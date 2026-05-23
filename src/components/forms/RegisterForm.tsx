@@ -3,6 +3,9 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
+import Button from "@/components/ui/Button";
+import Input from "@/components/ui/Input";
+
 export default function RegisterForm() {
 const router = useRouter();
 
@@ -23,7 +26,6 @@ e.preventDefault();
 
 setLoading(true);
 
-// شبیه‌سازی API
 setTimeout(() => {
 router.push("/dashboard");
 }, 1200);
@@ -43,105 +45,95 @@ Register your organization to access enterprise governance systems.
 </p>
 
 <div className="mt-8 grid grid-cols-1 gap-4">
-<input
-type="text"
+
+<Input
 placeholder="Corporate Legal Name"
-className="rounded-lg border border-slate-300 p-3 text-sm outline-none focus:border-slate-900"
 value={formData.legalName}
-onChange={(e) =>
+onChange={(value) =>
 setFormData({
 ...formData,
-legalName: e.target.value,
+legalName: value,
 })
 }
 />
 
-<input
-type="text"
+<Input
 placeholder="Tax ID / Business Number"
-className="rounded-lg border border-slate-300 p-3 text-sm outline-none focus:border-slate-900"
 value={formData.taxId}
-onChange={(e) =>
+onChange={(value) =>
 setFormData({
 ...formData,
-taxId: e.target.value,
+taxId: value,
 })
 }
 />
 
-<input
+<Input
 type="email"
 placeholder="Corporate Email"
-className="rounded-lg border border-slate-300 p-3 text-sm outline-none focus:border-slate-900"
 value={formData.email}
-onChange={(e) =>
+onChange={(value) =>
 setFormData({
 ...formData,
-email: e.target.value,
+email: value,
 })
 }
 />
 
-<input
-type="text"
+<Input
 placeholder="Phone Number"
-className="rounded-lg border border-slate-300 p-3 text-sm outline-none focus:border-slate-900"
 value={formData.phoneNumber}
-onChange={(e) =>
+onChange={(value) =>
 setFormData({
 ...formData,
-phoneNumber: e.target.value,
+phoneNumber: value,
 })
 }
 />
 
-<input
-type="text"
+<Input
 placeholder="Regional Hub"
-className="rounded-lg border border-slate-300 p-3 text-sm outline-none focus:border-slate-900"
 value={formData.regionalHub}
-onChange={(e) =>
+onChange={(value) =>
 setFormData({
 ...formData,
-regionalHub: e.target.value,
+regionalHub: value,
 })
 }
 />
 
-<input
-type="text"
+<Input
 placeholder="Role Type"
-className="rounded-lg border border-slate-300 p-3 text-sm outline-none focus:border-slate-900"
 value={formData.roleType}
-onChange={(e) =>
+onChange={(value) =>
 setFormData({
 ...formData,
-roleType: e.target.value,
+roleType: value,
 })
 }
 />
 
-<input
-type="text"
+<Input
 placeholder="Primary Category"
-className="rounded-lg border border-slate-300 p-3 text-sm outline-none focus:border-slate-900"
 value={formData.mainCategory}
-onChange={(e) =>
+onChange={(value) =>
 setFormData({
 ...formData,
-mainCategory: e.target.value,
+mainCategory: value,
 })
 }
 />
+
 </div>
 
-<button
+<div className="mt-6">
+<Button
 type="submit"
 disabled={loading}
-className="mt-6 w-full rounded-lg bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-50"
 >
 {loading ? "Initializing..." : "Initialize Sandbox Account"}
-</button>
+</Button>
+</div>
 </form>
 );
 } 
