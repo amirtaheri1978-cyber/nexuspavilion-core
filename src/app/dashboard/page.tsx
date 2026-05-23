@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import AppSidebar from "@/components/common/AppSidebar";
 import AppTopbar from "@/components/common/AppTopbar";
 import SandboxStrip from "@/components/common/SandboxStrip";
+import LogoutButton from "@/components/common/LogoutButton";
 
 import {
 getOrganization,
@@ -53,6 +54,8 @@ return (
 <AppTopbar />
 
 <div className="p-8">
+<div className="flex items-start justify-between gap-6">
+<div>
 <h1 className="text-3xl font-bold text-slate-900">
 Global Procurement Ledger
 </h1>
@@ -60,6 +63,10 @@ Global Procurement Ledger
 <p className="mt-2 text-slate-600">
 Explore active supply networks while your enterprise verification is pending.
 </p>
+</div>
+
+<LogoutButton />
+</div>
 
 {organization && (
 <div className="mt-8 rounded-xl border border-slate-200 bg-white p-6">
