@@ -7,15 +7,16 @@ import AppTopbar from "@/components/common/AppTopbar";
 import SandboxStrip from "@/components/common/SandboxStrip";
 
 import {
-getEnterpriseSession,
-type MockEnterpriseSession,
-} from "@/lib/mockEnterpriseSession";
+getOrganization,
+type OrganizationData,
+} from "@/lib/storage";
 
 export default function DashboardPage() {
-const [session, setSession] = useState<MockEnterpriseSession | null>(null);
+const [organization, setOrganization] =
+useState<OrganizationData | null>(null);
 
 useEffect(() => {
-setSession(getEnterpriseSession());
+setOrganization(getOrganization());
 }, []);
 
 return (
@@ -37,18 +38,18 @@ Global Procurement Ledger
 Explore active supply networks while your enterprise verification is pending.
 </p>
 
-{session && (
+{organization && (
 <div className="mt-8 rounded-xl border border-slate-200 bg-white p-6">
 <h2 className="text-lg font-semibold text-slate-900">
-{session.legalName}
+{organization.companyName}
 </h2>
 
 <p className="mt-2 text-sm text-slate-600">
-{session.primaryCategory} · {session.regionalHub}
+{organization.primaryCategory} · {organization.regionalHub}
 </p>
 
 <p className="mt-2 text-sm text-amber-700">
-Verification Status: {session.verificationStatus}
+Verification Status: SANDBOX
 </p>
 </div>
 )}

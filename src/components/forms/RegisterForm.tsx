@@ -8,9 +8,9 @@ import FormInput from "@/components/ui/FormInput";
 import ErrorMessage from "@/components/ui/ErrorMessage";
 
 import {
-saveEnterpriseSession,
-type MockEnterpriseSession,
-} from "@/lib/mockEnterpriseSession";
+saveOrganization,
+type OrganizationData,
+} from "@/lib/storage";
 
 export default function RegisterForm() {
 const router = useRouter();
@@ -18,7 +18,7 @@ const router = useRouter();
 const [loading, setLoading] = useState(false);
 
 const [formData, setFormData] = useState({
-legalName: "",
+companyName: "",
 taxId: "",
 email: "",
 phone: "",
@@ -28,7 +28,7 @@ primaryCategory: "",
 });
 
 const [errors, setErrors] = useState({
-legalName: "",
+companyName: "",
 taxId: "",
 email: "",
 phone: "",
@@ -39,7 +39,7 @@ primaryCategory: "",
 
 function validateForm() {
 const newErrors = {
-legalName: "",
+companyName: "",
 taxId: "",
 email: "",
 phone: "",
@@ -50,8 +50,8 @@ primaryCategory: "",
 
 let isValid = true;
 
-if (!formData.legalName.trim()) {
-newErrors.legalName = "Corporate legal name is required.";
+if (!formData.companyName.trim()) {
+newErrors.companyName = "Corporate legal name is required.";
 isValid = false;
 }
 
@@ -86,7 +86,6 @@ isValid = false;
 }
 
 setErrors(newErrors);
-
 return isValid;
 }
 
@@ -101,12 +100,17 @@ return;
 
 setLoading(true);
 
-const sessionData: MockEnterpriseSession = {
-...formData,
-verificationStatus: "SANDBOX",
+const organizationData: OrganizationData = {
+companyName: formData.companyName,
+taxId: formData.taxId,
+email: formData.email,
+phone: formData.phone,
+regionalHub: formData.regionalHub,
+roleType: formData.roleType,
+primaryCategory: formData.primaryCategory,
 };
 
-saveEnterpriseSession(sessionData);
+saveOrganization(organizationData);
 
 await new Promise((resolve) => setTimeout(resolve, 2000));
 
@@ -139,11 +143,11 @@ Register your organization to access enterprise governance systems.
 </div>
 
 <FormInput
-name="legalName"
+name="companyName"
 placeholder="Corporate Legal Name"
-value={formData.legalName}
+value={formData.companyName}
 onChange={handleChange}
-error={errors.legalName}
+error={errors.companyName}
 />
 
 <FormInput
