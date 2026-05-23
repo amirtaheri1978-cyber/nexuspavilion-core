@@ -13,6 +13,7 @@ type RegisterSchemaType,
 
 import Button from "@/components/ui/Button";
 import ErrorMessage from "@/components/ui/ErrorMessage";
+import FormInput from "@/components/ui/FormInput";
 
 export default function RegisterForm() {
 const router = useRouter();
@@ -71,55 +72,36 @@ Register your organization to access enterprise governance systems.
 )}
 
 <div className="mt-8 space-y-5">
-<div>
-<input
-type="text"
+<FormInput
 placeholder="Corporate Legal Name"
+error={errors.legalName?.message}
 {...register("legalName")}
-className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition-all focus:border-slate-900"
 />
-<ErrorMessage message={errors.legalName?.message} />
-</div>
 
-<div>
-<input
-type="text"
+<FormInput
 placeholder="Tax ID / Business Number"
+error={errors.taxId?.message}
 {...register("taxId")}
-className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition-all focus:border-slate-900"
 />
-<ErrorMessage message={errors.taxId?.message} />
-</div>
 
-<div>
-<input
+<FormInput
 type="email"
 placeholder="Corporate Email"
+error={errors.email?.message}
 {...register("email")}
-className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition-all focus:border-slate-900"
 />
-<ErrorMessage message={errors.email?.message} />
-</div>
 
-<div>
-<input
-type="text"
+<FormInput
 placeholder="Phone Number"
+error={errors.phoneNumber?.message}
 {...register("phoneNumber")}
-className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition-all focus:border-slate-900"
 />
-<ErrorMessage message={errors.phoneNumber?.message} />
-</div>
 
-<div>
-<input
-type="text"
+<FormInput
 placeholder="Regional Hub"
+error={errors.regionalHub?.message}
 {...register("regionalHub")}
-className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition-all focus:border-slate-900"
 />
-<ErrorMessage message={errors.regionalHub?.message} />
-</div>
 
 <div>
 <select
@@ -134,18 +116,15 @@ Role Type
 <option value="CONTRACTOR">General Contractor</option>
 <option value="SUPPLIER">Industrial Supplier</option>
 </select>
+
 <ErrorMessage message={errors.roleType?.message} />
 </div>
 
-<div>
-<input
-type="text"
+<FormInput
 placeholder="Primary Category"
+error={errors.mainCategory?.message}
 {...register("mainCategory")}
-className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition-all focus:border-slate-900"
 />
-<ErrorMessage message={errors.mainCategory?.message} />
-</div>
 
 <div className="pt-2">
 <Button type="submit" disabled={loading}>
@@ -155,4 +134,4 @@ className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm 
 </div>
 </form>
 );
-} 
+}
