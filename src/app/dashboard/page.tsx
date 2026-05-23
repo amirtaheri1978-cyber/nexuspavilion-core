@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 import AppSidebar from "@/components/common/AppSidebar";
 import AppTopbar from "@/components/common/AppTopbar";
@@ -12,12 +13,34 @@ type OrganizationData,
 } from "@/lib/storage";
 
 export default function DashboardPage() {
+const router = useRouter();
+
 const [organization, setOrganization] =
 useState<OrganizationData | null>(null);
 
+const [loading, setLoading] = useState(true);
+
 useEffect(() => {
-setOrganization(getOrganization());
-}, []);
+const storedOrganization = getOrganization();
+
+if (!storedOrganization) {
+router.push("/register");
+return;
+}
+
+setOrganization(storedOrganization);
+setLoading(false);
+}, [router]);
+
+if (loading) {
+return (
+<main className="flex min-h-screen items-center justify-center bg-slate-100">
+<p className="text-sm text-slate-500">
+Loading enterprise workspace...
+</p>
+</main>
+);
+}
 
 return (
 <main className="min-h-screen bg-slate-100">
