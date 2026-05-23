@@ -1,28 +1,69 @@
+import AppSidebar from "@/components/common/AppSidebar";
+import AppTopbar from "@/components/common/AppTopbar";
+import SandboxStrip from "@/components/common/SandboxStrip";
+
 export default function DashboardPage() {
 return (
-<main className="flex min-h-screen bg-[#f4f4f4] font-sans">
+<main className="min-h-screen bg-slate-100">
+<SandboxStrip />
 
-{/* ZONE A: AppSidebar - سایدبار تیره مطابق رنگ انتخابی شما */}
-<aside className="w-[250px] bg-[#111827] p-[30px] text-white flex flex-col gap-4">
-<h2 className="text-xl font-bold tracking-tight mb-2">Nexus Pavilion</h2>
-<p className="text-sm font-medium opacity-90 cursor-pointer hover:opacity-100 transition-opacity">Dashboard</p>
-<p className="text-sm font-medium opacity-70 cursor-pointer hover:opacity-100 transition-opacity">Projects</p>
-<p className="text-sm font-medium opacity-70 cursor-pointer hover:opacity-100 transition-opacity">Governance</p>
-<p className="text-sm font-medium opacity-70 cursor-pointer hover:opacity-100 transition-opacity">AI Engine</p>
-</aside>
+<div className="flex">
+<AppSidebar />
 
-{/* ZONE C: Main Workspace Canvas */}
-<section className="flex-1 p-[40px]">
-<h1 className="text-3xl font-bold tracking-tight text-slate-900">Executive Dashboard</h1>
-<p className="mt-2 text-slate-600">Sandbox operational environment is now active.</p>
+<section className="flex-1 min-h-screen">
+<AppTopbar />
 
-{/* System Status Block */}
-<div className="mt-[30px] rounded-[12px] bg-white p-[20px] shadow-sm border border-slate-100">
-<h3 className="text-lg font-semibold text-slate-900">System Status</h3>
-<p className="mt-1 text-sm font-medium text-emerald-600">AI Governance Core Online</p>
+<div className="p-8">
+<h1 className="text-3xl font-bold text-slate-900">
+Global Procurement Ledger
+</h1>
+
+<p className="mt-2 text-slate-600">
+Explore active supply networks while your enterprise
+verification is pending.
+</p>
+
+<div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+<div className="rounded-xl bg-white p-6 border border-slate-200">
+<h3 className="font-semibold text-slate-900">
+Directory Access
+</h3>
+
+<p className="mt-2 text-sm text-slate-600">
+Public company listings are available in read-only mode.
+</p>
+</div>
+
+<div className="rounded-xl bg-white p-6 border border-slate-200">
+<h3 className="font-semibold text-slate-900">
+Verification Status
+</h3>
+
+<p className="mt-2 text-sm text-amber-700">
+Sandbox mode active.
+</p>
+
+<a
+href="/verify"
+className="mt-4 inline-block rounded-lg bg-amber-600 px-4 py-2 text-sm font-medium text-white hover:bg-amber-700 transition"
+>
+View Requirements
+</a>
+</div>
+
+<div className="rounded-xl bg-white p-6 border border-slate-200">
+<h3 className="font-semibold text-slate-900">
+Locked Systems
+</h3>
+
+<p className="mt-2 text-sm text-slate-600">
+RFQ, Project Matrix, and Blueprint Center unlock after approval.
+</p>
+</div>
+</div>
 </div>
 </section>
-
+</div>
 </main>
 );
 } 

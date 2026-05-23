@@ -1,58 +1,33 @@
-import AppSidebar from "@/components/common/AppSidebar";
-import AppTopbar from "@/components/common/AppTopbar";
-import SandboxStrip from "@/components/common/SandboxStrip";
+import RegisterForm from "@/components/forms/RegisterForm";
 
-export default function DashboardPage() {
+export default function RegisterPage() {
 return (
-<main className="min-h-screen bg-slate-100">
-<SandboxStrip />
+<main className="flex min-h-screen w-full overflow-hidden bg-slate-50 font-sans">
+<section className="hidden w-[40%] flex-col justify-between bg-[#111827] p-12 text-white md:flex">
+<div>
+<h2 className="text-xl font-bold tracking-tight">
+Nexus Pavilion
+</h2>
+</div>
 
-<div className="flex">
-<AppSidebar />
-
-<section className="flex-1 min-h-screen">
-<AppTopbar />
-
-<div className="p-8">
-<h1 className="text-3xl font-bold text-slate-900">
-Global Procurement Ledger
+<div className="my-auto space-y-4">
+<h1 className="text-4xl font-extrabold tracking-tight">
+Join Nexus Pavilion
 </h1>
 
-<p className="mt-2 text-slate-600">
-Explore active supply networks while your enterprise verification is pending.
-</p>
-
-<div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
-<div className="rounded-xl bg-white p-6 border border-slate-200">
-<h3 className="font-semibold text-slate-900">
-Directory Access
-</h3>
-<p className="mt-2 text-sm text-slate-600">
-Public company listings are available in read-only mode.
+<p className="max-w-sm text-sm leading-relaxed text-slate-400">
+Initialize your enterprise node under Sandbox governance.
 </p>
 </div>
 
-<div className="rounded-xl bg-white p-6 border border-slate-200">
-<h3 className="font-semibold text-slate-900">
-Verification Status
-</h3>
-<p className="mt-2 text-sm text-amber-700">
-Sandbox mode active.
-</p>
-</div>
-
-<div className="rounded-xl bg-white p-6 border border-slate-200">
-<h3 className="font-semibold text-slate-900">
-Locked Systems
-</h3>
-<p className="mt-2 text-sm text-slate-600">
-RFQ, Project Matrix, and Blueprint Center unlock after approval.
-</p>
-</div>
-</div>
+<div className="text-xs text-slate-500">
+© 2026 Nexus Pavilion. All rights reserved.
 </div>
 </section>
-</div>
+
+<section className="flex flex-1 items-center justify-center px-6 py-12 sm:px-16 lg:px-24">
+<RegisterForm />
+</section>
 </main>
 );
-}
+} 
