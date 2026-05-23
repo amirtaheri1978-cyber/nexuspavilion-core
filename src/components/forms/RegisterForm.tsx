@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
+import Select from "@/components/ui/Select";
 
 export default function RegisterForm() {
 const router = useRouter();
@@ -102,7 +103,7 @@ regionalHub: value,
 }
 />
 
-<Input
+<Select
 placeholder="Role Type"
 value={formData.roleType}
 onChange={(value) =>
@@ -111,6 +112,11 @@ setFormData({
 roleType: value,
 })
 }
+options={[
+{ label: "Owner / Developer", value: "OWNER" },
+{ label: "General Contractor", value: "CONTRACTOR" },
+{ label: "Industrial Supplier", value: "SUPPLIER" },
+]}
 />
 
 <Input
