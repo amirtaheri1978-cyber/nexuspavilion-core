@@ -45,9 +45,12 @@ Locked Systems
 🔒 Project Matrix Locked
 </div>
 
-<div className="rounded-lg px-3 py-2 text-sm text-slate-500">
+<Link
+href="/rfq"
+className="block rounded-lg px-3 py-2 text-sm text-slate-400 transition hover:bg-slate-900 hover:text-white"
+>
 🔒 RFQ Manager Locked
-</div>
+</Link>
 
 <div className="rounded-lg px-3 py-2 text-sm text-slate-500">
 🔒 Blueprint Center Locked
