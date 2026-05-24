@@ -33,7 +33,7 @@ const [name, setName] = useState("");
 const [category, setCategory] = useState("");
 const [location, setLocation] = useState("");
 const [networkRole, setNetworkRole] = useState("Owner / Developer");
-const [status, setStatus] = useState("verified");
+const [status, setStatus] = useState("approved");
 const [loading, setLoading] = useState(true);
 const [saving, setSaving] = useState(false);
 const [error, setError] = useState("");
@@ -84,6 +84,7 @@ status,
 .eq("id", companyId);
 
 if (error) {
+console.error(error);
 setError("Could not update company. Please check Supabase permissions.");
 setSaving(false);
 return;
@@ -112,7 +113,7 @@ className="text-sm font-medium text-slate-600 hover:text-slate-900"
 
 <section className="mt-8 rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
 <p className="text-sm font-semibold uppercase tracking-wide text-amber-700">
-Connections Directory
+Enterprise Network
 </p>
 
 <h1 className="mt-3 text-3xl font-bold text-slate-900">
@@ -170,9 +171,11 @@ value={status}
 onChange={(event) => setStatus(event.target.value)}
 className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-slate-900"
 >
+<option value="approved">Approved</option>
 <option value="verified">Verified</option>
 <option value="sandbox">Sandbox</option>
 <option value="pending">Pending</option>
+<option value="rejected">Rejected</option>
 </select>
 
 <button

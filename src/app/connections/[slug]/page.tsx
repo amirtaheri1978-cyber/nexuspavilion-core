@@ -1,164 +1,231 @@
-import Link from "next/link";
+"use client";
 
-import StatusBadge from "@/components/ui/StatusBadge";
+import { useEffect, useState } from "react";
+import { useRouter, useParams } from "next/navigation";
+
+import AppSidebar from "@/components/common/AppSidebar";
+import AppTopbar from "@/components/common/AppTopbar";
+
 import { supabase } from "@/lib/supabase";
-
-type StatusBadgeValue = "SANDBOX" | "PENDING" | "APPROVED" | "REJECTED";
 
 type Company = {
 id: string;
-name: string;
-slug: string;
+company_name: string;
 category: string;
 location: string;
-network_role: string;
+role_type: string;
 status: string;
-created_at: string;
-};
-
-function normalizeStatus(status: string): StatusBadgeValue {
-const value = status.toLowerCase();
-
-if (value === "verified" || value === "approved") return "APPROVED";
-if (value === "pending") return "PENDING";
-if (value === "rejected") return "REJECTED";
-
-return "SANDBOX";
-}
-
-function formatStatus(status: string) {
-const value = status.toLowerCase();
-
-if (value === "verified" || value === "approved") return "Verified";
-if (value === "sandbox") return "Sandbox";
-if (value === "pending") return "Pending";
-if (value === "rejected") return "Rejected";
-
-return status;
-}
-
-type CompanyProfilePageProps = {
-params: Promise<{
 slug: string;
-}>;
 };
 
-export default async function CompanyProfilePage({
-params,
-}: CompanyProfilePageProps) {
-const { slug } = await params;
+export default function EditCompanyPage() {
+const router = useRouter();
+const params = useParams();
 
-const { data: company, error } = await supabase
+const slug = params.slug as string;
+
+const [loading, setLoading] = useState(true);
+const [saving, setSaving] = useState(false);
+
+const [company, setCompany] = useState<Company | null>(null);
+
+const [companyName, setCompanyName] = useState("");
+const [category, setCategory] = useState("");
+const [location, setLocation] = useState("");
+const [roleType, setRoleType] = useState("OWNER");
+const [status, setStatus] = useState("PENDING");
+
+useEffect(() => {
+async function loadCompany() {
+const { data, error } = await supabase
 .from("companies")
 .select("*")
 .eq("slug", slug)
-.single<Company>();
+.single();
 
-if (error || !company) {
+if (error || !data) {
+console.error(error);
+return;
+}
+
+setCompany(data);
+
+setCompanyName(data.company_name ?? "");
+setCategory(data.category ?? "");
+setLocation(data.location ?? "");
+setRoleType(data.role_type ?? "OWNER");
+setStatus(data.status ?? "PENDING");
+
+setLoading(false);
+}
+
+loadCompany();
+}, [slug]);
+
+async function handleUpdateCompany(
+event: React.FormEvent<HTMLFormElement>
+) {
+event.preventDefault();
+
+if (!company) return;
+
+setSaving(true);
+
+const { error } = await supabase
+.from("companies")
+.update({
+company_name: companyName,
+category,
+location,
+role_type: roleType,
+status,
+})
+.eq("id", company.id);
+
+setSaving(false);
+
+if (error) {
+console.error(error);
+alert("Failed to update company.");
+return;
+}
+
+router.push(`/connections/${company.slug}`);
+}
+
+if (loading) {
 return (
-<main className="min-h-screen bg-slate-100 p-8">
-<div className="mx-auto max-w-4xl rounded-2xl border border-slate-200 bg-white p-8">
-<h1 className="text-2xl font-bold text-slate-900">
-Company not found
-</h1>
-
-<Link
-href="/connections"
-className="mt-6 inline-block text-sm font-medium text-slate-600 hover:text-slate-900"
->
-← Back to Connections
-</Link>
-</div>
+<main className="flex min-h-screen items-center justify-center bg-slate-100">
+<p className="text-sm text-slate-500">
+Loading company profile...
+</p>
 </main>
 );
 }
 
 return (
-<main className="min-h-screen bg-slate-100 p-8">
-<div className="mx-auto max-w-5xl">
-<Link
-href="/connections"
-className="text-sm font-medium text-slate-600 hover:text-slate-900"
->
-← Back to Connections
-</Link>
+<main className="min-h-screen bg-slate-100">
+<div className="flex">
+<AppSidebar />
 
-<section className="mt-8 rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
-<div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
-<div>
-<div className="flex flex-wrap items-center gap-3">
-<h1 className="text-3xl font-bold text-slate-900">
-{company.name}
+<section className="min-h-screen flex-1">
+<AppTopbar />
+
+<div className="p-8">
+<div className="mx-auto max-w-3xl">
+<a
+href={`/connections/${slug}`}
+className="text-sm text-slate-500 transition hover:text-slate-900"
+>
+← Back to Company
+</a>
+
+<div className="mt-6 rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
+<p className="text-sm font-semibold uppercase tracking-wide text-amber-700">
+Enterprise Network
+</p>
+
+<h1 className="mt-2 text-3xl font-bold text-slate-900">
+Edit Company
 </h1>
 
-<StatusBadge status={normalizeStatus(company.status)} />
-</div>
-
-<p className="mt-3 text-slate-600">
-{company.category} · {company.location}
-</p>
-</div>
-
-<div className="rounded-xl bg-slate-50 px-5 py-4">
-<p className="text-xs font-medium uppercase tracking-wide text-slate-500">
-Network Role
+<p className="mt-2 text-sm text-slate-600">
+Update enterprise company profile data stored in the live
+Supabase network.
 </p>
 
-<p className="mt-1 text-sm font-semibold text-slate-900">
-{company.network_role}
-</p>
-</div>
-</div>
-
-<div className="mt-8 grid grid-cols-1 gap-5 md:grid-cols-3">
-<div className="rounded-xl border border-slate-200 p-5">
-<p className="text-xs font-medium uppercase tracking-wide text-slate-500">
-Category
-</p>
-
-<p className="mt-2 text-sm font-semibold text-slate-900">
-{company.category}
-</p>
-</div>
-
-<div className="rounded-xl border border-slate-200 p-5">
-<p className="text-xs font-medium uppercase tracking-wide text-slate-500">
-Location
-</p>
-
-<p className="mt-2 text-sm font-semibold text-slate-900">
-{company.location}
-</p>
-</div>
-
-<div className="rounded-xl border border-slate-200 p-5">
-<p className="text-xs font-medium uppercase tracking-wide text-slate-500">
-Status
-</p>
-
-<p className="mt-2 text-sm font-semibold text-slate-900">
-{formatStatus(company.status)}
-</p>
-</div>
-</div>
-
-<div className="mt-8 rounded-xl border border-slate-200 p-6">
-<h2 className="font-semibold text-slate-900">Compliance Notes</h2>
-
-<p className="mt-4 text-sm leading-6 text-slate-600">
-This company profile is loaded from the live Supabase database.
-Additional compliance records, capabilities, documents, and
-verification workflow data will be connected in the next backend
-phase.
-</p>
-
-<div className="mt-6">
-<Link
-href={`/connections/${company.slug}/edit`}
-className="inline-flex rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800"
+<form
+onSubmit={handleUpdateCompany}
+className="mt-8 space-y-5"
 >
-Edit Company
-</Link>
+<div>
+<label className="mb-2 block text-sm font-medium text-slate-700">
+Company Name
+</label>
+
+<input
+type="text"
+value={companyName}
+onChange={(e) => setCompanyName(e.target.value)}
+required
+className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-slate-900"
+/>
+</div>
+
+<div>
+<label className="mb-2 block text-sm font-medium text-slate-700">
+Category
+</label>
+
+<input
+type="text"
+value={category}
+onChange={(e) => setCategory(e.target.value)}
+required
+className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-slate-900"
+/>
+</div>
+
+<div>
+<label className="mb-2 block text-sm font-medium text-slate-700">
+Location
+</label>
+
+<input
+type="text"
+value={location}
+onChange={(e) => setLocation(e.target.value)}
+required
+className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-slate-900"
+/>
+</div>
+
+<div>
+<label className="mb-2 block text-sm font-medium text-slate-700">
+Network Role
+</label>
+
+<select
+value={roleType}
+onChange={(e) => setRoleType(e.target.value)}
+className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-slate-900"
+>
+<option value="OWNER">Owner / Developer</option>
+<option value="CONTRACTOR">
+General Contractor
+</option>
+<option value="SUPPLIER">
+Industrial Supplier
+</option>
+</select>
+</div>
+
+<div>
+<label className="mb-2 block text-sm font-medium text-slate-700">
+Verification Status
+</label>
+
+<select
+value={status}
+onChange={(e) => setStatus(e.target.value)}
+className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-slate-900"
+>
+<option value="PENDING">Pending</option>
+<option value="APPROVED">Approved</option>
+<option value="REJECTED">Rejected</option>
+<option value="SANDBOX">Sandbox</option>
+</select>
+</div>
+
+<button
+type="submit"
+disabled={saving}
+className="w-full rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:opacity-50"
+>
+{saving ? "Updating Company..." : "Save Changes"}
+</button>
+</form>
+</div>
 </div>
 </div>
 </section>
