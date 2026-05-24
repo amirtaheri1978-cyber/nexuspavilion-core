@@ -1,18 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-
 import AppSidebar from "@/components/common/AppSidebar";
 import AppTopbar from "@/components/common/AppTopbar";
 import SandboxStrip from "@/components/common/SandboxStrip";
 import LogoutButton from "@/components/common/LogoutButton";
 import StatusBadge from "@/components/ui/StatusBadge";
 
-import {
-getOrganization,
-type OrganizationData,
-} from "@/lib/storage";
+import { useRequireOrganization } from "@/hooks/useRequireOrganization";
 
 function formatRoleType(roleType: string) {
 const roleMap: Record<string, string> = {
@@ -25,24 +19,7 @@ return roleMap[roleType] ?? roleType;
 }
 
 export default function DashboardPage() {
-const router = useRouter();
-
-const [organization, setOrganization] =
-useState<OrganizationData | null>(null);
-
-const [loading, setLoading] = useState(true);
-
-useEffect(() => {
-const storedOrganization = getOrganization();
-
-if (!storedOrganization) {
-router.push("/register");
-return;
-}
-
-setOrganization(storedOrganization);
-setLoading(false);
-}, [router]);
+const { organization, loading } = useRequireOrganization();
 
 if (loading) {
 return (
@@ -102,6 +79,7 @@ Explore active supply networks while your enterprise verification is pending.
 <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
 Network Role
 </p>
+
 <p className="mt-1 text-sm font-semibold text-slate-900">
 {formatRoleType(organization.roleType)}
 </p>
@@ -111,6 +89,7 @@ Network Role
 <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
 Regional Hub
 </p>
+
 <p className="mt-1 text-sm font-semibold text-slate-900">
 {organization.regionalHub}
 </p>
@@ -120,6 +99,7 @@ Regional Hub
 <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
 Tax ID
 </p>
+
 <p className="mt-1 text-sm font-semibold text-slate-900">
 {organization.taxId}
 </p>
