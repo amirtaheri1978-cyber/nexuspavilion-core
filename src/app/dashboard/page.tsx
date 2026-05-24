@@ -7,11 +7,22 @@ import AppSidebar from "@/components/common/AppSidebar";
 import AppTopbar from "@/components/common/AppTopbar";
 import SandboxStrip from "@/components/common/SandboxStrip";
 import LogoutButton from "@/components/common/LogoutButton";
+import StatusBadge from "@/components/ui/StatusBadge";
 
 import {
 getOrganization,
 type OrganizationData,
 } from "@/lib/storage";
+
+function formatRoleType(roleType: string) {
+const roleMap: Record<string, string> = {
+OWNER: "Owner / Developer",
+CONTRACTOR: "General Contractor",
+SUPPLIER: "Industrial Supplier",
+};
+
+return roleMap[roleType] ?? roleType;
+}
 
 export default function DashboardPage() {
 const router = useRouter();
@@ -69,18 +80,51 @@ Explore active supply networks while your enterprise verification is pending.
 </div>
 
 {organization && (
-<div className="mt-8 rounded-xl border border-slate-200 bg-white p-6">
-<h2 className="text-lg font-semibold text-slate-900">
+<div className="mt-8 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+<div className="flex items-start justify-between gap-6">
+<div>
+<div className="flex items-center gap-3">
+<h2 className="text-xl font-semibold text-slate-900">
 {organization.companyName}
 </h2>
+
+<StatusBadge status="SANDBOX" />
+</div>
 
 <p className="mt-2 text-sm text-slate-600">
 {organization.primaryCategory} · {organization.regionalHub}
 </p>
+</div>
+</div>
 
-<p className="mt-2 text-sm text-amber-700">
-Verification Status: SANDBOX
+<div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-3">
+<div className="rounded-xl bg-slate-50 p-4">
+<p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+Network Role
 </p>
+<p className="mt-1 text-sm font-semibold text-slate-900">
+{formatRoleType(organization.roleType)}
+</p>
+</div>
+
+<div className="rounded-xl bg-slate-50 p-4">
+<p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+Regional Hub
+</p>
+<p className="mt-1 text-sm font-semibold text-slate-900">
+{organization.regionalHub}
+</p>
+</div>
+
+<div className="rounded-xl bg-slate-50 p-4">
+<p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+Tax ID
+</p>
+<p className="mt-1 text-sm font-semibold text-slate-900">
+{organization.taxId}
+</p>
+</div>
+</div>
 </div>
 )}
 
