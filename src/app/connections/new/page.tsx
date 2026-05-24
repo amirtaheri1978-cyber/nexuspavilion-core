@@ -21,12 +21,13 @@ const [name, setName] = useState("");
 const [category, setCategory] = useState("");
 const [location, setLocation] = useState("");
 const [networkRole, setNetworkRole] = useState("Owner / Developer");
-const [status, setStatus] = useState("verified");
+const [status, setStatus] = useState("approved");
 const [saving, setSaving] = useState(false);
 const [error, setError] = useState("");
 
 async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
 event.preventDefault();
+
 setSaving(true);
 setError("");
 
@@ -42,12 +43,14 @@ status,
 });
 
 if (error) {
+console.error(error);
 setError("Could not create company. Please check Supabase permissions.");
 setSaving(false);
 return;
 }
 
 router.push("/connections");
+router.refresh();
 }
 
 return (
@@ -72,6 +75,12 @@ Add Company
 <p className="mt-3 text-slate-600">
 Create a new enterprise network profile in the live Supabase database.
 </p>
+
+{error && (
+<p className="mt-6 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">
+{error}
+</p>
+)}
 
 <form onSubmit={handleSubmit} className="mt-8 space-y-5">
 <input
@@ -113,23 +122,19 @@ value={status}
 onChange={(event) => setStatus(event.target.value)}
 className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-slate-900"
 >
+<option value="approved">Approved</option>
 <option value="verified">Verified</option>
 <option value="sandbox">Sandbox</option>
 <option value="pending">Pending</option>
+<option value="rejected">Rejected</option>
 </select>
-
-{error && (
-<p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">
-{error}
-</p>
-)}
 
 <button
 type="submit"
 disabled={saving}
 className="w-full rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-60"
 >
-{saving ? "Saving..." : "Create Company"}
+{saving ? "Creating Company..." : "Create Company"}
 </button>
 </form>
 </section>
