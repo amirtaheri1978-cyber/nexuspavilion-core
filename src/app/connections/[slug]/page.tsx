@@ -1,6 +1,9 @@
 import Link from "next/link";
 
+import StatusBadge from "@/components/ui/StatusBadge";
 import { supabase } from "@/lib/supabase";
+
+type StatusBadgeValue = "SANDBOX" | "PENDING" | "APPROVED" | "REJECTED";
 
 type Company = {
 id: string;
@@ -13,28 +16,25 @@ status: string;
 created_at: string;
 };
 
+function normalizeStatus(status: string): StatusBadgeValue {
+const value = status.toLowerCase();
+
+if (value === "verified" || value === "approved") return "APPROVED";
+if (value === "pending") return "PENDING";
+if (value === "rejected") return "REJECTED";
+
+return "SANDBOX";
+}
+
 function formatStatus(status: string) {
 const value = status.toLowerCase();
 
-if (value === "verified") return "Verified";
+if (value === "verified" || value === "approved") return "Verified";
 if (value === "sandbox") return "Sandbox";
 if (value === "pending") return "Pending";
+if (value === "rejected") return "Rejected";
 
 return status;
-}
-
-function getStatusStyle(status: string) {
-const value = status.toLowerCase();
-
-if (value === "verified") {
-return "bg-emerald-100 text-emerald-700";
-}
-
-if (value === "pending") {
-return "bg-blue-100 text-blue-700";
-}
-
-return "bg-amber-100 text-amber-700";
 }
 
 type CompanyProfilePageProps = {
@@ -91,13 +91,7 @@ className="text-sm font-medium text-slate-600 hover:text-slate-900"
 {company.name}
 </h1>
 
-<span
-className={`rounded-full px-3 py-1 text-xs font-semibold ${getStatusStyle(
-company.status
-)}`}
->
-{formatStatus(company.status)}
-</span>
+<StatusBadge status={normalizeStatus(company.status)} />
 </div>
 
 <p className="mt-3 text-slate-600">
@@ -149,9 +143,7 @@ Status
 </div>
 
 <div className="mt-8 rounded-xl border border-slate-200 p-6">
-<h2 className="font-semibold text-slate-900">
-Compliance Notes
-</h2>
+<h2 className="font-semibold text-slate-900">Compliance Notes</h2>
 
 <p className="mt-4 text-sm leading-6 text-slate-600">
 This company profile is loaded from the live Supabase database.
