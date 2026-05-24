@@ -1,30 +1,66 @@
+import Link from "next/link";
+
 export default function AppSidebar() {
 return (
-<aside className="w-[260px] min-h-screen bg-[#111827] text-white p-6">
-<h2 className="text-xl font-bold tracking-tight">Nexus Pavilion</h2>
+<aside className="min-h-screen w-64 bg-slate-950 px-6 py-8 text-white">
+<div>
+<h2 className="text-xl font-bold tracking-tight">
+Nexus Pavilion
+</h2>
 
-<p className="mt-2 text-xs text-slate-400">
+<p className="mt-1 text-xs text-slate-400">
 Sandbox Workspace
 </p>
+</div>
 
-<nav className="mt-8 flex flex-col gap-4 text-sm">
-<a className="font-medium text-white">Dashboard</a>
-<a className="text-slate-300">Connections Directory</a>
-<a className="text-slate-300">Market Insights</a>
+<nav className="mt-10 space-y-2">
+<Link
+href="/dashboard"
+className="block rounded-lg px-3 py-2 text-sm font-medium text-slate-200 transition hover:bg-slate-900 hover:text-white"
+>
+Dashboard
+</Link>
 
-<a className="text-slate-400 flex items-center gap-2 cursor-not-allowed">
+<Link
+href="/connections"
+className="block rounded-lg px-3 py-2 text-sm font-medium text-slate-200 transition hover:bg-slate-900 hover:text-white"
+>
+Connections Directory
+</Link>
+
+<Link
+href="/dashboard"
+className="block rounded-lg px-3 py-2 text-sm font-medium text-slate-400 transition hover:bg-slate-900 hover:text-white"
+>
+Market Insights
+</Link>
+
+<div className="pt-4">
+<p className="px-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
+Locked Systems
+</p>
+
+<div className="mt-2 space-y-2">
+<div className="rounded-lg px-3 py-2 text-sm text-slate-500">
 🔒 Project Matrix Locked
-</a>
+</div>
 
-<a className="text-slate-400 flex items-center gap-2 cursor-not-allowed">
+<div className="rounded-lg px-3 py-2 text-sm text-slate-500">
 🔒 RFQ Manager Locked
-</a>
+</div>
 
-<a className="text-slate-400 flex items-center gap-2 cursor-not-allowed">
+<div className="rounded-lg px-3 py-2 text-sm text-slate-500">
 🔒 Blueprint Center Locked
-</a>
+</div>
+</div>
+</div>
 
-<a className="text-slate-300">Support & Contact</a>
+<Link
+href="/verify"
+className="block rounded-lg px-3 py-2 text-sm font-medium text-slate-200 transition hover:bg-slate-900 hover:text-white"
+>
+Support & Contact
+</Link>
 </nav>
 </aside>
 );
