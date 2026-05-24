@@ -159,6 +159,15 @@ Additional compliance records, capabilities, documents, and
 verification workflow data will be connected in the next backend
 phase.
 </p>
+
+<div className="mt-6">
+<Link
+href={`/connections/${company.slug}/edit`}
+className="inline-flex rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800"
+>
+Edit Company
+</Link>
+</div>
 </div>
 </section>
 </div>
