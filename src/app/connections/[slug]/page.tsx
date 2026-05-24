@@ -1,16 +1,40 @@
 import Link from "next/link";
 
-import { companies } from "@/data/companies";
-import StatusBadge from "@/components/ui/StatusBadge";
+import { supabase } from "@/lib/supabase";
 
-function formatRole(role: string) {
-const roleMap: Record<string, string> = {
-OWNER: "Owner / Developer",
-CONTRACTOR: "General Contractor",
-SUPPLIER: "Industrial Supplier",
+type Company = {
+id: string;
+name: string;
+slug: string;
+category: string;
+location: string;
+network_role: string;
+status: string;
+created_at: string;
 };
 
-return roleMap[role] ?? role;
+function formatStatus(status: string) {
+const value = status.toLowerCase();
+
+if (value === "verified") return "Verified";
+if (value === "sandbox") return "Sandbox";
+if (value === "pending") return "Pending";
+
+return status;
+}
+
+function getStatusStyle(status: string) {
+const value = status.toLowerCase();
+
+if (value === "verified") {
+return "bg-emerald-100 text-emerald-700";
+}
+
+if (value === "pending") {
+return "bg-blue-100 text-blue-700";
+}
+
+return "bg-amber-100 text-amber-700";
 }
 
 type CompanyProfilePageProps = {
@@ -24,11 +48,13 @@ params,
 }: CompanyProfilePageProps) {
 const { slug } = await params;
 
-const company = companies.find(
-(item) => item.slug.trim() === slug.trim()
-);
+const { data: company, error } = await supabase
+.from("companies")
+.select("*")
+.eq("slug", slug)
+.single<Company>();
 
-if (!company) {
+if (error || !company) {
 return (
 <main className="min-h-screen bg-slate-100 p-8">
 <div className="mx-auto max-w-4xl rounded-2xl border border-slate-200 bg-white p-8">
@@ -65,11 +91,17 @@ className="text-sm font-medium text-slate-600 hover:text-slate-900"
 {company.name}
 </h1>
 
-<StatusBadge status={company.status} />
+<span
+className={`rounded-full px-3 py-1 text-xs font-semibold ${getStatusStyle(
+company.status
+)}`}
+>
+{formatStatus(company.status)}
+</span>
 </div>
 
 <p className="mt-3 text-slate-600">
-{company.category} · {company.region}
+{company.category} · {company.location}
 </p>
 </div>
 
@@ -79,38 +111,54 @@ Network Role
 </p>
 
 <p className="mt-1 text-sm font-semibold text-slate-900">
-{formatRole(company.role)}
+{company.network_role}
 </p>
 </div>
 </div>
 
-<div className="mt-8 grid grid-cols-1 gap-5 md:grid-cols-2">
+<div className="mt-8 grid grid-cols-1 gap-5 md:grid-cols-3">
 <div className="rounded-xl border border-slate-200 p-5">
-<h2 className="font-semibold text-slate-900">
-Capabilities
-</h2>
+<p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+Category
+</p>
 
-<ul className="mt-4 space-y-3">
-{company.capabilities.map((capability) => (
-<li
-key={capability}
-className="rounded-lg bg-slate-50 px-4 py-3 text-sm text-slate-700"
->
-{capability}
-</li>
-))}
-</ul>
+<p className="mt-2 text-sm font-semibold text-slate-900">
+{company.category}
+</p>
 </div>
 
 <div className="rounded-xl border border-slate-200 p-5">
+<p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+Location
+</p>
+
+<p className="mt-2 text-sm font-semibold text-slate-900">
+{company.location}
+</p>
+</div>
+
+<div className="rounded-xl border border-slate-200 p-5">
+<p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+Status
+</p>
+
+<p className="mt-2 text-sm font-semibold text-slate-900">
+{formatStatus(company.status)}
+</p>
+</div>
+</div>
+
+<div className="mt-8 rounded-xl border border-slate-200 p-6">
 <h2 className="font-semibold text-slate-900">
 Compliance Notes
 </h2>
 
 <p className="mt-4 text-sm leading-6 text-slate-600">
-{company.complianceNotes}
+This company profile is loaded from the live Supabase database.
+Additional compliance records, capabilities, documents, and
+verification workflow data will be connected in the next backend
+phase.
 </p>
-</div>
 </div>
 </section>
 </div>

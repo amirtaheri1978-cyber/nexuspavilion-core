@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 import AppSidebar from "@/components/common/AppSidebar";
 import AppTopbar from "@/components/common/AppTopbar";
 import SandboxStrip from "@/components/common/SandboxStrip";
@@ -49,11 +51,21 @@ Global Procurement Ledger
 </h1>
 
 <p className="mt-2 text-slate-600">
-Explore active supply networks while your enterprise verification is pending.
+Explore active supply networks while your enterprise
+verification is pending.
 </p>
 </div>
 
+<div className="flex items-center gap-3">
+<Link
+href="/connections/new"
+className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
+>
+Add Company
+</Link>
+
 <LogoutButton />
+</div>
 </div>
 
 {organization && (
@@ -69,7 +81,8 @@ Explore active supply networks while your enterprise verification is pending.
 </div>
 
 <p className="mt-2 text-sm text-slate-600">
-{organization.primaryCategory} · {organization.regionalHub}
+{organization.primaryCategory} ·{" "}
+{organization.regionalHub}
 </p>
 </div>
 </div>
@@ -115,8 +128,16 @@ Directory Access
 </h3>
 
 <p className="mt-2 text-sm text-slate-600">
-Public company listings are available in read-only mode.
+Public company listings are now connected to the live
+Supabase directory.
 </p>
+
+<Link
+href="/connections"
+className="mt-4 inline-block text-sm font-semibold text-slate-900 hover:underline"
+>
+View Directory →
+</Link>
 </div>
 
 <div className="rounded-xl border border-slate-200 bg-white p-6">
@@ -128,22 +149,29 @@ Verification Status
 Sandbox mode active.
 </p>
 
-<a
+<Link
 href="/verify"
 className="mt-4 inline-block rounded-lg bg-amber-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-amber-700"
 >
 View Requirements
-</a>
+</Link>
 </div>
 
 <div className="rounded-xl border border-slate-200 bg-white p-6">
 <h3 className="font-semibold text-slate-900">
-Locked Systems
+Procurement Systems
 </h3>
 
 <p className="mt-2 text-sm text-slate-600">
-RFQ, Project Matrix, and Blueprint Center unlock after approval.
+RFQ workflows are available in sandbox mode.
 </p>
+
+<Link
+href="/rfq"
+className="mt-4 inline-block text-sm font-semibold text-slate-900 hover:underline"
+>
+Open RFQ Manager →
+</Link>
 </div>
 </div>
 </div>
