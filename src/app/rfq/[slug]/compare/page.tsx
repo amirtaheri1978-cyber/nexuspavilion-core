@@ -1,10 +1,12 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
-import AwardContractButton from "@/components/award-contract-button";
 import { createClient } from "@/lib/supabase/server";
 
 type PageProps = {
-params: Promise<{ slug: string }>;
+params: Promise<{
+slug: string;
+}>;
 };
 
 export default async function CompareQuotesPage({ params }: PageProps) {
@@ -31,19 +33,52 @@ const { data: quotes } = await supabase
 .eq("rfq_id", rfq.id)
 .order("created_at", { ascending: false });
 
+async function awardQuote(formData: FormData) {
+"use server";
+
+const supabase = await createClient();
+const quoteId = formData.get("quoteId");
+
+if (!quoteId) return;
+
+const { data: quote } = await supabase
+.from("quotes")
+.select("*")
+.eq("id", quoteId)
+.single();
+
+if (!quote) return;
+
+await supabase
+.from("rfqs")
+.update({
+status: "awarded",
+awarded_quote_id: quote.id,
+awarded_at: new Date().toISOString(),
+})
+.eq("id", quote.rfq_id);
+
+await supabase
+.from("quotes")
+.update({ decision: "approved" })
+.eq("id", quote.id);
+
+redirect("/dashboard");
+}
+
 return (
 <main className="min-h-screen bg-[#f6f6f3] px-6 py-16">
-<div className="mx-auto max-w-6xl">
+<div className="mx-auto max-w-5xl">
 <Link href={`/rfq/${rfq.slug}`} className="text-sm text-black/60">
 ← Back to RFQ
 </Link>
 
 <section className="mt-6 rounded-[32px] border border-black/5 bg-white p-10">
-<p className="text-xs font-semibold uppercase tracking-[0.3em] text-[#d97745]">
+<p className="text-[12px] font-semibold uppercase tracking-[0.3em] text-[#d97745]">
 Quote Comparison
 </p>
 
-<h1 className="mt-3 text-5xl font-black text-black">
+<h1 className="mt-3 text-5xl font-black tracking-tight text-black">
 {rfq.title}
 </h1>
 
@@ -53,7 +88,7 @@ Compare supplier quotes side-by-side before making a procurement decision.
 </section>
 
 <div className="mt-8 overflow-hidden rounded-[28px] border border-black/5 bg-white">
-<div className="grid grid-cols-5 bg-black px-6 py-4 text-sm font-semibold text-white">
+<div className="grid grid-cols-5 bg-[#111111] px-6 py-4 text-sm font-semibold text-white">
 <div>Amount</div>
 <div>Timeline</div>
 <div>Decision</div>
@@ -61,7 +96,7 @@ Compare supplier quotes side-by-side before making a procurement decision.
 <div>Action</div>
 </div>
 
-{quotes?.map((quote: any) => (
+{quotes?.map((quote) => (
 <div
 key={quote.id}
 className="grid grid-cols-5 items-center border-t border-black/5 px-6 py-6"
@@ -82,9 +117,16 @@ ${quote.amount}
 
 <div className="text-black/60">{quote.message}</div>
 
-<div>
-<AwardContractButton quoteId={quote.id} />
-</div>
+<form action={awardQuote}>
+<input type="hidden" name="quoteId" value={quote.id} />
+
+<button
+type="submit"
+className="rounded-full bg-black px-5 py-3 text-sm font-semibold text-white"
+>
+Award Contract
+</button>
+</form>
 </div>
 ))}
 </div>
