@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import InviteVendorForm from "@/components/invite-vendor-form";
 import QuoteDecisionButtons from "@/components/quote-decision-buttons";
 import SubmitQuoteForm from "@/components/submit-quote-form";
 import { createClient } from "@/lib/supabase/server";
@@ -60,6 +61,8 @@ Procurement RFQ
 <Info title="Deadline" value={rfq.deadline} />
 </div>
 </section>
+
+<InviteVendorForm rfqId={rfq.id} />
 
 <section className="mt-10 rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
 <p className="text-sm font-semibold uppercase tracking-[0.2em] text-orange-500">
@@ -133,7 +136,7 @@ return (
 </p>
 
 <p className="mt-2 text-2xl font-bold text-slate-900">
-{value}
+{value || "Not specified"}
 </p>
 </div>
 );
