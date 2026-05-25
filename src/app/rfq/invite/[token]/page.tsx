@@ -1,103 +1,111 @@
-import { createClient } from "@supabase/supabase-js"
+import Link from "next/link";
 
-const supabase = createClient(
-process.env.NEXT_PUBLIC_SUPABASE_URL!,
-process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
+import SubmitQuoteForm from "@/components/submit-quote-form";
+import { createClient } from "@/lib/supabase/server";
 
 export default async function InvitePage({
 params,
 }: {
-params: { token: string }
+params: Promise<{ token: string }>;
 }) {
-const { data: invite } = await supabase
+const { token } = await params;
+const cleanToken = token.trim();
+
+const supabase = await createClient();
+
+const { data: invite, error: inviteError } = await supabase
 .from("rfq_invites")
 .select("*")
-.eq("token", params.token)
-.single()
+.eq("token", cleanToken)
+.maybeSingle();
 
-if (!invite) {
+if (inviteError || !invite) {
 return (
-<main className="min-h-screen flex items-center justify-center">
-<h1 className="text-2xl font-bold">Invalid Invite</h1>
+<main className="flex min-h-screen items-center justify-center bg-slate-100 p-8">
+<div className="rounded-3xl bg-white p-8 shadow-sm">
+<h1 className="text-2xl font-black text-slate-950">Invalid Invite</h1>
+<p className="mt-4 text-slate-600">Token checked:</p>
+<p className="mt-2 break-all rounded-xl bg-slate-100 p-3 text-sm">
+{cleanToken}
+</p>
+</div>
 </main>
-)
+);
 }
 
 const { data: rfq } = await supabase
 .from("rfqs")
 .select("*")
 .eq("id", invite.rfq_id)
-.single()
+.maybeSingle();
+
+if (!rfq) {
+return (
+<main className="flex min-h-screen items-center justify-center bg-slate-100 p-8">
+<div className="rounded-3xl bg-white p-8 shadow-sm">
+<h1 className="text-2xl font-black text-slate-950">RFQ Not Found</h1>
+<p className="mt-4 text-slate-600">Invite exists, but RFQ was not found.</p>
+<p className="mt-2 break-all rounded-xl bg-slate-100 p-3 text-sm">
+rfq_id: {invite.rfq_id}
+</p>
+</div>
+</main>
+);
+}
 
 return (
-<main className="min-h-screen bg-[#f5f5f2] px-6 py-16">
-<div className="max-w-3xl mx-auto space-y-6">
-<div className="bg-white rounded-3xl border border-black/5 p-10">
-<p className="text-xs tracking-[0.3em] uppercase text-[#c26d3a] mb-4">
+<main className="min-h-screen bg-slate-100 px-6 py-12">
+<div className="mx-auto max-w-4xl space-y-8">
+<section className="rounded-3xl border border-slate-200 bg-white p-10 shadow-sm">
+<p className="text-sm font-semibold uppercase tracking-[0.25em] text-orange-500">
 Supplier Invitation
 </p>
 
-<h1 className="text-5xl font-black tracking-tight mb-4">
-{rfq?.title}
+<h1 className="mt-3 text-5xl font-black text-slate-950">
+You’ve been invited to quote
 </h1>
 
-<p className="text-black/60 mb-8">
-You have been invited to submit a quote.
+<p className="mt-4 text-lg text-slate-600">
+Invitation sent to{" "}
+<span className="font-bold text-slate-950">{invite.email}</span>
 </p>
 
-<div className="grid md:grid-cols-2 gap-6">
-<div className="rounded-2xl border border-black/5 p-6">
-<p className="text-xs uppercase text-black/40 mb-2">
-Budget
-</p>
+<div className="mt-10 rounded-3xl bg-slate-50 p-8">
+<h2 className="text-4xl font-black text-slate-950">{rfq.title}</h2>
 
-<p className="text-3xl font-bold">
-${rfq?.budget?.toLocaleString()}
-</p>
-</div>
+<p className="mt-4 leading-8 text-slate-600">{rfq.description}</p>
 
-<div className="rounded-2xl border border-black/5 p-6">
-<p className="text-xs uppercase text-black/40 mb-2">
-Deadline
-</p>
-
-<p className="text-2xl font-bold">
-{rfq?.deadline}
-</p>
-</div>
+<div className="mt-8 grid gap-5 md:grid-cols-2">
+<Info title="Category" value={rfq.category} />
+<Info title="Location" value={rfq.location} />
+<Info title="Budget" value={rfq.budget} />
+<Info title="Deadline" value={rfq.deadline} />
 </div>
 </div>
 
-<div className="bg-white rounded-3xl border border-black/5 p-10">
-<p className="text-xs tracking-[0.3em] uppercase text-[#c26d3a] mb-4">
-Submit Proposal
-</p>
-
-<form className="space-y-4">
-<input
-placeholder="Quote amount"
-className="w-full rounded-2xl border border-black/10 px-4 py-4"
-/>
-
-<input
-placeholder="Timeline"
-className="w-full rounded-2xl border border-black/10 px-4 py-4"
-/>
-
-<textarea
-placeholder="Proposal notes"
-className="w-full rounded-2xl border border-black/10 px-4 py-4 h-40"
-/>
-
-<button
-className="bg-black text-white rounded-full px-6 py-3 font-medium"
+<div className="mt-8">
+<Link
+href={`/rfq/${rfq.slug}`}
+className="rounded-full bg-slate-950 px-6 py-3 text-sm font-bold text-white"
 >
-Submit Quote
-</button>
-</form>
+Open RFQ Page
+</Link>
 </div>
+</section>
+
+<SubmitQuoteForm rfqId={rfq.id} />
 </div>
 </main>
-)
+);
+}
+
+function Info({ title, value }: { title: string; value: string | null }) {
+return (
+<div className="rounded-2xl bg-white p-5">
+<p className="text-sm font-semibold uppercase text-slate-500">{title}</p>
+<p className="mt-2 text-lg font-bold text-slate-950">
+{value || "Not specified"}
+</p>
+</div>
+);
 }
