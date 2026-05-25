@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@/lib/supabase/client";
 
 function createSlug(value: string) {
 return value
@@ -16,6 +16,7 @@ return value
 
 export default function NewCompanyPage() {
 const router = useRouter();
+const supabase = createClient();
 
 const [name, setName] = useState("");
 const [category, setCategory] = useState("");
@@ -31,25 +32,41 @@ event.preventDefault();
 setSaving(true);
 setError("");
 
+const {
+data: { user },
+error: userError,
+} = await supabase.auth.getUser();
+
+if (userError || !user) {
+setError("You must be logged in to create a company.");
+setSaving(false);
+return;
+}
+
 const slug = createSlug(name);
 
-const { error } = await supabase.from("companies").insert({
+const { data, error } = await supabase
+.from("companies")
+.insert({
 name,
 slug,
 category,
 location,
 network_role: networkRole,
 status,
-});
+user_id: user.id,
+})
+.select("slug")
+.single();
 
-if (error) {
+if (error || !data) {
 console.error(error);
 setError("Could not create company. Please check Supabase permissions.");
 setSaving(false);
 return;
 }
 
-router.push("/connections");
+router.push(`/connections/${data.slug}`);
 router.refresh();
 }
 

@@ -1,79 +1,109 @@
+"use client";
+
+import { useState } from "react";
+
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+
+import { createClient } from "@/lib/supabase/client";
+
 export default function RegisterPage() {
+const router = useRouter();
+
+const supabase = createClient();
+
+const [email, setEmail] = useState("");
+const [password, setPassword] = useState("");
+
+const [loading, setLoading] = useState(false);
+
+const [error, setError] = useState("");
+
+async function handleRegister(e: React.FormEvent) {
+e.preventDefault();
+
+setLoading(true);
+
+setError("");
+
+const { error } = await supabase.auth.signUp({
+email,
+password,
+});
+
+if (error) {
+setError(error.message);
+
+setLoading(false);
+
+return;
+}
+
+router.push("/dashboard");
+
+router.refresh();
+}
+
 return (
-<main className="min-h-screen bg-slate-100 grid grid-cols-1 lg:grid-cols-[40%_60%]">
+<main className="flex min-h-screen items-center justify-center bg-slate-100 px-6">
+<form
+onSubmit={handleRegister}
+className="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-10 shadow-sm"
+>
+<div className="mb-8">
+<p className="mb-2 text-sm font-semibold uppercase tracking-[0.2em] text-amber-700">
+Nexus Pavilion
+</p>
 
-<section className="bg-[#111827] text-white p-10 flex flex-col justify-center">
-<h1 className="text-4xl font-bold">
-Join Nexus Pavilion
+<h1 className="text-3xl font-bold text-slate-900">
+Create account
 </h1>
-
-<p className="mt-4 text-slate-300">
-Initialize your enterprise node under Sandbox governance.
-</p>
-</section>
-
-<section className="p-10 flex items-center justify-center">
-
-<form className="w-full max-w-2xl bg-white rounded-xl border border-slate-200 p-8 shadow-sm">
-
-<h2 className="text-2xl font-bold text-slate-900">
-Corporate Registration
-</h2>
-
-<p className="mt-2 text-slate-500 text-sm">
-Register your organization to access enterprise governance systems.
-</p>
-
-<div className="mt-6 grid grid-cols-1 gap-4">
-
-<input
-className="border border-slate-300 rounded-lg p-3"
-placeholder="Corporate Legal Name"
-/>
-
-<input
-className="border border-slate-300 rounded-lg p-3"
-placeholder="Tax ID / Business Number"
-/>
-
-<input
-className="border border-slate-300 rounded-lg p-3"
-placeholder="Corporate Email"
-/>
-
-<input
-className="border border-slate-300 rounded-lg p-3"
-placeholder="Phone Number"
-/>
-
-<input
-className="border border-slate-300 rounded-lg p-3"
-placeholder="Regional Hub"
-/>
-
-<input
-className="border border-slate-300 rounded-lg p-3"
-placeholder="Role Type"
-/>
-
-<input
-className="border border-slate-300 rounded-lg p-3"
-placeholder="Primary Category"
-/>
-
 </div>
 
+<div className="space-y-5">
+<input
+type="email"
+value={email}
+onChange={(e) => setEmail(e.target.value)}
+placeholder="Email address"
+required
+className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none transition focus:border-slate-400"
+/>
+
+<input
+type="password"
+value={password}
+onChange={(e) => setPassword(e.target.value)}
+placeholder="Password"
+required
+className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none transition focus:border-slate-400"
+/>
+</div>
+
+{error && (
+<p className="mt-4 text-sm text-red-500">
+{error}
+</p>
+)}
+
 <button
-type="button"
-className="mt-6 w-full rounded-lg bg-slate-900 px-5 py-3 text-white font-medium hover:bg-slate-800"
+type="submit"
+disabled={loading}
+className="mt-6 w-full rounded-xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-50"
 >
-Initialize Sandbox Account
+{loading ? "Creating account..." : "Create account"}
 </button>
 
+<div className="mt-6 text-center text-sm text-slate-500">
+Already have an account?{" "}
+<Link
+href="/login"
+className="font-medium text-slate-900 hover:underline"
+>
+Login
+</Link>
+</div>
 </form>
-
-</section>
-
 </main>
 );
-} 
+}
