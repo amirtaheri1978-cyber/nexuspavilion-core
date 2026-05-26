@@ -2,13 +2,11 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
 
-export default function CreateRFQPage() {
+export default function NewRFQPage() {
 const router = useRouter();
-const supabase = createClient();
-
 const [loading, setLoading] = useState(false);
+const [error, setError] = useState("");
 
 const [formData, setFormData] = useState({
 title: "",
@@ -19,148 +17,133 @@ budget: "",
 deadline: "",
 });
 
-async function handleSubmit(e: React.FormEvent) {
-e.preventDefault();
+async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+event.preventDefault();
 
-try {
 setLoading(true);
+setError("");
 
-const {
-data: { user },
-} = await supabase.auth.getUser();
-
-if (!user) {
-alert("Please login first.");
-return;
-}
-
-const slug =
-formData.title
-.toLowerCase()
-.replaceAll(" ", "-")
-.replace(/[^a-z0-9-]/g, "") +
-"-" +
-Date.now();
-
-const { error } = await supabase.from("rfqs").insert({
-title: formData.title,
-slug,
-description: formData.description,
-category: formData.category,
-location: formData.location,
-budget: formData.budget,
-deadline: formData.deadline,
-status: "OPEN",
-user_id: user.id,
+const response = await fetch("/api/rfqs", {
+method: "POST",
+headers: {
+"Content-Type": "application/json",
+},
+body: JSON.stringify(formData),
 });
 
-if (error) {
-console.error(error);
-alert(error.message);
+const data = await response.json();
+
+setLoading(false);
+
+if (!response.ok) {
+setError(data.error || "Failed to create RFQ");
 return;
 }
 
-router.push("/rfq");
+router.push(`/rfq/${data.slug}`);
 router.refresh();
-} catch (error) {
-console.error(error);
-alert("Something went wrong.");
-} finally {
-setLoading(false);
-}
 }
 
 return (
-<main className="min-h-screen bg-neutral-50 px-6 py-12">
-<div className="mx-auto max-w-3xl rounded-3xl border border-neutral-200 bg-white p-10 shadow-sm">
-<p className="text-sm font-semibold uppercase tracking-[0.2em] text-orange-700">
-Procurement RFQ
+<main className="min-h-screen bg-slate-100 px-8 py-10">
+<div className="mx-auto max-w-4xl">
+<div className="rounded-3xl border border-slate-200 bg-white p-10">
+<p className="text-xs font-black uppercase tracking-[0.35em] text-orange-500">
+Procurement Workflow
 </p>
 
-<h1 className="mt-2 text-5xl font-black tracking-tight text-neutral-900">
+<h1 className="mt-3 text-5xl font-black text-slate-950">
 Create RFQ
 </h1>
 
-<p className="mt-4 text-lg text-neutral-600">
-Create a request for quotation for your enterprise procurement
-workflow.
+<p className="mt-4 max-w-2xl text-sm text-slate-600">
+Publish a procurement request to suppliers across Nexus Pavilion.
 </p>
+</div>
 
-<form onSubmit={handleSubmit} className="mt-10 space-y-6">
+<form
+onSubmit={handleSubmit}
+className="mt-8 rounded-3xl border border-slate-200 bg-white p-8"
+>
+<div className="grid gap-6">
 <input
-type="text"
-placeholder="RFQ title"
 required
+placeholder="RFQ Title"
 value={formData.title}
-onChange={(e) =>
-setFormData({ ...formData, title: e.target.value })
+onChange={(event) =>
+setFormData({ ...formData, title: event.target.value })
 }
-className="w-full rounded-2xl border border-neutral-300 px-5 py-4 outline-none transition focus:border-black"
+className="rounded-2xl border border-slate-300 px-4 py-3 outline-none"
 />
 
 <textarea
-placeholder="Scope of work / procurement details"
 required
-rows={6}
+rows={5}
+placeholder="Description"
 value={formData.description}
-onChange={(e) =>
-setFormData({
-...formData,
-description: e.target.value,
-})
+onChange={(event) =>
+setFormData({ ...formData, description: event.target.value })
 }
-className="w-full rounded-2xl border border-neutral-300 px-5 py-4 outline-none transition focus:border-black"
+className="rounded-2xl border border-slate-300 px-4 py-3 outline-none"
 />
 
+<div className="grid gap-6 md:grid-cols-2">
 <input
-type="text"
+required
 placeholder="Category"
-required
 value={formData.category}
-onChange={(e) =>
-setFormData({ ...formData, category: e.target.value })
+onChange={(event) =>
+setFormData({ ...formData, category: event.target.value })
 }
-className="w-full rounded-2xl border border-neutral-300 px-5 py-4 outline-none transition focus:border-black"
+className="rounded-2xl border border-slate-300 px-4 py-3 outline-none"
 />
 
 <input
-type="text"
+required
 placeholder="Location"
-required
 value={formData.location}
-onChange={(e) =>
-setFormData({ ...formData, location: e.target.value })
+onChange={(event) =>
+setFormData({ ...formData, location: event.target.value })
 }
-className="w-full rounded-2xl border border-neutral-300 px-5 py-4 outline-none transition focus:border-black"
+className="rounded-2xl border border-slate-300 px-4 py-3 outline-none"
 />
+</div>
 
+<div className="grid gap-6 md:grid-cols-2">
 <input
-type="text"
-placeholder="Budget range"
 required
+placeholder="Budget"
 value={formData.budget}
-onChange={(e) =>
-setFormData({ ...formData, budget: e.target.value })
+onChange={(event) =>
+setFormData({ ...formData, budget: event.target.value })
 }
-className="w-full rounded-2xl border border-neutral-300 px-5 py-4 outline-none transition focus:border-black"
+className="rounded-2xl border border-slate-300 px-4 py-3 outline-none"
 />
 
 <input
 type="date"
 required
 value={formData.deadline}
-onChange={(e) =>
-setFormData({ ...formData, deadline: e.target.value })
+onChange={(event) =>
+setFormData({ ...formData, deadline: event.target.value })
 }
-className="w-full rounded-2xl border border-neutral-300 px-5 py-4 outline-none transition focus:border-black"
+className="rounded-2xl border border-slate-300 px-4 py-3 outline-none"
 />
+</div>
+</div>
+
+{error && (
+<div className="mt-6 rounded-2xl bg-red-50 px-4 py-3 text-sm font-semibold text-red-600">
+{error}
+</div>
+)}
 
 <button
 type="submit"
 disabled={loading}
-className="w-full rounded-2xl bg-black px-6 py-4 text-lg font-bold text-white transition hover:bg-neutral-800 disabled:opacity-50"
+className="mt-8 rounded-full bg-slate-950 px-6 py-3 text-sm font-bold text-white disabled:opacity-50"
 >
-{loading ? "Creating RFQ..." : "Create RFQ"}
+{loading ? "Publishing..." : "Publish RFQ"}
 </button>
 </form>
 </div>

@@ -1,180 +1,179 @@
 "use client";
 
-import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 
-import { createClient } from "@/lib/supabase/client";
+export default function NewRFQPage() {
+const router = useRouter();
 
-type Company = {
-id: string;
-name: string;
-slug: string;
-category: string;
-location: string;
-network_role: string;
-status: string;
-created_at: string;
-};
+const [loading, setLoading] = useState(false);
+const [error, setError] = useState("");
 
-export default function ConnectionsPage() {
-const supabase = createClient();
+const [formData, setFormData] = useState({
+title: "",
+description: "",
+category: "",
+location: "",
+budget: "",
+deadline: "",
+});
 
-const [companies, setCompanies] = useState<Company[]>([]);
-const [loading, setLoading] = useState(true);
+async function handleSubmit(
+event: React.FormEvent<HTMLFormElement>
+) {
+event.preventDefault();
 
-const [search, setSearch] = useState("");
-
-useEffect(() => {
-async function loadCompanies() {
+try {
 setLoading(true);
+setError("");
 
-const {
-data: { user },
-} = await supabase.auth.getUser();
+const response = await fetch("/api/rfqs", {
+method: "POST",
+headers: {
+"Content-Type": "application/json",
+},
+body: JSON.stringify(formData),
+});
 
-if (!user) {
-window.location.href = "/login";
-return;
+const data = await response.json();
+
+if (!response.ok) {
+throw new Error(data.error || "Failed to create RFQ");
 }
 
-const { data, error } = await supabase
-.from("companies")
-.select("*")
-.eq("user_id", user.id)
-.order("created_at", { ascending: false });
-
-if (!error && data) {
-setCompanies(data);
-}
-
+router.push(`/rfq/${data.slug}`);
+router.refresh();
+} catch (err: any) {
+setError(err.message || "Something went wrong.");
+} finally {
 setLoading(false);
 }
-
-loadCompanies();
-}, [supabase]);
-
-const filteredCompanies = useMemo(() => {
-const query = search.toLowerCase().trim();
-
-if (!query) {
-return companies;
 }
 
-return companies.filter((company) => {
 return (
-company.name.toLowerCase().includes(query) ||
-company.location.toLowerCase().includes(query) ||
-company.network_role.toLowerCase().includes(query) ||
-company.status.toLowerCase().includes(query) ||
-company.category.toLowerCase().includes(query)
-);
-});
-}, [companies, search]);
-
-return (
-<main className="min-h-screen bg-slate-100 p-8">
-<div className="mx-auto max-w-7xl">
-<div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
-<div>
-<p className="text-sm font-semibold uppercase tracking-wide text-amber-700">
-Connections Directory
+<main className="min-h-screen bg-slate-100 px-8 py-10">
+<div className="mx-auto max-w-4xl">
+<div className="rounded-3xl border border-slate-200 bg-white p-10">
+<p className="text-xs font-black uppercase tracking-[0.35em] text-orange-500">
+Procurement Workflow
 </p>
 
-<h1 className="mt-2 text-4xl font-bold text-slate-900">
-My Enterprise Supply Network
+<h1 className="mt-3 text-5xl font-black text-slate-950">
+Create RFQ
 </h1>
 
-<p className="mt-3 max-w-2xl text-slate-600">
-Browse companies connected to your authenticated workspace.
+<p className="mt-4 max-w-2xl text-sm text-slate-600">
+Publish a procurement request to suppliers across Nexus Pavilion.
 </p>
 </div>
 
-<div className="flex w-full flex-col gap-3 md:w-auto md:flex-row">
+<form
+onSubmit={handleSubmit}
+className="mt-8 rounded-3xl border border-slate-200 bg-white p-8"
+>
+<div className="grid gap-6">
 <input
 type="text"
-placeholder="Search company, role, region..."
-value={search}
-onChange={(event) => setSearch(event.target.value)}
-className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-slate-900 md:w-80"
+required
+placeholder="RFQ Title"
+value={formData.title}
+onChange={(event) =>
+setFormData({
+...formData,
+title: event.target.value,
+})
+}
+className="rounded-2xl border border-slate-300 px-4 py-3 outline-none"
 />
 
-<Link
-href="/dashboard"
-className="rounded-xl border border-slate-300 bg-white px-5 py-3 text-center text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
->
-Dashboard
-</Link>
+<textarea
+required
+rows={5}
+placeholder="Description"
+value={formData.description}
+onChange={(event) =>
+setFormData({
+...formData,
+description: event.target.value,
+})
+}
+className="rounded-2xl border border-slate-300 px-4 py-3 outline-none"
+/>
 
-<Link
-href="/connections/new"
-className="rounded-xl bg-slate-900 px-5 py-3 text-center text-sm font-semibold text-white transition hover:bg-slate-800"
->
-Add Company
-</Link>
+<div className="grid gap-6 md:grid-cols-2">
+<input
+type="text"
+required
+placeholder="Category"
+value={formData.category}
+onChange={(event) =>
+setFormData({
+...formData,
+category: event.target.value,
+})
+}
+className="rounded-2xl border border-slate-300 px-4 py-3 outline-none"
+/>
+
+<input
+type="text"
+required
+placeholder="Location"
+value={formData.location}
+onChange={(event) =>
+setFormData({
+...formData,
+location: event.target.value,
+})
+}
+className="rounded-2xl border border-slate-300 px-4 py-3 outline-none"
+/>
+</div>
+
+<div className="grid gap-6 md:grid-cols-2">
+<input
+type="number"
+required
+placeholder="Budget"
+value={formData.budget}
+onChange={(event) =>
+setFormData({
+...formData,
+budget: event.target.value,
+})
+}
+className="rounded-2xl border border-slate-300 px-4 py-3 outline-none"
+/>
+
+<input
+type="date"
+required
+value={formData.deadline}
+onChange={(event) =>
+setFormData({
+...formData,
+deadline: event.target.value,
+})
+}
+className="rounded-2xl border border-slate-300 px-4 py-3 outline-none"
+/>
 </div>
 </div>
 
-{loading ? (
-<div className="mt-12 rounded-2xl border border-slate-200 bg-white p-10 text-center text-slate-500">
-Loading enterprise network...
-</div>
-) : filteredCompanies.length === 0 ? (
-<div className="mt-12 rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center">
-<h2 className="text-xl font-semibold text-slate-900">
-No companies found
-</h2>
-
-<p className="mt-3 text-slate-500">
-Try a different search term or create a new enterprise company.
-</p>
-</div>
-) : (
-<div className="mt-10 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-{filteredCompanies.map((company) => (
-<Link
-key={company.id}
-href={`/connections/${company.slug}`}
-className="group rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:border-slate-300 hover:shadow-lg"
->
-<div className="flex items-start justify-between">
-<div>
-<h2 className="text-2xl font-bold text-slate-900">
-{company.name}
-</h2>
-
-<p className="mt-2 text-sm text-slate-500">
-{company.category} · {company.location}
-</p>
-</div>
-
-<span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-amber-800">
-{company.status}
-</span>
-</div>
-
-<div className="mt-6 rounded-xl bg-slate-50 p-4">
-<p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-Network Role
-</p>
-
-<p className="mt-2 text-sm font-medium text-slate-900">
-{company.network_role}
-</p>
-</div>
-
-<div className="mt-6 flex items-center justify-between text-sm">
-<span className="text-slate-500">
-Enterprise Profile
-</span>
-
-<span className="font-semibold text-slate-900 transition group-hover:translate-x-1">
-Open →
-</span>
-</div>
-</Link>
-))}
+{error && (
+<div className="mt-6 rounded-2xl bg-red-50 px-4 py-3 text-sm font-semibold text-red-600">
+{error}
 </div>
 )}
+
+<button
+type="submit"
+disabled={loading}
+className="mt-8 rounded-full bg-slate-950 px-6 py-3 text-sm font-bold text-white transition hover:opacity-90 disabled:opacity-50"
+>
+{loading ? "Publishing..." : "Publish RFQ"}
+</button>
+</form>
 </div>
 </main>
 );
