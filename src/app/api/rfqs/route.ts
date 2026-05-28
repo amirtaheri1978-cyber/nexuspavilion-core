@@ -13,6 +13,31 @@ return `${title
 export async function POST(request: Request) {
 try {
 const supabase = await createClient();
+
+const {
+data: { user },
+} = await supabase.auth.getUser();
+
+if (!user) {
+return NextResponse.json(
+{ error: "Unauthorized" },
+{ status: 401 }
+);
+}
+
+const { data: profile } = await supabase
+.from("profiles")
+.select("*")
+.eq("id", user.id)
+.single();
+
+if (!profile?.company_id) {
+return NextResponse.json(
+{ error: "No company linked to profile" },
+{ status: 400 }
+);
+}
+
 const body = await request.json();
 
 const slug = createSlug(body.title);
@@ -28,35 +53,48 @@ location: body.location,
 budget: body.budget,
 deadline: body.deadline,
 status: "open",
+company_id: profile.company_id,
+user_id: user.id,
 })
 .select()
 .single();
 
 if (error || !rfq) {
-console.error("RFQ insert error:", error);
-
 return NextResponse.json(
 { error: error?.message || "Failed to create RFQ" },
 { status: 500 }
 );
 }
 
+await supabase.from("audit_logs").insert({
+action: "RFQ_CREATED",
+entity_type: "rfq",
+entity_id: rfq.id,
+user_id: user.id,
+company_id: profile.company_id,
+metadata: {
+title: rfq.title,
+budget: rfq.budget,
+category: rfq.category,
+},
+});
+
 await supabase.from("notifications").insert({
-title: "New RFQ Created",
-message: `${body.title} procurement opportunity has been published.`,
+company_id: profile.company_id,
+title: "RFQ Created",
+message: `${rfq.title} procurement opportunity has been published.`,
 type: "rfq",
-is_read: false,
 });
 
 return NextResponse.json({
 success: true,
-slug: rfq.slug,
+rfq,
 });
 } catch (error) {
-console.error("RFQ API error:", error);
+console.error(error);
 
 return NextResponse.json(
-{ error: "Server error" },
+{ error: "Internal server error" },
 { status: 500 }
 );
 }

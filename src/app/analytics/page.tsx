@@ -6,26 +6,53 @@ import { createClient } from "@/lib/supabase/server";
 export default async function AnalyticsPage() {
 const supabase = await createClient();
 
-const { data: rfqs } = await supabase.from("rfqs").select("*");
-const { data: quotes } = await supabase.from("quotes").select("*");
+const {
+data: { user },
+} = await supabase.auth.getUser();
+
+const { data: profile } = await supabase
+.from("profiles")
+.select("company_id")
+.eq("id", user?.id)
+.single();
+
+const companyId = profile?.company_id;
+
+const { data: rfqs } = companyId
+? await supabase
+.from("rfqs")
+.select("*")
+.eq("company_id", companyId)
+: { data: [] };
+
+const rfqList = rfqs ?? [];
+const rfqIds = rfqList.map((rfq: any) => rfq.id);
+
+const { data: quotes } =
+rfqIds.length > 0
+? await supabase.from("quotes").select("*").in("rfq_id", rfqIds)
+: { data: [] };
+
 const { data: notifications } = await supabase
 .from("notifications")
 .select("*")
 .order("created_at", { ascending: false })
 .limit(5);
 
-const rfqList = rfqs ?? [];
 const quoteList = quotes ?? [];
 
 const totalRfqs = rfqList.length;
-const activeRfqs = rfqList.filter((rfq) => rfq.status !== "awarded").length;
+const activeRfqs = rfqList.filter((rfq: any) => rfq.status !== "awarded")
+.length;
+
 const awardedContracts = quoteList.filter(
-(quote) => quote.decision === "awarded"
+(quote: any) => quote.decision === "awarded"
 ).length;
+
 const supplierQuotes = quoteList.length;
 
 const quoteAmounts = quoteList
-.map((quote) => Number(quote.amount))
+.map((quote: any) => Number(quote.amount))
 .filter((amount) => !Number.isNaN(amount));
 
 const procurementVolume = quoteAmounts.reduce(
@@ -34,16 +61,15 @@ const procurementVolume = quoteAmounts.reduce(
 );
 
 const awardedVolume = quoteList
-.filter((quote) => quote.decision === "awarded")
-.reduce((total, quote) => total + Number(quote.amount || 0), 0);
+.filter((quote: any) => quote.decision === "awarded")
+.reduce((total: number, quote: any) => total + Number(quote.amount || 0), 0);
 
 const averageQuote =
 quoteAmounts.length > 0
 ? Math.round(procurementVolume / quoteAmounts.length)
 : 0;
 
-const lowestQuote =
-quoteAmounts.length > 0 ? Math.min(...quoteAmounts) : 0;
+const lowestQuote = quoteAmounts.length > 0 ? Math.min(...quoteAmounts) : 0;
 
 const potentialSavings =
 averageQuote > lowestQuote ? averageQuote - lowestQuote : 0;
@@ -87,8 +113,8 @@ Procurement Analytics
 </h1>
 
 <p className="mt-4 max-w-3xl text-sm text-slate-600">
-Monitor RFQs, supplier quotes, awarded contracts, procurement
-volume, savings, and platform activity across Nexus Pavilion.
+Company-isolated analytics for RFQs, supplier quotes, awarded
+contracts, procurement volume, savings, and platform activity.
 </p>
 </section>
 
@@ -176,7 +202,7 @@ ${awardedVolume.toLocaleString()}
 </h2>
 
 <p className="mt-3 text-sm text-slate-600">
-Total value of quotes that have been awarded.
+Total value of company RFQ quotes that have been awarded.
 </p>
 </div>
 
@@ -211,7 +237,7 @@ No activity yet.
 
 <section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
 <p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
-RFQ Pipeline
+Company RFQ Pipeline
 </p>
 
 <div className="mt-6 overflow-hidden rounded-2xl border border-slate-200">
@@ -244,6 +270,17 @@ RFQ Pipeline
 </td>
 </tr>
 ))}
+
+{rfqList.length === 0 && (
+<tr>
+<td
+colSpan={4}
+className="px-5 py-10 text-center text-sm font-semibold text-slate-500"
+>
+No company RFQs found.
+</td>
+</tr>
+)}
 </tbody>
 </table>
 </div>

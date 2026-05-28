@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
 
+import SignOutButton from "@/components/sign-out-button";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function DashboardPage() {
@@ -10,31 +10,38 @@ const {
 data: { user },
 } = await supabase.auth.getUser();
 
-if (!user) {
-redirect("/login");
-}
+const { data: profile } = await supabase
+.from("profiles")
+.select("id, email, role, company_id")
+.eq("id", user?.id)
+.single();
 
-const { data: company } = await supabase
+const { data: company } = profile?.company_id
+? await supabase
 .from("companies")
-.select("id, name, slug, logo_url, category, location, network_role, status")
-.eq("user_id", user.id)
-.maybeSingle();
+.select("*")
+.eq("id", profile.company_id)
+.single()
+: { data: null };
 
-async function signOut() {
-"use server";
+const { count: rfqCount } = await supabase
+.from("rfqs")
+.select("*", { count: "exact", head: true });
 
-const supabase = await createClient();
-await supabase.auth.signOut();
+const { count: quoteCount } = await supabase
+.from("quotes")
+.select("*", { count: "exact", head: true });
 
-redirect("/login");
-}
+const { count: notificationCount } = await supabase
+.from("notifications")
+.select("*", { count: "exact", head: true });
 
 return (
-<main className="min-h-screen bg-slate-100 px-6 py-12">
-<div className="mx-auto max-w-7xl">
-<div className="flex items-start justify-between gap-6">
+<main className="min-h-screen bg-[#f6f6f3]">
+<div className="mx-auto max-w-7xl px-6 py-10">
+<div className="flex items-start justify-between">
 <div>
-<p className="text-sm font-semibold uppercase tracking-[0.3em] text-orange-500">
+<p className="text-xs font-black uppercase tracking-[0.35em] text-orange-500">
 Workspace Home
 </p>
 
@@ -42,38 +49,35 @@ Workspace Home
 Nexus Pavilion Dashboard
 </h1>
 
-<p className="mt-4 max-w-3xl text-lg text-slate-600">
-Signed in as {user.email}
+<p className="mt-3 text-lg text-slate-600">
+Signed in as {profile?.email || user?.email}
+</p>
+
+<p className="mt-2 text-sm font-bold uppercase tracking-[0.2em] text-slate-400">
+Role: {profile?.role || "buyer"}
 </p>
 </div>
 
-<form action={signOut}>
-<button
-type="submit"
-className="rounded-full border border-slate-300 bg-white px-5 py-3 text-sm font-bold text-slate-950 transition hover:bg-slate-50"
->
-Sign out
-</button>
-</form>
+<SignOutButton />
 </div>
 
-{company ? (
-<section className="mt-10 rounded-3xl bg-white p-8 shadow-sm">
-<p className="text-sm font-semibold uppercase tracking-[0.2em] text-orange-500">
+<section className="mt-10 rounded-[32px] border border-black/5 bg-white p-8">
+<p className="text-xs font-black uppercase tracking-[0.3em] text-orange-500">
 My Enterprise Company
 </p>
 
-<div className="mt-6 flex items-start justify-between gap-6">
+{company ? (
+<div className="mt-6 flex items-center justify-between">
 <div className="flex items-center gap-5">
 {company.logo_url ? (
 <img
 src={company.logo_url}
 alt={company.name}
-className="h-20 w-20 rounded-2xl border border-slate-200 object-contain p-2"
+className="h-20 w-20 rounded-3xl border border-slate-200 object-contain p-2"
 />
 ) : (
-<div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-slate-100 text-3xl font-black text-slate-400">
-{company.name?.charAt(0) || "C"}
+<div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-slate-100 text-3xl">
+🏗️
 </div>
 )}
 
@@ -82,91 +86,85 @@ className="h-20 w-20 rounded-2xl border border-slate-200 object-contain p-2"
 {company.name}
 </h2>
 
-<p className="mt-2 text-slate-600">
+<p className="mt-1 text-sm font-semibold text-slate-500">
 {company.category} · {company.location}
 </p>
 
-<p className="mt-1 text-sm font-semibold text-slate-500">
-{company.network_role}
+<p className="mt-2 text-sm text-slate-600">
+{company.network_role || "Enterprise Workspace"}
 </p>
 </div>
 </div>
 
 <Link
 href={`/company/${company.slug}`}
-className="rounded-full bg-slate-950 px-5 py-3 text-sm font-bold text-white"
+className="rounded-full bg-slate-950 px-6 py-3 text-sm font-bold text-white"
 >
 Open Company
 </Link>
 </div>
-</section>
 ) : (
-<section className="mt-10 rounded-3xl bg-white p-8 shadow-sm">
+<div className="mt-6 rounded-3xl bg-slate-50 p-6">
 <h2 className="text-2xl font-black text-slate-950">
-No company connected yet
+No company connected
 </h2>
 
-<p className="mt-3 text-slate-600">
-Connect or create an enterprise company profile to unlock
-procurement workflows.
+<p className="mt-2 text-slate-600">
+Your profile exists, but no company_id is attached yet.
 </p>
-</section>
+</div>
 )}
+</section>
 
-<section className="mt-10 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-<DashboardCard
+<section className="mt-8 grid gap-6 md:grid-cols-4">
+<WorkspaceCard
 title="Company Hub"
 description="Manage enterprise profiles and branding."
 href="/company"
 />
 
-<DashboardCard
+<WorkspaceCard
 title="RFQ Marketplace"
 description="Browse and create procurement opportunities."
 href="/rfq"
 />
 
-<DashboardCard
+<WorkspaceCard
 title="Vendor Dashboard"
 description="Track submitted quotes and decisions."
 href="/vendor-dashboard"
 />
 
-<DashboardCard
+<WorkspaceCard
 title="Public Directory"
 description="Explore connected enterprise companies."
 href="/directory"
 />
 </section>
 
-<section className="mt-10 rounded-3xl bg-white p-8 shadow-sm">
-<p className="text-sm font-semibold uppercase tracking-[0.2em] text-orange-500">
-Quick Actions
+<section className="mt-8 rounded-[32px] border border-black/5 bg-white p-8">
+<p className="text-xs font-black uppercase tracking-[0.3em] text-orange-500">
+Quick Intelligence
 </p>
 
-<div className="mt-6 flex flex-wrap gap-4">
-<Link
-href="/rfq/new"
-className="rounded-full bg-slate-950 px-6 py-3 text-sm font-bold text-white"
->
-Create RFQ
-</Link>
+<div className="mt-6 grid gap-6 md:grid-cols-3">
+<InsightCard
+title="Active RFQs"
+value={String(rfqCount || 0)}
+detail="Live procurement opportunities"
+/>
 
-<Link
-href="/rfq"
-className="rounded-full border border-slate-300 bg-white px-6 py-3 text-sm font-bold text-slate-950"
->
-Browse RFQs
-</Link>
+<InsightCard
+title="Supplier Quotes"
+value={String(quoteCount || 0)}
+detail="Submitted enterprise bids"
+/>
 
-{company && (
-<Link
-href={`/company/${company.slug}`}
-className="rounded-full border border-slate-300 bg-white px-6 py-3 text-sm font-bold text-slate-950"
->
-View My Company
-</Link>
-)}
+<InsightCard
+title="Notifications"
+value={String(notificationCount || 0)}
+detail="Platform activity events"
+/>
 </div>
 </section>
 </div>
@@ -174,7 +172,7 @@ View My Company
 );
 }
 
-function DashboardCard({
+function WorkspaceCard({
 title,
 description,
 href,
@@ -186,15 +184,37 @@ href: string;
 return (
 <Link
 href={href}
-className="rounded-3xl bg-white p-7 shadow-sm transition hover:-translate-y-1 hover:shadow-xl"
+className="rounded-[28px] border border-black/5 bg-white p-7 transition hover:-translate-y-1 hover:shadow-xl"
 >
-<h2 className="text-2xl font-black text-slate-950">{title}</h2>
+<h3 className="text-2xl font-black text-slate-950">{title}</h3>
 
-<p className="mt-3 min-h-16 text-slate-600">{description}</p>
+<p className="mt-3 text-sm leading-relaxed text-slate-600">
+{description}
+</p>
 
-<span className="mt-6 inline-flex font-bold text-slate-950">
-Open →
-</span>
+<div className="mt-6 text-sm font-black text-slate-950">Open →</div>
 </Link>
+);
+}
+
+function InsightCard({
+title,
+value,
+detail,
+}: {
+title: string;
+value: string;
+detail: string;
+}) {
+return (
+<div className="rounded-3xl border border-black/5 bg-slate-50 p-6">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-slate-500">
+{title}
+</p>
+
+<p className="mt-3 text-4xl font-black text-slate-950">{value}</p>
+
+<p className="mt-2 text-sm text-slate-600">{detail}</p>
+</div>
 );
 }
