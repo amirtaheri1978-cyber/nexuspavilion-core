@@ -40,7 +40,7 @@ setError(data.error || "Failed to create RFQ");
 return;
 }
 
-router.push(`/rfq/${data.slug}`);
+router.push(`/rfq/${data.rfq.slug}`);
 router.refresh();
 }
 

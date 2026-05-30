@@ -87,7 +87,6 @@ lowestAmount && validAmount > 0
 : 0;
 
 const timelineScore = Math.round(getTimelineScore(quote.timeline) * 0.3);
-
 const totalScore = Math.min(priceScore + timelineScore, 100);
 
 return {
@@ -106,14 +105,16 @@ quote.totalScore > best.totalScore ? quote : best
 )
 : null;
 
+const awardedQuote = scoredQuotes.find(
+(quote) => quote.decision === "awarded"
+);
+
+const hasAwardedContract = !!awardedQuote;
+
 const potentialSavings =
 recommendedQuote && averageBid
 ? averageBid - recommendedQuote.amountNumber
 : 0;
-
-const awardedQuote = scoredQuotes.find(
-(quote) => quote.decision === "awarded"
-);
 
 return (
 <main className="min-h-screen bg-[#f6f6f3] px-6 py-16">
@@ -261,6 +262,10 @@ Highest Bid
 {quote.decision === "awarded" ? (
 <span className="rounded-full bg-green-100 px-4 py-2 text-sm font-bold text-green-700">
 Contract Awarded
+</span>
+) : hasAwardedContract ? (
+<span className="rounded-full bg-slate-100 px-4 py-2 text-sm font-bold text-slate-500">
+Award Closed
 </span>
 ) : (
 <AwardContractButton quoteId={quote.id} />
