@@ -2,6 +2,36 @@ import Link from "next/link";
 
 import { createClient } from "@/lib/supabase/server";
 
+type RFQ = {
+id: string;
+slug: string;
+title: string | null;
+description: string | null;
+category: string | null;
+location: string | null;
+budget: number | string | null;
+status: string | null;
+created_at?: string | null;
+};
+
+function getStatusLabel(status: string | null) {
+if (status === "awarded") return "Awarded";
+if (status === "closed") return "Closed";
+return "Open";
+}
+
+function getStatusClass(status: string | null) {
+if (status === "awarded") return "bg-green-100 text-green-700";
+if (status === "closed") return "bg-slate-200 text-slate-600";
+return "bg-orange-100 text-orange-700";
+}
+
+function getActionLabel(status: string | null) {
+if (status === "awarded") return "View Award →";
+if (status === "closed") return "View Closed →";
+return "Open →";
+}
+
 export default async function RFQMarketplacePage() {
 const supabase = await createClient();
 
@@ -9,11 +39,13 @@ const {
 data: { user },
 } = await supabase.auth.getUser();
 
-const { data: profile } = await supabase
+const { data: profile } = user
+? await supabase
 .from("profiles")
 .select("company_id")
-.eq("id", user?.id)
-.single();
+.eq("id", user.id)
+.single()
+: { data: null };
 
 const { data: rfqs } = profile?.company_id
 ? await supabase
@@ -23,17 +55,29 @@ const { data: rfqs } = profile?.company_id
 .order("created_at", { ascending: false })
 : { data: [] };
 
+const rfqList = (rfqs ?? []) as RFQ[];
+
+const openCount = rfqList.filter(
+(rfq) => !rfq.status || rfq.status === "open"
+).length;
+
+const awardedCount = rfqList.filter(
+(rfq) => rfq.status === "awarded"
+).length;
+
+const closedCount = rfqList.filter((rfq) => rfq.status === "closed").length;
+
 return (
 <main className="min-h-screen bg-[#f6f6f3] px-8 py-10">
 <div className="mx-auto max-w-7xl">
-<div className="flex items-start justify-between">
+<div className="flex items-start justify-between gap-6">
 <div>
 <p className="text-xs font-black uppercase tracking-[0.35em] text-orange-500">
 Procurement Marketplace
 </p>
 
-<h1 className="mt-3 text-5xl font-black text-slate-950">
-RFQ Marketplace
+<h1 className="mt-3 text-5xl font-black text-red-600">
+RFQ Marketplace TEST
 </h1>
 
 <p className="mt-4 max-w-2xl text-sm text-slate-600">
@@ -50,17 +94,34 @@ Create RFQ
 </Link>
 </div>
 
+<section className="mt-8 grid gap-4 md:grid-cols-4">
+<StatusCard title="Total RFQs" value={rfqList.length} />
+<StatusCard title="Open" value={openCount} />
+<StatusCard title="Awarded" value={awardedCount} />
+<StatusCard title="Closed" value={closedCount} />
+</section>
+
 <section className="mt-10 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-{rfqs && rfqs.length > 0 ? (
-rfqs.map((rfq: any) => (
+{rfqList.length > 0 ? (
+rfqList.map((rfq) => (
 <Link
 key={rfq.id}
 href={`/rfq/${rfq.slug}`}
 className="rounded-[28px] border border-black/5 bg-white p-7 transition hover:-translate-y-1 hover:shadow-xl"
 >
+<div className="flex items-start justify-between gap-4">
 <p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
 {rfq.category || "Procurement"}
 </p>
+
+<span
+className={`rounded-full px-3 py-1 text-xs font-black ${getStatusClass(
+rfq.status
+)}`}
+>
+{getStatusLabel(rfq.status)}
+</span>
+</div>
 
 <h2 className="mt-3 text-2xl font-black text-slate-950">
 {rfq.title}
@@ -86,13 +147,9 @@ ${Number(rfq.budget || 0).toLocaleString()}
 </div>
 </div>
 
-<div className="mt-6 flex items-center justify-between">
-<span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-700">
-{rfq.status || "open"}
-</span>
-
+<div className="mt-6 flex items-center justify-end">
 <span className="text-sm font-black text-slate-950">
-Open →
+{getActionLabel(rfq.status)}
 </span>
 </div>
 </Link>
@@ -111,5 +168,16 @@ Create your first company-scoped procurement opportunity.
 </section>
 </div>
 </main>
+);
+}
+
+function StatusCard({ title, value }: { title: string; value: number }) {
+return (
+<div className="rounded-3xl border border-black/5 bg-white p-6">
+<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+{title}
+</p>
+<p className="mt-3 text-3xl font-black text-slate-950">{value}</p>
+</div>
 );
 }
