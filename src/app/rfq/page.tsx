@@ -76,19 +76,19 @@ return (
 Procurement Marketplace
 </p>
 
-<h1 className="mt-3 text-5xl font-black text-red-600">
-RFQ Marketplace TEST
+<h1 className="mt-3 text-5xl font-black text-slate-950">
+RFQ Marketplace
 </h1>
 
 <p className="mt-4 max-w-2xl text-sm text-slate-600">
-Browse and manage procurement opportunities connected to your
-enterprise workspace.
+Browse, monitor, and manage procurement opportunities connected to
+your enterprise workspace.
 </p>
 </div>
 
 <Link
 href="/rfq/new"
-className="rounded-full bg-slate-950 px-6 py-3 text-sm font-bold text-white"
+className="rounded-full bg-slate-950 px-6 py-3 text-sm font-bold text-white transition hover:bg-slate-800"
 >
 Create RFQ
 </Link>
@@ -107,7 +107,7 @@ rfqList.map((rfq) => (
 <Link
 key={rfq.id}
 href={`/rfq/${rfq.slug}`}
-className="rounded-[28px] border border-black/5 bg-white p-7 transition hover:-translate-y-1 hover:shadow-xl"
+className="group rounded-[28px] border border-black/5 bg-white p-7 transition hover:-translate-y-1 hover:shadow-xl"
 >
 <div className="flex items-start justify-between gap-4">
 <p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
@@ -124,18 +124,18 @@ rfq.status
 </div>
 
 <h2 className="mt-3 text-2xl font-black text-slate-950">
-{rfq.title}
+{rfq.title || "Untitled RFQ"}
 </h2>
 
 <p className="mt-3 line-clamp-3 text-sm leading-relaxed text-slate-600">
-{rfq.description}
+{rfq.description || "No description provided."}
 </p>
 
 <div className="mt-6 grid grid-cols-2 gap-4 text-sm">
 <div>
 <p className="font-bold text-slate-400">Location</p>
 <p className="mt-1 font-semibold text-slate-700">
-{rfq.location}
+{rfq.location || "N/A"}
 </p>
 </div>
 
@@ -148,7 +148,7 @@ ${Number(rfq.budget || 0).toLocaleString()}
 </div>
 
 <div className="mt-6 flex items-center justify-end">
-<span className="text-sm font-black text-slate-950">
+<span className="text-sm font-black text-slate-950 transition group-hover:translate-x-1">
 {getActionLabel(rfq.status)}
 </span>
 </div>
@@ -163,6 +163,13 @@ No RFQs found
 <p className="mt-2 text-sm text-slate-600">
 Create your first company-scoped procurement opportunity.
 </p>
+
+<Link
+href="/rfq/new"
+className="mt-6 inline-flex rounded-full bg-slate-950 px-6 py-3 text-sm font-bold text-white"
+>
+Create RFQ
+</Link>
 </div>
 )}
 </section>
@@ -177,6 +184,7 @@ return (
 <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
 {title}
 </p>
+
 <p className="mt-3 text-3xl font-black text-slate-950">{value}</p>
 </div>
 );
