@@ -2,9 +2,23 @@ import { NextResponse } from "next/server";
 
 import { createClient } from "@/lib/supabase/server";
 
+type AwardRequestBody = {
+quoteId?: string;
+};
+
+function formatCurrency(value: number | string | null | undefined) {
+const amount = Number(value);
+
+if (!Number.isFinite(amount)) {
+return "$0";
+}
+
+return `$${amount.toLocaleString()}`;
+}
+
 export async function POST(request: Request) {
 try {
-const body = await request.json();
+const body = (await request.json()) as AwardRequestBody;
 const quoteId = body.quoteId;
 
 if (!quoteId) {
@@ -45,6 +59,13 @@ if (rfqError || !rfq) {
 return NextResponse.json({ error: "RFQ not found" }, { status: 404 });
 }
 
+if (rfq.status === "awarded") {
+return NextResponse.json(
+{ error: "This RFQ has already been awarded" },
+{ status: 400 }
+);
+}
+
 const { data: existingAward } = await supabase
 .from("quotes")
 .select("id")
@@ -52,7 +73,7 @@ const { data: existingAward } = await supabase
 .eq("decision", "awarded")
 .maybeSingle();
 
-if (existingAward && existingAward.id !== quoteId) {
+if (existingAward) {
 return NextResponse.json(
 { error: "Contract already awarded" },
 { status: 400 }
@@ -66,7 +87,8 @@ const { error: rejectError } = await supabase
 .update({
 decision: "rejected",
 })
-.eq("rfq_id", selectedQuote.rfq_id);
+.eq("rfq_id", selectedQuote.rfq_id)
+.neq("id", quoteId);
 
 if (rejectError) {
 return NextResponse.json(
@@ -114,18 +136,20 @@ return NextResponse.json(
 );
 }
 
-const { error: notificationError } = await supabase
-.from("notifications")
-.insert({
+const notificationPayload = {
 title: "Contract Awarded",
-message: `${rfq.title ?? "Project"} procurement contract has been awarded at $${Number(
-selectedQuote.amount || 0
-).toLocaleString()}.`,
+message: `${rfq.title ?? "Project"} procurement contract has been awarded at ${formatCurrency(
+selectedQuote.amount
+)}.`,
 type: "award",
 is_read: false,
-});
+};
 
-const { error: auditError } = await supabase.from("audit_logs").insert({
+const { error: notificationError } = await supabase
+.from("notifications")
+.insert(notificationPayload);
+
+const auditPayload = {
 action: "CONTRACT_AWARDED",
 entity_type: "quote",
 entity_id: quoteId,
@@ -133,16 +157,24 @@ user_id: user.id,
 company_id: rfq.company_id,
 metadata: {
 rfq_id: rfq.id,
+rfq_slug: rfq.slug,
 rfq_title: rfq.title,
 awarded_amount: selectedQuote.amount,
 awarded_quote_id: quoteId,
 awarded_at: awardedAt,
 },
-});
+};
+
+const { error: auditError } = await supabase
+.from("audit_logs")
+.insert(auditPayload);
 
 return NextResponse.json({
 success: true,
 awardedQuoteId: quoteId,
+rfqId: selectedQuote.rfq_id,
+rfqSlug: rfq.slug,
+awardedAmount: selectedQuote.amount,
 warnings: {
 notification: notificationError?.message || null,
 audit: auditError?.message || null,
