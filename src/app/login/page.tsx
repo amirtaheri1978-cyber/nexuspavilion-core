@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
@@ -22,7 +23,7 @@ setLoading(true);
 setError("");
 
 const { data, error } = await supabase.auth.signInWithPassword({
-email,
+email: email.trim(),
 password,
 });
 
@@ -49,41 +50,60 @@ router.refresh();
 }
 
 return (
-<main className="flex min-h-screen items-center justify-center bg-slate-100 px-6">
-<div className="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
+<main className="flex min-h-screen items-center justify-center bg-[#f6f6f3] px-6 py-10">
+<div className="w-full max-w-md rounded-[32px] border border-black/5 bg-white p-8 shadow-sm">
 <p className="text-xs font-black uppercase tracking-[0.35em] text-orange-500">
 Nexus Pavilion
 </p>
 
-<h1 className="mt-3 text-4xl font-black text-slate-950">
-Sign in
-</h1>
+<h1 className="mt-3 text-4xl font-black text-slate-950">Sign in</h1>
 
-<p className="mt-3 text-sm text-slate-600">
+<p className="mt-3 text-sm leading-6 text-slate-600">
 Access your secure construction procurement workspace.
 </p>
 
 <form onSubmit={handleLogin} className="mt-8 space-y-5">
+<label className="block">
+<span className="mb-2 block text-xs font-black uppercase tracking-[0.2em] text-slate-500">
+Email
+</span>
+
 <input
 type="email"
 required
-placeholder="Email"
+placeholder="you@company.com"
 value={email}
 onChange={(event) => setEmail(event.target.value)}
-className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-slate-950"
+className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-950 outline-none transition focus:border-slate-950 focus:bg-white"
 />
+</label>
+
+<label className="block">
+<div className="mb-2 flex items-center justify-between gap-4">
+<span className="block text-xs font-black uppercase tracking-[0.2em] text-slate-500">
+Password
+</span>
+
+<Link
+href="/forgot-password"
+className="text-xs font-black text-orange-600 hover:text-orange-700"
+>
+Forgot password?
+</Link>
+</div>
 
 <input
 type="password"
 required
-placeholder="Password"
+placeholder="Enter your password"
 value={password}
 onChange={(event) => setPassword(event.target.value)}
-className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-slate-950"
+className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-950 outline-none transition focus:border-slate-950 focus:bg-white"
 />
+</label>
 
 {error && (
-<div className="rounded-2xl bg-red-50 px-4 py-3 text-sm font-semibold text-red-600">
+<div className="rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-600">
 {error}
 </div>
 )}
@@ -91,11 +111,18 @@ className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none foc
 <button
 type="submit"
 disabled={loading}
-className="w-full rounded-full bg-slate-950 px-6 py-3 text-sm font-bold text-white disabled:opacity-50"
+className="w-full rounded-full bg-slate-950 px-6 py-3 text-sm font-bold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
 >
 {loading ? "Signing in..." : "Sign in"}
 </button>
 </form>
+
+<div className="mt-6 rounded-3xl bg-slate-50 p-5">
+<p className="text-sm font-semibold leading-6 text-slate-600">
+New to Nexus Pavilion? Ask your company admin for an invitation to
+join the secure procurement workspace.
+</p>
+</div>
 </div>
 </main>
 );
