@@ -80,10 +80,10 @@ category: rfq.category,
 });
 
 await supabase.from("notifications").insert({
-company_id: profile.company_id,
 title: "RFQ Created",
 message: `${rfq.title} procurement opportunity has been published.`,
 type: "rfq",
+is_read: false,
 });
 
 return NextResponse.json({
