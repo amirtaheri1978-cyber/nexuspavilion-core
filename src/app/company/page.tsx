@@ -1,8 +1,12 @@
 import Link from "next/link";
 
 import CompanyLogoUpload from "@/components/company-logo-upload";
+import InvitationActions from "@/components/invitation-actions";
 import InviteUserForm from "@/components/invite-user-form";
 import { createClient } from "@/lib/supabase/server";
+
+const SITE_URL =
+"https://scaling-invention-5g7q4p5rwrwj3vwq7-3000.app.github.dev";
 
 type Company = {
 id: string;
@@ -20,7 +24,34 @@ id: string;
 email: string | null;
 role: string | null;
 company_id: string | null;
+created_at?: string | null;
 };
+
+type Invitation = {
+id: string;
+company_id: string;
+email: string | null;
+role: string | null;
+status: string | null;
+token: string | null;
+created_at: string | null;
+};
+
+function formatDate(value: string | null | undefined) {
+if (!value) return "N/A";
+
+return new Intl.DateTimeFormat("en", {
+month: "short",
+day: "numeric",
+year: "numeric",
+}).format(new Date(value));
+}
+
+function getInviteUrl(token: string | null) {
+if (!token) return "";
+
+return `${SITE_URL}/invite/${token}`;
+}
 
 export default async function CompanyWorkspacePage() {
 const supabase = await createClient();
@@ -32,7 +63,7 @@ data: { user },
 const { data: profile } = user
 ? await supabase
 .from("profiles")
-.select("id, email, role, company_id")
+.select("id, email, role, company_id, created_at")
 .eq("id", user.id)
 .single()
 : { data: null };
@@ -63,7 +94,7 @@ const typedCompany = company as Company | null;
 const { data: teamMembers } = typedCompany?.id
 ? await supabase
 .from("profiles")
-.select("id, email, role, company_id")
+.select("id, email, role, company_id, created_at")
 .eq("company_id", typedCompany.id)
 .order("created_at", { ascending: true })
 : { data: [] };
@@ -71,14 +102,18 @@ const { data: teamMembers } = typedCompany?.id
 const { data: invitations } = typedCompany?.id
 ? await supabase
 .from("invitations")
-.select("*")
+.select("id, company_id, email, role, status, token, created_at")
 .eq("company_id", typedCompany.id)
 .order("created_at", { ascending: false })
-.limit(8)
+.limit(12)
 : { data: [] };
 
 const teamList = (teamMembers ?? []) as Profile[];
-const invitationList = invitations ?? [];
+const invitationList = (invitations ?? []) as Invitation[];
+
+const pendingInvitationCount = invitationList.filter(
+(invite) => invite.status === "pending"
+).length;
 
 if (!user) {
 return (
@@ -124,9 +159,25 @@ No company connected
 </h1>
 
 <p className="mt-4 max-w-2xl text-sm leading-6 text-slate-600">
-Your profile is not attached to a company workspace yet. Accept an
-invitation or ask your workspace admin to invite your email.
+Your profile is not attached to a company workspace yet. Create a
+company workspace or accept an invitation from a company admin.
 </p>
+
+<div className="mt-6 flex flex-wrap gap-3">
+<Link
+href="/create-company"
+className="inline-flex rounded-full bg-slate-950 px-6 py-3 text-sm font-bold text-white transition hover:bg-slate-800"
+>
+Create Company Workspace
+</Link>
+
+<Link
+href="/dashboard"
+className="inline-flex rounded-full bg-white px-6 py-3 text-sm font-bold text-slate-950 shadow-sm transition hover:shadow-md"
+>
+Back to Dashboard
+</Link>
+</div>
 </section>
 </div>
 </main>
@@ -207,7 +258,7 @@ Signed in as {typedProfile?.email || user.email} ·{" "}
 
 <div className="grid min-w-[280px] grid-cols-2 gap-4">
 <MiniMetric title="Team Members" value={teamList.length} />
-<MiniMetric title="Invitations" value={invitationList.length} />
+<MiniMetric title="Pending Invites" value={pendingInvitationCount} />
 <MiniMetric
 title="Your Role"
 value={typedProfile?.role || "buyer"}
@@ -238,6 +289,10 @@ Workspace Team
 Company Members
 </h2>
 
+<p className="mt-3 text-sm leading-6 text-slate-600">
+Active users currently connected to this company workspace.
+</p>
+
 <div className="mt-6 space-y-4">
 {teamList.length > 0 ? (
 teamList.map((member) => (
@@ -245,6 +300,8 @@ teamList.map((member) => (
 key={member.id}
 className="rounded-3xl border border-slate-100 bg-slate-50 p-5"
 >
+<div className="flex items-start justify-between gap-4">
+<div>
 <p className="text-lg font-black text-slate-950">
 {member.email || "User"}
 </p>
@@ -252,6 +309,16 @@ className="rounded-3xl border border-slate-100 bg-slate-50 p-5"
 <p className="mt-1 text-sm font-bold capitalize text-slate-500">
 {member.role || "buyer"}
 </p>
+
+<p className="mt-2 text-xs font-bold text-slate-400">
+Joined {formatDate(member.created_at)}
+</p>
+</div>
+
+<span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-black text-emerald-700">
+Active
+</span>
+</div>
 </div>
 ))
 ) : (
@@ -269,9 +336,16 @@ Invitation Pipeline
 Recent Invitations
 </h2>
 
+<p className="mt-3 text-sm leading-6 text-slate-600">
+Manage pending and historical invitations for this workspace.
+</p>
+
 <div className="mt-6 space-y-4">
 {invitationList.length > 0 ? (
-invitationList.map((invite: any) => (
+invitationList.map((invite) => {
+const inviteUrl = getInviteUrl(invite.token);
+
+return (
 <div
 key={invite.id}
 className="rounded-3xl border border-slate-100 bg-slate-50 p-5"
@@ -279,11 +353,15 @@ className="rounded-3xl border border-slate-100 bg-slate-50 p-5"
 <div className="flex items-start justify-between gap-4">
 <div>
 <p className="text-lg font-black text-slate-950">
-{invite.email}
+{invite.email || "No email"}
 </p>
 
 <p className="mt-1 text-sm font-bold capitalize text-slate-500">
 {invite.role || "vendor"}
+</p>
+
+<p className="mt-2 text-xs font-bold text-slate-400">
+Created {formatDate(invite.created_at)}
 </p>
 </div>
 
@@ -291,8 +369,15 @@ className="rounded-3xl border border-slate-100 bg-slate-50 p-5"
 {invite.status || "pending"}
 </span>
 </div>
+
+<InvitationActions
+invitationId={invite.id}
+inviteUrl={inviteUrl}
+status={invite.status}
+/>
 </div>
-))
+);
+})
 ) : (
 <EmptyState message="No invitations have been created yet." />
 )}
