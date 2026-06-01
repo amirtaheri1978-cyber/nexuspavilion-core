@@ -194,9 +194,27 @@ Open Company
 No company connected
 </h2>
 
-<p className="mt-2 text-slate-600">
-Your profile exists, but no company_id is attached yet.
+<p className="mt-2 max-w-2xl text-slate-600">
+Your profile exists, but no company workspace is attached yet.
+Create your company workspace to become the admin and start
+inviting vendors, buyers, and team members.
 </p>
+
+<div className="mt-6 flex flex-wrap gap-3">
+<Link
+href="/create-company"
+className="inline-flex rounded-full bg-slate-950 px-6 py-3 text-sm font-bold text-white transition hover:bg-slate-800"
+>
+Create Company Workspace
+</Link>
+
+<Link
+href="/directory"
+className="inline-flex rounded-full bg-white px-6 py-3 text-sm font-bold text-slate-950 shadow-sm transition hover:shadow-md"
+>
+Explore Directory
+</Link>
+</div>
 </div>
 )}
 </section>

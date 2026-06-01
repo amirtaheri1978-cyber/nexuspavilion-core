@@ -96,6 +96,7 @@ const notPending = invitation.status !== "pending";
 const userEmail = String(user?.email || "").toLowerCase();
 const inviteEmail = String(invitation.email || "").toLowerCase();
 const emailMismatch = Boolean(user && userEmail !== inviteEmail);
+const signupHref = getAbsolutePath(`/invite/${invitation.token}/signup`);
 
 return (
 <main className="min-h-screen bg-[#f6f6f3] px-6 py-10">
@@ -174,24 +175,37 @@ value={expired ? "Expired" : invitation.status}
 {!user ? (
 <div className="rounded-3xl bg-yellow-50 p-6">
 <h3 className="text-xl font-black text-slate-950">
-Sign in required
+Create or sign in to continue
 </h3>
 
 <p className="mt-2 text-sm leading-6 text-slate-600">
-Please sign in with the same email address this invitation was
-sent to:
+This invitation was sent to:
 </p>
 
 <p className="mt-3 text-sm font-black text-yellow-800">
 {invitation.email}
 </p>
 
+<div className="mt-6 flex flex-wrap gap-3">
+<Link
+href={signupHref}
+className="inline-flex rounded-full bg-slate-950 px-6 py-3 text-sm font-bold text-white"
+>
+Create account and join
+</Link>
+
 <Link
 href={getAbsolutePath("/login")}
-className="mt-6 inline-flex rounded-full bg-slate-950 px-6 py-3 text-sm font-bold text-white"
+className="inline-flex rounded-full bg-white px-6 py-3 text-sm font-bold text-slate-950 shadow-sm"
 >
-Sign in to accept
+I already have an account
 </Link>
+</div>
+
+<p className="mt-4 text-xs font-bold leading-5 text-slate-500">
+New users can create a password and join this workspace
+directly from the invitation.
+</p>
 </div>
 ) : emailMismatch ? (
 <div className="rounded-3xl bg-red-50 p-6">

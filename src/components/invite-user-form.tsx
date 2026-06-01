@@ -2,9 +2,17 @@
 
 import { useState } from "react";
 
+type InviteEmailResult = {
+sent?: boolean;
+skipped?: boolean;
+id?: string | null;
+error?: string | null;
+};
+
 type InviteResponse = {
 success?: boolean;
 inviteUrl?: string;
+email?: InviteEmailResult;
 error?: string;
 };
 
@@ -13,6 +21,9 @@ const [email, setEmail] = useState("");
 const [role, setRole] = useState("vendor");
 const [loading, setLoading] = useState(false);
 const [inviteUrl, setInviteUrl] = useState("");
+const [emailResult, setEmailResult] = useState<InviteEmailResult | null>(
+null
+);
 const [copied, setCopied] = useState(false);
 const [error, setError] = useState("");
 
@@ -21,6 +32,7 @@ event.preventDefault();
 
 setLoading(true);
 setInviteUrl("");
+setEmailResult(null);
 setCopied(false);
 setError("");
 
@@ -53,7 +65,9 @@ return;
 }
 
 if (!response.ok) {
-setError(data.error || `Failed to create invitation. Status: ${response.status}`);
+setError(
+data.error || `Failed to create invitation. Status: ${response.status}`
+);
 return;
 }
 
@@ -63,9 +77,11 @@ return;
 }
 
 setInviteUrl(data.inviteUrl);
+setEmailResult(data.email || null);
 setEmail("");
 } catch (error) {
 console.error(error);
+
 setError(
 error instanceof Error
 ? `Request failed: ${error.message}`
@@ -92,6 +108,44 @@ setError("Could not copy invite link. Please copy it manually.");
 }
 }
 
+function getStatusLabel() {
+if (!emailResult) return "Email Delivery Ready";
+if (emailResult.sent) return "Email Sent";
+if (emailResult.skipped) return "Email Skipped";
+if (emailResult.error) return "Email Failed";
+
+return "Email Delivery Ready";
+}
+
+function getResultTitle() {
+if (!emailResult) return "Invitation created";
+if (emailResult.sent) return "Invitation email sent";
+if (emailResult.skipped) return "Invitation created, email skipped";
+if (emailResult.error) return "Invitation created, email failed";
+
+return "Invitation created";
+}
+
+function getResultMessage() {
+if (!emailResult) {
+return "The invitation link was created. You can copy and share it manually.";
+}
+
+if (emailResult.sent) {
+return "The invitation email was sent successfully. The copy link remains available as a fallback.";
+}
+
+if (emailResult.skipped) {
+return "Email delivery was skipped because email configuration is missing. Use the copy link fallback for now.";
+}
+
+if (emailResult.error) {
+return `Email delivery failed: ${emailResult.error}. Use the copy link fallback for now.`;
+}
+
+return "The invitation link was created. You can copy and share it manually.";
+}
+
 return (
 <section className="rounded-[32px] border border-black/5 bg-white p-8">
 <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
@@ -106,8 +160,8 @@ Invite user to workspace
 
 <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
 Invite vendors, buyers, or admins to join your company workspace.
-For now, copy and share the invite link manually. Email delivery is
-coming in the next sprint.
+Nexus Pavilion will send an invitation email and keep a copy link
+available as a fallback.
 </p>
 </div>
 
@@ -117,7 +171,7 @@ Status
 </p>
 
 <p className="mt-1 text-sm font-black text-slate-950">
-Manual Link Sharing
+{getStatusLabel()}
 </p>
 </div>
 </div>
@@ -150,7 +204,7 @@ type="submit"
 disabled={loading}
 className="rounded-full bg-slate-950 px-6 py-3 text-sm font-bold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
 >
-{loading ? "Creating..." : "Create Invite"}
+{loading ? "Sending..." : "Send Invite"}
 </button>
 </form>
 
@@ -159,10 +213,20 @@ className="rounded-full bg-slate-950 px-6 py-3 text-sm font-bold text-white tran
 <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
 <div>
 <p className="text-sm font-black text-green-700">
-Invitation created
+{getResultTitle()}
 </p>
 
-<p className="mt-2 max-w-3xl break-all text-sm font-semibold leading-6 text-green-800">
+<p className="mt-2 text-sm font-bold leading-6 text-green-800">
+{getResultMessage()}
+</p>
+
+{emailResult?.id && (
+<p className="mt-2 text-xs font-bold text-green-700">
+Resend Email ID: {emailResult.id}
+</p>
+)}
+
+<p className="mt-4 max-w-3xl break-all text-sm font-semibold leading-6 text-green-800">
 {inviteUrl}
 </p>
 </div>
@@ -177,8 +241,8 @@ className="rounded-full bg-green-700 px-5 py-3 text-sm font-bold text-white tran
 </div>
 
 <p className="mt-4 text-xs font-bold leading-5 text-green-700">
-Share this link with the invited user. They must sign in using the
-same email address used for this invitation.
+The invited user must use the same email address shown in the
+invitation.
 </p>
 </div>
 )}

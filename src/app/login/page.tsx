@@ -16,14 +16,43 @@ const [password, setPassword] = useState("");
 const [loading, setLoading] = useState(false);
 const [error, setError] = useState("");
 
+async function syncUserProfile(userId: string, userEmail: string | null) {
+const normalizedEmail = String(userEmail || "").trim().toLowerCase();
+
+const { data: existingProfile } = await supabase
+.from("profiles")
+.select("id")
+.eq("id", userId)
+.maybeSingle();
+
+if (existingProfile) {
+await supabase
+.from("profiles")
+.update({
+email: normalizedEmail,
+})
+.eq("id", userId);
+
+return;
+}
+
+await supabase.from("profiles").insert({
+id: userId,
+email: normalizedEmail,
+role: "buyer",
+});
+}
+
 async function handleLogin(event: React.FormEvent<HTMLFormElement>) {
 event.preventDefault();
 
 setLoading(true);
 setError("");
 
+const normalizedEmail = email.trim().toLowerCase();
+
 const { data, error } = await supabase.auth.signInWithPassword({
-email: email.trim(),
+email: normalizedEmail,
 password,
 });
 
@@ -36,11 +65,7 @@ return;
 const user = data.user;
 
 if (user) {
-await supabase.from("profiles").upsert({
-id: user.id,
-email: user.email,
-role: "buyer",
-});
+await syncUserProfile(user.id, user.email ?? null);
 }
 
 setLoading(false);
@@ -119,8 +144,11 @@ className="w-full rounded-full bg-slate-950 px-6 py-3 text-sm font-bold text-whi
 
 <div className="mt-6 rounded-3xl bg-slate-50 p-5">
 <p className="text-sm font-semibold leading-6 text-slate-600">
-New to Nexus Pavilion? Ask your company admin for an invitation to
-join the secure procurement workspace.
+New to Nexus Pavilion?{" "}
+<Link href="/signup" className="font-black text-orange-600">
+Create an account
+</Link>{" "}
+or use your company invitation link to join a workspace.
 </p>
 </div>
 </div>

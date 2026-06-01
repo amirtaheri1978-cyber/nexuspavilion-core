@@ -1,9 +1,16 @@
 import { NextResponse } from "next/server";
 
+import { buildCompanyInvitationEmail } from "@/lib/email/templates/company-invitation-email";
+import { sendEmail } from "@/lib/email/send-email";
 import { createClient } from "@/lib/supabase/server";
 
 const SITE_URL =
 "https://scaling-invention-5g7q4p5rwrwj3vwq7-3000.app.github.dev";
+
+type Company = {
+id: string;
+name: string | null;
+};
 
 function normalizeEmail(email: string) {
 return email.trim().toLowerCase();
@@ -40,10 +47,7 @@ error: userError,
 } = await supabase.auth.getUser();
 
 if (userError || !user) {
-return NextResponse.json(
-{ error: "Unauthorized." },
-{ status: 401 }
-);
+return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
 }
 
 const { data: profile } = await supabase
@@ -56,6 +60,21 @@ if (!profile?.company_id) {
 return NextResponse.json(
 { error: "No company assigned." },
 { status: 400 }
+);
+}
+
+const { data: companyData } = await supabase
+.from("companies")
+.select("id, name")
+.eq("id", profile.company_id)
+.single();
+
+const company = companyData as Company | null;
+
+if (!company) {
+return NextResponse.json(
+{ error: "Company workspace not found." },
+{ status: 404 }
 );
 }
 
@@ -74,7 +93,7 @@ return NextResponse.json(
 );
 }
 
-const { data: invitation, error } = await supabase
+const { data: invitation, error: invitationError } = await supabase
 .from("invitations")
 .insert({
 company_id: profile.company_id,
@@ -85,8 +104,8 @@ invited_by: user.id,
 .select()
 .single();
 
-if (error) {
-console.error(error);
+if (invitationError || !invitation) {
+console.error(invitationError);
 
 return NextResponse.json(
 { error: "Failed to create invitation." },
@@ -94,12 +113,58 @@ return NextResponse.json(
 );
 }
 
+const companyName = company.name || "Your company";
 const inviteUrl = `${SITE_URL}/invite/${invitation.token}`;
+
+const invitationEmail = buildCompanyInvitationEmail({
+companyName,
+invitedEmail: email,
+invitedRole: role,
+inviteUrl,
+});
+
+const emailResult = await sendEmail({
+to: email,
+subject: invitationEmail.subject,
+html: invitationEmail.html,
+text: invitationEmail.text,
+});
+
+await supabase.from("notifications").insert({
+title: "Invitation Created",
+message: `${email} was invited to ${companyName} as ${role}.`,
+type: "invitation",
+is_read: false,
+});
+
+await supabase.from("audit_logs").insert({
+action: "INVITATION_CREATED",
+entity_type: "invitation",
+entity_id: invitation.id,
+user_id: user.id,
+company_id: profile.company_id,
+metadata: {
+email,
+role,
+invite_url: inviteUrl,
+email_sent: emailResult.success,
+email_skipped: emailResult.skipped,
+email_id: emailResult.id,
+email_error: emailResult.error,
+created_at: new Date().toISOString(),
+},
+});
 
 return NextResponse.json({
 success: true,
 invitation,
 inviteUrl,
+email: {
+sent: emailResult.success,
+skipped: emailResult.skipped,
+id: emailResult.id,
+error: emailResult.error,
+},
 });
 } catch (error) {
 console.error(error);
