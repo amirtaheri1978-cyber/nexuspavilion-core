@@ -1,0 +1,123 @@
+import { NextResponse } from "next/server";
+
+import { createClient } from "@/lib/supabase/server";
+
+function normalizeRole(role: string) {
+const value = role.trim().toLowerCase();
+
+if (value === "admin") return "admin";
+if (value === "buyer") return "buyer";
+
+return "vendor";
+}
+
+export async function POST(request: Request) {
+try {
+const body = await request.json();
+
+const memberId = String(body.memberId || "");
+const role = normalizeRole(String(body.role || "vendor"));
+
+if (!memberId) {
+return NextResponse.json(
+{ error: "Member ID is required." },
+{ status: 400 }
+);
+}
+
+const supabase = await createClient();
+
+const {
+data: { user },
+error: userError,
+} = await supabase.auth.getUser();
+
+if (userError || !user) {
+return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+}
+
+const { data: currentProfile } = await supabase
+.from("profiles")
+.select("id, email, role, company_id")
+.eq("id", user.id)
+.single();
+
+if (!currentProfile?.company_id) {
+return NextResponse.json(
+{ error: "No company assigned." },
+{ status: 400 }
+);
+}
+
+if (currentProfile.role !== "admin") {
+return NextResponse.json(
+{ error: "Only admins can update member roles." },
+{ status: 403 }
+);
+}
+
+const { data: targetMember } = await supabase
+.from("profiles")
+.select("id, email, role, company_id")
+.eq("id", memberId)
+.eq("company_id", currentProfile.company_id)
+.single();
+
+if (!targetMember) {
+return NextResponse.json(
+{ error: "Member not found in your company." },
+{ status: 404 }
+);
+}
+
+if (targetMember.id === currentProfile.id) {
+return NextResponse.json(
+{ error: "You cannot change your own role." },
+{ status: 400 }
+);
+}
+
+const { error: updateError } = await supabase
+.from("profiles")
+.update({
+role,
+})
+.eq("id", targetMember.id)
+.eq("company_id", currentProfile.company_id);
+
+if (updateError) {
+console.error(updateError);
+
+return NextResponse.json(
+{ error: "Failed to update member role." },
+{ status: 500 }
+);
+}
+
+await supabase.from("audit_logs").insert({
+action: "MEMBER_ROLE_UPDATED",
+entity_type: "profile",
+entity_id: targetMember.id,
+user_id: user.id,
+company_id: currentProfile.company_id,
+metadata: {
+member_email: targetMember.email,
+previous_role: targetMember.role,
+new_role: role,
+updated_at: new Date().toISOString(),
+},
+});
+
+return NextResponse.json({
+success: true,
+role,
+});
+} catch (error) {
+console.error(error);
+
+return NextResponse.json(
+{ error: "Internal server error." },
+{ status: 500 }
+);
+}
+}

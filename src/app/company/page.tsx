@@ -3,6 +3,7 @@ import Link from "next/link";
 import CompanyLogoUpload from "@/components/company-logo-upload";
 import InvitationActions from "@/components/invitation-actions";
 import InviteUserForm from "@/components/invite-user-form";
+import MemberActions from "@/components/member-actions";
 import { createClient } from "@/lib/supabase/server";
 
 const SITE_URL =
@@ -114,6 +115,8 @@ const invitationList = (invitations ?? []) as Invitation[];
 const pendingInvitationCount = invitationList.filter(
 (invite) => invite.status === "pending"
 ).length;
+
+const adminCount = teamList.filter((member) => member.role === "admin").length;
 
 if (!user) {
 return (
@@ -259,11 +262,8 @@ Signed in as {typedProfile?.email || user.email} ·{" "}
 <div className="grid min-w-[280px] grid-cols-2 gap-4">
 <MiniMetric title="Team Members" value={teamList.length} />
 <MiniMetric title="Pending Invites" value={pendingInvitationCount} />
-<MiniMetric
-title="Your Role"
-value={typedProfile?.role || "buyer"}
-/>
-<MiniMetric title="Workspace" value="Active" />
+<MiniMetric title="Admins" value={adminCount} />
+<MiniMetric title="Your Role" value={typedProfile?.role || "buyer"} />
 </div>
 </div>
 
@@ -291,6 +291,7 @@ Company Members
 
 <p className="mt-3 text-sm leading-6 text-slate-600">
 Active users currently connected to this company workspace.
+Workspace admins can update roles or remove members.
 </p>
 
 <div className="mt-6 space-y-4">
@@ -319,6 +320,14 @@ Joined {formatDate(member.created_at)}
 Active
 </span>
 </div>
+
+<MemberActions
+memberId={member.id}
+memberEmail={member.email}
+memberRole={member.role}
+currentUserId={typedProfile?.id || user.id}
+currentUserRole={typedProfile?.role || "buyer"}
+/>
 </div>
 ))
 ) : (
