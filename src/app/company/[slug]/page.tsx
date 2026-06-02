@@ -36,6 +36,14 @@ decision: string | null;
 created_at: string | null;
 };
 
+type ActivityLog = {
+id: string;
+action: string | null;
+entity_type: string | null;
+metadata: Record<string, any> | null;
+created_at: string | null;
+};
+
 type PageProps = {
 params: Promise<{
 slug: string;
@@ -62,6 +70,94 @@ function getRFQStatusLabel(status: string | null) {
 if (status === "awarded") return "Awarded";
 if (status === "closed") return "Closed";
 return "Open";
+}
+
+function formatDate(value: string | null) {
+if (!value) return "N/A";
+
+return new Intl.DateTimeFormat("en", {
+month: "short",
+day: "numeric",
+year: "numeric",
+}).format(new Date(value));
+}
+
+function getActivityLabel(action: string | null) {
+if (action === "CONTRACT_AWARDED") return "Contract Awarded";
+if (action === "QUOTE_SUBMITTED") return "Quote Submitted";
+if (action === "RFQ_CREATED") return "RFQ Created";
+if (action === "INVITATION_CREATED") return "Invitation Created";
+if (action === "INVITATION_REVOKED") return "Invitation Revoked";
+if (action === "MEMBER_ROLE_UPDATED") return "Member Role Updated";
+if (action === "MEMBER_REMOVED") return "Member Removed";
+
+return action || "Activity";
+}
+
+function getActivityIcon(action: string | null) {
+if (action === "CONTRACT_AWARDED") return "🏆";
+if (action === "QUOTE_SUBMITTED") return "💰";
+if (action === "RFQ_CREATED") return "📋";
+if (action === "INVITATION_CREATED") return "📨";
+if (action === "INVITATION_REVOKED") return "⛔";
+if (action === "MEMBER_ROLE_UPDATED") return "👥";
+if (action === "MEMBER_REMOVED") return "🗑️";
+
+return "⚡";
+}
+
+function getActivityDetail(log: ActivityLog) {
+const metadata = log.metadata || {};
+
+if (log.action === "CONTRACT_AWARDED") {
+const title = metadata.rfq_title || "Procurement contract";
+const amount = Number(metadata.awarded_amount || 0);
+
+return `${title} awarded at $${amount.toLocaleString()}.`;
+}
+
+if (log.action === "QUOTE_SUBMITTED") {
+const title = metadata.rfq_title || "RFQ";
+const amount = Number(metadata.amount || 0);
+
+return `Quote submitted for ${title} at $${amount.toLocaleString()}.`;
+}
+
+if (log.action === "RFQ_CREATED") {
+const title = metadata.title || metadata.rfq_title || "New RFQ";
+
+return `${title} was created.`;
+}
+
+if (log.action === "INVITATION_CREATED") {
+const email = metadata.email || "A user";
+const role = metadata.role || "member";
+
+return `${email} was invited as ${role}.`;
+}
+
+if (log.action === "INVITATION_REVOKED") {
+const email = metadata.email || "An invitation";
+
+return `${email} was revoked.`;
+}
+
+if (log.action === "MEMBER_ROLE_UPDATED") {
+const email = metadata.email || "A member";
+const role = metadata.role || metadata.new_role || "updated role";
+
+return `${email} role updated to ${role}.`;
+}
+
+if (log.action === "MEMBER_REMOVED") {
+const email = metadata.email || "A member";
+
+return `${email} was removed from the workspace.`;
+}
+
+return log.entity_type
+? `${log.entity_type} activity was recorded.`
+: "Workspace activity was recorded.";
 }
 
 export default async function PublicCompanyPage({ params }: PageProps) {
@@ -102,6 +198,13 @@ const { data: rfqs } = await supabase
 .eq("company_id", company.id)
 .order("created_at", { ascending: false });
 
+const { data: activityLogs } = await supabase
+.from("audit_logs")
+.select("id, action, entity_type, metadata, created_at")
+.eq("company_id", company.id)
+.order("created_at", { ascending: false })
+.limit(10);
+
 const rfqList = (rfqs ?? []) as RFQ[];
 const rfqIds = rfqList.map((rfq) => rfq.id);
 
@@ -115,6 +218,7 @@ rfqIds.length > 0
 : { data: [] };
 
 const quoteList = (quotes ?? []) as Quote[];
+const activityList = (activityLogs ?? []) as ActivityLog[];
 
 const totalRfqs = rfqList.length;
 const openRfqs = rfqList.filter(
@@ -246,7 +350,7 @@ detail={`${awardedRfqs} of ${totalRfqs} RFQs awarded`}
 </section>
 
 <section className="mt-8 grid gap-8 lg:grid-cols-3">
-<div className="lg:col-span-2 rounded-[32px] border border-black/5 bg-white p-8">
+<div className="rounded-[32px] border border-black/5 bg-white p-8 lg:col-span-2">
 <div className="flex items-end justify-between gap-6">
 <div>
 <p className="text-xs font-black uppercase tracking-[0.3em] text-orange-500">
@@ -379,6 +483,73 @@ ${Number(quote.amount || 0).toLocaleString()}
 )}
 </div>
 </aside>
+</section>
+
+<section className="mt-8 rounded-[32px] border border-black/5 bg-white p-8">
+<div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+<div>
+<p className="text-xs font-black uppercase tracking-[0.3em] text-orange-500">
+Procurement Activity
+</p>
+
+<h2 className="mt-3 text-3xl font-black text-slate-950">
+Recent Procurement Activity
+</h2>
+
+<p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">
+Live company activity from RFQ creation, supplier submissions,
+contract awards, invitations, and workspace management.
+</p>
+</div>
+
+<Link
+href="/analytics"
+className="rounded-full bg-slate-950 px-5 py-3 text-sm font-bold text-white"
+>
+Open Analytics
+</Link>
+</div>
+
+<div className="mt-6 space-y-4">
+{activityList.length > 0 ? (
+activityList.map((log) => (
+<div
+key={log.id}
+className="rounded-3xl border border-slate-100 bg-slate-50 p-5"
+>
+<div className="flex items-start gap-4">
+<div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white text-2xl shadow-sm">
+{getActivityIcon(log.action)}
+</div>
+
+<div className="min-w-0 flex-1">
+<div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+<div>
+<p className="text-lg font-black text-slate-950">
+{getActivityLabel(log.action)}
+</p>
+
+<p className="mt-1 text-sm leading-6 text-slate-600">
+{getActivityDetail(log)}
+</p>
+</div>
+
+<span className="rounded-full bg-white px-3 py-1 text-xs font-black text-slate-500 shadow-sm">
+{formatDate(log.created_at)}
+</span>
+</div>
+
+<p className="mt-3 text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+{log.entity_type || "activity"}
+</p>
+</div>
+</div>
+</div>
+))
+) : (
+<EmptyState message="No procurement activity has been recorded yet." />
+)}
+</div>
 </section>
 
 <section className="mt-8 rounded-[32px] border border-black/5 bg-white p-8">
