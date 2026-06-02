@@ -46,6 +46,22 @@ if (status === "closed") return "Closed";
 return "Open";
 }
 
+function getGrade(score: number) {
+if (score >= 90) return "A+ Preferred Vendor";
+if (score >= 80) return "A Qualified Vendor";
+if (score >= 70) return "B Competitive Vendor";
+if (score >= 60) return "C Developing Vendor";
+return "Emerging Vendor";
+}
+
+function getStrength(score: number) {
+if (score >= 90) return "Excellent";
+if (score >= 80) return "Strong";
+if (score >= 70) return "Competitive";
+if (score >= 60) return "Developing";
+return "Early Stage";
+}
+
 export default async function VendorDashboardPage() {
 const supabase = await createClient();
 
@@ -91,20 +107,20 @@ const awardedQuotes = quoteList.filter(
 (quote) => quote.decision === "awarded"
 );
 
+const lostQuotes = quoteList.filter((quote) => quote.decision === "rejected");
+
 const awardedRevenue = awardedQuotes.reduce((total, quote) => {
 const amount = Number(quote.amount);
 return total + (Number.isFinite(amount) ? amount : 0);
 }, 0);
 
-const openRfqs = rfqList.filter(
-(rfq) => !rfq.status || rfq.status === "open"
-);
+const totalBidVolume = quoteList.reduce((total, quote) => {
+const amount = Number(quote.amount);
+return total + (Number.isFinite(amount) ? amount : 0);
+}, 0);
 
-const pendingDecisionRfqs = openRfqs.filter((rfq) =>
-quoteList.some((quote) => quote.rfq_id === rfq.id)
-);
-
-const pendingDecisions = pendingDecisionRfqs.length;
+const averageBid =
+submittedQuotes > 0 ? Math.round(totalBidVolume / submittedQuotes) : 0;
 
 const averageAward =
 awardedQuotes.length > 0
@@ -115,6 +131,38 @@ const winRate =
 submittedQuotes > 0
 ? Math.round((awardedQuotes.length / submittedQuotes) * 100)
 : 0;
+
+const procurementScore = Math.min(
+100,
+Math.round(
+winRate * 0.45 +
+awardedQuotes.length * 12 +
+Math.min(awardedRevenue / 25000, 25) +
+Math.min(submittedQuotes * 2, 15)
+)
+);
+
+const performanceGrade = getGrade(procurementScore);
+const competitiveStrength = getStrength(procurementScore);
+
+const vendorRank =
+procurementScore >= 90
+? "Top Tier"
+: procurementScore >= 75
+? "Preferred"
+: procurementScore >= 60
+? "Qualified"
+: "Developing";
+
+const openRfqs = rfqList.filter(
+(rfq) => !rfq.status || rfq.status === "open"
+);
+
+const pendingDecisionRfqs = openRfqs.filter((rfq) =>
+quoteList.some((quote) => quote.rfq_id === rfq.id)
+);
+
+const pendingDecisions = pendingDecisionRfqs.length;
 
 const pipelineRows = rfqList.map((rfq) => {
 const rfqQuotes = quoteList.filter((quote) => quote.rfq_id === rfq.id);
@@ -159,8 +207,8 @@ Vendor Dashboard
 
 <p className="mt-4 max-w-3xl text-sm leading-6 text-slate-600">
 Track company RFQs, supplier quote activity, award decisions,
-pending bid reviews, and procurement revenue connected to your
-secure workspace.
+pending bid reviews, procurement revenue, and vendor performance
+intelligence connected to your secure workspace.
 </p>
 </div>
 
@@ -175,22 +223,22 @@ Open Marketplace
 
 <section className="mt-8 grid gap-6 md:grid-cols-4">
 <MetricCard
-title="Company RFQs"
-value={String(rfqList.length)}
-detail={`${openRfqs.length} open opportunities`}
+title="Procurement Score"
+value={`${procurementScore}/100`}
+detail={performanceGrade}
+highlight={procurementScore >= 80}
 />
 
 <MetricCard
-title="Submitted Quotes"
-value={String(submittedQuotes)}
-detail="Total supplier bids"
+title="Vendor Rank"
+value={vendorRank}
+detail={`${competitiveStrength} competitive position`}
 />
 
 <MetricCard
-title="Pending Decisions"
-value={String(pendingDecisions)}
-detail="Open RFQs with quotes"
-highlight={pendingDecisions > 0}
+title="Win Rate"
+value={`${winRate}%`}
+detail="Awarded quotes vs submitted"
 />
 
 <MetricCard
@@ -200,15 +248,40 @@ detail={`${awardedQuotes.length} awarded quotes`}
 />
 
 <MetricCard
+title="Submitted Quotes"
+value={String(submittedQuotes)}
+detail="Total supplier bids"
+/>
+
+<MetricCard
+title="Lost Quotes"
+value={String(lostQuotes.length)}
+detail="Rejected or non-awarded bids"
+/>
+
+<MetricCard
+title="Average Bid"
+value={formatMoney(averageBid)}
+detail="Average submitted quote"
+/>
+
+<MetricCard
 title="Average Award"
 value={formatMoney(averageAward)}
 detail="Average awarded contract"
 />
 
 <MetricCard
-title="Win Rate"
-value={`${winRate}%`}
-detail="Awarded quotes vs submitted"
+title="Company RFQs"
+value={String(rfqList.length)}
+detail={`${openRfqs.length} open opportunities`}
+/>
+
+<MetricCard
+title="Pending Decisions"
+value={String(pendingDecisions)}
+detail="Open RFQs with quotes"
+highlight={pendingDecisions > 0}
 />
 
 <MetricCard
@@ -222,6 +295,51 @@ title="Awards"
 value={String(awardedQuotes.length)}
 detail="Completed procurement wins"
 />
+</section>
+
+<section className="mt-8 rounded-[32px] border border-black/5 bg-white p-8">
+<p className="text-xs font-black uppercase tracking-[0.3em] text-orange-500">
+AI Supplier Performance
+</p>
+
+<div className="mt-4 grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
+<div>
+<h2 className="text-3xl font-black text-slate-950">
+Supplier Performance Intelligence
+</h2>
+
+<p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">
+Nexus evaluates quote volume, awarded contracts, win rate,
+awarded revenue, average bid value, and pending procurement
+activity to produce a supplier performance signal.
+</p>
+
+<div className="mt-6 grid gap-4 md:grid-cols-3">
+<MiniCard title="Grade" value={performanceGrade} />
+<MiniCard title="Strength" value={competitiveStrength} />
+<MiniCard title="Rank" value={vendorRank} />
+</div>
+</div>
+
+<div className="rounded-3xl bg-slate-50 p-6">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-slate-400">
+Ranking Signals
+</p>
+
+<div className="mt-4 space-y-3">
+<SignalRow label="Win Rate" value={`${winRate}%`} />
+<SignalRow
+label="Awarded Revenue"
+value={formatMoney(awardedRevenue)}
+/>
+<SignalRow
+label="Quote Volume"
+value={String(submittedQuotes)}
+/>
+<SignalRow label="Average Bid" value={formatMoney(averageBid)} />
+</div>
+</div>
+</div>
 </section>
 
 <section className="mt-8 grid gap-8 lg:grid-cols-[1.5fr_0.8fr]">
@@ -385,7 +503,9 @@ Recent Awards
 <div className="mt-6 space-y-4">
 {recentAwards.length > 0 ? (
 recentAwards.map((quote) => {
-const rfq = rfqList.find((item) => item.id === quote.rfq_id);
+const rfq = rfqList.find(
+(item) => item.id === quote.rfq_id
+);
 
 return (
 <div
@@ -440,9 +560,7 @@ highlight?: boolean;
 return (
 <div
 className={`rounded-3xl border p-7 ${
-highlight
-? "border-yellow-200 bg-yellow-50"
-: "border-black/5 bg-white"
+highlight ? "border-yellow-200 bg-yellow-50" : "border-black/5 bg-white"
 }`}
 >
 <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">
@@ -456,6 +574,27 @@ highlight
 );
 }
 
+function MiniCard({ title, value }: { title: string; value: string }) {
+return (
+<div className="rounded-3xl bg-white p-5 shadow-sm">
+<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+{title}
+</p>
+
+<p className="mt-2 text-2xl font-black text-slate-950">{value}</p>
+</div>
+);
+}
+
+function SignalRow({ label, value }: { label: string; value: string }) {
+return (
+<div className="flex items-center justify-between rounded-2xl bg-white px-4 py-3 shadow-sm">
+<p className="text-sm font-black text-slate-600">{label}</p>
+<p className="text-sm font-black text-slate-950">{value}</p>
+</div>
+);
+}
+
 function Badge({
 children,
 className = "bg-white text-slate-600",
@@ -464,7 +603,9 @@ children: React.ReactNode;
 className?: string;
 }) {
 return (
-<span className={`rounded-full px-3 py-1 text-xs font-bold shadow-sm ${className}`}>
+<span
+className={`rounded-full px-3 py-1 text-xs font-bold shadow-sm ${className}`}
+>
 {children}
 </span>
 );
