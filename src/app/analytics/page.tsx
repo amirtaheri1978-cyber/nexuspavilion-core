@@ -40,6 +40,50 @@ const { data: notifications } = await supabase
 .limit(5);
 
 const quoteList = quotes ?? [];
+const { data: companies } = await supabase
+.from("companies")
+.select("id,name");
+
+const companyList = companies ?? [];
+
+const vendorLeaderboard = companyList
+.map((company: any) => {
+const companyQuotes = quoteList.filter(
+(quote: any) => quote.company_id === company.id
+);
+
+const awardedQuotes = companyQuotes.filter(
+(quote: any) => quote.decision === "awarded"
+);
+
+const revenue = awardedQuotes.reduce(
+(total: number, quote: any) =>
+total + Number(quote.amount || 0),
+0
+);
+
+const winRate =
+companyQuotes.length > 0
+? Math.round(
+(awardedQuotes.length / companyQuotes.length) * 100
+)
+: 0;
+
+return {
+name: company.name,
+quotes: companyQuotes.length,
+awards: awardedQuotes.length,
+revenue,
+winRate,
+score:
+winRate * 0.5 +
+awardedQuotes.length * 10 +
+revenue / 100000,
+};
+})
+.filter((vendor) => vendor.quotes > 0)
+.sort((a, b) => b.score - a.score)
+.slice(0, 10);
 
 const totalRfqs = rfqList.length;
 const activeRfqs = rfqList.filter((rfq: any) => rfq.status !== "awarded")
@@ -234,7 +278,55 @@ No activity yet.
 </div>
 </div>
 </section>
+<section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
+Vendor Intelligence
+</p>
 
+<h2 className="mt-3 text-3xl font-black text-slate-950">
+Top Vendors
+</h2>
+
+<div className="mt-6 overflow-hidden rounded-2xl border border-slate-200">
+<table className="w-full text-left">
+<thead className="bg-slate-950 text-white">
+<tr>
+<th className="px-5 py-4">Vendor</th>
+<th className="px-5 py-4">Quotes</th>
+<th className="px-5 py-4">Awards</th>
+<th className="px-5 py-4">Win Rate</th>
+<th className="px-5 py-4">Revenue</th>
+</tr>
+</thead>
+
+<tbody>
+{vendorLeaderboard.map((vendor) => (
+<tr key={vendor.name}>
+<td className="px-5 py-4 font-bold">
+{vendor.name}
+</td>
+
+<td className="px-5 py-4">
+{vendor.quotes}
+</td>
+
+<td className="px-5 py-4">
+{vendor.awards}
+</td>
+
+<td className="px-5 py-4">
+{vendor.winRate}%
+</td>
+
+<td className="px-5 py-4">
+${vendor.revenue.toLocaleString()}
+</td>
+</tr>
+))}
+</tbody>
+</table>
+</div>
+</section>
 <section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
 <p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
 Company RFQ Pipeline
