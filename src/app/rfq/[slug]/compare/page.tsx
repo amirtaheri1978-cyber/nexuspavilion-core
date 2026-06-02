@@ -10,6 +10,7 @@ params: Promise<{ slug: string }>;
 type Quote = {
 id: string;
 rfq_id: string;
+company_id?: string | null;
 amount: number | string | null;
 timeline: string | null;
 message: string | null;
@@ -35,6 +36,14 @@ function getDecisionClass(decision: string | null) {
 if (decision === "awarded") return "bg-green-100 text-green-700";
 if (decision === "rejected") return "bg-red-100 text-red-700";
 return "bg-yellow-100 text-yellow-700";
+}
+
+function formatMoney(value: number | string | null | undefined) {
+const amount = Number(value);
+
+if (!Number.isFinite(amount)) return "$0";
+
+return `$${amount.toLocaleString()}`;
 }
 
 export default async function CompareQuotesPage({ params }: PageProps) {
@@ -65,7 +74,7 @@ const quoteList = (quotes ?? []) as Quote[];
 
 const amounts = quoteList
 .map((quote) => Number(quote.amount))
-.filter((amount) => !Number.isNaN(amount));
+.filter((amount) => Number.isFinite(amount));
 
 const lowestAmount = amounts.length > 0 ? Math.min(...amounts) : null;
 const highestAmount = amounts.length > 0 ? Math.max(...amounts) : null;
@@ -79,11 +88,11 @@ amounts.reduce((total, amount) => total + amount, 0) / amounts.length
 
 const scoredQuotes = quoteList.map((quote) => {
 const amount = Number(quote.amount);
-const validAmount = !Number.isNaN(amount) ? amount : 0;
+const amountNumber = Number.isFinite(amount) ? amount : 0;
 
 const priceScore =
-lowestAmount && validAmount > 0
-? Math.round((lowestAmount / validAmount) * 70)
+lowestAmount && amountNumber > 0
+? Math.round((lowestAmount / amountNumber) * 70)
 : 0;
 
 const timelineScore = Math.round(getTimelineScore(quote.timeline) * 0.3);
@@ -91,7 +100,7 @@ const totalScore = Math.min(priceScore + timelineScore, 100);
 
 return {
 ...quote,
-amountNumber: validAmount,
+amountNumber,
 priceScore,
 timelineScore,
 totalScore,
@@ -115,6 +124,44 @@ const potentialSavings =
 recommendedQuote && averageBid
 ? averageBid - recommendedQuote.amountNumber
 : 0;
+
+const confidenceScore = recommendedQuote
+? Math.min(
+98,
+Math.max(
+75,
+recommendedQuote.totalScore +
+(recommendedQuote.amountNumber === lowestAmount ? 3 : 0) +
+(recommendedQuote.timelineScore >= 24 ? 2 : 0)
+)
+)
+: 0;
+
+const riskLevel =
+!recommendedQuote || scoredQuotes.length === 0
+? "Pending"
+: recommendedQuote.totalScore >= 90
+? "Low Risk"
+: recommendedQuote.totalScore >= 80
+? "Moderate Risk"
+: "High Risk";
+
+const aiReasons = recommendedQuote
+? [
+recommendedQuote.amountNumber === lowestAmount
+? "Lowest submitted bid"
+: "Competitive pricing profile",
+recommendedQuote.timelineScore >= 24
+? "Strong delivery timeline"
+: "Acceptable delivery timeline",
+recommendedQuote.totalScore >= 90
+? "High procurement score"
+: "Balanced price and timeline score",
+potentialSavings > 0
+? `${formatMoney(Math.max(potentialSavings, 0))} estimated savings versus average bid`
+: "Comparable to average bid",
+]
+: [];
 
 return (
 <main className="min-h-screen bg-[#f6f6f3] px-6 py-16">
@@ -141,7 +188,7 @@ decision data.
 title="Recommended Bid"
 value={
 recommendedQuote
-? `$${recommendedQuote.amountNumber.toLocaleString()}`
+? formatMoney(recommendedQuote.amountNumber)
 : "No bids"
 }
 detail="Based on price and timeline score"
@@ -149,25 +196,83 @@ detail="Based on price and timeline score"
 
 <InsightCard
 title="Average Bid"
-value={`$${averageBid.toLocaleString()}`}
+value={formatMoney(averageBid)}
 detail="Across all submitted quotes"
 />
 
 <InsightCard
 title="Potential Savings"
-value={`$${Math.max(potentialSavings, 0).toLocaleString()}`}
+value={formatMoney(Math.max(potentialSavings, 0))}
 detail="Compared to average bid"
 />
 
 <InsightCard
 title="Awarded Contract"
 value={
-awardedQuote
-? `$${awardedQuote.amountNumber.toLocaleString()}`
-: "Pending"
+awardedQuote ? formatMoney(awardedQuote.amountNumber) : "Pending"
 }
 detail="Current procurement decision"
 />
+</section>
+
+<section className="mt-8 rounded-[32px] border border-black/5 bg-white p-8">
+<p className="text-xs font-black uppercase tracking-[0.3em] text-orange-500">
+AI Procurement Intelligence
+</p>
+
+<div className="mt-4 grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
+<div>
+<h2 className="text-3xl font-black text-slate-950">
+Award Recommendation
+</h2>
+
+<p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">
+Nexus evaluates quote price, delivery timeline, scoring strength,
+and projected savings to recommend the strongest award path.
+</p>
+
+<div className="mt-6 grid gap-4 md:grid-cols-3">
+<MiniCard
+title="Confidence"
+value={recommendedQuote ? `${confidenceScore}%` : "Pending"}
+/>
+
+<MiniCard title="Risk Level" value={riskLevel} />
+
+<MiniCard
+title="Suggested Award"
+value={
+recommendedQuote
+? formatMoney(recommendedQuote.amountNumber)
+: "Pending"
+}
+/>
+</div>
+</div>
+
+<div className="rounded-3xl bg-slate-50 p-6">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-slate-400">
+Decision Reasons
+</p>
+
+<div className="mt-4 space-y-3">
+{aiReasons.length > 0 ? (
+aiReasons.map((reason) => (
+<div
+key={reason}
+className="rounded-2xl bg-white px-4 py-3 text-sm font-bold text-slate-700 shadow-sm"
+>
+✓ {reason}
+</div>
+))
+) : (
+<p className="text-sm font-bold text-slate-500">
+Submit quotes to activate AI procurement recommendations.
+</p>
+)}
+</div>
+</div>
+</div>
 </section>
 
 <div className="mt-8 overflow-hidden rounded-[28px] border border-black/5 bg-white">
@@ -198,7 +303,7 @@ key={quote.id}
 className="grid grid-cols-7 items-center border-t border-black/5 px-6 py-6"
 >
 <div className="text-2xl font-bold text-black">
-${quote.amountNumber.toLocaleString()}
+{formatMoney(quote.amountNumber)}
 </div>
 
 <div className="font-medium text-black/70">
@@ -219,6 +324,7 @@ quote.decision
 <div className="text-lg font-black text-black">
 {quote.totalScore}/100
 </div>
+
 <div className="mt-1 text-xs text-black/40">
 Price {quote.priceScore} · Time {quote.timelineScore}
 </div>
@@ -316,6 +422,18 @@ return (
 </p>
 <p className="mt-3 text-3xl font-black text-black">{value}</p>
 <p className="mt-2 text-sm text-black/50">{detail}</p>
+</div>
+);
+}
+
+function MiniCard({ title, value }: { title: string; value: string }) {
+return (
+<div className="rounded-3xl bg-white p-5 shadow-sm">
+<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+{title}
+</p>
+
+<p className="mt-2 text-2xl font-black text-slate-950">{value}</p>
 </div>
 );
 }

@@ -27,13 +27,22 @@ budget: number | string | null;
 status: string | null;
 created_at: string | null;
 };
-
 type Quote = {
 id: string;
 rfq_id: string;
+company_id: string | null;
 amount: number | string | null;
 decision: string | null;
 created_at: string | null;
+};
+
+type VendorPerformance = {
+submittedQuotes: number;
+awardedQuotes: number;
+awardedRevenue: number;
+totalBidValue: number;
+averageBid: number;
+winRate: number;
 };
 
 type ActivityLog = {
@@ -246,6 +255,40 @@ totalRfqs > 0 ? Math.round((awardedRfqs / totalRfqs) * 100) : 0;
 
 const recentRfqs = rfqList.slice(0, 6);
 const recentAwards = awardedQuotes.slice(0, 5);
+
+const vendorCompanyQuotes = quoteList.filter(
+(quote) => quote.company_id === company.id
+);
+
+const vendorSubmittedQuotes = vendorCompanyQuotes.length;
+
+const vendorAwardedQuotes = vendorCompanyQuotes.filter(
+(quote) => quote.decision === "awarded"
+);
+
+const vendorAwardedRevenue = vendorAwardedQuotes.reduce((total, quote) => {
+const amount = Number(quote.amount);
+return total + (Number.isNaN(amount) ? 0 : amount);
+}, 0);
+
+const vendorTotalBidValue = vendorCompanyQuotes.reduce((total, quote) => {
+const amount = Number(quote.amount);
+return total + (Number.isNaN(amount) ? 0 : amount);
+}, 0);
+
+const vendorAverageBid =
+vendorSubmittedQuotes > 0
+? Math.round(vendorTotalBidValue / vendorSubmittedQuotes)
+: 0;
+
+const vendorWinRate =
+vendorSubmittedQuotes > 0
+? Math.round((vendorAwardedQuotes.length / vendorSubmittedQuotes) * 100)
+: 0;
+
+const isVendorProfile =
+String(company.network_role || "").toLowerCase().includes("vendor") ||
+String(company.network_role || "").toLowerCase().includes("supplier");
 
 return (
 <main className="min-h-screen bg-[#f6f6f3] p-8">
@@ -551,7 +594,88 @@ className="rounded-3xl border border-slate-100 bg-slate-50 p-5"
 )}
 </div>
 </section>
+{isVendorProfile ? (
+<section className="mt-8 rounded-[32px] border border-black/5 bg-white p-8">
+<p className="text-xs font-black uppercase tracking-[0.3em] text-orange-500">
+Vendor Performance
+</p>
 
+<h2 className="mt-3 text-3xl font-black text-slate-950">
+Supplier Scorecard
+</h2>
+
+<p className="mt-4 max-w-4xl text-sm leading-7 text-slate-600">
+Performance summary based on submitted quotes, awarded contracts,
+win rate, awarded revenue, and average bid value across the Nexus
+Pavilion procurement network.
+</p>
+
+<div className="mt-8 grid gap-6 md:grid-cols-3 xl:grid-cols-6">
+<MetricCard
+title="Quotes"
+value={String(vendorSubmittedQuotes)}
+detail="Submitted bids"
+/>
+
+<MetricCard
+title="Awards"
+value={String(vendorAwardedQuotes.length)}
+detail="Contracts won"
+/>
+
+<MetricCard
+title="Win Rate"
+value={`${vendorWinRate}%`}
+detail="Awards vs quotes"
+/>
+
+<MetricCard
+title="Awarded Revenue"
+value={`$${vendorAwardedRevenue.toLocaleString()}`}
+detail="Total won value"
+/>
+
+<MetricCard
+title="Average Bid"
+value={`$${vendorAverageBid.toLocaleString()}`}
+detail="Average submitted quote"
+/>
+
+<MetricCard
+title="Bid Volume"
+value={`$${vendorTotalBidValue.toLocaleString()}`}
+detail="Total quoted value"
+/>
+</div>
+
+<div className="mt-8 rounded-3xl border border-slate-100 bg-slate-50 p-6">
+<div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+<div>
+<p className="text-xs font-black uppercase tracking-[0.25em] text-slate-400">
+Vendor Ranking Signal
+</p>
+
+<h3 className="mt-2 text-2xl font-black text-slate-950">
+{vendorWinRate >= 50
+? "Preferred Vendor"
+: vendorWinRate >= 25
+? "Qualified Vendor"
+: "Emerging Vendor"}
+</h3>
+
+<p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+This scorecard helps buyers evaluate supplier reliability,
+pricing activity, and historical award performance.
+</p>
+</div>
+
+<span className="rounded-full bg-white px-5 py-3 text-sm font-black text-slate-700 shadow-sm">
+{vendorWinRate}% Win Rate
+</span>
+</div>
+</div>
+</section>
+) : null}
 <section className="mt-8 rounded-[32px] border border-black/5 bg-white p-8">
 <p className="text-xs font-black uppercase tracking-[0.3em] text-orange-500">
 Public Procurement Profile
