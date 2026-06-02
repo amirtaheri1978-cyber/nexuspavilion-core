@@ -21,7 +21,32 @@ const priceScore = amount > 0 ? 70 : 0;
 return Math.min(priceScore + Math.round(timelineScore * 0.3), 100);
 }
 
+function normalizeAmount(value: string | number) {
+const amount = Number(String(value).replace(/[^0-9.]/g, ""));
+
+if (!Number.isFinite(amount) || amount <= 0) {
+return null;
+}
+
+return amount;
+}
+
+function isOpenForQuotes(rfq: {
+status: string | null;
+awarded_quote_id?: string | null;
+awarded_at?: string | null;
+}) {
+const status = String(rfq.status || "open").toLowerCase();
+
+if (status !== "open") return false;
+if (rfq.awarded_quote_id) return false;
+if (rfq.awarded_at) return false;
+
+return true;
+}
+
 export async function POST(request: Request) {
+try {
 const supabase = await createClient();
 
 const {
@@ -35,9 +60,13 @@ return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
 const body = await request.json();
 
-const amount = Number(body.amount);
+const slug = String(body.slug || "").trim();
+const rfqId = String(body.rfqId || "").trim();
+const amount = normalizeAmount(body.amount || "");
+const timeline = String(body.timeline || "").trim();
+const message = String(body.message || "").trim();
 
-if (!body.slug || Number.isNaN(amount) || amount <= 0) {
+if ((!slug && !rfqId) || !amount || !timeline || !message) {
 return NextResponse.json(
 { error: "Invalid quote submission" },
 { status: 400 }
@@ -57,21 +86,47 @@ return NextResponse.json(
 );
 }
 
-const { data: rfq, error: rfqError } = await supabase
+const rfqQuery = supabase
 .from("rfqs")
-.select("id, title, slug, company_id")
-.eq("slug", body.slug)
-.single();
+.select("id, title, slug, status, company_id, awarded_quote_id, awarded_at");
+
+const { data: rfq, error: rfqError } = rfqId
+? await rfqQuery.eq("id", rfqId).single()
+: await rfqQuery.eq("slug", slug).single();
 
 if (rfqError || !rfq) {
 return NextResponse.json({ error: "RFQ not found" }, { status: 404 });
 }
 
-if (rfq.company_id !== profile.company_id) {
-return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+if (!isOpenForQuotes(rfq)) {
+return NextResponse.json(
+{ error: "This RFQ is no longer accepting quotes." },
+{ status: 400 }
+);
 }
 
-const score = calculateScore(amount, String(body.timeline || ""));
+if (rfq.company_id === profile.company_id) {
+return NextResponse.json(
+{ error: "Your company cannot submit a quote to its own RFQ." },
+{ status: 403 }
+);
+}
+
+const { data: existingQuote } = await supabase
+.from("quotes")
+.select("id")
+.eq("rfq_id", rfq.id)
+.eq("company_id", profile.company_id)
+.maybeSingle();
+
+if (existingQuote) {
+return NextResponse.json(
+{ error: "Your company has already submitted a quote for this RFQ." },
+{ status: 409 }
+);
+}
+
+const score = calculateScore(amount, timeline);
 
 const { data: quote, error: quoteError } = await supabase
 .from("quotes")
@@ -80,8 +135,8 @@ rfq_id: rfq.id,
 company_id: profile.company_id,
 user_id: user.id,
 amount,
-timeline: body.timeline,
-message: body.message,
+timeline,
+message,
 status: "submitted",
 decision: "pending",
 score,
@@ -106,13 +161,13 @@ metadata: {
 rfq_id: rfq.id,
 rfq_title: rfq.title,
 amount,
-timeline: body.timeline,
+timeline,
 score,
+submitted_at: new Date().toISOString(),
 },
 });
 
 await supabase.from("notifications").insert({
-company_id: profile.company_id,
 title: "Quote Submitted",
 message: `A new quote was submitted for ${rfq.title}.`,
 type: "quote",
@@ -122,5 +177,14 @@ is_read: false,
 return NextResponse.json({
 success: true,
 quote,
+redirectTo: `/rfq/${rfq.slug}`,
 });
+} catch (error) {
+console.error(error);
+
+return NextResponse.json(
+{ error: "Internal server error" },
+{ status: 500 }
+);
+}
 }

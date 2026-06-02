@@ -11,7 +11,18 @@ category: string | null;
 location: string | null;
 budget: number | string | null;
 status: string | null;
+company_id: string | null;
 created_at?: string | null;
+};
+
+type Profile = {
+company_id: string | null;
+role: string | null;
+};
+
+type Company = {
+id: string;
+network_role: string | null;
 };
 
 function getStatusLabel(status: string | null) {
@@ -32,6 +43,36 @@ if (status === "closed") return "View Closed →";
 return "Open →";
 }
 
+function isSupplierCompany(networkRole: string | null | undefined) {
+const value = String(networkRole || "").toLowerCase();
+
+return value.includes("vendor") || value.includes("supplier");
+}
+
+function canCreateRFQ(networkRole: string | null | undefined) {
+return !isSupplierCompany(networkRole);
+}
+
+function getPageDescription(networkRole: string | null | undefined) {
+if (isSupplierCompany(networkRole)) {
+return "Browse open procurement opportunities from enterprise buyers and submit supplier quotes.";
+}
+
+return "Browse, monitor, and manage procurement opportunities connected to your enterprise workspace.";
+}
+
+function getMarketplaceMode(networkRole: string | null | undefined) {
+if (isSupplierCompany(networkRole)) {
+return "Supplier View";
+}
+
+return "Buyer Workspace";
+}
+
+function isOpenRFQ(status: string | null) {
+return !status || status === "open";
+}
+
 export default async function RFQMarketplacePage() {
 const supabase = await createClient();
 
@@ -39,15 +80,35 @@ const {
 data: { user },
 } = await supabase.auth.getUser();
 
-const { data: profile } = user
+const { data: profileData } = user
 ? await supabase
 .from("profiles")
-.select("company_id")
+.select("company_id, role")
 .eq("id", user.id)
 .single()
 : { data: null };
 
-const { data: rfqs } = profile?.company_id
+const profile = profileData as Profile | null;
+
+const { data: companyData } = profile?.company_id
+? await supabase
+.from("companies")
+.select("id, network_role")
+.eq("id", profile.company_id)
+.single()
+: { data: null };
+
+const company = companyData as Company | null;
+const supplierMode = isSupplierCompany(company?.network_role);
+
+const { data: rfqs } = supplierMode
+? await supabase
+.from("rfqs")
+.select("*")
+.or("status.eq.open,status.is.null")
+.neq("company_id", profile?.company_id || "")
+.order("created_at", { ascending: false })
+: profile?.company_id
 ? await supabase
 .from("rfqs")
 .select("*")
@@ -57,9 +118,7 @@ const { data: rfqs } = profile?.company_id
 
 const rfqList = (rfqs ?? []) as RFQ[];
 
-const openCount = rfqList.filter(
-(rfq) => !rfq.status || rfq.status === "open"
-).length;
+const openCount = rfqList.filter((rfq) => isOpenRFQ(rfq.status)).length;
 
 const awardedCount = rfqList.filter(
 (rfq) => rfq.status === "awarded"
@@ -80,18 +139,23 @@ Procurement Marketplace
 RFQ Marketplace
 </h1>
 
-<p className="mt-4 max-w-2xl text-sm text-slate-600">
-Browse, monitor, and manage procurement opportunities connected to
-your enterprise workspace.
+<p className="mt-4 max-w-2xl text-sm leading-6 text-slate-600">
+{getPageDescription(company?.network_role)}
+</p>
+
+<p className="mt-3 text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+Marketplace Mode: {getMarketplaceMode(company?.network_role)}
 </p>
 </div>
 
+{canCreateRFQ(company?.network_role) ? (
 <Link
 href="/rfq/new"
 className="rounded-full bg-slate-950 px-6 py-3 text-sm font-bold text-white transition hover:bg-slate-800"
 >
 Create RFQ
 </Link>
+) : null}
 </div>
 
 <section className="mt-8 grid gap-4 md:grid-cols-4">
@@ -147,7 +211,17 @@ ${Number(rfq.budget || 0).toLocaleString()}
 </div>
 </div>
 
-<div className="mt-6 flex items-center justify-end">
+<div className="mt-6 flex items-center justify-between gap-4">
+{supplierMode ? (
+<span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-black text-slate-600">
+Supplier Opportunity
+</span>
+) : (
+<span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-black text-slate-600">
+Your Company RFQ
+</span>
+)}
+
 <span className="text-sm font-black text-slate-950 transition group-hover:translate-x-1">
 {getActionLabel(rfq.status)}
 </span>
@@ -160,16 +234,20 @@ ${Number(rfq.budget || 0).toLocaleString()}
 No RFQs found
 </h2>
 
-<p className="mt-2 text-sm text-slate-600">
-Create your first company-scoped procurement opportunity.
+<p className="mt-2 text-sm leading-6 text-slate-600">
+{supplierMode
+? "No open buyer RFQs are currently available for supplier quotes."
+: "Create your first company-scoped procurement opportunity."}
 </p>
 
+{canCreateRFQ(company?.network_role) ? (
 <Link
 href="/rfq/new"
 className="mt-6 inline-flex rounded-full bg-slate-950 px-6 py-3 text-sm font-bold text-white"
 >
 Create RFQ
 </Link>
+) : null}
 </div>
 )}
 </section>

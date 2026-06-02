@@ -3,12 +3,28 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-type Props = {
+type AwardContractButtonProps = {
 quoteId: string;
 disabled?: boolean;
 };
 
-export default function AwardContractButton({ quoteId, disabled = false }: Props) {
+type AwardContractResponse = {
+success?: boolean;
+error?: string;
+redirectTo?: string;
+rfq?: {
+slug?: string | null;
+};
+warnings?: {
+notification?: string | null;
+audit?: string | null;
+};
+};
+
+export default function AwardContractButton({
+quoteId,
+disabled = false,
+}: AwardContractButtonProps) {
 const router = useRouter();
 
 const [loading, setLoading] = useState(false);
@@ -23,10 +39,10 @@ const confirmed = window.confirm(
 
 if (!confirmed) return;
 
-try {
 setLoading(true);
 setError("");
 
+try {
 const response = await fetch("/api/award-contract", {
 method: "POST",
 headers: {
@@ -37,24 +53,37 @@ quoteId,
 }),
 });
 
-const data = await response.json();
+const data = (await response.json()) as AwardContractResponse;
 
 if (!response.ok) {
-setError(data.error || "Failed to award contract");
+setError(data.error || "Failed to award contract.");
+return;
+}
+
+if (data.warnings?.notification) {
+console.warn("Award notification warning:", data.warnings.notification);
+}
+
+if (data.warnings?.audit) {
+console.warn("Award audit warning:", data.warnings.audit);
+}
+
+if (data.redirectTo) {
+router.push(data.redirectTo);
+router.refresh();
+return;
+}
+
+if (data.rfq?.slug) {
+router.push(`/rfq/${data.rfq.slug}`);
+router.refresh();
 return;
 }
 
 router.refresh();
-
-if (data.rfqSlug) {
-window.location.href = `/rfq/${data.rfqSlug}/compare`;
-return;
-}
-
-window.location.reload();
 } catch (awardError) {
 console.error(awardError);
-setError("Failed to award contract");
+setError("Failed to award contract.");
 } finally {
 setLoading(false);
 }
@@ -66,13 +95,15 @@ return (
 type="button"
 onClick={handleAward}
 disabled={loading || disabled}
-className="rounded-full bg-slate-950 px-5 py-2 text-sm font-bold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500"
+className="rounded-full bg-green-700 px-5 py-2 text-sm font-bold text-white transition hover:bg-green-800 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500"
 >
 {loading ? "Awarding..." : "Award Contract"}
 </button>
 
 {error ? (
-<p className="max-w-[180px] text-xs font-bold text-red-600">{error}</p>
+<p className="max-w-[220px] text-xs font-bold leading-5 text-red-600">
+{error}
+</p>
 ) : null}
 </div>
 );

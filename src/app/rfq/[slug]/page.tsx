@@ -1,13 +1,23 @@
 import Link from "next/link";
 
+import AwardContractButton from "@/components/award-contract-button";
 import { createClient } from "@/lib/supabase/server";
 
 type PageProps = {
 params: Promise<{ slug: string }>;
 };
 
+type Profile = {
+id: string;
+email: string | null;
+role: string | null;
+company_id: string | null;
+};
+
 type Quote = {
 id: string;
+company_id: string | null;
+user_id: string | null;
 amount: number | string | null;
 timeline: string | null;
 message: string | null;
@@ -73,6 +83,20 @@ export default async function RFQDetailPage({ params }: PageProps) {
 const { slug } = await params;
 const supabase = await createClient();
 
+const {
+data: { user },
+} = await supabase.auth.getUser();
+
+const { data: profileData } = user
+? await supabase
+.from("profiles")
+.select("id, email, role, company_id")
+.eq("id", user.id)
+.single()
+: { data: null };
+
+const profile = profileData as Profile | null;
+
 const { data: rfq } = await supabase
 .from("rfqs")
 .select("*")
@@ -87,11 +111,27 @@ return (
 );
 }
 
-const { data: quotes } = await supabase
+const isOwner = Boolean(
+profile?.company_id && rfq.company_id === profile.company_id
+);
+
+const rfqStatus = String(rfq.status || "open");
+const isOpen = !rfq.status || rfqStatus === "open";
+
+const { data: quotes } = isOwner
+? await supabase
 .from("quotes")
 .select("*")
 .eq("rfq_id", rfq.id)
-.order("amount", { ascending: true });
+.order("amount", { ascending: true })
+: profile?.company_id
+? await supabase
+.from("quotes")
+.select("*")
+.eq("rfq_id", rfq.id)
+.eq("company_id", profile.company_id)
+.order("created_at", { ascending: false })
+: { data: [] };
 
 const quoteList = (quotes ?? []) as Quote[];
 
@@ -131,7 +171,7 @@ totalScore,
 });
 
 const recommendedQuote =
-scoredQuotes.length > 0
+isOwner && scoredQuotes.length > 0
 ? scoredQuotes.reduce((best, quote) =>
 quote.totalScore > best.totalScore ? quote : best
 )
@@ -142,13 +182,10 @@ const awardedQuote = scoredQuotes.find(
 );
 
 const potentialSavings =
-recommendedQuote && averageBid
-? averageBid - recommendedQuote.amountNumber
-: 0;
+recommendedQuote && averageBid ? averageBid - recommendedQuote.amountNumber : 0;
 
-const rfqStatus = String(rfq.status || "open");
-const isOpen = !rfq.status || rfqStatus === "open";
-const isAwarded = rfqStatus === "awarded";
+const hasMyQuote = !isOwner && quoteList.length > 0;
+const canSubmitQuote = !isOwner && isOpen && !hasMyQuote;
 
 return (
 <main className="min-h-screen bg-[#f6f6f3] px-8 py-10">
@@ -185,7 +222,7 @@ rfq.status
 {getRFQStatusLabel(rfq.status)}
 </span>
 
-{isOpen ? (
+{canSubmitQuote ? (
 <Link
 href={`/rfq/${rfq.slug}/submit`}
 className="rounded-full bg-slate-950 px-6 py-3 text-sm font-bold text-white transition hover:bg-slate-800"
@@ -194,7 +231,13 @@ Submit Quote
 </Link>
 ) : null}
 
-{isAwarded && awardedQuote ? (
+{!isOwner && hasMyQuote ? (
+<p className="text-sm font-bold text-slate-500">
+Your company has submitted a quote.
+</p>
+) : null}
+
+{isOwner && rfqStatus === "awarded" && awardedQuote ? (
 <p className="text-sm font-bold text-green-700">
 Awarded at {formatMoney(awardedQuote.amountNumber)}
 </p>
@@ -210,6 +253,7 @@ Awarded at {formatMoney(awardedQuote.amountNumber)}
 </div>
 </section>
 
+{isOwner ? (
 <section className="mt-8 grid gap-6 md:grid-cols-4">
 <InsightCard
 title="Quotes"
@@ -235,25 +279,58 @@ detail="Compared to average bid"
 
 <InsightCard
 title="Awarded"
-value={awardedQuote ? formatMoney(awardedQuote.amountNumber) : "Not yet"}
+value={
+awardedQuote ? formatMoney(awardedQuote.amountNumber) : "Not yet"
+}
 detail="Current award decision"
 />
 </section>
+) : (
+<section className="mt-8 grid gap-6 md:grid-cols-3">
+<InsightCard
+title="Your Quote"
+value={
+scoredQuotes[0] ? formatMoney(scoredQuotes[0].amountNumber) : "Not submitted"
+}
+detail="Visible only to your company"
+/>
+
+<InsightCard
+title="Timeline"
+value={scoredQuotes[0]?.timeline || "Pending"}
+detail="Your submitted delivery schedule"
+/>
+
+<InsightCard
+title="Status"
+value={scoredQuotes[0]?.decision || "Open for quote"}
+detail="Private supplier submission status"
+/>
+</section>
+)}
 
 <section className="mt-8 rounded-[32px] border border-black/5 bg-white p-8">
 <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
 <div>
 <p className="text-xs font-black uppercase tracking-[0.3em] text-orange-500">
-Quote Intelligence
+{isOwner ? "Quote Intelligence" : "Supplier Submission"}
 </p>
 
 <h2 className="mt-3 text-3xl font-black text-slate-950">
-Supplier Quote Scoring
+{isOwner ? "Supplier Quote Scoring" : "Your Company Quote"}
 </h2>
+
+{!isOwner ? (
+<p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
+Supplier pricing is confidential. You can only view your own
+submission. Competitor pricing and award controls are visible
+only to the RFQ owner.
+</p>
+) : null}
 </div>
 
 <div className="flex flex-wrap gap-3">
-{isOpen ? (
+{canSubmitQuote ? (
 <Link
 href={`/rfq/${rfq.slug}/submit`}
 className="rounded-full bg-white px-6 py-3 text-sm font-bold text-slate-950 shadow-sm transition hover:shadow-md"
@@ -262,15 +339,18 @@ Submit Quote
 </Link>
 ) : null}
 
+{isOwner ? (
 <Link
 href={`/rfq/${rfq.slug}/compare`}
 className="rounded-full bg-slate-950 px-6 py-3 text-sm font-bold text-white transition hover:bg-slate-800"
 >
 Open Compare View
 </Link>
+) : null}
 </div>
 </div>
 
+{isOwner ? (
 <div className="mt-6 overflow-hidden rounded-2xl border border-slate-200">
 <div className="grid grid-cols-6 bg-slate-950 px-6 py-4 text-sm font-bold text-white">
 <div>Amount</div>
@@ -278,7 +358,7 @@ Open Compare View
 <div>Decision</div>
 <div>Score</div>
 <div>Message</div>
-<div>Signals</div>
+<div>Actions</div>
 </div>
 
 {scoredQuotes.map((quote) => {
@@ -291,6 +371,7 @@ highestAmount !== lowestAmount &&
 quote.amountNumber === highestAmount;
 const belowAverage =
 averageBid > 0 && quote.amountNumber <= averageBid;
+const canAward = isOpen && quote.decision !== "awarded";
 
 return (
 <div
@@ -333,6 +414,7 @@ Price {quote.priceScore} · Time {quote.timelineScore}
 {quote.message || "No message"}
 </div>
 
+<div className="space-y-3">
 <div className="space-y-2">
 {isRecommended && <Badge>Recommended</Badge>}
 {isLowest && <Badge>Lowest Bid</Badge>}
@@ -340,36 +422,110 @@ Price {quote.priceScore} · Time {quote.timelineScore}
 {quote.timelineScore >= 24 && <Badge>Strong Timeline</Badge>}
 {isHighest && <Badge>Highest Bid</Badge>}
 </div>
+
+{canAward ? <AwardContractButton quoteId={quote.id} /> : null}
+
+{quote.decision === "awarded" ? (
+<p className="text-xs font-black text-green-700">
+Contract awarded
+</p>
+) : null}
+</div>
 </div>
 );
 })}
 
 {scoredQuotes.length === 0 && (
-<div className="px-6 py-12 text-center">
-<p className="text-lg font-black text-slate-950">
-No supplier quotes submitted yet.
-</p>
-
-<p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-slate-500">
-This RFQ is open and ready for supplier pricing. Submit the
-first quote to activate quote intelligence, bid comparison, and
-award recommendations.
-</p>
-
-{isOpen ? (
-<Link
-href={`/rfq/${rfq.slug}/submit`}
-className="mt-6 inline-flex rounded-full bg-slate-950 px-6 py-3 text-sm font-bold text-white transition hover:bg-slate-800"
->
-Submit First Quote
-</Link>
-) : null}
-</div>
+<EmptyQuoteState
+isOpen={isOpen}
+rfqSlug={rfq.slug}
+canSubmitQuote={false}
+/>
 )}
 </div>
+) : (
+<div className="mt-6 overflow-hidden rounded-2xl border border-slate-200">
+<div className="grid grid-cols-4 bg-slate-950 px-6 py-4 text-sm font-bold text-white">
+<div>Your Amount</div>
+<div>Timeline</div>
+<div>Status</div>
+<div>Message</div>
+</div>
+
+{scoredQuotes.length > 0 ? (
+scoredQuotes.map((quote) => (
+<div
+key={quote.id}
+className="grid grid-cols-4 items-center border-t border-slate-100 px-6 py-5"
+>
+<div className="text-xl font-black text-slate-950">
+{formatMoney(quote.amountNumber)}
+</div>
+
+<div className="text-sm font-semibold text-slate-600">
+{quote.timeline || "N/A"}
+</div>
+
+<div>
+<span
+className={`rounded-full px-3 py-1 text-xs font-bold ${getDecisionClass(
+quote.decision
+)}`}
+>
+{quote.decision || "submitted"}
+</span>
+</div>
+
+<div className="text-sm text-slate-600">
+{quote.message || "No message"}
+</div>
+</div>
+))
+) : (
+<EmptyQuoteState
+isOpen={isOpen}
+rfqSlug={rfq.slug}
+canSubmitQuote={canSubmitQuote}
+/>
+)}
+</div>
+)}
 </section>
 </div>
 </main>
+);
+}
+
+function EmptyQuoteState({
+isOpen,
+rfqSlug,
+canSubmitQuote,
+}: {
+isOpen: boolean;
+rfqSlug: string;
+canSubmitQuote: boolean;
+}) {
+return (
+<div className="px-6 py-12 text-center">
+<p className="text-lg font-black text-slate-950">
+No quote submitted yet.
+</p>
+
+<p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-slate-500">
+{isOpen
+? "This RFQ is open and ready for supplier pricing."
+: "This RFQ is no longer accepting quotes."}
+</p>
+
+{canSubmitQuote ? (
+<Link
+href={`/rfq/${rfqSlug}/submit`}
+className="mt-6 inline-flex rounded-full bg-slate-950 px-6 py-3 text-sm font-bold text-white transition hover:bg-slate-800"
+>
+Submit Quote
+</Link>
+) : null}
+</div>
 );
 }
 
