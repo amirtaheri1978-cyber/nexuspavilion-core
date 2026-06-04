@@ -46,6 +46,34 @@ if (!Number.isFinite(amount)) return "$0";
 return `$${amount.toLocaleString()}`;
 }
 
+function getRiskLevel({
+amount,
+averageBid,
+lowestAmount,
+highestAmount,
+totalScore,
+}: {
+amount: number;
+averageBid: number;
+lowestAmount: number | null;
+highestAmount: number | null;
+totalScore: number;
+}) {
+if (!averageBid || !lowestAmount || !highestAmount) return "Pending";
+if (amount < averageBid * 0.75) return "High Risk";
+if (amount === highestAmount && highestAmount !== lowestAmount) return "Medium Risk";
+if (totalScore >= 90) return "Low Risk";
+if (totalScore >= 80) return "Medium Risk";
+return "High Risk";
+}
+
+function getRiskClass(risk: string) {
+if (risk === "Low Risk") return "bg-green-100 text-green-700";
+if (risk === "Medium Risk") return "bg-yellow-100 text-yellow-700";
+if (risk === "High Risk") return "bg-red-100 text-red-700";
+return "bg-slate-100 text-slate-600";
+}
+
 export default async function CompareQuotesPage({ params }: PageProps) {
 const { slug } = await params;
 const supabase = await createClient();
@@ -98,12 +126,33 @@ lowestAmount && amountNumber > 0
 const timelineScore = Math.round(getTimelineScore(quote.timeline) * 0.3);
 const totalScore = Math.min(priceScore + timelineScore, 100);
 
+const awardProbability = Math.min(
+98,
+Math.max(
+25,
+totalScore +
+(amountNumber === lowestAmount ? 5 : 0) +
+(timelineScore >= 24 ? 3 : 0) -
+(averageBid > 0 && amountNumber > averageBid ? 5 : 0)
+)
+);
+
+const riskLevel = getRiskLevel({
+amount: amountNumber,
+averageBid,
+lowestAmount,
+highestAmount,
+totalScore,
+});
+
 return {
 ...quote,
 amountNumber,
 priceScore,
 timelineScore,
 totalScore,
+awardProbability,
+riskLevel,
 };
 });
 
@@ -137,14 +186,11 @@ recommendedQuote.totalScore +
 )
 : 0;
 
-const riskLevel =
-!recommendedQuote || scoredQuotes.length === 0
-? "Pending"
-: recommendedQuote.totalScore >= 90
-? "Low Risk"
-: recommendedQuote.totalScore >= 80
-? "Moderate Risk"
-: "High Risk";
+const executiveSummary = recommendedQuote
+? `${formatMoney(
+recommendedQuote.amountNumber
+)} is currently the strongest award path with ${confidenceScore}% confidence and ${recommendedQuote.riskLevel.toLowerCase()} profile.`
+: "Submit supplier quotes to activate procurement intelligence.";
 
 const aiReasons = recommendedQuote
 ? [
@@ -154,9 +200,8 @@ recommendedQuote.amountNumber === lowestAmount
 recommendedQuote.timelineScore >= 24
 ? "Strong delivery timeline"
 : "Acceptable delivery timeline",
-recommendedQuote.totalScore >= 90
-? "High procurement score"
-: "Balanced price and timeline score",
+`${recommendedQuote.awardProbability}% award probability`,
+`${recommendedQuote.riskLevel} procurement risk`,
 potentialSavings > 0
 ? `${formatMoney(Math.max(potentialSavings, 0))} estimated savings versus average bid`
 : "Comparable to average bid",
@@ -178,8 +223,8 @@ Procurement Intelligence
 <h1 className="mt-3 text-5xl font-black text-black">{rfq.title}</h1>
 
 <p className="mt-3 text-lg text-black/60">
-Compare supplier quotes using live pricing, timeline, and award
-decision data.
+Compare supplier quotes using pricing, timeline, award probability,
+procurement risk, and decision intelligence.
 </p>
 </section>
 
@@ -191,27 +236,29 @@ recommendedQuote
 ? formatMoney(recommendedQuote.amountNumber)
 : "No bids"
 }
-detail="Based on price and timeline score"
+detail="Best price, timeline, and risk profile"
 />
 
 <InsightCard
-title="Average Bid"
-value={formatMoney(averageBid)}
-detail="Across all submitted quotes"
+title="Award Probability"
+value={
+recommendedQuote
+? `${recommendedQuote.awardProbability}%`
+: "Pending"
+}
+detail="Predicted award strength"
+/>
+
+<InsightCard
+title="Risk Level"
+value={recommendedQuote ? recommendedQuote.riskLevel : "Pending"}
+detail="Procurement risk signal"
 />
 
 <InsightCard
 title="Potential Savings"
 value={formatMoney(Math.max(potentialSavings, 0))}
 detail="Compared to average bid"
-/>
-
-<InsightCard
-title="Awarded Contract"
-value={
-awardedQuote ? formatMoney(awardedQuote.amountNumber) : "Pending"
-}
-detail="Current procurement decision"
 />
 </section>
 
@@ -223,12 +270,11 @@ AI Procurement Intelligence
 <div className="mt-4 grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
 <div>
 <h2 className="text-3xl font-black text-slate-950">
-Award Recommendation
+Award Prediction Engine
 </h2>
 
 <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">
-Nexus evaluates quote price, delivery timeline, scoring strength,
-and projected savings to recommend the strongest award path.
+{executiveSummary}
 </p>
 
 <div className="mt-6 grid gap-4 md:grid-cols-3">
@@ -236,8 +282,6 @@ and projected savings to recommend the strongest award path.
 title="Confidence"
 value={recommendedQuote ? `${confidenceScore}%` : "Pending"}
 />
-
-<MiniCard title="Risk Level" value={riskLevel} />
 
 <MiniCard
 title="Suggested Award"
@@ -247,12 +291,17 @@ recommendedQuote
 : "Pending"
 }
 />
+
+<MiniCard
+title="Risk"
+value={recommendedQuote ? recommendedQuote.riskLevel : "Pending"}
+/>
 </div>
 </div>
 
 <div className="rounded-3xl bg-slate-50 p-6">
 <p className="text-xs font-black uppercase tracking-[0.25em] text-slate-400">
-Decision Reasons
+Recommendation Reasons
 </p>
 
 <div className="mt-4 space-y-3">
@@ -276,13 +325,14 @@ Submit quotes to activate AI procurement recommendations.
 </section>
 
 <div className="mt-8 overflow-hidden rounded-[28px] border border-black/5 bg-white">
-<div className="grid grid-cols-7 bg-black px-6 py-4 text-sm font-semibold text-white">
+<div className="grid grid-cols-8 bg-black px-6 py-4 text-sm font-semibold text-white">
 <div>Amount</div>
 <div>Timeline</div>
 <div>Decision</div>
 <div>Score</div>
+<div>Probability</div>
+<div>Risk</div>
 <div>Message</div>
-<div>Intelligence</div>
 <div>Action</div>
 </div>
 
@@ -300,14 +350,14 @@ averageBid > 0 && quote.amountNumber <= averageBid;
 return (
 <div
 key={quote.id}
-className="grid grid-cols-7 items-center border-t border-black/5 px-6 py-6"
+className="grid grid-cols-8 items-center border-t border-black/5 px-6 py-6"
 >
 <div className="text-2xl font-bold text-black">
 {formatMoney(quote.amountNumber)}
 </div>
 
 <div className="font-medium text-black/70">
-{quote.timeline}
+{quote.timeline || "N/A"}
 </div>
 
 <div>
@@ -330,9 +380,23 @@ Price {quote.priceScore} · Time {quote.timelineScore}
 </div>
 </div>
 
-<div className="text-black/60">{quote.message}</div>
+<div className="text-lg font-black text-slate-950">
+{quote.awardProbability}%
+</div>
 
-<div className="space-y-2">
+<div>
+<span
+className={`rounded-full px-3 py-1 text-xs font-black ${getRiskClass(
+quote.riskLevel
+)}`}
+>
+{quote.riskLevel}
+</span>
+</div>
+
+<div className="space-y-2 text-sm text-black/60">
+<p>{quote.message || "No message"}</p>
+
 {isRecommended && (
 <Badge className="bg-orange-100 text-orange-700">
 Recommended
