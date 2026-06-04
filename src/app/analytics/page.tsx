@@ -1,7 +1,20 @@
 import Link from "next/link";
-
 import AnalyticsChart from "@/components/analytics-chart";
 import { createClient } from "@/lib/supabase/server";
+
+function getHealthLabel(score: number) {
+if (score >= 85) return "Strong";
+if (score >= 70) return "Healthy";
+if (score >= 55) return "Moderate";
+return "Needs Attention";
+}
+
+function getCompetitionLabel(avgQuotesPerRfq: number) {
+if (avgQuotesPerRfq >= 4) return "High Competition";
+if (avgQuotesPerRfq >= 2) return "Healthy Competition";
+if (avgQuotesPerRfq >= 1) return "Limited Competition";
+return "No Competition Yet";
+}
 
 export default async function AnalyticsPage() {
 const supabase = await createClient();
@@ -33,13 +46,21 @@ rfqIds.length > 0
 ? await supabase.from("quotes").select("*").in("rfq_id", rfqIds)
 : { data: [] };
 
-const { data: notifications } = await supabase
+const { data: notifications } = companyId
+? await supabase
+.from("notifications")
+.select("*")
+.eq("company_id", companyId)
+.order("created_at", { ascending: false })
+.limit(5)
+: await supabase
 .from("notifications")
 .select("*")
 .order("created_at", { ascending: false })
 .limit(5);
 
 const quoteList = quotes ?? [];
+
 const { data: companies } = await supabase
 .from("companies")
 .select("id,name");
@@ -57,16 +78,13 @@ const awardedQuotes = companyQuotes.filter(
 );
 
 const revenue = awardedQuotes.reduce(
-(total: number, quote: any) =>
-total + Number(quote.amount || 0),
+(total: number, quote: any) => total + Number(quote.amount || 0),
 0
 );
 
 const winRate =
 companyQuotes.length > 0
-? Math.round(
-(awardedQuotes.length / companyQuotes.length) * 100
-)
+? Math.round((awardedQuotes.length / companyQuotes.length) * 100)
 : 0;
 
 return {
@@ -75,10 +93,7 @@ quotes: companyQuotes.length,
 awards: awardedQuotes.length,
 revenue,
 winRate,
-score:
-winRate * 0.5 +
-awardedQuotes.length * 10 +
-revenue / 100000,
+score: winRate * 0.5 + awardedQuotes.length * 10 + revenue / 100000,
 };
 })
 .filter((vendor) => vendor.quotes > 0)
@@ -86,8 +101,10 @@ revenue / 100000,
 .slice(0, 10);
 
 const totalRfqs = rfqList.length;
-const activeRfqs = rfqList.filter((rfq: any) => rfq.status !== "awarded")
-.length;
+
+const activeRfqs = rfqList.filter(
+(rfq: any) => !rfq.status || rfq.status === "open"
+).length;
 
 const awardedContracts = quoteList.filter(
 (quote: any) => quote.decision === "awarded"
@@ -97,7 +114,7 @@ const supplierQuotes = quoteList.length;
 
 const quoteAmounts = quoteList
 .map((quote: any) => Number(quote.amount))
-.filter((amount) => !Number.isNaN(amount));
+.filter((amount) => Number.isFinite(amount));
 
 const procurementVolume = quoteAmounts.reduce(
 (total, amount) => total + amount,
@@ -122,6 +139,29 @@ const awardRate =
 supplierQuotes > 0
 ? Math.round((awardedContracts / supplierQuotes) * 100)
 : 0;
+
+const avgQuotesPerRfq =
+totalRfqs > 0 ? Math.round((supplierQuotes / totalRfqs) * 10) / 10 : 0;
+
+const supplierActivityScore = Math.min(100, supplierQuotes * 12);
+const competitionScore = Math.min(100, avgQuotesPerRfq * 25);
+const awardScore = Math.min(100, awardRate * 1.5);
+const savingsScore = potentialSavings > 0 ? 85 : 55;
+
+const procurementHealthScore = Math.round(
+supplierActivityScore * 0.25 +
+competitionScore * 0.25 +
+awardScore * 0.25 +
+savingsScore * 0.25
+);
+
+const procurementHealth = getHealthLabel(procurementHealthScore);
+const competitionIndex = getCompetitionLabel(avgQuotesPerRfq);
+
+const executiveSummary =
+totalRfqs === 0
+? "No RFQ activity has been created yet. Start by publishing procurement opportunities to activate executive intelligence."
+: `${procurementHealth} procurement health. ${competitionIndex}. Award conversion is ${awardRate}%, with ${supplierQuotes} supplier quotes and ${potentialSavings.toLocaleString()} dollars in estimated savings opportunity.`;
 
 const activityChartData = [
 { name: "RFQs", value: totalRfqs },
@@ -158,8 +198,50 @@ Procurement Analytics
 
 <p className="mt-4 max-w-3xl text-sm text-slate-600">
 Company-isolated analytics for RFQs, supplier quotes, awarded
-contracts, procurement volume, savings, and platform activity.
+contracts, procurement volume, savings, platform activity, and
+executive procurement intelligence.
 </p>
+</section>
+
+<section className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+<MetricCard title="Health Score" value={`${procurementHealthScore}/100`} />
+<MetricCard title="Procurement Health" value={procurementHealth} />
+<MetricCard title="Competition Index" value={competitionIndex} />
+<MetricCard
+title="Avg Quotes / RFQ"
+value={avgQuotesPerRfq.toString()}
+/>
+</section>
+
+<section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
+Executive Procurement Intelligence
+</p>
+
+<div className="mt-4 grid gap-6 lg:grid-cols-[1.3fr_0.7fr]">
+<div>
+<h2 className="text-3xl font-black text-slate-950">
+Procurement Health Summary
+</h2>
+
+<p className="mt-3 max-w-4xl text-sm leading-7 text-slate-600">
+{executiveSummary}
+</p>
+</div>
+
+<div className="rounded-3xl bg-slate-50 p-6">
+<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+AI Signals
+</p>
+
+<div className="mt-4 space-y-3">
+<SignalRow label="Supplier Activity" value={`${supplierActivityScore}/100`} />
+<SignalRow label="Competition" value={`${competitionScore}/100`} />
+<SignalRow label="Award Conversion" value={`${awardScore}/100`} />
+<SignalRow label="Savings Signal" value={`${savingsScore}/100`} />
+</div>
+</div>
+</div>
 </section>
 
 <section className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
@@ -169,10 +251,7 @@ contracts, procurement volume, savings, and platform activity.
 title="Awarded Contracts"
 value={awardedContracts.toString()}
 />
-<MetricCard
-title="Supplier Quotes"
-value={supplierQuotes.toString()}
-/>
+<MetricCard title="Supplier Quotes" value={supplierQuotes.toString()} />
 </section>
 
 <section className="mt-6 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
@@ -278,6 +357,7 @@ No activity yet.
 </div>
 </div>
 </section>
+
 <section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
 <p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
 Vendor Intelligence
@@ -291,42 +371,50 @@ Top Vendors
 <table className="w-full text-left">
 <thead className="bg-slate-950 text-white">
 <tr>
-<th className="px-5 py-4">Vendor</th>
-<th className="px-5 py-4">Quotes</th>
-<th className="px-5 py-4">Awards</th>
-<th className="px-5 py-4">Win Rate</th>
-<th className="px-5 py-4">Revenue</th>
+<th className="px-5 py-4 text-sm">Vendor</th>
+<th className="px-5 py-4 text-sm">Quotes</th>
+<th className="px-5 py-4 text-sm">Awards</th>
+<th className="px-5 py-4 text-sm">Win Rate</th>
+<th className="px-5 py-4 text-sm">Revenue</th>
 </tr>
 </thead>
 
 <tbody>
-{vendorLeaderboard.map((vendor) => (
-<tr key={vendor.name}>
-<td className="px-5 py-4 font-bold">
+{vendorLeaderboard.length > 0 ? (
+vendorLeaderboard.map((vendor) => (
+<tr key={vendor.name} className="border-t border-slate-100">
+<td className="px-5 py-4 font-bold text-slate-950">
 {vendor.name}
 </td>
-
-<td className="px-5 py-4">
+<td className="px-5 py-4 text-slate-600">
 {vendor.quotes}
 </td>
-
-<td className="px-5 py-4">
+<td className="px-5 py-4 text-slate-600">
 {vendor.awards}
 </td>
-
-<td className="px-5 py-4">
+<td className="px-5 py-4 text-slate-600">
 {vendor.winRate}%
 </td>
-
-<td className="px-5 py-4">
+<td className="px-5 py-4 text-slate-600">
 ${vendor.revenue.toLocaleString()}
 </td>
 </tr>
-))}
+))
+) : (
+<tr>
+<td
+colSpan={5}
+className="px-5 py-10 text-center text-sm font-semibold text-slate-500"
+>
+No vendor quote activity found.
+</td>
+</tr>
+)}
 </tbody>
 </table>
 </div>
 </section>
+
 <section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
 <p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
 Company RFQ Pipeline
@@ -389,6 +477,21 @@ return (
 {title}
 </p>
 <p className="mt-3 text-3xl font-black text-slate-950">{value}</p>
+</div>
+);
+}
+
+function SignalRow({
+label,
+value,
+}: {
+label: string;
+value: string;
+}) {
+return (
+<div className="flex items-center justify-between rounded-2xl bg-white px-4 py-3 shadow-sm">
+<p className="text-sm font-black text-slate-600">{label}</p>
+<p className="text-sm font-black text-slate-950">{value}</p>
 </div>
 );
 }
