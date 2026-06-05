@@ -488,6 +488,92 @@ enterpriseProcurementScore >= 80
 ? "Healthy"
 : "Needs Attention";
 
+const procurementOpportunityScore = Math.min(
+100,
+Math.round(
+potentialSavings / 1000 +
+avgQuotesPerRfq * 15 +
+awardRate * 0.3 +
+budgetUtilization * 0.2
+)
+);
+
+const opportunityLevel =
+procurementOpportunityScore >= 80
+? "High Opportunity"
+: procurementOpportunityScore >= 60
+? "Strong Opportunity"
+: procurementOpportunityScore >= 40
+? "Developing Opportunity"
+: "Early Opportunity";
+
+const bestProcurementCategory = topCategory;
+
+const savingsOpportunityLevel =
+potentialSavings > 50000
+? "Major Savings"
+: potentialSavings > 10000
+? "Strong Savings"
+: potentialSavings > 0
+? "Moderate Savings"
+: "Low Savings";
+
+const executiveCommandRecommendation =
+enterpriseProcurementScore >= 80 && procurementRiskIndex < 35
+? "Procurement performance is strong. Continue scaling supplier coverage and competitive RFQ activity."
+: procurementOpportunityScore >= 70
+? "High opportunity detected. Prioritize supplier expansion, competitive bidding, and category-level savings capture."
+: procurementRiskIndex >= 60
+? "Risk level is elevated. Review supplier dependency, award concentration, and RFQ conversion quality."
+: "Procurement operations are stable. Continue improving supplier participation and forecast confidence.";
+
+const executiveAlerts = [];
+
+if (procurementOpportunityScore >= 80) {
+executiveAlerts.push({
+level: "opportunity",
+title: "Major Savings Opportunity",
+message:
+"Category analysis indicates significant procurement savings potential.",
+});
+}
+
+if (predictionAccuracy >= 75) {
+executiveAlerts.push({
+level: "healthy",
+title: "Forecast Accuracy Above Target",
+message:
+"Prediction models are performing above the target threshold.",
+});
+}
+
+if (procurementRiskIndex >= 35) {
+executiveAlerts.push({
+level: "warning",
+title: "Supplier Dependency Risk",
+message:
+"Vendor concentration should be reviewed to reduce exposure.",
+});
+}
+
+if (supplierRanking.length <= 3) {
+executiveAlerts.push({
+level: "warning",
+title: "Limited Supplier Participation",
+message:
+"Expand supplier coverage to improve competition and pricing.",
+});
+}
+
+const boardRecommendation =
+procurementRiskIndex >= 60
+? "Reduce supplier dependency and review award concentration before scaling procurement volume."
+: procurementOpportunityScore >= 80
+? "Prioritize high-opportunity procurement categories and expand supplier participation to capture savings."
+: enterpriseProcurementScore >= 75
+? "Continue scaling competitive RFQs while maintaining supplier performance and forecast confidence."
+: "Improve RFQ participation, supplier coverage, and procurement data quality to strengthen executive confidence.";
+
 const activityChartData = [
 { name: "RFQs", value: totalRfqs },
 { name: "Active", value: activeRfqs },
@@ -512,6 +598,46 @@ className="text-sm font-semibold text-slate-600 hover:text-slate-950"
 ← Back to Dashboard
 </Link>
 
+<section className="mt-8 rounded-3xl border border-orange-200 bg-white p-8">
+<p className="text-xs font-black uppercase tracking-[0.3em] text-orange-500">
+Boardroom Dashboard
+</p>
+
+<div className="mt-5 grid gap-8 lg:grid-cols-[0.9fr_1.1fr]">
+<div>
+<h2 className="text-4xl font-black text-slate-950">
+CEO Procurement Brief
+</h2>
+
+<p className="mt-4 text-sm leading-7 text-slate-600">
+{boardRecommendation}
+</p>
+</div>
+
+<div className="grid gap-4 sm:grid-cols-2">
+<MetricCard
+title="Revenue Under Management"
+value={`$${procurementVolume.toLocaleString()}`}
+/>
+
+<MetricCard
+title="Savings Generated"
+value={`$${forecastSavings.toLocaleString()}`}
+/>
+
+<MetricCard
+title="Enterprise Score"
+value={`${enterpriseProcurementScore}/100`}
+/>
+
+<MetricCard
+title="Forecast Accuracy"
+value={`${predictionAccuracy}%`}
+/>
+</div>
+</div>
+</section>
+
 <section className="mt-8 rounded-3xl border border-slate-200 bg-white p-10">
 <p className="text-xs font-black uppercase tracking-[0.35em] text-orange-500">
 Executive Command Center
@@ -526,6 +652,100 @@ Company-isolated analytics for RFQs, supplier quotes, awarded
 contracts, procurement volume, savings, platform activity, and
 executive procurement intelligence.
 </p>
+</section>
+<section className="mt-8 rounded-3xl border border-slate-200 bg-slate-950 p-8 text-white">
+<p className="text-xs font-black uppercase tracking-[0.3em] text-orange-400">
+Executive Procurement Command Center
+</p>
+
+<div className="mt-5 grid gap-8 lg:grid-cols-[1fr_0.8fr]">
+<div>
+<h2 className="text-4xl font-black">
+Enterprise Procurement Control Tower
+</h2>
+
+<p className="mt-4 max-w-3xl text-sm leading-7 text-slate-300">
+{executiveCommandRecommendation}
+</p>
+</div>
+
+<div className="grid gap-4 sm:grid-cols-2">
+<div className="rounded-2xl bg-white/10 p-5">
+<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+Enterprise Score
+</p>
+<p className="mt-2 text-3xl font-black">
+{enterpriseProcurementScore}/100
+</p>
+</div>
+
+<div className="rounded-2xl bg-white/10 p-5">
+<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+Opportunity
+</p>
+<p className="mt-2 text-3xl font-black">
+{procurementOpportunityScore}/100
+</p>
+</div>
+
+<div className="rounded-2xl bg-white/10 p-5">
+<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+Risk Index
+</p>
+<p className="mt-2 text-3xl font-black">
+{procurementRiskIndex}/100
+</p>
+</div>
+
+<div className="rounded-2xl bg-white/10 p-5">
+<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+Forecast Accuracy
+</p>
+<p className="mt-2 text-3xl font-black">
+{predictionAccuracy}%
+</p>
+</div>
+</div>
+</div>
+</section>
+
+<section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
+Executive Alerts Center
+</p>
+
+<h2 className="mt-3 text-3xl font-black text-slate-950">
+Real-Time Executive Signals
+</h2>
+
+<div className="mt-6 space-y-4">
+{executiveAlerts.map((alert, index) => (
+<div
+key={index}
+className="rounded-2xl border border-slate-200 p-5"
+>
+<div className="flex items-center gap-3">
+<div
+className={`h-3 w-3 rounded-full ${
+alert.level === "healthy"
+? "bg-green-500"
+: alert.level === "opportunity"
+? "bg-yellow-500"
+: "bg-red-500"
+}`}
+/>
+
+<p className="font-black text-slate-950">
+{alert.title}
+</p>
+</div>
+
+<p className="mt-2 text-sm text-slate-600">
+{alert.message}
+</p>
+</div>
+))}
+</div>
 </section>
 
 <section className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
@@ -893,6 +1113,38 @@ No RFQ forecast data available.
 )}
 </tbody>
 </table>
+</div>
+</section>
+
+<section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
+Procurement Opportunity Engine
+</p>
+
+<h2 className="mt-3 text-3xl font-black text-slate-950">
+Opportunity Intelligence Center
+</h2>
+
+<div className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+<MetricCard
+title="Opportunity Score"
+value={`${procurementOpportunityScore}/100`}
+/>
+
+<MetricCard
+title="Opportunity Level"
+value={opportunityLevel}
+/>
+
+<MetricCard
+title="Best Category"
+value={bestProcurementCategory}
+/>
+
+<MetricCard
+title="Savings Signal"
+value={savingsOpportunityLevel}
+/>
 </div>
 </section>
 
