@@ -151,9 +151,7 @@ budgetTotal > 0 ? Math.round((awardedVolume / budgetTotal) * 100) : 0;
 
 const executiveProcurementHealth = Math.min(
 100,
-Math.round(
-awardRate * 0.4 + budgetUtilization * 0.3 + avgQuotesPerRfq * 10
-)
+Math.round(awardRate * 0.4 + budgetUtilization * 0.3 + avgQuotesPerRfq * 10)
 );
 
 const marketCompetitionIndex =
@@ -204,6 +202,7 @@ potentialSavings > 10000
 : awardedVolume > budgetTotal * 0.7
 ? "Award conversion is healthy. Continue scaling high-performing supplier relationships."
 : "Review supplier participation and RFQ attractiveness to improve procurement outcomes.";
+
 const strategicRecommendations: string[] = [];
 
 if (avgQuotesPerRfq < 2) {
@@ -244,11 +243,15 @@ strategicRecommendations.push(
 
 const awardProbabilityForecast = rfqList
 .map((rfq: any) => {
-const rfqQuotes = quoteList.filter((quote: any) => quote.rfq_id === rfq.id);
+const rfqQuotes = quoteList.filter(
+(quote: any) => quote.rfq_id === rfq.id
+);
 
 const lowestBid =
 rfqQuotes.length > 0
-? Math.min(...rfqQuotes.map((quote: any) => Number(quote.amount || 0)))
+? Math.min(
+...rfqQuotes.map((quote: any) => Number(quote.amount || 0))
+)
 : 0;
 
 const probability = Math.min(
@@ -273,68 +276,6 @@ status: rfq.status || "open",
 };
 })
 .slice(0, 10);
-
-const supplierRanking = companyList
-.map((company: any) => {
-const companyQuotes = quoteList.filter(
-(quote: any) => quote.company_id === company.id
-);
-
-const awardedQuotes = companyQuotes.filter(
-(quote: any) => quote.decision === "awarded"
-);
-
-const revenue = awardedQuotes.reduce(
-(total: number, quote: any) =>
-total + Number(quote.amount || 0),
-0
-);
-
-const winRate =
-companyQuotes.length > 0
-? Math.round(
-(awardedQuotes.length / companyQuotes.length) * 100
-)
-: 0;
-
-const participationScore = Math.min(
-100,
-companyQuotes.length * 5
-);
-
-const revenueScore = Math.min(
-100,
-revenue / 10000
-);
-
-const aiScore = Math.round(
-winRate * 0.45 +
-participationScore * 0.25 +
-revenueScore * 0.30
-);
-
-const tier =
-aiScore >= 90
-? "Platinum"
-: aiScore >= 80
-? "Gold"
-: aiScore >= 65
-? "Silver"
-: "Bronze";
-
-return {
-name: company.name,
-quotes: companyQuotes.length,
-awards: awardedQuotes.length,
-revenue,
-winRate,
-aiScore,
-tier,
-};
-})
-.filter((vendor) => vendor.quotes > 0)
-.sort((a, b) => b.aiScore - a.aiScore)
-.slice(0, 20);
 
 const vendorLeaderboard = companyList
 .map((company: any) => {
@@ -368,10 +309,101 @@ score: winRate * 0.5 + awardedQuotes.length * 10 + revenue / 100000,
 .filter((vendor) => vendor.quotes > 0)
 .sort((a, b) => b.score - a.score)
 .slice(0, 10);
-const procurementRiskIndex = Math.max(
-0,
-100 - procurementHealthScore
+
+const supplierRanking = companyList
+.map((company: any) => {
+const companyQuotes = quoteList.filter(
+(quote: any) => quote.company_id === company.id
 );
+
+const awardedQuotes = companyQuotes.filter(
+(quote: any) => quote.decision === "awarded"
+);
+
+const revenue = awardedQuotes.reduce(
+(total: number, quote: any) => total + Number(quote.amount || 0),
+0
+);
+
+const winRate =
+companyQuotes.length > 0
+? Math.round((awardedQuotes.length / companyQuotes.length) * 100)
+: 0;
+
+const participationScore = Math.min(100, companyQuotes.length * 5);
+const revenueScore = Math.min(100, revenue / 10000);
+
+const aiScore = Math.round(
+winRate * 0.45 + participationScore * 0.25 + revenueScore * 0.3
+);
+
+const tier =
+aiScore >= 90
+? "Platinum"
+: aiScore >= 80
+? "Gold"
+: aiScore >= 65
+? "Silver"
+: "Bronze";
+
+return {
+name: company.name,
+quotes: companyQuotes.length,
+awards: awardedQuotes.length,
+revenue,
+winRate,
+aiScore,
+tier,
+};
+})
+.filter((vendor) => vendor.quotes > 0)
+.sort((a, b) => b.aiScore - a.aiScore)
+.slice(0, 20);
+
+const topSupplierRevenue = Math.max(
+...supplierRanking.map((supplier) => supplier.revenue),
+0
+);
+
+const supplierRiskRadar = supplierRanking.map((supplier) => {
+const financialRisk = Math.max(
+5,
+Math.round(100 - supplier.revenue / 5000)
+);
+
+const performanceRisk = Math.max(5, Math.round(100 - supplier.winRate));
+
+const capacityRisk =
+supplier.quotes <= 1 ? 70 : supplier.quotes <= 3 ? 45 : 20;
+
+const dependencyRisk =
+topSupplierRevenue > 0 && supplier.revenue > topSupplierRevenue * 0.5
+? 75
+: 30;
+
+const deliveryRisk = Math.round((performanceRisk + capacityRisk) / 2);
+
+const overallRisk = Math.round(
+(financialRisk +
+performanceRisk +
+capacityRisk +
+dependencyRisk +
+deliveryRisk) /
+5
+);
+
+return {
+...supplier,
+financialRisk,
+performanceRisk,
+capacityRisk,
+dependencyRisk,
+deliveryRisk,
+overallRisk,
+};
+});
+
+const procurementRiskIndex = Math.max(0, 100 - procurementHealthScore);
 
 const supplierDependencyRisk =
 vendorLeaderboard.length <= 1
@@ -380,13 +412,10 @@ vendorLeaderboard.length <= 1
 ? "Medium"
 : "Low";
 
-const topVendorRevenue =
-vendorLeaderboard[0]?.revenue || 0;
+const topVendorRevenue = vendorLeaderboard[0]?.revenue || 0;
 
 const vendorConcentrationRisk =
-awardedVolume > 0
-? Math.round((topVendorRevenue / awardedVolume) * 100)
-: 0;
+awardedVolume > 0 ? Math.round((topVendorRevenue / awardedVolume) * 100) : 0;
 
 const concentrationLevel =
 vendorConcentrationRisk >= 70
@@ -413,6 +442,7 @@ procurementHealthScore >= 85
 : procurementHealthScore >= 55
 ? "Moderate"
 : "Low";
+
 const dataQualityScore = Math.min(
 100,
 Math.round(
@@ -426,10 +456,8 @@ Math.round(
 const supplierReliabilityScore =
 supplierRanking.length > 0
 ? Math.round(
-supplierRanking.reduce(
-(sum, vendor) => sum + vendor.winRate,
-0
-) / supplierRanking.length
+supplierRanking.reduce((sum, vendor) => sum + vendor.winRate, 0) /
+supplierRanking.length
 )
 : 0;
 
@@ -443,11 +471,22 @@ procurementHealthScore >= 80
 : 65;
 
 const awardPredictionConfidence =
-awardRate >= 50
-? "High"
-: awardRate >= 25
-? "Moderate"
-: "Low";
+awardRate >= 50 ? "High" : awardRate >= 25 ? "Moderate" : "Low";
+
+const enterpriseProcurementScore = Math.round(
+(procurementHealthScore +
+predictionAccuracy +
+dataQualityScore +
+(100 - procurementRiskIndex)) /
+4
+);
+
+const executiveStatus =
+enterpriseProcurementScore >= 80
+? "Excellent"
+: enterpriseProcurementScore >= 60
+? "Healthy"
+: "Needs Attention";
 
 const activityChartData = [
 { name: "RFQs", value: totalRfqs },
@@ -536,10 +575,7 @@ value={`${competitionScore}/100`}
 label="Award Conversion"
 value={`${awardScore}/100`}
 />
-<SignalRow
-label="Savings Signal"
-value={`${savingsScore}/100`}
-/>
+<SignalRow label="Savings Signal" value={`${savingsScore}/100`} />
 </div>
 </div>
 </div>
@@ -645,6 +681,7 @@ className="rounded-2xl bg-slate-100 p-4"
 <p className="text-sm font-black text-slate-950">
 {notification.title}
 </p>
+
 <p className="mt-1 text-xs text-slate-600">
 {notification.type}
 </p>
@@ -774,10 +811,12 @@ Recommended Action
 </p>
 </div>
 </section>
+
 <section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
 <p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
 AI Strategic Recommendations
 </p>
+
 <h2 className="mt-3 text-3xl font-black text-slate-950">
 Recommended Executive Actions
 </h2>
@@ -795,6 +834,7 @@ className="rounded-2xl border border-slate-200 bg-slate-50 p-5"
 ))}
 </div>
 </section>
+
 <section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
 <p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
 Award Probability Forecast
@@ -823,7 +863,9 @@ RFQ Award Forecast Engine
 {rfq.title}
 </td>
 
-<td className="px-5 py-4 text-slate-600">{rfq.category}</td>
+<td className="px-5 py-4 text-slate-600">
+{rfq.category}
+</td>
 
 <td className="px-5 py-4 text-slate-600">{rfq.quotes}</td>
 
@@ -853,6 +895,38 @@ No RFQ forecast data available.
 </table>
 </div>
 </section>
+
+<section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
+Executive KPI Scorecard
+</p>
+
+<h2 className="mt-3 text-3xl font-black text-slate-950">
+Enterprise Procurement Score
+</h2>
+
+<div className="mt-6 grid gap-4 md:grid-cols-5">
+<MetricCard
+title="Overall Score"
+value={`${enterpriseProcurementScore}/100`}
+/>
+
+<MetricCard title="Executive Status" value={executiveStatus} />
+
+<MetricCard
+title="Forecast Accuracy"
+value={`${predictionAccuracy}%`}
+/>
+
+<MetricCard
+title="Savings Forecast"
+value={`$${forecastSavings.toLocaleString()}`}
+/>
+
+<MetricCard title="AI Confidence" value={`${dataQualityScore}%`} />
+</div>
+</section>
+
 <section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
 <p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
 Executive Forecast
@@ -910,15 +984,19 @@ vendorLeaderboard.map((vendor) => (
 <td className="px-5 py-4 font-bold text-slate-950">
 {vendor.name}
 </td>
+
 <td className="px-5 py-4 text-slate-600">
 {vendor.quotes}
 </td>
+
 <td className="px-5 py-4 text-slate-600">
 {vendor.awards}
 </td>
+
 <td className="px-5 py-4 text-slate-600">
 {vendor.winRate}%
 </td>
+
 <td className="px-5 py-4 text-slate-600">
 ${vendor.revenue.toLocaleString()}
 </td>
@@ -938,6 +1016,58 @@ No vendor quote activity found.
 </table>
 </div>
 </section>
+
+<section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
+Supplier Risk Radar
+</p>
+
+<h2 className="mt-3 text-3xl font-black text-slate-950">
+Supplier Risk Intelligence
+</h2>
+
+<div className="mt-6 overflow-hidden rounded-2xl border border-slate-200">
+<table className="w-full text-left">
+<thead className="bg-slate-950 text-white">
+<tr>
+<th className="px-4 py-4 text-sm">Supplier</th>
+<th className="px-4 py-4 text-sm">Overall</th>
+<th className="px-4 py-4 text-sm">Financial</th>
+<th className="px-4 py-4 text-sm">Performance</th>
+<th className="px-4 py-4 text-sm">Capacity</th>
+<th className="px-4 py-4 text-sm">Dependency</th>
+</tr>
+</thead>
+
+<tbody>
+{supplierRiskRadar.map((supplier) => (
+<tr key={supplier.name} className="border-t border-slate-100">
+<td className="px-4 py-4 font-bold">{supplier.name}</td>
+<td className="px-4 py-4 font-black">
+{supplier.overallRisk}
+</td>
+<td className="px-4 py-4">{supplier.financialRisk}</td>
+<td className="px-4 py-4">{supplier.performanceRisk}</td>
+<td className="px-4 py-4">{supplier.capacityRisk}</td>
+<td className="px-4 py-4">{supplier.dependencyRisk}</td>
+</tr>
+))}
+
+{supplierRiskRadar.length === 0 && (
+<tr>
+<td
+colSpan={6}
+className="px-5 py-10 text-center text-sm font-semibold text-slate-500"
+>
+No supplier risk data available.
+</td>
+</tr>
+)}
+</tbody>
+</table>
+</div>
+</section>
+
 <section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
 <p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
 AI Supplier Ranking Engine
@@ -951,34 +1081,17 @@ Supplier Intelligence Ranking
 <table className="w-full text-left">
 <thead className="bg-slate-950 text-white">
 <tr>
-<th className="px-5 py-4 text-sm">
-Supplier
-</th>
-
-<th className="px-5 py-4 text-sm">
-AI Score
-</th>
-
-<th className="px-5 py-4 text-sm">
-Tier
-</th>
-
-<th className="px-5 py-4 text-sm">
-Win Rate
-</th>
-
-<th className="px-5 py-4 text-sm">
-Revenue
-</th>
+<th className="px-5 py-4 text-sm">Supplier</th>
+<th className="px-5 py-4 text-sm">AI Score</th>
+<th className="px-5 py-4 text-sm">Tier</th>
+<th className="px-5 py-4 text-sm">Win Rate</th>
+<th className="px-5 py-4 text-sm">Revenue</th>
 </tr>
 </thead>
 
 <tbody>
 {supplierRanking.map((vendor) => (
-<tr
-key={vendor.name}
-className="border-t border-slate-100"
->
+<tr key={vendor.name} className="border-t border-slate-100">
 <td className="px-5 py-4 font-bold text-slate-950">
 {vendor.name}
 </td>
@@ -1040,12 +1153,15 @@ Company RFQ Pipeline
 <td className="px-5 py-4 font-bold text-slate-950">
 {rfq.title}
 </td>
+
 <td className="px-5 py-4 text-slate-600">
 {rfq.category}
 </td>
+
 <td className="px-5 py-4 text-slate-600">
 {rfq.location}
 </td>
+
 <td className="px-5 py-4">
 <span className="rounded-full bg-slate-100 px-3 py-1 text-sm font-bold text-slate-700">
 {rfq.status || "open"}
@@ -1079,7 +1195,6 @@ Enterprise Risk Center
 </h2>
 
 <div className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-5">
-
 <MetricCard
 title="Risk Index"
 value={`${procurementRiskIndex}/100`}
@@ -1100,13 +1215,10 @@ title="Maturity Score"
 value={`${procurementMaturityScore}/100`}
 />
 
-<MetricCard
-title="AI Confidence"
-value={aiConfidenceScore}
-/>
-
+<MetricCard title="AI Confidence" value={aiConfidenceScore} />
 </div>
 </section>
+
 <section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
 <p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
 AI Confidence Engine
@@ -1117,11 +1229,7 @@ Prediction Confidence Center
 </h2>
 
 <div className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-5">
-
-<MetricCard
-title="AI Confidence"
-value={aiConfidenceScore}
-/>
+<MetricCard title="AI Confidence" value={aiConfidenceScore} />
 
 <MetricCard
 title="Data Quality"
@@ -1142,7 +1250,6 @@ value={`${predictionAccuracy}%`}
 title="Award Confidence"
 value={awardPredictionConfidence}
 />
-
 </div>
 </section>
 </div>
@@ -1156,6 +1263,7 @@ return (
 <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">
 {title}
 </p>
+
 <p className="mt-3 text-3xl font-black text-slate-950">{value}</p>
 </div>
 );
