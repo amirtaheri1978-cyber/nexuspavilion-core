@@ -204,7 +204,43 @@ potentialSavings > 10000
 : awardedVolume > budgetTotal * 0.7
 ? "Award conversion is healthy. Continue scaling high-performing supplier relationships."
 : "Review supplier participation and RFQ attractiveness to improve procurement outcomes.";
+const strategicRecommendations: string[] = [];
 
+if (avgQuotesPerRfq < 2) {
+strategicRecommendations.push(
+"Increase supplier invitations to improve RFQ competition."
+);
+}
+
+if (budgetUtilization > 85) {
+strategicRecommendations.push(
+"Budget utilization is high. Increase competitive bidding activity."
+);
+}
+
+if (potentialSavings > 10000) {
+strategicRecommendations.push(
+"Large savings opportunity detected. Review lowest-bid suppliers."
+);
+}
+
+if (awardRate < 30) {
+strategicRecommendations.push(
+"Award conversion is low. Review RFQ quality and supplier targeting."
+);
+}
+
+if (topCategory !== "N/A") {
+strategicRecommendations.push(
+`Expand supplier coverage in ${topCategory} procurement category.`
+);
+}
+
+if (strategicRecommendations.length === 0) {
+strategicRecommendations.push(
+"Procurement performance is healthy. Continue scaling supplier participation."
+);
+}
 const vendorLeaderboard = companyList
 .map((company: any) => {
 const companyQuotes = quoteList.filter(
@@ -566,6 +602,29 @@ Recommended Action
 
 <section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
 <p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
+<section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
+AI Strategic Recommendations
+</p>
+
+<h2 className="mt-3 text-3xl font-black text-slate-950">
+Recommended Executive Actions
+</h2>
+
+<div className="mt-6 space-y-4">
+{strategicRecommendations.map((recommendation, index) => (
+<div
+key={index}
+className="rounded-2xl border border-slate-200 bg-slate-50 p-5"
+>
+<p className="text-sm font-semibold text-slate-700">
+{recommendation}
+</p>
+</div>
+))}
+</div>
+</section>
+
 Executive Forecast
 </p>
 
