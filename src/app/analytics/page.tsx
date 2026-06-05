@@ -241,6 +241,101 @@ strategicRecommendations.push(
 "Procurement performance is healthy. Continue scaling supplier participation."
 );
 }
+
+const awardProbabilityForecast = rfqList
+.map((rfq: any) => {
+const rfqQuotes = quoteList.filter((quote: any) => quote.rfq_id === rfq.id);
+
+const lowestBid =
+rfqQuotes.length > 0
+? Math.min(...rfqQuotes.map((quote: any) => Number(quote.amount || 0)))
+: 0;
+
+const probability = Math.min(
+95,
+Math.max(
+25,
+Math.round(
+rfqQuotes.length * 18 +
+(rfq.status === "awarded" ? 35 : 0) +
+(lowestBid > 0 ? 15 : 0) +
+awardRate * 0.2
+)
+)
+);
+
+return {
+title: rfq.title || "Untitled RFQ",
+category: rfq.category || "Procurement",
+quotes: rfqQuotes.length,
+probability,
+status: rfq.status || "open",
+};
+})
+.slice(0, 10);
+
+const supplierRanking = companyList
+.map((company: any) => {
+const companyQuotes = quoteList.filter(
+(quote: any) => quote.company_id === company.id
+);
+
+const awardedQuotes = companyQuotes.filter(
+(quote: any) => quote.decision === "awarded"
+);
+
+const revenue = awardedQuotes.reduce(
+(total: number, quote: any) =>
+total + Number(quote.amount || 0),
+0
+);
+
+const winRate =
+companyQuotes.length > 0
+? Math.round(
+(awardedQuotes.length / companyQuotes.length) * 100
+)
+: 0;
+
+const participationScore = Math.min(
+100,
+companyQuotes.length * 5
+);
+
+const revenueScore = Math.min(
+100,
+revenue / 10000
+);
+
+const aiScore = Math.round(
+winRate * 0.45 +
+participationScore * 0.25 +
+revenueScore * 0.30
+);
+
+const tier =
+aiScore >= 90
+? "Platinum"
+: aiScore >= 80
+? "Gold"
+: aiScore >= 65
+? "Silver"
+: "Bronze";
+
+return {
+name: company.name,
+quotes: companyQuotes.length,
+awards: awardedQuotes.length,
+revenue,
+winRate,
+aiScore,
+tier,
+};
+})
+.filter((vendor) => vendor.quotes > 0)
+.sort((a, b) => b.aiScore - a.aiScore)
+.slice(0, 20);
+
 const vendorLeaderboard = companyList
 .map((company: any) => {
 const companyQuotes = quoteList.filter(
@@ -273,6 +368,86 @@ score: winRate * 0.5 + awardedQuotes.length * 10 + revenue / 100000,
 .filter((vendor) => vendor.quotes > 0)
 .sort((a, b) => b.score - a.score)
 .slice(0, 10);
+const procurementRiskIndex = Math.max(
+0,
+100 - procurementHealthScore
+);
+
+const supplierDependencyRisk =
+vendorLeaderboard.length <= 1
+? "Critical"
+: vendorLeaderboard.length <= 3
+? "Medium"
+: "Low";
+
+const topVendorRevenue =
+vendorLeaderboard[0]?.revenue || 0;
+
+const vendorConcentrationRisk =
+awardedVolume > 0
+? Math.round((topVendorRevenue / awardedVolume) * 100)
+: 0;
+
+const concentrationLevel =
+vendorConcentrationRisk >= 70
+? "High"
+: vendorConcentrationRisk >= 40
+? "Moderate"
+: "Low";
+
+const procurementMaturityScore = Math.min(
+100,
+Math.round(
+procurementHealthScore * 0.5 +
+competitionScore * 0.2 +
+awardRate * 0.2 +
+budgetUtilization * 0.1
+)
+);
+
+const aiConfidenceScore =
+procurementHealthScore >= 85
+? "Very High"
+: procurementHealthScore >= 70
+? "High"
+: procurementHealthScore >= 55
+? "Moderate"
+: "Low";
+const dataQualityScore = Math.min(
+100,
+Math.round(
+(totalRfqs > 0 ? 30 : 0) +
+(supplierQuotes > 0 ? 30 : 0) +
+(awardedContracts > 0 ? 20 : 0) +
+(budgetTotal > 0 ? 20 : 0)
+)
+);
+
+const supplierReliabilityScore =
+supplierRanking.length > 0
+? Math.round(
+supplierRanking.reduce(
+(sum, vendor) => sum + vendor.winRate,
+0
+) / supplierRanking.length
+)
+: 0;
+
+const predictionAccuracy =
+procurementHealthScore >= 80
+? 92
+: procurementHealthScore >= 70
+? 84
+: procurementHealthScore >= 55
+? 76
+: 65;
+
+const awardPredictionConfidence =
+awardRate >= 50
+? "High"
+: awardRate >= 25
+? "Moderate"
+: "Low";
 
 const activityChartData = [
 { name: "RFQs", value: totalRfqs },
@@ -599,14 +774,10 @@ Recommended Action
 </p>
 </div>
 </section>
-
-<section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
-<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
 <section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
 <p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
 AI Strategic Recommendations
 </p>
-
 <h2 className="mt-3 text-3xl font-black text-slate-950">
 Recommended Executive Actions
 </h2>
@@ -624,7 +795,66 @@ className="rounded-2xl border border-slate-200 bg-slate-50 p-5"
 ))}
 </div>
 </section>
+<section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
+Award Probability Forecast
+</p>
 
+<h2 className="mt-3 text-3xl font-black text-slate-950">
+RFQ Award Forecast Engine
+</h2>
+
+<div className="mt-6 overflow-hidden rounded-2xl border border-slate-200">
+<table className="w-full text-left">
+<thead className="bg-slate-950 text-white">
+<tr>
+<th className="px-5 py-4 text-sm">RFQ</th>
+<th className="px-5 py-4 text-sm">Category</th>
+<th className="px-5 py-4 text-sm">Quotes</th>
+<th className="px-5 py-4 text-sm">Probability</th>
+<th className="px-5 py-4 text-sm">Status</th>
+</tr>
+</thead>
+
+<tbody>
+{awardProbabilityForecast.map((rfq) => (
+<tr key={rfq.title} className="border-t border-slate-100">
+<td className="px-5 py-4 font-bold text-slate-950">
+{rfq.title}
+</td>
+
+<td className="px-5 py-4 text-slate-600">{rfq.category}</td>
+
+<td className="px-5 py-4 text-slate-600">{rfq.quotes}</td>
+
+<td className="px-5 py-4 font-black text-emerald-600">
+{rfq.probability}%
+</td>
+
+<td className="px-5 py-4">
+<span className="rounded-full bg-slate-100 px-3 py-1 text-sm font-bold text-slate-700">
+{rfq.status}
+</span>
+</td>
+</tr>
+))}
+
+{awardProbabilityForecast.length === 0 && (
+<tr>
+<td
+colSpan={5}
+className="px-5 py-10 text-center text-sm font-semibold text-slate-500"
+>
+No RFQ forecast data available.
+</td>
+</tr>
+)}
+</tbody>
+</table>
+</div>
+</section>
+<section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
 Executive Forecast
 </p>
 
@@ -708,6 +938,85 @@ No vendor quote activity found.
 </table>
 </div>
 </section>
+<section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
+AI Supplier Ranking Engine
+</p>
+
+<h2 className="mt-3 text-3xl font-black text-slate-950">
+Supplier Intelligence Ranking
+</h2>
+
+<div className="mt-6 overflow-hidden rounded-2xl border border-slate-200">
+<table className="w-full text-left">
+<thead className="bg-slate-950 text-white">
+<tr>
+<th className="px-5 py-4 text-sm">
+Supplier
+</th>
+
+<th className="px-5 py-4 text-sm">
+AI Score
+</th>
+
+<th className="px-5 py-4 text-sm">
+Tier
+</th>
+
+<th className="px-5 py-4 text-sm">
+Win Rate
+</th>
+
+<th className="px-5 py-4 text-sm">
+Revenue
+</th>
+</tr>
+</thead>
+
+<tbody>
+{supplierRanking.map((vendor) => (
+<tr
+key={vendor.name}
+className="border-t border-slate-100"
+>
+<td className="px-5 py-4 font-bold text-slate-950">
+{vendor.name}
+</td>
+
+<td className="px-5 py-4 font-black text-emerald-600">
+{vendor.aiScore}
+</td>
+
+<td className="px-5 py-4">
+<span className="rounded-full bg-slate-100 px-3 py-1 text-sm font-bold">
+{vendor.tier}
+</span>
+</td>
+
+<td className="px-5 py-4 text-slate-600">
+{vendor.winRate}%
+</td>
+
+<td className="px-5 py-4 text-slate-600">
+${vendor.revenue.toLocaleString()}
+</td>
+</tr>
+))}
+
+{supplierRanking.length === 0 && (
+<tr>
+<td
+colSpan={5}
+className="px-5 py-10 text-center text-slate-500"
+>
+No supplier intelligence available.
+</td>
+</tr>
+)}
+</tbody>
+</table>
+</div>
+</section>
 
 <section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
 <p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
@@ -757,6 +1066,83 @@ No company RFQs found.
 )}
 </tbody>
 </table>
+</div>
+</section>
+
+<section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
+Executive Risk Intelligence
+</p>
+
+<h2 className="mt-3 text-3xl font-black text-slate-950">
+Enterprise Risk Center
+</h2>
+
+<div className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-5">
+
+<MetricCard
+title="Risk Index"
+value={`${procurementRiskIndex}/100`}
+/>
+
+<MetricCard
+title="Supplier Dependency"
+value={supplierDependencyRisk}
+/>
+
+<MetricCard
+title="Vendor Concentration"
+value={concentrationLevel}
+/>
+
+<MetricCard
+title="Maturity Score"
+value={`${procurementMaturityScore}/100`}
+/>
+
+<MetricCard
+title="AI Confidence"
+value={aiConfidenceScore}
+/>
+
+</div>
+</section>
+<section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
+AI Confidence Engine
+</p>
+
+<h2 className="mt-3 text-3xl font-black text-slate-950">
+Prediction Confidence Center
+</h2>
+
+<div className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-5">
+
+<MetricCard
+title="AI Confidence"
+value={aiConfidenceScore}
+/>
+
+<MetricCard
+title="Data Quality"
+value={`${dataQualityScore}/100`}
+/>
+
+<MetricCard
+title="Supplier Reliability"
+value={`${supplierReliabilityScore}/100`}
+/>
+
+<MetricCard
+title="Prediction Accuracy"
+value={`${predictionAccuracy}%`}
+/>
+
+<MetricCard
+title="Award Confidence"
+value={awardPredictionConfidence}
+/>
+
 </div>
 </section>
 </div>
