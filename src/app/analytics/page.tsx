@@ -1,4 +1,5 @@
 import Link from "next/link";
+
 import AnalyticsChart from "@/components/analytics-chart";
 import { createClient } from "@/lib/supabase/server";
 
@@ -36,6 +37,7 @@ const { data: rfqs } = companyId
 .from("rfqs")
 .select("*")
 .eq("company_id", companyId)
+.order("created_at", { ascending: false })
 : { data: [] };
 
 const rfqList = rfqs ?? [];
@@ -43,7 +45,11 @@ const rfqIds = rfqList.map((rfq: any) => rfq.id);
 
 const { data: quotes } =
 rfqIds.length > 0
-? await supabase.from("quotes").select("*").in("rfq_id", rfqIds)
+? await supabase
+.from("quotes")
+.select("*")
+.in("rfq_id", rfqIds)
+.order("created_at", { ascending: false })
 : { data: [] };
 
 const { data: notifications } = companyId
@@ -59,46 +65,10 @@ const { data: notifications } = companyId
 .order("created_at", { ascending: false })
 .limit(5);
 
+const { data: companies } = await supabase.from("companies").select("id,name");
+
 const quoteList = quotes ?? [];
-
-const { data: companies } = await supabase
-.from("companies")
-.select("id,name");
-
 const companyList = companies ?? [];
-
-const vendorLeaderboard = companyList
-.map((company: any) => {
-const companyQuotes = quoteList.filter(
-(quote: any) => quote.company_id === company.id
-);
-
-const awardedQuotes = companyQuotes.filter(
-(quote: any) => quote.decision === "awarded"
-);
-
-const revenue = awardedQuotes.reduce(
-(total: number, quote: any) => total + Number(quote.amount || 0),
-0
-);
-
-const winRate =
-companyQuotes.length > 0
-? Math.round((awardedQuotes.length / companyQuotes.length) * 100)
-: 0;
-
-return {
-name: company.name,
-quotes: companyQuotes.length,
-awards: awardedQuotes.length,
-revenue,
-winRate,
-score: winRate * 0.5 + awardedQuotes.length * 10 + revenue / 100000,
-};
-})
-.filter((vendor) => vendor.quotes > 0)
-.sort((a, b) => b.score - a.score)
-.slice(0, 10);
 
 const totalRfqs = rfqList.length;
 
@@ -141,11 +111,11 @@ supplierQuotes > 0
 : 0;
 
 const avgQuotesPerRfq =
-totalRfqs > 0 ? Math.round((supplierQuotes / totalRfqs) * 10) / 10 : 0;
+totalRfqs > 0 ? Number((supplierQuotes / totalRfqs).toFixed(1)) : 0;
 
 const supplierActivityScore = Math.min(100, supplierQuotes * 12);
 const competitionScore = Math.min(100, avgQuotesPerRfq * 25);
-const awardScore = Math.min(100, awardRate * 1.5);
+const awardScore = Math.min(100, Math.round(awardRate * 1.5));
 const savingsScore = potentialSavings > 0 ? 85 : 55;
 
 const procurementHealthScore = Math.round(
@@ -158,10 +128,133 @@ savingsScore * 0.25
 const procurementHealth = getHealthLabel(procurementHealthScore);
 const competitionIndex = getCompetitionLabel(avgQuotesPerRfq);
 
+const categoryCounts = rfqList.reduce(
+(acc: Record<string, number>, rfq: any) => {
+const category = rfq.category || "Uncategorized";
+acc[category] = (acc[category] || 0) + 1;
+return acc;
+},
+{}
+);
+
+const topCategory =
+Object.entries(categoryCounts).sort((a, b) => b[1] - a[1])[0]?.[0] ||
+"N/A";
+
+const budgetTotal = rfqList.reduce(
+(total: number, rfq: any) => total + Number(rfq.budget || 0),
+0
+);
+
+const budgetUtilization =
+budgetTotal > 0 ? Math.round((awardedVolume / budgetTotal) * 100) : 0;
+
+const executiveProcurementHealth = Math.min(
+100,
+Math.round(
+awardRate * 0.4 + budgetUtilization * 0.3 + avgQuotesPerRfq * 10
+)
+);
+
+const marketCompetitionIndex =
+avgQuotesPerRfq >= 4
+? "High"
+: avgQuotesPerRfq >= 2
+? "Healthy"
+: avgQuotesPerRfq >= 1
+? "Limited"
+: "None";
+
 const executiveSummary =
 totalRfqs === 0
 ? "No RFQ activity has been created yet. Start by publishing procurement opportunities to activate executive intelligence."
 : `${procurementHealth} procurement health. ${competitionIndex}. Award conversion is ${awardRate}%, with ${supplierQuotes} supplier quotes and ${potentialSavings.toLocaleString()} dollars in estimated savings opportunity.`;
+
+const vendorLeaderboard = companyList
+.map((company: any) => {
+const companyQuotes = quoteList.filter(
+(quote: any) => quote.company_id === company.id
+);
+
+const awardedQuotes = companyQuotes.filter(
+(quote: any) => quote.decision === "awarded"
+);
+
+const revenue = awardedQuotes.reduce(
+(total: number, quote: any) => total + Number(quote.amount || 0),
+0
+);
+
+const winRate =
+companyQuotes.length > 0
+? Math.round((awardedQuotes.length / companyQuotes.length) * 100)
+: 0;
+<section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
+Executive Procurement Dashboard
+</p>
+
+<h2 className="mt-3 text-3xl font-black text-slate-950">
+Strategic Command Signals
+</h2>
+
+<div className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+<MetricCard
+title="Procurement Health"
+value={`${procurementHealthScore}/100`}
+/>
+
+<MetricCard
+title="Executive Health"
+value={`${executiveProcurementHealth}/100`}
+/>
+
+<MetricCard
+title="Market Competition"
+value={marketCompetitionIndex}
+/>
+
+<MetricCard
+title="Top Category"
+value={topCategory}
+/>
+</div>
+
+<div className="mt-6 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+<MetricCard
+title="Budget Utilization"
+value={`${budgetUtilization}%`}
+/>
+
+<MetricCard
+title="Savings Opportunity"
+value={`$${potentialSavings.toLocaleString()}`}
+/>
+
+<MetricCard
+title="Awarded Volume"
+value={`$${awardedVolume.toLocaleString()}`}
+/>
+
+<MetricCard
+title="Top Vendor"
+value={vendorLeaderboard[0]?.name || "N/A"}
+/>
+</div>
+</section>
+
+return {
+name: company.name,
+quotes: companyQuotes.length,
+awards: awardedQuotes.length,
+revenue,
+winRate,
+score: winRate * 0.5 + awardedQuotes.length * 10 + revenue / 100000,
+};
+})
+.filter((vendor) => vendor.quotes > 0)
+.sort((a, b) => b.score - a.score)
+.slice(0, 10);
 
 const activityChartData = [
 { name: "RFQs", value: totalRfqs },
@@ -204,7 +297,10 @@ executive procurement intelligence.
 </section>
 
 <section className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-<MetricCard title="Health Score" value={`${procurementHealthScore}/100`} />
+<MetricCard
+title="Health Score"
+value={`${procurementHealthScore}/100`}
+/>
 <MetricCard title="Procurement Health" value={procurementHealth} />
 <MetricCard title="Competition Index" value={competitionIndex} />
 <MetricCard
@@ -235,9 +331,18 @@ AI Signals
 </p>
 
 <div className="mt-4 space-y-3">
-<SignalRow label="Supplier Activity" value={`${supplierActivityScore}/100`} />
-<SignalRow label="Competition" value={`${competitionScore}/100`} />
-<SignalRow label="Award Conversion" value={`${awardScore}/100`} />
+<SignalRow
+label="Supplier Activity"
+value={`${supplierActivityScore}/100`}
+/>
+<SignalRow
+label="Competition"
+value={`${competitionScore}/100`}
+/>
+<SignalRow
+label="Award Conversion"
+value={`${awardScore}/100`}
+/>
 <SignalRow label="Savings Signal" value={`${savingsScore}/100`} />
 </div>
 </div>
@@ -360,6 +465,47 @@ No activity yet.
 
 <section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
 <p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
+Strategic Procurement Intelligence
+</p>
+
+<h2 className="mt-3 text-3xl font-black text-slate-950">
+Executive Market Signals
+</h2>
+
+<div className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+<MetricCard
+title="Executive Health"
+value={`${executiveProcurementHealth}/100`}
+/>
+
+<MetricCard
+title="Market Competition"
+value={marketCompetitionIndex}
+/>
+
+<MetricCard
+title="Budget Utilization"
+value={`${budgetUtilization}%`}
+/>
+
+<MetricCard title="Top Category" value={topCategory} />
+</div>
+
+<div className="mt-6 grid gap-6 md:grid-cols-2">
+<MetricCard
+title="Total RFQ Budget"
+value={`$${budgetTotal.toLocaleString()}`}
+/>
+
+<MetricCard
+title="Savings Opportunity"
+value={`$${potentialSavings.toLocaleString()}`}
+/>
+</div>
+</section>
+
+<section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
 Vendor Intelligence
 </p>
 
@@ -414,7 +560,59 @@ No vendor quote activity found.
 </table>
 </div>
 </section>
+<section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
+Executive Procurement Dashboard
+</p>
 
+<h2 className="mt-3 text-3xl font-black text-slate-950">
+Strategic Command Signals
+</h2>
+
+<div className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+<MetricCard
+title="Procurement Health"
+value={`${procurementHealthScore}/100`}
+/>
+
+<MetricCard
+title="Executive Health"
+value={`${executiveProcurementHealth}/100`}
+/>
+
+<MetricCard
+title="Market Competition"
+value={marketCompetitionIndex}
+/>
+
+<MetricCard
+title="Top Category"
+value={topCategory}
+/>
+</div>
+
+<div className="mt-6 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+<MetricCard
+title="Budget Utilization"
+value={`${budgetUtilization}%`}
+/>
+
+<MetricCard
+title="Savings Opportunity"
+value={`$${potentialSavings.toLocaleString()}`}
+/>
+
+<MetricCard
+title="Awarded Volume"
+value={`$${awardedVolume.toLocaleString()}`}
+/>
+
+<MetricCard
+title="Top Vendor"
+value={vendorLeaderboard[0]?.name || "N/A"}
+/>
+</div>
+</section>
 <section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
 <p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
 Company RFQ Pipeline
@@ -481,13 +679,7 @@ return (
 );
 }
 
-function SignalRow({
-label,
-value,
-}: {
-label: string;
-value: string;
-}) {
+function SignalRow({ label, value }: { label: string; value: string }) {
 return (
 <div className="flex items-center justify-between rounded-2xl bg-white px-4 py-3 shadow-sm">
 <p className="text-sm font-black text-slate-600">{label}</p>

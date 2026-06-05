@@ -153,6 +153,57 @@ procurementScore >= 90
 : procurementScore >= 60
 ? "Qualified"
 : "Developing";
+const supplierTier =
+procurementScore >= 90
+? "Platinum Supplier"
+: procurementScore >= 80
+? "Gold Supplier"
+: procurementScore >= 65
+? "Silver Supplier"
+: "Developing Supplier";
+
+const awardProbability = Math.min(
+98,
+Math.max(
+25,
+Math.round(
+winRate * 0.5 +
+awardedQuotes.length * 10 +
+Math.min(awardedRevenue / 20000, 25) +
+Math.min(submittedQuotes * 3, 15)
+)
+)
+);
+
+const supplierRisk =
+procurementScore >= 85
+? "Low Risk"
+: procurementScore >= 65
+? "Medium Risk"
+: "High Risk";
+
+const marketplaceReputation =
+procurementScore >= 90
+? "Excellent"
+: procurementScore >= 75
+? "Strong"
+: procurementScore >= 60
+? "Reliable"
+: "Limited Data";
+
+const quoteCompetitiveness =
+averageBid > 0 && awardedRevenue > 0
+? "Competitive"
+: submittedQuotes > 0
+? "Developing"
+: "No Activity";
+
+const recentActivitySignal =
+submittedQuotes >= 5
+? "Active"
+: submittedQuotes >= 2
+? "Moderate"
+: "Low";
 
 const openRfqs = rfqList.filter(
 (rfq) => !rfq.status || rfq.status === "open"
@@ -299,7 +350,7 @@ detail="Completed procurement wins"
 
 <section className="mt-8 rounded-[32px] border border-black/5 bg-white p-8">
 <p className="text-xs font-black uppercase tracking-[0.3em] text-orange-500">
-AI Supplier Performance
+AI Supplier Ranking Engine
 </p>
 
 <div className="mt-4 grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
@@ -309,15 +360,29 @@ Supplier Performance Intelligence
 </h2>
 
 <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">
-Nexus evaluates quote volume, awarded contracts, win rate,
-awarded revenue, average bid value, and pending procurement
-activity to produce a supplier performance signal.
+Nexus AI evaluates supplier quote activity, awarded contracts,
+awarded revenue, procurement engagement, and marketplace
+competitiveness to generate a supplier ranking profile.
 </p>
 
-<div className="mt-6 grid gap-4 md:grid-cols-3">
-<MiniCard title="Grade" value={performanceGrade} />
-<MiniCard title="Strength" value={competitiveStrength} />
-<MiniCard title="Rank" value={vendorRank} />
+<div className="mt-8 grid gap-4 md:grid-cols-3">
+<MetricCard
+title="Supplier Score"
+value={'${procurementStore}/100'}
+detail="AI weighted performance score"
+/>
+
+<MetricCard
+title="Performance Grade"
+value={performanceGrade}
+detail="Overall supplier classification"
+/>
+
+<MetricCard
+title="Marketplace Rank"
+value={vendorRank}
+detail="Position within supplier ecosystem"
+/>
 </div>
 </div>
 
@@ -327,7 +392,10 @@ Ranking Signals
 </p>
 
 <div className="mt-4 space-y-3">
-<SignalRow label="Win Rate" value={`${winRate}%`} />
+<SignalRow
+label="Win Rate"
+value={`${winRate}%`}
+/>
 <SignalRow
 label="Awarded Revenue"
 value={formatMoney(awardedRevenue)}
@@ -336,7 +404,66 @@ value={formatMoney(awardedRevenue)}
 label="Quote Volume"
 value={String(submittedQuotes)}
 />
-<SignalRow label="Average Bid" value={formatMoney(averageBid)} />
+
+<SignalRow
+label="Average Bid"
+value={formatMoney(averageBid)}
+/>
+
+<SignalRow
+label="Supplier Tier"
+value={supplierTier}
+/>
+
+<SignalRow
+label="Award Probability"
+value={`${awardProbability}%`}
+/>
+
+<SignalRow
+label="Risk Level"
+value={supplierRisk}
+/>
+
+<SignalRow
+label="Reputation"
+value={marketplaceReputation}
+/>
+
+<SignalRow
+label="Quote Competitiveness"
+value={quoteCompetitiveness}
+/>
+
+<SignalRow
+label="Recent Activity"
+value={recentActivitySignal}
+/>
+n
+<SignalRow
+label="Award Count"
+value={String(awardedQuotes.length)}
+/>
+
+<SignalRow
+label="Award Revenue"
+value={formatMoney(awardedRevenue)}
+/>
+
+<SignalRow
+label="Quote Volume"
+value={String(submittedQuotes)}
+/>
+
+<SignalRow
+label="Average Bid"
+value={formatMoney(averageBid)}
+/>
+
+<SignalRow
+label="Competitive Strength"
+value={competitiveStrength}
+/>
 </div>
 </div>
 </div>
