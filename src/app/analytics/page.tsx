@@ -165,10 +165,45 @@ avgQuotesPerRfq >= 4
 ? "Limited"
 : "None";
 
+const forecastAwardVolume = Math.round(awardedVolume * 1.15);
+const forecastSavings = Math.round(potentialSavings * 1.2);
+
+const forecastHealth =
+procurementHealthScore >= 85
+? "Strong Growth"
+: procurementHealthScore >= 70
+? "Stable Growth"
+: procurementHealthScore >= 55
+? "Moderate Risk"
+: "Needs Intervention";
+
+const forecastCompetition =
+competitionScore >= 80
+? "Highly Competitive"
+: competitionScore >= 60
+? "Competitive"
+: competitionScore >= 40
+? "Developing"
+: "Low Activity";
+
 const executiveSummary =
 totalRfqs === 0
 ? "No RFQ activity has been created yet. Start by publishing procurement opportunities to activate executive intelligence."
 : `${procurementHealth} procurement health. ${competitionIndex}. Award conversion is ${awardRate}%, with ${supplierQuotes} supplier quotes and ${potentialSavings.toLocaleString()} dollars in estimated savings opportunity.`;
+
+const aiInsight =
+executiveProcurementHealth >= 85
+? `Procurement operations are performing strongly. Competition remains ${marketCompetitionIndex.toLowerCase()} and estimated savings exceed $${potentialSavings.toLocaleString()}.`
+: executiveProcurementHealth >= 70
+? "Procurement performance is stable, but there is room to improve supplier participation and award efficiency."
+: "Warning: procurement performance requires attention. Consider increasing supplier engagement and reviewing RFQ conversion rates.";
+
+const aiRecommendation =
+potentialSavings > 10000
+? "Focus on competitive bidding strategies to unlock additional savings."
+: awardedVolume > budgetTotal * 0.7
+? "Award conversion is healthy. Continue scaling high-performing supplier relationships."
+: "Review supplier participation and RFQ attractiveness to improve procurement outcomes.";
 
 const vendorLeaderboard = companyList
 .map((company: any) => {
@@ -189,59 +224,6 @@ const winRate =
 companyQuotes.length > 0
 ? Math.round((awardedQuotes.length / companyQuotes.length) * 100)
 : 0;
-<section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
-<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
-Executive Procurement Dashboard
-</p>
-
-<h2 className="mt-3 text-3xl font-black text-slate-950">
-Strategic Command Signals
-</h2>
-
-<div className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-<MetricCard
-title="Procurement Health"
-value={`${procurementHealthScore}/100`}
-/>
-
-<MetricCard
-title="Executive Health"
-value={`${executiveProcurementHealth}/100`}
-/>
-
-<MetricCard
-title="Market Competition"
-value={marketCompetitionIndex}
-/>
-
-<MetricCard
-title="Top Category"
-value={topCategory}
-/>
-</div>
-
-<div className="mt-6 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-<MetricCard
-title="Budget Utilization"
-value={`${budgetUtilization}%`}
-/>
-
-<MetricCard
-title="Savings Opportunity"
-value={`$${potentialSavings.toLocaleString()}`}
-/>
-
-<MetricCard
-title="Awarded Volume"
-value={`$${awardedVolume.toLocaleString()}`}
-/>
-
-<MetricCard
-title="Top Vendor"
-value={vendorLeaderboard[0]?.name || "N/A"}
-/>
-</div>
-</section>
 
 return {
 name: company.name,
@@ -343,7 +325,10 @@ value={`${competitionScore}/100`}
 label="Award Conversion"
 value={`${awardScore}/100`}
 />
-<SignalRow label="Savings Signal" value={`${savingsScore}/100`} />
+<SignalRow
+label="Savings Signal"
+value={`${savingsScore}/100`}
+/>
 </div>
 </div>
 </div>
@@ -506,6 +491,110 @@ value={`$${potentialSavings.toLocaleString()}`}
 
 <section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
 <p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
+Executive Procurement Dashboard
+</p>
+
+<h2 className="mt-3 text-3xl font-black text-slate-950">
+Strategic Command Signals
+</h2>
+
+<div className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+<MetricCard
+title="Procurement Health"
+value={`${procurementHealthScore}/100`}
+/>
+
+<MetricCard
+title="Executive Health"
+value={`${executiveProcurementHealth}/100`}
+/>
+
+<MetricCard
+title="Market Competition"
+value={marketCompetitionIndex}
+/>
+
+<MetricCard title="Top Category" value={topCategory} />
+</div>
+
+<div className="mt-6 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+<MetricCard
+title="Budget Utilization"
+value={`${budgetUtilization}%`}
+/>
+
+<MetricCard
+title="Savings Opportunity"
+value={`$${potentialSavings.toLocaleString()}`}
+/>
+
+<MetricCard
+title="Awarded Volume"
+value={`$${awardedVolume.toLocaleString()}`}
+/>
+
+<MetricCard
+title="Top Vendor"
+value={vendorLeaderboard[0]?.name || "N/A"}
+/>
+</div>
+</section>
+
+<section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
+AI Procurement Insights
+</p>
+
+<h2 className="mt-3 text-3xl font-black text-slate-950">
+Executive Recommendations
+</h2>
+
+<div className="mt-6 rounded-3xl bg-slate-50 p-6">
+<p className="text-sm leading-7 text-slate-700">{aiInsight}</p>
+</div>
+
+<div className="mt-6 rounded-3xl border border-orange-200 bg-orange-50 p-6">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-600">
+Recommended Action
+</p>
+
+<p className="mt-3 text-sm leading-7 text-slate-700">
+{aiRecommendation}
+</p>
+</div>
+</section>
+
+<section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
+Executive Forecast
+</p>
+
+<h2 className="mt-3 text-3xl font-black text-slate-950">
+Procurement Forecast Intelligence
+</h2>
+
+<div className="mt-6 grid gap-6 md:grid-cols-4">
+<MetricCard
+title="Forecast Award Volume"
+value={`$${forecastAwardVolume.toLocaleString()}`}
+/>
+
+<MetricCard
+title="Forecast Savings"
+value={`$${forecastSavings.toLocaleString()}`}
+/>
+
+<MetricCard title="Forecast Health" value={forecastHealth} />
+
+<MetricCard
+title="Competition Outlook"
+value={forecastCompetition}
+/>
+</div>
+</section>
+
+<section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
 Vendor Intelligence
 </p>
 
@@ -560,59 +649,7 @@ No vendor quote activity found.
 </table>
 </div>
 </section>
-<section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
-<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
-Executive Procurement Dashboard
-</p>
 
-<h2 className="mt-3 text-3xl font-black text-slate-950">
-Strategic Command Signals
-</h2>
-
-<div className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-<MetricCard
-title="Procurement Health"
-value={`${procurementHealthScore}/100`}
-/>
-
-<MetricCard
-title="Executive Health"
-value={`${executiveProcurementHealth}/100`}
-/>
-
-<MetricCard
-title="Market Competition"
-value={marketCompetitionIndex}
-/>
-
-<MetricCard
-title="Top Category"
-value={topCategory}
-/>
-</div>
-
-<div className="mt-6 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-<MetricCard
-title="Budget Utilization"
-value={`${budgetUtilization}%`}
-/>
-
-<MetricCard
-title="Savings Opportunity"
-value={`$${potentialSavings.toLocaleString()}`}
-/>
-
-<MetricCard
-title="Awarded Volume"
-value={`$${awardedVolume.toLocaleString()}`}
-/>
-
-<MetricCard
-title="Top Vendor"
-value={vendorLeaderboard[0]?.name || "N/A"}
-/>
-</div>
-</section>
 <section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
 <p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
 Company RFQ Pipeline
