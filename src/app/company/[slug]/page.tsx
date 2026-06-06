@@ -290,6 +290,92 @@ const isVendorProfile =
 String(company.network_role || "").toLowerCase().includes("vendor") ||
 String(company.network_role || "").toLowerCase().includes("supplier");
 
+const supplierParticipationScore = Math.min(100, vendorSubmittedQuotes * 8);
+const supplierRevenueScore = Math.min(100, vendorAwardedRevenue / 5000);
+
+const supplierFinancialRisk = Math.max(
+5,
+Math.round(100 - vendorAwardedRevenue / 5000)
+);
+
+const supplierPerformanceRisk = Math.max(5, Math.round(100 - vendorWinRate));
+
+const supplierCapacityRisk =
+vendorSubmittedQuotes <= 1 ? 70 : vendorSubmittedQuotes <= 3 ? 45 : 20;
+
+const supplierDependencyRisk = vendorAwardedRevenue > 100000 ? 35 : 70;
+
+const supplierFinancialScore = Math.max(0, 100 - supplierFinancialRisk);
+const supplierPerformanceScore = Math.max(0, 100 - supplierPerformanceRisk);
+const supplierDependencyScore = Math.max(0, 100 - supplierDependencyRisk);
+
+const supplierIntelligenceScore = Math.min(
+100,
+Math.round(
+supplierFinancialScore * 0.15 +
+supplierPerformanceScore * 0.25 +
+supplierDependencyScore * 0.15 +
+vendorWinRate * 0.25 +
+supplierParticipationScore * 0.1 +
+supplierRevenueScore * 0.1
+)
+);
+
+const supplierTier =
+supplierIntelligenceScore >= 90
+? "Platinum Supplier"
+: supplierIntelligenceScore >= 80
+? "Gold Supplier"
+: supplierIntelligenceScore >= 65
+? "Silver Supplier"
+: "Developing Supplier";
+
+const supplierRecommendation =
+supplierIntelligenceScore >= 90
+? "Preferred Supplier"
+: supplierIntelligenceScore >= 80
+? "Strategic Supplier"
+: supplierIntelligenceScore >= 65
+? "Approved Supplier"
+: "Monitor Supplier";
+
+const supplierRiskLevel =
+supplierIntelligenceScore >= 80
+? "Low Risk"
+: supplierIntelligenceScore >= 60
+? "Medium Risk"
+: "High Risk";
+
+const procurementFitScore = Math.min(
+100,
+Math.round(
+supplierIntelligenceScore * 0.5 +
+vendorWinRate * 0.25 +
+supplierParticipationScore * 0.25
+)
+);
+
+const supplierExecutiveAction =
+supplierIntelligenceScore >= 80
+? "Increase RFQ allocation and consider this company for preferred supplier workflows."
+: supplierIntelligenceScore >= 65
+? "Continue inviting this supplier while monitoring pricing, delivery consistency, and quote activity."
+: "Monitor this supplier closely and improve quote volume, win rate, and award performance before increasing dependency.";
+
+const supplierStrength =
+vendorWinRate >= 50
+? "Strong award conversion"
+: vendorSubmittedQuotes >= 3
+? "Active procurement participation"
+: "Early supplier engagement";
+
+const supplierWeakness =
+vendorSubmittedQuotes <= 1
+? "Limited quote history"
+: vendorWinRate < 25
+? "Low award conversion"
+: "Dependency and capacity should continue to be monitored.";
+
 return (
 <main className="min-h-screen bg-[#f6f6f3] p-8">
 <div className="mx-auto max-w-7xl">
@@ -527,6 +613,101 @@ ${Number(quote.amount || 0).toLocaleString()}
 </div>
 </aside>
 </section>
+{isVendorProfile ? (
+<section className="mt-8 rounded-[36px] border border-slate-200 bg-slate-950 p-8 text-white">
+<p className="text-xs font-black uppercase tracking-[0.3em] text-orange-400">
+AI Supplier Profile Intelligence
+</p>
+
+<div className="mt-5 grid gap-8 lg:grid-cols-[1fr_0.9fr]">
+<div>
+<h2 className="text-4xl font-black">
+Supplier Intelligence Profile
+</h2>
+
+<p className="mt-4 max-w-3xl text-sm leading-7 text-slate-300">
+{supplierExecutiveAction}
+</p>
+</div>
+
+<div className="grid gap-4 sm:grid-cols-2">
+<div className="rounded-2xl bg-white/10 p-5">
+<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+Supplier Score
+</p>
+<p className="mt-2 text-3xl font-black">
+{supplierIntelligenceScore}/100
+</p>
+</div>
+
+<div className="rounded-2xl bg-white/10 p-5">
+<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+Supplier Tier
+</p>
+<p className="mt-2 text-3xl font-black">
+{supplierTier}
+</p>
+</div>
+
+<div className="rounded-2xl bg-white/10 p-5">
+<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+Procurement Fit
+</p>
+<p className="mt-2 text-3xl font-black">
+{procurementFitScore}/100
+</p>
+</div>
+
+<div className="rounded-2xl bg-white/10 p-5">
+<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+Recommendation
+</p>
+<p className="mt-2 text-2xl font-black">
+{supplierRecommendation}
+</p>
+</div>
+</div>
+</div>
+
+<div className="mt-8 grid gap-4 md:grid-cols-4">
+<div className="rounded-2xl bg-white/5 p-5">
+<p className="text-xs font-black uppercase tracking-[0.2em] text-orange-400">
+Risk Level
+</p>
+<p className="mt-3 text-sm font-semibold text-slate-300">
+{supplierRiskLevel}
+</p>
+</div>
+
+<div className="rounded-2xl bg-white/5 p-5">
+<p className="text-xs font-black uppercase tracking-[0.2em] text-orange-400">
+Strength
+</p>
+<p className="mt-3 text-sm font-semibold text-slate-300">
+{supplierStrength}
+</p>
+</div>
+
+<div className="rounded-2xl bg-white/5 p-5">
+<p className="text-xs font-black uppercase tracking-[0.2em] text-orange-400">
+Watch Item
+</p>
+<p className="mt-3 text-sm font-semibold text-slate-300">
+{supplierWeakness}
+</p>
+</div>
+
+<div className="rounded-2xl bg-white/5 p-5">
+<p className="text-xs font-black uppercase tracking-[0.2em] text-orange-400">
+Win Probability
+</p>
+<p className="mt-3 text-sm font-semibold text-slate-300">
+{vendorWinRate}%
+</p>
+</div>
+</div>
+</section>
+) : null}
 
 <section className="mt-8 rounded-[32px] border border-black/5 bg-white p-8">
 <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
