@@ -1257,6 +1257,64 @@ value={`$${forecastSavings.toLocaleString()}`}
 <MetricCard title="AI Confidence" value={`${dataQualityScore}%`} />
 </div>
 </section>
+<section className="mt-8 rounded-3xl border border-slate-200 bg-slate-950 p-8 text-white">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-400">
+Boardroom KPI Intelligence
+</p>
+
+<h2 className="mt-3 text-4xl font-black">
+Executive Performance Matrix
+</h2>
+
+<p className="mt-3 max-w-3xl text-sm text-slate-300">
+Real-time executive indicators measuring procurement efficiency,
+supplier engagement, digital maturity, board readiness, and
+enterprise execution performance.
+</p>
+
+<div className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-5">
+<MetricCard
+title="Board Health"
+value={`${boardHealthIndex}/100`}
+/>
+
+<MetricCard
+title="Efficiency"
+value={`${procurementEfficiencyScore}/100`}
+/>
+
+<MetricCard
+title="Supplier Engagement"
+value={`${supplierEngagementScore}/100`}
+/>
+
+<MetricCard
+title="Executive Readiness"
+value={`${executiveReadinessScore}/100`}
+/>
+
+<MetricCard
+title="Digital Maturity"
+value={`${digitalMaturityScore}/100`}
+/>
+</div>
+
+<div className="mt-8 rounded-3xl bg-white/10 p-6">
+<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+Board Assessment
+</p>
+
+<h3 className="mt-3 text-3xl font-black">
+{boardHealthStatus}
+</h3>
+
+<p className="mt-3 text-sm text-slate-300">
+Enterprise procurement intelligence is continuously evaluating
+operational performance, supplier participation, forecasting
+accuracy, procurement maturity, and executive readiness.
+</p>
+</div>
+</section>
 
 <section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
 <p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
