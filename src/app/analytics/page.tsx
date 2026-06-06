@@ -675,6 +675,29 @@ boardHealthIndex >= 70
 },
 ];
 
+const executivePerformanceMatrix = [
+{
+title: "Board Health",
+value: `${boardHealthIndex}/100`,
+},
+{
+title: "Efficiency",
+value: `${procurementEfficiencyScore}/100`,
+},
+{
+title: "Supplier Engagement",
+value: `${supplierEngagementScore}/100`,
+},
+{
+title: "Executive Readiness",
+value: `${executiveReadinessScore}/100`,
+},
+{
+title: "Digital Maturity",
+value: `${digitalMaturityScore}/100`,
+},
+];
+
 const boardPriorityScore = Math.min(
 100,
 Math.round(
@@ -1416,6 +1439,54 @@ value={bestProcurementCategory}
 title="Savings Signal"
 value={savingsOpportunityLevel}
 />
+</div>
+</section>
+<section className="mt-8 rounded-[32px] bg-gradient-to-br from-black via-slate-900 to-black p-8 text-white">
+<p className="text-xs font-black uppercase tracking-[0.3em] text-orange-400">
+Boardroom KPI Intelligence
+</p>
+
+<h2 className="mt-3 text-4xl font-black">
+Executive Performance Matrix
+</h2>
+
+<p className="mt-3 max-w-4xl text-sm text-slate-300">
+Real-time executive indicators measuring procurement efficiency,
+supplier engagement, digital maturity, board readiness and
+enterprise execution performance.
+</p>
+
+<div className="mt-8 grid gap-4 md:grid-cols-5">
+{executivePerformanceMatrix.map((metric) => (
+<div
+key={metric.title}
+className="rounded-3xl bg-white p-5 text-slate-950"
+>
+<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+{metric.title}
+</p>
+
+<p className="mt-3 text-4xl font-black">
+{metric.value}
+</p>
+</div>
+))}
+</div>
+
+<div className="mt-8 rounded-3xl bg-white/5 p-6">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-slate-400">
+Board Assessment
+</p>
+
+<h3 className="mt-2 text-3xl font-black">
+{boardHealthStatus}
+</h3>
+
+<p className="mt-3 text-sm text-slate-300">
+Enterprise procurement intelligence continuously evaluates
+supplier participation, procurement efficiency, forecasting
+accuracy, digital maturity and executive readiness.
+</p>
 </div>
 </section>
 
