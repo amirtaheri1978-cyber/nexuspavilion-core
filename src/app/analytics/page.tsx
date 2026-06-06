@@ -724,6 +724,9 @@ opportunityScore: categoryOpportunityScore,
 .sort((a, b) => b.opportunityScore - a.opportunityScore)
 .slice(0, 5);
 
+
+
+
 const executivePerformanceMatrix = [
 {
 title: "Board Health",
@@ -756,6 +759,41 @@ procurementOpportunityScore * 0.25 +
 boardHealthIndex * 0.15
 )
 );
+
+const bestCaseProjection = Math.round(
+forecastAwardVolume + forecastSavings + procurementOpportunityScore * 1000
+);
+
+const expectedProjection = Math.round(
+forecastAwardVolume + forecastSavings * 0.6
+);
+
+const riskProjection = Math.max(
+0,
+Math.round(forecastAwardVolume - procurementRiskIndex * 1000)
+);
+
+const simulationConfidence =
+dataQualityScore >= 80
+? "High"
+: dataQualityScore >= 60
+? "Moderate"
+: "Low";
+
+const digitalTwinScenario =
+boardPriorityScore >= 80
+? "Growth Scenario"
+: procurementRiskIndex >= 60
+? "Risk Scenario"
+: "Stable Scenario";
+
+const digitalTwinRecommendation =
+digitalTwinScenario === "Growth Scenario"
+? "Prioritize supplier expansion, category growth, and savings capture."
+: digitalTwinScenario === "Risk Scenario"
+? "Reduce vendor concentration, improve competition, and review award exposure."
+: "Maintain procurement discipline while improving forecast quality and supplier coverage.";
+
 
 const boardPriorityLevel =
 boardPriorityScore >= 80
@@ -1088,6 +1126,66 @@ Procurement Priority
 {procurementPriority}
 </p>
 </div>
+</div>
+</section>
+
+<section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
+Executive Procurement Digital Twin
+</p>
+
+<h2 className="mt-3 text-3xl font-black text-slate-950">
+Scenario Simulation Engine
+</h2>
+
+<p className="mt-3 max-w-4xl text-sm leading-7 text-slate-600">
+AI-powered procurement simulation comparing best-case, expected,
+and risk-adjusted projections based on forecast volume, savings,
+supplier participation, risk index, and board priority signals.
+</p>
+
+<div className="mt-8 grid gap-6 md:grid-cols-3">
+<MetricCard
+title="Best Case Projection"
+value={`$${bestCaseProjection.toLocaleString()}`}
+/>
+
+<MetricCard
+title="Expected Projection"
+value={`$${expectedProjection.toLocaleString()}`}
+/>
+
+<MetricCard
+title="Risk Projection"
+value={`$${riskProjection.toLocaleString()}`}
+/>
+</div>
+
+<div className="mt-8 grid gap-6 md:grid-cols-3">
+<MetricCard
+title="Simulation Confidence"
+value={simulationConfidence}
+/>
+
+<MetricCard
+title="Scenario"
+value={digitalTwinScenario}
+/>
+
+<MetricCard
+title="Risk Index"
+value={`${procurementRiskIndex}/100`}
+/>
+</div>
+
+<div className="mt-8 rounded-3xl border border-orange-200 bg-orange-50 p-6">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-600">
+Digital Twin Recommendation
+</p>
+
+<p className="mt-3 text-sm font-semibold leading-7 text-slate-700">
+{digitalTwinRecommendation}
+</p>
 </div>
 </section>
 
