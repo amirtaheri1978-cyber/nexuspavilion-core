@@ -893,6 +893,36 @@ boardPriorityScore >= 80
 ? "Risk exposure is elevated. Copilot recommends prioritizing supplier diversification."
 : "Procurement performance is stable. Copilot recommends increasing supplier coverage and data maturity.";
 
+const executiveDecisionQueue = [
+procurementRiskIndex >= 50
+? "Review supplier concentration risk."
+: "Maintain supplier diversification strategy.",
+
+potentialSavings > 10000
+? `Capture $${potentialSavings.toLocaleString()} savings opportunity.`
+: "Monitor category savings performance.",
+
+awardRate < 25
+? "Improve RFQ conversion and award execution."
+: "Maintain strong award conversion performance.",
+];
+
+const topQuarterRisks = [
+procurementRiskIndex >= 50
+? "Supplier dependency"
+: "Low risk exposure",
+
+supplierRanking.length <= 3
+? "Limited supplier competition"
+: "Healthy supplier participation",
+];
+
+const topQuarterOpportunities = [
+`${bestProcurementCategory} category expansion`,
+`${savingsOpportunityLevel} savings capture`,
+"Supplier network growth",
+];
+
 const boardRecommendation =
 procurementRiskIndex >= 60
 ? "Reduce supplier dependency and review award concentration before scaling procurement volume."
@@ -1309,6 +1339,58 @@ className="rounded-2xl border border-white/10 bg-white/5 p-5"
 </p>
 </div>
 ))}
+</div>
+<div className="mt-8 grid gap-6 md:grid-cols-3">
+<div className="rounded-2xl border border-white/10 bg-white/5 p-5">
+<p className="text-xs font-black uppercase tracking-[0.2em] text-orange-400">
+Executive Decision Queue
+</p>
+
+<div className="mt-4 space-y-3">
+{executiveDecisionQueue.map((item) => (
+<div
+key={item}
+className="rounded-xl bg-white/5 p-3 text-sm text-slate-300"
+>
+{item}
+</div>
+))}
+</div>
+</div>
+
+<div className="rounded-2xl border border-white/10 bg-white/5 p-5">
+<p className="text-xs font-black uppercase tracking-[0.2em] text-red-400">
+Top Risks This Quarter
+</p>
+
+<div className="mt-4 space-y-3">
+{topQuarterRisks.map((risk) => (
+<div
+key={risk}
+className="rounded-xl bg-white/5 p-3 text-sm text-slate-300"
+>
+{risk}
+</div>
+))}
+</div>
+</div>
+
+<div className="rounded-2xl border border-white/10 bg-white/5 p-5">
+<p className="text-xs font-black uppercase tracking-[0.2em] text-green-400">
+Top Opportunities
+</p>
+
+<div className="mt-4 space-y-3">
+{topQuarterOpportunities.map((opportunity) => (
+<div
+key={opportunity}
+className="rounded-xl bg-white/5 p-3 text-sm text-slate-300"
+>
+{opportunity}
+</div>
+))}
+</div>
+</div>
 </div>
 </section>
 
