@@ -675,6 +675,52 @@ boardHealthIndex >= 70
 },
 ];
 
+const boardPriorityScore = Math.min(
+100,
+Math.round(
+enterpriseProcurementScore * 0.35 +
+procurementOpportunityScore * 0.25 +
+(100 - procurementRiskIndex) * 0.25 +
+boardHealthIndex * 0.15
+)
+);
+
+const boardPriorityLevel =
+boardPriorityScore >= 80
+? "High Performance"
+: boardPriorityScore >= 60
+? "Growth Opportunity"
+: "Executive Attention";
+
+const topRisk =
+vendorConcentrationRisk >= 70
+? "Vendor concentration exceeds recommended threshold."
+: supplierRanking.length <= 3
+? "Supplier participation remains limited."
+: procurementRiskIndex >= 50
+? "Procurement risk level is elevated."
+: "No major enterprise procurement risks detected.";
+
+const topOpportunity =
+potentialSavings > 0
+? `${bestProcurementCategory} category contains ${potentialSavings.toLocaleString()} dollars in savings opportunity.`
+: "Expand supplier participation to uncover additional savings opportunities.";
+
+const ceoPriority =
+procurementOpportunityScore >= 70
+? "Scale supplier network and category expansion."
+: "Improve procurement growth initiatives.";
+
+const cfoPriority =
+forecastSavings > 0
+? `Capture forecast savings of ${forecastSavings.toLocaleString()} dollars.`
+: "Increase budget visibility and spend optimization.";
+
+const procurementPriority =
+avgQuotesPerRfq < 2
+? "Increase RFQ competition and supplier engagement."
+: "Maintain healthy procurement competition levels.";
+
 const boardRecommendation =
 procurementRiskIndex >= 60
 ? "Reduce supplier dependency and review award concentration before scaling procurement volume."
@@ -882,6 +928,94 @@ className="rounded-2xl border border-slate-200 bg-slate-50 p-5"
 </p>
 </div>
 ))}
+</div>
+</section>
+
+<section className="mt-8 rounded-3xl border border-slate-200 bg-slate-950 p-8 text-white">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-400">
+AI Procurement Command Center
+</p>
+
+<h2 className="mt-3 text-4xl font-black">
+Executive Priority Dashboard
+</h2>
+
+<div className="mt-8 grid gap-6 md:grid-cols-4">
+<div className="rounded-2xl bg-white/10 p-5">
+<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+Board Priority Score
+</p>
+
+<p className="mt-2 text-4xl font-black">
+{boardPriorityScore}/100
+</p>
+
+<p className="mt-2 text-sm text-slate-300">
+{boardPriorityLevel}
+</p>
+</div>
+
+<div className="rounded-2xl bg-white/10 p-5">
+<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+Top Risk
+</p>
+
+<p className="mt-2 text-sm font-semibold text-white">
+{topRisk}
+</p>
+</div>
+
+<div className="rounded-2xl bg-white/10 p-5">
+<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+Top Opportunity
+</p>
+
+<p className="mt-2 text-sm font-semibold text-white">
+{topOpportunity}
+</p>
+</div>
+
+<div className="rounded-2xl bg-white/10 p-5">
+<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+Board Health
+</p>
+
+<p className="mt-2 text-3xl font-black">
+{boardHealthStatus}
+</p>
+</div>
+</div>
+
+<div className="mt-8 grid gap-4 md:grid-cols-3">
+<div className="rounded-2xl bg-white/5 p-5">
+<p className="text-xs font-black uppercase tracking-[0.2em] text-orange-400">
+CEO Priority
+</p>
+
+<p className="mt-3 text-sm leading-7 text-slate-300">
+{ceoPriority}
+</p>
+</div>
+
+<div className="rounded-2xl bg-white/5 p-5">
+<p className="text-xs font-black uppercase tracking-[0.2em] text-orange-400">
+CFO Priority
+</p>
+
+<p className="mt-3 text-sm leading-7 text-slate-300">
+{cfoPriority}
+</p>
+</div>
+
+<div className="rounded-2xl bg-white/5 p-5">
+<p className="text-xs font-black uppercase tracking-[0.2em] text-orange-400">
+Procurement Priority
+</p>
+
+<p className="mt-3 text-sm leading-7 text-slate-300">
+{procurementPriority}
+</p>
+</div>
 </div>
 </section>
 
