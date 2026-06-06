@@ -30,6 +30,16 @@ type: string | null;
 created_at: string | null;
 };
 
+function formatMoney(value: number | string | null | undefined) {
+const amount = Number(value);
+
+if (!Number.isFinite(amount)) {
+return "$0";
+}
+
+return `$${amount.toLocaleString()}`;
+}
+
 export default async function DashboardPage() {
 const supabase = await createClient();
 
@@ -84,13 +94,16 @@ const { data: notifications } = await supabase
 const notificationList = (notifications ?? []) as Notification[];
 
 const totalRfqs = rfqList.length;
+
 const openRfqs = rfqList.filter(
 (rfq) => !rfq.status || rfq.status === "open"
 ).length;
+
 const awardedRfqs = rfqList.filter((rfq) => rfq.status === "awarded").length;
 const closedRfqs = rfqList.filter((rfq) => rfq.status === "closed").length;
 
 const submittedQuotes = quoteList.length;
+
 const awardedQuotes = quoteList.filter(
 (quote) => quote.decision === "awarded"
 );
@@ -114,6 +127,84 @@ return total + (Number.isNaN(budget) ? 0 : budget);
 }, 0);
 
 const estimatedSavings = Math.max(totalBudget - totalAwardedSpend, 0);
+
+const procurementHealthScore = Math.min(
+100,
+Math.round(
+awardRate * 0.35 +
+Math.min(submittedQuotes * 8, 30) +
+Math.min(awardedQuotes.length * 12, 25) +
+(estimatedSavings > 0 ? 10 : 0)
+)
+);
+
+const riskIndex = Math.max(0, 100 - procurementHealthScore);
+
+const forecastAccuracy =
+procurementHealthScore >= 80
+? 92
+: procurementHealthScore >= 65
+? 84
+: procurementHealthScore >= 50
+? 76
+: 65;
+
+const supplierConcentration =
+awardedQuotes.length <= 1
+? "High"
+: awardedQuotes.length <= 3
+? "Medium"
+: "Low";
+
+const executiveStatus =
+procurementHealthScore >= 85
+? "Excellent"
+: procurementHealthScore >= 70
+? "Healthy"
+: procurementHealthScore >= 55
+? "Moderate"
+: "Needs Attention";
+
+const boardRecommendation =
+riskIndex >= 60
+? "Reduce procurement risk by increasing supplier participation, improving RFQ conversion, and reviewing award concentration."
+: estimatedSavings > 0
+? "Prioritize savings capture, maintain competitive bidding activity, and scale high-performing supplier relationships."
+: "Continue growing RFQ activity, supplier quote volume, and award decisions to strengthen executive procurement confidence.";
+
+const executiveAlerts = [];
+
+if (riskIndex >= 55) {
+executiveAlerts.push({
+level: "warning",
+title: "Procurement Risk Requires Attention",
+message: "Risk exposure is elevated. Review RFQ activity and award conversion.",
+});
+}
+
+if (estimatedSavings > 0) {
+executiveAlerts.push({
+level: "opportunity",
+title: "Savings Opportunity Available",
+message: "Budget-to-award spread indicates potential procurement savings.",
+});
+}
+
+if (submittedQuotes < 3) {
+executiveAlerts.push({
+level: "warning",
+title: "Supplier Participation Is Limited",
+message: "Invite more vendors to improve competition and pricing quality.",
+});
+}
+
+if (forecastAccuracy >= 75) {
+executiveAlerts.push({
+level: "healthy",
+title: "Forecast Confidence Is Active",
+message: "Procurement data is sufficient for executive forecasting signals.",
+});
+}
 
 const topRfqsByBudget = [...rfqList]
 .sort((a, b) => Number(b.budget || 0) - Number(a.budget || 0))
@@ -146,7 +237,76 @@ Role: {profile?.role || "buyer"}
 <SignOutButton />
 </div>
 
-<section className="mt-10 rounded-[32px] border border-black/5 bg-white p-8">
+<section className="mt-10 rounded-[36px] border border-slate-200 bg-slate-950 p-8 text-white">
+<p className="text-xs font-black uppercase tracking-[0.3em] text-orange-400">
+CEO Command Center
+</p>
+
+<div className="mt-5 grid gap-8 lg:grid-cols-[1fr_0.9fr]">
+<div>
+<h2 className="text-4xl font-black">
+Executive Procurement Control Tower
+</h2>
+
+<p className="mt-4 max-w-3xl text-sm leading-7 text-slate-300">
+{boardRecommendation}
+</p>
+</div>
+
+<div className="grid gap-4 sm:grid-cols-2">
+<DarkMetric
+title="Enterprise Score"
+value={`${procurementHealthScore}/100`}
+/>
+<DarkMetric title="Risk Index" value={`${riskIndex}/100`} />
+<DarkMetric
+title="Forecast Accuracy"
+value={`${forecastAccuracy}%`}
+/>
+<DarkMetric
+title="Supplier Concentration"
+value={supplierConcentration}
+/>
+</div>
+</div>
+</section>
+
+<section className="mt-8 rounded-[32px] border border-black/5 bg-white p-8">
+<p className="text-xs font-black uppercase tracking-[0.3em] text-orange-500">
+Executive Alerts
+</p>
+
+<h2 className="mt-3 text-3xl font-black text-slate-950">
+Real-Time Procurement Signals
+</h2>
+
+<div className="mt-6 space-y-4">
+{executiveAlerts.map((alert, index) => (
+<div
+key={index}
+className="rounded-2xl border border-slate-200 bg-slate-50 p-5"
+>
+<div className="flex items-center gap-3">
+<div
+className={`h-3 w-3 rounded-full ${
+alert.level === "healthy"
+? "bg-green-500"
+: alert.level === "opportunity"
+? "bg-yellow-500"
+: "bg-red-500"
+}`}
+/>
+
+<p className="font-black text-slate-950">{alert.title}</p>
+</div>
+
+<p className="mt-2 text-sm text-slate-600">{alert.message}</p>
+</div>
+))}
+</div>
+</section>
+
+<section className="mt-8 rounded-[32px] border border-black/5 bg-white p-8">
 <p className="text-xs font-black uppercase tracking-[0.3em] text-orange-500">
 My Enterprise Company
 </p>
@@ -280,7 +440,7 @@ detail="Submitted enterprise bids"
 
 <InsightCard
 title="Awarded Spend"
-value={`$${totalAwardedSpend.toLocaleString()}`}
+value={formatMoney(totalAwardedSpend)}
 detail="Total awarded contract value"
 />
 
@@ -304,13 +464,13 @@ detail="Archived or completed events"
 
 <InsightCard
 title="Est. Savings"
-value={`$${estimatedSavings.toLocaleString()}`}
+value={formatMoney(estimatedSavings)}
 detail="Budget less awarded value"
 />
 
 <InsightCard
 title="Average Award"
-value={`$${averageAward.toLocaleString()}`}
+value={formatMoney(averageAward)}
 detail="Average awarded contract"
 />
 </div>
@@ -355,7 +515,7 @@ Awarded
 </div>
 
 <p className="mt-4 text-2xl font-black text-slate-950">
-${Number(quote.amount || 0).toLocaleString()}
+{formatMoney(quote.amount)}
 </p>
 </div>
 );
@@ -401,7 +561,7 @@ className="block rounded-3xl border border-slate-100 bg-slate-50 p-5 transition 
 </div>
 
 <p className="mt-4 text-2xl font-black text-slate-950">
-${Number(rfq.budget || 0).toLocaleString()}
+{formatMoney(rfq.budget)}
 </p>
 </Link>
 ))
@@ -498,6 +658,18 @@ return (
 <p className="mt-3 text-4xl font-black text-slate-950">{value}</p>
 
 <p className="mt-2 text-sm text-slate-600">{detail}</p>
+</div>
+);
+}
+
+function DarkMetric({ title, value }: { title: string; value: string }) {
+return (
+<div className="rounded-2xl bg-white/10 p-5">
+<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+{title}
+</p>
+
+<p className="mt-2 text-3xl font-black text-white">{value}</p>
 </div>
 );
 }
