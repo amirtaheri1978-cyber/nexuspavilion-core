@@ -330,16 +330,24 @@ companyQuotes.length > 0
 ? Math.round((awardedQuotes.length / companyQuotes.length) * 100)
 : 0;
 
-const participationScore = Math.min(100, companyQuotes.length * 8);
-const revenueScore = Math.min(100, revenue / 5000);
+const participationScore = Math.min(100, companyQuotes.length * 5);
+const revenueScore = Math.min(100, revenue / 10000);
 
-const financialRisk = Math.max(5, Math.round(100 - revenue / 5000));
-const performanceRisk = Math.max(5, Math.round(100 - winRate));
-const dependencyRisk = revenue > 100000 ? 35 : 70;
+const estimatedFinancialRisk = Math.max(
+5,
+Math.round(100 - revenue / 5000)
+);
 
-const financialScore = Math.max(0, 100 - financialRisk);
-const performanceScore = Math.max(0, 100 - performanceRisk);
-const dependencyScore = Math.max(0, 100 - dependencyRisk);
+const estimatedPerformanceRisk = Math.max(
+5,
+Math.round(100 - winRate)
+);
+
+const estimatedDependencyRisk = revenue > 100000 ? 35 : 70;
+
+const financialScore = Math.max(0, 100 - estimatedFinancialRisk);
+const performanceScore = Math.max(0, 100 - estimatedPerformanceRisk);
+const dependencyScore = Math.max(0, 100 - estimatedDependencyRisk);
 
 const aiScore = Math.round(
 financialScore * 0.15 +
@@ -359,15 +367,6 @@ aiScore >= 90
 ? "Silver"
 : "Bronze";
 
-const recommendation =
-aiScore >= 90
-? "Preferred Supplier"
-: aiScore >= 80
-? "Strategic Supplier"
-: aiScore >= 65
-? "Approved Supplier"
-: "Monitor Supplier";
-
 return {
 name: company.name,
 quotes: companyQuotes.length,
@@ -382,6 +381,15 @@ recommendation,
 .filter((vendor) => vendor.quotes > 0)
 .sort((a, b) => b.aiScore - a.aiScore)
 .slice(0, 20);
+
+const recommendation =
+aiScore >= 90
+? "Preferred Supplier"
+: aiScore >= 80
+? "Strategic Supplier"
+: aiScore >= 65
+? "Approved Supplier"
+: "Monitor Supplier";
 
 const topSupplierRevenue = Math.max(
 ...supplierRanking.map((supplier) => supplier.revenue),
@@ -1342,6 +1350,7 @@ No supplier risk data available.
 </table>
 </div>
 </section>
+
 <section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
 <p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
 AI Supplier Ranking Engine
@@ -1360,7 +1369,7 @@ Supplier Intelligence Ranking
 <th className="px-5 py-4 text-sm">Tier</th>
 <th className="px-5 py-4 text-sm">Win Rate</th>
 <th className="px-5 py-4 text-sm">Revenue</th>
-<th className="px-5 py-4 text-sm">Recommendation</th>
+<th className="px-5 py-4 tes"
 </tr>
 </thead>
 
@@ -1388,17 +1397,13 @@ Supplier Intelligence Ranking
 <td className="px-5 py-4 text-slate-600">
 ${vendor.revenue.toLocaleString()}
 </td>
-
-<td className="px-5 py-4 text-slate-600">
-{vendor.recommendation}
-</td>
 </tr>
 ))}
 
 {supplierRanking.length === 0 && (
 <tr>
 <td
-colSpan={6}
+colSpan={5}
 className="px-5 py-10 text-center text-slate-500"
 >
 No supplier intelligence available.
