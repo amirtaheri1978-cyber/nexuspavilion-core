@@ -511,6 +511,62 @@ enterpriseProcurementScore >= 80
 ? "Healthy"
 : "Needs Attention";
 
+const procurementEfficiencyScore = Math.min(
+100,
+Math.round(
+awardRate * 0.4 +
+budgetUtilization * 0.3 +
+avgQuotesPerRfq * 10 +
+procurementHealthScore * 0.2
+)
+);
+
+const supplierEngagementScore = Math.min(
+100,
+Math.round(
+supplierQuotes * 5 +
+avgQuotesPerRfq * 15 +
+supplierReliabilityScore * 0.3
+)
+);
+
+const executiveReadinessScore = Math.min(
+100,
+Math.round(
+enterpriseProcurementScore * 0.4 +
+predictionAccuracy * 0.3 +
+dataQualityScore * 0.3
+)
+);
+
+const digitalMaturityScore = Math.min(
+100,
+Math.round(
+procurementMaturityScore * 0.5 +
+dataQualityScore * 0.25 +
+supplierEngagementScore * 0.25
+)
+);
+
+const boardHealthIndex = Math.min(
+100,
+Math.round(
+procurementEfficiencyScore * 0.25 +
+executiveReadinessScore * 0.25 +
+digitalMaturityScore * 0.25 +
+procurementHealthScore * 0.25
+)
+);
+
+const boardHealthStatus =
+boardHealthIndex >= 85
+? "Excellent"
+: boardHealthIndex >= 70
+? "Strong"
+: boardHealthIndex >= 55
+? "Moderate"
+: "Needs Action";
+
 const procurementOpportunityScore = Math.min(
 100,
 Math.round(
