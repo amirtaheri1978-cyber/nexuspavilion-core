@@ -675,6 +675,55 @@ boardHealthIndex >= 70
 },
 ];
 
+const categoryIntelligence = Object.entries(categoryCounts)
+.map(([category, count]) => {
+const categoryRfqs = rfqList.filter(
+(rfq: any) => (rfq.category || "Uncategorized") === category
+);
+
+const categoryRfqIds = categoryRfqs.map((rfq: any) => rfq.id);
+
+const categoryQuotes = quoteList.filter((quote: any) =>
+categoryRfqIds.includes(quote.rfq_id)
+);
+
+const categoryAwards = categoryQuotes.filter(
+(quote: any) => quote.decision === "awarded"
+);
+
+const categorySpend = categoryAwards.reduce(
+(total: number, quote: any) => total + Number(quote.amount || 0),
+0
+);
+
+const categoryWinRate =
+categoryQuotes.length > 0
+? Math.round((categoryAwards.length / categoryQuotes.length) * 100)
+: 0;
+
+const categoryOpportunityScore = Math.min(
+100,
+Math.round(
+count * 20 +
+categoryQuotes.length * 10 +
+categoryWinRate * 0.3 +
+Math.min(categorySpend / 10000, 25)
+)
+);
+
+return {
+category,
+rfqs: count,
+quotes: categoryQuotes.length,
+awards: categoryAwards.length,
+spend: categorySpend,
+winRate: categoryWinRate,
+opportunityScore: categoryOpportunityScore,
+};
+})
+.sort((a, b) => b.opportunityScore - a.opportunityScore)
+.slice(0, 5);
+
 const executivePerformanceMatrix = [
 {
 title: "Board Health",
@@ -1487,6 +1536,96 @@ Enterprise procurement intelligence continuously evaluates
 supplier participation, procurement efficiency, forecasting
 accuracy, digital maturity and executive readiness.
 </p>
+</div>
+</section>
+
+<section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
+Category Intelligence
+</p>
+
+<h2 className="mt-3 text-3xl font-black text-slate-950">
+Top Procurement Categories
+</h2>
+
+<p className="mt-3 text-sm text-slate-600">
+AI-driven category performance analysis based on RFQ activity,
+supplier participation, award volume, and procurement opportunity.
+</p>
+
+<div className="mt-8 overflow-x-auto">
+<table className="w-full">
+<thead>
+<tr className="border-b border-slate-200 text-left">
+<th className="pb-4 text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+Category
+</th>
+
+<th className="pb-4 text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+RFQs
+</th>
+
+<th className="pb-4 text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+Quotes
+</th>
+
+<th className="pb-4 text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+Awards
+</th>
+
+<th className="pb-4 text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+Win Rate
+</th>
+
+<th className="pb-4 text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+Spend
+</th>
+
+<th className="pb-4 text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+Opportunity
+</th>
+</tr>
+</thead>
+
+<tbody>
+{categoryIntelligence.map((item) => (
+<tr
+key={item.category}
+className="border-b border-slate-100"
+>
+<td className="py-4 font-black text-slate-950">
+{item.category}
+</td>
+
+<td className="py-4 text-slate-700">
+{item.rfqs}
+</td>
+
+<td className="py-4 text-slate-700">
+{item.quotes}
+</td>
+
+<td className="py-4 text-slate-700">
+{item.awards}
+</td>
+
+<td className="py-4 font-bold text-slate-950">
+{item.winRate}%
+</td>
+
+<td className="py-4 font-bold text-slate-950">
+${item.spend.toLocaleString()}
+</td>
+
+<td className="py-4">
+<span className="rounded-full bg-orange-100 px-3 py-1 text-xs font-black text-orange-700">
+{item.opportunityScore}/100
+</span>
+</td>
+</tr>
+))}
+</tbody>
+</table>
 </div>
 </section>
 
