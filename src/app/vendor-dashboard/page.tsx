@@ -132,13 +132,34 @@ submittedQuotes > 0
 ? Math.round((awardedQuotes.length / submittedQuotes) * 100)
 : 0;
 
+const financialRisk = Math.max(
+5,
+Math.round(100 - awardedRevenue / 5000)
+);
+
+const performanceRisk = Math.max(5, Math.round(100 - winRate));
+
+const capacityRisk =
+submittedQuotes <= 1 ? 70 : submittedQuotes <= 3 ? 45 : 20;
+
+const dependencyRisk = awardedRevenue > 100000 ? 35 : 70;
+
+const financialScore = Math.max(0, 100 - financialRisk);
+const performanceScore = Math.max(0, 100 - performanceRisk);
+const dependencyScore = Math.max(0, 100 - dependencyRisk);
+
+const participationScore = Math.min(100, submittedQuotes * 8);
+const revenueScore = Math.min(100, awardedRevenue / 5000);
+
 const procurementScore = Math.min(
 100,
 Math.round(
-winRate * 0.45 +
-awardedQuotes.length * 12 +
-Math.min(awardedRevenue / 25000, 25) +
-Math.min(submittedQuotes * 2, 15)
+financialScore * 0.15 +
+performanceScore * 0.25 +
+dependencyScore * 0.15 +
+winRate * 0.25 +
+participationScore * 0.1 +
+revenueScore * 0.1
 )
 );
 
@@ -153,6 +174,7 @@ procurementScore >= 90
 : procurementScore >= 60
 ? "Qualified"
 : "Developing";
+
 const supplierTier =
 procurementScore >= 90
 ? "Platinum Supplier"
@@ -161,6 +183,15 @@ procurementScore >= 90
 : procurementScore >= 65
 ? "Silver Supplier"
 : "Developing Supplier";
+
+const supplierRecommendation =
+procurementScore >= 90
+? "Preferred Supplier"
+: procurementScore >= 80
+? "Strategic Supplier"
+: procurementScore >= 65
+? "Approved Supplier"
+: "Monitor Supplier";
 
 const awardProbability = Math.min(
 98,
@@ -204,6 +235,17 @@ submittedQuotes >= 5
 : submittedQuotes >= 2
 ? "Moderate"
 : "Low";
+
+const executiveRecommendation =
+procurementScore >= 85
+? "Increase RFQ allocation and maintain this supplier as a preferred procurement partner."
+: procurementScore >= 65
+? "Continue RFQ participation while monitoring risk, pricing, and delivery consistency."
+: "Monitor this supplier closely and improve quote volume, win rate, and awarded revenue before increasing dependency.";
+
+const overallRisk = Math.round(
+(financialRisk + performanceRisk + capacityRisk + dependencyRisk) / 4
+);
 
 const openRfqs = rfqList.filter(
 (rfq) => !rfq.status || rfq.status === "open"
@@ -249,7 +291,7 @@ return (
 <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
 <div>
 <p className="text-xs font-black uppercase tracking-[0.35em] text-orange-500">
-Vendor Intelligence
+Supplier Intelligence Dashboard
 </p>
 
 <h1 className="mt-3 text-5xl font-black text-slate-950">
@@ -269,6 +311,34 @@ className="rounded-full bg-slate-950 px-6 py-3 text-sm font-bold text-white tran
 >
 Open Marketplace
 </Link>
+</div>
+</section>
+
+<section className="mt-8 rounded-[36px] border border-slate-200 bg-slate-950 p-8 text-white">
+<p className="text-xs font-black uppercase tracking-[0.3em] text-orange-400">
+Executive Supplier Intelligence
+</p>
+
+<div className="mt-5 grid gap-8 lg:grid-cols-[1fr_0.9fr]">
+<div>
+<h2 className="text-4xl font-black">
+Supplier Performance Control Tower
+</h2>
+
+<p className="mt-4 max-w-3xl text-sm leading-7 text-slate-300">
+{executiveRecommendation}
+</p>
+</div>
+
+<div className="grid gap-4 sm:grid-cols-2">
+<DarkMetric
+title="Supplier Score"
+value={`${procurementScore}/100`}
+/>
+<DarkMetric title="Tier" value={supplierTier} />
+<DarkMetric title="Risk" value={supplierRisk} />
+<DarkMetric title="Recommendation" value={supplierRecommendation} />
+</div>
 </div>
 </section>
 
@@ -361,14 +431,15 @@ Supplier Performance Intelligence
 
 <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">
 Nexus AI evaluates supplier quote activity, awarded contracts,
-awarded revenue, procurement engagement, and marketplace
-competitiveness to generate a supplier ranking profile.
+awarded revenue, procurement engagement, risk exposure, and
+marketplace competitiveness to generate a supplier ranking
+profile.
 </p>
 
 <div className="mt-8 grid gap-4 md:grid-cols-3">
 <MetricCard
 title="Supplier Score"
-value={'${procurementStore}/100'}
+value={`${procurementScore}/100`}
 detail="AI weighted performance score"
 />
 
@@ -392,10 +463,7 @@ Ranking Signals
 </p>
 
 <div className="mt-4 space-y-3">
-<SignalRow
-label="Win Rate"
-value={`${winRate}%`}
-/>
+<SignalRow label="Win Rate" value={`${winRate}%`} />
 <SignalRow
 label="Awarded Revenue"
 value={formatMoney(awardedRevenue)}
@@ -404,68 +472,53 @@ value={formatMoney(awardedRevenue)}
 label="Quote Volume"
 value={String(submittedQuotes)}
 />
-
+<SignalRow label="Average Bid" value={formatMoney(averageBid)} />
+<SignalRow label="Supplier Tier" value={supplierTier} />
 <SignalRow
-label="Average Bid"
-value={formatMoney(averageBid)}
+label="Recommendation"
+value={supplierRecommendation}
 />
-
-<SignalRow
-label="Supplier Tier"
-value={supplierTier}
-/>
-
 <SignalRow
 label="Award Probability"
 value={`${awardProbability}%`}
 />
-
-<SignalRow
-label="Risk Level"
-value={supplierRisk}
-/>
-
-<SignalRow
-label="Reputation"
-value={marketplaceReputation}
-/>
-
+<SignalRow label="Risk Level" value={supplierRisk} />
+<SignalRow label="Reputation" value={marketplaceReputation} />
 <SignalRow
 label="Quote Competitiveness"
 value={quoteCompetitiveness}
 />
-
 <SignalRow
 label="Recent Activity"
 value={recentActivitySignal}
 />
-n
-<SignalRow
-label="Award Count"
-value={String(awardedQuotes.length)}
-/>
-
-<SignalRow
-label="Award Revenue"
-value={formatMoney(awardedRevenue)}
-/>
-
-<SignalRow
-label="Quote Volume"
-value={String(submittedQuotes)}
-/>
-
-<SignalRow
-label="Average Bid"
-value={formatMoney(averageBid)}
-/>
-
 <SignalRow
 label="Competitive Strength"
 value={competitiveStrength}
 />
 </div>
 </div>
+</div>
+</section>
+
+<section className="mt-8 rounded-[32px] border border-black/5 bg-white p-8">
+<p className="text-xs font-black uppercase tracking-[0.3em] text-orange-500">
+Supplier Risk Intelligence
+</p>
+
+<h2 className="mt-3 text-3xl font-black text-slate-950">
+Risk Breakdown
+</h2>
+
+<div className="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-5">
+<MiniCard title="Overall Risk" value={`${overallRisk}/100`} />
+<MiniCard title="Financial Risk" value={`${financialRisk}/100`} />
+<MiniCard
+title="Performance Risk"
+value={`${performanceRisk}/100`}
+/>
+<MiniCard title="Capacity Risk" value={`${capacityRisk}/100`} />
+<MiniCard title="Dependency Risk" value={`${dependencyRisk}/100`} />
 </div>
 </section>
 
@@ -630,9 +683,7 @@ Recent Awards
 <div className="mt-6 space-y-4">
 {recentAwards.length > 0 ? (
 recentAwards.map((quote) => {
-const rfq = rfqList.find(
-(item) => item.id === quote.rfq_id
-);
+const rfq = rfqList.find((item) => item.id === quote.rfq_id);
 
 return (
 <div
@@ -709,6 +760,18 @@ return (
 </p>
 
 <p className="mt-2 text-2xl font-black text-slate-950">{value}</p>
+</div>
+);
+}
+
+function DarkMetric({ title, value }: { title: string; value: string }) {
+return (
+<div className="rounded-2xl bg-white/10 p-5">
+<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+{title}
+</p>
+
+<p className="mt-2 text-3xl font-black">{value}</p>
 </div>
 );
 }
