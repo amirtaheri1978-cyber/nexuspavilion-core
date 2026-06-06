@@ -644,6 +644,37 @@ message:
 });
 }
 
+const executiveRecommendations = [
+{
+role: "CEO Action",
+action:
+procurementOpportunityScore >= 80
+? `Prioritize ${bestProcurementCategory} as a strategic growth and savings category.`
+: "Maintain procurement discipline while scaling executive visibility.",
+},
+{
+role: "CFO Action",
+action:
+forecastSavings > 0
+? `Review ${forecastSavings.toLocaleString()} dollars in forecast savings opportunity.`
+: "Monitor spend performance and improve budget-to-award visibility.",
+},
+{
+role: "Procurement Director",
+action:
+supplierRanking.length <= 3
+? "Expand supplier participation to reduce vendor dependency risk."
+: "Continue strengthening supplier performance and category coverage.",
+},
+{
+role: "Board Priority",
+action:
+boardHealthIndex >= 70
+? "Scale procurement intelligence adoption across enterprise stakeholders."
+: "Improve procurement data maturity, supplier coverage, and award conversion.",
+},
+];
+
 const boardRecommendation =
 procurementRiskIndex >= 60
 ? "Reduce supplier dependency and review award concentration before scaling procurement volume."
@@ -821,6 +852,33 @@ alert.level === "healthy"
 
 <p className="mt-2 text-sm text-slate-600">
 {alert.message}
+</p>
+</div>
+))}
+</div>
+</section>
+
+<section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
+AI Executive Recommendations
+</p>
+
+<h2 className="mt-3 text-3xl font-black text-slate-950">
+Executive Action Plan
+</h2>
+
+<div className="mt-6 grid gap-4 md:grid-cols-2">
+{executiveRecommendations.map((item) => (
+<div
+key={item.role}
+className="rounded-2xl border border-slate-200 bg-slate-50 p-5"
+>
+<p className="text-xs font-black uppercase tracking-[0.2em] text-orange-500">
+{item.role}
+</p>
+
+<p className="mt-3 text-sm font-semibold leading-7 text-slate-700">
+{item.action}
 </p>
 </div>
 ))}
