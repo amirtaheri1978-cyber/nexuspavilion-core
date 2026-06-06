@@ -795,6 +795,7 @@ digitalTwinScenario === "Growth Scenario"
 : "Maintain procurement discipline while improving forecast quality and supplier coverage.";
 
 
+
 const boardPriorityLevel =
 boardPriorityScore >= 80
 ? "High Performance"
@@ -830,6 +831,42 @@ const procurementPriority =
 avgQuotesPerRfq < 2
 ? "Increase RFQ competition and supplier engagement."
 : "Maintain healthy procurement competition levels.";
+
+const procurementCopilotPrompts = [
+{
+question: "Where is our biggest savings opportunity?",
+answer:
+potentialSavings > 0
+? `${bestProcurementCategory} shows the strongest savings signal with $${potentialSavings.toLocaleString()} in estimated opportunity.`
+: "Savings opportunity is currently limited. Increase supplier participation to improve pricing discovery.",
+},
+{
+question: "Which area needs executive attention?",
+answer:
+procurementRiskIndex >= 50
+? "Procurement risk is elevated. Review supplier dependency, award concentration, and low-competition categories."
+: "Executive attention should focus on scaling supplier engagement and maintaining forecast confidence.",
+},
+{
+question: "What should the CEO prioritize?",
+answer: ceoPriority,
+},
+{
+question: "What should the CFO monitor?",
+answer: cfoPriority,
+},
+{
+question: "What should Procurement improve?",
+answer: procurementPriority,
+},
+];
+
+const copilotSummary =
+boardPriorityScore >= 80
+? "Nexus Copilot recommends scaling category growth, supplier coverage, and savings capture."
+: procurementRiskIndex >= 60
+? "Nexus Copilot recommends reducing risk exposure before expanding procurement volume."
+: "Nexus Copilot recommends improving supplier participation and procurement data maturity.";
 
 const boardRecommendation =
 procurementRiskIndex >= 60
@@ -1186,6 +1223,37 @@ Digital Twin Recommendation
 <p className="mt-3 text-sm font-semibold leading-7 text-slate-700">
 {digitalTwinRecommendation}
 </p>
+</div>
+</section>
+
+<section className="mt-8 rounded-3xl border border-slate-200 bg-slate-950 p-8 text-white">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-400">
+Enterprise Procurement Copilot
+</p>
+
+<h2 className="mt-3 text-4xl font-black">
+Ask Nexus Copilot
+</h2>
+
+<p className="mt-3 max-w-4xl text-sm leading-7 text-slate-300">
+{copilotSummary}
+</p>
+
+<div className="mt-8 grid gap-4 md:grid-cols-2">
+{procurementCopilotPrompts.map((prompt) => (
+<div
+key={prompt.question}
+className="rounded-2xl bg-white/10 p-5"
+>
+<p className="text-xs font-black uppercase tracking-[0.2em] text-orange-400">
+{prompt.question}
+</p>
+
+<p className="mt-3 text-sm font-semibold leading-7 text-slate-300">
+{prompt.answer}
+</p>
+</div>
+))}
 </div>
 </section>
 
