@@ -868,6 +868,31 @@ boardPriorityScore >= 80
 ? "Nexus Copilot recommends reducing risk exposure before expanding procurement volume."
 : "Nexus Copilot recommends improving supplier participation and procurement data maturity.";
 
+const copilotModes = [
+{
+mode: "CEO Mode",
+focus: "Growth, market position, supplier network expansion",
+insight: ceoPriority,
+},
+{
+mode: "CFO Mode",
+focus: "Savings, spend control, forecast confidence",
+insight: cfoPriority,
+},
+{
+mode: "Procurement Director Mode",
+focus: "Supplier competition, award quality, category execution",
+insight: procurementPriority,
+},
+];
+
+const copilotFeaturedInsight =
+boardPriorityScore >= 80
+? "Executive momentum is strong. Copilot recommends scaling procurement intelligence adoption."
+: procurementRiskIndex >= 60
+? "Risk exposure is elevated. Copilot recommends prioritizing supplier diversification."
+: "Procurement performance is stable. Copilot recommends increasing supplier coverage and data maturity.";
+
 const boardRecommendation =
 procurementRiskIndex >= 60
 ? "Reduce supplier dependency and review award concentration before scaling procurement volume."
@@ -1251,6 +1276,36 @@ className="rounded-2xl bg-white/10 p-5"
 
 <p className="mt-3 text-sm font-semibold leading-7 text-slate-300">
 {prompt.answer}
+</p>
+</div>
+))}
+</div>
+<div className="mt-8 rounded-3xl border border-white/10 bg-white/5 p-6">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-400">
+Featured Insight
+</p>
+
+<p className="mt-3 text-sm font-semibold leading-7 text-slate-300">
+{copilotFeaturedInsight}
+</p>
+</div>
+
+<div className="mt-8 grid gap-4 md:grid-cols-3">
+{copilotModes.map((mode) => (
+<div
+key={mode.mode}
+className="rounded-2xl border border-white/10 bg-white/5 p-5"
+>
+<p className="text-xs font-black uppercase tracking-[0.2em] text-orange-400">
+{mode.mode}
+</p>
+
+<p className="mt-3 text-xs font-semibold uppercase tracking-[0.15em] text-slate-400">
+{mode.focus}
+</p>
+
+<p className="mt-4 text-sm leading-7 text-slate-300">
+{mode.insight}
 </p>
 </div>
 ))}
