@@ -1,7 +1,7 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase";
 
 type DeleteCompanyButtonProps = {
 id: string;
@@ -13,6 +13,7 @@ id,
 companyName,
 }: DeleteCompanyButtonProps) {
 const router = useRouter();
+const [isDeleting, setIsDeleting] = useState(false);
 
 async function handleDelete() {
 const confirmed = window.confirm(
@@ -21,15 +22,17 @@ const confirmed = window.confirm(
 
 if (!confirmed) return;
 
-try {
-const { error } = await supabase
-.from("companies")
-.delete()
-.eq("id", id);
+setIsDeleting(true);
 
-if (error) {
-console.error(error);
-alert("Failed to delete company.");
+try {
+const response = await fetch(`/api/companies/${id}`, {
+method: "DELETE",
+});
+
+const data = await response.json();
+
+if (!response.ok) {
+alert(data.error || "Failed to delete company.");
 return;
 }
 
@@ -40,15 +43,18 @@ router.refresh();
 } catch (err) {
 console.error(err);
 alert("Unexpected error.");
+} finally {
+setIsDeleting(false);
 }
 }
 
 return (
 <button
 onClick={handleDelete}
-className="inline-flex rounded-lg border border-red-300 bg-red-50 px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-100 transition"
+disabled={isDeleting}
+className="inline-flex rounded-lg border border-red-300 bg-red-50 px-4 py-2 text-sm font-medium text-red-700 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60"
 >
-Delete Company
+{isDeleting ? "Deleting..." : "Delete Company"}
 </button>
 );
 }

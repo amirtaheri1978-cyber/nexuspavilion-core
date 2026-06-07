@@ -1,8 +1,10 @@
 import Link from "next/link";
 
+import DeleteCompanyButton from "@/components/connections/DeleteCompanyButton";
 import InvitationActions from "@/components/invitation-actions";
 import MemberActions from "@/components/member-actions";
 import { createClient } from "@/lib/supabase/server";
+
 
 type Profile = {
 id: string;
@@ -396,6 +398,31 @@ status={invitation.status}
 </section>
 </aside>
 </section>
+
+{company && currentProfile.role === "admin" ? ( 
+<section className="mt-8 rounded-[32px] border border-red-200 bg-red-50 p-8">
+<p className="text-xs font-black uppercase tracking-[0.3em] text-red-500">
+Danger Zone
+</p>
+
+<h2 className="mt-3 text-3xl font-black text-red-700">
+Delete Company Workspace
+</h2>
+
+<p className="mt-4 max-w-4xl text-sm leading-7 text-red-700">
+Deleting this company workspace is permanent. This action should only
+be used by an authorized admin when the workspace must be removed from
+Nexus Pavilion.
+</p>
+
+<div className="mt-6">
+<DeleteCompanyButton
+id={company.id}
+companyName={company.name || "Company Workspace"}
+/>
+</div>
+</section>
+) : null}
 
 <section className="mt-8 rounded-[32px] border border-black/5 bg-white p-8">
 <p className="text-xs font-black uppercase tracking-[0.3em] text-orange-500">
