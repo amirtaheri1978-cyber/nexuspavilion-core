@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 
 import { createClient } from "@/lib/supabase/server";
 
+import { sendEmail } from "@/lib/email/send-email";
+import { rfqCreatedEmail } from "@/lib/email/templates/rfq-created-email";
+
 function createSlug(title: string) {
 return `${title
 .toLowerCase()
@@ -78,6 +81,23 @@ budget: rfq.budget,
 category: rfq.category,
 },
 });
+
+try {
+if (user.email) {
+await sendEmail({
+to: user.email,
+subject: `RFQ Created: ${rfq.title}`,
+html: rfqCreatedEmail({
+rfqTitle: rfq.title || "New RFQ",
+category: rfq.category || "Procurement",
+budget: rfq.budget ? String(rfq.budget) : "Not specified",
+rfqUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/rfq/${rfq.slug}`,
+}),
+});
+}
+} catch (error) {
+console.error("RFQ created email failed:", error);
+}
 
 await supabase.from("notifications").insert({
 title: "RFQ Created",

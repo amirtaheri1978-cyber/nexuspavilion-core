@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 
 import { createClient } from "@/lib/supabase/server";
 
+import { sendEmail } from "@/lib/email/send-email";
+import { awardNotificationEmail } from "@/lib/email/templates/award-notification-email";
+
 type AwardRequestBody = {
 quoteId?: string;
 };
@@ -235,6 +238,23 @@ awarded_company_id: selectedQuote.company_id,
 awarded_at: awardedAt,
 },
 });
+
+try {
+if (user.email) {
+await sendEmail({
+to: user.email,
+subject: `Contract Awarded: ${rfq.title ?? "Project"}`,
+html: awardNotificationEmail({
+rfqTitle: rfq.title ?? "Project",
+amount: formatCurrency(selectedQuote.amount),
+awardUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/rfq/${rfq.slug}/compare`,
+}),
+});
+}
+} catch (error) {
+console.error("Award notification email failed:", error);
+}
+
 
 return NextResponse.json({
 success: true,

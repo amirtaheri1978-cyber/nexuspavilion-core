@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 
 import { createClient } from "@/lib/supabase/server";
 
+import { sendEmail } from "@/lib/email/send-email";
+import { companyWelcomeEmail } from "@/lib/email/templates/company-welcome-email";
+
 function normalizeText(value: string) {
 return value.trim();
 }
@@ -147,6 +150,19 @@ owner_email: normalizedEmail,
 created_at: new Date().toISOString(),
 },
 });
+
+try {
+await sendEmail({
+to: user.email!,
+subject: "Welcome to Nexus Pavilion",
+html: companyWelcomeEmail({
+companyName: name,
+workspaceUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/company`,
+}),
+});
+} catch (error) {
+console.error("Welcome email failed:", error);
+}
 
 return NextResponse.json({
 success: true,

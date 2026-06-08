@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 
 import { createClient } from "@/lib/supabase/server";
 
+import { sendEmail } from "@/lib/email/send-email";
+import { quoteSubmittedEmail } from "@/lib/email/templates/quote-submitted-email";
+
 function calculateScore(amount: number, timeline: string) {
 const timelineValue = timeline.toLowerCase();
 
@@ -166,6 +169,23 @@ score,
 submitted_at: new Date().toISOString(),
 },
 });
+
+try {
+if (user.email) {
+await sendEmail({
+to: user.email,
+subject: `Quote Submitted: ${rfq.title}`,
+html: quoteSubmittedEmail({
+rfqTitle: rfq.title || "RFQ",
+amount: amount ? String(amount) : "Not specified",
+timeline: timeline || "Not specified",
+quoteUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/rfq/${rfq.slug}/compare`,
+}),
+});
+}
+} catch (error) {
+console.error("Quote submitted email failed:", error);
+}
 
 await supabase.from("notifications").insert({
 title: "Quote Submitted",
