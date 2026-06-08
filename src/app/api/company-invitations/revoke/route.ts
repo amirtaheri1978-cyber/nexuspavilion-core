@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
 
+import { canInviteUsers, type UserRole } from "@/lib/permissions";
 import { createClient } from "@/lib/supabase/server";
 
 export async function POST(request: Request) {
 try {
 const body = await request.json();
-const invitationId = String(body.invitationId || "");
+const invitationId = String(body.invitationId || "").trim();
 
 if (!invitationId) {
 return NextResponse.json(
@@ -27,7 +28,7 @@ return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
 
 const { data: profile } = await supabase
 .from("profiles")
-.select("company_id, role")
+.select("id, email, company_id, role")
 .eq("id", user.id)
 .single();
 
@@ -38,9 +39,9 @@ return NextResponse.json(
 );
 }
 
-if (profile.role !== "admin" && profile.role !== "buyer") {
+if (!canInviteUsers(profile.role as UserRole)) {
 return NextResponse.json(
-{ error: "You do not have permission to revoke invitations." },
+{ error: "You do not have permission to manage invitations." },
 { status: 403 }
 );
 }
@@ -54,7 +55,7 @@ const { data: invitation } = await supabase
 
 if (!invitation) {
 return NextResponse.json(
-{ error: "Invitation not found." },
+{ error: "Invitation not found in your company workspace." },
 { status: 404 }
 );
 }
@@ -71,7 +72,8 @@ const { error: updateError } = await supabase
 .update({
 status: "revoked",
 })
-.eq("id", invitation.id);
+.eq("id", invitation.id)
+.eq("company_id", profile.company_id);
 
 if (updateError) {
 console.error(updateError);
@@ -91,6 +93,11 @@ company_id: profile.company_id,
 metadata: {
 email: invitation.email,
 role: invitation.role,
+revoked_by: {
+id: profile.id,
+email: profile.email,
+role: profile.role,
+},
 revoked_at: new Date().toISOString(),
 },
 });

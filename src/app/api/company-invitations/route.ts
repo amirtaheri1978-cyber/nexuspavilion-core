@@ -2,9 +2,11 @@ import { NextResponse } from "next/server";
 
 import { buildCompanyInvitationEmail } from "@/lib/email/templates/company-invitation-email";
 import { sendEmail } from "@/lib/email/send-email";
+import { canInviteUsers, type UserRole } from "@/lib/permissions";
 import { createClient } from "@/lib/supabase/server";
 
 const SITE_URL =
+process.env.NEXT_PUBLIC_SITE_URL ||
 "https://scaling-invention-5g7q4p5rwrwj3vwq7-3000.app.github.dev";
 
 type Company = {
@@ -12,12 +14,18 @@ id: string;
 name: string | null;
 };
 
-function normalizeEmail(email: string) {
-return email.trim().toLowerCase();
+type InviteRole = "admin" | "buyer" | "vendor";
+
+function normalizeEmail(email: unknown) {
+return String(email || "").trim().toLowerCase();
 }
 
-function normalizeRole(role: string) {
-const value = role.trim().toLowerCase();
+function isValidEmail(email: string) {
+return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+function normalizeRole(role: unknown): InviteRole {
+const value = String(role || "").trim().toLowerCase();
 
 if (value === "admin") return "admin";
 if (value === "buyer") return "buyer";
@@ -29,12 +37,19 @@ export async function POST(request: Request) {
 try {
 const body = await request.json();
 
-const email = normalizeEmail(body.email || "");
-const role = normalizeRole(body.role || "vendor");
+const email = normalizeEmail(body.email);
+const role = normalizeRole(body.role);
 
 if (!email) {
 return NextResponse.json(
 { error: "Email is required." },
+{ status: 400 }
+);
+}
+
+if (!isValidEmail(email)) {
+return NextResponse.json(
+{ error: "Please enter a valid email address." },
 { status: 400 }
 );
 }
@@ -52,7 +67,7 @@ return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
 
 const { data: profile } = await supabase
 .from("profiles")
-.select("company_id")
+.select("id, email, company_id, role")
 .eq("id", user.id)
 .single();
 
@@ -60,6 +75,13 @@ if (!profile?.company_id) {
 return NextResponse.json(
 { error: "No company assigned." },
 { status: 400 }
+);
+}
+
+if (!canInviteUsers(profile.role as UserRole)) {
+return NextResponse.json(
+{ error: "You do not have permission to invite company users." },
+{ status: 403 }
 );
 }
 
@@ -78,6 +100,20 @@ return NextResponse.json(
 );
 }
 
+const { data: existingMember } = await supabase
+.from("profiles")
+.select("id, email, company_id")
+.eq("company_id", profile.company_id)
+.eq("email", email)
+.maybeSingle();
+
+if (existingMember) {
+return NextResponse.json(
+{ error: "This user is already a member of your company workspace." },
+{ status: 409 }
+);
+}
+
 const { data: existingInvite } = await supabase
 .from("invitations")
 .select("id")
@@ -88,7 +124,7 @@ const { data: existingInvite } = await supabase
 
 if (existingInvite) {
 return NextResponse.json(
-{ error: "Invitation already exists." },
+{ error: "A pending invitation already exists for this email." },
 { status: 409 }
 );
 }
@@ -101,7 +137,7 @@ email,
 role,
 invited_by: user.id,
 })
-.select()
+.select("id, email, role, status, token, company_id")
 .single();
 
 if (invitationError || !invitation) {
@@ -109,6 +145,13 @@ console.error(invitationError);
 
 return NextResponse.json(
 { error: "Failed to create invitation." },
+{ status: 500 }
+);
+}
+
+if (!invitation.token) {
+return NextResponse.json(
+{ error: "Invitation token was not generated." },
 { status: 500 }
 );
 }
@@ -135,6 +178,7 @@ title: "Invitation Created",
 message: `${email} was invited to ${companyName} as ${role}.`,
 type: "invitation",
 is_read: false,
+company_id: profile.company_id,
 });
 
 await supabase.from("audit_logs").insert({
@@ -151,6 +195,11 @@ email_sent: emailResult.success,
 email_skipped: emailResult.skipped,
 email_id: emailResult.id,
 email_error: emailResult.error,
+invited_by: {
+id: profile.id,
+email: profile.email,
+role: profile.role,
+},
 created_at: new Date().toISOString(),
 },
 });

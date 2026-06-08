@@ -1,13 +1,15 @@
 import { NextResponse } from "next/server";
 
+import { canChangeRoles, type UserRole } from "@/lib/permissions";
 import { createClient } from "@/lib/supabase/server";
 
-function normalizeRole(role: string) {
-const value = role.trim().toLowerCase();
+type EditableRole = "admin" | "buyer" | "vendor";
+
+function normalizeRole(role: unknown): EditableRole {
+const value = String(role || "").trim().toLowerCase();
 
 if (value === "admin") return "admin";
 if (value === "buyer") return "buyer";
-
 return "vendor";
 }
 
@@ -15,8 +17,8 @@ export async function POST(request: Request) {
 try {
 const body = await request.json();
 
-const memberId = String(body.memberId || "");
-const role = normalizeRole(String(body.role || "vendor"));
+const memberId = String(body.memberId || "").trim();
+const role = normalizeRole(body.role);
 
 if (!memberId) {
 return NextResponse.json(
@@ -49,9 +51,9 @@ return NextResponse.json(
 );
 }
 
-if (currentProfile.role !== "admin") {
+if (!canChangeRoles(currentProfile.role as UserRole)) {
 return NextResponse.json(
-{ error: "Only admins can update member roles." },
+{ error: "You do not have permission to update member roles." },
 { status: 403 }
 );
 }
@@ -65,7 +67,7 @@ const { data: targetMember } = await supabase
 
 if (!targetMember) {
 return NextResponse.json(
-{ error: "Member not found in your company." },
+{ error: "Member not found in your company workspace." },
 { status: 404 }
 );
 }
@@ -75,6 +77,50 @@ return NextResponse.json(
 { error: "You cannot change your own role." },
 { status: 400 }
 );
+}
+
+const { count: adminCount } = await supabase
+.from("profiles")
+.select("*", { count: "exact", head: true })
+.eq("company_id", currentProfile.company_id)
+.eq("role", "admin");
+
+if (
+targetMember.role === "admin" &&
+role !== "admin" &&
+(adminCount || 0) <= 1
+) {
+return NextResponse.json(
+{
+error:
+"Cannot remove the last workspace admin. Assign another admin first.",
+},
+{ status: 400 }
+);
+}
+
+if (targetMember.role === "admin" && role !== "admin") {
+const { count: adminCount, error: adminCountError } = await supabase
+.from("profiles")
+.select("id", { count: "exact", head: true })
+.eq("company_id", currentProfile.company_id)
+.eq("role", "admin");
+
+if (adminCountError) {
+console.error(adminCountError);
+
+return NextResponse.json(
+{ error: "Failed to validate workspace administrators." },
+{ status: 500 }
+);
+}
+
+if ((adminCount || 0) <= 1) {
+return NextResponse.json(
+{ error: "You cannot demote the last workspace admin." },
+{ status: 400 }
+);
+}
 }
 
 const { error: updateError } = await supabase

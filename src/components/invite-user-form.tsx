@@ -16,25 +16,41 @@ email?: InviteEmailResult;
 error?: string;
 };
 
+type InviteRole = "vendor" | "buyer" | "admin";
+
+function normalizeEmail(value: string) {
+return value.trim().toLowerCase();
+}
+
+function isValidEmail(value: string) {
+return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
+
 export default function InviteUserForm() {
 const [email, setEmail] = useState("");
-const [role, setRole] = useState("vendor");
+const [role, setRole] = useState<InviteRole>("vendor");
 const [loading, setLoading] = useState(false);
 const [inviteUrl, setInviteUrl] = useState("");
-const [emailResult, setEmailResult] = useState<InviteEmailResult | null>(
-null
-);
+const [emailResult, setEmailResult] = useState<InviteEmailResult | null>(null);
 const [copied, setCopied] = useState(false);
 const [error, setError] = useState("");
 
 async function handleInvite(event: React.FormEvent<HTMLFormElement>) {
 event.preventDefault();
 
+const normalizedEmail = normalizeEmail(email);
+
 setLoading(true);
 setInviteUrl("");
 setEmailResult(null);
 setCopied(false);
 setError("");
+
+if (!isValidEmail(normalizedEmail)) {
+setLoading(false);
+setError("Please enter a valid work email address.");
+return;
+}
 
 try {
 const response = await fetch("/api/company-invitations", {
@@ -43,7 +59,7 @@ headers: {
 "Content-Type": "application/json",
 },
 body: JSON.stringify({
-email: email.trim(),
+email: normalizedEmail,
 role,
 }),
 });
@@ -79,6 +95,7 @@ return;
 setInviteUrl(data.inviteUrl);
 setEmailResult(data.email || null);
 setEmail("");
+setRole("vendor");
 } catch (error) {
 console.error(error);
 
@@ -160,8 +177,8 @@ Invite user to workspace
 
 <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
 Invite vendors, buyers, or admins to join your company workspace.
-Nexus Pavilion will send an invitation email and keep a copy link
-available as a fallback.
+Nexus Pavilion sends the invitation email and keeps a secure copy
+link available as a fallback.
 </p>
 </div>
 
@@ -186,13 +203,15 @@ required
 placeholder="user@company.com"
 value={email}
 onChange={(event) => setEmail(event.target.value)}
-className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-950 outline-none transition focus:border-slate-950 focus:bg-white"
+disabled={loading}
+className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-950 outline-none transition focus:border-slate-950 focus:bg-white disabled:cursor-not-allowed disabled:opacity-60"
 />
 
 <select
 value={role}
-onChange={(event) => setRole(event.target.value)}
-className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-950 outline-none transition focus:border-slate-950 focus:bg-white"
+onChange={(event) => setRole(event.target.value as InviteRole)}
+disabled={loading}
+className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-950 outline-none transition focus:border-slate-950 focus:bg-white disabled:cursor-not-allowed disabled:opacity-60"
 >
 <option value="vendor">Vendor</option>
 <option value="buyer">Buyer</option>
@@ -208,7 +227,7 @@ className="rounded-full bg-slate-950 px-6 py-3 text-sm font-bold text-white tran
 </button>
 </form>
 
-{inviteUrl && (
+{inviteUrl ? (
 <div className="mt-6 rounded-3xl border border-green-100 bg-green-50 p-5">
 <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
 <div>
@@ -220,11 +239,11 @@ className="rounded-full bg-slate-950 px-6 py-3 text-sm font-bold text-white tran
 {getResultMessage()}
 </p>
 
-{emailResult?.id && (
+{emailResult?.id ? (
 <p className="mt-2 text-xs font-bold text-green-700">
 Resend Email ID: {emailResult.id}
 </p>
-)}
+) : null}
 
 <p className="mt-4 max-w-3xl break-all text-sm font-semibold leading-6 text-green-800">
 {inviteUrl}
@@ -245,13 +264,13 @@ The invited user must use the same email address shown in the
 invitation.
 </p>
 </div>
-)}
+) : null}
 
-{error && (
+{error ? (
 <div className="mt-6 rounded-2xl bg-red-50 p-4 text-sm font-bold leading-6 text-red-600">
 {error}
 </div>
-)}
+) : null}
 </section>
 );
 }

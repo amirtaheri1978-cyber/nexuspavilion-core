@@ -19,14 +19,30 @@ export async function POST(request: Request) {
 try {
 const body = await request.json();
 
-const name = normalizeText(body.name || "");
-const category = normalizeText(body.category || "");
-const location = normalizeText(body.location || "");
-const networkRole = normalizeText(body.networkRole || "Owner / Developer");
+const name = normalizeText(String(body.name || ""));
+const category = normalizeText(String(body.category || ""));
+const location = normalizeText(String(body.location || ""));
+const networkRole = normalizeText(
+String(body.networkRole || "Owner / Developer")
+);
 
 if (!name) {
 return NextResponse.json(
 { error: "Company name is required." },
+{ status: 400 }
+);
+}
+
+if (!category) {
+return NextResponse.json(
+{ error: "Company category is required." },
+{ status: 400 }
+);
+}
+
+if (!location) {
+return NextResponse.json(
+{ error: "Regional hub is required." },
 { status: 400 }
 );
 }
@@ -56,6 +72,14 @@ return NextResponse.json(
 }
 
 const baseSlug = createSlug(name);
+
+if (!baseSlug) {
+return NextResponse.json(
+{ error: "Company name must include letters or numbers." },
+{ status: 400 }
+);
+}
+
 const slug = `${baseSlug}-${crypto.randomUUID().slice(0, 8)}`;
 
 const { data: company, error: companyError } = await supabase
@@ -63,8 +87,8 @@ const { data: company, error: companyError } = await supabase
 .insert({
 name,
 slug,
-category: category || "Enterprise",
-location: location || "Location N/A",
+category,
+location,
 network_role: networkRole || "Owner / Developer",
 status: "verified",
 user_id: user.id,
@@ -83,18 +107,28 @@ return NextResponse.json(
 
 const normalizedEmail = String(user.email || "").trim().toLowerCase();
 
-await supabase.from("profiles").upsert({
+const { error: profileError } = await supabase.from("profiles").upsert({
 id: user.id,
 email: normalizedEmail,
-role: "admin",
+role: "owner",
 company_id: company.id,
 });
+
+if (profileError) {
+console.error(profileError);
+
+return NextResponse.json(
+{ error: "Company created, but failed to connect your profile." },
+{ status: 500 }
+);
+}
 
 await supabase.from("notifications").insert({
 title: "Company Created",
 message: `${name} workspace was created successfully.`,
 type: "company",
 is_read: false,
+company_id: company.id,
 });
 
 await supabase.from("audit_logs").insert({
@@ -109,6 +143,7 @@ slug,
 category,
 location,
 network_role: networkRole,
+owner_email: normalizedEmail,
 created_at: new Date().toISOString(),
 },
 });
@@ -116,7 +151,7 @@ created_at: new Date().toISOString(),
 return NextResponse.json({
 success: true,
 company,
-redirectTo: "/company",
+redirectTo: "/company/settings",
 });
 } catch (error) {
 console.error(error);

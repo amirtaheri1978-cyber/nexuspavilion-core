@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
 
+import { canManageMembers, type UserRole } from "@/lib/permissions";
 import { createClient } from "@/lib/supabase/server";
 
 export async function POST(request: Request) {
 try {
 const body = await request.json();
 
-const memberId = String(body.memberId || "");
+const memberId = String(body.memberId || "").trim();
 
 if (!memberId) {
 return NextResponse.json(
@@ -39,9 +40,9 @@ return NextResponse.json(
 );
 }
 
-if (currentProfile.role !== "admin") {
+if (!canManageMembers(currentProfile.role as UserRole)) {
 return NextResponse.json(
-{ error: "Only admins can remove members." },
+{ error: "You do not have permission to remove company members." },
 { status: 403 }
 );
 }
@@ -55,16 +56,60 @@ const { data: targetMember } = await supabase
 
 if (!targetMember) {
 return NextResponse.json(
-{ error: "Member not found in your company." },
+{ error: "Member not found in your company workspace." },
 { status: 404 }
 );
 }
 
 if (targetMember.id === currentProfile.id) {
 return NextResponse.json(
-{ error: "You cannot remove yourself from the company." },
+{ error: "You cannot remove yourself from the company workspace." },
 { status: 400 }
 );
+}
+
+const { count: adminCount } = await supabase
+.from("profiles")
+.select("*", { count: "exact", head: true })
+.eq("company_id", currentProfile.company_id)
+.eq("role", "admin");
+
+if (
+targetMember.role === "admin" &&
+(adminCount || 0) <= 1
+) {
+return NextResponse.json(
+{
+error:
+"Cannot remove the last workspace admin. Assign another admin first.",
+},
+{ status: 400 }
+);
+}
+
+
+if (targetMember.role === "admin") {
+const { count: adminCount, error: adminCountError } = await supabase
+.from("profiles")
+.select("id", { count: "exact", head: true })
+.eq("company_id", currentProfile.company_id)
+.eq("role", "admin");
+
+if (adminCountError) {
+console.error(adminCountError);
+
+return NextResponse.json(
+{ error: "Failed to validate workspace administrators." },
+{ status: 500 }
+);
+}
+
+if ((adminCount || 0) <= 1) {
+return NextResponse.json(
+{ error: "You cannot remove the last workspace admin." },
+{ status: 400 }
+);
+}
 }
 
 const { error: updateError } = await supabase

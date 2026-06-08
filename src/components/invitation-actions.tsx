@@ -33,10 +33,16 @@ const [message, setMessage] = useState("");
 const [error, setError] = useState("");
 
 const isPending = status === "pending";
+const hasInviteUrl = inviteUrl.trim().length > 0;
 
 async function handleCopy() {
 setMessage("");
 setError("");
+
+if (!hasInviteUrl) {
+setError("Invitation link is not available.");
+return;
+}
 
 try {
 await navigator.clipboard.writeText(inviteUrl);
@@ -52,6 +58,11 @@ setError("Could not copy invite link.");
 }
 
 async function handleResend() {
+if (!isPending) {
+setError("Only pending invitations can be resent.");
+return;
+}
+
 setLoadingAction("resend");
 setMessage("");
 setError("");
@@ -75,10 +86,12 @@ return;
 if (data.email?.sent) {
 setMessage("Invitation email resent.");
 } else if (data.email?.error) {
-setError(`Invitation resent failed: ${data.email.error}`);
+setError(`Invitation resend failed: ${data.email.error}`);
 } else {
 setMessage("Invitation resend completed.");
 }
+
+router.refresh();
 } catch {
 setError("Request failed. Please try again.");
 } finally {
@@ -87,8 +100,13 @@ setLoadingAction("");
 }
 
 async function handleRevoke() {
+if (!isPending) {
+setError("Only pending invitations can be revoked.");
+return;
+}
+
 const confirmed = window.confirm(
-"Are you sure you want to revoke this invitation?"
+"Revoke this invitation? The invited user will no longer be able to join with this link."
 );
 
 if (!confirmed) return;
@@ -128,18 +146,19 @@ return (
 <button
 type="button"
 onClick={handleCopy}
-className="rounded-full bg-white px-4 py-2 text-xs font-black text-slate-950 shadow-sm transition hover:shadow-md"
+disabled={!hasInviteUrl || loadingAction !== ""}
+className="rounded-full bg-white px-4 py-2 text-xs font-black text-slate-950 shadow-sm transition hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50"
 >
 {copied ? "Copied" : "Copy Link"}
 </button>
 
-{isPending && (
+{isPending ? (
 <>
 <button
 type="button"
 onClick={handleResend}
 disabled={loadingAction === "resend"}
-className="rounded-full bg-slate-950 px-4 py-2 text-xs font-black text-white transition hover:bg-slate-800 disabled:opacity-50"
+className="rounded-full bg-slate-950 px-4 py-2 text-xs font-black text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
 >
 {loadingAction === "resend" ? "Resending..." : "Resend"}
 </button>
@@ -148,21 +167,21 @@ className="rounded-full bg-slate-950 px-4 py-2 text-xs font-black text-white tra
 type="button"
 onClick={handleRevoke}
 disabled={loadingAction === "revoke"}
-className="rounded-full bg-red-700 px-4 py-2 text-xs font-black text-white transition hover:bg-red-800 disabled:opacity-50"
+className="rounded-full bg-red-700 px-4 py-2 text-xs font-black text-white transition hover:bg-red-800 disabled:cursor-not-allowed disabled:opacity-50"
 >
 {loadingAction === "revoke" ? "Revoking..." : "Revoke"}
 </button>
 </>
-)}
+) : null}
 </div>
 
-{message && (
+{message ? (
 <p className="text-xs font-bold leading-5 text-green-700">{message}</p>
-)}
+) : null}
 
-{error && (
+{error ? (
 <p className="text-xs font-bold leading-5 text-red-600">{error}</p>
-)}
+) : null}
 </div>
 );
 }

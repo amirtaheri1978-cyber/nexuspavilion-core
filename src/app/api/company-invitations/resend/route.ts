@@ -2,15 +2,17 @@ import { NextResponse } from "next/server";
 
 import { buildCompanyInvitationEmail } from "@/lib/email/templates/company-invitation-email";
 import { sendEmail } from "@/lib/email/send-email";
+import { canInviteUsers, type UserRole } from "@/lib/permissions";
 import { createClient } from "@/lib/supabase/server";
 
 const SITE_URL =
+process.env.NEXT_PUBLIC_SITE_URL ||
 "https://scaling-invention-5g7q4p5rwrwj3vwq7-3000.app.github.dev";
 
 export async function POST(request: Request) {
 try {
 const body = await request.json();
-const invitationId = String(body.invitationId || "");
+const invitationId = String(body.invitationId || "").trim();
 
 if (!invitationId) {
 return NextResponse.json(
@@ -32,7 +34,7 @@ return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
 
 const { data: profile } = await supabase
 .from("profiles")
-.select("company_id, role")
+.select("id, email, company_id, role")
 .eq("id", user.id)
 .single();
 
@@ -43,9 +45,9 @@ return NextResponse.json(
 );
 }
 
-if (profile.role !== "admin" && profile.role !== "buyer") {
+if (!canInviteUsers(profile.role as UserRole)) {
 return NextResponse.json(
-{ error: "You do not have permission to resend invitations." },
+{ error: "You do not have permission to manage invitations." },
 { status: 403 }
 );
 }
@@ -59,7 +61,7 @@ const { data: invitation } = await supabase
 
 if (!invitation) {
 return NextResponse.json(
-{ error: "Invitation not found." },
+{ error: "Invitation not found in your company workspace." },
 { status: 404 }
 );
 }
@@ -67,6 +69,13 @@ return NextResponse.json(
 if (invitation.status !== "pending") {
 return NextResponse.json(
 { error: "Only pending invitations can be resent." },
+{ status: 400 }
+);
+}
+
+if (!invitation.email || !invitation.token) {
+return NextResponse.json(
+{ error: "Invitation is missing required delivery details." },
 { status: 400 }
 );
 }
@@ -114,6 +123,11 @@ email_sent: emailResult.success,
 email_skipped: emailResult.skipped,
 email_id: emailResult.id,
 email_error: emailResult.error,
+resent_by: {
+id: profile.id,
+email: profile.email,
+role: profile.role,
+},
 resent_at: new Date().toISOString(),
 },
 });
