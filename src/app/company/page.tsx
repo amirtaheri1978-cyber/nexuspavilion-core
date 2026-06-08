@@ -1,13 +1,14 @@
 import Link from "next/link";
 
 import CompanyLogoUpload from "@/components/company-logo-upload";
+import CompanySettingsForm from "@/components/company-settings-form";
+import DeleteCompanyButton from "@/components/connections/DeleteCompanyButton";
 import InvitationActions from "@/components/invitation-actions";
 import InviteUserForm from "@/components/invite-user-form";
 import MemberActions from "@/components/member-actions";
 import { createClient } from "@/lib/supabase/server";
 
-const SITE_URL =
-"https://scaling-invention-5g7q4p5rwrwj3vwq7-3000.app.github.dev";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "";
 
 type Company = {
 id: string;
@@ -38,6 +39,14 @@ token: string | null;
 created_at: string | null;
 };
 
+type AuditLog = {
+id: string;
+action: string | null;
+entity_type: string | null;
+metadata: Record<string, unknown> | null;
+created_at: string | null;
+};
+
 function formatDate(value: string | null | undefined) {
 if (!value) return "N/A";
 
@@ -52,6 +61,36 @@ function getInviteUrl(token: string | null) {
 if (!token) return "";
 
 return `${SITE_URL}/invite/${token}`;
+}
+
+function getRoleLabel(role: string | null) {
+if (role === "admin") return "Admin";
+if (role === "buyer") return "Buyer";
+if (role === "vendor") return "Vendor";
+if (role === "owner") return "Owner";
+return role || "Member";
+}
+
+function getActivityLabel(action: string | null) {
+if (action === "COMPANY_UPDATED") return "Company profile updated";
+if (action === "COMPANY_DELETED") return "Workspace removed";
+if (action === "INVITATION_CREATED") return "Invitation created";
+if (action === "INVITATION_REVOKED") return "Invitation revoked";
+if (action === "MEMBER_ROLE_UPDATED") return "Member role updated";
+if (action === "MEMBER_REMOVED") return "Member removed";
+if (action === "RFQ_CREATED") return "RFQ created";
+if (action === "QUOTE_SUBMITTED") return "Quote submitted";
+if (action === "CONTRACT_AWARDED") return "Contract awarded";
+
+return action || "Workspace activity";
+}
+
+function canManageWorkspace(role: string | null) {
+return role === "admin" || role === "buyer" || role === "owner";
+}
+
+function canDeleteWorkspace(role: string | null) {
+return role === "admin" || role === "owner";
 }
 
 export default async function CompanyWorkspacePage() {
@@ -109,14 +148,30 @@ const { data: invitations } = typedCompany?.id
 .limit(12)
 : { data: [] };
 
+const { data: auditLogs } = typedCompany?.id
+? await supabase
+.from("audit_logs")
+.select("id, action, entity_type, metadata, created_at")
+.eq("company_id", typedCompany.id)
+.order("created_at", { ascending: false })
+.limit(8)
+: { data: [] };
+
 const teamList = (teamMembers ?? []) as Profile[];
 const invitationList = (invitations ?? []) as Invitation[];
+const activityList = (auditLogs ?? []) as AuditLog[];
 
 const pendingInvitationCount = invitationList.filter(
 (invite) => invite.status === "pending"
 ).length;
 
 const adminCount = teamList.filter((member) => member.role === "admin").length;
+const buyerCount = teamList.filter((member) => member.role === "buyer").length;
+const vendorCount = teamList.filter((member) => member.role === "vendor").length;
+
+const userRole = typedProfile?.role || "buyer";
+const canManage = canManageWorkspace(userRole);
+const canDelete = canDeleteWorkspace(userRole);
 
 if (!user) {
 return (
@@ -234,7 +289,7 @@ className="h-24 w-24 rounded-3xl border border-slate-200 bg-white object-contain
 
 <div>
 <p className="text-xs font-black uppercase tracking-[0.35em] text-orange-500">
-Company Workspace
+Workspace Center
 </p>
 
 <div className="mt-3 flex flex-wrap items-center gap-3">
@@ -243,7 +298,7 @@ Company Workspace
 </h1>
 
 <span className="rounded-full bg-emerald-100 px-4 py-1 text-sm font-bold capitalize text-emerald-700">
-{typedCompany.status || "sandbox"}
+{typedCompany.status || "verified"}
 </span>
 </div>
 
@@ -254,7 +309,7 @@ Company Workspace
 
 <p className="mt-2 text-sm font-bold uppercase tracking-[0.2em] text-slate-400">
 Signed in as {typedProfile?.email || user.email} ·{" "}
-{typedProfile?.role || "buyer"}
+{getRoleLabel(userRole)}
 </p>
 </div>
 </div>
@@ -263,7 +318,7 @@ Signed in as {typedProfile?.email || user.email} ·{" "}
 <MiniMetric title="Team Members" value={teamList.length} />
 <MiniMetric title="Pending Invites" value={pendingInvitationCount} />
 <MiniMetric title="Admins" value={adminCount} />
-<MiniMetric title="Your Role" value={typedProfile?.role || "buyer"} />
+<MiniMetric title="Your Role" value={getRoleLabel(userRole)} />
 </div>
 </div>
 
@@ -277,12 +332,68 @@ value={typedCompany.network_role || "Enterprise Workspace"}
 </div>
 </section>
 
+<section className="grid gap-8 lg:grid-cols-[1.15fr_0.85fr]">
+<div className="rounded-[32px] border border-black/5 bg-white p-8">
+<p className="text-xs font-black uppercase tracking-[0.3em] text-orange-500">
+Company Profile
+</p>
+
+<h2 className="mt-3 text-3xl font-black text-slate-950">
+Company Information
+</h2>
+
+<p className="mt-3 text-sm leading-6 text-slate-600">
+Keep your company identity, market role, and location accurate
+across Nexus Pavilion.
+</p>
+
+{canManage ? (
+<CompanySettingsForm
+companyId={typedCompany.id}
+initialName={typedCompany.name || ""}
+initialCategory={typedCompany.category || ""}
+initialLocation={typedCompany.location || ""}
+initialNetworkRole={
+typedCompany.network_role || "Vendor / Supplier"
+}
+currentUserRole={userRole}
+/>
+) : (
+<EmptyState message="You have read-only access to this company profile." />
+)}
+</div>
+
+<div className="space-y-8">
+<CompanyLogoUpload
+companyId={typedCompany.id}
+currentLogoUrl={typedCompany.logo_url}
+/>
+
+<div className="rounded-[32px] border border-black/5 bg-white p-8">
+<p className="text-xs font-black uppercase tracking-[0.3em] text-orange-500">
+Workspace Health
+</p>
+
+<h2 className="mt-3 text-3xl font-black text-slate-950">
+Access Summary
+</h2>
+
+<div className="mt-6 space-y-4">
+<RoleRow label="Admins" value={adminCount} />
+<RoleRow label="Buyers" value={buyerCount} />
+<RoleRow label="Vendors" value={vendorCount} />
+<RoleRow label="Total Members" value={teamList.length} />
+</div>
+</div>
+</div>
+</section>
+
 <InviteUserForm />
 
 <section className="grid gap-8 lg:grid-cols-2">
 <div className="rounded-[32px] border border-black/5 bg-white p-8">
 <p className="text-xs font-black uppercase tracking-[0.3em] text-orange-500">
-Workspace Team
+People & Access
 </p>
 
 <h2 className="mt-3 text-3xl font-black text-slate-950">
@@ -291,7 +402,6 @@ Company Members
 
 <p className="mt-3 text-sm leading-6 text-slate-600">
 Active users currently connected to this company workspace.
-Workspace admins can update roles or remove members.
 </p>
 
 <div className="mt-6 space-y-4">
@@ -307,8 +417,8 @@ className="rounded-3xl border border-slate-100 bg-slate-50 p-5"
 {member.email || "User"}
 </p>
 
-<p className="mt-1 text-sm font-bold capitalize text-slate-500">
-{member.role || "buyer"}
+<p className="mt-1 text-sm font-bold text-slate-500">
+{getRoleLabel(member.role)}
 </p>
 
 <p className="mt-2 text-xs font-bold text-slate-400">
@@ -326,7 +436,7 @@ memberId={member.id}
 memberEmail={member.email}
 memberRole={member.role}
 currentUserId={typedProfile?.id || user.id}
-currentUserRole={typedProfile?.role || "buyer"}
+currentUserRole={userRole}
 />
 </div>
 ))
@@ -338,7 +448,7 @@ currentUserRole={typedProfile?.role || "buyer"}
 
 <div className="rounded-[32px] border border-black/5 bg-white p-8">
 <p className="text-xs font-black uppercase tracking-[0.3em] text-orange-500">
-Invitation Pipeline
+Invitations
 </p>
 
 <h2 className="mt-3 text-3xl font-black text-slate-950">
@@ -365,8 +475,8 @@ className="rounded-3xl border border-slate-100 bg-slate-50 p-5"
 {invite.email || "No email"}
 </p>
 
-<p className="mt-1 text-sm font-bold capitalize text-slate-500">
-{invite.role || "vendor"}
+<p className="mt-1 text-sm font-bold text-slate-500">
+{getRoleLabel(invite.role)}
 </p>
 
 <p className="mt-2 text-xs font-bold text-slate-400">
@@ -394,10 +504,83 @@ status={invite.status}
 </div>
 </section>
 
-<CompanyLogoUpload
-companyId={typedCompany.id}
-currentLogoUrl={typedCompany.logo_url}
+<section className="grid gap-8 lg:grid-cols-[1fr_0.8fr]">
+<div className="rounded-[32px] border border-black/5 bg-white p-8">
+<p className="text-xs font-black uppercase tracking-[0.3em] text-orange-500">
+Activity History
+</p>
+
+<h2 className="mt-3 text-3xl font-black text-slate-950">
+Recent Workspace Activity
+</h2>
+
+<p className="mt-3 text-sm leading-6 text-slate-600">
+A record of important company, invitation, member, and procurement
+updates.
+</p>
+
+<div className="mt-6 space-y-4">
+{activityList.length > 0 ? (
+activityList.map((log) => (
+<div
+key={log.id}
+className="rounded-3xl border border-slate-100 bg-slate-50 p-5"
+>
+<p className="text-sm font-black text-slate-950">
+{getActivityLabel(log.action)}
+</p>
+
+<p className="mt-2 text-xs font-bold text-slate-400">
+{formatDate(log.created_at)} ·{" "}
+{log.entity_type || "workspace"}
+</p>
+</div>
+))
+) : (
+<EmptyState message="No workspace activity has been recorded yet." />
+)}
+</div>
+</div>
+
+<div className="rounded-[32px] border border-slate-200 bg-white p-8">
+<p className="text-xs font-black uppercase tracking-[0.3em] text-orange-500">
+Workspace Governance
+</p>
+
+<h2 className="mt-3 text-3xl font-black text-slate-950">
+Company Ownership & Controls
+</h2>
+
+<p className="mt-4 text-sm leading-7 text-slate-600">
+Manage high-impact workspace actions such as ownership, archival,
+and permanent removal. These controls are restricted to authorized
+company leaders.
+</p>
+
+{canDelete ? (
+<div className="mt-6 rounded-3xl border border-red-200 bg-red-50 p-5">
+<p className="text-sm font-black text-red-700">
+Permanent Workspace Removal
+</p>
+
+<p className="mt-2 text-sm leading-6 text-red-700">
+Removing this workspace permanently deletes the company record.
+Use this only when the company workspace must be retired from
+Nexus Pavilion.
+</p>
+
+<div className="mt-5">
+<DeleteCompanyButton
+id={typedCompany.id}
+companyName={typedCompany.name || "Company Workspace"}
 />
+</div>
+</div>
+) : (
+<EmptyState message="Only authorized company leaders can manage workspace governance controls." />
+)}
+</div>
+</section>
 </div>
 </main>
 );
@@ -431,6 +614,15 @@ return (
 </p>
 
 <p className="mt-2 text-xl font-black text-slate-950">{value}</p>
+</div>
+);
+}
+
+function RoleRow({ label, value }: { label: string; value: number }) {
+return (
+<div className="flex items-center justify-between rounded-3xl bg-slate-50 p-5">
+<p className="text-sm font-black text-slate-700">{label}</p>
+<p className="text-2xl font-black text-slate-950">{value}</p>
 </div>
 );
 }

@@ -43,9 +43,11 @@ throw new Error(data.error || "Failed to create RFQ");
 
 router.push(`/rfq/${data.slug}`);
 router.refresh();
-} catch (err: any) {
-setError(err.message || "Something went wrong.");
+} catch (err: unknown) {
+const message = err instanceof Error ? err.message : "Something went wrong.";
+setError(message);
 } finally {
+
 setLoading(false);
 }
 }

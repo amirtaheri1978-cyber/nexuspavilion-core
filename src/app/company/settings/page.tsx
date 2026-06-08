@@ -1,5 +1,5 @@
 import Link from "next/link";
-
+import CompanySettingsForm from "@/components/company-settings-form";
 import DeleteCompanyButton from "@/components/connections/DeleteCompanyButton";
 import InvitationActions from "@/components/invitation-actions";
 import MemberActions from "@/components/member-actions";
@@ -159,6 +159,11 @@ invitation.status === "sent"
 const canManageTeam =
 currentProfile.role === "admin" || currentProfile.role === "buyer";
 
+const canManageCompanyProfile =
+currentProfile.role === "admin" ||
+currentProfile.role === "buyer" ||
+currentProfile.role === "owner";
+
 return (
 <main className="min-h-screen bg-[#f6f6f3] px-8 py-10">
 <div className="mx-auto max-w-7xl">
@@ -213,6 +218,31 @@ Workspace
 </div>
 </div>
 </section>
+
+{company && canManageCompanyProfile ? (
+<section className="mt-8 rounded-[32px] border border-black/5 bg-white p-8">
+<p className="text-xs font-black uppercase tracking-[0.3em] text-orange-500">
+Company Profile
+</p>
+
+<h2 className="mt-3 text-3xl font-black text-slate-950">
+Edit Company Information
+</h2>
+
+<p className="mt-4 max-w-3xl text-sm leading-6 text-slate-600">
+Update company details, category, location, and network role.
+</p>
+
+<CompanySettingsForm
+companyId={company.id}
+initialName={company.name || ""}
+initialCategory={company.category || ""}
+initialLocation={company.location || ""}
+initialNetworkRole={company.network_role || "Owner / Developer"}
+currentUserRole={currentProfile.role ||""}
+/>
+</section>
+) : null}
 
 <section className="mt-8 grid gap-6 md:grid-cols-4">
 <MetricCard
@@ -399,7 +429,7 @@ status={invitation.status}
 </aside>
 </section>
 
-{company && currentProfile.role === "admin" ? ( 
+{company && (currentProfile.role === "admin" || currentProfile.role === "buyer") ? ( 
 <section className="mt-8 rounded-[32px] border border-red-200 bg-red-50 p-8">
 <p className="text-xs font-black uppercase tracking-[0.3em] text-red-500">
 Danger Zone

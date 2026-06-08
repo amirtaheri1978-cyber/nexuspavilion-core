@@ -1,29 +1,32 @@
 "use client";
 
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
 import { createClient } from "@/lib/supabase/client";
 
 const SITE_URL =
+process.env.NEXT_PUBLIC_SITE_URL ||
 "https://scaling-invention-5g7q4p5rwrwj3vwq7-3000.app.github.dev";
 
-type Invitation = {
-id: string;
-company_id: string;
-email: string;
-role: string;
-status: string;
-token: string;
-expires_at: string | null;
-companies?: {
+type CompanyRecord = {
 id: string;
 name: string | null;
 category: string | null;
 location: string | null;
 logo_url: string | null;
-} | null;
+};
+
+type InvitationRecord = {
+id: string;
+company_id: string;
+email: string | null;
+role: string | null;
+status: string | null;
+token: string | null;
+expires_at: string | null;
+companies: CompanyRecord | CompanyRecord[] | null;
 };
 
 function formatRole(role: string | null | undefined) {
@@ -38,13 +41,12 @@ return new Date(expiresAt).getTime() < Date.now();
 }
 
 export default function InviteSignupPage() {
-const router = useRouter();
 const params = useParams<{ token: string }>();
 const supabase = useMemo(() => createClient(), []);
 
 const token = params.token;
 
-const [invitation, setInvitation] = useState<any>(null);
+const [invitation, setInvitation] = useState<InvitationRecord | null>(null);
 const [loadingInvitation, setLoadingInvitation] = useState(true);
 
 const [password, setPassword] = useState("");
@@ -53,6 +55,10 @@ const [confirmPassword, setConfirmPassword] = useState("");
 const [submitting, setSubmitting] = useState(false);
 const [message, setMessage] = useState("");
 const [error, setError] = useState("");
+
+const company = Array.isArray(invitation?.companies)
+? invitation.companies[0]
+: invitation?.companies;
 
 const passwordIsReady = password.length >= 8;
 const passwordsMatch = password.length > 0 && password === confirmPassword;
@@ -94,7 +100,7 @@ setInvitation(null);
 return;
 }
 
-setInvitation(data);
+setInvitation(data as InvitationRecord);
 }
 
 loadInvitation();
@@ -160,7 +166,13 @@ setError("Passwords do not match.");
 return;
 }
 
-const email = invitation.email.trim().toLowerCase();
+const email = (invitation.email || "").trim().toLowerCase();
+
+if (!email) {
+setSubmitting(false);
+setError("Invitation email is missing.");
+return;
+}
 
 const { error: signupError } = await supabase.auth.signUp({
 email,
@@ -254,15 +266,15 @@ account will be connected automatically after signup.
 
 <div className="mt-8 rounded-3xl bg-slate-50 p-6">
 <div className="flex items-start gap-5">
-{invitation.companies?.logo_url ? (
+{company?.logo_url ? (
 <img
-src={invitation.companies.logo_url}
-alt={invitation.companies.name || "Company"}
+src={company.logo_url}
+alt={company.name || "Company"}
 className="h-20 w-20 rounded-3xl border border-slate-200 bg-white object-contain p-2"
 />
 ) : (
 <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-white text-3xl font-black text-slate-500">
-{invitation.companies?.name?.charAt(0) || "N"}
+{company?.name?.charAt(0) || "N"}
 </div>
 )}
 
@@ -272,23 +284,23 @@ Company Workspace
 </p>
 
 <h2 className="mt-2 text-3xl font-black text-slate-950">
-{invitation.companies?.name || "Company Workspace"}
+{company?.name || "Company Workspace"}
 </h2>
 
 <p className="mt-2 text-sm font-semibold text-slate-600">
-{invitation.companies?.category || "Enterprise"} ·{" "}
-{invitation.companies?.location || "Location N/A"}
+{company?.category || "Enterprise"} ·{" "}
+{company?.location || "Location N/A"}
 </p>
 </div>
 </div>
 </div>
 
 <div className="mt-6 grid gap-4 md:grid-cols-3">
-<InfoBox title="Email" value={invitation.email} />
+<InfoBox title="Email" value={invitation.email || "Invited user"} />
 <InfoBox title="Role" value={formatRole(invitation.role)} />
 <InfoBox
 title="Status"
-value={expired ? "Expired" : invitation.status}
+value={expired ? "Expired" : invitation.status || "pending"}
 />
 </div>
 </div>
@@ -318,7 +330,7 @@ Invited email
 <input
 type="email"
 readOnly
-value={invitation.email}
+value={invitation.email || ""}
 className="w-full rounded-2xl border border-slate-200 bg-slate-100 px-4 py-3 text-sm font-bold text-slate-500 outline-none"
 />
 </label>
@@ -381,17 +393,17 @@ passwordsMatch ? "text-green-700" : "text-slate-400"
 </div>
 </div>
 
-{message && (
+{message ? (
 <div className="rounded-2xl bg-green-50 px-4 py-3 text-sm font-bold leading-6 text-green-700">
 {message}
 </div>
-)}
+) : null}
 
-{error && (
+{error ? (
 <div className="rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold leading-6 text-red-600">
 {error}
 </div>
-)}
+) : null}
 
 <button
 type="submit"

@@ -49,7 +49,7 @@ type ActivityLog = {
 id: string;
 action: string | null;
 entity_type: string | null;
-metadata: Record<string, any> | null;
+metadata: Record<string, unknown> | null;
 created_at: string | null;
 };
 

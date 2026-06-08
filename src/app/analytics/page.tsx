@@ -3,6 +3,28 @@ import Link from "next/link";
 import AnalyticsChart from "@/components/analytics-chart";
 import { createClient } from "@/lib/supabase/server";
 
+type RFQ = {
+id: string;
+title: string;
+category: string | null;
+location: string | null;
+budget: number | string | null;
+status: string | null;
+};
+
+type Quote = {
+id: string;
+rfq_id: string;
+company_id: string | null;
+amount: number | string | null;
+decision: string | null;
+};
+
+type Company = {
+id: string;
+name: string | null;
+};
+
 function getHealthLabel(score: number) {
 if (score >= 85) return "Strong";
 if (score >= 70) return "Healthy";
@@ -40,8 +62,8 @@ const { data: rfqs } = companyId
 .order("created_at", { ascending: false })
 : { data: [] };
 
-const rfqList = rfqs ?? [];
-const rfqIds = rfqList.map((rfq: any) => rfq.id);
+const rfqList = (rfqs ?? []) as RFQ[];
+const rfqIds = rfqList.map((rfq) => rfq.id);
 
 const { data: quotes } =
 rfqIds.length > 0
@@ -67,23 +89,23 @@ const { data: notifications } = companyId
 
 const { data: companies } = await supabase.from("companies").select("id,name");
 
-const quoteList = quotes ?? [];
-const companyList = companies ?? [];
+const quoteList = (quotes ?? []) as Quote[];
+const companyList = (companies ?? []) as Company[];
 
 const totalRfqs = rfqList.length;
 
 const activeRfqs = rfqList.filter(
-(rfq: any) => !rfq.status || rfq.status === "open"
+(rfq: RFQ) => !rfq.status || rfq.status === "open"
 ).length;
 
 const awardedContracts = quoteList.filter(
-(quote: any) => quote.decision === "awarded"
+(quote) => quote.decision === "awarded"
 ).length;
 
 const supplierQuotes = quoteList.length;
 
 const quoteAmounts = quoteList
-.map((quote: any) => Number(quote.amount))
+.map((quote) => Number(quote.amount))
 .filter((amount) => Number.isFinite(amount));
 
 const procurementVolume = quoteAmounts.reduce(
@@ -92,8 +114,8 @@ const procurementVolume = quoteAmounts.reduce(
 );
 
 const awardedVolume = quoteList
-.filter((quote: any) => quote.decision === "awarded")
-.reduce((total: number, quote: any) => total + Number(quote.amount || 0), 0);
+.filter((quote) => quote.decision === "awarded")
+.reduce((total, quote) => total + Number(quote.amount || 0), 0);
 
 const averageQuote =
 quoteAmounts.length > 0
@@ -129,7 +151,7 @@ const procurementHealth = getHealthLabel(procurementHealthScore);
 const competitionIndex = getCompetitionLabel(avgQuotesPerRfq);
 
 const categoryCounts = rfqList.reduce(
-(acc: Record<string, number>, rfq: any) => {
+(acc: Record<string, number>, rfq) => {
 const category = rfq.category || "Uncategorized";
 acc[category] = (acc[category] || 0) + 1;
 return acc;
@@ -142,7 +164,7 @@ Object.entries(categoryCounts).sort((a, b) => b[1] - a[1])[0]?.[0] ||
 "N/A";
 
 const budgetTotal = rfqList.reduce(
-(total: number, rfq: any) => total + Number(rfq.budget || 0),
+(total, rfq) => total + Number(rfq.budget || 0),
 0
 );
 
@@ -242,15 +264,15 @@ strategicRecommendations.push(
 }
 
 const awardProbabilityForecast = rfqList
-.map((rfq: any) => {
+.map((rfq) => {
 const rfqQuotes = quoteList.filter(
-(quote: any) => quote.rfq_id === rfq.id
+(quote) => quote.rfq_id === rfq.id
 );
 
 const lowestBid =
 rfqQuotes.length > 0
 ? Math.min(
-...rfqQuotes.map((quote: any) => Number(quote.amount || 0))
+...rfqQuotes.map((quote) => Number(quote.amount || 0))
 )
 : 0;
 
@@ -278,17 +300,17 @@ status: rfq.status || "open",
 .slice(0, 10);
 
 const vendorLeaderboard = companyList
-.map((company: any) => {
+.map((company) => {
 const companyQuotes = quoteList.filter(
-(quote: any) => quote.company_id === company.id
+(quote) => quote.company_id === company.id
 );
 
 const awardedQuotes = companyQuotes.filter(
-(quote: any) => quote.decision === "awarded"
+(quote) => quote.decision === "awarded"
 );
 
 const revenue = awardedQuotes.reduce(
-(total: number, quote: any) => total + Number(quote.amount || 0),
+(total, quote) => total + Number(quote.amount || 0),
 0
 );
 
@@ -311,17 +333,17 @@ score: winRate * 0.5 + awardedQuotes.length * 10 + revenue / 100000,
 .slice(0, 10);
 
 const supplierRanking = companyList
-.map((company: any) => {
+.map((company) => {
 const companyQuotes = quoteList.filter(
-(quote: any) => quote.company_id === company.id
+(quote) => quote.company_id === company.id
 );
 
 const awardedQuotes = companyQuotes.filter(
-(quote: any) => quote.decision === "awarded"
+(quote) => quote.decision === "awarded"
 );
 
 const revenue = awardedQuotes.reduce(
-(total: number, quote: any) => total + Number(quote.amount || 0),
+(total, quote) => total + Number(quote.amount || 0),
 0
 );
 
@@ -606,7 +628,13 @@ enterpriseProcurementScore >= 80 && procurementRiskIndex < 35
 ? "Risk level is elevated. Review supplier dependency, award concentration, and RFQ conversion quality."
 : "Procurement operations are stable. Continue improving supplier participation and forecast confidence.";
 
-const executiveAlerts = [];
+type ExecutiveAlert = {
+level: "opportunity" | "healthy" | "warning";
+title: string;
+message: string;
+};
+
+const executiveAlerts: ExecutiveAlert[] = [];
 
 if (procurementOpportunityScore >= 80) {
 executiveAlerts.push({
@@ -678,21 +706,21 @@ boardHealthIndex >= 70
 const categoryIntelligence = Object.entries(categoryCounts)
 .map(([category, count]) => {
 const categoryRfqs = rfqList.filter(
-(rfq: any) => (rfq.category || "Uncategorized") === category
+(rfq) => (rfq.category || "Uncategorized") === category
 );
 
-const categoryRfqIds = categoryRfqs.map((rfq: any) => rfq.id);
+const categoryRfqIds = categoryRfqs.map((rfq) => rfq.id);
 
-const categoryQuotes = quoteList.filter((quote: any) =>
+const categoryQuotes = quoteList.filter((quote) =>
 categoryRfqIds.includes(quote.rfq_id)
 );
 
 const categoryAwards = categoryQuotes.filter(
-(quote: any) => quote.decision === "awarded"
+(quote) => quote.decision === "awarded"
 );
 
 const categorySpend = categoryAwards.reduce(
-(total: number, quote: any) => total + Number(quote.amount || 0),
+(total, quote) => total + Number(quote.amount || 0),
 0
 );
 
@@ -1539,7 +1567,7 @@ Recent Activity
 
 <div className="mt-4 space-y-3">
 {notifications && notifications.length > 0 ? (
-notifications.map((notification: any) => (
+notifications.map((notification) => (
 <div
 key={notification.id}
 className="rounded-2xl bg-slate-100 p-4"
@@ -2246,7 +2274,7 @@ Company RFQ Pipeline
 </thead>
 
 <tbody>
-{rfqList.map((rfq: any) => (
+{rfqList.map((rfq) => (
 <tr key={rfq.id} className="border-t border-slate-100">
 <td className="px-5 py-4 font-bold text-slate-950">
 {rfq.title}
