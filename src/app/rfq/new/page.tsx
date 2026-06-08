@@ -74,6 +74,7 @@ setError("");
 try {
 const response = await fetch("/api/rfqs", {
 method: "POST",
+credentials: "include",
 headers: {
 "Content-Type": "application/json",
 },
@@ -86,6 +87,7 @@ budget: formData.budget.trim(),
 deadline: formData.deadline,
 }),
 });
+
 
 const data = await response.json();
 

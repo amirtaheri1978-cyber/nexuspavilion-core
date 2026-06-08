@@ -46,6 +46,9 @@ return;
 const { data, error: signupError } = await supabase.auth.signUp({
 email: normalizedEmail,
 password,
+options: {
+    emailRedirectTo: `${window.location.origin}/create-company`,
+},
 });
 
 if (signupError) {
