@@ -1,4 +1,5 @@
 import Link from "next/link";
+import ContactForm from "@/components/contact-form";
 
 export default function ContactPage() {
 return (
@@ -54,6 +55,7 @@ Contact Information
 <InfoRow label="Platform" value="Nexus Pavilion Procurement Intelligence" />
 <InfoRow label="Focus" value="Construction procurement, RFQs, supplier intelligence, and enterprise analytics" />
 </div>
+<ContactForm />
 
 <div className="mt-8 flex flex-wrap gap-3">
 <Link
