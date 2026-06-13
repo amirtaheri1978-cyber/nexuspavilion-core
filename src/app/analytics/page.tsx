@@ -964,6 +964,133 @@ procurementRiskIndex >= 60
 ? "Continue scaling competitive RFQs while maintaining supplier performance and forecast confidence."
 : "Improve RFQ participation, supplier coverage, and procurement data quality to strengthen executive confidence.";
 
+const industryBenchmarkScore = Math.min(
+100,
+Math.round(
+procurementHealthScore * 0.4 +
+supplierReliabilityScore * 0.2 +
+competitionScore * 0.2 +
+predictionAccuracy * 0.2
+)
+);
+
+const procurementBenchmarkScore = Math.min(
+100,
+Math.round(
+procurementMaturityScore * 0.5 +
+executiveProcurementHealth * 0.3 +
+boardHealthIndex * 0.2
+)
+);
+
+const supplierBenchmarkScore = Math.min(
+100,
+Math.round(
+supplierReliabilityScore * 0.5 +
+supplierEngagementScore * 0.3 +
+competitionScore * 0.2
+)
+);
+
+const costOptimizationBenchmark = Math.min(
+100,
+Math.round(
+budgetUtilization * 0.3 +
+procurementOpportunityScore * 0.4 +
+savingsScore * 0.3
+)
+);
+
+const benchmarkStatus =
+industryBenchmarkScore >= 85
+? "Top Quartile"
+: industryBenchmarkScore >= 70
+? "Above Average"
+: industryBenchmarkScore >= 55
+? "Average"
+: "Below Benchmark";
+
+const benchmarkMatrix = [
+{
+title: "Industry",
+score: industryBenchmarkScore,
+},
+{
+title: "Procurement",
+score: procurementBenchmarkScore,
+},
+{
+title: "Supplier",
+score: supplierBenchmarkScore,
+},
+{
+title: "Cost",
+score: costOptimizationBenchmark,
+},
+];
+
+const strategicSuppliers = supplierRanking.filter(
+(supplier) => supplier.aiScore >= 85
+).length;
+
+const preferredSuppliers = supplierRanking.filter(
+(supplier) => supplier.aiScore >= 70
+).length;
+
+const highRiskSuppliers = supplierRiskRadar.filter(
+(supplier) => supplier.overallRisk >= 60
+).length;
+
+const supplierDiversificationScore =
+supplierRanking.length >= 10
+? 100
+: Math.min(100, supplierRanking.length * 10);
+
+const portfolioHealthIndex = Math.min(
+100,
+Math.round(
+supplierReliabilityScore * 0.4 +
+supplierDiversificationScore * 0.3 +
+supplierEngagementScore * 0.3
+)
+);
+
+const portfolioStatus =
+portfolioHealthIndex >= 85
+? "Excellent"
+: portfolioHealthIndex >= 70
+? "Healthy"
+: portfolioHealthIndex >= 55
+? "Moderate"
+: "Needs Attention";
+
+const portfolioRecommendations: string[] = [];
+
+if (highRiskSuppliers > 0) {
+portfolioRecommendations.push(
+"Reduce exposure to high-risk suppliers."
+);
+}
+
+if (supplierDiversificationScore < 60) {
+portfolioRecommendations.push(
+"Expand supplier network to improve diversification."
+);
+}
+
+if (strategicSuppliers < 3) {
+portfolioRecommendations.push(
+"Develop additional strategic supplier relationships."
+);
+}
+
+if (portfolioRecommendations.length === 0) {
+portfolioRecommendations.push(
+"Supplier portfolio is performing within target range."
+);
+}
+
+
 const activityChartData = [
 { name: "RFQs", value: totalRfqs },
 { name: "Active", value: activeRfqs },
@@ -1994,6 +2121,102 @@ value={`$${forecastSavings.toLocaleString()}`}
 <MetricCard title="AI Confidence" value={`${dataQualityScore}%`} />
 </div>
 </section>
+
+<section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
+Executive Benchmark Engine
+</p>
+
+<h2 className="mt-3 text-3xl font-black text-slate-950">
+Industry Benchmark Intelligence
+</h2>
+
+<div className="mt-8 grid gap-6 md:grid-cols-4">
+{benchmarkMatrix.map((item) => (
+<MetricCard
+key={item.title}
+title={`${item.title} Benchmark`}
+value={`${item.score}/100`}
+/>
+))}
+</div>
+
+<div className="mt-8 rounded-3xl border border-orange-200 bg-orange-50 p-6">
+<p className="text-xs font-black uppercase tracking-[0.2em] text-orange-600">
+Benchmark Status
+</p>
+
+<h3 className="mt-2 text-3xl font-black text-slate-950">
+{benchmarkStatus}
+</h3>
+
+<p className="mt-3 text-sm leading-7 text-slate-700">
+Benchmark analysis compares procurement performance,
+supplier quality, cost optimization, and executive maturity
+against enterprise procurement standards.
+</p>
+</div>
+</section>
+<section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
+Supplier Portfolio Intelligence
+</p>
+
+<h2 className="mt-3 text-3xl font-black text-slate-950">
+Supplier Portfolio Health
+</h2>
+
+<div className="mt-8 grid gap-6 md:grid-cols-5">
+<MetricCard
+title="Portfolio Health"
+value={`${portfolioHealthIndex}/100`}
+/>
+
+<MetricCard
+title="Strategic Suppliers"
+value={strategicSuppliers.toString()}
+/>
+
+<MetricCard
+title="Preferred Suppliers"
+value={preferredSuppliers.toString()}
+/>
+
+<MetricCard
+title="High Risk Suppliers"
+value={highRiskSuppliers.toString()}
+/>
+
+<MetricCard
+title="Diversification"
+value={`${supplierDiversificationScore}/100`}
+/>
+</div>
+
+<div className="mt-8 rounded-3xl border border-orange-200 bg-orange-50 p-6">
+<p className="text-xs font-black uppercase tracking-[0.2em] text-orange-600">
+Portfolio Status
+</p>
+
+<h3 className="mt-2 text-3xl font-black text-slate-950">
+{portfolioStatus}
+</h3>
+</div>
+
+<div className="mt-8 space-y-4">
+{portfolioRecommendations.map((recommendation) => (
+<div
+key={recommendation}
+className="rounded-2xl border border-slate-200 bg-slate-50 p-4"
+>
+<p className="text-sm font-semibold text-slate-700">
+{recommendation}
+</p>
+</div>
+))}
+</div>
+</section>
+
 <section className="mt-8 rounded-3xl border border-slate-200 bg-slate-950 p-8 text-white">
 <p className="text-xs font-black uppercase tracking-[0.25em] text-orange-400">
 Boardroom KPI Intelligence
