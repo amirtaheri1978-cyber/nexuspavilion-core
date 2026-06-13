@@ -352,6 +352,10 @@ companyQuotes.length > 0
 ? Math.round((awardedQuotes.length / companyQuotes.length) * 100)
 : 0;
 
+
+
+
+
 const participationScore = Math.min(100, companyQuotes.length * 8);
 const revenueScore = Math.min(100, revenue / 5000);
 
