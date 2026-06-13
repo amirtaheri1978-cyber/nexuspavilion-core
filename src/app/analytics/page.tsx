@@ -3,6 +3,7 @@ import Link from "next/link";
 import AnalyticsChart from "@/components/analytics-chart";
 import { createClient } from "@/lib/supabase/server";
 import ExecutiveExportPanel from "@/components/executive-export-panel";
+import BoardReportGenerator from "@/components/board-report-generator";
 
 type RFQ = {
 id: string;
@@ -2663,6 +2664,7 @@ value={awardPredictionConfidence}
 </div>
 </section>
 </div>
+<BoardReportGenerator />
 </main>
 );
 }
