@@ -4,6 +4,9 @@ import AnalyticsChart from "@/components/analytics-chart";
 import { createClient } from "@/lib/supabase/server";
 import ExecutiveExportPanel from "@/components/executive-export-panel";
 import BoardReportGenerator from "@/components/board-report-generator";
+import AIBoardNarrativeGenerator from "@/components/ai-board-narrative-generator";
+import AIConfidenceEngine from "@/components/ai-confidence-engine";
+import ExecutiveRiskIntelligence from "@/components/executive-risk-intelligence";
 
 type RFQ = {
 id: string;
@@ -2424,123 +2427,10 @@ No vendor quote activity found.
 </div>
 </section>
 
-<section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
-<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
-Supplier Risk Radar
-</p>
-
-<h2 className="mt-3 text-3xl font-black text-slate-950">
-Supplier Risk Intelligence
-</h2>
-
-<div className="mt-6 overflow-hidden rounded-2xl border border-slate-200">
-<table className="w-full text-left">
-<thead className="bg-slate-950 text-white">
-<tr>
-<th className="px-4 py-4 text-sm">Supplier</th>
-<th className="px-4 py-4 text-sm">Overall</th>
-<th className="px-4 py-4 text-sm">Financial</th>
-<th className="px-4 py-4 text-sm">Performance</th>
-<th className="px-4 py-4 text-sm">Capacity</th>
-<th className="px-4 py-4 text-sm">Dependency</th>
-</tr>
-</thead>
-
-<tbody>
-{supplierRiskRadar.map((supplier) => (
-<tr key={supplier.name} className="border-t border-slate-100">
-<td className="px-4 py-4 font-bold">{supplier.name}</td>
-<td className="px-4 py-4 font-black">
-{supplier.overallRisk}
-</td>
-<td className="px-4 py-4">{supplier.financialRisk}</td>
-<td className="px-4 py-4">{supplier.performanceRisk}</td>
-<td className="px-4 py-4">{supplier.capacityRisk}</td>
-<td className="px-4 py-4">{supplier.dependencyRisk}</td>
-</tr>
-))}
-
-{supplierRiskRadar.length === 0 && (
-<tr>
-<td
-colSpan={6}
-className="px-5 py-10 text-center text-sm font-semibold text-slate-500"
->
-No supplier risk data available.
-</td>
-</tr>
-)}
-</tbody>
-</table>
-</div>
-</section>
-<section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
-<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
-AI Supplier Ranking Engine
-</p>
-
-<h2 className="mt-3 text-3xl font-black text-slate-950">
-Supplier Intelligence Ranking
-</h2>
-
-<div className="mt-6 overflow-hidden rounded-2xl border border-slate-200">
-<table className="w-full text-left">
-<thead className="bg-slate-950 text-white">
-<tr>
-<th className="px-5 py-4 text-sm">Supplier</th>
-<th className="px-5 py-4 text-sm">AI Score</th>
-<th className="px-5 py-4 text-sm">Tier</th>
-<th className="px-5 py-4 text-sm">Win Rate</th>
-<th className="px-5 py-4 text-sm">Revenue</th>
-<th className="px-5 py-4 text-sm">Recommendation</th>
-</tr>
-</thead>
-
-<tbody>
-{supplierRanking.map((vendor) => (
-<tr key={vendor.name} className="border-t border-slate-100">
-<td className="px-5 py-4 font-bold text-slate-950">
-{vendor.name}
-</td>
-
-<td className="px-5 py-4 font-black text-emerald-600">
-{vendor.aiScore}
-</td>
-
-<td className="px-5 py-4">
-<span className="rounded-full bg-slate-100 px-3 py-1 text-sm font-bold">
-{vendor.tier}
-</span>
-</td>
-
-<td className="px-5 py-4 text-slate-600">
-{vendor.winRate}%
-</td>
-
-<td className="px-5 py-4 text-slate-600">
-${vendor.revenue.toLocaleString()}
-</td>
-
-<td className="px-5 py-4 text-slate-600">
-{vendor.recommendation}
-</td>
-</tr>
-))}
-
-{supplierRanking.length === 0 && (
-<tr>
-<td
-colSpan={6}
-className="px-5 py-10 text-center text-slate-500"
->
-No supplier intelligence available.
-</td>
-</tr>
-)}
-</tbody>
-</table>
-</div>
-</section>
+<ExecutiveRiskIntelligence
+supplierRiskRadar={supplierRiskRadar}
+supplierRanking={supplierRanking}
+/>
 
 <section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
 <p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
@@ -2630,41 +2520,17 @@ value={`${procurementMaturityScore}/100`}
 </div>
 </section>
 
-<section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
-<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
-AI Confidence Engine
-</p>
-
-<h2 className="mt-3 text-3xl font-black text-slate-950">
-Prediction Confidence Center
-</h2>
-
-<div className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-5">
-<MetricCard title="AI Confidence" value={aiConfidenceScore} />
-
-<MetricCard
-title="Data Quality"
-value={`${dataQualityScore}/100`}
+<AIConfidenceEngine
+aiConfidenceScore={aiConfidenceScore}
+dataQualityScore={dataQualityScore}
+supplierReliabilityScore={supplierReliabilityScore}
+predictionAccuracy={predictionAccuracy}
+awardPredictionConfidence={awardPredictionConfidence}
 />
 
-<MetricCard
-title="Supplier Reliability"
-value={`${supplierReliabilityScore}/100`}
-/>
-
-<MetricCard
-title="Prediction Accuracy"
-value={`${predictionAccuracy}%`}
-/>
-
-<MetricCard
-title="Award Confidence"
-value={awardPredictionConfidence}
-/>
-</div>
-</section>
 </div>
 <BoardReportGenerator />
+<AIBoardNarrativeGenerator />
 </main>
 );
 }
