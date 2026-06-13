@@ -7,6 +7,7 @@ import BoardReportGenerator from "@/components/board-report-generator";
 import AIBoardNarrativeGenerator from "@/components/ai-board-narrative-generator";
 import AIConfidenceEngine from "@/components/ai-confidence-engine";
 import ExecutiveRiskIntelligence from "@/components/executive-risk-intelligence";
+import ProcurementCopilotIntelligence from "@/components/procurement-copilot-intelligence";
 
 type RFQ = {
 id: string;
@@ -2519,6 +2520,14 @@ value={`${procurementMaturityScore}/100`}
 <MetricCard title="AI Confidence" value={aiConfidenceScore} />
 </div>
 </section>
+
+<ProcurementCopilotIntelligence
+procurementRiskIndex={procurementRiskIndex}
+supplierDependencyRisk={supplierDependencyRisk}
+awardPredictionConfidence={awardPredictionConfidence}
+predictionAccuracy={predictionAccuracy}
+executiveStatus={executiveStatus}
+/>
 
 <AIConfidenceEngine
 aiConfidenceScore={aiConfidenceScore}
