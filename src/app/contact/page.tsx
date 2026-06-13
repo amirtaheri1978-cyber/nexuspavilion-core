@@ -51,7 +51,7 @@ Contact Information
 </h2>
 
 <div className="mt-6 space-y-4">
-<InfoRow label="Email" value="hello@nexuspavilion.com" />
+<InfoRow label="Email" value="a.mirtaheri1978@gmail.com" />
 <InfoRow label="Platform" value="Nexus Pavilion Procurement Intelligence" />
 <InfoRow label="Focus" value="Construction procurement, RFQs, supplier intelligence, and enterprise analytics" />
 </div>
