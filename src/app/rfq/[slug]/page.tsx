@@ -1,8 +1,8 @@
 import Link from "next/link";
 
 import AwardContractButton from "@/components/award-contract-button";
-import { createClient } from "@/lib/supabase/server";
 import InviteVendorForm from "@/components/invite-vendor-form";
+import { createClient } from "@/lib/supabase/server";
 
 type PageProps = {
 params: Promise<{ slug: string }>;
@@ -27,23 +27,128 @@ decision: string | null;
 
 type ScoredQuote = Quote & {
 amountNumber: number;
+rank: number;
 priceScore: number;
 timelineScore: number;
+riskScore: number;
+performanceScore: number;
 totalScore: number;
+awardConfidence: number;
+riskLevel: string;
+budgetVariance: number;
+lowestBidVariance: number;
 };
 
-function getTimelineScore(timeline: string | null) {
+function formatMoney(value: number | string | null | undefined) {
+const amount = Number(value);
+
+if (!Number.isFinite(amount)) {
+return "$0";
+}
+
+return `$${amount.toLocaleString()}`;
+}
+
+function getTimelineMonths(timeline: string | null) {
 const value = String(timeline || "").toLowerCase();
+const numberMatch = value.match(/\d+/);
+const amount = numberMatch ? Number(numberMatch[0]) : null;
 
-if (value.includes("q1")) return 100;
-if (value.includes("q2")) return 85;
-if (value.includes("q3")) return 70;
-if (value.includes("q4")) return 55;
-if (value.includes("week")) return 80;
-if (value.includes("month")) return 60;
-if (value.includes("fast") || value.includes("quick")) return 90;
+if (!amount) {
+if (value.includes("q1")) return 3;
+if (value.includes("q2")) return 6;
+if (value.includes("q3")) return 9;
+if (value.includes("q4")) return 12;
+if (value.includes("fast") || value.includes("quick")) return 6;
+return 18;
+}
 
-return 50;
+if (value.includes("week")) {
+return Math.max(1, Math.round(amount / 4.345));
+}
+
+if (value.includes("month")) {
+return amount;
+}
+
+return amount;
+}
+
+function getTimelineScore(timeline: string | null) {
+const months = getTimelineMonths(timeline);
+
+if (months <= 6) return 100;
+if (months <= 9) return 92;
+if (months <= 12) return 84;
+if (months <= 16) return 74;
+if (months <= 20) return 62;
+if (months <= 24) return 52;
+
+return 40;
+}
+
+function getPerformanceScore(message: string | null) {
+const value = String(message || "").toLowerCase();
+
+let score = 55;
+
+const positiveSignals = [
+"healthcare",
+"hospital",
+"infection control",
+"phased",
+"occupied",
+"quality assurance",
+"project management",
+"firestopping",
+"commissioning",
+"warranty",
+"experience",
+"certified",
+"cor",
+"wsib",
+];
+
+positiveSignals.forEach((signal) => {
+if (value.includes(signal)) score += 4;
+});
+
+if (value.length > 500) score += 5;
+if (value.length > 900) score += 5;
+
+return Math.min(score, 100);
+}
+
+function getRiskScore({
+amountNumber,
+budget,
+timeline,
+message,
+}: {
+amountNumber: number;
+budget: number;
+timeline: string | null;
+message: string | null;
+}) {
+let score = 85;
+
+const timelineMonths = getTimelineMonths(timeline);
+const value = String(message || "").toLowerCase();
+
+if (budget > 0 && amountNumber > budget) score -= 18;
+if (budget > 0 && amountNumber < budget * 0.65) score -= 12;
+if (timelineMonths > 24) score -= 15;
+if (!value.includes("warranty")) score -= 5;
+if (!value.includes("quality")) score -= 5;
+if (!value.includes("project management")) score -= 5;
+
+return Math.max(20, Math.min(score, 100));
+}
+
+function getRiskLevel(score: number) {
+if (score >= 80) return "Low";
+if (score >= 60) return "Medium";
+return "High";
 }
 
 function getRFQStatusClass(status: string | null) {
@@ -68,16 +173,6 @@ function getScoreClass(score: number) {
 if (score >= 90) return "text-green-700";
 if (score >= 75) return "text-orange-700";
 return "text-red-700";
-}
-
-function formatMoney(value: number | string | null | undefined) {
-const amount = Number(value);
-
-if (!Number.isFinite(amount)) {
-return "$0";
-}
-
-return `$${amount.toLocaleString()}`;
 }
 
 export default async function RFQDetailPage({ params }: PageProps) {
@@ -136,6 +231,8 @@ const { data: quotes } = isOwner
 
 const quoteList = (quotes ?? []) as Quote[];
 
+const budget = Number(rfq.budget || 0);
+
 const amounts = quoteList
 .map((quote) => Number(quote.amount))
 .filter((amount) => Number.isFinite(amount));
@@ -150,33 +247,62 @@ amounts.reduce((total, amount) => total + amount, 0) / amounts.length
 )
 : 0;
 
-const scoredQuotes: ScoredQuote[] = quoteList.map((quote) => {
+const scoredQuotesUnranked = quoteList.map((quote) => {
 const amount = Number(quote.amount);
 const amountNumber = Number.isFinite(amount) ? amount : 0;
 
 const priceScore =
 lowestAmount && amountNumber > 0
-? Math.round((lowestAmount / amountNumber) * 70)
+? Math.min(100, Math.round((lowestAmount / amountNumber) * 100))
 : 0;
 
-const timelineScore = Math.round(getTimelineScore(quote.timeline) * 0.3);
-const totalScore = Math.min(priceScore + timelineScore, 100);
+const timelineScore = getTimelineScore(quote.timeline);
+const performanceScore = getPerformanceScore(quote.message);
+const riskScore = getRiskScore({
+amountNumber,
+budget,
+timeline: quote.timeline,
+message: quote.message,
+});
+
+const totalScore = Math.min(
+100,
+Math.round(
+priceScore * 0.4 +
+timelineScore * 0.25 +
+performanceScore * 0.2 +
+riskScore * 0.15
+)
+);
+
+const budgetVariance = budget > 0 ? amountNumber - budget : 0;
+const lowestBidVariance =
+lowestAmount && amountNumber > 0 ? amountNumber - lowestAmount : 0;
 
 return {
 ...quote,
 amountNumber,
+rank: 0,
 priceScore,
 timelineScore,
+riskScore,
+performanceScore,
 totalScore,
+awardConfidence: Math.min(99, Math.max(35, totalScore)),
+riskLevel: getRiskLevel(riskScore),
+budgetVariance,
+lowestBidVariance,
 };
 });
 
-const recommendedQuote =
-isOwner && scoredQuotes.length > 0
-? scoredQuotes.reduce((best, quote) =>
-quote.totalScore > best.totalScore ? quote : best
-)
-: null;
+const scoredQuotes: ScoredQuote[] = scoredQuotesUnranked
+.sort((a, b) => b.totalScore - a.totalScore)
+.map((quote, index) => ({
+...quote,
+rank: index + 1,
+}));
+
+const recommendedQuote = isOwner && scoredQuotes.length > 0 ? scoredQuotes[0] : null;
 
 const awardedQuote = scoredQuotes.find(
 (quote) => quote.decision === "awarded"
@@ -269,7 +395,7 @@ recommendedQuote
 ? formatMoney(recommendedQuote.amountNumber)
 : "Pending"
 }
-detail="Best score based on price and timeline"
+detail="AI-ranked best overall supplier"
 />
 
 <InsightCard
@@ -279,11 +405,13 @@ detail="Compared to average bid"
 />
 
 <InsightCard
-title="Awarded"
+title="Award Confidence"
 value={
-awardedQuote ? formatMoney(awardedQuote.amountNumber) : "Not yet"
+recommendedQuote
+? `${recommendedQuote.awardConfidence}%`
+: "Pending"
 }
-detail="Current award decision"
+detail="Composite procurement confidence"
 />
 </section>
 ) : (
@@ -291,7 +419,9 @@ detail="Current award decision"
 <InsightCard
 title="Your Quote"
 value={
-scoredQuotes[0] ? formatMoney(scoredQuotes[0].amountNumber) : "Not submitted"
+scoredQuotes[0]
+? formatMoney(scoredQuotes[0].amountNumber)
+: "Not submitted"
 }
 detail="Visible only to your company"
 />
@@ -310,12 +440,60 @@ detail="Private supplier submission status"
 </section>
 )}
 
+{isOwner && recommendedQuote ? (
+<section className="mt-8 rounded-[32px] bg-slate-950 p-8 text-white">
+<p className="text-xs font-black uppercase tracking-[0.3em] text-orange-400">
+AI Supplier Ranking Engine
+</p>
+
+<div className="mt-5 grid gap-8 lg:grid-cols-[1fr_0.9fr]">
+<div>
+<h2 className="text-4xl font-black">
+Recommended Winner: Rank #{recommendedQuote.rank}
+</h2>
+
+<p className="mt-4 max-w-3xl text-sm leading-7 text-slate-300">
+Nexus Pavilion recommends this supplier based on weighted
+analysis of price competitiveness, delivery timeline,
+proposal strength, and procurement risk.
+</p>
+
+<div className="mt-6 flex flex-wrap gap-3">
+<DarkBadge>Overall {recommendedQuote.totalScore}/100</DarkBadge>
+<DarkBadge>Risk {recommendedQuote.riskLevel}</DarkBadge>
+<DarkBadge>
+Confidence {recommendedQuote.awardConfidence}%
+</DarkBadge>
+</div>
+</div>
+
+<div className="grid gap-4 sm:grid-cols-2">
+<DarkMetric
+title="Price Score"
+value={`${recommendedQuote.priceScore}/100`}
+/>
+<DarkMetric
+title="Timeline Score"
+value={`${recommendedQuote.timelineScore}/100`}
+/>
+<DarkMetric
+title="Performance"
+value={`${recommendedQuote.performanceScore}/100`}
+/>
+<DarkMetric
+title="Risk Score"
+value={`${recommendedQuote.riskScore}/100`}
+/>
+</div>
+</div>
+</section>
+) : null}
+
 {isOwner && isOpen ? (
 <div className="mt-8">
 <InviteVendorForm rfqId={rfq.id} />
 </div>
 ) : null}
-
 
 <section className="mt-8 rounded-[32px] border border-black/5 bg-white p-8">
 <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
@@ -325,7 +503,9 @@ detail="Private supplier submission status"
 </p>
 
 <h2 className="mt-3 text-3xl font-black text-slate-950">
-{isOwner ? "Supplier Quote Scoring" : "Your Company Quote"}
+{isOwner
+? "AI Supplier Ranking"
+: "Your Company Quote"}
 </h2>
 
 {!isOwner ? (
@@ -334,7 +514,12 @@ Supplier pricing is confidential. You can only view your own
 submission. Competitor pricing and award controls are visible
 only to the RFQ owner.
 </p>
-) : null}
+) : (
+<p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
+Ranking uses weighted scoring: 40% price, 25% timeline, 20%
+performance signals, and 15% procurement risk.
+</p>
+)}
 </div>
 
 <div className="flex flex-wrap gap-3">
@@ -360,12 +545,14 @@ Open Compare View
 
 {isOwner ? (
 <div className="mt-6 overflow-hidden rounded-2xl border border-slate-200">
-<div className="grid grid-cols-6 bg-slate-950 px-6 py-4 text-sm font-bold text-white">
+<div className="grid grid-cols-8 bg-slate-950 px-6 py-4 text-xs font-bold uppercase tracking-[0.15em] text-white">
+<div>Rank</div>
 <div>Amount</div>
 <div>Timeline</div>
 <div>Decision</div>
-<div>Score</div>
-<div>Message</div>
+<div>AI Score</div>
+<div>Risk</div>
+<div>Variance</div>
 <div>Actions</div>
 </div>
 
@@ -384,9 +571,16 @@ const canAward = isOpen && quote.decision !== "awarded";
 return (
 <div
 key={quote.id}
-className="grid grid-cols-6 items-center border-t border-slate-100 px-6 py-5"
+className="grid grid-cols-8 items-center border-t border-slate-100 px-6 py-5"
 >
-<div className="text-xl font-black text-slate-950">
+<div>
+<p className="text-2xl font-black text-slate-950">
+#{quote.rank}
+</p>
+{isRecommended ? <Badge>Recommended</Badge> : null}
+</div>
+
+<div className="text-lg font-black text-slate-950">
 {formatMoney(quote.amountNumber)}
 </div>
 
@@ -414,24 +608,42 @@ quote.totalScore
 </p>
 
 <p className="mt-1 text-xs text-slate-400">
-Price {quote.priceScore} · Time {quote.timelineScore}
+P {quote.priceScore} · T {quote.timelineScore} · R{" "}
+{quote.riskScore}
 </p>
 </div>
 
-<div className="text-sm text-slate-600">
-{quote.message || "No message"}
+<div>
+<p className="text-sm font-black text-slate-950">
+{quote.riskLevel}
+</p>
+<p className="text-xs text-slate-400">
+Confidence {quote.awardConfidence}%
+</p>
+</div>
+
+<div>
+<p className="text-xs font-bold text-slate-500">
+Budget: {formatMoney(quote.budgetVariance)}
+</p>
+<p className="mt-1 text-xs font-bold text-slate-500">
+Lowest: {formatMoney(quote.lowestBidVariance)}
+</p>
 </div>
 
 <div className="space-y-3">
 <div className="space-y-2">
-{isRecommended && <Badge>Recommended</Badge>}
 {isLowest && <Badge>Lowest Bid</Badge>}
 {belowAverage && <Badge>Below Average</Badge>}
-{quote.timelineScore >= 24 && <Badge>Strong Timeline</Badge>}
+{quote.timelineScore >= 84 && (
+<Badge>Strong Timeline</Badge>
+)}
 {isHighest && <Badge>Highest Bid</Badge>}
 </div>
 
-{canAward ? <AwardContractButton quoteId={quote.id} /> : null}
+{canAward ? (
+<AwardContractButton quoteId={quote.id} />
+) : null}
 
 {quote.decision === "awarded" ? (
 <p className="text-xs font-black text-green-700">
@@ -568,6 +780,26 @@ return (
 
 <p className="mt-2 text-sm text-slate-600">{detail}</p>
 </div>
+);
+}
+
+function DarkMetric({ title, value }: { title: string; value: string }) {
+return (
+<div className="rounded-2xl bg-white/10 p-5">
+<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+{title}
+</p>
+
+<p className="mt-2 text-3xl font-black text-white">{value}</p>
+</div>
+);
+}
+
+function DarkBadge({ children }: { children: React.ReactNode }) {
+return (
+<span className="rounded-full bg-white/10 px-4 py-2 text-xs font-black uppercase tracking-[0.15em] text-white">
+{children}
+</span>
 );
 }
 

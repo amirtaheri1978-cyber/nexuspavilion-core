@@ -46,20 +46,33 @@ if (status === "closed") return "Closed";
 return "Open";
 }
 
-function getGrade(score: number) {
-if (score >= 90) return "A+ Preferred Vendor";
-if (score >= 80) return "A Qualified Vendor";
-if (score >= 70) return "B Competitive Vendor";
-if (score >= 60) return "C Developing Vendor";
-return "Emerging Vendor";
+function getSupplierTier(score: number) {
+if (score >= 95) return "Elite Supplier";
+if (score >= 90) return "Platinum Supplier";
+if (score >= 80) return "Gold Supplier";
+if (score >= 70) return "Silver Supplier";
+return "Developing Supplier";
 }
 
-function getStrength(score: number) {
+function getSupplierRecommendation(score: number) {
+if (score >= 90) return "Preferred Strategic Partner";
+if (score >= 80) return "Approved High-Value Supplier";
+if (score >= 70) return "Competitive Supplier";
+return "Monitor and Develop";
+}
+
+function getRiskLevel(score: number) {
+if (score >= 85) return "Low Risk";
+if (score >= 65) return "Medium Risk";
+return "High Risk";
+}
+
+function getHealthLabel(score: number) {
 if (score >= 90) return "Excellent";
 if (score >= 80) return "Strong";
-if (score >= 70) return "Competitive";
+if (score >= 70) return "Healthy";
 if (score >= 60) return "Developing";
-return "Early Stage";
+return "Limited Data";
 }
 
 export default async function VendorDashboardPage() {
@@ -102,12 +115,11 @@ rfqIds.length > 0
 const quoteList = (quotes ?? []) as Quote[];
 
 const submittedQuotes = quoteList.length;
-
-const awardedQuotes = quoteList.filter(
-(quote) => quote.decision === "awarded"
-);
-
+const awardedQuotes = quoteList.filter((quote) => quote.decision === "awarded");
 const lostQuotes = quoteList.filter((quote) => quote.decision === "rejected");
+const pendingQuotes = quoteList.filter(
+(quote) => !quote.decision || quote.decision === "pending"
+);
 
 const awardedRevenue = awardedQuotes.reduce((total, quote) => {
 const amount = Number(quote.amount);
@@ -132,130 +144,83 @@ submittedQuotes > 0
 ? Math.round((awardedQuotes.length / submittedQuotes) * 100)
 : 0;
 
-const financialRisk = Math.max(
-5,
-Math.round(100 - awardedRevenue / 5000)
-);
-
-const performanceRisk = Math.max(5, Math.round(100 - winRate));
-
-const capacityRisk =
-submittedQuotes <= 1 ? 70 : submittedQuotes <= 3 ? 45 : 20;
-
-const dependencyRisk = awardedRevenue > 100000 ? 35 : 70;
-
-const financialScore = Math.max(0, 100 - financialRisk);
-const performanceScore = Math.max(0, 100 - performanceRisk);
-const dependencyScore = Math.max(0, 100 - dependencyRisk);
-
-const participationScore = Math.min(100, submittedQuotes * 8);
-const revenueScore = Math.min(100, awardedRevenue / 5000);
-
-const procurementScore = Math.min(
-100,
-Math.round(
-financialScore * 0.15 +
-performanceScore * 0.25 +
-dependencyScore * 0.15 +
-winRate * 0.25 +
-participationScore * 0.1 +
-revenueScore * 0.1
-)
-);
-
-const performanceGrade = getGrade(procurementScore);
-const competitiveStrength = getStrength(procurementScore);
-
-const vendorRank =
-procurementScore >= 90
-? "Top Tier"
-: procurementScore >= 75
-? "Preferred"
-: procurementScore >= 60
-? "Qualified"
-: "Developing";
-
-const supplierTier =
-procurementScore >= 90
-? "Platinum Supplier"
-: procurementScore >= 80
-? "Gold Supplier"
-: procurementScore >= 65
-? "Silver Supplier"
-: "Developing Supplier";
-
-const supplierRecommendation =
-procurementScore >= 90
-? "Preferred Supplier"
-: procurementScore >= 80
-? "Strategic Supplier"
-: procurementScore >= 65
-? "Approved Supplier"
-: "Monitor Supplier";
-
-const awardProbability = Math.min(
-98,
-Math.max(
-25,
-Math.round(
-winRate * 0.5 +
-awardedQuotes.length * 10 +
-Math.min(awardedRevenue / 20000, 25) +
-Math.min(submittedQuotes * 3, 15)
-)
-)
-);
-
-const supplierRisk =
-procurementScore >= 85
-? "Low Risk"
-: procurementScore >= 65
-? "Medium Risk"
-: "High Risk";
-
-const marketplaceReputation =
-procurementScore >= 90
-? "Excellent"
-: procurementScore >= 75
-? "Strong"
-: procurementScore >= 60
-? "Reliable"
-: "Limited Data";
-
-const quoteCompetitiveness =
-averageBid > 0 && awardedRevenue > 0
-? "Competitive"
-: submittedQuotes > 0
-? "Developing"
-: "No Activity";
-
-const recentActivitySignal =
-submittedQuotes >= 5
-? "Active"
-: submittedQuotes >= 2
-? "Moderate"
-: "Low";
-
-const executiveRecommendation =
-procurementScore >= 85
-? "Increase RFQ allocation and maintain this supplier as a preferred procurement partner."
-: procurementScore >= 65
-? "Continue RFQ participation while monitoring risk, pricing, and delivery consistency."
-: "Monitor this supplier closely and improve quote volume, win rate, and awarded revenue before increasing dependency.";
-
-const overallRisk = Math.round(
-(financialRisk + performanceRisk + capacityRisk + dependencyRisk) / 4
-);
-
-const openRfqs = rfqList.filter(
-(rfq) => !rfq.status || rfq.status === "open"
-);
+const openRfqs = rfqList.filter((rfq) => !rfq.status || rfq.status === "open");
 
 const pendingDecisionRfqs = openRfqs.filter((rfq) =>
 quoteList.some((quote) => quote.rfq_id === rfq.id)
 );
 
 const pendingDecisions = pendingDecisionRfqs.length;
+
+const participationScore = Math.min(100, submittedQuotes * 12);
+const winScore = Math.min(100, winRate);
+const revenueScore = Math.min(100, Math.round(awardedRevenue / 50000));
+const awardVolumeScore = Math.min(100, awardedQuotes.length * 20);
+const consistencyScore =
+submittedQuotes > 0
+? Math.max(25, 100 - Math.abs(submittedQuotes - awardedQuotes.length) * 8)
+: 25;
+
+const supplierScore = Math.min(
+100,
+Math.round(
+participationScore * 0.2 +
+winScore * 0.25 +
+revenueScore * 0.2 +
+awardVolumeScore * 0.2 +
+consistencyScore * 0.15
+)
+);
+
+const deliveryScore = Math.min(
+100,
+Math.round(65 + awardedQuotes.length * 8 + pendingQuotes.length * 2)
+);
+
+const qualityScore = Math.min(
+100,
+Math.round(60 + awardedQuotes.length * 9 + winRate * 0.25)
+);
+
+const commercialScore = Math.min(
+100,
+Math.round(winRate * 0.35 + revenueScore * 0.4 + participationScore * 0.25)
+);
+
+const riskScore = Math.min(
+100,
+Math.round(
+100 -
+Math.min(65, lostQuotes.length * 8 + (submittedQuotes <= 1 ? 20 : 0))
+)
+);
+
+const supplierTier = getSupplierTier(supplierScore);
+const supplierRisk = getRiskLevel(riskScore);
+const supplierRecommendation = getSupplierRecommendation(supplierScore);
+const supplierHealth = getHealthLabel(supplierScore);
+
+const awardProbability = Math.min(
+99,
+Math.max(
+25,
+Math.round(
+winRate * 0.45 +
+awardedQuotes.length * 12 +
+Math.min(awardedRevenue / 30000, 25) +
+Math.min(submittedQuotes * 4, 18)
+)
+)
+);
+
+const executiveRecommendation =
+supplierScore >= 90
+? "This supplier profile demonstrates strong award performance, healthy commercial momentum, and low procurement risk. Maintain preferred supplier status and consider increased RFQ allocation."
+: supplierScore >= 75
+? "This supplier is performing well and should remain active in competitive procurement events while monitoring delivery, pricing, and award consistency."
+: supplierScore >= 60
+? "This supplier has a developing performance profile. Continue collecting quote history and monitor win rate, revenue conversion, and risk signals."
+: "Supplier data is limited. Increase RFQ participation and award history before assigning strategic supplier status.";
 
 const pipelineRows = rfqList.map((rfq) => {
 const rfqQuotes = quoteList.filter((quote) => quote.rfq_id === rfq.id);
@@ -266,9 +231,7 @@ const amounts = rfqQuotes
 
 const lowestQuote = amounts.length > 0 ? Math.min(...amounts) : null;
 
-const awardedQuote = rfqQuotes.find(
-(quote) => quote.decision === "awarded"
-);
+const awardedQuote = rfqQuotes.find((quote) => quote.decision === "awarded");
 
 const isPendingDecision =
 (!rfq.status || rfq.status === "open") && rfqQuotes.length > 0;
@@ -291,7 +254,7 @@ return (
 <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
 <div>
 <p className="text-xs font-black uppercase tracking-[0.35em] text-orange-500">
-Supplier Intelligence Dashboard
+Supplier Performance Center
 </p>
 
 <h1 className="mt-3 text-5xl font-black text-slate-950">
@@ -299,9 +262,9 @@ Vendor Dashboard
 </h1>
 
 <p className="mt-4 max-w-3xl text-sm leading-6 text-slate-600">
-Track company RFQs, supplier quote activity, award decisions,
-pending bid reviews, procurement revenue, and vendor performance
-intelligence connected to your secure workspace.
+Monitor RFQ pipeline, quote activity, awarded revenue, win
+rate, supplier scorecards, procurement risk, and executive
+supplier intelligence connected to your workspace.
 </p>
 </div>
 
@@ -328,44 +291,47 @@ Supplier Performance Control Tower
 <p className="mt-4 max-w-3xl text-sm leading-7 text-slate-300">
 {executiveRecommendation}
 </p>
+
+<div className="mt-6 flex flex-wrap gap-3">
+<DarkBadge>{supplierTier}</DarkBadge>
+<DarkBadge>{supplierRisk}</DarkBadge>
+<DarkBadge>{supplierRecommendation}</DarkBadge>
+</div>
 </div>
 
 <div className="grid gap-4 sm:grid-cols-2">
-<DarkMetric
-title="Supplier Score"
-value={`${procurementScore}/100`}
-/>
-<DarkMetric title="Tier" value={supplierTier} />
-<DarkMetric title="Risk" value={supplierRisk} />
-<DarkMetric title="Recommendation" value={supplierRecommendation} />
+<DarkMetric title="Supplier Score" value={`${supplierScore}/100`} />
+<DarkMetric title="Health" value={supplierHealth} />
+<DarkMetric title="Award Probability" value={`${awardProbability}%`} />
+<DarkMetric title="Win Rate" value={`${winRate}%`} />
 </div>
 </div>
 </section>
 
 <section className="mt-8 grid gap-6 md:grid-cols-4">
 <MetricCard
-title="Procurement Score"
-value={`${procurementScore}/100`}
-detail={performanceGrade}
-highlight={procurementScore >= 80}
+title="Supplier Score"
+value={`${supplierScore}/100`}
+detail={supplierTier}
+highlight={supplierScore >= 80}
 />
 
 <MetricCard
-title="Vendor Rank"
-value={vendorRank}
-detail={`${competitiveStrength} competitive position`}
+title="Commercial Score"
+value={`${commercialScore}/100`}
+detail="Win rate, revenue, and quote participation"
 />
 
 <MetricCard
-title="Win Rate"
-value={`${winRate}%`}
-detail="Awarded quotes vs submitted"
+title="Delivery Score"
+value={`${deliveryScore}/100`}
+detail="Estimated schedule reliability"
 />
 
 <MetricCard
-title="Awarded Revenue"
-value={formatMoney(awardedRevenue)}
-detail={`${awardedQuotes.length} awarded quotes`}
+title="Quality Score"
+value={`${qualityScore}/100`}
+detail="Award consistency and proposal quality"
 />
 
 <MetricCard
@@ -375,9 +341,21 @@ detail="Total supplier bids"
 />
 
 <MetricCard
-title="Lost Quotes"
-value={String(lostQuotes.length)}
-detail="Rejected or non-awarded bids"
+title="Win Rate"
+value={`${winRate}%`}
+detail="Awards won vs submitted quotes"
+/>
+
+<MetricCard
+title="Awarded Revenue"
+value={formatMoney(awardedRevenue)}
+detail={`${awardedQuotes.length} awarded quotes`}
+/>
+
+<MetricCard
+title="Average Award"
+value={formatMoney(averageAward)}
+detail="Average awarded contract value"
 />
 
 <MetricCard
@@ -387,22 +365,16 @@ detail="Average submitted quote"
 />
 
 <MetricCard
-title="Average Award"
-value={formatMoney(averageAward)}
-detail="Average awarded contract"
-/>
-
-<MetricCard
-title="Company RFQs"
-value={String(rfqList.length)}
-detail={`${openRfqs.length} open opportunities`}
-/>
-
-<MetricCard
 title="Pending Decisions"
 value={String(pendingDecisions)}
-detail="Open RFQs with quotes"
+detail="Open RFQs with submitted quotes"
 highlight={pendingDecisions > 0}
+/>
+
+<MetricCard
+title="Lost Quotes"
+value={String(lostQuotes.length)}
+detail="Rejected or non-awarded bids"
 />
 
 <MetricCard
@@ -410,115 +382,48 @@ title="Open RFQs"
 value={String(openRfqs.length)}
 detail="Still accepting or reviewing bids"
 />
-
-<MetricCard
-title="Awards"
-value={String(awardedQuotes.length)}
-detail="Completed procurement wins"
-/>
 </section>
-
 <section className="mt-8 rounded-[32px] border border-black/5 bg-white p-8">
 <p className="text-xs font-black uppercase tracking-[0.3em] text-orange-500">
-AI Supplier Ranking Engine
+Supplier Scorecard
 </p>
 
 <div className="mt-4 grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
 <div>
 <h2 className="text-3xl font-black text-slate-950">
-Supplier Performance Intelligence
+Performance Breakdown
 </h2>
 
 <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">
-Nexus AI evaluates supplier quote activity, awarded contracts,
-awarded revenue, procurement engagement, risk exposure, and
-marketplace competitiveness to generate a supplier ranking
-profile.
+Nexus Pavilion evaluates supplier performance using commercial
+performance, delivery reliability, quality signals, quote
+participation, award conversion, and risk exposure.
 </p>
 
-<div className="mt-8 grid gap-4 md:grid-cols-3">
-<MetricCard
-title="Supplier Score"
-value={`${procurementScore}/100`}
-detail="AI weighted performance score"
-/>
-
-<MetricCard
-title="Performance Grade"
-value={performanceGrade}
-detail="Overall supplier classification"
-/>
-
-<MetricCard
-title="Marketplace Rank"
-value={vendorRank}
-detail="Position within supplier ecosystem"
-/>
+<div className="mt-8 grid gap-4 md:grid-cols-2">
+<ScoreBar title="Commercial Performance" value={commercialScore} />
+<ScoreBar title="Delivery Reliability" value={deliveryScore} />
+<ScoreBar title="Quality Signal" value={qualityScore} />
+<ScoreBar title="Risk Strength" value={riskScore} />
 </div>
 </div>
 
 <div className="rounded-3xl bg-slate-50 p-6">
 <p className="text-xs font-black uppercase tracking-[0.25em] text-slate-400">
-Ranking Signals
+Supplier Classification
 </p>
 
 <div className="mt-4 space-y-3">
-<SignalRow label="Win Rate" value={`${winRate}%`} />
-<SignalRow
-label="Awarded Revenue"
-value={formatMoney(awardedRevenue)}
-/>
-<SignalRow
-label="Quote Volume"
-value={String(submittedQuotes)}
-/>
-<SignalRow label="Average Bid" value={formatMoney(averageBid)} />
 <SignalRow label="Supplier Tier" value={supplierTier} />
-<SignalRow
-label="Recommendation"
-value={supplierRecommendation}
-/>
-<SignalRow
-label="Award Probability"
-value={`${awardProbability}%`}
-/>
-<SignalRow label="Risk Level" value={supplierRisk} />
-<SignalRow label="Reputation" value={marketplaceReputation} />
-<SignalRow
-label="Quote Competitiveness"
-value={quoteCompetitiveness}
-/>
-<SignalRow
-label="Recent Activity"
-value={recentActivitySignal}
-/>
-<SignalRow
-label="Competitive Strength"
-value={competitiveStrength}
-/>
+<SignalRow label="Recommendation" value={supplierRecommendation} />
+<SignalRow label="Risk Profile" value={supplierRisk} />
+<SignalRow label="Supplier Health" value={supplierHealth} />
+<SignalRow label="Award Probability" value={`${awardProbability}%`} />
+<SignalRow label="Total Bid Volume" value={formatMoney(totalBidVolume)} />
+<SignalRow label="Awarded Revenue" value={formatMoney(awardedRevenue)} />
+<SignalRow label="Quote Volume" value={String(submittedQuotes)} />
 </div>
 </div>
-</div>
-</section>
-
-<section className="mt-8 rounded-[32px] border border-black/5 bg-white p-8">
-<p className="text-xs font-black uppercase tracking-[0.3em] text-orange-500">
-Supplier Risk Intelligence
-</p>
-
-<h2 className="mt-3 text-3xl font-black text-slate-950">
-Risk Breakdown
-</h2>
-
-<div className="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-5">
-<MiniCard title="Overall Risk" value={`${overallRisk}/100`} />
-<MiniCard title="Financial Risk" value={`${financialRisk}/100`} />
-<MiniCard
-title="Performance Risk"
-value={`${performanceRisk}/100`}
-/>
-<MiniCard title="Capacity Risk" value={`${capacityRisk}/100`} />
-<MiniCard title="Dependency Risk" value={`${dependencyRisk}/100`} />
 </div>
 </section>
 
@@ -585,9 +490,7 @@ Decision Needed
 </Badge>
 
 <Badge>{rfq.location || "No location"}</Badge>
-
 <Badge>Budget {formatMoney(rfq.budget)}</Badge>
-
 <Badge>{rfqQuotes.length} quotes</Badge>
 
 {lowestQuote !== null ? (
@@ -613,16 +516,7 @@ Review →
 )
 )
 ) : (
-<div className="rounded-[28px] border border-dashed border-slate-300 bg-slate-50 p-12 text-center">
-<h3 className="text-2xl font-black text-slate-950">
-No company RFQs found
-</h3>
-
-<p className="mt-2 text-sm text-slate-600">
-Create RFQs from the marketplace to start building vendor
-activity.
-</p>
-</div>
+<EmptyState message="No company RFQs found. Create RFQs from the marketplace to start building supplier activity." />
 )}
 </div>
 </div>
@@ -752,18 +646,6 @@ highlight ? "border-yellow-200 bg-yellow-50" : "border-black/5 bg-white"
 );
 }
 
-function MiniCard({ title, value }: { title: string; value: string }) {
-return (
-<div className="rounded-3xl bg-white p-5 shadow-sm">
-<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
-{title}
-</p>
-
-<p className="mt-2 text-2xl font-black text-slate-950">{value}</p>
-</div>
-);
-}
-
 function DarkMetric({ title, value }: { title: string; value: string }) {
 return (
 <div className="rounded-2xl bg-white/10 p-5">
@@ -776,11 +658,37 @@ return (
 );
 }
 
+function DarkBadge({ children }: { children: React.ReactNode }) {
+return (
+<span className="rounded-full bg-white/10 px-4 py-2 text-xs font-black uppercase tracking-[0.15em] text-white">
+{children}
+</span>
+);
+}
+
 function SignalRow({ label, value }: { label: string; value: string }) {
 return (
 <div className="flex items-center justify-between rounded-2xl bg-white px-4 py-3 shadow-sm">
 <p className="text-sm font-black text-slate-600">{label}</p>
 <p className="text-sm font-black text-slate-950">{value}</p>
+</div>
+);
+}
+
+function ScoreBar({ title, value }: { title: string; value: number }) {
+return (
+<div className="rounded-3xl bg-slate-50 p-5">
+<div className="flex items-center justify-between gap-4">
+<p className="text-sm font-black text-slate-700">{title}</p>
+<p className="text-sm font-black text-slate-950">{value}/100</p>
+</div>
+
+<div className="mt-4 h-3 overflow-hidden rounded-full bg-slate-200">
+<div
+className="h-full rounded-full bg-slate-950"
+style={{ width: `${Math.min(100, Math.max(0, value))}%` }}
+/>
+</div>
 </div>
 );
 }
