@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import AwardContractButton from "@/components/award-contract-button";
 import { createClient } from "@/lib/supabase/server";
+import InviteVendorForm from "@/components/invite-vendor-form";
 
 type PageProps = {
 params: Promise<{ slug: string }>;
@@ -308,6 +309,13 @@ detail="Private supplier submission status"
 />
 </section>
 )}
+
+{isOwner && isOpen ? (
+<div className="mt-8">
+<InviteVendorForm rfqId={rfq.id} />
+</div>
+) : null}
+
 
 <section className="mt-8 rounded-[32px] border border-black/5 bg-white p-8">
 <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">

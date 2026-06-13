@@ -49,9 +49,20 @@ const value = String(networkRole || "").toLowerCase();
 return value.includes("vendor") || value.includes("supplier");
 }
 
-function canCreateRFQ(networkRole: string | null | undefined) {
+function canCreateRFQ(
+role: string | null | undefined,
+networkRole: string | null | undefined
+) {
+const normalizedRole = String(role || "").toLowerCase();
+
+if (["owner", "admin", "buyer"].includes(normalizedRole)) {
+return true;
+}
+
 return !isSupplierCompany(networkRole);
 }
+
+
 
 function getPageDescription(networkRole: string | null | undefined) {
 if (isSupplierCompany(networkRole)) {
@@ -99,15 +110,15 @@ const { data: companyData } = profile?.company_id
 : { data: null };
 
 const company = companyData as Company | null;
-const supplierMode = isSupplierCompany(company?.network_role);
+const supplierMode =
+profile?.role === "vendor" || isSupplierCompany(company?.network_role);
 
 const { data: rfqs } = supplierMode
 ? await supabase
 .from("rfqs")
 .select("*")
 .or("status.eq.open,status.is.null")
-.neq("company_id", profile?.company_id || "")
-.order("created_at", { ascending: false })
+.eq("status", "open")
 : profile?.company_id
 ? await supabase
 .from("rfqs")
@@ -148,7 +159,7 @@ Marketplace Mode: {getMarketplaceMode(company?.network_role)}
 </p>
 </div>
 
-{canCreateRFQ(company?.network_role) ? (
+{canCreateRFQ(profile?.role, company?.network_role) ? (
 <Link
 href="/rfq/new"
 className="rounded-full bg-slate-950 px-6 py-3 text-sm font-bold text-white transition hover:bg-slate-800"
@@ -240,7 +251,7 @@ No RFQs found
 : "Create your first company-scoped procurement opportunity."}
 </p>
 
-{canCreateRFQ(company?.network_role) ? (
+{canCreateRFQ(profile?.role,company?.network_role) ? (
 <Link
 href="/rfq/new"
 className="mt-6 inline-flex rounded-full bg-slate-950 px-6 py-3 text-sm font-bold text-white"

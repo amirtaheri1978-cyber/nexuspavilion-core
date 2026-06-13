@@ -1,14 +1,38 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+
+type AccountType = "buyer_owner" | "vendor_supplier" | "consultant_service";
 
 type CreateCompanyResponse = {
 success?: boolean;
 redirectTo?: string;
 error?: string;
 };
+
+const ACCOUNT_TYPES: {
+value: AccountType;
+label: string;
+description: string;
+}[] = [
+{
+value: "buyer_owner",
+label: "Buyer / Owner",
+description: "For owners, developers, GCs, and procurement teams creating RFQs.",
+},
+{
+value: "vendor_supplier",
+label: "Vendor / Supplier",
+description: "For suppliers, manufacturers, subcontractors, and specialty vendors.",
+},
+{
+value: "consultant_service",
+label: "Consultant / Service Provider",
+description: "For architects, engineers, consultants, and professional services.",
+},
+];
 
 const COMPANY_CATEGORIES = [
 "Developer / Owner",
@@ -31,14 +55,28 @@ const COMPANY_CATEGORIES = [
 "Other",
 ];
 
-const NETWORK_ROLES = [
+const NETWORK_ROLES_BY_ACCOUNT_TYPE: Record<AccountType, string[]> = {
+buyer_owner: [
 "Owner / Developer",
 "General Contractor",
-"Architect / Designer",
-"Manufacturer",
+"Construction Manager",
+"Procurement Team",
+],
+vendor_supplier: [
 "Vendor / Supplier",
+"Manufacturer",
+"Distributor / Supplier",
+"Subcontractor",
+"Specialty Contractor",
+],
+consultant_service: [
+"Architect / Designer",
+"Engineer",
+"Cost Consultant",
+"Project Consultant",
 "Consultant",
-];
+],
+};
 
 function normalizeValue(value: string) {
 return value.trim();
@@ -47,22 +85,33 @@ return value.trim();
 export default function CreateCompanyPage() {
 const router = useRouter();
 
+const [accountType, setAccountType] = useState<AccountType>("buyer_owner");
 const [name, setName] = useState("");
 const [category, setCategory] = useState("Mixed-Use Development");
 const [location, setLocation] = useState("");
-const [networkRole, setNetworkRole] = useState("Owner / Developer");
+const [networkRole, setNetworkRole] = useState(
+NETWORK_ROLES_BY_ACCOUNT_TYPE.buyer_owner[0]
+);
 
 const [loading, setLoading] = useState(false);
 const [error, setError] = useState("");
+
+const networkRoles = NETWORK_ROLES_BY_ACCOUNT_TYPE[accountType];
 
 const formIsReady = useMemo(() => {
 return (
 normalizeValue(name).length >= 2 &&
 normalizeValue(category).length > 0 &&
 normalizeValue(location).length >= 2 &&
+normalizeValue(accountType).length > 0 &&
 normalizeValue(networkRole).length > 0
 );
-}, [name, category, location, networkRole]);
+}, [name, category, location, accountType, networkRole]);
+
+function handleAccountTypeChange(value: AccountType) {
+setAccountType(value);
+setNetworkRole(NETWORK_ROLES_BY_ACCOUNT_TYPE[value][0]);
+}
 
 async function handleCreateCompany(
 event: React.FormEvent<HTMLFormElement>
@@ -92,6 +141,7 @@ body: JSON.stringify({
 name: normalizedName,
 category: normalizedCategory,
 location: normalizedLocation,
+accountType,
 networkRole: normalizedNetworkRole,
 }),
 });
@@ -123,7 +173,7 @@ className="text-sm font-bold text-slate-500 hover:text-slate-950"
 ← Back to dashboard
 </Link>
 
-<section className="mt-8 grid gap-8 lg:grid-cols-[1fr_420px]">
+<section className="mt-8 grid gap-8 lg:grid-cols-[1fr_460px]">
 <div className="rounded-[40px] border border-black/5 bg-slate-950 p-10 text-white">
 <p className="text-xs font-black uppercase tracking-[0.35em] text-orange-400">
 Nexus Pavilion Setup
@@ -134,30 +184,30 @@ Create your company workspace
 </h1>
 
 <p className="mt-5 max-w-2xl text-sm leading-7 text-slate-300">
-Start with only the essentials required to activate your company
-workspace. Billing, tax ID, and legal verification are handled
-later during subscription or enterprise verification.
+Choose how your organization participates in Nexus Pavilion.
+Your account type controls workspace permissions, RFQ access,
+supplier visibility, and procurement workflows from day one.
 </p>
 
 <div className="mt-8 grid gap-4 md:grid-cols-2">
 <SetupPoint
-title="Fast setup"
-description="No tax ID or billing details required at onboarding."
+title="Correct role from day one"
+description="Buyer-side and supplier-side accounts are assigned accurately during setup."
 />
 
 <SetupPoint
-title="Governance ready"
-description="You can add admins, invite users, and manage access after setup."
+title="Procurement-ready"
+description="Owners and GCs can create RFQs. Vendors can discover opportunities and submit quotes."
 />
 
 <SetupPoint
-title="Marketplace identity"
-description="Category and role define how your company appears in the network."
+title="Enterprise governance"
+description="Workspace ownership, access, and permissions are connected to account type."
 />
 
 <SetupPoint
-title="Enterprise path"
-description="Verification and subscription details can be completed later."
+title="Billing later"
+description="Tax ID, billing, and verification are collected later during subscription or review."
 />
 </div>
 </div>
@@ -172,11 +222,40 @@ Company identity
 </h2>
 
 <p className="mt-3 text-sm leading-6 text-slate-600">
-Create the workspace profile your team and suppliers will use
-across Nexus Pavilion.
+Set up the correct company profile and access model for your
+organization.
 </p>
 
 <form onSubmit={handleCreateCompany} className="mt-7 space-y-5">
+<label className="block">
+<span className="mb-2 block text-xs font-black uppercase tracking-[0.2em] text-slate-500">
+Account Type
+</span>
+
+<select
+required
+value={accountType}
+onChange={(event) =>
+handleAccountTypeChange(event.target.value as AccountType)
+}
+disabled={loading}
+className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-950 outline-none transition focus:border-slate-950 focus:bg-white disabled:cursor-not-allowed disabled:opacity-60"
+>
+{ACCOUNT_TYPES.map((item) => (
+<option key={item.value} value={item.value}>
+{item.label}
+</option>
+))}
+</select>
+
+<p className="mt-2 text-xs font-semibold leading-5 text-slate-500">
+{
+ACCOUNT_TYPES.find((item) => item.value === accountType)
+?.description
+}
+</p>
+</label>
+
 <label className="block">
 <span className="mb-2 block text-xs font-black uppercase tracking-[0.2em] text-slate-500">
 Company Name
@@ -185,7 +264,11 @@ Company Name
 <input
 type="text"
 required
-placeholder="Northline Development Group"
+placeholder={
+accountType === "vendor_supplier"
+? "Ottawa Interior Solutions Inc."
+: "Northline Development Group"
+}
 value={name}
 onChange={(event) => setName(event.target.value)}
 disabled={loading}
@@ -241,13 +324,25 @@ onChange={(event) => setNetworkRole(event.target.value)}
 disabled={loading}
 className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-950 outline-none transition focus:border-slate-950 focus:bg-white disabled:cursor-not-allowed disabled:opacity-60"
 >
-{NETWORK_ROLES.map((item) => (
+{networkRoles.map((item) => (
 <option key={item} value={item}>
 {item}
 </option>
 ))}
 </select>
 </label>
+
+<div className="rounded-3xl bg-slate-50 p-5">
+<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+Access Model
+</p>
+
+<p className="mt-2 text-sm font-semibold leading-6 text-slate-600">
+{accountType === "buyer_owner"
+? "This workspace can create RFQs, invite suppliers, compare quotes, and award contracts."
+: "This workspace can discover procurement opportunities, respond to RFQs, and manage supplier activity."}
+</p>
+</div>
 
 <div className="rounded-3xl bg-slate-50 p-5">
 <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">

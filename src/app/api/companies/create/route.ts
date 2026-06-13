@@ -1,9 +1,52 @@
 import { NextResponse } from "next/server";
 
+import { companyWelcomeEmail } from "@/lib/email/templates/company-welcome-email";
+import { sendEmail } from "@/lib/email/send-email";
 import { createClient } from "@/lib/supabase/server";
 
-import { sendEmail } from "@/lib/email/send-email";
-import { companyWelcomeEmail } from "@/lib/email/templates/company-welcome-email";
+type AccountType = "buyer_owner" | "vendor_supplier" | "consultant_service";
+
+const ACCOUNT_TYPE_CONFIG: Record<
+AccountType,
+{
+profileRole: "owner" | "vendor";
+defaultNetworkRole: string;
+allowedNetworkRoles: string[];
+}
+> = {
+buyer_owner: {
+profileRole: "owner",
+defaultNetworkRole: "Owner / Developer",
+allowedNetworkRoles: [
+"Owner / Developer",
+"General Contractor",
+"Construction Manager",
+"Procurement Team",
+],
+},
+vendor_supplier: {
+profileRole: "vendor",
+defaultNetworkRole: "Vendor / Supplier",
+allowedNetworkRoles: [
+"Vendor / Supplier",
+"Manufacturer",
+"Distributor / Supplier",
+"Subcontractor",
+"Specialty Contractor",
+],
+},
+consultant_service: {
+profileRole: "vendor",
+defaultNetworkRole: "Consultant",
+allowedNetworkRoles: [
+"Architect / Designer",
+"Engineer",
+"Cost Consultant",
+"Project Consultant",
+"Consultant",
+],
+},
+};
 
 function normalizeText(value: string) {
 return value.trim();
@@ -18,6 +61,14 @@ return name
 .slice(0, 80);
 }
 
+function isAccountType(value: string): value is AccountType {
+return (
+value === "buyer_owner" ||
+value === "vendor_supplier" ||
+value === "consultant_service"
+);
+}
+
 export async function POST(request: Request) {
 try {
 const body = await request.json();
@@ -25,9 +76,8 @@ const body = await request.json();
 const name = normalizeText(String(body.name || ""));
 const category = normalizeText(String(body.category || ""));
 const location = normalizeText(String(body.location || ""));
-const networkRole = normalizeText(
-String(body.networkRole || "Owner / Developer")
-);
+const rawAccountType = normalizeText(String(body.accountType || ""));
+const rawNetworkRole = normalizeText(String(body.networkRole || ""));
 
 if (!name) {
 return NextResponse.json(
@@ -46,6 +96,25 @@ return NextResponse.json(
 if (!location) {
 return NextResponse.json(
 { error: "Regional hub is required." },
+{ status: 400 }
+);
+}
+
+if (!isAccountType(rawAccountType)) {
+return NextResponse.json(
+{ error: "A valid account type is required." },
+{ status: 400 }
+);
+}
+
+const accountConfig = ACCOUNT_TYPE_CONFIG[rawAccountType];
+
+const networkRole =
+rawNetworkRole || accountConfig.defaultNetworkRole;
+
+if (!accountConfig.allowedNetworkRoles.includes(networkRole)) {
+return NextResponse.json(
+{ error: "Network role is not valid for this account type." },
 { status: 400 }
 );
 }
@@ -92,7 +161,7 @@ name,
 slug,
 category,
 location,
-network_role: networkRole || "Owner / Developer",
+network_role: networkRole,
 status: "verified",
 user_id: user.id,
 })
@@ -113,7 +182,7 @@ const normalizedEmail = String(user.email || "").trim().toLowerCase();
 const { error: profileError } = await supabase.from("profiles").upsert({
 id: user.id,
 email: normalizedEmail,
-role: "owner",
+role: accountConfig.profileRole,
 company_id: company.id,
 });
 
@@ -145,6 +214,8 @@ name,
 slug,
 category,
 location,
+account_type: rawAccountType,
+profile_role: accountConfig.profileRole,
 network_role: networkRole,
 owner_email: normalizedEmail,
 created_at: new Date().toISOString(),
@@ -152,14 +223,16 @@ created_at: new Date().toISOString(),
 });
 
 try {
+if (user.email) {
 await sendEmail({
-to: user.email!,
+to: user.email,
 subject: "Welcome to Nexus Pavilion",
 html: companyWelcomeEmail({
 companyName: name,
-workspaceUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/company`,
+workspaceUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/company/settings`,
 }),
 });
+}
 } catch (error) {
 console.error("Welcome email failed:", error);
 }
@@ -167,6 +240,8 @@ console.error("Welcome email failed:", error);
 return NextResponse.json({
 success: true,
 company,
+accountType: rawAccountType,
+role: accountConfig.profileRole,
 redirectTo: "/company/settings",
 });
 } catch (error) {

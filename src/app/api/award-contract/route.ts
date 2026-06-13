@@ -1,12 +1,34 @@
 import { NextResponse } from "next/server";
 
-import { createClient } from "@/lib/supabase/server";
-
 import { sendEmail } from "@/lib/email/send-email";
 import { awardNotificationEmail } from "@/lib/email/templates/award-notification-email";
+import { createClient } from "@/lib/supabase/server";
 
 type AwardRequestBody = {
 quoteId?: string;
+};
+
+type QuoteRecord = {
+id: string;
+rfq_id: string;
+company_id: string | null;
+user_id: string | null;
+amount: number | string | null;
+timeline: string | null;
+message: string | null;
+status: string | null;
+decision: string | null;
+awarded_at?: string | null;
+};
+
+type RfqRecord = {
+id: string;
+title: string | null;
+slug: string;
+status: string | null;
+company_id: string;
+awarded_quote_id: string | null;
+awarded_at: string | null;
 };
 
 function formatCurrency(value: number | string | null | undefined) {
@@ -19,10 +41,14 @@ return "$0";
 return `$${amount.toLocaleString()}`;
 }
 
+function isAwardAuthorized(role: string | null | undefined) {
+return ["owner", "admin", "buyer"].includes(String(role || "").toLowerCase());
+}
+
 export async function POST(request: Request) {
 try {
 const body = (await request.json()) as AwardRequestBody;
-const quoteId = String(body.quoteId || "");
+const quoteId = String(body.quoteId || "").trim();
 
 if (!quoteId) {
 return NextResponse.json(
@@ -42,22 +68,22 @@ if (userError || !user) {
 return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
 }
 
-const { data: profile } = await supabase
+const { data: profile, error: profileError } = await supabase
 .from("profiles")
 .select("id, email, role, company_id")
 .eq("id", user.id)
-.single();
+.maybeSingle();
 
-if (!profile?.company_id) {
+if (profileError || !profile?.company_id) {
 return NextResponse.json(
-{ error: "No company assigned." },
-{ status: 400 }
+{ error: "Company profile is required to award contracts." },
+{ status: 403 }
 );
 }
 
-if (profile.role !== "admin" && profile.role !== "buyer") {
+if (!isAwardAuthorized(profile.role)) {
 return NextResponse.json(
-{ error: "Only buyers and admins can award contracts." },
+{ error: "Only authorized procurement leaders can award contracts." },
 { status: 403 }
 );
 }
@@ -65,32 +91,54 @@ return NextResponse.json(
 const { data: selectedQuote, error: quoteError } = await supabase
 .from("quotes")
 .select(
-`
-id,
-rfq_id,
-company_id,
-user_id,
-amount,
-timeline,
-message,
-status,
-decision
-`
+"id, rfq_id, company_id, user_id, amount, timeline, message, status, decision, awarded_at"
 )
 .eq("id", quoteId)
-.single();
+.maybeSingle<QuoteRecord>();
 
-if (quoteError || !selectedQuote) {
+if (quoteError) {
+console.error("Quote lookup error:", quoteError);
+
+return NextResponse.json(
+{ error: quoteError.message || "Failed to read quote." },
+{ status: 500 }
+);
+}
+
+if (!selectedQuote) {
 return NextResponse.json({ error: "Quote not found." }, { status: 404 });
+}
+
+if (selectedQuote.decision === "awarded") {
+return NextResponse.json(
+{ error: "This quote has already been awarded." },
+{ status: 400 }
+);
+}
+
+if (selectedQuote.decision === "rejected") {
+return NextResponse.json(
+{ error: "Rejected quotes cannot be awarded." },
+{ status: 400 }
+);
 }
 
 const { data: rfq, error: rfqError } = await supabase
 .from("rfqs")
 .select("id, title, slug, status, company_id, awarded_quote_id, awarded_at")
 .eq("id", selectedQuote.rfq_id)
-.single();
+.maybeSingle<RfqRecord>();
 
-if (rfqError || !rfq) {
+if (rfqError) {
+console.error("RFQ lookup error:", rfqError);
+
+return NextResponse.json(
+{ error: rfqError.message || "Failed to read RFQ." },
+{ status: 500 }
+);
+}
+
+if (!rfq) {
 return NextResponse.json({ error: "RFQ not found." }, { status: 404 });
 }
 
@@ -108,14 +156,30 @@ return NextResponse.json(
 );
 }
 
-const { data: existingAward } = await supabase
+if (selectedQuote.company_id && selectedQuote.company_id === rfq.company_id) {
+return NextResponse.json(
+{ error: "Your company cannot award its own quote." },
+{ status: 403 }
+);
+}
+
+const { data: existingAwards, error: existingAwardError } = await supabase
 .from("quotes")
 .select("id")
 .eq("rfq_id", selectedQuote.rfq_id)
 .eq("decision", "awarded")
-.maybeSingle();
+.limit(1);
 
-if (existingAward) {
+if (existingAwardError) {
+console.error("Existing award lookup error:", existingAwardError);
+
+return NextResponse.json(
+{ error: existingAwardError.message || "Failed to check existing awards." },
+{ status: 500 }
+);
+}
+
+if ((existingAwards || []).length > 0) {
 return NextResponse.json(
 { error: "This RFQ already has an awarded quote." },
 { status: 400 }
@@ -124,7 +188,11 @@ return NextResponse.json(
 
 const awardedAt = new Date().toISOString();
 
-const { data: updatedRfq, error: rfqUpdateError } = await supabase
+console.log("RFQ ID:", rfq.id);
+console.log("RFQ COMPANY:", rfq.company_id);
+console.log("PROFILE COMPANY:", profile.company_id);
+
+const { data: updatedRfqs, error: rfqUpdateError } = await supabase
 .from("rfqs")
 .update({
 status: "awarded",
@@ -132,19 +200,29 @@ awarded_quote_id: quoteId,
 awarded_at: awardedAt,
 })
 .eq("id", rfq.id)
-.eq("company_id", profile.company_id)
-.select("id, title, slug, status, company_id, awarded_quote_id, awarded_at")
-.single();
+.select("id, title, slug, status, company_id, awarded_quote_id, awarded_at");
 
-if (rfqUpdateError || !updatedRfq) {
+console.log("UPDATED RFQS:", updatedRfqs);
+console.log("UPDATE ERROR:", rfqUpdateError);
+
+if (rfqUpdateError) {
 console.error("RFQ award update error:", rfqUpdateError);
 
 return NextResponse.json(
 {
 error:
-rfqUpdateError?.message ||
+rfqUpdateError.message ||
 "Failed to update RFQ status. Contract was not awarded.",
 },
+{ status: 500 }
+);
+}
+
+const updatedRfq = (updatedRfqs || [])[0] as RfqRecord | undefined;
+
+if (!updatedRfq) {
+return NextResponse.json(
+{ error: "Failed to update RFQ status. No matching RFQ was updated." },
 { status: 500 }
 );
 }
@@ -175,17 +253,16 @@ return NextResponse.json(
 );
 }
 
-const { data: awardedQuote, error: awardError } = await supabase
+const { data: awardedQuotes, error: awardError } = await supabase
 .from("quotes")
 .update({
 decision: "awarded",
 awarded_at: awardedAt,
 })
 .eq("id", quoteId)
-.select()
-.single();
+.select();
 
-if (awardError || !awardedQuote) {
+if (awardError) {
 console.error("Selected quote award error:", awardError);
 
 await supabase
@@ -206,7 +283,35 @@ awarded_at: null,
 .eq("rfq_id", selectedQuote.rfq_id);
 
 return NextResponse.json(
-{ error: awardError?.message || "Failed to award contract." },
+{ error: awardError.message || "Failed to award contract." },
+{ status: 500 }
+);
+}
+
+const awardedQuote = (awardedQuotes || [])[0] as QuoteRecord | undefined;
+
+if (!awardedQuote) {
+console.error("Selected quote award error: no quote row was updated.");
+
+await supabase
+.from("rfqs")
+.update({
+status: "open",
+awarded_quote_id: null,
+awarded_at: null,
+})
+.eq("id", rfq.id);
+
+await supabase
+.from("quotes")
+.update({
+decision: "pending",
+awarded_at: null,
+})
+.eq("rfq_id", selectedQuote.rfq_id);
+
+return NextResponse.json(
+{ error: "Failed to award contract. No quote row was updated." },
 { status: 500 }
 );
 }
@@ -220,6 +325,7 @@ selectedQuote.amount
 )}.`,
 type: "award",
 is_read: false,
+company_id: rfq.company_id,
 });
 
 const { error: auditError } = await supabase.from("audit_logs").insert({
@@ -235,6 +341,8 @@ rfq_title: rfq.title,
 awarded_amount: selectedQuote.amount,
 awarded_quote_id: quoteId,
 awarded_company_id: selectedQuote.company_id,
+awarded_user_id: selectedQuote.user_id,
+awarded_by_role: profile.role,
 awarded_at: awardedAt,
 },
 });
@@ -247,14 +355,13 @@ subject: `Contract Awarded: ${rfq.title ?? "Project"}`,
 html: awardNotificationEmail({
 rfqTitle: rfq.title ?? "Project",
 amount: formatCurrency(selectedQuote.amount),
-awardUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/rfq/${rfq.slug}/compare`,
+awardUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/rfq/${rfq.slug}`,
 }),
 });
 }
 } catch (error) {
 console.error("Award notification email failed:", error);
 }
-
 
 return NextResponse.json({
 success: true,

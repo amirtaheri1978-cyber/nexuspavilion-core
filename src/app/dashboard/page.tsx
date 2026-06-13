@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
 import SignOutButton from "@/components/sign-out-button";
 import { createClient } from "@/lib/supabase/server";
@@ -30,6 +31,16 @@ type: string | null;
 created_at: string | null;
 };
 
+type ActivityEvent = {
+id: string;
+title: string;
+description: string;
+type: string;
+severity: "success" | "info" | "warning" | "critical";
+createdAt: string | null;
+href: string;
+};
+
 function formatMoney(value: number | string | null | undefined) {
 const amount = Number(value);
 
@@ -38,6 +49,94 @@ return "$0";
 }
 
 return `$${amount.toLocaleString()}`;
+}
+
+function formatRelativeTime(value: string | null | undefined) {
+if (!value) return "Recently";
+
+const date = new Date(value);
+const now = new Date();
+const diff = now.getTime() - date.getTime();
+
+if (Number.isNaN(diff)) return "Recently";
+
+const minutes = Math.floor(diff / 60000);
+const hours = Math.floor(minutes / 60);
+const days = Math.floor(hours / 24);
+
+if (minutes < 1) return "Just now";
+if (minutes < 60) return `${minutes} min ago`;
+if (hours < 24) return `${hours} hr ago`;
+if (days < 7) return `${days} day${days === 1 ? "" : "s"} ago`;
+
+return date.toLocaleDateString();
+}
+
+function getNotificationSeverity(type: string | null): ActivityEvent["severity"] {
+const normalized = String(type || "").toLowerCase();
+
+if (normalized.includes("award")) return "success";
+if (normalized.includes("risk")) return "warning";
+if (normalized.includes("error")) return "critical";
+
+return "info";
+}
+
+function buildActivityFeed({
+notifications,
+rfqs,
+awardedQuotes,
+}: {
+notifications: Notification[];
+rfqs: RFQ[];
+awardedQuotes: Quote[];
+}) {
+const notificationEvents: ActivityEvent[] = notifications.map((item) => ({
+id: `notification-${item.id}`,
+title: item.title || "Platform Activity",
+description: item.message || "A procurement activity was recorded.",
+type: item.type || "event",
+severity: getNotificationSeverity(item.type),
+createdAt: item.created_at,
+href: "/dashboard",
+}));
+
+const rfqEvents: ActivityEvent[] = rfqs.slice(0, 5).map((rfq) => ({
+id: `rfq-${rfq.id}`,
+title: rfq.status === "awarded" ? "RFQ Awarded" : "RFQ Created",
+description: `${rfq.title || "Untitled RFQ"} · ${
+rfq.location || "Location N/A"
+}`,
+type: rfq.status || "rfq",
+severity: rfq.status === "awarded" ? "success" : "info",
+createdAt: rfq.created_at,
+href: rfq.slug ? `/rfq/${rfq.slug}` : "/rfq",
+}));
+
+const awardEvents: ActivityEvent[] = awardedQuotes.slice(0, 5).map((quote) => {
+const rfq = rfqs.find((item) => item.id === quote.rfq_id);
+
+return {
+id: `award-${quote.id}`,
+title: "Contract Awarded",
+description: `${rfq?.title || "Awarded RFQ"} · ${formatMoney(
+quote.amount
+)}`,
+type: "award",
+severity: "success",
+createdAt: quote.created_at,
+href: rfq?.slug ? `/rfq/${rfq.slug}` : "/rfq",
+};
+});
+
+return [...notificationEvents, ...awardEvents, ...rfqEvents]
+.sort((a, b) => {
+const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+
+return dateB - dateA;
+})
+.slice(0, 8);
 }
 
 export default async function DashboardPage() {
@@ -54,6 +153,10 @@ const { data: profile } = user
 .eq("id", user.id)
 .single()
 : { data: null };
+
+if (!profile?.company_id) {
+redirect("/create-company");
+}
 
 const { data: company } = profile?.company_id
 ? await supabase
@@ -88,8 +191,9 @@ const quoteList = (quotes ?? []) as Quote[];
 const { data: notifications } = await supabase
 .from("notifications")
 .select("*")
+.eq("company_id", profile.company_id)
 .order("created_at", { ascending: false })
-.limit(5);
+.limit(8);
 
 const notificationList = (notifications ?? []) as Notification[];
 
@@ -212,6 +316,12 @@ const topRfqsByBudget = [...rfqList]
 
 const recentAwards = awardedQuotes.slice(0, 5);
 
+const activityFeed = buildActivityFeed({
+notifications: notificationList,
+rfqs: rfqList,
+awardedQuotes,
+});
+
 return (
 <main className="min-h-screen bg-[#f6f6f3]">
 <div className="mx-auto max-w-7xl px-6 py-10">
@@ -230,7 +340,7 @@ Signed in as {profile?.email || user?.email}
 </p>
 
 <p className="mt-2 text-sm font-bold uppercase tracking-[0.2em] text-slate-400">
-Role: {profile?.role || "buyer"}
+Role: {profile?.role ? profile.role.toUpperCase() : "SETUP REQUIRED"}
 </p>
 </div>
 
@@ -254,19 +364,10 @@ Executive Procurement Control Tower
 </div>
 
 <div className="grid gap-4 sm:grid-cols-2">
-<DarkMetric
-title="Enterprise Score"
-value={`${procurementHealthScore}/100`}
-/>
+<DarkMetric title="Enterprise Score" value={`${procurementHealthScore}/100`} />
 <DarkMetric title="Risk Index" value={`${riskIndex}/100`} />
-<DarkMetric
-title="Forecast Accuracy"
-value={`${forecastAccuracy}%`}
-/>
-<DarkMetric
-title="Supplier Concentration"
-value={supplierConcentration}
-/>
+<DarkMetric title="Forecast Accuracy" value={`${forecastAccuracy}%`} />
+<DarkMetric title="Supplier Concentration" value={supplierConcentration} />
 </div>
 </div>
 </section>
@@ -282,10 +383,7 @@ Real-Time Procurement Signals
 
 <div className="mt-6 space-y-4">
 {executiveAlerts.map((alert, index) => (
-<div
-key={index}
-className="rounded-2xl border border-slate-200 bg-slate-50 p-5"
->
+<div key={index} className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
 <div className="flex items-center gap-3">
 <div
 className={`h-3 w-3 rounded-full ${
@@ -349,60 +447,15 @@ Open Company
 </Link>
 </div>
 ) : (
-<div className="mt-6 rounded-3xl bg-slate-50 p-6">
-<h2 className="text-2xl font-black text-slate-950">
-No company connected
-</h2>
-
-<p className="mt-2 max-w-2xl text-slate-600">
-Your profile exists, but no company workspace is attached yet.
-Create your company workspace to become the admin and start
-inviting vendors, buyers, and team members.
-</p>
-
-<div className="mt-6 flex flex-wrap gap-3">
-<Link
-href="/create-company"
-className="inline-flex rounded-full bg-slate-950 px-6 py-3 text-sm font-bold text-white transition hover:bg-slate-800"
->
-Create Company Workspace
-</Link>
-
-<Link
-href="/directory"
-className="inline-flex rounded-full bg-white px-6 py-3 text-sm font-bold text-slate-950 shadow-sm transition hover:shadow-md"
->
-Explore Directory
-</Link>
-</div>
-</div>
+<EmptyState message="No company connected." />
 )}
 </section>
 
 <section className="mt-8 grid gap-6 md:grid-cols-4">
-<WorkspaceCard
-title="Company Hub"
-description="Manage enterprise profiles and branding."
-href="/company"
-/>
-
-<WorkspaceCard
-title="RFQ Marketplace"
-description="Browse, create, and award procurement opportunities."
-href="/rfq"
-/>
-
-<WorkspaceCard
-title="Vendor Dashboard"
-description="Track submitted quotes, awards, and supplier activity."
-href="/vendor-dashboard"
-/>
-
-<WorkspaceCard
-title="Public Directory"
-description="Explore connected enterprise companies."
-href="/directory"
-/>
+<WorkspaceCard title="Company Hub" description="Manage enterprise profiles and branding." href="/company" />
+<WorkspaceCard title="RFQ Marketplace" description="Browse, create, and award procurement opportunities." href="/rfq" />
+<WorkspaceCard title="Vendor Dashboard" description="Track submitted quotes, awards, and supplier activity." href="/vendor-dashboard" />
+<WorkspaceCard title="Public Directory" description="Explore connected enterprise companies." href="/directory" />
 </section>
 
 <section className="mt-8 rounded-[32px] border border-black/5 bg-white p-8">
@@ -417,62 +470,20 @@ Executive Analytics
 </h2>
 </div>
 
-<Link
-href="/rfq"
-className="rounded-full bg-slate-950 px-5 py-3 text-sm font-bold text-white"
->
+<Link href="/rfq" className="rounded-full bg-slate-950 px-5 py-3 text-sm font-bold text-white">
 Open Marketplace
 </Link>
 </div>
 
 <div className="mt-6 grid gap-6 md:grid-cols-4">
-<InsightCard
-title="Total RFQs"
-value={String(totalRfqs)}
-detail={`${openRfqs} open · ${awardedRfqs} awarded`}
-/>
-
-<InsightCard
-title="Supplier Quotes"
-value={String(submittedQuotes)}
-detail="Submitted enterprise bids"
-/>
-
-<InsightCard
-title="Awarded Spend"
-value={formatMoney(totalAwardedSpend)}
-detail="Total awarded contract value"
-/>
-
-<InsightCard
-title="Award Rate"
-value={`${awardRate}%`}
-detail="RFQs converted to awards"
-/>
-
-<InsightCard
-title="Open RFQs"
-value={String(openRfqs)}
-detail="Active procurement opportunities"
-/>
-
-<InsightCard
-title="Closed RFQs"
-value={String(closedRfqs)}
-detail="Archived or completed events"
-/>
-
-<InsightCard
-title="Est. Savings"
-value={formatMoney(estimatedSavings)}
-detail="Budget less awarded value"
-/>
-
-<InsightCard
-title="Average Award"
-value={formatMoney(averageAward)}
-detail="Average awarded contract"
-/>
+<InsightCard title="Total RFQs" value={String(totalRfqs)} detail={`${openRfqs} open · ${awardedRfqs} awarded`} />
+<InsightCard title="Supplier Quotes" value={String(submittedQuotes)} detail="Submitted enterprise bids" />
+<InsightCard title="Awarded Spend" value={formatMoney(totalAwardedSpend)} detail="Total awarded contract value" />
+<InsightCard title="Award Rate" value={`${awardRate}%`} detail="RFQs converted to awards" />
+<InsightCard title="Open RFQs" value={String(openRfqs)} detail="Active procurement opportunities" />
+<InsightCard title="Closed RFQs" value={String(closedRfqs)} detail="Archived or completed events" />
+<InsightCard title="Est. Savings" value={formatMoney(estimatedSavings)} detail="Budget less awarded value" />
+<InsightCard title="Average Award" value={formatMoney(averageAward)} detail="Average awarded contract" />
 </div>
 </section>
 
@@ -489,15 +500,10 @@ Recent Award Decisions
 <div className="mt-6 space-y-4">
 {recentAwards.length > 0 ? (
 recentAwards.map((quote) => {
-const relatedRfq = rfqList.find(
-(rfq) => rfq.id === quote.rfq_id
-);
+const relatedRfq = rfqList.find((rfq) => rfq.id === quote.rfq_id);
 
 return (
-<div
-key={quote.id}
-className="rounded-3xl border border-slate-100 bg-slate-50 p-5"
->
+<div key={quote.id} className="rounded-3xl border border-slate-100 bg-slate-50 p-5">
 <div className="flex items-start justify-between gap-4">
 <div>
 <p className="text-lg font-black text-slate-950">
@@ -550,8 +556,7 @@ className="block rounded-3xl border border-slate-100 bg-slate-50 p-5 transition 
 </p>
 
 <p className="mt-1 text-sm font-semibold text-slate-500">
-{rfq.category || "Procurement"} ·{" "}
-{rfq.location || "Location N/A"}
+{rfq.category || "Procurement"} · {rfq.location || "Location N/A"}
 </p>
 </div>
 
@@ -573,40 +578,29 @@ className="block rounded-3xl border border-slate-100 bg-slate-50 p-5 transition 
 </section>
 
 <section className="mt-8 rounded-[32px] border border-black/5 bg-white p-8">
+<div className="flex items-end justify-between gap-6">
+<div>
 <p className="text-xs font-black uppercase tracking-[0.3em] text-orange-500">
-Activity Center
+Activity Command Center
 </p>
 
 <h2 className="mt-3 text-3xl font-black text-slate-950">
-Recent Notifications
+Live Procurement Timeline
 </h2>
-
-<div className="mt-6 space-y-4">
-{notificationList.length > 0 ? (
-notificationList.map((notification) => (
-<div
-key={notification.id}
-className="rounded-3xl border border-slate-100 bg-slate-50 p-5"
->
-<div className="flex items-start justify-between gap-4">
-<div>
-<p className="text-lg font-black text-slate-950">
-{notification.title || "Notification"}
-</p>
-
-<p className="mt-2 text-sm leading-relaxed text-slate-600">
-{notification.message || "No message provided."}
-</p>
 </div>
 
-<span className="rounded-full bg-orange-100 px-3 py-1 text-xs font-black uppercase text-orange-700">
-{notification.type || "event"}
+<span className="rounded-full bg-slate-950 px-4 py-2 text-xs font-black uppercase tracking-[0.2em] text-white">
+{activityFeed.length} Signals
 </span>
 </div>
-</div>
+
+<div className="mt-6 space-y-4">
+{activityFeed.length > 0 ? (
+activityFeed.map((event) => (
+<ActivityFeedItem key={event.id} event={event} />
 ))
 ) : (
-<EmptyState message="No recent notifications." />
+<EmptyState message="No procurement activity has been recorded yet." />
 )}
 </div>
 </section>
@@ -631,9 +625,7 @@ className="rounded-[28px] border border-black/5 bg-white p-7 transition hover:-t
 >
 <h3 className="text-2xl font-black text-slate-950">{title}</h3>
 
-<p className="mt-3 text-sm leading-relaxed text-slate-600">
-{description}
-</p>
+<p className="mt-3 text-sm leading-relaxed text-slate-600">{description}</p>
 
 <div className="mt-6 text-sm font-black text-slate-950">Open →</div>
 </Link>
@@ -671,6 +663,61 @@ return (
 
 <p className="mt-2 text-3xl font-black text-white">{value}</p>
 </div>
+);
+}
+
+function ActivityFeedItem({ event }: { event: ActivityEvent }) {
+const severityClass =
+event.severity === "success"
+? "bg-green-100 text-green-700"
+: event.severity === "warning"
+? "bg-yellow-100 text-yellow-800"
+: event.severity === "critical"
+? "bg-red-100 text-red-700"
+: "bg-blue-100 text-blue-700";
+
+const dotClass =
+event.severity === "success"
+? "bg-green-500"
+: event.severity === "warning"
+? "bg-yellow-500"
+: event.severity === "critical"
+? "bg-red-500"
+: "bg-blue-500";
+
+return (
+<Link
+href={event.href}
+className="group block rounded-3xl border border-slate-100 bg-slate-50 p-5 transition hover:-translate-y-1 hover:bg-white hover:shadow-lg"
+>
+<div className="flex items-start gap-4">
+<div className={`mt-2 h-3 w-3 rounded-full ${dotClass}`} />
+
+<div className="min-w-0 flex-1">
+<div className="flex flex-wrap items-center justify-between gap-3">
+<p className="text-lg font-black text-slate-950">{event.title}</p>
+
+<div className="flex items-center gap-2">
+<span className={`rounded-full px-3 py-1 text-xs font-black uppercase ${severityClass}`}>
+{event.type}
+</span>
+
+<span className="text-xs font-bold text-slate-400">
+{formatRelativeTime(event.createdAt)}
+</span>
+</div>
+</div>
+
+<p className="mt-2 text-sm leading-relaxed text-slate-600">
+{event.description}
+</p>
+
+<p className="mt-3 text-xs font-black uppercase tracking-[0.2em] text-slate-400 transition group-hover:text-slate-950">
+Open event →
+</p>
+</div>
+</div>
+</Link>
 );
 }
 

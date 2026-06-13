@@ -11,8 +11,8 @@ Nexus Pavilion
 </h3>
 
 <p className="mt-4 text-sm leading-7 text-slate-600">
-AI-powered procurement intelligence platform connecting buyers,
-suppliers, and enterprise procurement teams.
+Construction procurement intelligence platform for owners,
+contractors, suppliers, and enterprise procurement teams.
 </p>
 </div>
 
@@ -23,19 +23,19 @@ Platform
 
 <div className="mt-4 flex flex-col gap-3">
 <Link href="/dashboard" className="text-slate-700 hover:text-black">
-Dashboard
+Executive Overview
 </Link>
 
 <Link href="/rfq" className="text-slate-700 hover:text-black">
-RFQs
-</Link>
-
-<Link href="/analytics" className="text-slate-700 hover:text-black">
-Analytics
+Procurement
 </Link>
 
 <Link href="/directory" className="text-slate-700 hover:text-black">
-Directory
+Supplier Network
+</Link>
+
+<Link href="/notifications" className="text-slate-700 hover:text-black">
+Activity Center
 </Link>
 </div>
 </div>
@@ -46,20 +46,20 @@ Company
 </h4>
 
 <div className="mt-4 flex flex-col gap-3">
-<Link href="/about" className="text-slate-700 hover:text-black">
-About
+<Link href="/company/settings" className="text-slate-700 hover:text-black">
+Company Profile
 </Link>
 
-<Link href="/contact" className="text-slate-700 hover:text-black">
-Contact
+<Link href="/company/settings" className="text-slate-700 hover:text-black">
+Team Access
 </Link>
 
-<Link href="/privacy" className="text-slate-700 hover:text-black">
-Privacy Policy
+<Link href="/company/settings" className="text-slate-700 hover:text-black">
+Invitations
 </Link>
 
-<Link href="/terms" className="text-slate-700 hover:text-black">
-Terms of Service
+<Link href="/company/settings" className="text-slate-700 hover:text-black">
+Ownership
 </Link>
 </div>
 </div>
@@ -70,34 +70,47 @@ Intelligence
 </h4>
 
 <div className="mt-4 flex flex-col gap-3">
-<Link
-href="/vendor-dashboard"
-className="text-slate-700 hover:text-black"
->
-Vendor Intelligence
-</Link>
-
-<Link
-href="/analytics"
-className="text-slate-700 hover:text-black"
->
+<Link href="/analytics" className="text-slate-700 hover:text-black">
 Procurement Intelligence
 </Link>
 
-<Link
-href="/connections"
-className="text-slate-700 hover:text-black"
->
-Supplier Network
+<Link href="/vendor-dashboard" className="text-slate-700 hover:text-black">
+Supplier Intelligence
+</Link>
+
+<Link href="/analytics" className="text-slate-700 hover:text-black">
+Market Intelligence
+</Link>
+
+<Link href="/analytics" className="text-slate-700 hover:text-black">
+Executive Intelligence
 </Link>
 </div>
 </div>
 </div>
 
-<div className="mt-12 border-t border-slate-200 pt-8">
+<div className="mt-12 flex flex-col gap-4 border-t border-slate-200 pt-8 md:flex-row md:items-center md:justify-between">
 <p className="text-sm text-slate-500">
 © {new Date().getFullYear()} Nexus Pavilion. All rights reserved.
 </p>
+
+<div className="flex flex-wrap gap-5 text-sm">
+<Link href="/about" className="text-slate-500 hover:text-black">
+About
+</Link>
+
+<Link href="/contact" className="text-slate-500 hover:text-black">
+Contact
+</Link>
+
+<Link href="/privacy" className="text-slate-500 hover:text-black">
+Privacy
+</Link>
+
+<Link href="/terms" className="text-slate-500 hover:text-black">
+Terms
+</Link>
+</div>
 </div>
 </div>
 </footer>

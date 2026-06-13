@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
 import AwardContractButton from "@/components/award-contract-button";
 import { createClient } from "@/lib/supabase/server";
@@ -92,6 +93,24 @@ return (
 );
 }
 
+const {
+data: { user },
+} = await supabase.auth.getUser();
+
+if (!user) {
+redirect("/login");
+}
+
+const { data: profile } = await supabase
+.from("profiles")
+.select("id, company_id, role")
+.eq("id", user.id)
+.single();
+
+if (!profile?.company_id || profile.company_id !== rfq.company_id) {
+redirect("/rfq");
+}
+
 const { data: quotes } = await supabase
 .from("quotes")
 .select("*")
@@ -109,9 +128,7 @@ const highestAmount = amounts.length > 0 ? Math.max(...amounts) : null;
 
 const averageBid =
 amounts.length > 0
-? Math.round(
-amounts.reduce((total, amount) => total + amount, 0) / amounts.length
-)
+? Math.round(amounts.reduce((total, amount) => total + amount, 0) / amounts.length)
 : 0;
 
 const scoredQuotes = quoteList.map((quote) => {
@@ -163,16 +180,11 @@ quote.totalScore > best.totalScore ? quote : best
 )
 : null;
 
-const awardedQuote = scoredQuotes.find(
-(quote) => quote.decision === "awarded"
-);
-
+const awardedQuote = scoredQuotes.find((quote) => quote.decision === "awarded");
 const hasAwardedContract = !!awardedQuote;
 
 const potentialSavings =
-recommendedQuote && averageBid
-? averageBid - recommendedQuote.amountNumber
-: 0;
+recommendedQuote && averageBid ? averageBid - recommendedQuote.amountNumber : 0;
 
 const confidenceScore = recommendedQuote
 ? Math.min(
@@ -211,41 +223,35 @@ potentialSavings > 0
 return (
 <main className="min-h-screen bg-[#f6f6f3] px-6 py-16">
 <div className="mx-auto max-w-6xl">
-<Link href={`/rfq/${rfq.slug}`} className="text-sm text-black/60">
+<Link href={`/rfq/${rfq.slug}`} className="text-sm font-bold text-black/60">
 ← Back to RFQ
 </Link>
 
-<section className="mt-6 rounded-[32px] border border-black/5 bg-white p-10">
-<p className="text-xs font-semibold uppercase tracking-[0.3em] text-[#d97745]">
+<section className="mt-6 rounded-[36px] border border-black/5 bg-white p-10">
+<p className="text-xs font-black uppercase tracking-[0.3em] text-orange-500">
 Procurement Intelligence
 </p>
 
-<h1 className="mt-3 text-5xl font-black text-black">{rfq.title}</h1>
+<h1 className="mt-3 text-5xl font-black leading-tight text-slate-950">
+{rfq.title}
+</h1>
 
-<p className="mt-3 text-lg text-black/60">
-Compare supplier quotes using pricing, timeline, award probability,
-procurement risk, and decision intelligence.
+<p className="mt-4 max-w-4xl text-sm leading-7 text-slate-600">
+Compare supplier quotes using pricing, delivery timeline, award
+probability, procurement risk, and executive decision intelligence.
 </p>
 </section>
 
 <section className="mt-8 grid gap-6 md:grid-cols-4">
 <InsightCard
 title="Recommended Bid"
-value={
-recommendedQuote
-? formatMoney(recommendedQuote.amountNumber)
-: "No bids"
-}
+value={recommendedQuote ? formatMoney(recommendedQuote.amountNumber) : "No bids"}
 detail="Best price, timeline, and risk profile"
 />
 
 <InsightCard
 title="Award Probability"
-value={
-recommendedQuote
-? `${recommendedQuote.awardProbability}%`
-: "Pending"
-}
+value={recommendedQuote ? `${recommendedQuote.awardProbability}%` : "Pending"}
 detail="Predicted award strength"
 />
 
@@ -262,46 +268,42 @@ detail="Compared to average bid"
 />
 </section>
 
-<section className="mt-8 rounded-[32px] border border-black/5 bg-white p-8">
-<p className="text-xs font-black uppercase tracking-[0.3em] text-orange-500">
-AI Procurement Intelligence
+<section className="mt-8 overflow-hidden rounded-[36px] border border-black/5 bg-slate-950 text-white">
+<div className="grid gap-8 p-8 lg:grid-cols-[1.2fr_0.8fr]">
+<div>
+<p className="text-xs font-black uppercase tracking-[0.3em] text-orange-400">
+Executive Award Recommendation
 </p>
 
-<div className="mt-4 grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
-<div>
-<h2 className="text-3xl font-black text-slate-950">
-Award Prediction Engine
+<h2 className="mt-4 text-4xl font-black">
+{recommendedQuote ? "Ready for procurement review" : "Awaiting supplier quotes"}
 </h2>
 
-<p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">
+<p className="mt-4 max-w-3xl text-sm font-semibold leading-7 text-white/65">
 {executiveSummary}
 </p>
 
-<div className="mt-6 grid gap-4 md:grid-cols-3">
-<MiniCard
-title="Confidence"
+<div className="mt-8 grid gap-4 md:grid-cols-3">
+<DarkMetric
+title="Confidence Score"
 value={recommendedQuote ? `${confidenceScore}%` : "Pending"}
 />
 
-<MiniCard
-title="Suggested Award"
-value={
-recommendedQuote
-? formatMoney(recommendedQuote.amountNumber)
-: "Pending"
-}
+<DarkMetric
+title="Recommended Award"
+value={recommendedQuote ? formatMoney(recommendedQuote.amountNumber) : "Pending"}
 />
 
-<MiniCard
-title="Risk"
+<DarkMetric
+title="Risk Profile"
 value={recommendedQuote ? recommendedQuote.riskLevel : "Pending"}
 />
 </div>
 </div>
 
-<div className="rounded-3xl bg-slate-50 p-6">
-<p className="text-xs font-black uppercase tracking-[0.25em] text-slate-400">
-Recommendation Reasons
+<div className="rounded-3xl bg-white/10 p-6">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-white/40">
+Decision Drivers
 </p>
 
 <div className="mt-4 space-y-3">
@@ -309,14 +311,15 @@ Recommendation Reasons
 aiReasons.map((reason) => (
 <div
 key={reason}
-className="rounded-2xl bg-white px-4 py-3 text-sm font-bold text-slate-700 shadow-sm"
+className="rounded-2xl bg-white px-4 py-3 text-sm font-black text-slate-800"
 >
 ✓ {reason}
 </div>
 ))
 ) : (
-<p className="text-sm font-bold text-slate-500">
-Submit quotes to activate AI procurement recommendations.
+<p className="text-sm font-bold leading-6 text-white/60">
+Supplier quotes are required before Nexus Pavilion can
+generate an executive award recommendation.
 </p>
 )}
 </div>
@@ -337,15 +340,13 @@ Submit quotes to activate AI procurement recommendations.
 </div>
 
 {scoredQuotes.map((quote) => {
-const isLowest =
-lowestAmount !== null && quote.amountNumber === lowestAmount;
+const isLowest = lowestAmount !== null && quote.amountNumber === lowestAmount;
 const isHighest =
 highestAmount !== null &&
 highestAmount !== lowestAmount &&
 quote.amountNumber === highestAmount;
 const isRecommended = recommendedQuote?.id === quote.id;
-const isBelowAverage =
-averageBid > 0 && quote.amountNumber <= averageBid;
+const isBelowAverage = averageBid > 0 && quote.amountNumber <= averageBid;
 
 return (
 <div
@@ -484,20 +485,22 @@ return (
 <p className="text-xs font-bold uppercase tracking-[0.2em] text-black/40">
 {title}
 </p>
+
 <p className="mt-3 text-3xl font-black text-black">{value}</p>
+
 <p className="mt-2 text-sm text-black/50">{detail}</p>
 </div>
 );
 }
 
-function MiniCard({ title, value }: { title: string; value: string }) {
+function DarkMetric({ title, value }: { title: string; value: string }) {
 return (
-<div className="rounded-3xl bg-white p-5 shadow-sm">
-<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+<div className="rounded-3xl bg-white/10 p-5">
+<p className="text-xs font-black uppercase tracking-[0.2em] text-white/40">
 {title}
 </p>
 
-<p className="mt-2 text-2xl font-black text-slate-950">{value}</p>
+<p className="mt-2 text-2xl font-black text-white">{value}</p>
 </div>
 );
 }
