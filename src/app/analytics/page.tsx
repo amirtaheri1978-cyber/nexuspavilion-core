@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import AnalyticsChart from "@/components/analytics-chart";
 import { createClient } from "@/lib/supabase/server";
+import ExecutiveExportPanel from "@/components/executive-export-panel";
 
 type RFQ = {
 id: string;
@@ -1493,6 +1494,8 @@ className="rounded-2xl border border-slate-200 bg-slate-50 p-5"
 ))}
 </div>
 </section>
+
+<ExecutiveExportPanel />
 
 <section className="mt-8 rounded-3xl border border-slate-200 bg-slate-950 p-8 text-white">
 <p className="text-xs font-black uppercase tracking-[0.25em] text-orange-400">
