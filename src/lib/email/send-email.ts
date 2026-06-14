@@ -1,7 +1,6 @@
 import { Resend } from "resend";
 
-const emailFrom =
-process.env.EMAIL_FROM || "Nexus Pavilion <onboarding@resend.dev>";
+const fallbackEmailFrom = "Nexus Pavilion <onboarding@resend.dev>";
 
 export type SendEmailInput = {
 to: string;
@@ -17,6 +16,10 @@ id: string | null;
 error: string | null;
 };
 
+function getEmailFrom() {
+return process.env.EMAIL_FROM || fallbackEmailFrom;
+}
+
 export async function sendEmail({
 to,
 subject,
@@ -24,6 +27,7 @@ html,
 text,
 }: SendEmailInput): Promise<SendEmailResult> {
 const resendApiKey = process.env.RESEND_API_KEY;
+const emailFrom = getEmailFrom();
 
 if (!resendApiKey) {
 console.warn("RESEND_API_KEY is not configured. Email was not sent.");
@@ -33,6 +37,15 @@ success: false,
 skipped: true,
 id: null,
 error: "RESEND_API_KEY is not configured.",
+};
+}
+
+if (!to || !subject || !html) {
+return {
+success: false,
+skipped: false,
+id: null,
+error: "Missing required email fields.",
 };
 }
 

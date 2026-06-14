@@ -30,7 +30,7 @@ const body = (await request.json()) as ContactRequestBody;
 const name = body.name?.trim() || "";
 const email = body.email?.trim().toLowerCase() || "";
 const company = body.company?.trim() || "Not provided";
-const inquiryType = body.inquiryType?.trim() || "General inquiry";
+const inquiryType = body.inquiryType?.trim() || "General Inquiry";
 const message = body.message?.trim() || "";
 
 if (!name || !email || !message) {
@@ -60,9 +60,7 @@ const safeInquiryType = escapeHtml(inquiryType);
 const safeMessage = escapeHtml(message).replaceAll("\n", "<br />");
 
 const contactEmail =
-process.env.CONTACT_EMAIL ||
-process.env.EMAIL_FROM ||
-"hello@nexuspavilion.com";
+process.env.CONTACT_EMAIL || "a.mirtaheri1978@gmail.com";
 
 const emailResult = await sendEmail({
 to: contactEmail,
@@ -91,7 +89,18 @@ message,
 ].join("\n"),
 });
 
-if (!emailResult.success && !emailResult.skipped) {
+if (emailResult.skipped) {
+return NextResponse.json(
+{
+success: false,
+message:
+"Contact request received, but email delivery is not configured.",
+},
+{ status: 503 }
+);
+}
+
+if (!emailResult.success) {
 return NextResponse.json(
 {
 success: false,
@@ -103,9 +112,7 @@ message: emailResult.error || "Failed to send contact request.",
 
 return NextResponse.json({
 success: true,
-message: emailResult.skipped
-? "Contact request received. Email delivery is not configured yet."
-: "Contact request sent successfully.",
+message: "Contact request sent successfully.",
 });
 } catch (error) {
 console.error("Contact API error:", error);
