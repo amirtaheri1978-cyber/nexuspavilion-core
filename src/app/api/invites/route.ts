@@ -7,6 +7,16 @@ const SITE_URL =
 process.env.NEXT_PUBLIC_SITE_URL ||
 "https://scaling-invention-5g7q4p5rwrwj3vwq7-3000.app.github.dev";
 
+type ProcurementScope =
+| "material"
+| "subcontractor"
+| "equipment"
+| "professional_service";
+
+type SourcingMethod = "open" | "invited" | "sealed_bid";
+
+type ContractFramework = "project_specific" | "framework";
+
 function generateToken() {
 return crypto.randomUUID().replaceAll("-", "");
 }
@@ -23,58 +33,229 @@ function isAllowedProcurementRole(role: string | null | undefined) {
 return ["owner", "admin", "buyer"].includes(String(role || "").toLowerCase());
 }
 
+function escapeHtml(value: string | number | null | undefined) {
+return String(value || "")
+.replaceAll("&", "&amp;")
+.replaceAll("<", "&lt;")
+.replaceAll(">", "&gt;")
+.replaceAll('"', "&quot;")
+.replaceAll("'", "&#039;");
+}
+
+function formatMoney(value: number | string | null | undefined) {
+const amount = Number(value);
+
+if (!Number.isFinite(amount) || amount <= 0) {
+return "Not specified";
+}
+
+return `$${amount.toLocaleString()}`;
+}
+
+function formatDate(value: string | null | undefined) {
+if (!value) return "Not specified";
+
+const date = new Date(value);
+
+if (Number.isNaN(date.getTime())) {
+return value;
+}
+
+return date.toLocaleDateString("en-US", {
+year: "numeric",
+month: "long",
+day: "numeric",
+});
+}
+
+function getProcurementScopeLabel(value: ProcurementScope | null | undefined) {
+if (value === "material") return "Material / Product RFQ";
+if (value === "equipment") return "Equipment Rental RFQ";
+if (value === "professional_service") return "Professional Service RFQ";
+return "Subcontractor / Trade RFQ";
+}
+
+function getSourcingMethodLabel(value: SourcingMethod | null | undefined) {
+if (value === "open") return "Open Tendering / Public Broadcast";
+if (value === "sealed_bid") return "Sealed Bid RFQ";
+return "Selective Routing / Invited RFQ";
+}
+
+function getContractFrameworkLabel(value: ContractFramework | null | undefined) {
+if (value === "framework") return "Framework Call-Off / Blanket RFQ";
+return "Project-Specific RFQ";
+}
+
+function getSourcingDescription(value: SourcingMethod | null | undefined) {
+if (value === "open") {
+return "This RFQ may be visible through the open marketplace to qualified vendors that meet the buyer’s requirements.";
+}
+
+if (value === "sealed_bid") {
+return "This RFQ uses a controlled sealed-bid workflow. Commercial responses remain confidential and are reviewed according to the buyer’s deadline and evaluation process.";
+}
+
+return "This RFQ is being routed to a selected supplier shortlist. Access is controlled through this secure invitation link.";
+}
+
 function buildRfqInviteEmail({
 rfqTitle,
+category,
+budget,
+deadline,
+procurementScope,
+sourcingMethod,
+contractFramework,
 inviteUrl,
 }: {
 rfqTitle: string;
+category: string;
+budget: string;
+deadline: string;
+procurementScope: string;
+sourcingMethod: string;
+contractFramework: string;
 inviteUrl: string;
 }) {
+const safeRfqTitle = escapeHtml(rfqTitle || "Procurement RFQ");
+const safeCategory = escapeHtml(category || "Procurement");
+const safeBudget = escapeHtml(budget || "Not specified");
+const safeDeadline = escapeHtml(deadline || "Not specified");
+const safeProcurementScope = escapeHtml(procurementScope);
+const safeSourcingMethod = escapeHtml(sourcingMethod);
+const safeContractFramework = escapeHtml(contractFramework);
+const safeInviteUrl = escapeHtml(inviteUrl);
+
 const subject = `RFQ Invitation: ${rfqTitle}`;
 
 const text = `You have been invited to quote on ${rfqTitle}.
 
+Category: ${category}
+Procurement Scope: ${procurementScope}
+Sourcing Method: ${sourcingMethod}
+Contract Framework: ${contractFramework}
+Budget: ${budget}
+Deadline: ${deadline}
+
 Open the secure RFQ invitation link:
 ${inviteUrl}
+
+Confidentiality notice:
+Supplier submissions are confidential. Competing vendors cannot view your commercial response.
+
+Governance notice:
+The buyer reserves the right to accept or reject any or all submissions, or cancel the RFQ process at any point without incurring liability or obligation to justify the decision.
 
 Nexus Pavilion`;
 
 const html = `
-<div style="font-family: Arial, sans-serif; color: #0f172a; line-height: 1.6;">
-<p style="font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase; color: #f97316; font-weight: 800;">
-Nexus Pavilion RFQ Invitation
+<div style="margin:0;background:#f6f6f3;padding:32px;font-family:Arial,Helvetica,sans-serif;">
+<div style="max-width:700px;margin:0 auto;overflow:hidden;border-radius:28px;border:1px solid #e5e7eb;background:#ffffff;">
+<div style="background:#020617;padding:34px 32px;color:#ffffff;">
+<p style="margin:0;font-size:11px;font-weight:900;letter-spacing:0.28em;color:#fb923c;text-transform:uppercase;">
+Nexus Pavilion · Secure RFQ Invitation
 </p>
 
-<h1 style="font-size: 28px; margin: 0 0 16px;">
+<h1 style="margin:14px 0 0;font-size:34px;line-height:1.1;font-weight:900;color:#ffffff;">
 You have been invited to quote
 </h1>
 
-<p>
-You have been invited to submit a supplier quote for:
+<p style="margin:16px 0 0;max-width:580px;font-size:15px;line-height:1.75;color:#cbd5e1;">
+A buyer has invited you to review and respond to a secure construction procurement opportunity through Nexus Pavilion.
+</p>
+</div>
+
+<div style="padding:32px;">
+<div style="border-radius:22px;border:1px solid #e2e8f0;background:#f8fafc;padding:24px;">
+<p style="margin:0;font-size:11px;font-weight:900;letter-spacing:0.22em;color:#f97316;text-transform:uppercase;">
+RFQ Opportunity
 </p>
 
-<p style="font-size: 18px; font-weight: 800;">
-${rfqTitle}
+<h2 style="margin:12px 0 0;font-size:24px;line-height:1.25;font-weight:900;color:#020617;">
+${safeRfqTitle}
+</h2>
+
+<p style="margin:10px 0 0;font-size:14px;line-height:1.65;color:#475569;">
+${safeCategory}
 </p>
 
-<p>
-Open the secure RFQ invitation link below to review the opportunity and submit your quote.
+${emailInfoBlock("Procurement Scope", safeProcurementScope)}
+${emailInfoBlock("Sourcing Strategy", safeSourcingMethod)}
+${emailInfoBlock("Contract Framework", safeContractFramework)}
+${emailInfoBlock("Budget", safeBudget)}
+${emailInfoBlock("Submission Deadline", safeDeadline)}
+</div>
+
+<div style="margin-top:24px;border-radius:22px;background:#fff7ed;padding:22px;border:1px solid #fed7aa;">
+<p style="margin:0;font-size:12px;font-weight:900;letter-spacing:0.22em;color:#ea580c;text-transform:uppercase;">
+Sourcing & Access
 </p>
 
-<p style="margin: 24px 0;">
-<a href="${inviteUrl}" style="display: inline-block; background: #020617; color: #ffffff; padding: 12px 20px; border-radius: 999px; text-decoration: none; font-weight: 800;">
-Open RFQ Invitation
+<p style="margin:12px 0 0;font-size:14px;line-height:1.75;color:#7c2d12;font-weight:700;">
+${escapeHtml(getSourcingDescription(sourcingMethod as SourcingMethod))}
+</p>
+</div>
+
+<div style="margin-top:18px;border-radius:22px;background:#f8fafc;padding:22px;border:1px solid #e2e8f0;">
+<p style="margin:0;font-size:12px;font-weight:900;letter-spacing:0.22em;color:#475569;text-transform:uppercase;">
+Governance Controls
+</p>
+
+<ul style="margin:14px 0 0;padding-left:20px;color:#334155;font-size:14px;line-height:1.8;font-weight:700;">
+<li>Supplier submissions are confidential and not visible to competing vendors.</li>
+<li>Commercial responses are reviewed only by authorized buyer-side users.</li>
+<li>Submission timing is governed by the RFQ deadline shown above.</li>
+<li>Quote comparison and award review are handled inside the secure workspace.</li>
+</ul>
+</div>
+
+<div style="margin-top:18px;border-radius:22px;background:#fff1f2;padding:22px;border:1px solid #fecdd3;">
+<p style="margin:0;font-size:12px;font-weight:900;letter-spacing:0.22em;color:#be123c;text-transform:uppercase;">
+Buyer Reservation
+</p>
+
+<p style="margin:12px 0 0;font-size:13px;line-height:1.75;color:#7f1d1d;font-weight:700;">
+The Buyer reserves the right to accept or reject any or all submissions, or cancel the RFQ process at any point without incurring liability or obligation to justify the decision.
+</p>
+</div>
+
+<a
+href="${safeInviteUrl}"
+style="display:inline-block;margin-top:28px;background:#020617;color:#ffffff;padding:15px 24px;border-radius:999px;text-decoration:none;font-size:14px;font-weight:900;"
+>
+Open Secure RFQ Invitation
 </a>
+
+<p style="margin-top:24px;font-size:13px;line-height:1.6;color:#64748b;">
+If the button does not work, copy and paste this link into your browser:
 </p>
 
-<p style="font-size: 12px; color: #64748b;">
-If the button does not work, copy and paste this link into your browser:<br />
-${inviteUrl}
+<p style="word-break:break-all;font-size:13px;color:#334155;">
+${safeInviteUrl}
 </p>
+
+<p style="margin:28px 0 0;font-size:12px;line-height:1.7;color:#94a3b8;">
+This message was sent by Nexus Pavilion procurement automation. Access to this RFQ is controlled by invitation token and sourcing rules.
+</p>
+</div>
+</div>
 </div>
 `;
 
 return { subject, html, text };
+}
+
+function emailInfoBlock(label: string, value: string) {
+return `
+<div style="margin-top:14px;border-radius:16px;background:#ffffff;padding:16px;border:1px solid #e5e7eb;">
+<p style="margin:0;font-size:11px;font-weight:900;letter-spacing:0.18em;color:#94a3b8;text-transform:uppercase;">
+${label}
+</p>
+<p style="margin:6px 0 0;font-size:16px;font-weight:900;color:#020617;">
+${value}
+</p>
+</div>
+`;
 }
 
 export async function POST(request: Request) {
@@ -131,7 +312,9 @@ return NextResponse.json(
 
 const { data: rfq, error: rfqError } = await supabase
 .from("rfqs")
-.select("id, title, slug, company_id, status")
+.select(
+"id, title, slug, company_id, status, category, budget, deadline, procurement_scope, sourcing_method, contract_framework"
+)
 .eq("id", rfqId)
 .single();
 
@@ -193,8 +376,24 @@ return NextResponse.json(
 );
 }
 
+const procurementScope = getProcurementScopeLabel(
+rfq.procurement_scope as ProcurementScope | null
+);
+const sourcingMethod = getSourcingMethodLabel(
+rfq.sourcing_method as SourcingMethod | null
+);
+const contractFramework = getContractFrameworkLabel(
+rfq.contract_framework as ContractFramework | null
+);
+
 const invitationEmail = buildRfqInviteEmail({
 rfqTitle: rfq.title || "Procurement RFQ",
+category: rfq.category || "Procurement",
+budget: formatMoney(rfq.budget),
+deadline: formatDate(rfq.deadline),
+procurementScope,
+sourcingMethod,
+contractFramework,
 inviteUrl: absoluteInviteUrl,
 });
 
@@ -217,6 +416,13 @@ rfq_title: rfq.title,
 supplier_email: email,
 invite_token: token,
 invite_url: absoluteInviteUrl,
+procurement_scope: rfq.procurement_scope,
+procurement_scope_label: procurementScope,
+sourcing_method: rfq.sourcing_method,
+sourcing_method_label: sourcingMethod,
+contract_framework: rfq.contract_framework,
+contract_framework_label: contractFramework,
+deadline: rfq.deadline,
 email_sent: emailResult.success,
 email_skipped: emailResult.skipped,
 email_id: emailResult.id,

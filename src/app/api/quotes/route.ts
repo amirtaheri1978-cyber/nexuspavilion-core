@@ -1,9 +1,8 @@
 import { NextResponse } from "next/server";
 
-import { createClient } from "@/lib/supabase/server";
-
 import { sendEmail } from "@/lib/email/send-email";
 import { quoteSubmittedEmail } from "@/lib/email/templates/quote-submitted-email";
+import { createClient } from "@/lib/supabase/server";
 
 function calculateScore(amount: number, timeline: string) {
 const timelineValue = timeline.toLowerCase();
@@ -34,16 +33,50 @@ return null;
 return amount;
 }
 
+function hasDeadlinePassed(deadline: string | null | undefined) {
+if (!deadline) return false;
+
+const deadlineDate = new Date(deadline);
+
+if (Number.isNaN(deadlineDate.getTime())) {
+return false;
+}
+
+const now = new Date();
+
+return now.getTime() > deadlineDate.getTime();
+}
+
+function formatDeadline(deadline: string | null | undefined) {
+if (!deadline) return "Not specified";
+
+const deadlineDate = new Date(deadline);
+
+if (Number.isNaN(deadlineDate.getTime())) {
+return deadline;
+}
+
+return deadlineDate.toLocaleString("en-US", {
+year: "numeric",
+month: "long",
+day: "numeric",
+hour: "2-digit",
+minute: "2-digit",
+});
+}
+
 function isOpenForQuotes(rfq: {
 status: string | null;
 awarded_quote_id?: string | null;
 awarded_at?: string | null;
+deadline?: string | null;
 }) {
 const status = String(rfq.status || "open").toLowerCase();
 
 if (status !== "open") return false;
 if (rfq.awarded_quote_id) return false;
 if (rfq.awarded_at) return false;
+if (hasDeadlinePassed(rfq.deadline)) return false;
 
 return true;
 }
@@ -91,7 +124,9 @@ return NextResponse.json(
 
 const rfqQuery = supabase
 .from("rfqs")
-.select("id, title, slug, status, company_id, awarded_quote_id, awarded_at");
+.select(
+"id, title, slug, status, company_id, awarded_quote_id, awarded_at, deadline"
+);
 
 const { data: rfq, error: rfqError } = rfqId
 ? await rfqQuery.eq("id", rfqId).single()
@@ -99,6 +134,17 @@ const { data: rfq, error: rfqError } = rfqId
 
 if (rfqError || !rfq) {
 return NextResponse.json({ error: "RFQ not found" }, { status: 404 });
+}
+
+if (hasDeadlinePassed(rfq.deadline)) {
+return NextResponse.json(
+{
+error: `This RFQ deadline has passed. Late submissions are not accepted. Deadline: ${formatDeadline(
+rfq.deadline
+)}.`,
+},
+{ status: 403 }
+);
 }
 
 if (!isOpenForQuotes(rfq)) {
@@ -166,6 +212,7 @@ rfq_title: rfq.title,
 amount,
 timeline,
 score,
+deadline: rfq.deadline,
 submitted_at: new Date().toISOString(),
 },
 });
@@ -192,6 +239,7 @@ title: "Quote Submitted",
 message: `A new quote was submitted for ${rfq.title}.`,
 type: "quote",
 is_read: false,
+company_id: rfq.company_id,
 });
 
 return NextResponse.json({

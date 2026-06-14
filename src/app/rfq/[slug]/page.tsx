@@ -8,6 +8,16 @@ type PageProps = {
 params: Promise<{ slug: string }>;
 };
 
+type ProcurementScope =
+| "material"
+| "subcontractor"
+| "equipment"
+| "professional_service";
+
+type SourcingMethod = "open" | "invited" | "sealed_bid";
+
+type ContractFramework = "project_specific" | "framework";
+
 type Profile = {
 id: string;
 email: string | null;
@@ -25,6 +35,22 @@ message: string | null;
 decision: string | null;
 };
 
+type RFQ = {
+id: string;
+slug: string;
+title: string | null;
+description: string | null;
+category: string | null;
+location: string | null;
+budget: number | string | null;
+deadline: string | null;
+status: string | null;
+company_id: string | null;
+procurement_scope: ProcurementScope | null;
+sourcing_method: SourcingMethod | null;
+contract_framework: ContractFramework | null;
+};
+
 type ScoredQuote = Quote & {
 amountNumber: number;
 rank: number;
@@ -39,6 +65,24 @@ budgetVariance: number;
 lowestBidVariance: number;
 };
 
+const PROCUREMENT_SCOPE_LABELS: Record<ProcurementScope, string> = {
+material: "Material / Product RFQ",
+subcontractor: "Subcontractor / Trade RFQ",
+equipment: "Equipment Rental RFQ",
+professional_service: "Professional Service RFQ",
+};
+
+const SOURCING_METHOD_LABELS: Record<SourcingMethod, string> = {
+open: "Open RFQ",
+invited: "Invited / Selective RFQ",
+sealed_bid: "Sealed Bid RFQ",
+};
+
+const CONTRACT_FRAMEWORK_LABELS: Record<ContractFramework, string> = {
+project_specific: "Project-Specific RFQ",
+framework: "Master / Framework RFQ",
+};
+
 function formatMoney(value: number | string | null | undefined) {
 const amount = Number(value);
 
@@ -47,6 +91,33 @@ return "$0";
 }
 
 return `$${amount.toLocaleString()}`;
+}
+
+function getProcurementScope(value: ProcurementScope | null | undefined) {
+if (value && PROCUREMENT_SCOPE_LABELS[value]) return value;
+return "subcontractor";
+}
+
+function getSourcingMethod(value: SourcingMethod | null | undefined) {
+if (value && SOURCING_METHOD_LABELS[value]) return value;
+return "invited";
+}
+
+function getContractFramework(value: ContractFramework | null | undefined) {
+if (value && CONTRACT_FRAMEWORK_LABELS[value]) return value;
+return "project_specific";
+}
+
+function getScopeLabel(value: ProcurementScope | null | undefined) {
+return PROCUREMENT_SCOPE_LABELS[getProcurementScope(value)];
+}
+
+function getSourcingLabel(value: SourcingMethod | null | undefined) {
+return SOURCING_METHOD_LABELS[getSourcingMethod(value)];
+}
+
+function getFrameworkLabel(value: ContractFramework | null | undefined) {
+return CONTRACT_FRAMEWORK_LABELS[getContractFramework(value)];
 }
 
 function getTimelineMonths(timeline: string | null) {
@@ -118,7 +189,6 @@ if (value.length > 900) score += 5;
 
 return Math.min(score, 100);
 }
-
 function getRiskScore({
 amountNumber,
 budget,
@@ -175,6 +245,34 @@ if (score >= 75) return "text-orange-700";
 return "text-red-700";
 }
 
+function getProcurementFitMessage(rfq: RFQ) {
+const scope = getProcurementScope(rfq.procurement_scope);
+const sourcing = getSourcingMethod(rfq.sourcing_method);
+const framework = getContractFramework(rfq.contract_framework);
+
+if (scope === "material" && framework === "framework") {
+return "This RFQ is structured for recurring material pricing, supplier capacity review, and long-term procurement control.";
+}
+
+if (scope === "subcontractor") {
+return "This RFQ is structured for trade package pricing, scope review, delivery capability, and subcontractor risk comparison.";
+}
+
+if (scope === "equipment") {
+return "This RFQ is structured for rental duration, equipment availability, logistics, maintenance terms, and site-readiness evaluation.";
+}
+
+if (scope === "professional_service") {
+return "This RFQ is structured for professional expertise, service capability, advisory fit, schedule alignment, and project requirements.";
+}
+
+if (sourcing === "sealed_bid") {
+return "This RFQ is configured for controlled bid submission and deadline-based evaluation.";
+}
+
+return "This RFQ is classified for construction procurement intelligence, supplier matching, quote comparison, and executive reporting.";
+}
+
 export default async function RFQDetailPage({ params }: PageProps) {
 const { slug } = await params;
 const supabase = await createClient();
@@ -193,11 +291,13 @@ const { data: profileData } = user
 
 const profile = profileData as Profile | null;
 
-const { data: rfq } = await supabase
+const { data: rfqData } = await supabase
 .from("rfqs")
 .select("*")
 .eq("slug", slug)
 .single();
+
+const rfq = rfqData as RFQ | null;
 
 if (!rfq) {
 return (
@@ -294,7 +394,6 @@ budgetVariance,
 lowestBidVariance,
 };
 });
-
 const scoredQuotes: ScoredQuote[] = scoredQuotesUnranked
 .sort((a, b) => b.totalScore - a.totalScore)
 .map((quote, index) => ({
@@ -302,7 +401,8 @@ const scoredQuotes: ScoredQuote[] = scoredQuotesUnranked
 rank: index + 1,
 }));
 
-const recommendedQuote = isOwner && scoredQuotes.length > 0 ? scoredQuotes[0] : null;
+const recommendedQuote =
+isOwner && scoredQuotes.length > 0 ? scoredQuotes[0] : null;
 
 const awardedQuote = scoredQuotes.find(
 (quote) => quote.decision === "awarded"
@@ -324,20 +424,27 @@ className="text-sm font-semibold text-slate-500 hover:text-slate-950"
 ← Back to RFQ Marketplace
 </Link>
 
-<section className="mt-8 rounded-[32px] border border-black/5 bg-white p-10">
+<section className="mt-8 overflow-hidden rounded-[36px] border border-black/5 bg-white">
+<div className="bg-slate-950 p-10 text-white">
 <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between">
 <div>
-<p className="text-xs font-black uppercase tracking-[0.35em] text-orange-500">
-Procurement Opportunity
+<p className="text-xs font-black uppercase tracking-[0.35em] text-orange-400">
+Construction Procurement Opportunity
 </p>
 
-<h1 className="mt-4 text-5xl font-black text-slate-950">
+<h1 className="mt-4 text-5xl font-black leading-tight">
 {rfq.title}
 </h1>
 
-<p className="mt-4 max-w-3xl text-sm leading-relaxed text-slate-600">
-{rfq.description}
+<p className="mt-4 max-w-4xl text-sm leading-7 text-slate-300">
+{rfq.description || "No description provided."}
 </p>
+
+<div className="mt-6 flex flex-wrap gap-2">
+<DarkBadge>{getScopeLabel(rfq.procurement_scope)}</DarkBadge>
+<DarkBadge>{getSourcingLabel(rfq.sourcing_method)}</DarkBadge>
+<DarkBadge>{getFrameworkLabel(rfq.contract_framework)}</DarkBadge>
+</div>
 </div>
 
 <div className="flex flex-col items-start gap-3 lg:items-end">
@@ -352,31 +459,42 @@ rfq.status
 {canSubmitQuote ? (
 <Link
 href={`/rfq/${rfq.slug}/submit`}
-className="rounded-full bg-slate-950 px-6 py-3 text-sm font-bold text-white transition hover:bg-slate-800"
+className="rounded-full bg-white px-6 py-3 text-sm font-bold text-slate-950 transition hover:bg-slate-100"
 >
 Submit Quote
 </Link>
 ) : null}
 
 {!isOwner && hasMyQuote ? (
-<p className="text-sm font-bold text-slate-500">
+<p className="text-sm font-bold text-slate-400">
 Your company has submitted a quote.
 </p>
 ) : null}
 
 {isOwner && rfqStatus === "awarded" && awardedQuote ? (
-<p className="text-sm font-bold text-green-700">
+<p className="text-sm font-bold text-green-300">
 Awarded at {formatMoney(awardedQuote.amountNumber)}
 </p>
 ) : null}
 </div>
 </div>
+</div>
 
-<div className="mt-8 grid gap-5 md:grid-cols-4">
-<InfoCard title="Category" value={rfq.category || "N/A"} />
+<div className="grid gap-5 p-8 md:grid-cols-4">
+<InfoCard title="Category / Trade" value={rfq.category || "N/A"} />
 <InfoCard title="Location" value={rfq.location || "N/A"} />
 <InfoCard title="Budget" value={formatMoney(rfq.budget)} />
 <InfoCard title="Deadline" value={rfq.deadline || "N/A"} />
+</div>
+
+<div className="border-t border-slate-100 bg-slate-50 p-8">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
+Procurement Intelligence Context
+</p>
+
+<p className="mt-3 max-w-4xl text-sm font-semibold leading-7 text-slate-700">
+{getProcurementFitMessage(rfq)}
+</p>
 </div>
 </section>
 
@@ -455,7 +573,7 @@ Recommended Winner: Rank #{recommendedQuote.rank}
 <p className="mt-4 max-w-3xl text-sm leading-7 text-slate-300">
 Nexus Pavilion recommends this supplier based on weighted
 analysis of price competitiveness, delivery timeline,
-proposal strength, and procurement risk.
+proposal strength, procurement risk, and RFQ classification.
 </p>
 
 <div className="mt-6 flex flex-wrap gap-3">
@@ -464,6 +582,7 @@ proposal strength, and procurement risk.
 <DarkBadge>
 Confidence {recommendedQuote.awardConfidence}%
 </DarkBadge>
+<DarkBadge>{getScopeLabel(rfq.procurement_scope)}</DarkBadge>
 </div>
 </div>
 
@@ -494,7 +613,6 @@ value={`${recommendedQuote.riskScore}/100`}
 <InviteVendorForm rfqId={rfq.id} />
 </div>
 ) : null}
-
 <section className="mt-8 rounded-[32px] border border-black/5 bg-white p-8">
 <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
 <div>
@@ -503,9 +621,7 @@ value={`${recommendedQuote.riskScore}/100`}
 </p>
 
 <h2 className="mt-3 text-3xl font-black text-slate-950">
-{isOwner
-? "AI Supplier Ranking"
-: "Your Company Quote"}
+{isOwner ? "AI Supplier Ranking" : "Your Company Quote"}
 </h2>
 
 {!isOwner ? (
@@ -517,7 +633,8 @@ only to the RFQ owner.
 ) : (
 <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
 Ranking uses weighted scoring: 40% price, 25% timeline, 20%
-performance signals, and 15% procurement risk.
+performance signals, and 15% procurement risk. RFQ
+classification helps improve context for supplier evaluation.
 </p>
 )}
 </div>
@@ -633,12 +750,12 @@ Lowest: {formatMoney(quote.lowestBidVariance)}
 
 <div className="space-y-3">
 <div className="space-y-2">
-{isLowest && <Badge>Lowest Bid</Badge>}
-{belowAverage && <Badge>Below Average</Badge>}
-{quote.timelineScore >= 84 && (
+{isLowest ? <Badge>Lowest Bid</Badge> : null}
+{belowAverage ? <Badge>Below Average</Badge> : null}
+{quote.timelineScore >= 84 ? (
 <Badge>Strong Timeline</Badge>
-)}
-{isHighest && <Badge>Highest Bid</Badge>}
+) : null}
+{isHighest ? <Badge>Highest Bid</Badge> : null}
 </div>
 
 {canAward ? (
@@ -655,13 +772,13 @@ Contract awarded
 );
 })}
 
-{scoredQuotes.length === 0 && (
+{scoredQuotes.length === 0 ? (
 <EmptyQuoteState
 isOpen={isOpen}
 rfqSlug={rfq.slug}
 canSubmitQuote={false}
 />
-)}
+) : null}
 </div>
 ) : (
 <div className="mt-6 overflow-hidden rounded-2xl border border-slate-200">

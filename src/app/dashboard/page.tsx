@@ -6,6 +6,16 @@ import { createClient } from "@/lib/supabase/server";
 
 type Experience = "owner" | "vendor" | "consultant";
 
+type ProcurementScope =
+| "material"
+| "subcontractor"
+| "equipment"
+| "professional_service";
+
+type SourcingMethod = "open" | "invited" | "sealed_bid";
+
+type ContractFramework = "project_specific" | "framework";
+
 type RFQ = {
 id: string;
 slug: string | null;
@@ -15,6 +25,9 @@ location: string | null;
 budget: number | string | null;
 status: string | null;
 created_at: string | null;
+procurement_scope: ProcurementScope | null;
+sourcing_method: SourcingMethod | null;
+contract_framework: ContractFramework | null;
 };
 
 type Quote = {
@@ -54,6 +67,30 @@ createdAt: string | null;
 href: string;
 };
 
+type WorkspaceAlert = {
+level: "healthy" | "opportunity" | "warning";
+title: string;
+message: string;
+};
+
+const PROCUREMENT_SCOPE_LABELS: Record<ProcurementScope, string> = {
+material: "Material RFQs",
+subcontractor: "Trade RFQs",
+equipment: "Equipment RFQs",
+professional_service: "Service RFQs",
+};
+
+const SOURCING_METHOD_LABELS: Record<SourcingMethod, string> = {
+open: "Open RFQs",
+invited: "Invited RFQs",
+sealed_bid: "Sealed Bid RFQs",
+};
+
+const CONTRACT_FRAMEWORK_LABELS: Record<ContractFramework, string> = {
+project_specific: "Project-Specific",
+framework: "Framework Agreement",
+};
+
 function normalizeText(value: string | null | undefined) {
 return String(value || "").trim().toLowerCase();
 }
@@ -82,6 +119,21 @@ return "vendor";
 }
 
 return "owner";
+}
+
+function getProcurementScope(value: ProcurementScope | null | undefined) {
+if (value && PROCUREMENT_SCOPE_LABELS[value]) return value;
+return "subcontractor";
+}
+
+function getSourcingMethod(value: SourcingMethod | null | undefined) {
+if (value && SOURCING_METHOD_LABELS[value]) return value;
+return "invited";
+}
+
+function getContractFramework(value: ContractFramework | null | undefined) {
+if (value && CONTRACT_FRAMEWORK_LABELS[value]) return value;
+return "project_specific";
 }
 
 function formatMoney(value: number | string | null | undefined) {
@@ -144,17 +196,21 @@ createdAt: item.created_at,
 href: "/notifications",
 }));
 
-const rfqEvents: ActivityEvent[] = rfqs.slice(0, 5).map((rfq) => ({
+const rfqEvents: ActivityEvent[] = rfqs.slice(0, 5).map((rfq) => {
+const scope = PROCUREMENT_SCOPE_LABELS[getProcurementScope(rfq.procurement_scope)];
+
+return {
 id: `rfq-${rfq.id}`,
 title: rfq.status === "awarded" ? "RFQ Awarded" : "RFQ Activity",
-description: `${rfq.title || "Untitled RFQ"} · ${
+description: `${rfq.title || "Untitled RFQ"} · ${scope} · ${
 rfq.location || "Location N/A"
 }`,
 type: rfq.status || "rfq",
 severity: rfq.status === "awarded" ? "success" : "info",
 createdAt: rfq.created_at,
 href: rfq.slug ? `/rfq/${rfq.slug}` : "/rfq",
-}));
+};
+});
 
 const awardEvents: ActivityEvent[] = awardedQuotes.slice(0, 5).map((quote) => {
 const rfq = rfqs.find((item) => item.id === quote.rfq_id);
@@ -190,11 +246,11 @@ title: "Supplier Opportunity Command Center",
 subtitle:
 "Track open RFQs, submitted quotes, award outcomes, customer activity, and supplier growth signals.",
 heroLabel: "Supplier Growth Center",
-heroTitle: "Opportunity Pipeline Intelligence",
+heroTitle: "Construction Opportunity Pipeline",
 heroDescription:
-"Monitor RFQ access, quote activity, award conversion, and supplier readiness from one workspace.",
+"Monitor RFQ access by material, trade, equipment, service, sourcing method, and contract framework.",
 recommendation:
-"Prioritize high-fit RFQs, improve quote coverage, and maintain company profile readiness to increase award opportunities.",
+"Prioritize high-fit RFQs, improve quote coverage, and focus on opportunities that match your supplier category and delivery capacity.",
 companyLabel: "My Supplier Company",
 analyticsLabel: "Supplier Intelligence",
 analyticsTitle: "Opportunity & Quote Analytics",
@@ -212,9 +268,9 @@ subtitle:
 heroLabel: "Advisory Command Center",
 heroTitle: "Professional Services Intelligence",
 heroDescription:
-"Monitor project activity, advisory opportunities, client engagement, and service visibility across Nexus Pavilion.",
+"Monitor project RFQs, advisory opportunities, professional service demand, and client engagement signals.",
 recommendation:
-"Strengthen company profile, monitor relevant project opportunities, and support procurement workflows with advisory expertise.",
+"Strengthen company profile, monitor professional service opportunities, and support procurement workflows with advisory expertise.",
 companyLabel: "My Advisory Company",
 analyticsLabel: "Consultant Intelligence",
 analyticsTitle: "Advisory Activity Analytics",
@@ -227,15 +283,15 @@ return {
 eyebrow: "Executive Workspace",
 title: "Executive Procurement Command Center",
 subtitle:
-"Monitor RFQs, awards, supplier participation, procurement risk, savings opportunities, and board-level intelligence.",
+"Monitor RFQ mix, awards, supplier participation, sourcing method, framework agreements, procurement risk, and board-level intelligence.",
 heroLabel: "CEO Command Center",
-heroTitle: "Executive Procurement Control Tower",
+heroTitle: "Construction Procurement Control Tower",
 heroDescription:
-"Track procurement health, supplier concentration, award performance, risk exposure, and executive reporting confidence.",
+"Track procurement health, RFQ classification maturity, supplier concentration, award performance, and executive reporting confidence.",
 recommendation:
-"Prioritize competitive supplier participation, review award concentration, and use procurement intelligence to improve decision quality.",
+"Prioritize competitive supplier participation, improve RFQ classification maturity, review award concentration, and scale construction procurement intelligence.",
 companyLabel: "My Enterprise Company",
-analyticsLabel: "Procurement Intelligence",
+analyticsLabel: "Construction Procurement Intelligence",
 analyticsTitle: "Executive Analytics",
 activityLabel: "Activity Command Center",
 activityTitle: "Live Procurement Timeline",
@@ -267,7 +323,10 @@ const { data: company } = await supabase
 .single();
 
 const currentCompany = company as Company | null;
-const experience = getExperience(profile.role, currentCompany?.network_role || null);
+const experience = getExperience(
+profile.role,
+currentCompany?.network_role || null
+);
 const dashboardCopy = getDashboardCopy(experience);
 
 const { data: rfqs } = await supabase
@@ -314,6 +373,82 @@ const awardedQuotes = quoteList.filter(
 (quote) => quote.decision === "awarded"
 );
 
+const materialRfqs = rfqList.filter(
+(rfq) => getProcurementScope(rfq.procurement_scope) === "material"
+).length;
+
+const tradeRfqs = rfqList.filter(
+(rfq) => getProcurementScope(rfq.procurement_scope) === "subcontractor"
+).length;
+
+const equipmentRfqs = rfqList.filter(
+(rfq) => getProcurementScope(rfq.procurement_scope) === "equipment"
+).length;
+
+const serviceRfqs = rfqList.filter(
+(rfq) =>
+getProcurementScope(rfq.procurement_scope) === "professional_service"
+).length;
+
+const openMarketRfqs = rfqList.filter(
+(rfq) => getSourcingMethod(rfq.sourcing_method) === "open"
+).length;
+
+const invitedRfqs = rfqList.filter(
+(rfq) => getSourcingMethod(rfq.sourcing_method) === "invited"
+).length;
+
+const sealedBidRfqs = rfqList.filter(
+(rfq) => getSourcingMethod(rfq.sourcing_method) === "sealed_bid"
+).length;
+
+const frameworkRfqs = rfqList.filter(
+(rfq) => getContractFramework(rfq.contract_framework) === "framework"
+).length;
+
+const projectSpecificRfqs = rfqList.filter(
+(rfq) =>
+getContractFramework(rfq.contract_framework) === "project_specific"
+).length;
+
+const constructionClassificationScore = Math.min(
+100,
+Math.round(
+(totalRfqs > 0 ? 35 : 0) +
+(materialRfqs > 0 ? 10 : 0) +
+(tradeRfqs > 0 ? 10 : 0) +
+(equipmentRfqs > 0 ? 10 : 0) +
+(serviceRfqs > 0 ? 10 : 0) +
+(openMarketRfqs > 0 ? 8 : 0) +
+(invitedRfqs > 0 ? 8 : 0) +
+(sealedBidRfqs > 0 ? 9 : 0)
+)
+);
+
+const procurementMixStatus =
+constructionClassificationScore >= 80
+? "Mature RFQ Mix"
+: constructionClassificationScore >= 60
+? "Developing RFQ Mix"
+: constructionClassificationScore >= 35
+? "Early RFQ Mix"
+: "No RFQ Mix Yet";
+
+const dominantScope =
+[
+{ label: "Material", value: materialRfqs },
+{ label: "Trade", value: tradeRfqs },
+{ label: "Equipment", value: equipmentRfqs },
+{ label: "Service", value: serviceRfqs },
+].sort((a, b) => b.value - a.value)[0]?.label || "N/A";
+
+const dominantSourcing =
+[
+{ label: "Open", value: openMarketRfqs },
+{ label: "Invited", value: invitedRfqs },
+{ label: "Sealed Bid", value: sealedBidRfqs },
+].sort((a, b) => b.value - a.value)[0]?.label || "N/A";
+
 const totalAwardedSpend = awardedQuotes.reduce((total, quote) => {
 const amount = Number(quote.amount);
 return total + (Number.isNaN(amount) ? 0 : amount);
@@ -337,10 +472,11 @@ const estimatedSavings = Math.max(totalBudget - totalAwardedSpend, 0);
 const procurementHealthScore = Math.min(
 100,
 Math.round(
-awardRate * 0.35 +
-Math.min(submittedQuotes * 8, 30) +
-Math.min(awardedQuotes.length * 12, 25) +
-(estimatedSavings > 0 ? 10 : 0)
+awardRate * 0.3 +
+Math.min(submittedQuotes * 8, 25) +
+Math.min(awardedQuotes.length * 12, 20) +
+(estimatedSavings > 0 ? 10 : 0) +
+constructionClassificationScore * 0.15
 )
 );
 
@@ -387,14 +523,24 @@ rfqs: rfqList,
 awardedQuotes,
 });
 
-const alerts = [];
+const alerts: WorkspaceAlert[] = [];
+
+if (constructionClassificationScore < 60 && experience === "owner") {
+alerts.push({
+level: "warning",
+title: "RFQ Classification Maturity Is Low",
+message:
+"Improve material, trade, equipment, service, sourcing, and framework classification to strengthen analytics quality.",
+});
+}
 
 if (experience === "vendor") {
 if (openRfqs > 0) {
 alerts.push({
 level: "opportunity",
 title: "Open RFQs Available",
-message: "Review active RFQs and prioritize high-fit opportunities.",
+message:
+"Review active construction RFQs and prioritize high-fit opportunities.",
 });
 }
 
@@ -402,7 +548,8 @@ if (submittedQuotes < 3) {
 alerts.push({
 level: "warning",
 title: "Quote Pipeline Is Early",
-message: "Submit more quotes to improve visibility and award probability.",
+message:
+"Submit more quotes to improve supplier visibility and award probability.",
 });
 }
 
@@ -417,14 +564,16 @@ message: "Your submitted quotes are converting into award outcomes.",
 alerts.push({
 level: "healthy",
 title: "Advisory Workspace Active",
-message: "Monitor project opportunities and strengthen professional visibility.",
+message:
+"Monitor professional service opportunities and strengthen advisory visibility.",
 });
 
-if (openRfqs > 0) {
+if (serviceRfqs > 0 || openRfqs > 0) {
 alerts.push({
 level: "opportunity",
 title: "Project Activity Available",
-message: "Review active project opportunities and advisory workflows.",
+message:
+"Review active project opportunities and professional service workflows.",
 });
 }
 } else {
@@ -433,7 +582,7 @@ alerts.push({
 level: "warning",
 title: "Procurement Risk Requires Attention",
 message:
-"Risk exposure is elevated. Review RFQ activity and award conversion.",
+"Risk exposure is elevated. Review RFQ activity, sourcing method, and award conversion.",
 });
 }
 
@@ -450,7 +599,8 @@ if (submittedQuotes < 3) {
 alerts.push({
 level: "warning",
 title: "Supplier Participation Is Limited",
-message: "Invite more vendors to improve competition and pricing quality.",
+message:
+"Invite more vendors to improve competition and pricing quality.",
 });
 }
 
@@ -469,7 +619,6 @@ const topRfqsByBudget = [...rfqList]
 .slice(0, 5);
 
 const recentAwards = awardedQuotes.slice(0, 5);
-
 return (
 <main className="min-h-screen bg-[#f6f6f3]">
 <div className="mx-auto max-w-7xl px-6 py-10">
@@ -495,6 +644,7 @@ Signed in as {profile?.email || user?.email} · Role:{" "}
 
 <SignOutButton />
 </div>
+
 <section className="mt-10 rounded-[36px] border border-slate-200 bg-slate-950 p-8 text-white">
 <p className="text-xs font-black uppercase tracking-[0.3em] text-orange-400">
 {dashboardCopy.heroLabel}
@@ -525,21 +675,52 @@ Signed in as {profile?.email || user?.email} · Role:{" "}
 </>
 ) : experience === "consultant" ? (
 <>
+<DarkMetric title="Service RFQs" value={String(serviceRfqs)} />
 <DarkMetric title="Project Activity" value={String(openRfqs)} />
-<DarkMetric title="Client Signals" value={String(notificationList.length)} />
 <DarkMetric title="Service Visibility" value={executiveStatus} />
 <DarkMetric title="Forecast Confidence" value={`${forecastAccuracy}%`} />
 </>
 ) : (
 <>
 <DarkMetric title="Enterprise Score" value={`${procurementHealthScore}/100`} />
+<DarkMetric title="RFQ Maturity" value={`${constructionClassificationScore}/100`} />
 <DarkMetric title="Risk Index" value={`${riskIndex}/100`} />
 <DarkMetric title="Forecast Accuracy" value={`${forecastAccuracy}%`} />
-<DarkMetric title="Supplier Concentration" value={supplierConcentration} />
 </>
 )}
 </div>
 </div>
+</section>
+
+<section className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+<InsightCard title="Material RFQs" value={String(materialRfqs)} detail="Products, materials, and manufactured systems" />
+<InsightCard title="Trade RFQs" value={String(tradeRfqs)} detail="Subcontractor and trade work packages" />
+<InsightCard title="Equipment RFQs" value={String(equipmentRfqs)} detail="Rental equipment and site resources" />
+<InsightCard title="Service RFQs" value={String(serviceRfqs)} detail="Professional and advisory services" />
+</section>
+
+<section className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-5">
+<InsightCard title="Open Market" value={String(openMarketRfqs)} detail="Public or broadly visible RFQs" />
+<InsightCard title="Invited RFQs" value={String(invitedRfqs)} detail="Selective qualified supplier workflows" />
+<InsightCard title="Sealed Bids" value={String(sealedBidRfqs)} detail="Controlled bid submission workflows" />
+<InsightCard title="Project Specific" value={String(projectSpecificRfqs)} detail="Single-project procurement requests" />
+<InsightCard title="Framework RFQs" value={String(frameworkRfqs)} detail="Recurring or long-term agreements" />
+</section>
+
+<section className="mt-8 rounded-[32px] border border-black/5 bg-white p-8">
+<p className="text-xs font-black uppercase tracking-[0.3em] text-orange-500">
+Construction Procurement Mix
+</p>
+
+<h2 className="mt-3 text-3xl font-black text-slate-950">
+RFQ Classification Intelligence
+</h2>
+
+<p className="mt-3 max-w-4xl text-sm leading-7 text-slate-600">
+{procurementMixStatus}. Dominant procurement scope is {dominantScope}.
+Dominant sourcing method is {dominantSourcing}. Classification
+maturity score is {constructionClassificationScore}/100.
+</p>
 </section>
 
 <section className="mt-8 rounded-[32px] border border-black/5 bg-white p-8">
@@ -576,9 +757,7 @@ alert.level === "healthy"
 <p className="font-black text-slate-950">{alert.title}</p>
 </div>
 
-<p className="mt-2 text-sm text-slate-600">
-{alert.message}
-</p>
+<p className="mt-2 text-sm text-slate-600">{alert.message}</p>
 </div>
 ))
 ) : (
@@ -586,7 +765,6 @@ alert.level === "healthy"
 )}
 </div>
 </section>
-
 <section className="mt-8 rounded-[32px] border border-black/5 bg-white p-8">
 <p className="text-xs font-black uppercase tracking-[0.3em] text-orange-500">
 {dashboardCopy.companyLabel}
@@ -635,77 +813,31 @@ Open Company
 </section>
 
 <section className="mt-8 grid gap-6 md:grid-cols-4">
-{experience === "vendor" ? (
-<>
-<WorkspaceCard
-title="Open Opportunities"
-description="Browse available RFQs and buyer requests."
-href="/rfq"
-/>
-<WorkspaceCard
-title="My Quotes"
-description="Track submitted pricing and quote activity."
-href="/vendor-dashboard"
-/>
-<WorkspaceCard
-title="Company Profile"
-description="Improve supplier visibility and trust."
-href="/company/settings"
-/>
-<WorkspaceCard
-title="Activity Center"
-description="Review updates, notifications, and workflow signals."
-href="/notifications"
-/>
-</>
-) : experience === "consultant" ? (
-<>
-<WorkspaceCard
-title="Project Opportunities"
-description="Review project and advisory opportunities."
-href="/rfq"
-/>
-<WorkspaceCard
-title="Company Profile"
-description="Improve professional service visibility."
-href="/company/settings"
-/>
-<WorkspaceCard
-title="Activity Center"
-description="Review updates, notifications, and workflow signals."
-href="/notifications"
-/>
-<WorkspaceCard
-title="Directory"
-description="Explore connected enterprise companies."
-href="/directory"
-/>
-</>
-) : (
-<>
-<WorkspaceCard
-title="Company Hub"
-description="Manage enterprise profiles and branding."
-href="/company/settings"
-/>
 <WorkspaceCard
 title="RFQ Marketplace"
-description="Browse, create, and award procurement opportunities."
+description="Browse and manage procurement opportunities."
 href="/rfq"
 />
+
 <WorkspaceCard
-title="Executive AI"
-description="Review risk, confidence, and board reporting."
+title="Executive Analytics"
+description="Procurement intelligence and board reporting."
 href="/analytics"
 />
+
 <WorkspaceCard
-title="Supplier Directory"
-description="Explore connected enterprise companies."
-href="/directory"
+title="Company Hub"
+description="Manage company profile and visibility."
+href="/company/settings"
 />
-</>
-)}
+
+<WorkspaceCard
+title="Activity Center"
+description="Review procurement and workflow activity."
+href="/notifications"
+/>
 </section>
+
 <section className="mt-8 rounded-[32px] border border-black/5 bg-white p-8">
 <div className="flex items-end justify-between gap-6">
 <div>
@@ -722,160 +854,71 @@ href="/directory"
 href={experience === "owner" ? "/analytics" : "/rfq"}
 className="rounded-full bg-slate-950 px-5 py-3 text-sm font-bold text-white"
 >
-{experience === "owner" ? "Open Intelligence" : "Open Opportunities"}
+{experience === "owner"
+? "Open Intelligence"
+: "Open Opportunities"}
 </Link>
 </div>
 
 <div className="mt-6 grid gap-6 md:grid-cols-4">
-{experience === "vendor" ? (
-<>
-<InsightCard
-title="Open RFQs"
-value={String(openRfqs)}
-detail="Available procurement opportunities"
-/>
-<InsightCard
-title="Submitted Quotes"
-value={String(submittedQuotes)}
-detail="Supplier quote activity"
-/>
-<InsightCard
-title="Award Wins"
-value={String(awardedQuotes.length)}
-detail="Quotes converted to awards"
-/>
-<InsightCard
-title="Win Rate"
-value={`${vendorWinRate}%`}
-detail="Award conversion from quote activity"
-/>
-<InsightCard
-title="Pipeline Value"
-value={formatMoney(pipelineValue)}
-detail="Total submitted quote value"
-/>
-<InsightCard
-title="Awarded Revenue"
-value={formatMoney(totalAwardedSpend)}
-detail="Total awarded supplier value"
-/>
-<InsightCard
-title="Average Award"
-value={formatMoney(averageAward)}
-detail="Average awarded value"
-/>
-<InsightCard
-title="Notifications"
-value={String(notificationList.length)}
-detail="Recent supplier workflow signals"
-/>
-</>
-) : experience === "consultant" ? (
-<>
-<InsightCard
-title="Project Activity"
-value={String(totalRfqs)}
-detail={`${openRfqs} active opportunities`}
-/>
-<InsightCard
-title="Client Signals"
-value={String(notificationList.length)}
-detail="Recent advisory workflow signals"
-/>
-<InsightCard
-title="Submitted Inputs"
-value={String(submittedQuotes)}
-detail="Quote or advisory participation"
-/>
-<InsightCard
-title="Engagement Score"
-value={`${procurementHealthScore}/100`}
-detail="Workspace activity and visibility"
-/>
-<InsightCard
-title="Open Opportunities"
-value={String(openRfqs)}
-detail="Active project opportunities"
-/>
-<InsightCard
-title="Closed Activity"
-value={String(closedRfqs)}
-detail="Completed or archived project activity"
-/>
-<InsightCard
-title="Forecast Confidence"
-value={`${forecastAccuracy}%`}
-detail="Advisory intelligence confidence"
-/>
-<InsightCard
-title="Visibility"
-value={executiveStatus}
-detail="Professional service workspace status"
-/>
-</>
-) : (
-<>
 <InsightCard
 title="Total RFQs"
 value={String(totalRfqs)}
-detail={`${openRfqs} open · ${awardedRfqs} awarded`}
+detail={`${openRfqs} Open Opportunities`}
 />
-<InsightCard
-title="Supplier Quotes"
-value={String(submittedQuotes)}
-detail="Submitted enterprise bids"
-/>
-<InsightCard
-title="Awarded Spend"
-value={formatMoney(totalAwardedSpend)}
-detail="Total awarded contract value"
-/>
+
 <InsightCard
 title="Award Rate"
 value={`${awardRate}%`}
-detail="RFQs converted to awards"
+detail="RFQs converted into awards"
 />
+
 <InsightCard
-title="Open RFQs"
-value={String(openRfqs)}
-detail="Active procurement opportunities"
+title="Awarded Spend"
+value={formatMoney(totalAwardedSpend)}
+detail="Executed procurement value"
 />
+
 <InsightCard
-title="Closed RFQs"
-value={String(closedRfqs)}
-detail="Archived or completed events"
-/>
-<InsightCard
-title="Est. Savings"
+title="Savings"
 value={formatMoney(estimatedSavings)}
-detail="Budget less awarded value"
+detail="Budget vs award delta"
 />
+
 <InsightCard
-title="Average Award"
-value={formatMoney(averageAward)}
-detail="Average awarded contract"
+title="RFQ Maturity"
+value={`${constructionClassificationScore}/100`}
+detail="Construction procurement classification quality"
 />
-</>
-)}
+
+<InsightCard
+title="Dominant Scope"
+value={dominantScope}
+detail="Most active procurement category"
+/>
+
+<InsightCard
+title="Dominant Sourcing"
+value={dominantSourcing}
+detail="Primary sourcing methodology"
+/>
+
+<InsightCard
+title="Forecast Accuracy"
+value={`${forecastAccuracy}%`}
+detail="Executive forecast confidence"
+/>
 </div>
 </section>
 
 <section className="mt-8 grid gap-8 lg:grid-cols-2">
 <div className="rounded-[32px] border border-black/5 bg-white p-8">
 <p className="text-xs font-black uppercase tracking-[0.3em] text-orange-500">
-{experience === "vendor"
-? "Award Activity"
-: experience === "consultant"
-? "Engagement Activity"
-: "Award Activity"}
+Award Activity
 </p>
 
 <h2 className="mt-3 text-3xl font-black text-slate-950">
-{experience === "vendor"
-? "Recent Award Wins"
-: experience === "consultant"
-? "Recent Project Outcomes"
-: "Recent Award Decisions"}
+Recent Award Decisions
 </h2>
 
 <div className="mt-6 space-y-4">
@@ -913,32 +956,17 @@ Awarded
 );
 })
 ) : (
-<EmptyState
-message={
-experience === "vendor"
-? "No award wins have been recorded yet."
-: "No awards have been recorded yet."
-}
-/>
+<EmptyState message="No awards have been recorded yet." />
 )}
 </div>
 </div>
-
 <div className="rounded-[32px] border border-black/5 bg-white p-8">
 <p className="text-xs font-black uppercase tracking-[0.3em] text-orange-500">
-{experience === "vendor"
-? "Opportunity View"
-: experience === "consultant"
-? "Project View"
-: "Portfolio View"}
+Portfolio View
 </p>
 
 <h2 className="mt-3 text-3xl font-black text-slate-950">
-{experience === "vendor"
-? "Top RFQs by Budget"
-: experience === "consultant"
-? "Project Opportunities"
-: "Top RFQs by Budget"}
+Top RFQs by Budget
 </h2>
 
 <div className="mt-6 space-y-4">
@@ -956,14 +984,34 @@ className="block rounded-3xl border border-slate-100 bg-slate-50 p-5 transition 
 </p>
 
 <p className="mt-1 text-sm font-semibold text-slate-500">
-{rfq.category || "Procurement"} ·{" "}
-{rfq.location || "Location N/A"}
+{PROCUREMENT_SCOPE_LABELS[
+getProcurementScope(rfq.procurement_scope)
+]}{" "}
+· {rfq.location || "Location N/A"}
 </p>
 </div>
 
 <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-black text-slate-700">
 {rfq.status || "open"}
 </span>
+</div>
+
+<div className="mt-4 flex flex-wrap gap-2">
+<SmallBadge>
+{
+SOURCING_METHOD_LABELS[
+getSourcingMethod(rfq.sourcing_method)
+]
+}
+</SmallBadge>
+
+<SmallBadge>
+{
+CONTRACT_FRAMEWORK_LABELS[
+getContractFramework(rfq.contract_framework)
+]
+}
+</SmallBadge>
 </div>
 
 <p className="mt-4 text-2xl font-black text-slate-950">
@@ -1066,6 +1114,14 @@ return (
 
 <p className="mt-2 text-3xl font-black text-white">{value}</p>
 </div>
+);
+}
+
+function SmallBadge({ children }: { children: React.ReactNode }) {
+return (
+<span className="rounded-full bg-white px-3 py-1 text-xs font-black text-slate-600 shadow-sm">
+{children}
+</span>
 );
 }
 

@@ -2,6 +2,16 @@ import Link from "next/link";
 
 import { createClient } from "@/lib/supabase/server";
 
+type ProcurementScope =
+| "material"
+| "subcontractor"
+| "equipment"
+| "professional_service";
+
+type SourcingMethod = "open" | "invited" | "sealed_bid";
+
+type ContractFramework = "project_specific" | "framework";
+
 type RFQ = {
 id: string;
 slug: string;
@@ -13,6 +23,9 @@ budget: number | string | null;
 status: string | null;
 company_id: string | null;
 created_at?: string | null;
+procurement_scope: ProcurementScope | null;
+sourcing_method: SourcingMethod | null;
+contract_framework: ContractFramework | null;
 };
 
 type Profile = {
@@ -23,6 +36,24 @@ role: string | null;
 type Company = {
 id: string;
 network_role: string | null;
+};
+
+const PROCUREMENT_SCOPE_LABELS: Record<ProcurementScope, string> = {
+material: "Material / Product",
+subcontractor: "Subcontractor / Trade",
+equipment: "Equipment Rental",
+professional_service: "Professional Service",
+};
+
+const SOURCING_METHOD_LABELS: Record<SourcingMethod, string> = {
+open: "Open RFQ",
+invited: "Invited / Selective",
+sealed_bid: "Sealed Bid",
+};
+
+const CONTRACT_FRAMEWORK_LABELS: Record<ContractFramework, string> = {
+project_specific: "Project Specific",
+framework: "Framework Agreement",
 };
 
 function getStatusLabel(status: string | null) {
@@ -46,7 +77,13 @@ return "Open →";
 function isSupplierCompany(networkRole: string | null | undefined) {
 const value = String(networkRole || "").toLowerCase();
 
-return value.includes("vendor") || value.includes("supplier");
+return (
+value.includes("vendor") ||
+value.includes("supplier") ||
+value.includes("manufacturer") ||
+value.includes("distributor") ||
+value.includes("trade")
+);
 }
 
 function canCreateRFQ(
@@ -62,26 +99,70 @@ return true;
 return !isSupplierCompany(networkRole);
 }
 
-
-
 function getPageDescription(networkRole: string | null | undefined) {
 if (isSupplierCompany(networkRole)) {
-return "Browse open procurement opportunities from enterprise buyers and submit supplier quotes.";
+return "Browse open construction procurement opportunities by scope, sourcing method, framework, budget, and region.";
 }
 
-return "Browse, monitor, and manage procurement opportunities connected to your enterprise workspace.";
+return "Browse, classify, monitor, and manage construction RFQs connected to your enterprise workspace.";
 }
 
 function getMarketplaceMode(networkRole: string | null | undefined) {
 if (isSupplierCompany(networkRole)) {
-return "Supplier View";
+return "Supplier Opportunity View";
 }
 
-return "Buyer Workspace";
+return "Buyer Procurement Workspace";
 }
 
 function isOpenRFQ(status: string | null) {
 return !status || status === "open";
+}
+
+function getProcurementScope(value: ProcurementScope | null | undefined) {
+if (value && PROCUREMENT_SCOPE_LABELS[value]) {
+return value;
+}
+
+return "subcontractor";
+}
+
+function getSourcingMethod(value: SourcingMethod | null | undefined) {
+if (value && SOURCING_METHOD_LABELS[value]) {
+return value;
+}
+
+return "invited";
+}
+
+function getContractFramework(value: ContractFramework | null | undefined) {
+if (value && CONTRACT_FRAMEWORK_LABELS[value]) {
+return value;
+}
+
+return "project_specific";
+}
+
+function getScopeLabel(value: ProcurementScope | null | undefined) {
+return PROCUREMENT_SCOPE_LABELS[getProcurementScope(value)];
+}
+
+function getSourcingLabel(value: SourcingMethod | null | undefined) {
+return SOURCING_METHOD_LABELS[getSourcingMethod(value)];
+}
+
+function getFrameworkLabel(value: ContractFramework | null | undefined) {
+return CONTRACT_FRAMEWORK_LABELS[getContractFramework(value)];
+}
+
+function getBudgetLabel(value: number | string | null | undefined) {
+const amount = Number(value || 0);
+
+if (!Number.isFinite(amount) || amount <= 0) {
+return "Not specified";
+}
+
+return `$${amount.toLocaleString()}`;
 }
 
 export default async function RFQMarketplacePage() {
@@ -118,7 +199,7 @@ const { data: rfqs } = supplierMode
 .from("rfqs")
 .select("*")
 .or("status.eq.open,status.is.null")
-.eq("status", "open")
+.order("created_at", { ascending: false })
 : profile?.company_id
 ? await supabase
 .from("rfqs")
@@ -137,20 +218,35 @@ const awardedCount = rfqList.filter(
 
 const closedCount = rfqList.filter((rfq) => rfq.status === "closed").length;
 
+const materialCount = rfqList.filter(
+(rfq) => getProcurementScope(rfq.procurement_scope) === "material"
+).length;
+
+const tradeCount = rfqList.filter(
+(rfq) => getProcurementScope(rfq.procurement_scope) === "subcontractor"
+).length;
+
+const equipmentCount = rfqList.filter(
+(rfq) => getProcurementScope(rfq.procurement_scope) === "equipment"
+).length;
+
+const serviceCount = rfqList.filter(
+(rfq) => getProcurementScope(rfq.procurement_scope) === "professional_service"
+).length;
 return (
 <main className="min-h-screen bg-[#f6f6f3] px-8 py-10">
 <div className="mx-auto max-w-7xl">
 <div className="flex items-start justify-between gap-6">
 <div>
 <p className="text-xs font-black uppercase tracking-[0.35em] text-orange-500">
-Procurement Marketplace
+Construction Procurement Marketplace
 </p>
 
 <h1 className="mt-3 text-5xl font-black text-slate-950">
 RFQ Marketplace
 </h1>
 
-<p className="mt-4 max-w-2xl text-sm leading-6 text-slate-600">
+<p className="mt-4 max-w-3xl text-sm leading-6 text-slate-600">
 {getPageDescription(company?.network_role)}
 </p>
 
@@ -174,6 +270,13 @@ Create RFQ
 <StatusCard title="Open" value={openCount} />
 <StatusCard title="Awarded" value={awardedCount} />
 <StatusCard title="Closed" value={closedCount} />
+</section>
+
+<section className="mt-6 grid gap-4 md:grid-cols-4">
+<StatusCard title="Material RFQs" value={materialCount} />
+<StatusCard title="Trade RFQs" value={tradeCount} />
+<StatusCard title="Equipment RFQs" value={equipmentCount} />
+<StatusCard title="Service RFQs" value={serviceCount} />
 </section>
 
 <section className="mt-10 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
@@ -202,7 +305,13 @@ rfq.status
 {rfq.title || "Untitled RFQ"}
 </h2>
 
-<p className="mt-3 line-clamp-3 text-sm leading-relaxed text-slate-600">
+<div className="mt-4 flex flex-wrap gap-2">
+<Badge>{getScopeLabel(rfq.procurement_scope)}</Badge>
+<Badge>{getSourcingLabel(rfq.sourcing_method)}</Badge>
+<Badge>{getFrameworkLabel(rfq.contract_framework)}</Badge>
+</div>
+
+<p className="mt-4 line-clamp-3 text-sm leading-relaxed text-slate-600">
 {rfq.description || "No description provided."}
 </p>
 
@@ -217,7 +326,7 @@ rfq.status
 <div>
 <p className="font-bold text-slate-400">Budget</p>
 <p className="mt-1 font-semibold text-slate-700">
-${Number(rfq.budget || 0).toLocaleString()}
+{getBudgetLabel(rfq.budget)}
 </p>
 </div>
 </div>
@@ -247,11 +356,11 @@ No RFQs found
 
 <p className="mt-2 text-sm leading-6 text-slate-600">
 {supplierMode
-? "No open buyer RFQs are currently available for supplier quotes."
-: "Create your first company-scoped procurement opportunity."}
+? "No open construction RFQs are currently available for supplier quotes."
+: "Create your first classified construction procurement opportunity."}
 </p>
 
-{canCreateRFQ(profile?.role,company?.network_role) ? (
+{canCreateRFQ(profile?.role, company?.network_role) ? (
 <Link
 href="/rfq/new"
 className="mt-6 inline-flex rounded-full bg-slate-950 px-6 py-3 text-sm font-bold text-white"
@@ -276,5 +385,13 @@ return (
 
 <p className="mt-3 text-3xl font-black text-slate-950">{value}</p>
 </div>
+);
+}
+
+function Badge({ children }: { children: React.ReactNode }) {
+return (
+<span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-black text-slate-600">
+{children}
+</span>
 );
 }
