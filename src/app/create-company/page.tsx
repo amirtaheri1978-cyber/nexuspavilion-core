@@ -4,6 +4,12 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
+type OrganizationType =
+| "owner_developer"
+| "general_contractor"
+| "consultant_service"
+| "vendor_supplier";
+
 type AccountType = "buyer_owner" | "vendor_supplier" | "consultant_service";
 
 type CreateCompanyResponse = {
@@ -12,101 +18,138 @@ redirectTo?: string;
 error?: string;
 };
 
-const ACCOUNT_TYPES: {
-value: AccountType;
+type OrganizationOption = {
+value: OrganizationType;
 label: string;
+shortLabel: string;
+accountType: AccountType;
+networkRole: string;
 description: string;
-}[] = [
-{
-value: "buyer_owner",
-label: "Buyer / Owner",
-description:
-"For owners, developers, general contractors, and procurement teams managing RFQs and awards.",
-},
-{
-value: "vendor_supplier",
-label: "Vendor / Supplier",
-description:
-"For manufacturers, distributors, subcontractors, specialty trades, and material suppliers.",
-},
-{
-value: "consultant_service",
-label: "Consultant / Service Provider",
-description:
-"For architects, engineers, cost consultants, design advisors, and professional service teams.",
-},
-];
-
-const COMPANY_CATEGORIES = [
-"Project Owner",
-"Real Estate Developer",
-"General Contractor",
-"Construction Manager",
-"Architecture",
-"Engineering",
-"Design Consultancy",
-"Interior Construction",
-"Building Envelope",
-"Mechanical Systems",
-"Electrical Systems",
-"Building Technology Systems",
-"Specialty Trades",
-"Manufacturer",
-"Distributor",
-"Material Supplier",
-"Professional Services",
-"Cost Consultancy",
-"Public Sector",
-"Healthcare",
-"Education",
-"Hospitality & Mixed-Use",
-"Other",
-];
-
-const NETWORK_ROLES_BY_ACCOUNT_TYPE: Record<AccountType, string[]> = {
-buyer_owner: [
-"Project Owner",
-"Real Estate Developer",
-"General Contractor",
-"Construction Manager",
-"Procurement Team",
-],
-vendor_supplier: [
-"Manufacturer",
-"Distributor",
-"Material Supplier",
-"Subcontractor",
-"Specialty Trade",
-],
-consultant_service: [
-"Architect",
-"Engineer",
-"Design Consultant",
-"Cost Consultant",
-"Professional Services Consultant",
-],
+examples: string[];
+workspaceTitle: string;
+workspaceDescription: string;
+workspaceCapabilities: string[];
 };
 
-const CAPABILITIES_BY_ACCOUNT_TYPE: Record<AccountType, string[]> = {
-buyer_owner: [
+const ORGANIZATION_TYPES: OrganizationOption[] = [
+{
+value: "owner_developer",
+label: "Owner / Developer",
+shortLabel: "Owner",
+accountType: "buyer_owner",
+networkRole: "Project Owner",
+description:
+"You own, develop, finance, or manage construction projects and procure services from contractors, consultants, suppliers, and vendors.",
+examples: [
+"Real estate developers",
+"Asset owners",
+"Property groups",
+"Infrastructure owners",
+],
+workspaceTitle: "Owner Procurement Workspace",
+workspaceDescription:
+"Built for organizations that issue RFQs, compare proposals, award work, manage suppliers, and report procurement performance to leadership.",
+workspaceCapabilities: [
 "Create RFQs",
 "Invite suppliers",
 "Compare quotes",
 "Award contracts",
+"Generate executive reports",
 ],
-vendor_supplier: [
-"Discover opportunities",
-"Respond to RFQs",
-"Manage supplier profile",
-"Track procurement activity",
+},
+{
+value: "general_contractor",
+label: "General Contractor",
+shortLabel: "GC",
+accountType: "buyer_owner",
+networkRole: "General Contractor",
+description:
+"You manage project delivery and procure trades, subcontractors, materials, packages, and specialty vendors.",
+examples: [
+"General contractors",
+"Construction managers",
+"Design-build firms",
+"Project delivery teams",
 ],
-consultant_service: [
+workspaceTitle: "Contractor Procurement Workspace",
+workspaceDescription:
+"Built for construction teams that need structured RFQs, supplier outreach, quote comparison, award tracking, and procurement visibility.",
+workspaceCapabilities: [
+"Create RFQs",
+"Invite subcontractors",
+"Compare trade quotes",
+"Award packages",
+"Track procurement execution",
+],
+},
+{
+value: "consultant_service",
+label: "Consultant / Service Provider",
+shortLabel: "Consultant",
+accountType: "consultant_service",
+networkRole: "Professional Services Consultant",
+description:
+"You provide design, engineering, planning, cost, project advisory, or professional construction services.",
+examples: [
+"Architects",
+"Engineers",
+"Cost consultants",
+"Project advisors",
+],
+workspaceTitle: "Consultant Workspace",
+workspaceDescription:
+"Built for professional service teams that support procurement decisions, project requirements, advisory workflows, and collaboration.",
+workspaceCapabilities: [
 "Support project teams",
 "Join procurement workflows",
-"Contribute professional expertise",
 "Manage service visibility",
+"Collaborate on project requirements",
+"Contribute professional expertise",
 ],
-};
+},
+{
+value: "vendor_supplier",
+label: "Supplier / Vendor",
+shortLabel: "Supplier",
+accountType: "vendor_supplier",
+networkRole: "Supplier / Vendor",
+description:
+"You provide products, materials, equipment, specialized trades, manufacturing, distribution, or construction services.",
+examples: [
+"Manufacturers",
+"Distributors",
+"Specialty trades",
+"Material suppliers",
+],
+workspaceTitle: "Supplier Network Workspace",
+workspaceDescription:
+"Built for vendors and suppliers that want to receive RFQs, submit quotes, manage visibility, and build procurement reputation.",
+workspaceCapabilities: [
+"Receive RFQs",
+"Submit quotes",
+"Manage company profile",
+"Track opportunities",
+"Build procurement reputation",
+],
+},
+];
+
+const INDUSTRIES = [
+"General Construction",
+"Commercial Construction",
+"Residential Development",
+"Hospitality & Mixed-Use",
+"Healthcare",
+"Education",
+"Infrastructure",
+"Industrial",
+"Interior Construction",
+"Building Envelope",
+"Mechanical / Electrical",
+"Acoustics & Architectural Products",
+"Professional Services",
+"Other",
+];
 
 function normalizeValue(value: string) {
 return value.trim();
@@ -115,38 +158,26 @@ return value.trim();
 export default function CreateCompanyPage() {
 const router = useRouter();
 
-const [accountType, setAccountType] = useState<AccountType>("buyer_owner");
+const [organizationType, setOrganizationType] =
+useState<OrganizationType>("owner_developer");
 const [name, setName] = useState("");
-const [category, setCategory] = useState("Hospitality & Mixed-Use");
 const [location, setLocation] = useState("");
-const [networkRole, setNetworkRole] = useState(
-NETWORK_ROLES_BY_ACCOUNT_TYPE.buyer_owner[0]
-);
+const [industry, setIndustry] = useState("General Construction");
 
 const [loading, setLoading] = useState(false);
 const [error, setError] = useState("");
 
-const networkRoles = NETWORK_ROLES_BY_ACCOUNT_TYPE[accountType];
-const capabilities = CAPABILITIES_BY_ACCOUNT_TYPE[accountType];
-
-const selectedAccountType = ACCOUNT_TYPES.find(
-(item) => item.value === accountType
-);
+const selectedOrganization =
+ORGANIZATION_TYPES.find((item) => item.value === organizationType) ||
+ORGANIZATION_TYPES[0];
 
 const formIsReady = useMemo(() => {
 return (
 normalizeValue(name).length >= 2 &&
-normalizeValue(category).length > 0 &&
 normalizeValue(location).length >= 2 &&
-normalizeValue(accountType).length > 0 &&
-normalizeValue(networkRole).length > 0
+Boolean(selectedOrganization)
 );
-}, [name, category, location, accountType, networkRole]);
-
-function handleAccountTypeChange(value: AccountType) {
-setAccountType(value);
-setNetworkRole(NETWORK_ROLES_BY_ACCOUNT_TYPE[value][0]);
-}
+}, [name, location, selectedOrganization]);
 
 async function handleCreateCompany(
 event: React.FormEvent<HTMLFormElement>
@@ -154,12 +185,14 @@ event: React.FormEvent<HTMLFormElement>
 event.preventDefault();
 
 const normalizedName = normalizeValue(name);
-const normalizedCategory = normalizeValue(category);
 const normalizedLocation = normalizeValue(location);
-const normalizedNetworkRole = normalizeValue(networkRole);
+const normalizedIndustry =
+normalizeValue(industry) || "General Construction";
 
-if (!formIsReady) {
-setError("Please complete all required workspace setup fields.");
+if (!formIsReady || !selectedOrganization) {
+setError(
+"Please select your organization type and complete the required fields."
+);
 return;
 }
 
@@ -174,13 +207,12 @@ headers: {
 },
 body: JSON.stringify({
 name: normalizedName,
-category: normalizedCategory,
+category: normalizedIndustry,
 location: normalizedLocation,
-accountType,
-networkRole: normalizedNetworkRole,
+accountType: selectedOrganization.accountType,
+networkRole: selectedOrganization.networkRole,
 }),
 });
-
 let data: CreateCompanyResponse = {};
 
 try {
@@ -214,7 +246,7 @@ className="inline-flex text-sm font-bold text-slate-500 transition hover:text-sl
 ← Back to dashboard
 </Link>
 
-<section className="mt-6 grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
+<section className="mt-6 grid gap-6 lg:grid-cols-[1.02fr_0.98fr]">
 <section className="overflow-hidden rounded-[36px] border border-black/5 bg-slate-950 text-white shadow-sm">
 <div className="p-6 sm:p-10 lg:p-14">
 <p className="text-xs font-black uppercase tracking-[0.32em] text-orange-400">
@@ -222,31 +254,60 @@ Nexus Pavilion Setup
 </p>
 
 <h1 className="mt-5 max-w-4xl text-5xl font-black tracking-[-0.055em] text-white sm:text-6xl lg:text-7xl">
-Establish your procurement identity.
+Establish your procurement workspace.
 </h1>
 
 <p className="mt-6 max-w-2xl text-base leading-8 text-slate-300 sm:text-lg">
-Define how your organization participates in Nexus Pavilion.
-This setup controls workspace access, procurement workflows,
-supplier visibility, and company-level permissions.
+Create a company workspace that matches how your organization
+participates in construction procurement.
 </p>
+
+<div className="mt-8 rounded-[32px] border border-white/10 bg-white/[0.04] p-6">
+<p className="text-xs font-black uppercase tracking-[0.28em] text-orange-300">
+{selectedOrganization.workspaceTitle}
+</p>
+
+<h2 className="mt-4 text-3xl font-black text-white">
+{selectedOrganization.label}
+</h2>
+
+<p className="mt-4 text-sm leading-7 text-slate-300">
+{selectedOrganization.workspaceDescription}
+</p>
+
+<div className="mt-6 grid gap-3">
+{selectedOrganization.workspaceCapabilities.map(
+(capability) => (
+<div
+key={capability}
+className="rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm font-bold text-slate-200"
+>
+✓ {capability}
+</div>
+)
+)}
+</div>
+</div>
 
 <div className="mt-8 grid gap-3 sm:grid-cols-2">
 <SetupPoint
-title="Role clarity"
-description="Buyer, supplier, and consultant paths are separated from the beginning."
+title="Simple setup"
+description="Only the fields required to create your workspace are collected now."
 />
+
 <SetupPoint
-title="Permission-ready"
-description="Workspace access is connected to company identity and account type."
+title="Clear access model"
+description="Your organization type automatically configures role and workflow behavior."
 />
+
 <SetupPoint
-title="Procurement workflow"
-description="RFQ, supplier, quote, and award access is aligned to the selected model."
+title="Procurement ready"
+description="RFQs, supplier activity, analytics, and reporting are activated after setup."
 />
+
 <SetupPoint
-title="Billing later"
-description="Tax, billing, subscription, and verification details are collected later."
+title="Business details later"
+description="Billing, verification, tax, and subscription details are collected when required."
 />
 </div>
 </div>
@@ -262,37 +323,75 @@ Company identity.
 </h2>
 
 <p className="mt-4 text-sm leading-7 text-slate-600">
-Select the correct company model before entering the platform.
-These settings define the first layer of access and workflow
-behavior.
+Select the option that best describes your organization. Nexus
+Pavilion will configure the correct procurement workspace behind
+the scenes.
 </p>
 
-<form onSubmit={handleCreateCompany} className="mt-8 space-y-5">
-<label className="block">
-<span className="mb-2 block text-xs font-black uppercase tracking-[0.2em] text-slate-500">
-Account type
-</span>
+<form onSubmit={handleCreateCompany} className="mt-8 space-y-6">
+<section>
+<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">
+What best describes your organization?
+</p>
 
-<select
-required
-value={accountType}
-onChange={(event) =>
-handleAccountTypeChange(event.target.value as AccountType)
-}
+<div className="mt-4 grid gap-4">
+{ORGANIZATION_TYPES.map((item) => {
+const selected = item.value === organizationType;
+
+return (
+<button
+key={item.value}
+type="button"
 disabled={loading}
-className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-950 outline-none transition focus:border-slate-950 focus:bg-white focus:ring-4 focus:ring-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
+onClick={() => setOrganizationType(item.value)}
+className={`rounded-3xl border p-5 text-left transition ${
+selected
+? "border-slate-950 bg-slate-950 text-white shadow-xl"
+: "border-slate-200 bg-slate-50 text-slate-950 hover:border-slate-400 hover:bg-white"
+}`}
 >
-{ACCOUNT_TYPES.map((item) => (
-<option key={item.value} value={item.value}>
-{item.label}
-</option>
-))}
-</select>
+<div className="flex items-start justify-between gap-4">
+<div>
+<p className="text-lg font-black">{item.label}</p>
 
-<p className="mt-2 text-xs font-semibold leading-5 text-slate-500">
-{selectedAccountType?.description}
+<p
+className={`mt-2 text-sm leading-6 ${
+selected ? "text-slate-300" : "text-slate-600"
+}`}
+>
+{item.description}
 </p>
-</label>
+</div>
+
+<span
+className={`mt-1 rounded-full px-3 py-1 text-xs font-black ${
+selected
+? "bg-orange-500 text-white"
+: "bg-white text-slate-500"
+}`}
+>
+{selected ? "Selected" : item.shortLabel}
+</span>
+</div>
+<div className="mt-4 flex flex-wrap gap-2">
+{item.examples.map((example) => (
+<span
+key={example}
+className={`rounded-full px-3 py-1 text-xs font-bold ${
+selected
+? "bg-white/10 text-slate-200"
+: "bg-white text-slate-500"
+}`}
+>
+{example}
+</span>
+))}
+</div>
+</button>
+);
+})}
+</div>
+</section>
 
 <label className="block">
 <span className="mb-2 block text-xs font-black uppercase tracking-[0.2em] text-slate-500">
@@ -303,8 +402,8 @@ Company name
 type="text"
 required
 placeholder={
-accountType === "vendor_supplier"
-? "Ottawa Interior Construction Inc."
+organizationType === "vendor_supplier"
+? "Northern Acoustics & Ceilings Ltd."
 : "Northline Development Group"
 }
 value={name}
@@ -312,29 +411,14 @@ onChange={(event) => setName(event.target.value)}
 disabled={loading}
 className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-950 outline-none transition focus:border-slate-950 focus:bg-white focus:ring-4 focus:ring-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
 />
+
+<p className="mt-2 text-xs font-semibold leading-5 text-slate-500">
+This name will be visible to procurement teams, suppliers, and
+project partners across Nexus Pavilion.
+</p>
 </label>
 
 <div className="grid gap-5 sm:grid-cols-2">
-<label className="block">
-<span className="mb-2 block text-xs font-black uppercase tracking-[0.2em] text-slate-500">
-Primary category
-</span>
-
-<select
-required
-value={category}
-onChange={(event) => setCategory(event.target.value)}
-disabled={loading}
-className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-950 outline-none transition focus:border-slate-950 focus:bg-white focus:ring-4 focus:ring-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
->
-{COMPANY_CATEGORIES.map((item) => (
-<option key={item} value={item}>
-{item}
-</option>
-))}
-</select>
-</label>
-
 <label className="block">
 <span className="mb-2 block text-xs font-black uppercase tracking-[0.2em] text-slate-500">
 Regional hub
@@ -349,57 +433,72 @@ onChange={(event) => setLocation(event.target.value)}
 disabled={loading}
 className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-950 outline-none transition focus:border-slate-950 focus:bg-white focus:ring-4 focus:ring-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
 />
+
+<p className="mt-2 text-xs font-semibold leading-5 text-slate-500">
+Used for supplier discovery, market context, procurement
+reporting, and regional intelligence.
+</p>
 </label>
-</div>
 
 <label className="block">
 <span className="mb-2 block text-xs font-black uppercase tracking-[0.2em] text-slate-500">
-Network role
+Industry
+<span className="ml-2 font-bold text-slate-400">
+Optional
+</span>
 </span>
 
 <select
-required
-value={networkRole}
-onChange={(event) => setNetworkRole(event.target.value)}
+value={industry}
+onChange={(event) => setIndustry(event.target.value)}
 disabled={loading}
 className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-950 outline-none transition focus:border-slate-950 focus:bg-white focus:ring-4 focus:ring-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
 >
-{networkRoles.map((item) => (
+{INDUSTRIES.map((item) => (
 <option key={item} value={item}>
 {item}
 </option>
 ))}
 </select>
+
+<p className="mt-2 text-xs font-semibold leading-5 text-slate-500">
+Helps personalize benchmarks, analytics, supplier context,
+and executive reporting.
+</p>
 </label>
+</div>
 
-<div className="rounded-3xl border border-slate-100 bg-slate-50 p-5">
+<section className="rounded-3xl border border-slate-100 bg-slate-50 p-5">
 <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
-Workspace capabilities
+What happens next?
 </p>
 
-<div className="mt-4 grid gap-3 sm:grid-cols-2">
-{capabilities.map((capability) => (
-<div
-key={capability}
-className="rounded-2xl bg-white px-4 py-3 text-xs font-black text-slate-700"
->
-✓ {capability}
-</div>
-))}
-</div>
-</div>
+<div className="mt-4 grid gap-3">
+<NextStep
+number="01"
+title="Create your workspace"
+description="Nexus Pavilion creates your company command center."
+/>
 
-<div className="rounded-3xl border border-slate-100 bg-slate-50 p-5">
-<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
-Deferred setup
-</p>
+<NextStep
+number="02"
+title="Complete your company profile"
+description="Add logo, profile details, and marketplace visibility."
+/>
 
-<p className="mt-2 text-sm font-semibold leading-6 text-slate-600">
-Tax ID, business number, billing contact, verification, and
-subscription details are collected later when required.
-</p>
+<NextStep
+number="03"
+title="Invite team members"
+description="Bring procurement, finance, operations, or vendor teams into the workspace."
+/>
+
+<NextStep
+number="04"
+title="Start procurement activity"
+description="Create RFQs, compare quotes, track awards, and open executive analytics."
+/>
 </div>
-
+</section>
 {error ? (
 <div
 role="alert"
@@ -414,9 +513,7 @@ type="submit"
 disabled={loading || !formIsReady}
 className="w-full rounded-full bg-slate-950 px-7 py-4 text-sm font-black text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
 >
-{loading
-? "Creating company workspace..."
-: "Create Company Workspace"}
+{loading ? "Creating workspace..." : "Create Workspace"}
 </button>
 </form>
 </section>
@@ -438,6 +535,30 @@ return (
 <p className="text-sm font-black text-white">{title}</p>
 
 <p className="mt-2 text-xs font-semibold leading-5 text-slate-400">
+{description}
+</p>
+</div>
+);
+}
+
+function NextStep({
+number,
+title,
+description,
+}: {
+number: string;
+title: string;
+description: string;
+}) {
+return (
+<div className="rounded-2xl bg-white p-4">
+<p className="text-xs font-black uppercase tracking-[0.2em] text-orange-500">
+{number}
+</p>
+
+<p className="mt-2 text-sm font-black text-slate-950">{title}</p>
+
+<p className="mt-1 text-xs font-semibold leading-5 text-slate-500">
 {description}
 </p>
 </div>

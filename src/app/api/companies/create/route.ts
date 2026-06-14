@@ -19,6 +19,8 @@ profileRole: "owner",
 defaultNetworkRole: "Owner / Developer",
 allowedNetworkRoles: [
 "Owner / Developer",
+"Project Owner",
+"Real Estate Developer",
 "General Contractor",
 "Construction Manager",
 "Procurement Team",
@@ -26,23 +28,31 @@ allowedNetworkRoles: [
 },
 vendor_supplier: {
 profileRole: "vendor",
-defaultNetworkRole: "Vendor / Supplier",
+defaultNetworkRole: "Supplier / Vendor",
 allowedNetworkRoles: [
+"Supplier / Vendor",
 "Vendor / Supplier",
 "Manufacturer",
+"Distributor",
 "Distributor / Supplier",
+"Material Supplier",
 "Subcontractor",
+"Specialty Trade",
 "Specialty Contractor",
 ],
 },
 consultant_service: {
 profileRole: "vendor",
-defaultNetworkRole: "Consultant",
+defaultNetworkRole: "Consultant / Service Provider",
 allowedNetworkRoles: [
+"Consultant / Service Provider",
 "Architect / Designer",
+"Architect",
 "Engineer",
+"Design Consultant",
 "Cost Consultant",
 "Project Consultant",
+"Professional Services Consultant",
 "Consultant",
 ],
 },
@@ -69,12 +79,35 @@ value === "consultant_service"
 );
 }
 
+function normalizeNetworkRole(accountType: AccountType, value: string) {
+const normalizedValue = normalizeText(value);
+const accountConfig = ACCOUNT_TYPE_CONFIG[accountType];
+
+if (!normalizedValue) {
+return accountConfig.defaultNetworkRole;
+}
+
+const aliases: Record<string, string> = {
+"Supplier / Vendor": "Supplier / Vendor",
+"Vendor / Supplier": "Supplier / Vendor",
+"Specialty Contractor": "Specialty Trade",
+"Distributor / Supplier": "Distributor",
+"Consultant": "Consultant / Service Provider",
+"Professional Services Consultant": "Consultant / Service Provider",
+"Architect / Designer": "Architect",
+"Project Owner": "Owner / Developer",
+};
+
+return aliases[normalizedValue] || normalizedValue;
+}
+
 export async function POST(request: Request) {
 try {
 const body = await request.json();
 
 const name = normalizeText(String(body.name || ""));
-const category = normalizeText(String(body.category || ""));
+const category =
+normalizeText(String(body.category || "")) || "General Construction";
 const location = normalizeText(String(body.location || ""));
 const rawAccountType = normalizeText(String(body.accountType || ""));
 const rawNetworkRole = normalizeText(String(body.networkRole || ""));
@@ -82,13 +115,6 @@ const rawNetworkRole = normalizeText(String(body.networkRole || ""));
 if (!name) {
 return NextResponse.json(
 { error: "Company name is required." },
-{ status: 400 }
-);
-}
-
-if (!category) {
-return NextResponse.json(
-{ error: "Company category is required." },
 { status: 400 }
 );
 }
@@ -102,19 +128,17 @@ return NextResponse.json(
 
 if (!isAccountType(rawAccountType)) {
 return NextResponse.json(
-{ error: "A valid account type is required." },
+{ error: "A valid organization type is required." },
 { status: 400 }
 );
 }
 
 const accountConfig = ACCOUNT_TYPE_CONFIG[rawAccountType];
-
-const networkRole =
-rawNetworkRole || accountConfig.defaultNetworkRole;
+const networkRole = normalizeNetworkRole(rawAccountType, rawNetworkRole);
 
 if (!accountConfig.allowedNetworkRoles.includes(networkRole)) {
 return NextResponse.json(
-{ error: "Network role is not valid for this account type." },
+{ error: "Network role is not valid for this organization type." },
 { status: 400 }
 );
 }
