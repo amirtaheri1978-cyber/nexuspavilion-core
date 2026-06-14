@@ -38,6 +38,12 @@ id: string;
 network_role: string | null;
 };
 
+type RfqInvite = {
+rfq_id: string;
+email: string | null;
+status: string | null;
+};
+
 const PROCUREMENT_SCOPE_LABELS: Record<ProcurementScope, string> = {
 material: "Material / Product",
 subcontractor: "Subcontractor / Trade",
@@ -46,7 +52,7 @@ professional_service: "Professional Service",
 };
 
 const SOURCING_METHOD_LABELS: Record<SourcingMethod, string> = {
-open: "Open RFQ",
+open: "Open Tender",
 invited: "Invited / Selective",
 sealed_bid: "Sealed Bid",
 };
@@ -101,7 +107,7 @@ return !isSupplierCompany(networkRole);
 
 function getPageDescription(networkRole: string | null | undefined) {
 if (isSupplierCompany(networkRole)) {
-return "Browse open construction procurement opportunities by scope, sourcing method, framework, budget, and region.";
+return "Browse public RFQs and secure invited opportunities available to your supplier account.";
 }
 
 return "Browse, classify, monitor, and manage construction RFQs connected to your enterprise workspace.";
@@ -165,12 +171,54 @@ return "Not specified";
 return `$${amount.toLocaleString()}`;
 }
 
+function isSupplierVisibleRfq(rfq: RFQ, invitedRfqIds: Set<string>) {
+const sourcingMethod = getSourcingMethod(rfq.sourcing_method);
+const contractFramework = getContractFramework(rfq.contract_framework);
+
+if (!isOpenRFQ(rfq.status)) return false;
+
+if (sourcingMethod === "open") return true;
+
+if (sourcingMethod === "invited") {
+return invitedRfqIds.has(rfq.id);
+}
+
+if (sourcingMethod === "sealed_bid") {
+return invitedRfqIds.has(rfq.id);
+}
+
+if (contractFramework === "framework") {
+return invitedRfqIds.has(rfq.id);
+}
+
+return false;
+}
+
+function getVisibilityBadge(rfq: RFQ, supplierMode: boolean, invitedRfqIds: Set<string>) {
+const sourcingMethod = getSourcingMethod(rfq.sourcing_method);
+const contractFramework = getContractFramework(rfq.contract_framework);
+
+if (!supplierMode) {
+if (contractFramework === "framework") return "Framework Managed";
+if (sourcingMethod === "open") return "Public Marketplace";
+if (sourcingMethod === "sealed_bid") return "Sealed Bid Control";
+return "Invite-Controlled";
+}
+
+if (invitedRfqIds.has(rfq.id)) return "Invited Access";
+if (sourcingMethod === "open") return "Open Marketplace";
+
+return "Restricted";
+}
+
 export default async function RFQMarketplacePage() {
 const supabase = await createClient();
 
 const {
 data: { user },
 } = await supabase.auth.getUser();
+
+const userEmail = String(user?.email || "").trim().toLowerCase();
 
 const { data: profileData } = user
 ? await supabase
@@ -191,8 +239,20 @@ const { data: companyData } = profile?.company_id
 : { data: null };
 
 const company = companyData as Company | null;
+
 const supplierMode =
 profile?.role === "vendor" || isSupplierCompany(company?.network_role);
+
+const { data: invitedRows } =
+supplierMode && userEmail
+? await supabase
+.from("rfq_invites")
+.select("rfq_id, email, status")
+.eq("email", userEmail)
+: { data: [] };
+
+const inviteList = (invitedRows ?? []) as RfqInvite[];
+const invitedRfqIds = new Set(inviteList.map((invite) => invite.rfq_id));
 
 const { data: rfqs } = supplierMode
 ? await supabase
@@ -208,7 +268,11 @@ const { data: rfqs } = supplierMode
 .order("created_at", { ascending: false })
 : { data: [] };
 
-const rfqList = (rfqs ?? []) as RFQ[];
+const rawRfqList = (rfqs ?? []) as RFQ[];
+
+const rfqList = supplierMode
+? rawRfqList.filter((rfq) => isSupplierVisibleRfq(rfq, invitedRfqIds))
+: rawRfqList;
 
 const openCount = rfqList.filter((rfq) => isOpenRFQ(rfq.status)).length;
 
@@ -233,6 +297,23 @@ const equipmentCount = rfqList.filter(
 const serviceCount = rfqList.filter(
 (rfq) => getProcurementScope(rfq.procurement_scope) === "professional_service"
 ).length;
+
+const openTenderCount = rfqList.filter(
+(rfq) => getSourcingMethod(rfq.sourcing_method) === "open"
+).length;
+
+const invitedCount = rfqList.filter(
+(rfq) => getSourcingMethod(rfq.sourcing_method) === "invited"
+).length;
+
+const sealedBidCount = rfqList.filter(
+(rfq) => getSourcingMethod(rfq.sourcing_method) === "sealed_bid"
+).length;
+
+const frameworkCount = rfqList.filter(
+(rfq) => getContractFramework(rfq.contract_framework) === "framework"
+).length;
+
 return (
 <main className="min-h-screen bg-[#f6f6f3] px-8 py-10">
 <div className="mx-auto max-w-7xl">
@@ -266,7 +347,7 @@ Create RFQ
 </div>
 
 <section className="mt-8 grid gap-4 md:grid-cols-4">
-<StatusCard title="Total RFQs" value={rfqList.length} />
+<StatusCard title="Visible RFQs" value={rfqList.length} />
 <StatusCard title="Open" value={openCount} />
 <StatusCard title="Awarded" value={awardedCount} />
 <StatusCard title="Closed" value={closedCount} />
@@ -277,6 +358,13 @@ Create RFQ
 <StatusCard title="Trade RFQs" value={tradeCount} />
 <StatusCard title="Equipment RFQs" value={equipmentCount} />
 <StatusCard title="Service RFQs" value={serviceCount} />
+</section>
+
+<section className="mt-6 grid gap-4 md:grid-cols-4">
+<StatusCard title="Open Tender" value={openTenderCount} />
+<StatusCard title="Invited" value={invitedCount} />
+<StatusCard title="Sealed Bid" value={sealedBidCount} />
+<StatusCard title="Framework" value={frameworkCount} />
 </section>
 
 <section className="mt-10 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
@@ -332,15 +420,9 @@ rfq.status
 </div>
 
 <div className="mt-6 flex items-center justify-between gap-4">
-{supplierMode ? (
 <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-black text-slate-600">
-Supplier Opportunity
+{getVisibilityBadge(rfq, supplierMode, invitedRfqIds)}
 </span>
-) : (
-<span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-black text-slate-600">
-Your Company RFQ
-</span>
-)}
 
 <span className="text-sm font-black text-slate-950 transition group-hover:translate-x-1">
 {getActionLabel(rfq.status)}
@@ -356,7 +438,7 @@ No RFQs found
 
 <p className="mt-2 text-sm leading-6 text-slate-600">
 {supplierMode
-? "No open construction RFQs are currently available for supplier quotes."
+? "No public or invited RFQs are currently available for your supplier account."
 : "Create your first classified construction procurement opportunity."}
 </p>
 
