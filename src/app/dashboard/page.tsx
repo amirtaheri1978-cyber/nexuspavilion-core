@@ -4,6 +4,8 @@ import { redirect } from "next/navigation";
 import SignOutButton from "@/components/sign-out-button";
 import { createClient } from "@/lib/supabase/server";
 
+type Experience = "owner" | "vendor" | "consultant";
+
 type RFQ = {
 id: string;
 slug: string | null;
@@ -31,6 +33,17 @@ type: string | null;
 created_at: string | null;
 };
 
+type Company = {
+id: string;
+name: string | null;
+slug: string | null;
+category: string | null;
+location: string | null;
+network_role: string | null;
+status: string | null;
+logo_url: string | null;
+};
+
 type ActivityEvent = {
 id: string;
 title: string;
@@ -40,6 +53,36 @@ severity: "success" | "info" | "warning" | "critical";
 createdAt: string | null;
 href: string;
 };
+
+function normalizeText(value: string | null | undefined) {
+return String(value || "").trim().toLowerCase();
+}
+
+function getExperience(role: string | null, networkRole: string | null): Experience {
+const normalizedRole = normalizeText(role);
+const normalizedNetworkRole = normalizeText(networkRole);
+
+if (
+normalizedNetworkRole.includes("architect") ||
+normalizedNetworkRole.includes("engineer") ||
+normalizedNetworkRole.includes("consultant")
+) {
+return "consultant";
+}
+
+if (
+normalizedRole === "vendor" ||
+normalizedNetworkRole.includes("supplier") ||
+normalizedNetworkRole.includes("vendor") ||
+normalizedNetworkRole.includes("manufacturer") ||
+normalizedNetworkRole.includes("distributor") ||
+normalizedNetworkRole.includes("trade")
+) {
+return "vendor";
+}
+
+return "owner";
+}
 
 function formatMoney(value: number | string | null | undefined) {
 const amount = Number(value);
@@ -98,12 +141,12 @@ description: item.message || "A procurement activity was recorded.",
 type: item.type || "event",
 severity: getNotificationSeverity(item.type),
 createdAt: item.created_at,
-href: "/dashboard",
+href: "/notifications",
 }));
 
 const rfqEvents: ActivityEvent[] = rfqs.slice(0, 5).map((rfq) => ({
 id: `rfq-${rfq.id}`,
-title: rfq.status === "awarded" ? "RFQ Awarded" : "RFQ Created",
+title: rfq.status === "awarded" ? "RFQ Awarded" : "RFQ Activity",
 description: `${rfq.title || "Untitled RFQ"} · ${
 rfq.location || "Location N/A"
 }`,
@@ -139,6 +182,65 @@ return dateB - dateA;
 .slice(0, 8);
 }
 
+function getDashboardCopy(experience: Experience) {
+if (experience === "vendor") {
+return {
+eyebrow: "Supplier Workspace",
+title: "Supplier Opportunity Command Center",
+subtitle:
+"Track open RFQs, submitted quotes, award outcomes, customer activity, and supplier growth signals.",
+heroLabel: "Supplier Growth Center",
+heroTitle: "Opportunity Pipeline Intelligence",
+heroDescription:
+"Monitor RFQ access, quote activity, award conversion, and supplier readiness from one workspace.",
+recommendation:
+"Prioritize high-fit RFQs, improve quote coverage, and maintain company profile readiness to increase award opportunities.",
+companyLabel: "My Supplier Company",
+analyticsLabel: "Supplier Intelligence",
+analyticsTitle: "Opportunity & Quote Analytics",
+activityLabel: "Supplier Activity Center",
+activityTitle: "Live Supplier Timeline",
+};
+}
+
+if (experience === "consultant") {
+return {
+eyebrow: "Consultant Workspace",
+title: "Project Advisory Command Center",
+subtitle:
+"Track project opportunities, advisory activity, client signals, and professional service visibility.",
+heroLabel: "Advisory Command Center",
+heroTitle: "Professional Services Intelligence",
+heroDescription:
+"Monitor project activity, advisory opportunities, client engagement, and service visibility across Nexus Pavilion.",
+recommendation:
+"Strengthen company profile, monitor relevant project opportunities, and support procurement workflows with advisory expertise.",
+companyLabel: "My Advisory Company",
+analyticsLabel: "Consultant Intelligence",
+analyticsTitle: "Advisory Activity Analytics",
+activityLabel: "Consultant Activity Center",
+activityTitle: "Live Advisory Timeline",
+};
+}
+
+return {
+eyebrow: "Executive Workspace",
+title: "Executive Procurement Command Center",
+subtitle:
+"Monitor RFQs, awards, supplier participation, procurement risk, savings opportunities, and board-level intelligence.",
+heroLabel: "CEO Command Center",
+heroTitle: "Executive Procurement Control Tower",
+heroDescription:
+"Track procurement health, supplier concentration, award performance, risk exposure, and executive reporting confidence.",
+recommendation:
+"Prioritize competitive supplier participation, review award concentration, and use procurement intelligence to improve decision quality.",
+companyLabel: "My Enterprise Company",
+analyticsLabel: "Procurement Intelligence",
+analyticsTitle: "Executive Analytics",
+activityLabel: "Activity Command Center",
+activityTitle: "Live Procurement Timeline",
+};
+}
 export default async function DashboardPage() {
 const supabase = await createClient();
 
@@ -158,21 +260,21 @@ if (!profile?.company_id) {
 redirect("/create-company");
 }
 
-const { data: company } = profile?.company_id
-? await supabase
+const { data: company } = await supabase
 .from("companies")
-.select("*")
+.select("id, name, slug, category, location, network_role, status, logo_url")
 .eq("id", profile.company_id)
-.single()
-: { data: null };
+.single();
 
-const { data: rfqs } = profile?.company_id
-? await supabase
+const currentCompany = company as Company | null;
+const experience = getExperience(profile.role, currentCompany?.network_role || null);
+const dashboardCopy = getDashboardCopy(experience);
+
+const { data: rfqs } = await supabase
 .from("rfqs")
 .select("*")
 .eq("company_id", profile.company_id)
-.order("created_at", { ascending: false })
-: { data: [] };
+.order("created_at", { ascending: false });
 
 const rfqList = (rfqs ?? []) as RFQ[];
 const rfqIds = rfqList.map((rfq) => rfq.id);
@@ -269,33 +371,83 @@ procurementHealthScore >= 85
 ? "Moderate"
 : "Needs Attention";
 
-const boardRecommendation =
-riskIndex >= 60
-? "Reduce procurement risk by increasing supplier participation, improving RFQ conversion, and reviewing award concentration."
-: estimatedSavings > 0
-? "Prioritize savings capture, maintain competitive bidding activity, and scale high-performing supplier relationships."
-: "Continue growing RFQ activity, supplier quote volume, and award decisions to strengthen executive procurement confidence.";
+const vendorWinRate =
+submittedQuotes > 0
+? Math.round((awardedQuotes.length / submittedQuotes) * 100)
+: 0;
 
-const executiveAlerts = [];
+const pipelineValue = quoteList.reduce((total, quote) => {
+const amount = Number(quote.amount);
+return total + (Number.isNaN(amount) ? 0 : amount);
+}, 0);
 
-if (riskIndex >= 55) {
-executiveAlerts.push({
-level: "warning",
-title: "Procurement Risk Requires Attention",
-message: "Risk exposure is elevated. Review RFQ activity and award conversion.",
+const activityFeed = buildActivityFeed({
+notifications: notificationList,
+rfqs: rfqList,
+awardedQuotes,
 });
-}
 
-if (estimatedSavings > 0) {
-executiveAlerts.push({
+const alerts = [];
+
+if (experience === "vendor") {
+if (openRfqs > 0) {
+alerts.push({
 level: "opportunity",
-title: "Savings Opportunity Available",
-message: "Budget-to-award spread indicates potential procurement savings.",
+title: "Open RFQs Available",
+message: "Review active RFQs and prioritize high-fit opportunities.",
 });
 }
 
 if (submittedQuotes < 3) {
-executiveAlerts.push({
+alerts.push({
+level: "warning",
+title: "Quote Pipeline Is Early",
+message: "Submit more quotes to improve visibility and award probability.",
+});
+}
+
+if (vendorWinRate > 0) {
+alerts.push({
+level: "healthy",
+title: "Award Conversion Active",
+message: "Your submitted quotes are converting into award outcomes.",
+});
+}
+} else if (experience === "consultant") {
+alerts.push({
+level: "healthy",
+title: "Advisory Workspace Active",
+message: "Monitor project opportunities and strengthen professional visibility.",
+});
+
+if (openRfqs > 0) {
+alerts.push({
+level: "opportunity",
+title: "Project Activity Available",
+message: "Review active project opportunities and advisory workflows.",
+});
+}
+} else {
+if (riskIndex >= 55) {
+alerts.push({
+level: "warning",
+title: "Procurement Risk Requires Attention",
+message:
+"Risk exposure is elevated. Review RFQ activity and award conversion.",
+});
+}
+
+if (estimatedSavings > 0) {
+alerts.push({
+level: "opportunity",
+title: "Savings Opportunity Available",
+message:
+"Budget-to-award spread indicates potential procurement savings.",
+});
+}
+
+if (submittedQuotes < 3) {
+alerts.push({
 level: "warning",
 title: "Supplier Participation Is Limited",
 message: "Invite more vendors to improve competition and pricing quality.",
@@ -303,11 +455,13 @@ message: "Invite more vendors to improve competition and pricing quality.",
 }
 
 if (forecastAccuracy >= 75) {
-executiveAlerts.push({
+alerts.push({
 level: "healthy",
 title: "Forecast Confidence Is Active",
-message: "Procurement data is sufficient for executive forecasting signals.",
+message:
+"Procurement data is sufficient for executive forecasting signals.",
 });
+}
 }
 
 const topRfqsByBudget = [...rfqList]
@@ -316,74 +470,98 @@ const topRfqsByBudget = [...rfqList]
 
 const recentAwards = awardedQuotes.slice(0, 5);
 
-const activityFeed = buildActivityFeed({
-notifications: notificationList,
-rfqs: rfqList,
-awardedQuotes,
-});
-
 return (
 <main className="min-h-screen bg-[#f6f6f3]">
 <div className="mx-auto max-w-7xl px-6 py-10">
 <div className="flex items-start justify-between gap-6">
 <div>
 <p className="text-xs font-black uppercase tracking-[0.35em] text-orange-500">
-Executive Workspace
+{dashboardCopy.eyebrow}
 </p>
 
 <h1 className="mt-3 text-5xl font-black text-slate-950">
-Nexus Pavilion Dashboard
+{dashboardCopy.title}
 </h1>
 
-<p className="mt-3 text-lg text-slate-600">
-Signed in as {profile?.email || user?.email}
+<p className="mt-3 max-w-4xl text-lg leading-8 text-slate-600">
+{dashboardCopy.subtitle}
 </p>
 
-<p className="mt-2 text-sm font-bold uppercase tracking-[0.2em] text-slate-400">
-Role: {profile?.role ? profile.role.toUpperCase() : "SETUP REQUIRED"}
+<p className="mt-3 text-sm font-bold uppercase tracking-[0.2em] text-slate-400">
+Signed in as {profile?.email || user?.email} · Role:{" "}
+{profile?.role ? profile.role.toUpperCase() : "SETUP REQUIRED"}
 </p>
 </div>
 
 <SignOutButton />
 </div>
-
 <section className="mt-10 rounded-[36px] border border-slate-200 bg-slate-950 p-8 text-white">
 <p className="text-xs font-black uppercase tracking-[0.3em] text-orange-400">
-CEO Command Center
+{dashboardCopy.heroLabel}
 </p>
 
 <div className="mt-5 grid gap-8 lg:grid-cols-[1fr_0.9fr]">
 <div>
 <h2 className="text-4xl font-black">
-Executive Procurement Control Tower
+{dashboardCopy.heroTitle}
 </h2>
 
 <p className="mt-4 max-w-3xl text-sm leading-7 text-slate-300">
-{boardRecommendation}
+{dashboardCopy.heroDescription}
+</p>
+
+<p className="mt-5 max-w-3xl text-sm font-semibold leading-7 text-slate-300">
+{dashboardCopy.recommendation}
 </p>
 </div>
 
 <div className="grid gap-4 sm:grid-cols-2">
+{experience === "vendor" ? (
+<>
+<DarkMetric title="Open Opportunities" value={String(openRfqs)} />
+<DarkMetric title="Submitted Quotes" value={String(submittedQuotes)} />
+<DarkMetric title="Win Rate" value={`${vendorWinRate}%`} />
+<DarkMetric title="Pipeline Value" value={formatMoney(pipelineValue)} />
+</>
+) : experience === "consultant" ? (
+<>
+<DarkMetric title="Project Activity" value={String(openRfqs)} />
+<DarkMetric title="Client Signals" value={String(notificationList.length)} />
+<DarkMetric title="Service Visibility" value={executiveStatus} />
+<DarkMetric title="Forecast Confidence" value={`${forecastAccuracy}%`} />
+</>
+) : (
+<>
 <DarkMetric title="Enterprise Score" value={`${procurementHealthScore}/100`} />
 <DarkMetric title="Risk Index" value={`${riskIndex}/100`} />
 <DarkMetric title="Forecast Accuracy" value={`${forecastAccuracy}%`} />
 <DarkMetric title="Supplier Concentration" value={supplierConcentration} />
+</>
+)}
 </div>
 </div>
 </section>
 
 <section className="mt-8 rounded-[32px] border border-black/5 bg-white p-8">
 <p className="text-xs font-black uppercase tracking-[0.3em] text-orange-500">
-Executive Alerts
+{experience === "vendor"
+? "Supplier Signals"
+: experience === "consultant"
+? "Advisory Signals"
+: "Executive Alerts"}
 </p>
 
 <h2 className="mt-3 text-3xl font-black text-slate-950">
-Real-Time Procurement Signals
+Real-Time Workspace Signals
 </h2>
 
 <div className="mt-6 space-y-4">
-{executiveAlerts.map((alert, index) => (
-<div key={index} className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+{alerts.length > 0 ? (
+alerts.map((alert, index) => (
+<div
+key={index}
+className="rounded-2xl border border-slate-200 bg-slate-50 p-5"
+>
 <div className="flex items-center gap-3">
 <div
 className={`h-3 w-3 rounded-full ${
@@ -398,24 +576,29 @@ alert.level === "healthy"
 <p className="font-black text-slate-950">{alert.title}</p>
 </div>
 
-<p className="mt-2 text-sm text-slate-600">{alert.message}</p>
+<p className="mt-2 text-sm text-slate-600">
+{alert.message}
+</p>
 </div>
-))}
+))
+) : (
+<EmptyState message="No active workspace signals yet." />
+)}
 </div>
 </section>
 
 <section className="mt-8 rounded-[32px] border border-black/5 bg-white p-8">
 <p className="text-xs font-black uppercase tracking-[0.3em] text-orange-500">
-My Enterprise Company
+{dashboardCopy.companyLabel}
 </p>
 
-{company ? (
-<div className="mt-6 flex items-center justify-between gap-6">
+{currentCompany ? (
+<div className="mt-6 flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
 <div className="flex items-center gap-5">
-{company.logo_url ? (
+{currentCompany.logo_url ? (
 <img
-src={company.logo_url}
-alt={company.name}
+src={currentCompany.logo_url}
+alt={currentCompany.name || "Company"}
 className="h-20 w-20 rounded-3xl border border-slate-200 object-contain p-2"
 />
 ) : (
@@ -426,21 +609,21 @@ className="h-20 w-20 rounded-3xl border border-slate-200 object-contain p-2"
 
 <div>
 <h2 className="text-3xl font-black text-slate-950">
-{company.name}
+{currentCompany.name}
 </h2>
 
 <p className="mt-1 text-sm font-semibold text-slate-500">
-{company.category} · {company.location}
+{currentCompany.category} · {currentCompany.location}
 </p>
 
 <p className="mt-2 text-sm text-slate-600">
-{company.network_role || "Enterprise Workspace"}
+{currentCompany.network_role || "Workspace"}
 </p>
 </div>
 </div>
 
 <Link
-href={`/company/${company.slug}`}
+href={`/company/${currentCompany.slug}`}
 className="rounded-full bg-slate-950 px-6 py-3 text-sm font-bold text-white transition hover:bg-slate-800"
 >
 Open Company
@@ -452,58 +635,261 @@ Open Company
 </section>
 
 <section className="mt-8 grid gap-6 md:grid-cols-4">
-<WorkspaceCard title="Company Hub" description="Manage enterprise profiles and branding." href="/company" />
-<WorkspaceCard title="RFQ Marketplace" description="Browse, create, and award procurement opportunities." href="/rfq" />
-<WorkspaceCard title="Vendor Dashboard" description="Track submitted quotes, awards, and supplier activity." href="/vendor-dashboard" />
-<WorkspaceCard title="Public Directory" description="Explore connected enterprise companies." href="/directory" />
+{experience === "vendor" ? (
+<>
+<WorkspaceCard
+title="Open Opportunities"
+description="Browse available RFQs and buyer requests."
+href="/rfq"
+/>
+<WorkspaceCard
+title="My Quotes"
+description="Track submitted pricing and quote activity."
+href="/vendor-dashboard"
+/>
+<WorkspaceCard
+title="Company Profile"
+description="Improve supplier visibility and trust."
+href="/company/settings"
+/>
+<WorkspaceCard
+title="Activity Center"
+description="Review updates, notifications, and workflow signals."
+href="/notifications"
+/>
+</>
+) : experience === "consultant" ? (
+<>
+<WorkspaceCard
+title="Project Opportunities"
+description="Review project and advisory opportunities."
+href="/rfq"
+/>
+<WorkspaceCard
+title="Company Profile"
+description="Improve professional service visibility."
+href="/company/settings"
+/>
+<WorkspaceCard
+title="Activity Center"
+description="Review updates, notifications, and workflow signals."
+href="/notifications"
+/>
+<WorkspaceCard
+title="Directory"
+description="Explore connected enterprise companies."
+href="/directory"
+/>
+</>
+) : (
+<>
+<WorkspaceCard
+title="Company Hub"
+description="Manage enterprise profiles and branding."
+href="/company/settings"
+/>
+<WorkspaceCard
+title="RFQ Marketplace"
+description="Browse, create, and award procurement opportunities."
+href="/rfq"
+/>
+<WorkspaceCard
+title="Executive AI"
+description="Review risk, confidence, and board reporting."
+href="/analytics"
+/>
+<WorkspaceCard
+title="Supplier Directory"
+description="Explore connected enterprise companies."
+href="/directory"
+/>
+</>
+)}
 </section>
-
 <section className="mt-8 rounded-[32px] border border-black/5 bg-white p-8">
 <div className="flex items-end justify-between gap-6">
 <div>
 <p className="text-xs font-black uppercase tracking-[0.3em] text-orange-500">
-Procurement Intelligence
+{dashboardCopy.analyticsLabel}
 </p>
 
 <h2 className="mt-3 text-3xl font-black text-slate-950">
-Executive Analytics
+{dashboardCopy.analyticsTitle}
 </h2>
 </div>
 
-<Link href="/rfq" className="rounded-full bg-slate-950 px-5 py-3 text-sm font-bold text-white">
-Open Marketplace
+<Link
+href={experience === "owner" ? "/analytics" : "/rfq"}
+className="rounded-full bg-slate-950 px-5 py-3 text-sm font-bold text-white"
+>
+{experience === "owner" ? "Open Intelligence" : "Open Opportunities"}
 </Link>
 </div>
 
 <div className="mt-6 grid gap-6 md:grid-cols-4">
-<InsightCard title="Total RFQs" value={String(totalRfqs)} detail={`${openRfqs} open · ${awardedRfqs} awarded`} />
-<InsightCard title="Supplier Quotes" value={String(submittedQuotes)} detail="Submitted enterprise bids" />
-<InsightCard title="Awarded Spend" value={formatMoney(totalAwardedSpend)} detail="Total awarded contract value" />
-<InsightCard title="Award Rate" value={`${awardRate}%`} detail="RFQs converted to awards" />
-<InsightCard title="Open RFQs" value={String(openRfqs)} detail="Active procurement opportunities" />
-<InsightCard title="Closed RFQs" value={String(closedRfqs)} detail="Archived or completed events" />
-<InsightCard title="Est. Savings" value={formatMoney(estimatedSavings)} detail="Budget less awarded value" />
-<InsightCard title="Average Award" value={formatMoney(averageAward)} detail="Average awarded contract" />
+{experience === "vendor" ? (
+<>
+<InsightCard
+title="Open RFQs"
+value={String(openRfqs)}
+detail="Available procurement opportunities"
+/>
+<InsightCard
+title="Submitted Quotes"
+value={String(submittedQuotes)}
+detail="Supplier quote activity"
+/>
+<InsightCard
+title="Award Wins"
+value={String(awardedQuotes.length)}
+detail="Quotes converted to awards"
+/>
+<InsightCard
+title="Win Rate"
+value={`${vendorWinRate}%`}
+detail="Award conversion from quote activity"
+/>
+<InsightCard
+title="Pipeline Value"
+value={formatMoney(pipelineValue)}
+detail="Total submitted quote value"
+/>
+<InsightCard
+title="Awarded Revenue"
+value={formatMoney(totalAwardedSpend)}
+detail="Total awarded supplier value"
+/>
+<InsightCard
+title="Average Award"
+value={formatMoney(averageAward)}
+detail="Average awarded value"
+/>
+<InsightCard
+title="Notifications"
+value={String(notificationList.length)}
+detail="Recent supplier workflow signals"
+/>
+</>
+) : experience === "consultant" ? (
+<>
+<InsightCard
+title="Project Activity"
+value={String(totalRfqs)}
+detail={`${openRfqs} active opportunities`}
+/>
+<InsightCard
+title="Client Signals"
+value={String(notificationList.length)}
+detail="Recent advisory workflow signals"
+/>
+<InsightCard
+title="Submitted Inputs"
+value={String(submittedQuotes)}
+detail="Quote or advisory participation"
+/>
+<InsightCard
+title="Engagement Score"
+value={`${procurementHealthScore}/100`}
+detail="Workspace activity and visibility"
+/>
+<InsightCard
+title="Open Opportunities"
+value={String(openRfqs)}
+detail="Active project opportunities"
+/>
+<InsightCard
+title="Closed Activity"
+value={String(closedRfqs)}
+detail="Completed or archived project activity"
+/>
+<InsightCard
+title="Forecast Confidence"
+value={`${forecastAccuracy}%`}
+detail="Advisory intelligence confidence"
+/>
+<InsightCard
+title="Visibility"
+value={executiveStatus}
+detail="Professional service workspace status"
+/>
+</>
+) : (
+<>
+<InsightCard
+title="Total RFQs"
+value={String(totalRfqs)}
+detail={`${openRfqs} open · ${awardedRfqs} awarded`}
+/>
+<InsightCard
+title="Supplier Quotes"
+value={String(submittedQuotes)}
+detail="Submitted enterprise bids"
+/>
+<InsightCard
+title="Awarded Spend"
+value={formatMoney(totalAwardedSpend)}
+detail="Total awarded contract value"
+/>
+<InsightCard
+title="Award Rate"
+value={`${awardRate}%`}
+detail="RFQs converted to awards"
+/>
+<InsightCard
+title="Open RFQs"
+value={String(openRfqs)}
+detail="Active procurement opportunities"
+/>
+<InsightCard
+title="Closed RFQs"
+value={String(closedRfqs)}
+detail="Archived or completed events"
+/>
+<InsightCard
+title="Est. Savings"
+value={formatMoney(estimatedSavings)}
+detail="Budget less awarded value"
+/>
+<InsightCard
+title="Average Award"
+value={formatMoney(averageAward)}
+detail="Average awarded contract"
+/>
+</>
+)}
 </div>
 </section>
 
 <section className="mt-8 grid gap-8 lg:grid-cols-2">
 <div className="rounded-[32px] border border-black/5 bg-white p-8">
 <p className="text-xs font-black uppercase tracking-[0.3em] text-orange-500">
-Award Activity
+{experience === "vendor"
+? "Award Activity"
+: experience === "consultant"
+? "Engagement Activity"
+: "Award Activity"}
 </p>
 
 <h2 className="mt-3 text-3xl font-black text-slate-950">
-Recent Award Decisions
+{experience === "vendor"
+? "Recent Award Wins"
+: experience === "consultant"
+? "Recent Project Outcomes"
+: "Recent Award Decisions"}
 </h2>
 
 <div className="mt-6 space-y-4">
 {recentAwards.length > 0 ? (
 recentAwards.map((quote) => {
-const relatedRfq = rfqList.find((rfq) => rfq.id === quote.rfq_id);
+const relatedRfq = rfqList.find(
+(rfq) => rfq.id === quote.rfq_id
+);
 
 return (
-<div key={quote.id} className="rounded-3xl border border-slate-100 bg-slate-50 p-5">
+<div
+key={quote.id}
+className="rounded-3xl border border-slate-100 bg-slate-50 p-5"
+>
 <div className="flex items-start justify-between gap-4">
 <div>
 <p className="text-lg font-black text-slate-950">
@@ -527,18 +913,32 @@ Awarded
 );
 })
 ) : (
-<EmptyState message="No awards have been recorded yet." />
+<EmptyState
+message={
+experience === "vendor"
+? "No award wins have been recorded yet."
+: "No awards have been recorded yet."
+}
+/>
 )}
 </div>
 </div>
 
 <div className="rounded-[32px] border border-black/5 bg-white p-8">
 <p className="text-xs font-black uppercase tracking-[0.3em] text-orange-500">
-Portfolio View
+{experience === "vendor"
+? "Opportunity View"
+: experience === "consultant"
+? "Project View"
+: "Portfolio View"}
 </p>
 
 <h2 className="mt-3 text-3xl font-black text-slate-950">
-Top RFQs by Budget
+{experience === "vendor"
+? "Top RFQs by Budget"
+: experience === "consultant"
+? "Project Opportunities"
+: "Top RFQs by Budget"}
 </h2>
 
 <div className="mt-6 space-y-4">
@@ -556,7 +956,8 @@ className="block rounded-3xl border border-slate-100 bg-slate-50 p-5 transition 
 </p>
 
 <p className="mt-1 text-sm font-semibold text-slate-500">
-{rfq.category || "Procurement"} · {rfq.location || "Location N/A"}
+{rfq.category || "Procurement"} ·{" "}
+{rfq.location || "Location N/A"}
 </p>
 </div>
 
@@ -581,11 +982,11 @@ className="block rounded-3xl border border-slate-100 bg-slate-50 p-5 transition 
 <div className="flex items-end justify-between gap-6">
 <div>
 <p className="text-xs font-black uppercase tracking-[0.3em] text-orange-500">
-Activity Command Center
+{dashboardCopy.activityLabel}
 </p>
 
 <h2 className="mt-3 text-3xl font-black text-slate-950">
-Live Procurement Timeline
+{dashboardCopy.activityTitle}
 </h2>
 </div>
 
@@ -600,7 +1001,7 @@ activityFeed.map((event) => (
 <ActivityFeedItem key={event.id} event={event} />
 ))
 ) : (
-<EmptyState message="No procurement activity has been recorded yet." />
+<EmptyState message="No workspace activity has been recorded yet." />
 )}
 </div>
 </section>
@@ -625,7 +1026,9 @@ className="rounded-[28px] border border-black/5 bg-white p-7 transition hover:-t
 >
 <h3 className="text-2xl font-black text-slate-950">{title}</h3>
 
-<p className="mt-3 text-sm leading-relaxed text-slate-600">{description}</p>
+<p className="mt-3 text-sm leading-relaxed text-slate-600">
+{description}
+</p>
 
 <div className="mt-6 text-sm font-black text-slate-950">Open →</div>
 </Link>
@@ -698,7 +1101,9 @@ className="group block rounded-3xl border border-slate-100 bg-slate-50 p-5 trans
 <p className="text-lg font-black text-slate-950">{event.title}</p>
 
 <div className="flex items-center gap-2">
-<span className={`rounded-full px-3 py-1 text-xs font-black uppercase ${severityClass}`}>
+<span
+className={`rounded-full px-3 py-1 text-xs font-black uppercase ${severityClass}`}
+>
 {event.type}
 </span>
 
