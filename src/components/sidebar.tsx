@@ -18,6 +18,8 @@ type ProfileRole = "owner" | "admin" | "buyer" | "vendor" | string;
 type UserContext = {
 role: ProfileRole | null;
 networkRole: string | null;
+companyName: string | null;
+companyStatus: string | null;
 };
 
 type Experience = "owner" | "vendor" | "consultant";
@@ -27,106 +29,13 @@ label: string;
 href: string;
 key: string;
 description: string;
+badge?: string;
 };
 
-const OWNER_NAV: NavItem[] = [
-{
-label: "Executive Overview",
-href: "/dashboard",
-key: "dashboard",
-description: "Business command view",
-},
-{
-label: "Procurement",
-href: "/rfq",
-key: "rfq",
-description: "RFQs and awards",
-},
-{
-label: "Supplier Network",
-href: "/directory",
-key: "directory",
-description: "Qualified companies",
-},
-{
-label: "Intelligence",
-href: "/analytics",
-key: "analytics",
-description: "Performance insights",
-},
-{
-label: "Activity Center",
-href: "/notifications",
-key: "notifications",
-description: "Updates and alerts",
-},
-{
-label: "Company",
-href: "/company/settings",
-key: "company",
-description: "Profile and team access",
-},
-];
-
-const VENDOR_NAV: NavItem[] = [
-{
-label: "Executive Overview",
-href: "/dashboard",
-key: "dashboard",
-description: "Supplier workspace",
-},
-{
-label: "Opportunities",
-href: "/rfq",
-key: "rfq",
-description: "Open procurement",
-},
-{
-label: "My Quotes",
-href: "/vendor-dashboard",
-key: "vendor-dashboard",
-description: "Submitted pricing",
-},
-{
-label: "Activity Center",
-href: "/notifications",
-key: "notifications",
-description: "Updates and alerts",
-},
-{
-label: "Company",
-href: "/company/settings",
-key: "company",
-description: "Profile and team access",
-},
-];
-
-const CONSULTANT_NAV: NavItem[] = [
-{
-label: "Executive Overview",
-href: "/dashboard",
-key: "dashboard",
-description: "Advisory workspace",
-},
-{
-label: "Opportunities",
-href: "/rfq",
-key: "rfq",
-description: "Project opportunities",
-},
-{
-label: "Activity Center",
-href: "/notifications",
-key: "notifications",
-description: "Updates and alerts",
-},
-{
-label: "Company",
-href: "/company/settings",
-key: "company",
-description: "Profile and team access",
-},
-];
+type NavSection = {
+title: string;
+items: NavItem[];
+};
 
 function normalizeRole(value: string | null | undefined) {
 return String(value || "").trim().toLowerCase();
@@ -144,23 +53,206 @@ networkRole.includes("consultant")
 return "consultant";
 }
 
-if (role === "vendor") {
+if (
+role === "vendor" ||
+networkRole.includes("supplier") ||
+networkRole.includes("vendor") ||
+networkRole.includes("manufacturer") ||
+networkRole.includes("distributor") ||
+networkRole.includes("trade")
+) {
 return "vendor";
 }
 
 return "owner";
 }
 
-function getNavigation(experience: Experience) {
-if (experience === "vendor") return VENDOR_NAV;
-if (experience === "consultant") return CONSULTANT_NAV;
-return OWNER_NAV;
-}
-
 function getExperienceLabel(experience: Experience) {
 if (experience === "vendor") return "Supplier Workspace";
-if (experience === "consultant") return "Advisory Workspace";
+if (experience === "consultant") return "Consultant Workspace";
 return "Executive Workspace";
+}
+
+function getWorkspaceHealth(stats: Stats) {
+if (stats.unreadNotifications > 8) return "Needs Review";
+if (stats.activeRfqs > 0 || stats.awardedContracts > 0) return "Healthy";
+return "Ready";
+}
+
+function getHealthClass(status: string) {
+if (status === "Needs Review") return "bg-orange-100 text-orange-700";
+if (status === "Healthy") return "bg-green-100 text-green-700";
+return "bg-blue-100 text-blue-700";
+}
+
+function getNavigation(experience: Experience, stats: Stats): NavSection[] {
+if (experience === "vendor") {
+return [
+{
+title: "Supplier Command",
+items: [
+{
+label: "Workspace Overview",
+href: "/dashboard",
+key: "dashboard",
+description: "Supplier command view",
+badge: "Live",
+},
+{
+label: "Opportunities",
+href: "/rfq",
+key: "rfq",
+description: "Open RFQs and buyer requests",
+badge: String(stats.activeRfqs),
+},
+{
+label: "My Quotes",
+href: "/vendor-dashboard",
+key: "vendor-dashboard",
+description: "Submitted pricing and activity",
+badge: String(stats.supplierQuotes),
+},
+],
+},
+{
+title: "Operations",
+items: [
+{
+label: "Activity Center",
+href: "/notifications",
+key: "notifications",
+description: "Updates, alerts, and workflow signals",
+badge: String(stats.unreadNotifications),
+},
+{
+label: "Company Command",
+href: "/company/settings",
+key: "company",
+description: "Profile, team, access, and governance",
+},
+],
+},
+];
+}
+
+if (experience === "consultant") {
+return [
+{
+title: "Consultant Command",
+items: [
+{
+label: "Workspace Overview",
+href: "/dashboard",
+key: "dashboard",
+description: "Consultant workspace view",
+badge: "Live",
+},
+{
+label: "Project Opportunities",
+href: "/rfq",
+key: "rfq",
+description: "Open project and procurement activity",
+badge: String(stats.activeRfqs),
+},
+],
+},
+{
+title: "Operations",
+items: [
+{
+label: "Activity Center",
+href: "/notifications",
+key: "notifications",
+description: "Updates, alerts, and messages",
+badge: String(stats.unreadNotifications),
+},
+{
+label: "Company Command",
+href: "/company/settings",
+key: "company",
+description: "Profile, team, access, and governance",
+},
+],
+},
+];
+}
+
+return [
+{
+title: "Executive",
+items: [
+{
+label: "Command Center",
+href: "/dashboard",
+key: "dashboard",
+description: "Executive procurement overview",
+badge: "Live",
+},
+{
+label: "Executive AI",
+href: "/analytics",
+key: "analytics",
+description: "Risk, confidence, and board reporting",
+badge: "Ready",
+},
+],
+},
+{
+title: "Procurement",
+items: [
+{
+label: "RFQs",
+href: "/rfq",
+key: "rfq",
+description: "Create, manage, and review RFQs",
+badge: String(stats.activeRfqs),
+},
+{
+label: "Awards",
+href: "/rfq",
+key: "awards",
+description: "Awarded contracts and outcomes",
+badge: String(stats.awardedContracts),
+},
+],
+},
+{
+title: "Supplier Network",
+items: [
+{
+label: "Supplier Directory",
+href: "/directory",
+key: "directory",
+description: "Qualified companies and partners",
+},
+{
+label: "Quote Activity",
+href: "/vendor-dashboard",
+key: "quotes",
+description: "Supplier quote submissions",
+badge: String(stats.supplierQuotes),
+},
+],
+},
+{
+title: "Operations",
+items: [
+{
+label: "Activity Center",
+href: "/notifications",
+key: "notifications",
+description: "Alerts and workflow signals",
+badge: String(stats.unreadNotifications),
+},
+{
+label: "Company Governance",
+href: "/company/settings",
+key: "company",
+description: "Profile, team, roles, and controls",
+},
+],
+},
+];
 }
 
 export default function Sidebar() {
@@ -177,10 +269,13 @@ supplierQuotes: 0,
 const [context, setContext] = useState<UserContext>({
 role: null,
 networkRole: null,
+companyName: null,
+companyStatus: null,
 });
 
 const experience = getExperience(context);
-const navItems = getNavigation(experience);
+const navSections = getNavigation(experience, stats);
+const workspaceHealth = getWorkspaceHealth(stats);
 
 useEffect(() => {
 async function loadStats() {
@@ -211,39 +306,36 @@ if (!profile?.company_id) {
 setContext({
 role: profile?.role || null,
 networkRole: null,
+companyName: null,
+companyStatus: null,
 });
 return;
 }
 
 const { data: company } = await supabase
 .from("companies")
-.select("network_role")
+.select("name, network_role, status")
 .eq("id", profile.company_id)
 .maybeSingle();
 
 setContext({
 role: profile.role || null,
 networkRole: company?.network_role || null,
+companyName: company?.name || null,
+companyStatus: company?.status || null,
 });
 }
 
 loadStats();
 loadUserContext();
 }, [supabase]);
-
-function getBadge(key: string) {
-if (key === "dashboard") return "Live";
-if (key === "analytics") return "AI";
-if (key === "rfq") return String(stats.activeRfqs);
-if (key === "notifications") return String(stats.unreadNotifications);
-if (key === "vendor-dashboard") return String(stats.supplierQuotes);
-
-return null;
-}
-
 function isItemActive(href: string) {
 if (href === "/company/settings") {
 return pathname === href || pathname.startsWith("/company/settings");
+}
+
+if (href === "/dashboard") {
+return pathname === "/dashboard";
 }
 
 return pathname === href || pathname.startsWith(`${href}/`);
@@ -251,23 +343,23 @@ return pathname === href || pathname.startsWith(`${href}/`);
 
 function renderNavItem(item: NavItem) {
 const isActive = isItemActive(item.href);
-const badge = getBadge(item.key);
+const hasBadge = Boolean(item.badge && item.badge !== "0");
 
 return (
 <Link
-key={item.href}
+key={`${item.key}-${item.href}`}
 href={item.href}
-className={`group flex items-center justify-between rounded-2xl px-4 py-3 transition ${
+className={`group flex items-center justify-between gap-4 rounded-2xl px-4 py-3 transition ${
 isActive
 ? "bg-slate-950 text-white shadow-sm"
 : "text-slate-700 hover:bg-slate-100 hover:text-slate-950"
 }`}
 >
-<span>
+<span className="min-w-0">
 <span className="block text-sm font-black">{item.label}</span>
 
 <span
-className={`mt-0.5 block text-[11px] font-bold ${
+className={`mt-0.5 block text-[11px] font-bold leading-4 ${
 isActive ? "text-white/60" : "text-slate-400"
 }`}
 >
@@ -275,13 +367,17 @@ isActive ? "text-white/60" : "text-slate-400"
 </span>
 </span>
 
-{badge ? (
+{hasBadge ? (
 <span
-className={`rounded-full px-2 py-1 text-[10px] font-black uppercase tracking-wide ${
-isActive ? "bg-white/20 text-white" : "bg-orange-100 text-orange-700"
+className={`shrink-0 rounded-full px-2 py-1 text-[10px] font-black uppercase tracking-wide ${
+isActive
+? "bg-white/20 text-white"
+: item.badge === "Ready" || item.badge === "Live"
+? "bg-orange-100 text-orange-700"
+: "bg-slate-100 text-slate-600"
 }`}
 >
-{badge}
+{item.badge}
 </span>
 ) : null}
 </Link>
@@ -289,7 +385,7 @@ isActive ? "bg-white/20 text-white" : "bg-orange-100 text-orange-700"
 }
 
 return (
-<aside className="fixed left-0 top-0 z-40 hidden h-screen w-72 border-r border-slate-200 bg-white px-6 py-8 lg:block">
+<aside className="fixed left-0 top-0 z-40 hidden h-screen w-96 border-r border-slate-200 bg-white px-6 py-7 lg:block">
 <Link href="/dashboard" className="block">
 <p className="text-xs font-black uppercase tracking-[0.35em] text-orange-500">
 Nexus
@@ -298,16 +394,31 @@ Nexus
 <h1 className="mt-2 text-2xl font-black text-slate-950">Pavilion</h1>
 </Link>
 
-<div className="mt-6 rounded-3xl bg-gradient-to-br from-orange-500 to-orange-600 p-5 text-white shadow-sm">
-<p className="text-xs font-bold uppercase tracking-[0.2em] text-white/70">
-Procurement OS
+<div className="mt-6 rounded-[32px] bg-slate-950 p-5 text-white shadow-sm">
+<p className="text-xs font-black uppercase tracking-[0.22em] text-orange-400">
+Procurement Intelligence
 </p>
 
-<h2 className="mt-2 text-lg font-black">
-{getExperienceLabel(experience)}
+<h2 className="mt-3 text-2xl font-black leading-tight">
+{context.companyName || "Company Workspace"}
 </h2>
 
-<div className="mt-4 grid grid-cols-2 gap-3 text-xs">
+<div className="mt-3 flex flex-wrap gap-2">
+<span className="rounded-full bg-white/10 px-3 py-1 text-[10px] font-black uppercase tracking-wide text-slate-200">
+{getExperienceLabel(experience)}
+</span>
+
+<span className="rounded-full bg-green-400/10 px-3 py-1 text-[10px] font-black uppercase tracking-wide text-green-300">
+{context.companyStatus || "Verified"}
+</span>
+</div>
+
+<p className="mt-4 text-xs font-semibold leading-5 text-slate-400">
+Procurement navigation for RFQs, suppliers, quotes, governance, and
+executive reporting.
+</p>
+
+<div className="mt-5 grid grid-cols-2 gap-3">
 <Metric label="Active RFQs" value={stats.activeRfqs} />
 <Metric label="Awards" value={stats.awardedContracts} />
 <Metric label="Quotes" value={stats.supplierQuotes} />
@@ -315,31 +426,56 @@ Procurement OS
 </div>
 </div>
 
-<nav className="mt-8 space-y-6">
-<div>
-<p className="mb-2 px-4 text-[10px] font-black uppercase tracking-[0.25em] text-slate-400">
-Platform
+<div className="mt-5 rounded-[28px] border border-slate-200 bg-slate-50 p-4">
+<p className="text-[10px] font-black uppercase tracking-[0.22em] text-slate-400">
+Today
 </p>
 
-<div className="space-y-2">{navItems.map(renderNavItem)}</div>
+<div className="mt-4 grid grid-cols-3 gap-2">
+<TodaySignal label="RFQs" value={stats.activeRfqs} />
+<TodaySignal label="Alerts" value={stats.unreadNotifications} />
+<TodaySignal label="Awards" value={stats.awardedContracts} />
 </div>
+</div>
+
+<nav className="mt-6 max-h-[calc(100vh-490px)] space-y-5 overflow-y-auto pr-1">
+{navSections.map((section) => (
+<div key={section.title}>
+<p className="mb-2 px-4 text-[10px] font-black uppercase tracking-[0.25em] text-slate-400">
+{section.title}
+</p>
+
+<div className="space-y-2">{section.items.map(renderNavItem)}</div>
+</div>
+))}
 </nav>
 
-<div className="absolute bottom-8 left-6 right-6 rounded-3xl bg-slate-100 p-5">
-<p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500">
-Company
+<div className="absolute bottom-7 left-6 right-6 rounded-[28px] border border-slate-200 bg-slate-50 p-5">
+<div className="flex items-center justify-between gap-4">
+<div>
+<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+Workspace Health
 </p>
 
-<p className="mt-2 text-sm font-semibold leading-6 text-slate-700">
-Manage company profile, team access, invitations, ownership, and
-activity.
+<p className="mt-2 text-lg font-black text-slate-950">
+{workspaceHealth}
 </p>
+</div>
+
+<span
+className={`rounded-full px-3 py-1 text-xs font-black ${getHealthClass(
+workspaceHealth
+)}`}
+>
+{workspaceHealth}
+</span>
+</div>
 
 <Link
 href="/company/settings"
 className="mt-4 inline-flex w-full items-center justify-center rounded-full bg-slate-950 px-4 py-3 text-xs font-black text-white transition hover:bg-slate-800"
 >
-Open Company Profile
+Open Company Command Center
 </Link>
 
 <div className="mt-4 flex items-center gap-2">
@@ -356,9 +492,21 @@ System Operational
 
 function Metric({ label, value }: { label: string; value: number }) {
 return (
-<div>
-<p className="text-white/60">{label}</p>
-<p className="text-lg font-black">{value}</p>
+<div className="rounded-2xl bg-white/10 p-3">
+<p className="text-[10px] font-bold uppercase text-white/50">{label}</p>
+<p className="mt-1 text-lg font-black">{value}</p>
+</div>
+);
+}
+
+function TodaySignal({ label, value }: { label: string; value: number }) {
+return (
+<div className="rounded-2xl bg-white p-3 text-center shadow-sm">
+<p className="text-[10px] font-black uppercase tracking-wide text-slate-400">
+{label}
+</p>
+
+<p className="mt-1 text-lg font-black text-slate-950">{value}</p>
 </div>
 );
 }

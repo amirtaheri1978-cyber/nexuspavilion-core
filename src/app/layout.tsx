@@ -1,8 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 
-import Footer from "@/components/footer";
-import Sidebar from "@/components/sidebar";
+import AppShell from "@/components/app-shell";
 
 import "./globals.css";
 
@@ -49,8 +48,7 @@ canonical: "/",
 
 openGraph: {
 title: "Nexus Pavilion",
-description:
-"Enterprise procurement intelligence platform powered by AI.",
+description: "Enterprise procurement intelligence platform powered by AI.",
 url: "https://nexuspavilion.com",
 siteName: "Nexus Pavilion",
 type: "website",
@@ -60,8 +58,7 @@ locale: "en_US",
 twitter: {
 card: "summary_large_image",
 title: "Nexus Pavilion",
-description:
-"Enterprise procurement intelligence platform powered by AI.",
+description: "Enterprise procurement intelligence platform powered by AI.",
 },
 
 robots: {
@@ -91,12 +88,7 @@ children: React.ReactNode;
 return (
 <html lang="en">
 <body className={`${inter.className} bg-slate-100 antialiased`}>
-<Sidebar />
-
-<div className="min-h-screen lg:ml-72">
-{children}
-<Footer />
-</div>
+<AppShell>{children}</AppShell>
 </body>
 </html>
 );
