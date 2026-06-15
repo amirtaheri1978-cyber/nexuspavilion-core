@@ -512,6 +512,23 @@ submittedQuotes > 0
 ? Math.round((awardedQuotes.length / submittedQuotes) * 100)
 : 0;
 
+const hasProcurementData =
+totalRfqs > 0 || submittedQuotes > 0 || awardedQuotes.length > 0;
+
+const enterpriseScoreLabel = hasProcurementData
+? `${procurementHealthScore}/100`
+: "Setup";
+
+const riskIndexLabel = hasProcurementData ? `${riskIndex}/100` : "Pending";
+
+const forecastAccuracyLabel = hasProcurementData
+? `${forecastAccuracy}%`
+: "Pending";
+
+const rfqMaturityLabel = hasProcurementData
+? `${Math.min(100, Math.round((totalRfqs + submittedQuotes) * 12))}/100`
+: "Setup";
+
 const pipelineValue = quoteList.reduce((total, quote) => {
 const amount = Number(quote.amount);
 return total + (Number.isNaN(amount) ? 0 : amount);
@@ -642,7 +659,22 @@ Signed in as {profile?.email || user?.email} · Role:{" "}
 </p>
 </div>
 
+<div className="flex flex-wrap items-center justify-end gap-3">
+<Link
+href="/company/settings"
+className="rounded-full border border-slate-200 bg-white px-5 py-3 text-sm font-black text-slate-700 transition hover:border-slate-950 hover:text-slate-950"
+>
+Company Settings
+</Link>
+
+<div className="rounded-full bg-white px-5 py-3 text-sm font-black text-slate-600 shadow-sm">
+{currentCompany?.name || "Company Workspace"}
+</div>
+
 <SignOutButton />
+</div>
+
+
 </div>
 
 <section className="mt-10 rounded-[36px] border border-slate-200 bg-slate-950 p-8 text-white">
@@ -682,10 +714,11 @@ Signed in as {profile?.email || user?.email} · Role:{" "}
 </>
 ) : (
 <>
-<DarkMetric title="Enterprise Score" value={`${procurementHealthScore}/100`} />
-<DarkMetric title="RFQ Maturity" value={`${constructionClassificationScore}/100`} />
-<DarkMetric title="Risk Index" value={`${riskIndex}/100`} />
-<DarkMetric title="Forecast Accuracy" value={`${forecastAccuracy}%`} />
+
+<DarkMetric title="Enterprise Score" value={enterpriseScoreLabel} />
+<DarkMetric title="RFQ Maturity" value={rfqMaturityLabel} />
+<DarkMetric title="Risk Index" value={riskIndexLabel} />
+<DarkMetric title="Forecast Accuracy" value={forecastAccuracyLabel} />
 </>
 )}
 </div>
