@@ -223,7 +223,7 @@ items: [
 label: "Supplier Directory",
 href: "/directory",
 key: "directory",
-description: "Qualified companies and partners",
+description: "AVL, suppliers, and partners",
 },
 {
 label: "Quote Activity",
@@ -329,6 +329,7 @@ companyStatus: company?.status || null,
 loadStats();
 loadUserContext();
 }, [supabase]);
+
 function isItemActive(href: string) {
 if (href === "/company/settings") {
 return pathname === href || pathname.startsWith("/company/settings");
@@ -383,8 +384,54 @@ isActive
 </Link>
 );
 }
+return (
+<>
+<header className="sticky top-0 z-30 border-b border-slate-200 bg-white/95 px-5 py-4 backdrop-blur lg:hidden">
+<div className="flex items-center justify-between gap-4">
+<Link href="/dashboard" className="min-w-0">
+<p className="text-[10px] font-black uppercase tracking-[0.3em] text-orange-500">
+Nexus Pavilion
+</p>
+
+<p className="mt-1 truncate text-lg font-black text-slate-950">
+{context.companyName || "Procurement Workspace"}
+</p>
+</Link>
+
+<Link
+href="/notifications"
+className="rounded-full bg-slate-950 px-4 py-2 text-xs font-black text-white"
+>
+{stats.unreadNotifications > 0
+? `${stats.unreadNotifications} Alerts`
+: "Alerts"}
+</Link>
+</div>
+
+<div className="mt-4 flex gap-2 overflow-x-auto pb-1">
+{navSections
+.flatMap((section) => section.items)
+.slice(0, 6)
+.map((item) => {
+const isActive = isItemActive(item.href);
 
 return (
+<Link
+key={`mobile-${item.key}-${item.href}`}
+href={item.href}
+className={`shrink-0 rounded-full px-4 py-2 text-xs font-black ${
+isActive
+? "bg-slate-950 text-white"
+: "bg-slate-100 text-slate-700"
+}`}
+>
+{item.label}
+</Link>
+);
+})}
+</div>
+</header>
+
 <aside className="fixed left-0 top-0 z-40 hidden h-screen w-96 border-r border-slate-200 bg-white px-6 py-7 lg:block">
 <Link href="/dashboard" className="block">
 <p className="text-xs font-black uppercase tracking-[0.35em] text-orange-500">
@@ -487,6 +534,7 @@ System Operational
 </div>
 </div>
 </aside>
+</>
 );
 }
 
