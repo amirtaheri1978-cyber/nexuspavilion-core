@@ -24,6 +24,17 @@ amount: number | string | null;
 decision: string | null;
 };
 
+type Profile = {
+company_id: string | null;
+role: string | null;
+};
+
+type ApprovedVendor = {
+vendor_company_id: string;
+status: string | null;
+rating: number | null;
+};
+
 type RankedCompany = Company & {
 quotesSubmitted: number;
 awardsWon: number;
@@ -47,8 +58,15 @@ return (
 role.includes("vendor") ||
 role.includes("supplier") ||
 role.includes("contractor") ||
-role.includes("manufacturer")
+role.includes("manufacturer") ||
+role.includes("consultant") ||
+role.includes("architect") ||
+role.includes("engineer")
 );
+}
+
+function canManageAvl(role: string | null | undefined) {
+return ["owner", "admin", "buyer"].includes(String(role || "").toLowerCase());
 }
 
 function getSupplierRank(score: number) {
@@ -75,10 +93,31 @@ if (rank === "Developing") return "bg-yellow-100 text-yellow-800";
 return "bg-slate-100 text-slate-700";
 }
 
+function getAvlStatusClass(status: string | null | undefined) {
+if (status === "approved") return "bg-green-100 text-green-800";
+if (status === "conditional") return "bg-yellow-100 text-yellow-800";
+if (status === "suspended") return "bg-red-100 text-red-800";
+if (status === "rejected") return "bg-slate-200 text-slate-700";
+return "bg-slate-100 text-slate-700";
+}
+
+function getAvlStatusLabel(status: string | null | undefined) {
+if (status === "approved") return "Approved";
+if (status === "conditional") return "Conditional";
+if (status === "suspended") return "Suspended";
+if (status === "rejected") return "Rejected";
+return "Not in AVL";
+}
+
 function buildRankedCompanies(companies: Company[], quotes: Quote[]) {
 return companies.map((company) => {
-const companyQuotes = quotes.filter((quote) => quote.company_id === company.id);
-const awards = companyQuotes.filter((quote) => quote.decision === "awarded");
+const companyQuotes = quotes.filter(
+(quote) => quote.company_id === company.id
+);
+
+const awards = companyQuotes.filter(
+(quote) => quote.decision === "awarded"
+);
 
 const totalBidValue = companyQuotes.reduce((total, quote) => {
 const amount = Number(quote.amount);
@@ -122,19 +161,43 @@ reliabilitySignal: getReliabilitySignal(supplierScore),
 };
 });
 }
-
 export default function PublicDirectoryPage() {
-const supabase = createClient();
+const supabase = useMemo(() => createClient(), []);
 
 const [companies, setCompanies] = useState<Company[]>([]);
 const [quotes, setQuotes] = useState<Quote[]>([]);
+const [approvedVendors, setApprovedVendors] = useState<ApprovedVendor[]>([]);
+const [profile, setProfile] = useState<Profile | null>(null);
+
 const [search, setSearch] = useState("");
 const [loading, setLoading] = useState(true);
+const [savingVendorId, setSavingVendorId] = useState<string | null>(null);
+const [actionMessage, setActionMessage] = useState("");
 
 useEffect(() => {
 async function loadDirectoryData() {
-const [{ data: companiesData, error: companiesError }, { data: quotesData }] =
-await Promise.all([
+setLoading(true);
+
+const {
+data: { user },
+} = await supabase.auth.getUser();
+
+const { data: profileData } = user
+? await supabase
+.from("profiles")
+.select("company_id, role")
+.eq("id", user.id)
+.maybeSingle()
+: { data: null };
+
+const currentProfile = (profileData || null) as Profile | null;
+setProfile(currentProfile);
+
+const [
+{ data: companiesData, error: companiesError },
+{ data: quotesData },
+{ data: approvedVendorData },
+] = await Promise.all([
 supabase
 .from("companies")
 .select("*")
@@ -142,6 +205,12 @@ supabase
 .order("created_at", { ascending: false }),
 
 supabase.from("quotes").select("id, company_id, amount, decision"),
+
+currentProfile?.company_id
+? supabase
+.from("approved_vendors")
+.select("vendor_company_id, status, rating")
+: Promise.resolve({ data: [] }),
 ]);
 
 if (!companiesError && companiesData) {
@@ -152,11 +221,25 @@ if (quotesData) {
 setQuotes(quotesData as Quote[]);
 }
 
+if (approvedVendorData) {
+setApprovedVendors(approvedVendorData as ApprovedVendor[]);
+}
+
 setLoading(false);
 }
 
 loadDirectoryData();
 }, [supabase]);
+
+const approvedVendorMap = useMemo(() => {
+const map = new Map<string, ApprovedVendor>();
+
+approvedVendors.forEach((vendor) => {
+map.set(vendor.vendor_company_id, vendor);
+});
+
+return map;
+}, [approvedVendors]);
 
 const rankedCompanies = useMemo(() => {
 return buildRankedCompanies(companies, quotes);
@@ -191,13 +274,28 @@ supplierCompanies.reduce(
 )
 : 0;
 
+const approvedCount = approvedVendors.filter(
+(vendor) => vendor.status === "approved"
+).length;
+
+const conditionalCount = approvedVendors.filter(
+(vendor) => vendor.status === "conditional"
+).length;
+
+const suspendedCount = approvedVendors.filter(
+(vendor) => vendor.status === "suspended"
+).length;
+
 return {
 suppliers: supplierCompanies.length,
 totalAwards,
 totalRevenue,
 averageScore,
+approvedCount,
+conditionalCount,
+suspendedCount,
 };
-}, [supplierCompanies]);
+}, [supplierCompanies, approvedVendors]);
 
 const filteredCompanies = useMemo(() => {
 const query = search.toLowerCase().trim();
@@ -205,16 +303,70 @@ const query = search.toLowerCase().trim();
 if (!query) return rankedCompanies;
 
 return rankedCompanies.filter((company) => {
+const avlStatus = approvedVendorMap.get(company.id)?.status || "";
+
 return (
 company.name.toLowerCase().includes(query) ||
 company.category.toLowerCase().includes(query) ||
 company.location.toLowerCase().includes(query) ||
 company.network_role.toLowerCase().includes(query) ||
 company.supplierRank.toLowerCase().includes(query) ||
-company.reliabilitySignal.toLowerCase().includes(query)
+company.reliabilitySignal.toLowerCase().includes(query) ||
+avlStatus.toLowerCase().includes(query)
 );
 });
-}, [rankedCompanies, search]);
+}, [rankedCompanies, search, approvedVendorMap]);
+
+async function updateApprovedVendor(
+vendorCompanyId: string,
+status: "approved" | "conditional" | "suspended" | "rejected"
+) {
+try {
+setSavingVendorId(vendorCompanyId);
+setActionMessage("");
+
+const response = await fetch("/api/approved-vendors", {
+method: "POST",
+headers: {
+"Content-Type": "application/json",
+},
+body: JSON.stringify({
+vendorCompanyId,
+status,
+rating: status === "approved" ? 85 : status === "conditional" ? 70 : 40,
+}),
+});
+
+const data = await response.json();
+
+if (!response.ok) {
+setActionMessage(data.error || "Failed to update approved vendor.");
+return;
+}
+
+const nextVendor: ApprovedVendor = {
+vendor_company_id: vendorCompanyId,
+status: data.approvedVendor?.status || status,
+rating: data.approvedVendor?.rating || 85,
+};
+
+setApprovedVendors((current) => {
+const existing = current.filter(
+(vendor) => vendor.vendor_company_id !== vendorCompanyId
+);
+
+return [...existing, nextVendor];
+});
+
+setActionMessage("Approved vendor list updated.");
+} catch (error) {
+console.error(error);
+setActionMessage("Something went wrong while updating AVL.");
+} finally {
+setSavingVendorId(null);
+}
+}
+const canManageApprovedVendors = canManageAvl(profile?.role);
 
 return (
 <main className="min-h-screen bg-[#f6f6f3] px-6 py-10">
@@ -231,16 +383,17 @@ Construction Supplier Network
 </h1>
 
 <p className="mt-4 max-w-3xl text-sm font-semibold leading-7 text-slate-600">
-Discover verified construction companies, suppliers, contractors,
-and manufacturers with procurement activity, award history, and
-supplier intelligence signals.
+Discover verified construction companies, suppliers,
+contractors, manufacturers, consultants, architects, and
+engineers with procurement activity, award history, supplier
+intelligence, and approved vendor list controls.
 </p>
 </div>
 
 <div className="flex w-full flex-col gap-3 lg:w-auto lg:min-w-[360px]">
 <input
 type="text"
-placeholder="Search companies, categories, regions, or ranks..."
+placeholder="Search companies, categories, regions, ranks, or AVL status..."
 value={search}
 onChange={(event) => setSearch(event.target.value)}
 className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 text-sm font-bold text-slate-950 outline-none transition focus:border-slate-950 focus:bg-white"
@@ -265,6 +418,12 @@ Join Network
 </div>
 </section>
 
+{actionMessage ? (
+<div className="mt-6 rounded-3xl border border-orange-200 bg-orange-50 px-6 py-4 text-sm font-black text-orange-700">
+{actionMessage}
+</div>
+) : null}
+
 <section className="mt-8 grid gap-6 md:grid-cols-4">
 <MetricCard
 title="Verified Suppliers"
@@ -288,6 +447,26 @@ detail="Network supplier value"
 title="Avg Supplier Score"
 value={`${networkStats.averageScore}/100`}
 detail="Supplier intelligence average"
+/>
+</section>
+
+<section className="mt-6 grid gap-6 md:grid-cols-3">
+<MetricCard
+title="Approved Vendors"
+value={String(networkStats.approvedCount)}
+detail="Active AVL suppliers"
+/>
+
+<MetricCard
+title="Conditional Vendors"
+value={String(networkStats.conditionalCount)}
+detail="Suppliers under review"
+/>
+
+<MetricCard
+title="Suspended Vendors"
+value={String(networkStats.suspendedCount)}
+detail="Restricted supplier access"
 />
 </section>
 
@@ -335,12 +514,20 @@ Try another search term or check back as the network grows.
 </div>
 ) : (
 <div className="mt-10 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-{filteredCompanies.map((company) => (
-<Link
+{filteredCompanies.map((company) => {
+const avlRecord = approvedVendorMap.get(company.id);
+const isSelfCompany = profile?.company_id === company.id;
+const canShowAvlActions =
+canManageApprovedVendors &&
+!isSelfCompany &&
+isSupplierCompany(company);
+
+return (
+<div
 key={company.id}
-href={`/company/${company.slug}`}
-className="group block rounded-[32px] border border-black/5 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
+className="group rounded-[32px] border border-black/5 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
 >
+<Link href={`/company/${company.slug}`} className="block">
 <div className="flex items-start justify-between gap-4">
 <div className="flex items-start gap-4">
 {company.logo_url ? (
@@ -375,7 +562,7 @@ className="h-14 w-14 rounded-2xl border border-slate-200 bg-white object-cover"
 <InfoBox title="Network Role" value={company.network_role} />
 <InfoBox title="Supplier Rank" value={company.supplierRank} />
 </div>
-
+</Link>
 <div className="mt-5 grid gap-3 md:grid-cols-3">
 <SmallMetric title="Score" value={`${company.supplierScore}/100`} />
 <SmallMetric title="Win" value={`${company.winRate}%`} />
@@ -395,6 +582,14 @@ company.supplierRank
 {company.reliabilitySignal}
 </span>
 
+<span
+className={`rounded-full px-3 py-1 text-xs font-black ${getAvlStatusClass(
+avlRecord?.status
+)}`}
+>
+{getAvlStatusLabel(avlRecord?.status)}
+</span>
+
 {company.awardedRevenue > 0 ? (
 <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-black text-green-700">
 {formatMoney(company.awardedRevenue)} awarded
@@ -402,17 +597,77 @@ company.supplierRank
 ) : null}
 </div>
 
+{canShowAvlActions ? (
+<div className="mt-6 rounded-3xl border border-slate-200 bg-slate-50 p-4">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-slate-400">
+Approved Vendor List Controls
+</p>
+
+<div className="mt-4 grid gap-2 sm:grid-cols-2">
+<button
+type="button"
+disabled={savingVendorId === company.id}
+onClick={() => updateApprovedVendor(company.id, "approved")}
+className="rounded-full bg-slate-950 px-4 py-3 text-xs font-black text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
+>
+{savingVendorId === company.id
+? "Saving..."
+: "Approve Vendor"}
+</button>
+
+<button
+type="button"
+disabled={savingVendorId === company.id}
+onClick={() =>
+updateApprovedVendor(company.id, "conditional")
+}
+className="rounded-full bg-yellow-100 px-4 py-3 text-xs font-black text-yellow-800 transition hover:bg-yellow-200 disabled:cursor-not-allowed disabled:opacity-50"
+>
+Conditional
+</button>
+
+<button
+type="button"
+disabled={savingVendorId === company.id}
+onClick={() => updateApprovedVendor(company.id, "suspended")}
+className="rounded-full bg-red-100 px-4 py-3 text-xs font-black text-red-800 transition hover:bg-red-200 disabled:cursor-not-allowed disabled:opacity-50"
+>
+Suspend
+</button>
+
+<button
+type="button"
+disabled={savingVendorId === company.id}
+onClick={() => updateApprovedVendor(company.id, "rejected")}
+className="rounded-full bg-slate-200 px-4 py-3 text-xs font-black text-slate-700 transition hover:bg-slate-300 disabled:cursor-not-allowed disabled:opacity-50"
+>
+Reject
+</button>
+</div>
+
+<p className="mt-4 text-xs font-semibold leading-5 text-slate-500">
+AVL status controls future selective routing, framework
+invitations, supplier governance, and procurement access
+decisions.
+</p>
+</div>
+) : null}
+
 <div className="mt-6 flex items-center justify-between">
 <p className="text-sm font-semibold text-slate-500">
 Verified company profile
 </p>
 
-<span className="text-sm font-black text-slate-950 transition group-hover:translate-x-1">
+<Link
+href={`/company/${company.slug}`}
+className="text-sm font-black text-slate-950 transition hover:text-orange-600"
+>
 View Profile →
-</span>
-</div>
 </Link>
-))}
+</div>
+</div>
+);
+})}
 </div>
 )}
 </div>

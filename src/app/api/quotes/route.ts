@@ -4,6 +4,8 @@ import { sendEmail } from "@/lib/email/send-email";
 import { quoteSubmittedEmail } from "@/lib/email/templates/quote-submitted-email";
 import { createClient } from "@/lib/supabase/server";
 
+const VALIDITY_DAY_OPTIONS = [30, 60, 90, 120];
+
 function calculateScore(amount: number, timeline: string) {
 const timelineValue = timeline.toLowerCase();
 
@@ -31,6 +33,16 @@ return null;
 }
 
 return amount;
+}
+
+function normalizeValidityDays(value: unknown) {
+const validityDays = Number(value || 30);
+
+if (VALIDITY_DAY_OPTIONS.includes(validityDays)) {
+return validityDays;
+}
+
+return 30;
 }
 
 function hasDeadlinePassed(deadline: string | null | undefined) {
@@ -101,6 +113,7 @@ const rfqId = String(body.rfqId || "").trim();
 const amount = normalizeAmount(body.amount || "");
 const timeline = String(body.timeline || "").trim();
 const message = String(body.message || "").trim();
+const validityDays = normalizeValidityDays(body.validity_days);
 
 if ((!slug && !rfqId) || !amount || !timeline || !message) {
 return NextResponse.json(
@@ -186,6 +199,7 @@ user_id: user.id,
 amount,
 timeline,
 message,
+validity_days: validityDays,
 status: "submitted",
 decision: "pending",
 score,
@@ -211,6 +225,7 @@ rfq_id: rfq.id,
 rfq_title: rfq.title,
 amount,
 timeline,
+validity_days: validityDays,
 score,
 deadline: rfq.deadline,
 submitted_at: new Date().toISOString(),
@@ -226,6 +241,7 @@ html: quoteSubmittedEmail({
 rfqTitle: rfq.title || "RFQ",
 amount: amount ? String(amount) : "Not specified",
 timeline: timeline || "Not specified",
+validityDays: `${validityDays} days`,
 quoteUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/rfq/${rfq.slug}/compare`,
 }),
 });

@@ -33,6 +33,7 @@ amount: number | string | null;
 timeline: string | null;
 message: string | null;
 decision: string | null;
+validity_days?: number | null;
 };
 
 type RFQ = {
@@ -83,6 +84,9 @@ project_specific: "Project-Specific RFQ",
 framework: "Master / Framework RFQ",
 };
 
+const RIGHT_TO_REJECT_NOTICE =
+"The Buyer reserves the right to accept or reject any or all submissions, request clarifications, negotiate commercial terms, or cancel the RFQ process at any time without liability or obligation to justify the decision.";
+
 function formatMoney(value: number | string | null | undefined) {
 const amount = Number(value);
 
@@ -91,6 +95,36 @@ return "$0";
 }
 
 return `$${amount.toLocaleString()}`;
+}
+
+function formatDateTime(value: string | null | undefined) {
+if (!value) return "N/A";
+
+const date = new Date(value);
+
+if (Number.isNaN(date.getTime())) {
+return value;
+}
+
+return date.toLocaleString("en-US", {
+year: "numeric",
+month: "long",
+day: "numeric",
+hour: "2-digit",
+minute: "2-digit",
+});
+}
+
+function hasDeadlinePassed(deadline: string | null | undefined) {
+if (!deadline) return false;
+
+const deadlineDate = new Date(deadline);
+
+if (Number.isNaN(deadlineDate.getTime())) {
+return false;
+}
+
+return new Date().getTime() > deadlineDate.getTime();
 }
 
 function getProcurementScope(value: ProcurementScope | null | undefined) {
@@ -118,6 +152,32 @@ return SOURCING_METHOD_LABELS[getSourcingMethod(value)];
 
 function getFrameworkLabel(value: ContractFramework | null | undefined) {
 return CONTRACT_FRAMEWORK_LABELS[getContractFramework(value)];
+}
+
+function shouldEnforceBlindBidding(rfq: RFQ) {
+const sourcingMethod = getSourcingMethod(rfq.sourcing_method);
+const contractFramework = getContractFramework(rfq.contract_framework);
+
+return (
+sourcingMethod === "invited" ||
+sourcingMethod === "sealed_bid" ||
+contractFramework === "framework"
+);
+}
+
+function getBlindBiddingMessage(rfq: RFQ) {
+const sourcingMethod = getSourcingMethod(rfq.sourcing_method);
+const contractFramework = getContractFramework(rfq.contract_framework);
+
+if (sourcingMethod === "sealed_bid") {
+return "This sealed bid RFQ is under blind bidding control. Commercial submissions remain locked until the official closing deadline.";
+}
+
+if (contractFramework === "framework") {
+return "This framework RFQ uses controlled commercial access. Supplier pricing remains hidden until the RFQ deadline has passed.";
+}
+
+return "This invited RFQ uses blind bidding controls. Buyer-side users can see participation counts, but commercial pricing is locked until closing.";
 }
 
 function getTimelineMonths(timeline: string | null) {
@@ -189,6 +249,7 @@ if (value.length > 900) score += 5;
 
 return Math.min(score, 100);
 }
+
 function getRiskScore({
 amountNumber,
 budget,
@@ -214,7 +275,6 @@ if (!value.includes("project management")) score -= 5;
 
 return Math.max(20, Math.min(score, 100));
 }
-
 function getRiskLevel(score: number) {
 if (score >= 80) return "Low";
 if (score >= 60) return "Medium";
@@ -312,7 +372,10 @@ profile?.company_id && rfq.company_id === profile.company_id
 );
 
 const rfqStatus = String(rfq.status || "open");
-const isOpen = !rfq.status || rfqStatus === "open";
+const deadlinePassed = hasDeadlinePassed(rfq.deadline);
+const blindBiddingEnabled = shouldEnforceBlindBidding(rfq);
+const commercialEvaluationUnlocked = !blindBiddingEnabled || deadlinePassed;
+const isOpen = (!rfq.status || rfqStatus === "open") && !deadlinePassed;
 
 const { data: quotes } = isOwner
 ? await supabase
@@ -333,9 +396,11 @@ const quoteList = (quotes ?? []) as Quote[];
 
 const budget = Number(rfq.budget || 0);
 
-const amounts = quoteList
+const amounts = commercialEvaluationUnlocked
+? quoteList
 .map((quote) => Number(quote.amount))
-.filter((amount) => Number.isFinite(amount));
+.filter((amount) => Number.isFinite(amount))
+: [];
 
 const lowestAmount = amounts.length > 0 ? Math.min(...amounts) : null;
 const highestAmount = amounts.length > 0 ? Math.max(...amounts) : null;
@@ -347,7 +412,8 @@ amounts.reduce((total, amount) => total + amount, 0) / amounts.length
 )
 : 0;
 
-const scoredQuotesUnranked = quoteList.map((quote) => {
+const scoredQuotesUnranked = commercialEvaluationUnlocked
+? quoteList.map((quote) => {
 const amount = Number(quote.amount);
 const amountNumber = Number.isFinite(amount) ? amount : 0;
 
@@ -365,13 +431,25 @@ timeline: quote.timeline,
 message: quote.message,
 });
 
+const validityDays = Number(quote.validity_days || 30);
+
+const validityScore =
+validityDays >= 120
+? 100
+: validityDays >= 90
+? 92
+: validityDays >= 60
+? 84
+: 72;
+
 const totalScore = Math.min(
 100,
 Math.round(
-priceScore * 0.4 +
-timelineScore * 0.25 +
-performanceScore * 0.2 +
-riskScore * 0.15
+priceScore * 0.38 +
+timelineScore * 0.22 +
+performanceScore * 0.18 +
+riskScore * 0.14 +
+validityScore * 0.08
 )
 );
 
@@ -393,7 +471,9 @@ riskLevel: getRiskLevel(riskScore),
 budgetVariance,
 lowestBidVariance,
 };
-});
+})
+: [];
+
 const scoredQuotes: ScoredQuote[] = scoredQuotesUnranked
 .sort((a, b) => b.totalScore - a.totalScore)
 .map((quote, index) => ({
@@ -404,9 +484,9 @@ rank: index + 1,
 const recommendedQuote =
 isOwner && scoredQuotes.length > 0 ? scoredQuotes[0] : null;
 
-const awardedQuote = scoredQuotes.find(
-(quote) => quote.decision === "awarded"
-);
+const awardedQuote = commercialEvaluationUnlocked
+? scoredQuotes.find((quote) => quote.decision === "awarded")
+: null;
 
 const potentialSavings =
 recommendedQuote && averageBid ? averageBid - recommendedQuote.amountNumber : 0;
@@ -444,16 +524,17 @@ Construction Procurement Opportunity
 <DarkBadge>{getScopeLabel(rfq.procurement_scope)}</DarkBadge>
 <DarkBadge>{getSourcingLabel(rfq.sourcing_method)}</DarkBadge>
 <DarkBadge>{getFrameworkLabel(rfq.contract_framework)}</DarkBadge>
+{blindBiddingEnabled ? <DarkBadge>Blind Bidding</DarkBadge> : null}
 </div>
 </div>
 
 <div className="flex flex-col items-start gap-3 lg:items-end">
 <span
 className={`rounded-full px-4 py-2 text-sm font-black ${getRFQStatusClass(
-rfq.status
+deadlinePassed ? "closed" : rfq.status
 )}`}
 >
-{getRFQStatusLabel(rfq.status)}
+{deadlinePassed ? "Submission Closed" : getRFQStatusLabel(rfq.status)}
 </span>
 
 {canSubmitQuote ? (
@@ -471,7 +552,16 @@ Your company has submitted a quote.
 </p>
 ) : null}
 
-{isOwner && rfqStatus === "awarded" && awardedQuote ? (
+{!isOwner && deadlinePassed && !hasMyQuote ? (
+<p className="text-sm font-bold text-red-300">
+RFQ deadline has passed.
+</p>
+) : null}
+
+{isOwner &&
+rfqStatus === "awarded" &&
+awardedQuote &&
+commercialEvaluationUnlocked ? (
 <p className="text-sm font-bold text-green-300">
 Awarded at {formatMoney(awardedQuote.amountNumber)}
 </p>
@@ -484,7 +574,7 @@ Awarded at {formatMoney(awardedQuote.amountNumber)}
 <InfoCard title="Category / Trade" value={rfq.category || "N/A"} />
 <InfoCard title="Location" value={rfq.location || "N/A"} />
 <InfoCard title="Budget" value={formatMoney(rfq.budget)} />
-<InfoCard title="Deadline" value={rfq.deadline || "N/A"} />
+<InfoCard title="Deadline" value={formatDateTime(rfq.deadline)} />
 </div>
 
 <div className="border-t border-slate-100 bg-slate-50 p-8">
@@ -496,40 +586,65 @@ Procurement Intelligence Context
 {getProcurementFitMessage(rfq)}
 </p>
 </div>
-</section>
 
+{isOwner && blindBiddingEnabled && !commercialEvaluationUnlocked ? (
+<BlindBiddingNotice rfq={rfq} quoteCount={quoteList.length} />
+) : null}
+
+<GovernanceNotice />
+</section>
 {isOwner ? (
 <section className="mt-8 grid gap-6 md:grid-cols-4">
 <InsightCard
 title="Quotes"
-value={String(scoredQuotes.length)}
-detail="Submitted supplier bids"
+value={String(quoteList.length)}
+detail={
+commercialEvaluationUnlocked
+? "Submitted supplier bids"
+: "Commercial bids locked until deadline"
+}
 />
 
 <InsightCard
 title="Recommended"
 value={
-recommendedQuote
+commercialEvaluationUnlocked && recommendedQuote
 ? formatMoney(recommendedQuote.amountNumber)
-: "Pending"
+: "Locked"
 }
-detail="AI-ranked best overall supplier"
+detail={
+commercialEvaluationUnlocked
+? "AI-ranked best overall supplier"
+: "Blind bidding control active"
+}
 />
 
 <InsightCard
 title="Potential Savings"
-value={formatMoney(Math.max(potentialSavings, 0))}
-detail="Compared to average bid"
+value={
+commercialEvaluationUnlocked
+? formatMoney(Math.max(potentialSavings, 0))
+: "Locked"
+}
+detail={
+commercialEvaluationUnlocked
+? "Compared to average bid"
+: "Available after commercial opening"
+}
 />
 
 <InsightCard
 title="Award Confidence"
 value={
-recommendedQuote
+commercialEvaluationUnlocked && recommendedQuote
 ? `${recommendedQuote.awardConfidence}%`
-: "Pending"
+: "Locked"
 }
-detail="Composite procurement confidence"
+detail={
+commercialEvaluationUnlocked
+? "Composite procurement confidence"
+: "Evaluation opens after deadline"
+}
 />
 </section>
 ) : (
@@ -539,6 +654,8 @@ title="Your Quote"
 value={
 scoredQuotes[0]
 ? formatMoney(scoredQuotes[0].amountNumber)
+: quoteList[0]
+? "Submitted"
 : "Not submitted"
 }
 detail="Visible only to your company"
@@ -546,19 +663,25 @@ detail="Visible only to your company"
 
 <InsightCard
 title="Timeline"
-value={scoredQuotes[0]?.timeline || "Pending"}
+value={quoteList[0]?.timeline || "Pending"}
 detail="Your submitted delivery schedule"
 />
 
 <InsightCard
-title="Status"
-value={scoredQuotes[0]?.decision || "Open for quote"}
-detail="Private supplier submission status"
+title="Validity"
+value={
+quoteList[0]?.validity_days
+? `${quoteList[0].validity_days} days`
+: quoteList[0]
+? "30 days"
+: "Pending"
+}
+detail="Proposal price validity period"
 />
 </section>
 )}
 
-{isOwner && recommendedQuote ? (
+{isOwner && recommendedQuote && commercialEvaluationUnlocked ? (
 <section className="mt-8 rounded-[32px] bg-slate-950 p-8 text-white">
 <p className="text-xs font-black uppercase tracking-[0.3em] text-orange-400">
 AI Supplier Ranking Engine
@@ -573,15 +696,14 @@ Recommended Winner: Rank #{recommendedQuote.rank}
 <p className="mt-4 max-w-3xl text-sm leading-7 text-slate-300">
 Nexus Pavilion recommends this supplier based on weighted
 analysis of price competitiveness, delivery timeline,
-proposal strength, procurement risk, and RFQ classification.
+proposal strength, procurement risk, proposal validity, and
+RFQ classification.
 </p>
 
 <div className="mt-6 flex flex-wrap gap-3">
 <DarkBadge>Overall {recommendedQuote.totalScore}/100</DarkBadge>
 <DarkBadge>Risk {recommendedQuote.riskLevel}</DarkBadge>
-<DarkBadge>
-Confidence {recommendedQuote.awardConfidence}%
-</DarkBadge>
+<DarkBadge>Confidence {recommendedQuote.awardConfidence}%</DarkBadge>
 <DarkBadge>{getScopeLabel(rfq.procurement_scope)}</DarkBadge>
 </div>
 </div>
@@ -613,6 +735,7 @@ value={`${recommendedQuote.riskScore}/100`}
 <InviteVendorForm rfqId={rfq.id} />
 </div>
 ) : null}
+
 <section className="mt-8 rounded-[32px] border border-black/5 bg-white p-8">
 <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
 <div>
@@ -621,20 +744,31 @@ value={`${recommendedQuote.riskScore}/100`}
 </p>
 
 <h2 className="mt-3 text-3xl font-black text-slate-950">
-{isOwner ? "AI Supplier Ranking" : "Your Company Quote"}
+{isOwner
+? commercialEvaluationUnlocked
+? "AI Supplier Ranking"
+: "Blind Bid Lockbox"
+: "Your Company Quote"}
 </h2>
 
 {!isOwner ? (
 <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
 Supplier pricing is confidential. You can only view your own
 submission. Competitor pricing and award controls are visible
-only to the RFQ owner.
+only to authorized buyer-side users after the proper
+commercial opening stage.
+</p>
+) : commercialEvaluationUnlocked ? (
+<p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
+Ranking uses weighted scoring: 38% price, 22% timeline, 18%
+performance signals, 14% procurement risk, and 8% proposal
+validity.
 </p>
 ) : (
 <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
-Ranking uses weighted scoring: 40% price, 25% timeline, 20%
-performance signals, and 15% procurement risk. RFQ
-classification helps improve context for supplier evaluation.
+Commercial submissions are locked until the RFQ deadline.
+Buyer-side users can monitor participation count, but pricing,
+ranking, supplier comparison, and award actions are hidden.
 </p>
 )}
 </div>
@@ -649,7 +783,7 @@ Submit Quote
 </Link>
 ) : null}
 
-{isOwner ? (
+{isOwner && commercialEvaluationUnlocked ? (
 <Link
 href={`/rfq/${rfq.slug}/compare`}
 className="rounded-full bg-slate-950 px-6 py-3 text-sm font-bold text-white transition hover:bg-slate-800"
@@ -660,12 +794,47 @@ Open Compare View
 </div>
 </div>
 
-{isOwner ? (
+{isOwner && !commercialEvaluationUnlocked ? (
 <div className="mt-6 overflow-hidden rounded-2xl border border-slate-200">
-<div className="grid grid-cols-8 bg-slate-950 px-6 py-4 text-xs font-bold uppercase tracking-[0.15em] text-white">
+<div className="grid grid-cols-4 bg-slate-950 px-6 py-4 text-xs font-bold uppercase tracking-[0.15em] text-white">
+<div>Submissions</div>
+<div>Commercial Data</div>
+<div>Evaluation</div>
+<div>Status</div>
+</div>
+
+<div className="grid grid-cols-4 items-center border-t border-slate-100 px-6 py-6">
+<div>
+<p className="text-3xl font-black text-slate-950">
+{quoteList.length}
+</p>
+<p className="mt-1 text-xs font-bold text-slate-500">
+Quotes submitted
+</p>
+</div>
+
+<div className="text-sm font-black text-slate-600">
+Locked until deadline
+</div>
+
+<div className="text-sm font-black text-slate-600">
+Not opened
+</div>
+
+<div>
+<span className="rounded-full bg-orange-100 px-3 py-1 text-xs font-black text-orange-700">
+Blind Bidding Active
+</span>
+</div>
+</div>
+</div>
+) : isOwner ? (
+<div className="mt-6 overflow-hidden rounded-2xl border border-slate-200">
+<div className="grid grid-cols-9 bg-slate-950 px-6 py-4 text-xs font-bold uppercase tracking-[0.15em] text-white">
 <div>Rank</div>
 <div>Amount</div>
 <div>Timeline</div>
+<div>Validity</div>
 <div>Decision</div>
 <div>AI Score</div>
 <div>Risk</div>
@@ -688,7 +857,7 @@ const canAward = isOpen && quote.decision !== "awarded";
 return (
 <div
 key={quote.id}
-className="grid grid-cols-8 items-center border-t border-slate-100 px-6 py-5"
+className="grid grid-cols-9 items-center border-t border-slate-100 px-6 py-5"
 >
 <div>
 <p className="text-2xl font-black text-slate-950">
@@ -703,6 +872,10 @@ className="grid grid-cols-8 items-center border-t border-slate-100 px-6 py-5"
 
 <div className="text-sm font-semibold text-slate-600">
 {quote.timeline || "N/A"}
+</div>
+
+<div className="text-sm font-semibold text-slate-600">
+{quote.validity_days ? `${quote.validity_days} days` : "30 days"}
 </div>
 
 <div>
@@ -758,9 +931,7 @@ Lowest: {formatMoney(quote.lowestBidVariance)}
 {isHighest ? <Badge>Highest Bid</Badge> : null}
 </div>
 
-{canAward ? (
-<AwardContractButton quoteId={quote.id} />
-) : null}
+{canAward ? <AwardContractButton quoteId={quote.id} /> : null}
 
 {quote.decision === "awarded" ? (
 <p className="text-xs font-black text-green-700">
@@ -782,25 +953,30 @@ canSubmitQuote={false}
 </div>
 ) : (
 <div className="mt-6 overflow-hidden rounded-2xl border border-slate-200">
-<div className="grid grid-cols-4 bg-slate-950 px-6 py-4 text-sm font-bold text-white">
+<div className="grid grid-cols-5 bg-slate-950 px-6 py-4 text-sm font-bold text-white">
 <div>Your Amount</div>
 <div>Timeline</div>
+<div>Validity</div>
 <div>Status</div>
 <div>Message</div>
 </div>
 
-{scoredQuotes.length > 0 ? (
-scoredQuotes.map((quote) => (
+{quoteList.length > 0 ? (
+quoteList.map((quote) => (
 <div
 key={quote.id}
-className="grid grid-cols-4 items-center border-t border-slate-100 px-6 py-5"
+className="grid grid-cols-5 items-center border-t border-slate-100 px-6 py-5"
 >
 <div className="text-xl font-black text-slate-950">
-{formatMoney(quote.amountNumber)}
+{formatMoney(quote.amount)}
 </div>
 
 <div className="text-sm font-semibold text-slate-600">
 {quote.timeline || "N/A"}
+</div>
+
+<div className="text-sm font-semibold text-slate-600">
+{quote.validity_days ? `${quote.validity_days} days` : "30 days"}
 </div>
 
 <div>
@@ -828,8 +1004,84 @@ canSubmitQuote={canSubmitQuote}
 </div>
 )}
 </section>
+
+<section className="mt-8">
+<GovernanceNotice />
+</section>
 </div>
 </main>
+);
+}
+
+function BlindBiddingNotice({
+rfq,
+quoteCount,
+}: {
+rfq: RFQ;
+quoteCount: number;
+}) {
+return (
+<div className="border-t border-slate-100 bg-orange-50 p-8">
+<div className="rounded-3xl border border-orange-200 bg-white p-6">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-600">
+Blind Bidding Enforcement
+</p>
+
+<h3 className="mt-3 text-2xl font-black text-slate-950">
+Commercial bids are locked until closing
+</h3>
+
+<p className="mt-3 max-w-4xl text-sm font-bold leading-7 text-slate-700">
+{getBlindBiddingMessage(rfq)}
+</p>
+
+<div className="mt-5 grid gap-4 md:grid-cols-3">
+<MiniLockCard title="Submissions" value={`${quoteCount} received`} />
+<MiniLockCard title="Commercial Pricing" value="Locked" />
+<MiniLockCard title="Evaluation Room" value="Closed" />
+</div>
+</div>
+</div>
+);
+}
+
+function MiniLockCard({ title, value }: { title: string; value: string }) {
+return (
+<div className="rounded-2xl bg-slate-50 p-4">
+<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+{title}
+</p>
+
+<p className="mt-2 text-lg font-black text-slate-950">{value}</p>
+</div>
+);
+}
+
+function GovernanceNotice() {
+return (
+<div className="border-t border-slate-100 bg-white p-8">
+<div className="rounded-3xl border border-red-200 bg-red-50 p-6">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-red-600">
+Buyer Reservation Rights
+</p>
+
+<p className="mt-3 max-w-4xl text-sm font-bold leading-7 text-red-800">
+{RIGHT_TO_REJECT_NOTICE}
+</p>
+</div>
+
+<div className="mt-4 rounded-3xl border border-orange-200 bg-orange-50 p-6">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-600">
+Confidentiality & Anti-Collusion
+</p>
+
+<p className="mt-3 max-w-4xl text-sm font-bold leading-7 text-orange-800">
+Supplier submissions are confidential. Competing suppliers cannot view
+each other’s pricing, proposal notes, validity periods, or commercial
+submission data.
+</p>
+</div>
+</div>
 );
 }
 
