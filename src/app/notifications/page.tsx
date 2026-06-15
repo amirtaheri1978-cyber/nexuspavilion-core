@@ -1,3 +1,5 @@
+import { redirect } from "next/navigation";
+
 import { createClient } from "@/lib/supabase/server";
 
 type Notification = {
@@ -7,22 +9,60 @@ message: string | null;
 type: string | null;
 is_read: boolean | null;
 created_at: string | null;
+company_id?: string | null;
 };
+
+function formatNotificationDate(value: string | null) {
+if (!value) return "No date";
+
+const date = new Date(value);
+
+if (Number.isNaN(date.getTime())) {
+return "No date";
+}
+
+return date.toLocaleString();
+}
 
 export default async function NotificationsPage() {
 const supabase = await createClient();
 
+const {
+data: { user },
+} = await supabase.auth.getUser();
+
+if (!user) {
+redirect("/login");
+}
+
+const { data: profile } = await supabase
+.from("profiles")
+.select("id, company_id, role, email")
+.eq("id", user.id)
+.single();
+
+if (!profile?.company_id) {
+redirect("/create-company");
+}
+
 const { data: notifications } = await supabase
 .from("notifications")
-.select("id, title, message, type, is_read, created_at")
+.select("id, title, message, type, is_read, created_at, company_id")
+.eq("company_id", profile.company_id)
 .order("created_at", { ascending: false });
 
 const notificationList = (notifications ?? []) as Notification[];
+
+const unreadCount = notificationList.filter(
+(notification) => !notification.is_read
+).length;
 
 return (
 <main className="min-h-screen bg-slate-100 px-8 py-10">
 <div className="mx-auto max-w-5xl">
 <div className="rounded-3xl border border-slate-200 bg-white p-10">
+<div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
+<div>
 <p className="text-xs font-black uppercase tracking-[0.35em] text-orange-500">
 Activity Center
 </p>
@@ -31,10 +71,20 @@ Activity Center
 Notifications
 </h1>
 
-<p className="mt-4 max-w-2xl text-sm text-slate-600">
-Monitor procurement events, supplier actions, contract awards, and
-platform activity across Nexus Pavilion.
+<p className="mt-4 max-w-2xl text-sm leading-6 text-slate-600">
+Monitor procurement events, supplier actions, contract awards,
+and platform activity scoped to your company workspace only.
 </p>
+</div>
+
+<div className="rounded-3xl bg-slate-950 px-6 py-5 text-white">
+<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+Unread
+</p>
+
+<p className="mt-2 text-3xl font-black">{unreadCount}</p>
+</div>
+</div>
 </div>
 
 <div className="mt-8 space-y-4">
@@ -50,7 +100,7 @@ className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm"
 {notification.title || "Notification"}
 </h2>
 
-<p className="mt-2 text-sm text-slate-600">
+<p className="mt-2 text-sm leading-6 text-slate-600">
 {notification.message || "No message provided."}
 </p>
 
@@ -59,10 +109,12 @@ className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm"
 {notification.type || "activity"}
 </span>
 
+<span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-500">
+Company Workspace
+</span>
+
 <span className="text-xs font-semibold text-slate-400">
-{notification.created_at
-? new Date(notification.created_at).toLocaleString()
-: "No date"}
+{formatNotificationDate(notification.created_at)}
 </span>
 </div>
 </div>
@@ -80,7 +132,7 @@ No notifications yet
 </p>
 
 <p className="mt-2 text-sm text-slate-500">
-Procurement activity will appear here.
+Procurement activity for this company workspace will appear here.
 </p>
 </div>
 )}
