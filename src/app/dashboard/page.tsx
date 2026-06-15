@@ -638,6 +638,9 @@ const topRfqsByBudget = [...rfqList]
 const recentAwards = awardedQuotes.slice(0, 5);
 return (
 <main className="min-h-screen bg-[#f6f6f3]">
+<div className="fixed right-8 top-8 z-50 hidden lg:block">
+<SignOutButton />
+</div>
 <div className="mx-auto max-w-7xl px-6 py-10">
 <div className="flex items-start justify-between gap-6">
 <div>
@@ -653,27 +656,8 @@ return (
 {dashboardCopy.subtitle}
 </p>
 
-<p className="mt-3 text-sm font-bold uppercase tracking-[0.2em] text-slate-400">
-Signed in as {profile?.email || user?.email} · Role:{" "}
-{profile?.role ? profile.role.toUpperCase() : "SETUP REQUIRED"}
-</p>
+
 </div>
-
-<div className="flex flex-wrap items-center justify-end gap-3">
-<Link
-href="/company/settings"
-className="rounded-full border border-slate-200 bg-white px-5 py-3 text-sm font-black text-slate-700 transition hover:border-slate-950 hover:text-slate-950"
->
-Company Settings
-</Link>
-
-<div className="rounded-full bg-white px-5 py-3 text-sm font-black text-slate-600 shadow-sm">
-{currentCompany?.name || "Company Workspace"}
-</div>
-
-<SignOutButton />
-</div>
-
 
 </div>
 
