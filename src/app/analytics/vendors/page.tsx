@@ -36,6 +36,15 @@ compliance_score: number | null;
 overall_status: string | null;
 };
 
+type QuotePerformance = {
+id: string;
+rfq_id: string | null;
+company_id: string | null;
+amount: number | string | null;
+decision: string | null;
+created_at: string | null;
+};
+
 function formatStatus(value: string | null | undefined) {
 if (!value) return "Missing";
 
@@ -125,6 +134,92 @@ complianceList.find(
 );
 }
 
+function getVendorRiskLevel(compliance: Compliance | null) {
+const score = Number(compliance?.compliance_score || 0);
+
+if (!compliance || score === 0) return "Critical";
+if (score >= 85) return "Low";
+if (score >= 60) return "Medium";
+return "High";
+}
+
+function getVendorRiskClass(risk: string) {
+if (risk === "Low") return "bg-green-100 text-green-700";
+if (risk === "Medium") return "bg-orange-100 text-orange-700";
+if (risk === "High") return "bg-red-100 text-red-700";
+return "bg-slate-950 text-white";
+}
+
+function hasExpiredOrCriticalExpiry(compliance: Compliance | null) {
+if (!compliance) return true;
+
+const expiries = [
+compliance.insurance_expiry,
+compliance.certificate_expiry,
+compliance.license_expiry,
+];
+
+return expiries.some((expiry) => {
+const days = daysUntil(expiry);
+return days !== null && days <= 30;
+});
+}
+
+function getExecutiveAction(compliance: Compliance | null) {
+const risk = getVendorRiskLevel(compliance);
+
+if (risk === "Critical") return "Block RFQ participation until compliance is completed.";
+if (risk === "High") return "Escalate compliance review before award decision.";
+if (risk === "Medium") return "Request renewal documents before next procurement cycle.";
+return "Eligible for active procurement workflows.";
+}
+
+function getVendorQuotes(
+quotes: QuotePerformance[],
+vendorCompanyId: string | null | undefined
+) {
+if (!vendorCompanyId) return [];
+
+return quotes.filter((quote) => quote.company_id === vendorCompanyId);
+}
+
+function getAwardedQuotes(quotes: QuotePerformance[]) {
+return quotes.filter((quote) => quote.decision === "awarded");
+}
+
+function getSupplierIntelligenceScore({
+compliance,
+quotes,
+}: {
+compliance: Compliance | null;
+quotes: QuotePerformance[];
+}) {
+const complianceScore = Number(compliance?.compliance_score || 0);
+const quoteCount = quotes.length;
+const awardCount = getAwardedQuotes(quotes).length;
+
+const participationScore = Math.min(100, quoteCount * 12);
+const winRateScore =
+quoteCount > 0 ? Math.round((awardCount / quoteCount) * 100) : 0;
+
+return Math.min(
+100,
+Math.round(
+complianceScore * 0.45 +
+participationScore * 0.25 +
+winRateScore * 0.3
+)
+);
+}
+
+function getSupplierIntelligenceRank(score: number) {
+if (score >= 90) return "Strategic Supplier";
+if (score >= 75) return "Preferred Supplier";
+if (score >= 60) return "Qualified Supplier";
+if (score >= 35) return "Developing Supplier";
+return "Unqualified / Review Required";
+}
+
 export default async function VendorIntelligencePage() {
 const supabase = await createClient();
 
@@ -176,8 +271,23 @@ const { data: complianceData } = await supabase
 )
 .eq("buyer_company_id", profile.company_id);
 
+const vendorCompanyIds = approvedVendorsData
+? approvedVendorsData
+.map((vendor) => vendor.vendor_company_id)
+.filter(Boolean)
+: [];
+
+const { data: quotePerformanceData } =
+vendorCompanyIds.length > 0
+? await supabase
+.from("quotes")
+.select("id, rfq_id, company_id, amount, decision, created_at")
+.in("company_id", vendorCompanyIds)
+: { data: [] };
+
 const approvedVendors = (approvedVendorsData ?? []) as any[];
 const complianceList = (complianceData ?? []) as Compliance[];
+const quotePerformanceList = (quotePerformanceData ?? []) as QuotePerformance[];
 
 const totalVendors = approvedVendors.length;
 
@@ -208,11 +318,72 @@ vendor.vendor_company_id
 return !compliance || compliance.overall_status === "missing";
 }).length;
 
+const highRiskVendors = approvedVendors.filter((vendor) => {
+const compliance = getComplianceForVendor(
+complianceList,
+vendor.vendor_company_id
+);
+
+const risk = getVendorRiskLevel(compliance);
+
+return risk === "High" || risk === "Critical";
+}).length;
+
+const expiryAlerts = approvedVendors.filter((vendor) => {
+const compliance = getComplianceForVendor(
+complianceList,
+vendor.vendor_company_id
+);
+
+return hasExpiredOrCriticalExpiry(compliance);
+}).length;
+
+const criticalExpiryVendors = approvedVendors.filter((vendor) => {
+const compliance = getComplianceForVendor(
+complianceList,
+vendor.vendor_company_id
+);
+
+if (!compliance) return true;
+
+const expiries = [
+compliance.insurance_expiry,
+compliance.certificate_expiry,
+compliance.license_expiry,
+];
+
+return expiries.some((expiry) => {
+const days = daysUntil(expiry);
+return days !== null && days <= 30;
+});
+}).length;
+
+const expiredVendors = approvedVendors.filter((vendor) => {
+const compliance = getComplianceForVendor(
+complianceList,
+vendor.vendor_company_id
+);
+
+if (!compliance) return false;
+
+const expiries = [
+compliance.insurance_expiry,
+compliance.certificate_expiry,
+compliance.license_expiry,
+];
+
+return expiries.some((expiry) => {
+const days = daysUntil(expiry);
+return days !== null && days < 0;
+});
+}).length;
+
 const averageComplianceScore =
 complianceList.length > 0
 ? Math.round(
 complianceList.reduce(
-(total, compliance) => total + Number(compliance.compliance_score || 0),
+(total, compliance) =>
+total + Number(compliance.compliance_score || 0),
 0
 ) / complianceList.length
 )
@@ -293,6 +464,39 @@ value={String(missingCompliance)}
 detail="Vendors missing required compliance records"
 />
 </section>
+<section className="mt-8 rounded-[36px] bg-slate-950 p-8 text-white">
+<p className="text-xs font-black uppercase tracking-[0.3em] text-orange-400">
+Supplier Risk Intelligence
+</p>
+
+<div className="mt-5 grid gap-8 lg:grid-cols-[1fr_0.9fr]">
+<div>
+<h2 className="text-4xl font-black leading-tight">
+Compliance risk engine is active.
+</h2>
+
+<p className="mt-4 max-w-3xl text-sm font-semibold leading-7 text-slate-300">
+Nexus Pavilion evaluates approved vendors using compliance score,
+document status, expiry exposure, and procurement eligibility signals.
+</p>
+
+<div className="mt-6 flex flex-wrap gap-3">
+<DarkBadge>{highRiskVendors} High Risk</DarkBadge>
+<DarkBadge>{expiryAlerts} Expiry Alerts</DarkBadge>
+<DarkBadge>{missingCompliance} Missing Records</DarkBadge>
+<DarkBadge>{criticalExpiryVendors} Critical Expiry</DarkBadge>
+<DarkBadge>{expiredVendors} Expired</DarkBadge>
+</div>
+</div>
+
+<div className="grid gap-4 sm:grid-cols-2">
+<DarkMetric title="Avg Compliance" value={averageComplianceScore > 0 ? `${averageComplianceScore}/100` : "Setup"} />
+<DarkMetric title="High Risk" value={String(highRiskVendors)} />
+<DarkMetric title="Critical Expiry" value={String(criticalExpiryVendors)} />
+<DarkMetric title="Expired" value={String(expiredVendors)} />
+</div>
+</div>
+</section>
 
 <section className="mt-8 overflow-hidden rounded-[36px] border border-black/5 bg-white shadow-sm">
 <div className="border-b border-slate-100 p-8">
@@ -318,6 +522,21 @@ const vendor = approvedVendor.vendor;
 const compliance = getComplianceForVendor(
 complianceList,
 approvedVendor.vendor_company_id
+);
+const vendorQuotes = getVendorQuotes(
+quotePerformanceList,
+approvedVendor.vendor_company_id
+);
+
+const awardedVendorQuotes = getAwardedQuotes(vendorQuotes);
+
+const supplierIntelligenceScore = getSupplierIntelligenceScore({
+compliance,
+quotes: vendorQuotes,
+});
+
+const supplierIntelligenceRank = getSupplierIntelligenceRank(
+supplierIntelligenceScore
 );
 
 const complianceScore = Number(
@@ -414,6 +633,29 @@ Compliance Score
 
 <div className="mt-5 rounded-2xl bg-white p-4">
 <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+Supplier Intelligence
+</p>
+
+<p className="mt-2 text-2xl font-black text-slate-950">
+{supplierIntelligenceScore}/100
+</p>
+
+<p className="mt-1 text-xs font-black text-slate-500">
+{supplierIntelligenceRank}
+</p>
+
+<p className="mt-3 text-xs font-bold leading-5 text-slate-400">
+Based on compliance score, quote participation, and award performance.
+</p>
+</div>
+
+<div className="mt-4 grid grid-cols-2 gap-3">
+<SmallSignal title="Quotes" value={String(vendorQuotes.length)} />
+<SmallSignal title="Awards" value={String(awardedVendorQuotes.length)} />
+</div>
+
+<div className="mt-5 rounded-2xl bg-white p-4">
+<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
 RFQ Eligibility
 </p>
 
@@ -485,6 +727,26 @@ return (
 </p>
 
 <p className="mt-2 text-2xl font-black text-white">{value}</p>
+</div>
+);
+}
+
+function DarkBadge({ children }: { children: React.ReactNode }) {
+return (
+<span className="rounded-full bg-white/10 px-4 py-2 text-xs font-black uppercase tracking-[0.15em] text-white">
+{children}
+</span>
+);
+}
+
+function SmallSignal({ title, value }: { title: string; value: string }) {
+return (
+<div className="rounded-2xl bg-white p-4">
+<p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
+{title}
+</p>
+
+<p className="mt-2 text-lg font-black text-slate-950">{value}</p>
 </div>
 );
 }
