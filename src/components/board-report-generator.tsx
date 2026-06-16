@@ -22,8 +22,10 @@ supplierDependencyRisk: string;
 concentrationLevel: string;
 awardPredictionConfidence: string;
 predictionAccuracy: number;
-};
 
+benchmarkReadinessScore: number;
+boardHealthIndex: number;
+};
 
 const reports: ExecutiveReport[] = [
 {
@@ -93,6 +95,8 @@ const operationalNextSteps = [
 function getReport(type: ReportType) {
 return reports.find((report) => report.id === type) || reports[0];
 }
+
+
 export default function BoardReportGenerator({
 procurementRiskIndex,
 procurementMaturityScore,
@@ -101,6 +105,9 @@ supplierDependencyRisk,
 concentrationLevel,
 awardPredictionConfidence,
 predictionAccuracy,
+
+benchmarkReadinessScore,
+boardHealthIndex,
 }: BoardReportGeneratorProps) {
 
 const [activeReport, setActiveReport] = useState<ExecutiveReport | null>(
@@ -169,6 +176,9 @@ Executive Metrics:
 - Vendor Concentration: ${concentrationLevel}
 - Award Prediction Confidence: ${awardPredictionConfidence}
 - Prediction Accuracy: ${predictionAccuracy}
+- Benchmark Readiness Score: ${benchmarkReadinessScore}/100
+- Board Health Index: ${boardHealthIndex}/100
+
 
 
 Decision Readiness:

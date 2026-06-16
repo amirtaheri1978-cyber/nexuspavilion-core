@@ -2023,6 +2023,9 @@ supplierDependencyRisk={supplierDependencyRisk}
 concentrationLevel={concentrationLevel}
 awardPredictionConfidence={awardPredictionConfidence}
 predictionAccuracy={predictionAccuracy}
+
+benchmarkReadinessScore={benchmarkReadinessScore}
+boardHealthIndex={boardHealthIndex}
 />
 
 <AIBoardNarrativeGenerator />
