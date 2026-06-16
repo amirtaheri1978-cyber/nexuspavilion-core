@@ -732,6 +732,54 @@ procurementHealthScore * 0.25
 )
 );
 
+const benchmarkReadinessScore = Math.min(
+100,
+Math.round(
+procurementMaturityScore * 0.25 +
+supplierEngagementScore * 0.2 +
+executiveReadinessScore * 0.2 +
+dataQualityScore * 0.2 +
+predictionAccuracy * 0.15
+)
+);
+
+const executiveBenchmarkStatus =
+benchmarkReadinessScore >= 85
+? "Board Ready"
+: benchmarkReadinessScore >= 70
+? "Executive Ready"
+: benchmarkReadinessScore >= 50
+? "Operational"
+: "Insufficient Data";
+
+const supplierNetworkBenchmark =
+supplierRanking.length >= 10
+? "Scaled"
+: supplierRanking.length >= 5
+? "Developing"
+: supplierRanking.length > 0
+? "Early"
+: "Insufficient Data";
+
+const awardBenchmark =
+awardRate >= 60
+? "Strong"
+: awardRate >= 35
+? "Developing"
+: awardRate > 0
+? "Early"
+: "No Award History";
+
+const riskBenchmark =
+procurementRiskIndex <= 25
+? "Low Exposure"
+: procurementRiskIndex <= 50
+? "Moderate Exposure"
+: procurementRiskIndex <= 75
+? "Elevated Exposure"
+: "Critical Exposure";
+
+
 const boardHealthStatus =
 boardHealthIndex >= 85
 ? "Excellent"
@@ -1900,6 +1948,30 @@ className="rounded-2xl border border-white/10 bg-white/5 p-5"
 <DarkList title="Executive Decision Queue" items={executiveDecisionQueue} />
 <DarkList title="Top Risks This Quarter" items={topQuarterRisks} />
 <DarkList title="Top Opportunities" items={topQuarterOpportunities} />
+</div>
+</section>
+
+<section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
+Executive Benchmark Center
+</p>
+
+<h2 className="mt-3 text-3xl font-black text-slate-950">
+Enterprise Procurement Benchmark
+</h2>
+
+<p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-600">
+Benchmark procurement maturity, supplier network strength, award confidence,
+risk exposure, and board readiness using validated Nexus Pavilion operating
+data.
+</p>
+
+<div className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-5">
+<MetricCard title="Benchmark Score" value={`${benchmarkReadinessScore}/100`} />
+<MetricCard title="Benchmark Status" value={executiveBenchmarkStatus} />
+<MetricCard title="Supplier Network" value={supplierNetworkBenchmark} />
+<MetricCard title="Award Benchmark" value={awardBenchmark} />
+<MetricCard title="Risk Benchmark" value={riskBenchmark} />
 </div>
 </section>
 
