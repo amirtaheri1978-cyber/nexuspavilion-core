@@ -41,6 +41,9 @@ priceScore: number;
 timelineScore: number;
 performanceScore: number;
 riskScore: number;
+commercialScore: number;
+technicalScore: number;
+evaluationScore: number;
 totalScore: number;
 awardProbability: number;
 riskLevel: string;
@@ -219,6 +222,80 @@ if (score >= 75) return "text-orange-700";
 return "text-red-700";
 }
 
+function getValidityScore(validityDays: number) {
+if (validityDays >= 120) return 100;
+if (validityDays >= 90) return 92;
+if (validityDays >= 60) return 84;
+return 72;
+}
+
+function getBudgetDisciplineScore({
+amountNumber,
+budget,
+}: {
+amountNumber: number;
+budget: number;
+}) {
+if (budget <= 0 || amountNumber <= 0) return 70;
+
+const variance = Math.abs(amountNumber - budget) / budget;
+
+if (variance <= 0.05) return 100;
+if (variance <= 0.1) return 92;
+if (variance <= 0.2) return 80;
+if (variance <= 0.35) return 62;
+
+return 45;
+}
+
+function getCommercialScore({
+priceScore,
+validityScore,
+budgetDisciplineScore,
+}: {
+priceScore: number;
+validityScore: number;
+budgetDisciplineScore: number;
+}) {
+return Math.min(
+100,
+Math.round(
+priceScore * 0.6 + validityScore * 0.2 + budgetDisciplineScore * 0.2
+)
+);
+}
+
+function getTechnicalScore({
+timelineScore,
+performanceScore,
+riskScore,
+}: {
+timelineScore: number;
+performanceScore: number;
+riskScore: number;
+}) {
+return Math.min(
+100,
+Math.round(timelineScore * 0.45 + performanceScore * 0.35 + riskScore * 0.2)
+);
+}
+
+function getEvaluationScore({
+commercialScore,
+technicalScore,
+riskScore,
+}: {
+commercialScore: number;
+technicalScore: number;
+riskScore: number;
+}) {
+return Math.min(
+100,
+Math.round(commercialScore * 0.45 + technicalScore * 0.4 + riskScore * 0.15)
+);
+}
+
+
 export default async function CompareQuotesPage({ params }: PageProps) {
 const { slug } = await params;
 const supabase = await createClient();
@@ -306,25 +383,32 @@ message: quote.message,
 });
 
 const validityDays = Number(quote.validity_days || 30);
-const validityScore =
-validityDays >= 120
-? 100
-: validityDays >= 90
-? 92
-: validityDays >= 60
-? 84
-: 72;
+const validityScore = getValidityScore(validityDays);
 
-const totalScore = Math.min(
-100,
-Math.round(
-priceScore * 0.38 +
-timelineScore * 0.22 +
-performanceScore * 0.18 +
-riskScore * 0.14 +
-validityScore * 0.08
-)
-);
+const budgetDisciplineScore = getBudgetDisciplineScore({
+amountNumber,
+budget,
+});
+
+const commercialScore = getCommercialScore({
+priceScore,
+validityScore,
+budgetDisciplineScore,
+});
+
+const technicalScore = getTechnicalScore({
+timelineScore,
+performanceScore,
+riskScore,
+});
+
+const evaluationScore = getEvaluationScore({
+commercialScore,
+technicalScore,
+riskScore,
+});
+
+const totalScore = evaluationScore;
 
 const awardProbability = Math.min(
 99,
@@ -345,6 +429,9 @@ priceScore,
 timelineScore,
 performanceScore,
 riskScore,
+commercialScore,
+technicalScore,
+evaluationScore,
 totalScore,
 awardProbability,
 riskLevel: getRiskLevel(riskScore),
@@ -385,7 +472,7 @@ const executiveSummary =
 commercialEvaluationUnlocked && recommendedQuote
 ? `${formatMoney(
 recommendedQuote.amountNumber
-)} is currently the strongest award path with ${confidenceScore}% confidence, ${recommendedQuote.riskLevel.toLowerCase()}, and an overall AI score of ${recommendedQuote.totalScore}/100.`
+)} is currently the strongest award path with ${confidenceScore}% confidence, ${recommendedQuote.riskLevel.toLowerCase()}, with commercial score of ${recommendedQuote.commercialScore}/100 and technical score of ${recommendedQuote.technicalScore}/100, and final evaluation score of ${recommendedQuote.evaluationScore}/100.`
 : commercialEvaluationUnlocked
 ? "Submit supplier quotes to activate procurement intelligence."
 : "Commercial evaluation is locked until the RFQ deadline. Participation is visible, but pricing, ranking, and award controls remain sealed.";
@@ -544,10 +631,10 @@ commercialEvaluationUnlocked && recommendedQuote
 />
 
 <DarkMetric
-title="AI Score"
+title="Evaluation"
 value={
 commercialEvaluationUnlocked && recommendedQuote
-? `${recommendedQuote.totalScore}/100`
+? `${recommendedQuote.evaluationScore}/100`
 : "Locked"
 }
 />
@@ -642,7 +729,7 @@ Blind Bidding Active
 <div>Timeline</div>
 <div>Validity</div>
 <div>Decision</div>
-<div>AI Score</div>
+<div>Evaluation</div>
 <div>Probability</div>
 <div>Risk</div>
 <div>Variance</div>
@@ -702,14 +789,14 @@ quote.decision
 <div>
 <div
 className={`text-lg font-black ${getScoreClass(
-quote.totalScore
+quote.evaluationScore
 )}`}
 >
-{quote.totalScore}/100
+{quote.evaluationScore}/100
 </div>
 
 <div className="mt-1 text-xs text-black/40">
-P {quote.priceScore} · T {quote.timelineScore} · R{" "}
+C {quote.commercialScore} · T {quote.technicalScore} · R{" "}
 {quote.riskScore}
 </div>
 </div>
