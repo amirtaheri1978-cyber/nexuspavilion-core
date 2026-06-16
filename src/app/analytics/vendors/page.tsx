@@ -43,6 +43,7 @@ company_id: string | null;
 amount: number | string | null;
 decision: string | null;
 created_at: string | null;
+awarded_at: string | null;
 };
 
 function formatStatus(value: string | null | undefined) {
@@ -85,6 +86,14 @@ month: "short",
 day: "numeric",
 });
 }
+function formatMoney(value: number | string | null | undefined) {
+const amount = Number(value);
+
+if (!Number.isFinite(amount)) return "$0";
+
+return `$${amount.toLocaleString()}`;
+}
+
 
 function daysUntil(value: string | null | undefined) {
 if (!value) return null;
@@ -219,6 +228,52 @@ if (score >= 60) return "Qualified Supplier";
 if (score >= 35) return "Developing Supplier";
 return "Unqualified / Review Required";
 }
+function getAwardedRevenue(quotes: QuotePerformance[]) {
+return getAwardedQuotes(quotes).reduce((total, quote) => {
+const amount = Number(quote.amount);
+return total + (Number.isFinite(amount) ? amount : 0);
+}, 0);
+}
+
+function getWinRate(quotes: QuotePerformance[]) {
+if (quotes.length === 0) return 0;
+
+return Math.round((getAwardedQuotes(quotes).length / quotes.length) * 100);
+}
+
+function getAverageAwardValue(quotes: QuotePerformance[]) {
+const awardedQuotes = getAwardedQuotes(quotes);
+
+if (awardedQuotes.length === 0) return 0;
+
+return Math.round(getAwardedRevenue(quotes) / awardedQuotes.length);
+}
+
+function getPerformanceScore(quotes: QuotePerformance[]) {
+const quoteCount = quotes.length;
+const awards = getAwardedQuotes(quotes).length;
+const winRate = getWinRate(quotes);
+const revenue = getAwardedRevenue(quotes);
+
+return Math.min(
+100,
+Math.round(
+Math.min(quoteCount * 8, 30) +
+Math.min(awards * 15, 35) +
+winRate * 0.2 +
+Math.min(revenue / 50000, 15)
+)
+);
+}
+
+function getPerformanceRank(score: number) {
+if (score >= 85) return "Excellent";
+if (score >= 70) return "Strong";
+if (score >= 50) return "Reliable";
+if (score >= 30) return "Developing";
+return "Limited Data";
+}
+
 
 export default async function VendorIntelligencePage() {
 const supabase = await createClient();
@@ -281,7 +336,7 @@ const { data: quotePerformanceData } =
 vendorCompanyIds.length > 0
 ? await supabase
 .from("quotes")
-.select("id, rfq_id, company_id, amount, decision, created_at")
+.select("id, rfq_id, company_id, amount, decision, created_at, awarded_at")
 .in("company_id", vendorCompanyIds)
 : { data: [] };
 
@@ -539,6 +594,13 @@ const supplierIntelligenceRank = getSupplierIntelligenceRank(
 supplierIntelligenceScore
 );
 
+const vendorWinRate = getWinRate(vendorQuotes);
+const awardedRevenue = getAwardedRevenue(vendorQuotes);
+const averageAwardValue = getAverageAwardValue(vendorQuotes);
+const performanceScore = getPerformanceScore(vendorQuotes);
+const performanceRank = getPerformanceRank(performanceScore);
+
+
 const complianceScore = Number(
 compliance?.compliance_score || 0
 );
@@ -649,9 +711,30 @@ Based on compliance score, quote participation, and award performance.
 </p>
 </div>
 
+<div className="mt-4 rounded-2xl bg-white p-4">
+<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+Performance Scorecard
+</p>
+
+<p className="mt-2 text-2xl font-black text-slate-950">
+{performanceScore}/100
+</p>
+
+<p className="mt-1 text-xs font-black text-slate-500">
+{performanceRank}
+</p>
+
+<p className="mt-3 text-xs font-bold leading-5 text-slate-400">
+Based on awards won, quote activity, win rate, and awarded revenue.
+</p>
+</div>
+
+
 <div className="mt-4 grid grid-cols-2 gap-3">
 <SmallSignal title="Quotes" value={String(vendorQuotes.length)} />
 <SmallSignal title="Awards" value={String(awardedVendorQuotes.length)} />
+<SmallSignal title="Win Rate" value={`${vendorWinRate}%`} />
+<SmallSignal title="Awarded" value={formatMoney(awardedRevenue)} />
 </div>
 
 <div className="mt-5 rounded-2xl bg-white p-4">
