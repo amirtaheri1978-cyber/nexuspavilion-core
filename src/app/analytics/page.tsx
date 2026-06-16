@@ -1943,7 +1943,16 @@ awardPredictionConfidence={awardPredictionConfidence}
 />
 </div>
 
-<BoardReportGenerator />
+<BoardReportGenerator
+procurementRiskIndex={procurementRiskIndex}
+procurementMaturityScore={procurementMaturityScore}
+aiConfidenceScore={aiConfidenceScore}
+supplierDependencyRisk={supplierDependencyRisk}
+concentrationLevel={concentrationLevel}
+awardPredictionConfidence={awardPredictionConfidence}
+predictionAccuracy={predictionAccuracy}
+/>
+
 <AIBoardNarrativeGenerator />
 </main>
 );

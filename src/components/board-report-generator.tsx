@@ -14,6 +14,17 @@ statusLabel: string;
 primaryRequirement: string;
 };
 
+type BoardReportGeneratorProps = {
+procurementRiskIndex: number;
+procurementMaturityScore: number;
+aiConfidenceScore: string;
+supplierDependencyRisk: string;
+concentrationLevel: string;
+awardPredictionConfidence: string;
+predictionAccuracy: number;
+};
+
+
 const reports: ExecutiveReport[] = [
 {
 id: "board",
@@ -82,20 +93,50 @@ const operationalNextSteps = [
 function getReport(type: ReportType) {
 return reports.find((report) => report.id === type) || reports[0];
 }
+export default function BoardReportGenerator({
+procurementRiskIndex,
+procurementMaturityScore,
+aiConfidenceScore,
+supplierDependencyRisk,
+concentrationLevel,
+awardPredictionConfidence,
+predictionAccuracy,
+}: BoardReportGeneratorProps) {
 
-export default function BoardReportGenerator() {
 const [activeReport, setActiveReport] = useState<ExecutiveReport | null>(
 null
 );
 const [copied, setCopied] = useState(false);
 
 const generatedAt = useMemo(() => {
-return new Date().toLocaleDateString("en-US", {
+
+const boardReady =
+procurementMaturityScore >= 50 &&
+procurementRiskIndex > 0 &&
+aiConfidenceScore !== "Insufficient Data";
+
+const reportStatusLabel = boardReady ? "Ready" : "Insufficient Data";
+const reportStatusClass = boardReady
+? "rounded-full border border-green-200 bg-green-50 px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-green-700"
+: "rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-amber-700";
+
+    return new Date().toLocaleDateString("en-US", {
 year: "numeric",
 month: "long",
 day: "numeric",
 });
 }, []);
+
+const boardReady =
+procurementMaturityScore >= 50 &&
+procurementRiskIndex > 0 &&
+aiConfidenceScore !== "Insufficient Data";
+
+const reportStatusLabel = boardReady ? "Ready" : "Insufficient Data";
+const reportStatusClass = boardReady
+? "rounded-full border border-green-200 bg-green-50 px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-green-700"
+: "rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-amber-700";
+
 
 const executiveSummary = useMemo(() => {
 if (!activeReport) return "";
@@ -106,7 +147,7 @@ Audience:
 ${activeReport.audience}
 
 Status:
-${activeReport.statusLabel}
+${reportStatusLabel}
 
 Summary:
 This report is not generated because Nexus Pavilion does not yet have enough validated procurement data to produce a board-grade executive report.
@@ -120,9 +161,29 @@ ${requiredDataSources.map((item) => `- ${item}`).join("\n")}
 Recommended Next Steps:
 ${operationalNextSteps.map((item, index) => `${index + 1}. ${item}`).join("\n")}
 
+Executive Metrics:
+- Procurement Risk Index: ${procurementRiskIndex}/100
+- Procurement Maturity Score: ${procurementMaturityScore}/100
+- AI Confidence: ${aiConfidenceScore}
+- Supplier Dependency Risk: ${supplierDependencyRisk}
+- Vendor Concentration: ${concentrationLevel}
+- Award Prediction Confidence: ${awardPredictionConfidence}
+- Prediction Accuracy: ${predictionAccuracy}
+
+
 Decision Readiness:
 Executive decisions should not be generated from placeholder data, mock scores, or unverified analytics.`;
-}, [activeReport]);
+}, [
+activeReport,
+reportStatusLabel,
+procurementRiskIndex,
+procurementMaturityScore,
+aiConfidenceScore,
+supplierDependencyRisk,
+concentrationLevel,
+awardPredictionConfidence,
+predictionAccuracy,
+]);
 
 async function copySummary() {
 if (!executiveSummary) return;
@@ -285,7 +346,7 @@ report.status === "coming-soon"
 : "rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-amber-700"
 }
 >
-{report.statusLabel}
+{report.id === "cfo" ? report.statusLabel : reportStatusLabel}
 </span>
 </div>
 
@@ -356,7 +417,7 @@ activeReport.status === "coming-soon"
 Report Status
 </p>
 <p className="mt-2 text-2xl font-black">
-{activeReport.statusLabel}
+{activeReport.id === "cfo" ? activeReport.statusLabel : reportStatusLabel}
 </p>
 </div>
 </div>
@@ -393,9 +454,9 @@ Executive Summary
 
 <div className="mt-4 rounded-3xl border border-slate-200 bg-white p-6">
 <p className="text-sm font-semibold leading-7 text-slate-700">
-This report is not generated because Nexus Pavilion does
-not yet have enough validated procurement data to produce a
-board-grade executive report.
+{boardReady
+? "Nexus Pavilion has sufficient validated procurement intelligence to generate an executive-grade report for this audience."
+: "This report is not generated because Nexus Pavilion does not yet have enough validated procurement data to produce a board-grade executive report."}
 </p>
 
 <p className="mt-4 text-sm leading-7 text-slate-600">
