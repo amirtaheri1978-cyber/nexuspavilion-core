@@ -295,6 +295,71 @@ Math.round(commercialScore * 0.45 + technicalScore * 0.4 + riskScore * 0.15)
 );
 }
 
+function getBidSpreadPercent({
+lowestAmount,
+highestAmount,
+}: {
+lowestAmount: number | null;
+highestAmount: number | null;
+}) {
+if (!lowestAmount || !highestAmount || lowestAmount <= 0) return 0;
+
+return Math.round(((highestAmount - lowestAmount) / lowestAmount) * 100);
+}
+
+function getBudgetPosition({
+recommendedAmount,
+budget,
+}: {
+recommendedAmount: number;
+budget: number;
+}) {
+if (budget <= 0 || recommendedAmount <= 0) return "Budget unavailable";
+
+if (recommendedAmount <= budget * 0.9) return "Strong savings position";
+if (recommendedAmount <= budget) return "Within budget";
+if (recommendedAmount <= budget * 1.1) return "Slightly over budget";
+return "Over budget";
+}
+
+function getBenchmarkPosition({
+recommendedAmount,
+averageBid,
+}: {
+recommendedAmount: number;
+averageBid: number;
+}) {
+if (recommendedAmount <= 0 || averageBid <= 0) return "Benchmark pending";
+
+const ratio = recommendedAmount / averageBid;
+
+if (ratio <= 0.9) return "Top quartile";
+if (ratio <= 1) return "Competitive";
+if (ratio <= 1.1) return "Above average";
+return "High cost position";
+}
+
+function getCompetitivenessIndex({
+recommendedAmount,
+averageBid,
+evaluationScore,
+}: {
+recommendedAmount: number;
+averageBid: number;
+evaluationScore: number;
+}) {
+if (recommendedAmount <= 0 || averageBid <= 0) return evaluationScore;
+
+const pricePosition = Math.max(
+0,
+Math.min(100, Math.round((averageBid / recommendedAmount) * 100))
+);
+
+return Math.min(
+100,
+Math.round(pricePosition * 0.45 + evaluationScore * 0.55)
+);
+}
 
 export default async function CompareQuotesPage({ params }: PageProps) {
 const { slug } = await params;
@@ -456,6 +521,37 @@ const hasAwardedContract = !!awardedQuote;
 const potentialSavings =
 recommendedQuote && averageBid ? averageBid - recommendedQuote.amountNumber : 0;
 
+
+const bidSpreadPercent = getBidSpreadPercent({
+lowestAmount,
+highestAmount,
+});
+
+const budgetPosition =
+recommendedQuote && commercialEvaluationUnlocked
+? getBudgetPosition({
+recommendedAmount: recommendedQuote.amountNumber,
+budget,
+})
+: "Locked";
+
+const benchmarkPosition =
+recommendedQuote && commercialEvaluationUnlocked
+? getBenchmarkPosition({
+recommendedAmount: recommendedQuote.amountNumber,
+averageBid,
+})
+: "Locked";
+
+const competitivenessIndex =
+recommendedQuote && commercialEvaluationUnlocked
+? getCompetitivenessIndex({
+recommendedAmount: recommendedQuote.amountNumber,
+averageBid,
+evaluationScore: recommendedQuote.evaluationScore,
+})
+: 0;
+
 const confidenceScore = recommendedQuote
 ? Math.min(
 99,
@@ -599,6 +695,64 @@ commercialEvaluationUnlocked
 : "Available after deadline"
 }
 />
+</section>
+
+<section className="mt-8 rounded-[36px] border border-black/5 bg-white p-8 shadow-sm">
+<p className="text-xs font-black uppercase tracking-[0.3em] text-orange-500">
+Executive Benchmark Engine
+</p>
+
+<div className="mt-5 grid gap-8 lg:grid-cols-[1fr_0.9fr]">
+<div>
+<h2 className="text-4xl font-black leading-tight text-slate-950">
+Budget, market, and award benchmark signals.
+</h2>
+
+<p className="mt-4 max-w-3xl text-sm font-semibold leading-7 text-slate-600">
+Nexus Pavilion benchmarks the recommended award path against submitted
+bid distribution, average bid position, approved budget, and final
+evaluation score. No synthetic market data is used.
+</p>
+
+<div className="mt-6 flex flex-wrap gap-3">
+<BenchmarkBadge>{benchmarkPosition}</BenchmarkBadge>
+<BenchmarkBadge>{budgetPosition}</BenchmarkBadge>
+<BenchmarkBadge>{bidSpreadPercent}% Bid Spread</BenchmarkBadge>
+</div>
+</div>
+
+<div className="grid gap-4 sm:grid-cols-2">
+<BenchmarkMetric
+title="Competitiveness"
+value={
+commercialEvaluationUnlocked && recommendedQuote
+? `${competitivenessIndex}/100`
+: "Locked"
+}
+/>
+
+<BenchmarkMetric
+title="Average Bid"
+value={
+commercialEvaluationUnlocked && averageBid
+? formatMoney(averageBid)
+: "Locked"
+}
+/>
+
+<BenchmarkMetric
+title="Budget Position"
+value={commercialEvaluationUnlocked ? budgetPosition : "Locked"}
+/>
+
+<BenchmarkMetric
+title="Bid Spread"
+value={
+commercialEvaluationUnlocked ? `${bidSpreadPercent}%` : "Locked"
+}
+/>
+</div>
+</div>
 </section>
 
 <section className="mt-8 overflow-hidden rounded-[36px] border border-black/5 bg-slate-950 text-white">
@@ -936,6 +1090,31 @@ return (
 </p>
 
 <p className="mt-2 text-2xl font-black text-white">{value}</p>
+</div>
+);
+}
+function BenchmarkBadge({ children }: { children: React.ReactNode }) {
+return (
+<span className="rounded-full bg-slate-100 px-4 py-2 text-xs font-black uppercase tracking-[0.15em] text-slate-700">
+{children}
+</span>
+);
+}
+
+function BenchmarkMetric({
+title,
+value,
+}: {
+title: string;
+value: string;
+}) {
+return (
+<div className="rounded-3xl bg-slate-50 p-5">
+<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+{title}
+</p>
+
+<p className="mt-2 text-xl font-black text-slate-950">{value}</p>
 </div>
 );
 }
