@@ -839,7 +839,68 @@ boardReadinessScore >= 85
 ? "Executive Validation Recommended"
 : "Additional Procurement Evidence Required";
 
+const ceoReadinessScore = Math.min(
+100,
+Math.round(
+boardReadinessScore * 0.30 +
+enterpriseProcurementScore * 0.25 +
+executiveReadinessScore * 0.20 +
+benchmarkReadinessScore * 0.15 +
+supplierEngagementScore * 0.10
+)
+);
 
+const ceoPriorityLevel =
+ceoReadinessScore >= 85
+? "Strategic Expansion"
+: ceoReadinessScore >= 70
+? "Executive Optimization"
+: ceoReadinessScore >= 55
+? "Operational Stabilization"
+: "Immediate Leadership Attention";
+
+const ceoRiskLevel =
+procurementRiskIndex <= 25
+? "Low"
+: procurementRiskIndex <= 50
+? "Moderate"
+: "High";
+
+const ceoOpportunityLevel =
+procurementOpportunityScore >= 80
+? "High Opportunity"
+: procurementOpportunityScore >= 60
+? "Strong Opportunity"
+: "Emerging Opportunity";
+
+
+const ceoPriorityQueue = [
+`Board Readiness: ${boardReadinessScore}/100`,
+`Enterprise Score: ${enterpriseProcurementScore}/100`,
+`Executive Readiness: ${executiveReadinessScore}/100`,
+`Benchmark Status: ${executiveBenchmarkStatus}`,
+];
+
+const ceoCriticalRisks = [
+`Risk Exposure: ${procurementRiskIndex}/100`,
+`Supplier Dependency: ${supplierDependencyRisk}`,
+`Vendor Concentration: ${concentrationLevel}`,
+];
+
+const ceoStrategicOpportunities = [
+`Supplier Engagement: ${supplierEngagementScore}/100`,
+`Procurement Opportunity: ${procurementOpportunityScore}/100`,
+`Benchmark Readiness: ${benchmarkReadinessScore}/100`,
+];
+
+const ceoMorningBrief = `
+Nexus Pavilion executive intelligence indicates a CEO readiness score
+of ${ceoReadinessScore}/100. Current board readiness is
+${boardReadinessScore}/100 with ${executiveBenchmarkStatus}
+benchmark status. Enterprise procurement performance is
+${enterpriseProcurementScore}/100 while procurement risk exposure
+remains ${ceoRiskLevel.toLowerCase()}.
+`;
 
 const industryProcurementSignal =
 procurementEfficiencyScore >= 80 && supplierEngagementScore >= 70
@@ -2134,6 +2195,58 @@ value={riskVisibility}
 <MetricCard
 title="Recommendation"
 value={boardRecommendation}
+/>
+</div>
+</section>
+<section className="mt-8 rounded-3xl border border-slate-200 bg-slate-950 p-8 text-white">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-400">
+CEO Briefing Intelligence
+</p>
+
+<h2 className="mt-3 text-4xl font-black">
+Executive Morning Brief
+</h2>
+
+<p className="mt-4 max-w-4xl text-sm leading-7 text-slate-300">
+{ceoMorningBrief}
+</p>
+
+<div className="mt-8 grid gap-4 md:grid-cols-4">
+<DarkMetric
+title="CEO Readiness"
+value={`${ceoReadinessScore}/100`}
+/>
+
+<DarkMetric
+title="Priority"
+value={ceoPriorityLevel}
+/>
+
+<DarkMetric
+title="Risk Level"
+value={ceoRiskLevel}
+/>
+
+<DarkMetric
+title="Opportunity"
+value={ceoOpportunityLevel}
+/>
+</div>
+
+<div className="mt-8 grid gap-6 md:grid-cols-3">
+<DarkList
+title="Priority Queue"
+items={ceoPriorityQueue}
+/>
+
+<DarkList
+title="Critical Risks"
+items={ceoCriticalRisks}
+/>
+
+<DarkList
+title="Strategic Opportunities"
+items={ceoStrategicOpportunities}
 />
 </div>
 </section>
