@@ -2023,9 +2023,14 @@ supplierDependencyRisk={supplierDependencyRisk}
 concentrationLevel={concentrationLevel}
 awardPredictionConfidence={awardPredictionConfidence}
 predictionAccuracy={predictionAccuracy}
-
 benchmarkReadinessScore={benchmarkReadinessScore}
 boardHealthIndex={boardHealthIndex}
+
+enterpriseProcurementScore={enterpriseProcurementScore}
+executiveReadinessScore={executiveReadinessScore}
+procurementEfficiencyScore={procurementEfficiencyScore}
+supplierEngagementScore={supplierEngagementScore}
+digitalMaturityScore={digitalMaturityScore}
 />
 
 <AIBoardNarrativeGenerator />

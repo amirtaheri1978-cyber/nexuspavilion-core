@@ -22,9 +22,13 @@ supplierDependencyRisk: string;
 concentrationLevel: string;
 awardPredictionConfidence: string;
 predictionAccuracy: number;
-
 benchmarkReadinessScore: number;
 boardHealthIndex: number;
+enterpriseProcurementScore: number;
+executiveReadinessScore: number;
+procurementEfficiencyScore: number;
+supplierEngagementScore: number;
+digitalMaturityScore: number;
 };
 
 const reports: ExecutiveReport[] = [
@@ -105,9 +109,14 @@ supplierDependencyRisk,
 concentrationLevel,
 awardPredictionConfidence,
 predictionAccuracy,
-
 benchmarkReadinessScore,
 boardHealthIndex,
+enterpriseProcurementScore,
+executiveReadinessScore,
+procurementEfficiencyScore,
+supplierEngagementScore,
+digitalMaturityScore,
+
 }: BoardReportGeneratorProps) {
 
 const [activeReport, setActiveReport] = useState<ExecutiveReport | null>(
@@ -178,7 +187,11 @@ Executive Metrics:
 - Prediction Accuracy: ${predictionAccuracy}
 - Benchmark Readiness Score: ${benchmarkReadinessScore}/100
 - Board Health Index: ${boardHealthIndex}/100
-
+- Enterprise Procurement Score: ${enterpriseProcurementScore}/100
+- Executive Readiness Score: ${executiveReadinessScore}/100
+- Procurement Efficiency Score: ${procurementEfficiencyScore}/100
+- Supplier Engagement Score: ${supplierEngagementScore}/100
+- Digital Maturity Score: ${digitalMaturityScore}/100
 
 
 Decision Readiness:
