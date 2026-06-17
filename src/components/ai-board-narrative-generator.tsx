@@ -17,6 +17,10 @@ enterpriseProcurementScore: number;
 executiveReadinessScore: number;
 procurementRiskIndex: number;
 supplierEngagementScore: number;
+benchmarkReadinessScore: number;
+boardRecommendation: string;
+procurementMaturityScore: number;
+awardPredictionConfidence: string;
 };
 
 const narratives: ExecutiveNarrative[] = [
@@ -73,6 +77,10 @@ enterpriseProcurementScore,
 executiveReadinessScore,
 procurementRiskIndex,
 supplierEngagementScore,
+benchmarkReadinessScore,
+boardRecommendation,
+procurementMaturityScore,
+awardPredictionConfidence,
 }: AIBoardNarrativeGeneratorProps) {
 
 const narrativeReady =
@@ -130,6 +138,91 @@ No fake AI narratives
 </p>
 </div>
 </div>
+
+<section className="mt-8 rounded-3xl border border-slate-200 bg-slate-50 p-6">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
+Board Readiness Intelligence
+</p>
+
+<div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+<NarrativeMetric
+title="Board Health"
+value={`${boardHealthIndex}/100`}
+/>
+
+<NarrativeMetric
+title="Benchmark Readiness"
+value={`${benchmarkReadinessScore}/100`}
+/>
+
+<NarrativeMetric
+title="Benchmark Status"
+value={executiveBenchmarkStatus}
+/>
+
+<NarrativeMetric
+title="Recommendation"
+value={boardRecommendation}
+/>
+</div>
+</section>
+
+<section className="mt-6 rounded-3xl border border-slate-200 bg-white p-6">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
+CEO Briefing Intelligence
+</p>
+
+<div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+<NarrativeMetric
+title="Executive Status"
+value={executiveStatus}
+/>
+
+<NarrativeMetric
+title="Readiness Score"
+value={`${executiveReadinessScore}/100`}
+/>
+
+<NarrativeMetric
+title="Risk Index"
+value={`${procurementRiskIndex}/100`}
+/>
+
+<NarrativeMetric
+title="Enterprise Score"
+value={`${enterpriseProcurementScore}/100`}
+/>
+</div>
+</section>
+
+
+<section className="mt-6 rounded-3xl border border-slate-200 bg-white p-6">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
+Procurement Intelligence
+</p>
+
+<div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+<NarrativeMetric
+title="Procurement Maturity"
+value={`${procurementMaturityScore}/100`}
+/>
+
+<NarrativeMetric
+title="Supplier Engagement"
+value={`${supplierEngagementScore}/100`}
+/>
+
+<NarrativeMetric
+title="Award Confidence"
+value={awardPredictionConfidence}
+/>
+
+<NarrativeMetric
+title="Industry Score"
+value={`${industryBenchmarkScore}/100`}
+/>
+</div>
+</section>
 
 <div className="mt-8 grid gap-4 md:grid-cols-2">
 
@@ -212,5 +305,24 @@ Narrative Readiness
 </div>
 </div>
 </section>
+);
+}
+function NarrativeMetric({
+title,
+value,
+}: {
+title: string;
+value: string;
+}) {
+return (
+<div className="rounded-2xl border border-slate-200 bg-white p-4">
+<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+{title}
+</p>
+
+<p className="mt-3 text-lg font-black text-slate-950">
+{value}
+</p>
+</div>
 );
 }

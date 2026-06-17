@@ -2445,6 +2445,10 @@ enterpriseProcurementScore={enterpriseProcurementScore}
 executiveReadinessScore={executiveReadinessScore}
 procurementRiskIndex={procurementRiskIndex}
 supplierEngagementScore={supplierEngagementScore}
+benchmarkReadinessScore={benchmarkReadinessScore}
+boardRecommendation={boardRecommendation}
+procurementMaturityScore={procurementMaturityScore}
+awardPredictionConfidence={awardPredictionConfidence}
 />
 </main>
 );
