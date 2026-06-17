@@ -800,6 +800,45 @@ constructionClassificationScore * 0.15
 )
 );
 
+const governanceReadiness =
+executiveReadinessScore >= 80
+? "Board Ready"
+: executiveReadinessScore >= 60
+? "Executive Review"
+: "Operational Review";
+
+const financialVisibility =
+dataQualityScore >= 80
+? "High"
+: dataQualityScore >= 60
+? "Moderate"
+: "Limited";
+
+const riskVisibility =
+procurementRiskIndex <= 25
+? "Controlled"
+: procurementRiskIndex <= 50
+? "Monitored"
+: "Escalated";
+
+const boardReadinessScore = Math.min(
+100,
+Math.round(
+boardHealthIndex * 0.30 +
+executiveReadinessScore * 0.25 +
+enterpriseProcurementScore * 0.20 +
+benchmarkReadinessScore * 0.15 +
+dataQualityScore * 0.10
+)
+);
+
+const boardReadinessRecommendation =
+boardReadinessScore >= 85
+? "Proceed to Board Presentation"
+: boardReadinessScore >= 70
+? "Executive Validation Recommended"
+: "Additional Procurement Evidence Required";
+
 
 
 const industryProcurementSignal =
@@ -1359,7 +1398,7 @@ CEO Procurement Brief
 </h2>
 
 <p className="mt-4 text-sm leading-7 text-slate-600">
-{boardRecommendation}
+value={boardReadinessRecommendation}
 </p>
 </div>
 
@@ -2055,6 +2094,49 @@ risk posture into a single executive decision layer.
 </div>
 </section>
 
+
+<section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
+Board Readiness Intelligence
+</p>
+
+<h2 className="mt-3 text-3xl font-black text-slate-950">
+Executive Governance Center
+</h2>
+
+<p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-600">
+Evaluate executive governance readiness, board presentation
+confidence, financial visibility, procurement maturity,
+and enterprise risk posture using validated operating data.
+</p>
+
+<div className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-5">
+<MetricCard
+title="Board Readiness"
+value={`${boardReadinessScore}/100`}
+/>
+
+<MetricCard
+title="Governance"
+value={governanceReadiness}
+/>
+
+<MetricCard
+title="Financial Visibility"
+value={financialVisibility}
+/>
+
+<MetricCard
+title="Risk Visibility"
+value={riskVisibility}
+/>
+
+<MetricCard
+title="Recommendation"
+value={boardRecommendation}
+/>
+</div>
+</section>
 
 <ExecutiveRiskIntelligence
 supplierRiskRadar={supplierRiskRadar}
