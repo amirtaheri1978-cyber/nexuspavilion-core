@@ -1974,6 +1974,36 @@ data.
 <MetricCard title="Risk Benchmark" value={riskBenchmark} />
 </div>
 </section>
+<section className="mt-8 rounded-3xl border border-slate-200 bg-slate-950 p-8 text-white">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-400">
+Executive Scorecard
+</p>
+
+<h2 className="mt-3 text-4xl font-black">
+Board-Level Procurement Command Scorecard
+</h2>
+
+<p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-300">
+Nexus Pavilion consolidates procurement maturity, board health,
+benchmark readiness, supplier engagement, digital maturity, and enterprise
+risk posture into a single executive decision layer.
+</p>
+
+<div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+<DarkMetric title="Board Health" value={`${boardHealthIndex}/100`} />
+<DarkMetric title="Enterprise Score" value={`${enterpriseProcurementScore}/100`} />
+<DarkMetric title="Executive Readiness" value={`${executiveReadinessScore}/100`} />
+<DarkMetric title="Digital Maturity" value={`${digitalMaturityScore}/100`} />
+</div>
+
+<div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+<DarkMetric title="Procurement Efficiency" value={`${procurementEfficiencyScore}/100`} />
+<DarkMetric title="Supplier Engagement" value={`${supplierEngagementScore}/100`} />
+<DarkMetric title="Benchmark Status" value={executiveBenchmarkStatus} />
+<DarkMetric title="Executive Status" value={executiveStatus} />
+</div>
+</section>
+
 
 <ExecutiveRiskIntelligence
 supplierRiskRadar={supplierRiskRadar}
