@@ -732,6 +732,20 @@ procurementHealthScore * 0.25
 )
 );
 
+const boardCommandStatus =
+boardHealthIndex >= 85
+? "Board Ready"
+: boardHealthIndex >= 70
+? "Executive Review"
+: "Needs Attention";
+
+const ceoCommandStatus =
+executiveReadinessScore >= 80
+? "Decision Ready"
+: executiveReadinessScore >= 60
+? "Monitoring"
+: "Escalation Required";
+
 const benchmarkReadinessScore = Math.min(
 100,
 Math.round(
@@ -874,6 +888,8 @@ procurementOpportunityScore >= 80
 : "Emerging Opportunity";
 
 
+
+
 const ceoPriorityQueue = [
 `Board Readiness: ${boardReadinessScore}/100`,
 `Enterprise Score: ${enterpriseProcurementScore}/100`,
@@ -901,6 +917,45 @@ benchmark status. Enterprise procurement performance is
 ${enterpriseProcurementScore}/100 while procurement risk exposure
 remains ${ceoRiskLevel.toLowerCase()}.
 `;
+const boardStatus =
+boardHealthIndex >= 85
+? "Board Ready"
+: boardHealthIndex >= 70
+? "Executive Review"
+: "Needs Attention";
+
+const ceoStatus =
+executiveReadinessScore >= 80
+? "Decision Ready"
+: executiveReadinessScore >= 60
+? "Monitoring"
+: "Escalation Required";
+
+const riskStatus =
+procurementRiskIndex <= 25
+? "Controlled"
+: procurementRiskIndex <= 50
+? "Managed"
+: "Elevated";
+
+const opportunityStatus =
+procurementOpportunityScore >= 80
+? "High Opportunity"
+: procurementOpportunityScore >= 60
+? "Growth Opportunity"
+: "Limited Opportunity";
+
+
+
+const executiveRecommendation =
+procurementRiskIndex > 60
+? "Reduce supplier concentration and mitigate procurement exposure."
+: procurementOpportunityScore > 75
+? "Accelerate sourcing initiatives to capture available savings."
+: boardHealthIndex > 80
+? "Maintain current procurement operating strategy."
+: "Improve procurement maturity before scaling operations.";
+
 
 const industryProcurementSignal =
 procurementEfficiencyScore >= 80 && supplierEngagementScore >= 70
@@ -2271,6 +2326,78 @@ Enterprise Risk Center
 <MetricCard title="Vendor Concentration" value={concentrationLevel} />
 <MetricCard title="Maturity Score" value={`${procurementMaturityScore}/100`} />
 <MetricCard title="AI Confidence" value={aiConfidenceScore} />
+</div>
+</section>
+
+
+
+<section className="mt-8 rounded-3xl border border-slate-950 bg-slate-950 p-8 text-white">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-400">
+Procurement Command Center
+</p>
+
+<h2 className="mt-3 text-4xl font-black">
+Executive Procurement Command Center
+</h2>
+
+<p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-300">
+Unified executive decision layer combining board readiness,
+procurement performance, supplier engagement, operational risk,
+and strategic opportunity intelligence.
+</p>
+
+<div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+<DarkMetric
+title="Board Command"
+value={boardCommandStatus}
+/>
+
+<DarkMetric
+title="CEO Command"
+value={ceoCommandStatus}
+/>
+
+<DarkMetric
+title="Risk Level"
+value={ceoRiskLevel}
+/>
+
+<DarkMetric
+title="Opportunity"
+value={ceoOpportunityLevel}
+/>
+</div>
+
+<div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+<DarkMetric
+title="Board Health"
+value={`${boardHealthIndex}/100`}
+/>
+
+<DarkMetric
+title="Enterprise Score"
+value={`${enterpriseProcurementScore}/100`}
+/>
+
+<DarkMetric
+title="Executive Readiness"
+value={`${executiveReadinessScore}/100`}
+/>
+
+<DarkMetric
+title="Benchmark Readiness"
+value={`${benchmarkReadinessScore}/100`}
+/>
+</div>
+
+<div className="mt-6 rounded-3xl border border-white/10 bg-white/5 p-6">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-400">
+Command Recommendation
+</p>
+
+<p className="mt-4 text-sm leading-7 text-slate-300">
+{boardRecommendation}
+</p>
 </div>
 </section>
 
