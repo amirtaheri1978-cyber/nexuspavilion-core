@@ -800,6 +800,26 @@ constructionClassificationScore * 0.15
 )
 );
 
+
+
+const industryProcurementSignal =
+procurementEfficiencyScore >= 80 && supplierEngagementScore >= 70
+? "High Performance"
+: procurementEfficiencyScore >= 60 && supplierEngagementScore >= 50
+? "Competitive"
+: procurementEfficiencyScore >= 40
+? "Improving"
+: "Needs Development";
+
+const industryRiskSignal =
+procurementRiskIndex <= 25 && concentrationLevel === "Low"
+? "Low Exposure"
+: procurementRiskIndex <= 50
+? "Moderate Exposure"
+: procurementRiskIndex <= 75
+? "Elevated Exposure"
+: "Critical Exposure";
+
 const opportunityLevel =
 procurementOpportunityScore >= 80
 ? "High Opportunity"
@@ -1178,6 +1198,14 @@ predictionAccuracy * 0.15 +
 constructionClassificationScore * 0.1
 )
 );
+const industryBenchmarkPosition =
+industryBenchmarkScore >= 85
+? "Top Quartile"
+: industryBenchmarkScore >= 70
+? "Above Average"
+: industryBenchmarkScore >= 50
+? "Developing"
+: "Below Benchmark";
 
 const procurementBenchmarkScore = Math.min(
 100,
@@ -1974,6 +2002,29 @@ data.
 <MetricCard title="Risk Benchmark" value={riskBenchmark} />
 </div>
 </section>
+<section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
+Industry Benchmark Engine
+</p>
+
+<h2 className="mt-3 text-3xl font-black text-slate-950">
+Construction Procurement Industry Benchmark
+</h2>
+
+<p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-600">
+Nexus Pavilion estimates internal industry positioning using validated
+procurement maturity, supplier engagement, operational efficiency, data
+quality, and enterprise procurement performance signals.
+</p>
+
+<div className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+<MetricCard title="Industry Score" value={`${industryBenchmarkScore}/100`} />
+<MetricCard title="Market Position" value={industryBenchmarkPosition} />
+<MetricCard title="Procurement Signal" value={industryProcurementSignal} />
+<MetricCard title="Risk Signal" value={industryRiskSignal} />
+</div>
+</section>
+
 <section className="mt-8 rounded-3xl border border-slate-200 bg-slate-950 p-8 text-white">
 <p className="text-xs font-black uppercase tracking-[0.25em] text-orange-400">
 Executive Scorecard
