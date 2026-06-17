@@ -732,20 +732,6 @@ procurementHealthScore * 0.25
 )
 );
 
-const boardCommandStatus =
-boardHealthIndex >= 85
-? "Board Ready"
-: boardHealthIndex >= 70
-? "Executive Review"
-: "Needs Attention";
-
-const ceoCommandStatus =
-executiveReadinessScore >= 80
-? "Decision Ready"
-: executiveReadinessScore >= 60
-? "Monitoring"
-: "Escalation Required";
-
 const benchmarkReadinessScore = Math.min(
 100,
 Math.round(
@@ -814,6 +800,47 @@ constructionClassificationScore * 0.15
 )
 );
 
+const boardCommandStatus =
+boardHealthIndex >= 85
+? "Board Ready"
+: boardHealthIndex >= 70
+? "Executive Review"
+: "Needs Attention";
+
+const ceoCommandStatus =
+executiveReadinessScore >= 80
+? "Decision Ready"
+: executiveReadinessScore >= 60
+? "Monitoring"
+: "Escalation Required";
+
+const enterpriseCommandStatus =
+enterpriseProcurementScore >= 85
+? "World Class"
+: enterpriseProcurementScore >= 70
+? "High Performance"
+: enterpriseProcurementScore >= 55
+? "Developing"
+: "Needs Improvement";
+
+const riskCommandStatus =
+procurementRiskIndex <= 25
+? "Controlled"
+: procurementRiskIndex <= 50
+? "Managed"
+: procurementRiskIndex <= 75
+? "Elevated"
+: "Critical";
+
+const opportunityCommandStatus =
+procurementOpportunityScore >= 80
+? "High Opportunity"
+: procurementOpportunityScore >= 60
+? "Strong Opportunity"
+: procurementOpportunityScore >= 40
+? "Emerging Opportunity"
+: "Limited Opportunity";
+
 const governanceReadiness =
 executiveReadinessScore >= 80
 ? "Board Ready"
@@ -834,6 +861,8 @@ procurementRiskIndex <= 25
 : procurementRiskIndex <= 50
 ? "Monitored"
 : "Escalated";
+
+
 
 const boardReadinessScore = Math.min(
 100,
@@ -996,13 +1025,17 @@ potentialSavings > 50000
 : "Low Savings";
 
 const executiveCommandRecommendation =
-enterpriseProcurementScore >= 80 && procurementRiskIndex < 35
-? "Procurement performance is strong. Continue scaling supplier coverage, competitive RFQ activity, and classified construction procurement workflows."
+boardHealthIndex >= 85 &&
+benchmarkReadinessScore >= 80 &&
+procurementRiskIndex <= 35
+? "Board-ready environment. Accelerate strategic procurement initiatives."
+: procurementRiskIndex >= 70
+? "High risk exposure detected. Prioritize mitigation before expansion."
+: supplierDependencyRisk === "Critical"
+? "Supplier concentration risk detected. Diversify supplier network."
 : procurementOpportunityScore >= 70
-? "High opportunity detected. Prioritize supplier expansion, competitive bidding, RFQ classification maturity, and category-level savings capture."
-: procurementRiskIndex >= 60
-? "Risk level is elevated. Review supplier dependency, award concentration, RFQ conversion quality, and sourcing method governance."
-: "Procurement operations are stable. Continue improving supplier participation, RFQ mix maturity, and forecast confidence.";
+? "Strong opportunity signals detected. Increase procurement leverage."
+: "Continue operational optimization and monitor performance.";
 
 const executiveAlerts: ExecutiveAlert[] = [];
 
@@ -2210,6 +2243,39 @@ risk posture into a single executive decision layer.
 </div>
 </section>
 
+<section className="mt-8 rounded-3xl border border-slate-950 bg-slate-950 p-8 text-white">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-400">
+Executive Operating System
+</p>
+
+<h2 className="mt-3 text-4xl font-black">
+Enterprise Decision Layer
+</h2>
+
+<p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-300">
+Unified executive operating model combining board readiness,
+enterprise performance, risk posture, and strategic opportunity
+intelligence.
+</p>
+
+<div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+<DarkMetric title="Board Status" value={boardCommandStatus} />
+<DarkMetric title="CEO Status" value={ceoCommandStatus} />
+<DarkMetric title="Enterprise" value={enterpriseCommandStatus} />
+<DarkMetric title="Risk" value={riskCommandStatus} />
+<DarkMetric title="Opportunity" value={opportunityCommandStatus} />
+</div>
+
+<div className="mt-6 rounded-3xl border border-white/10 bg-white/5 p-6">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-400">
+Command Recommendation
+</p>
+
+<p className="mt-4 text-sm leading-7 text-slate-300">
+{executiveCommandRecommendation}
+</p>
+</div>
+</section>
 
 <section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
 <p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
@@ -2397,6 +2463,59 @@ Command Recommendation
 
 <p className="mt-4 text-sm leading-7 text-slate-300">
 {boardRecommendation}
+</p>
+</div>
+</section>
+
+<section className="mt-8 rounded-3xl border border-slate-950 bg-slate-950 p-8 text-white">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-400">
+Executive Operating System
+</p>
+
+<h2 className="mt-3 text-4xl font-black">
+Enterprise Command Layer
+</h2>
+
+<p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-300">
+Unified executive operating view across procurement performance,
+benchmark readiness, board health, enterprise risk, supplier engagement,
+and opportunity intelligence.
+</p>
+
+<div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+<DarkMetric
+title="Board Health"
+value={`${boardHealthIndex}/100`}
+/>
+
+<DarkMetric
+title="Benchmark"
+value={`${benchmarkReadinessScore}/100`}
+/>
+
+<DarkMetric
+title="Enterprise"
+value={enterpriseCommandStatus}
+/>
+
+<DarkMetric
+title="Risk"
+value={riskCommandStatus}
+/>
+
+<DarkMetric
+title="Opportunity"
+value={opportunityCommandStatus}
+/>
+</div>
+
+<div className="mt-6 rounded-3xl border border-white/10 bg-white/5 p-6">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-400">
+Executive Recommendation
+</p>
+
+<p className="mt-4 text-sm leading-7 text-slate-300">
+{executiveCommandRecommendation}
 </p>
 </div>
 </section>
