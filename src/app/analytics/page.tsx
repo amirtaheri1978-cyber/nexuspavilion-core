@@ -1037,6 +1037,28 @@ procurementRiskIndex <= 35
 ? "Strong opportunity signals detected. Increase procurement leverage."
 : "Continue operational optimization and monitor performance.";
 
+const boardPresentationStatus =
+boardHealthIndex >= 85 &&
+benchmarkReadinessScore >= 80
+? "Ready For Board Review"
+: boardHealthIndex >= 70
+? "Executive Review Required"
+: "Operational Improvement Required";
+
+const boardRiskPosition =
+procurementRiskIndex <= 25
+? "Low Risk"
+: procurementRiskIndex <= 50
+? "Moderate Risk"
+: "Elevated Risk";
+
+const boardStrategicPosition =
+procurementOpportunityScore >= 70
+? "Growth Opportunity"
+: supplierDependencyRisk === "Critical"
+? "Supplier Diversification Required"
+: "Operational Optimization";
+
 const executiveAlerts: ExecutiveAlert[] = [];
 
 if (constructionClassificationScore < 60) {
@@ -2272,6 +2294,39 @@ Command Recommendation
 </p>
 
 <p className="mt-4 text-sm leading-7 text-slate-300">
+{executiveCommandRecommendation}
+</p>
+</div>
+</section>
+
+<section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
+Board Presentation Layer
+</p>
+
+<h2 className="mt-3 text-3xl font-black text-slate-950">
+Board Executive Summary
+</h2>
+
+<p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-600">
+Board-facing procurement summary consolidating readiness, enterprise
+status, risk position, and strategic direction from validated executive
+intelligence.
+</p>
+
+<div className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+<MetricCard title="Board Readiness" value={boardPresentationStatus} />
+<MetricCard title="Enterprise Status" value={enterpriseCommandStatus} />
+<MetricCard title="Risk Position" value={boardRiskPosition} />
+<MetricCard title="Strategic Position" value={boardStrategicPosition} />
+</div>
+
+<div className="mt-8 rounded-3xl border border-slate-200 bg-slate-50 p-6">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-slate-400">
+Board Summary
+</p>
+
+<p className="mt-4 text-sm font-semibold leading-7 text-slate-700">
 {executiveCommandRecommendation}
 </p>
 </div>
