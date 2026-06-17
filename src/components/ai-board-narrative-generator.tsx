@@ -68,6 +68,15 @@ const dataRequirements = [
 "Financial impact metrics",
 ];
 
+const executiveEvidence = [
+"RFQ Activity",
+"Supplier Participation",
+"Award Decisions",
+"Risk Intelligence",
+"Benchmark Analytics",
+"Financial Signals",
+];
+
 export default function AIBoardNarrativeGenerator({
 executiveBenchmarkStatus,
 industryBenchmarkScore,
@@ -221,6 +230,30 @@ value={awardPredictionConfidence}
 title="Industry Score"
 value={`${industryBenchmarkScore}/100`}
 />
+</div>
+</section>
+
+<section className="mt-6 rounded-3xl border border-slate-200 bg-slate-950 p-6 text-white">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-400">
+Executive Evidence Layer
+</p>
+
+<p className="mt-3 text-sm font-semibold leading-7 text-slate-300">
+Executive intelligence is supported by validated procurement evidence
+rather than generated assumptions.
+</p>
+
+<div className="mt-6 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+{executiveEvidence.map((item) => (
+<div
+key={item}
+className="rounded-2xl border border-white/10 bg-white/5 p-4"
+>
+<p className="text-sm font-bold text-white">
+{item}
+</p>
+</div>
+))}
 </div>
 </section>
 
