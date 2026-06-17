@@ -2114,7 +2114,16 @@ supplierEngagementScore={supplierEngagementScore}
 digitalMaturityScore={digitalMaturityScore}
 />
 
-<AIBoardNarrativeGenerator />
+<AIBoardNarrativeGenerator
+executiveBenchmarkStatus={executiveBenchmarkStatus}
+industryBenchmarkScore={industryBenchmarkScore}
+executiveStatus={executiveStatus}
+boardHealthIndex={boardHealthIndex}
+enterpriseProcurementScore={enterpriseProcurementScore}
+executiveReadinessScore={executiveReadinessScore}
+procurementRiskIndex={procurementRiskIndex}
+supplierEngagementScore={supplierEngagementScore}
+/>
 </main>
 );
 }
