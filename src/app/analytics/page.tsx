@@ -1382,6 +1382,128 @@ constructionClassificationScore < 60
 : "Structured RFQ intelligence active",
 ];
 
+const boardRiskPriorities = [
+{
+title:
+procurementRiskIndex >= 60
+? "Supplier Dependency Risk"
+: "Supplier Risk Position",
+priority:
+procurementRiskIndex >= 60
+? "Critical"
+: procurementRiskIndex >= 40
+? "Moderate"
+: "Monitor",
+impact:
+procurementRiskIndex >= 60
+? "High"
+: procurementRiskIndex >= 40
+? "Medium"
+: "Low",
+attention:
+procurementRiskIndex >= 60
+? "Immediate"
+: procurementRiskIndex >= 40
+? "90 Days"
+: "Ongoing",
+summary:
+procurementRiskIndex >= 60
+? "Supplier dependency requires board visibility before procurement volume scales further."
+: procurementRiskIndex >= 40
+? "Supplier dependency should remain under management review as procurement activity expands."
+: "Supplier risk is currently controlled but should continue to be monitored.",
+},
+{
+title:
+supplierRanking.length <= 3
+? "Limited Supplier Competition"
+: "Supplier Competition Health",
+priority:
+supplierRanking.length <= 3
+? "Critical"
+: supplierRanking.length <= 6
+? "Moderate"
+: "Monitor",
+impact:
+supplierRanking.length <= 3
+? "High"
+: supplierRanking.length <= 6
+? "Medium"
+: "Low",
+attention:
+supplierRanking.length <= 3
+? "Immediate"
+: supplierRanking.length <= 6
+? "90 Days"
+: "Ongoing",
+summary:
+supplierRanking.length <= 3
+? "Limited supplier participation may reduce quote quality, competitive leverage, and decision confidence."
+: supplierRanking.length <= 6
+? "Supplier participation is developing and should be expanded to improve competitive coverage."
+: "Supplier participation supports healthy procurement competition.",
+},
+{
+title:
+constructionClassificationScore < 60
+? "RFQ Classification Maturity"
+: "Structured RFQ Intelligence",
+priority:
+constructionClassificationScore < 45
+? "Critical"
+: constructionClassificationScore < 60
+? "Moderate"
+: "Monitor",
+impact:
+constructionClassificationScore < 45
+? "High"
+: constructionClassificationScore < 60
+? "Medium"
+: "Low",
+attention:
+constructionClassificationScore < 45
+? "Immediate"
+: constructionClassificationScore < 60
+? "90 Days"
+: "Ongoing",
+summary:
+constructionClassificationScore < 60
+? "RFQ classification maturity should improve before executive reporting relies heavily on category-level intelligence."
+: "Structured RFQ intelligence is active and supports executive interpretation.",
+},
+{
+title:
+awardRate < 25
+? "Award Execution Risk"
+: "Award Conversion Health",
+priority:
+awardRate < 25
+? "Critical"
+: awardRate < 45
+? "Moderate"
+: "Monitor",
+impact:
+awardRate < 25
+? "High"
+: awardRate < 45
+? "Medium"
+: "Low",
+attention:
+awardRate < 25
+? "Immediate"
+: awardRate < 45
+? "90 Days"
+: "Ongoing",
+summary:
+awardRate < 25
+? "Award execution history is not yet strong enough to support high-confidence procurement decision patterns."
+: awardRate < 45
+? "Award conversion is developing and should be monitored as RFQ activity increases."
+: "Award conversion supports procurement decision confidence.",
+},
+];
+
+
 const topQuarterOpportunities = [
 `${bestProcurementCategory} category expansion`,
 `${savingsOpportunityLevel} savings capture`,
@@ -1924,6 +2046,72 @@ className="rounded-2xl border border-amber-100 bg-white p-4"
 </div>
 ))}
 </div>
+</div>
+</section>
+
+<section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
+Board Risk Prioritization
+</p>
+
+<h2 className="mt-3 text-3xl font-black text-slate-950">
+Executive Risk Priority Queue
+</h2>
+
+<p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-600">
+Nexus Pavilion ranks procurement risks by executive attention, operating
+impact, and board-level urgency using validated procurement, supplier,
+classification, and award signals.
+</p>
+
+<div className="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+{boardRiskPriorities.map((risk) => (
+<div
+key={risk.title}
+className={
+risk.priority === "Critical"
+? "rounded-3xl border border-red-200 bg-red-50 p-6"
+: risk.priority === "Moderate"
+? "rounded-3xl border border-amber-200 bg-amber-50 p-6"
+: "rounded-3xl border border-slate-200 bg-slate-50 p-6"
+}
+>
+<div className="flex items-start justify-between gap-3">
+<p
+className={
+risk.priority === "Critical"
+? "text-xs font-black uppercase tracking-[0.2em] text-red-600"
+: risk.priority === "Moderate"
+? "text-xs font-black uppercase tracking-[0.2em] text-amber-700"
+: "text-xs font-black uppercase tracking-[0.2em] text-slate-400"
+}
+>
+{risk.priority}
+</p>
+
+<span className="rounded-full bg-white px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-slate-700">
+{risk.attention}
+</span>
+</div>
+
+<h3 className="mt-4 text-xl font-black text-slate-950">
+{risk.title}
+</h3>
+
+<p className="mt-4 text-sm font-semibold leading-7 text-slate-700">
+{risk.summary}
+</p>
+
+<div className="mt-5 rounded-2xl border border-white/60 bg-white p-4">
+<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+Impact
+</p>
+<p className="mt-2 text-sm font-black text-slate-950">
+{risk.impact}
+</p>
+</div>
+</div>
+))}
 </div>
 </section>
 
