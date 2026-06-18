@@ -6,6 +6,7 @@ audience: string;
 status: NarrativeStatus;
 statusLabel: string;
 requirement: string;
+narrative?: string;
 };
 
 type AIBoardNarrativeGeneratorProps = {
@@ -77,6 +78,110 @@ const executiveEvidence = [
 "Financial Signals",
 ];
 
+function generateBoardNarrative({
+boardHealthIndex,
+enterpriseProcurementScore,
+executiveReadinessScore,
+industryBenchmarkScore,
+procurementRiskIndex,
+benchmarkReadinessScore,
+boardRecommendation,
+}: Pick<
+AIBoardNarrativeGeneratorProps,
+| "boardHealthIndex"
+| "enterpriseProcurementScore"
+| "executiveReadinessScore"
+| "industryBenchmarkScore"
+| "procurementRiskIndex"
+| "benchmarkReadinessScore"
+| "boardRecommendation"
+>) {
+return `Nexus Pavilion is currently operating with a Board Health Index of ${boardHealthIndex}/100, an Enterprise Procurement Score of ${enterpriseProcurementScore}/100, and an Executive Readiness Score of ${executiveReadinessScore}/100. Benchmark readiness is measured at ${benchmarkReadinessScore}/100 with an industry benchmark position of ${industryBenchmarkScore}/100. Current procurement risk exposure is ${procurementRiskIndex}/100. The board-level recommendation is: ${boardRecommendation}.`;
+}
+
+function generateCEONarrative({
+executiveStatus,
+executiveReadinessScore,
+enterpriseProcurementScore,
+supplierEngagementScore,
+procurementRiskIndex,
+}: Pick<
+AIBoardNarrativeGeneratorProps,
+| "executiveStatus"
+| "executiveReadinessScore"
+| "enterpriseProcurementScore"
+| "supplierEngagementScore"
+| "procurementRiskIndex"
+>) {
+return `Executive status is currently classified as ${executiveStatus}. The organization shows an executive readiness level of ${executiveReadinessScore}/100 and an enterprise procurement strength of ${enterpriseProcurementScore}/100. Supplier engagement is tracking at ${supplierEngagementScore}/100, while procurement risk exposure is ${procurementRiskIndex}/100. This indicates that leadership has enough directional intelligence to evaluate procurement performance, supplier momentum, and risk posture at an executive level.`;
+}
+
+function generateProcurementNarrative({
+procurementMaturityScore,
+supplierEngagementScore,
+awardPredictionConfidence,
+industryBenchmarkScore,
+procurementRiskIndex,
+}: Pick<
+AIBoardNarrativeGeneratorProps,
+| "procurementMaturityScore"
+| "supplierEngagementScore"
+| "awardPredictionConfidence"
+| "industryBenchmarkScore"
+| "procurementRiskIndex"
+>) {
+return `Procurement maturity is currently measured at ${procurementMaturityScore}/100, with supplier engagement at ${supplierEngagementScore}/100 and award prediction confidence classified as ${awardPredictionConfidence}. Industry benchmark strength is ${industryBenchmarkScore}/100. Risk exposure remains visible at ${procurementRiskIndex}/100, requiring procurement leadership to monitor supplier coverage, quote confidence, and award decision quality.`;
+}
+
+function generateBenchmarkNarrative({
+executiveBenchmarkStatus,
+industryBenchmarkScore,
+benchmarkReadinessScore,
+}: Pick<
+AIBoardNarrativeGeneratorProps,
+| "executiveBenchmarkStatus"
+| "industryBenchmarkScore"
+| "benchmarkReadinessScore"
+>) {
+return `Benchmark readiness is currently classified as ${executiveBenchmarkStatus}. Nexus Pavilion shows an industry benchmark score of ${industryBenchmarkScore}/100 and a benchmark readiness score of ${benchmarkReadinessScore}/100. This provides an executive reference point for comparing procurement operating strength, maturity, and board-level decision readiness.`;
+}
+
+function generateRiskNarrative({
+procurementRiskIndex,
+supplierEngagementScore,
+enterpriseProcurementScore,
+}: Pick<
+AIBoardNarrativeGeneratorProps,
+| "procurementRiskIndex"
+| "supplierEngagementScore"
+| "enterpriseProcurementScore"
+>) {
+if (procurementRiskIndex >= 70) {
+return `Procurement risk exposure is elevated at ${procurementRiskIndex}/100. Supplier engagement is ${supplierEngagementScore}/100 and enterprise procurement strength is ${enterpriseProcurementScore}/100. Board visibility is recommended until supplier participation, quote coverage, and award confidence improve.`;
+}
+
+if (procurementRiskIndex >= 45) {
+return `Procurement risk exposure is moderate at ${procurementRiskIndex}/100. Supplier engagement and enterprise procurement performance should continue to be monitored, particularly where supplier coverage or award confidence may affect decision quality.`;
+}
+
+return `Procurement risk exposure is currently controlled at ${procurementRiskIndex}/100. Current signals suggest that procurement risk is manageable, though continued monitoring is required as RFQ volume, supplier participation, and award activity increase.`;
+}
+
+function generateRecommendationNarrative({
+boardRecommendation,
+boardHealthIndex,
+executiveReadinessScore,
+procurementRiskIndex,
+}: Pick<
+AIBoardNarrativeGeneratorProps,
+| "boardRecommendation"
+| "boardHealthIndex"
+| "executiveReadinessScore"
+| "procurementRiskIndex"
+>) {
+return `Recommended board action: ${boardRecommendation}. This recommendation is based on a Board Health Index of ${boardHealthIndex}/100, Executive Readiness of ${executiveReadinessScore}/100, and Procurement Risk Index of ${procurementRiskIndex}/100.`;
+}
+
 export default function AIBoardNarrativeGenerator({
 executiveBenchmarkStatus,
 industryBenchmarkScore,
@@ -91,7 +196,6 @@ boardRecommendation,
 procurementMaturityScore,
 awardPredictionConfidence,
 }: AIBoardNarrativeGeneratorProps) {
-
 const narrativeReady =
 boardHealthIndex >= 55 &&
 enterpriseProcurementScore >= 50 &&
@@ -99,17 +203,70 @@ executiveReadinessScore >= 50;
 
 const narrativeStatusLabel = narrativeReady ? "Ready" : "Insufficient Data";
 
+const boardNarrative = generateBoardNarrative({
+boardHealthIndex,
+enterpriseProcurementScore,
+executiveReadinessScore,
+industryBenchmarkScore,
+procurementRiskIndex,
+benchmarkReadinessScore,
+boardRecommendation,
+});
+
+const ceoNarrative = generateCEONarrative({
+executiveStatus,
+executiveReadinessScore,
+enterpriseProcurementScore,
+supplierEngagementScore,
+procurementRiskIndex,
+});
+
+const procurementNarrative = generateProcurementNarrative({
+procurementMaturityScore,
+supplierEngagementScore,
+awardPredictionConfidence,
+industryBenchmarkScore,
+procurementRiskIndex,
+});
+
+const benchmarkNarrative = generateBenchmarkNarrative({
+executiveBenchmarkStatus,
+industryBenchmarkScore,
+benchmarkReadinessScore,
+});
+
+const riskNarrative = generateRiskNarrative({
+procurementRiskIndex,
+supplierEngagementScore,
+enterpriseProcurementScore,
+});
+
+const recommendationNarrative = generateRecommendationNarrative({
+boardRecommendation,
+boardHealthIndex,
+executiveReadinessScore,
+procurementRiskIndex,
+});
+
 const liveNarratives: ExecutiveNarrative[] = narratives.map((narrative) => {
 if (narrative.status === "coming-soon") {
 return narrative;
 }
 
+const generatedNarrative =
+narrative.title === "Board Narrative"
+? boardNarrative
+: narrative.title === "CEO Narrative"
+? ceoNarrative
+: procurementNarrative;
+
 return {
 ...narrative,
 status: narrativeReady ? "ready" : "insufficient-data",
 statusLabel: narrativeStatusLabel,
+narrative: narrativeReady ? generatedNarrative : undefined,
 requirement: narrativeReady
-? `Live narrative available. Board Health ${boardHealthIndex}/100, Enterprise Score ${enterpriseProcurementScore}/100, Executive Readiness ${executiveReadinessScore}/100, Industry Benchmark ${industryBenchmarkScore}/100, Executive Status ${executiveStatus}, Risk Index ${procurementRiskIndex}/100.`
+? "Live narrative generated from validated Nexus Pavilion executive intelligence."
 : narrative.requirement,
 };
 });
@@ -131,10 +288,10 @@ AI Board Narrative Generator
 </h2>
 
 <p className="mt-3 max-w-4xl text-sm leading-7 text-slate-600">
-Executive narratives are intentionally locked until Nexus Pavilion
-has validated procurement data. The platform does not generate
-board-facing language from placeholder metrics, fake scores, or
-unverified analytics.
+Executive narratives are generated only when Nexus Pavilion has
+enough validated procurement intelligence. The platform avoids
+placeholder board language, fake AI summaries, and unverified
+executive claims.
 </p>
 </div>
 
@@ -154,25 +311,13 @@ Board Readiness Intelligence
 </p>
 
 <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-<NarrativeMetric
-title="Board Health"
-value={`${boardHealthIndex}/100`}
-/>
-
+<NarrativeMetric title="Board Health" value={`${boardHealthIndex}/100`} />
 <NarrativeMetric
 title="Benchmark Readiness"
 value={`${benchmarkReadinessScore}/100`}
 />
-
-<NarrativeMetric
-title="Benchmark Status"
-value={executiveBenchmarkStatus}
-/>
-
-<NarrativeMetric
-title="Recommendation"
-value={boardRecommendation}
-/>
+<NarrativeMetric title="Benchmark Status" value={executiveBenchmarkStatus} />
+<NarrativeMetric title="Recommendation" value={boardRecommendation} />
 </div>
 </section>
 
@@ -182,28 +327,18 @@ CEO Briefing Intelligence
 </p>
 
 <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-<NarrativeMetric
-title="Executive Status"
-value={executiveStatus}
-/>
-
+<NarrativeMetric title="Executive Status" value={executiveStatus} />
 <NarrativeMetric
 title="Readiness Score"
 value={`${executiveReadinessScore}/100`}
 />
-
-<NarrativeMetric
-title="Risk Index"
-value={`${procurementRiskIndex}/100`}
-/>
-
+<NarrativeMetric title="Risk Index" value={`${procurementRiskIndex}/100`} />
 <NarrativeMetric
 title="Enterprise Score"
 value={`${enterpriseProcurementScore}/100`}
 />
 </div>
 </section>
-
 
 <section className="mt-6 rounded-3xl border border-slate-200 bg-white p-6">
 <p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
@@ -215,23 +350,43 @@ Procurement Intelligence
 title="Procurement Maturity"
 value={`${procurementMaturityScore}/100`}
 />
-
 <NarrativeMetric
 title="Supplier Engagement"
 value={`${supplierEngagementScore}/100`}
 />
-
 <NarrativeMetric
 title="Award Confidence"
 value={awardPredictionConfidence}
 />
-
 <NarrativeMetric
 title="Industry Score"
 value={`${industryBenchmarkScore}/100`}
 />
 </div>
 </section>
+
+{narrativeReady && (
+<section className="mt-6 rounded-3xl border border-slate-200 bg-slate-950 p-6 text-white">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-400">
+Board Narrative Package
+</p>
+
+<h3 className="mt-4 text-2xl font-black">
+Executive narrative package is ready.
+</h3>
+
+<div className="mt-6 grid gap-4 lg:grid-cols-2">
+<NarrativePanel title="Executive Summary" body={boardNarrative} dark />
+<NarrativePanel title="Risk Assessment" body={riskNarrative} dark />
+<NarrativePanel title="Benchmark Position" body={benchmarkNarrative} dark />
+<NarrativePanel
+title="Board Recommendation"
+body={recommendationNarrative}
+dark
+/>
+</div>
+</section>
+)}
 
 <section className="mt-6 rounded-3xl border border-slate-200 bg-slate-950 p-6 text-white">
 <p className="text-xs font-black uppercase tracking-[0.25em] text-orange-400">
@@ -249,18 +404,14 @@ rather than generated assumptions.
 key={item}
 className="rounded-2xl border border-white/10 bg-white/5 p-4"
 >
-<p className="text-sm font-bold text-white">
-{item}
-</p>
+<p className="text-sm font-bold text-white">{item}</p>
 </div>
 ))}
 </div>
 </section>
 
 <div className="mt-8 grid gap-4 md:grid-cols-2">
-
 {liveNarratives.map((narrative) => (
-
 <div
 key={narrative.title}
 className="rounded-2xl border border-slate-200 bg-slate-50 p-5"
@@ -292,6 +443,17 @@ narrative.status === "ready"
 <p className="mt-4 text-sm font-semibold leading-7 text-slate-700">
 {narrative.requirement}
 </p>
+
+{narrative.narrative && (
+<div className="mt-5 rounded-2xl border border-slate-200 bg-white p-5">
+<p className="text-xs font-black uppercase tracking-[0.2em] text-orange-500">
+Generated Narrative
+</p>
+<p className="mt-3 text-sm font-semibold leading-7 text-slate-700">
+{narrative.narrative}
+</p>
+</div>
+)}
 </div>
 ))}
 </div>
@@ -334,27 +496,59 @@ Narrative Readiness
 ? "Narratives are generated from validated Nexus Pavilion operating metrics, not placeholder language or decorative AI output."
 : "Until then, this module remains in a transparent readiness state instead of producing decorative AI language."}
 </p>
-
 </div>
 </div>
 </section>
 );
 }
-function NarrativeMetric({
-title,
-value,
-}: {
-title: string;
-value: string;
-}) {
+
+function NarrativeMetric({ title, value }: { title: string; value: string }) {
 return (
 <div className="rounded-2xl border border-slate-200 bg-white p-4">
 <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
 {title}
 </p>
 
-<p className="mt-3 text-lg font-black text-slate-950">
-{value}
+<p className="mt-3 text-lg font-black text-slate-950">{value}</p>
+</div>
+);
+}
+
+function NarrativePanel({
+title,
+body,
+dark = false,
+}: {
+title: string;
+body: string;
+dark?: boolean;
+}) {
+return (
+<div
+className={
+dark
+? "rounded-2xl border border-white/10 bg-white/5 p-5"
+: "rounded-2xl border border-slate-200 bg-white p-5"
+}
+>
+<p
+className={
+dark
+? "text-xs font-black uppercase tracking-[0.2em] text-orange-400"
+: "text-xs font-black uppercase tracking-[0.2em] text-orange-500"
+}
+>
+{title}
+</p>
+
+<p
+className={
+dark
+? "mt-3 text-sm font-semibold leading-7 text-slate-300"
+: "mt-3 text-sm font-semibold leading-7 text-slate-700"
+}
+>
+{body}
 </p>
 </div>
 );

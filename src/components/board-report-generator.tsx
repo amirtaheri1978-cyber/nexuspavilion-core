@@ -1,8 +1,9 @@
 "use client";
+
 import { useMemo, useState } from "react";
 
 type ReportType = "board" | "ceo" | "cfo" | "procurement";
-type ReportStatus = "insufficient-data" | "coming-soon";
+type ReportStatus = "ready" | "insufficient-data" | "coming-soon";
 
 type ExecutiveReport = {
 id: ReportType;
@@ -100,6 +101,142 @@ function getReport(type: ReportType) {
 return reports.find((report) => report.id === type) || reports[0];
 }
 
+function getRiskNarrative(procurementRiskIndex: number) {
+if (procurementRiskIndex >= 70) {
+return "Procurement risk exposure is elevated and should remain visible at the board and executive level until supplier coverage, concentration exposure, and award confidence improve.";
+}
+
+if (procurementRiskIndex >= 45) {
+return "Procurement risk exposure is moderate. Leadership should continue monitoring supplier dependency, concentration level, and procurement decision quality.";
+}
+
+return "Procurement risk exposure is currently controlled. Continued monitoring is still required as procurement activity, supplier participation, and award workflows scale.";
+}
+
+function generateReportBody({
+report,
+boardReady,
+procurementRiskIndex,
+procurementMaturityScore,
+aiConfidenceScore,
+supplierDependencyRisk,
+concentrationLevel,
+awardPredictionConfidence,
+predictionAccuracy,
+benchmarkReadinessScore,
+boardHealthIndex,
+enterpriseProcurementScore,
+executiveReadinessScore,
+procurementEfficiencyScore,
+supplierEngagementScore,
+digitalMaturityScore,
+}: {
+report: ExecutiveReport;
+boardReady: boolean;
+} & BoardReportGeneratorProps) {
+if (!boardReady || report.id === "cfo") {
+return {
+summary:
+report.id === "cfo"
+? "The CFO Brief is intentionally held in Coming Soon status until awarded contract value, quote variance, savings calculations, and budget exposure analytics are available."
+: "This report is not generated because Nexus Pavilion does not yet have enough validated procurement data to produce a board-grade executive report.",
+sections: [
+{
+title: "Primary Requirement",
+body: report.primaryRequirement,
+},
+{
+title: "Required Data Sources",
+body: requiredDataSources.join(", "),
+},
+{
+title: "Decision Readiness",
+body: "Executive decisions should not be generated from placeholder data, mock scores, or unverified analytics.",
+},
+],
+};
+}
+
+const riskNarrative = getRiskNarrative(procurementRiskIndex);
+
+if (report.id === "ceo") {
+return {
+summary: `Nexus Pavilion is ready to produce a CEO-level executive brief. Executive readiness is ${executiveReadinessScore}/100, enterprise procurement strength is ${enterpriseProcurementScore}/100, and supplier engagement is ${supplierEngagementScore}/100.`,
+sections: [
+{
+title: "Executive Momentum",
+body: `Procurement performance shows an enterprise score of ${enterpriseProcurementScore}/100 with digital maturity at ${digitalMaturityScore}/100. These indicators provide leadership with a high-level view of operating readiness and platform maturity.`,
+},
+{
+title: "Supplier Network Health",
+body: `Supplier engagement is currently ${supplierEngagementScore}/100. Supplier dependency risk is classified as ${supplierDependencyRisk}, with vendor concentration marked as ${concentrationLevel}.`,
+},
+{
+title: "Risk Visibility",
+body: riskNarrative,
+},
+{
+title: "CEO Action",
+body: "Maintain executive visibility over supplier participation, procurement throughput, award confidence, and risk exposure as procurement operations scale.",
+},
+],
+};
+}
+
+if (report.id === "procurement") {
+return {
+summary: `Nexus Pavilion is ready to produce a procurement leadership report. Procurement maturity is ${procurementMaturityScore}/100, procurement efficiency is ${procurementEfficiencyScore}/100, and award prediction confidence is ${awardPredictionConfidence}.`,
+sections: [
+{
+title: "Procurement Execution",
+body: `Procurement maturity is ${procurementMaturityScore}/100 and efficiency is ${procurementEfficiencyScore}/100. These signals indicate the current strength of workflow quality, RFQ execution, and operational readiness.`,
+},
+{
+title: "Supplier Participation",
+body: `Supplier engagement is ${supplierEngagementScore}/100. Dependency risk is ${supplierDependencyRisk}, while concentration level is ${concentrationLevel}.`,
+},
+{
+title: "Award Intelligence",
+body: `Award prediction confidence is ${awardPredictionConfidence}, with prediction accuracy at ${predictionAccuracy}. Procurement leadership should use this as a directional confidence layer, not as a substitute for validated award governance.`,
+},
+{
+title: "Operational Focus",
+body: "Prioritize RFQ completion, supplier response depth, quote coverage, award history, and risk signal validation.",
+},
+],
+};
+}
+
+return {
+summary: `Nexus Pavilion is ready to produce a board-grade executive report. Board Health is ${boardHealthIndex}/100, Enterprise Procurement Score is ${enterpriseProcurementScore}/100, Executive Readiness is ${executiveReadinessScore}/100, and AI Confidence is ${aiConfidenceScore}.`,
+sections: [
+{
+title: "Executive Summary",
+body: `Procurement intelligence has reached a board-reportable threshold. The current operating profile shows Board Health at ${boardHealthIndex}/100, Enterprise Procurement Score at ${enterpriseProcurementScore}/100, and Benchmark Readiness at ${benchmarkReadinessScore}/100.`,
+},
+{
+title: "Strategic Highlights",
+body: `Procurement maturity is ${procurementMaturityScore}/100, procurement efficiency is ${procurementEfficiencyScore}/100, supplier engagement is ${supplierEngagementScore}/100, and digital maturity is ${digitalMaturityScore}/100.`,
+},
+{
+title: "Risk Assessment",
+body: `${riskNarrative} Supplier dependency risk is ${supplierDependencyRisk}, vendor concentration is ${concentrationLevel}, and procurement risk index is ${procurementRiskIndex}/100.`,
+},
+{
+title: "Award Confidence",
+body: `Award prediction confidence is ${awardPredictionConfidence}, with prediction accuracy at ${predictionAccuracy}. This gives the board a directional view of procurement decision reliability.`,
+},
+{
+title: "Benchmark Position",
+body: `Benchmark readiness is ${benchmarkReadinessScore}/100. This creates an executive reference point for comparing procurement maturity, decision readiness, and operating discipline.`,
+},
+{
+title: "Board Recommendation",
+body: "Continue scaling validated procurement activity while maintaining governance over supplier concentration, decision confidence, and executive reporting quality.",
+},
+],
+};
+}
 
 export default function BoardReportGenerator({
 procurementRiskIndex,
@@ -116,27 +253,12 @@ executiveReadinessScore,
 procurementEfficiencyScore,
 supplierEngagementScore,
 digitalMaturityScore,
-
 }: BoardReportGeneratorProps) {
-
-const [activeReport, setActiveReport] = useState<ExecutiveReport | null>(
-null
-);
+const [activeReport, setActiveReport] = useState<ExecutiveReport | null>(null);
 const [copied, setCopied] = useState(false);
 
 const generatedAt = useMemo(() => {
-
-const boardReady =
-procurementMaturityScore >= 50 &&
-procurementRiskIndex > 0 &&
-aiConfidenceScore !== "Insufficient Data";
-
-const reportStatusLabel = boardReady ? "Ready" : "Insufficient Data";
-const reportStatusClass = boardReady
-? "rounded-full border border-green-200 bg-green-50 px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-green-700"
-: "rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-amber-700";
-
-    return new Date().toLocaleDateString("en-US", {
+return new Date().toLocaleDateString("en-US", {
 year: "numeric",
 month: "long",
 day: "numeric",
@@ -149,13 +271,49 @@ procurementRiskIndex > 0 &&
 aiConfidenceScore !== "Insufficient Data";
 
 const reportStatusLabel = boardReady ? "Ready" : "Insufficient Data";
-const reportStatusClass = boardReady
-? "rounded-full border border-green-200 bg-green-50 px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-green-700"
-: "rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-amber-700";
 
+const activeReportBody = useMemo(() => {
+if (!activeReport) return null;
+
+return generateReportBody({
+report: activeReport,
+boardReady,
+procurementRiskIndex,
+procurementMaturityScore,
+aiConfidenceScore,
+supplierDependencyRisk,
+concentrationLevel,
+awardPredictionConfidence,
+predictionAccuracy,
+benchmarkReadinessScore,
+boardHealthIndex,
+enterpriseProcurementScore,
+executiveReadinessScore,
+procurementEfficiencyScore,
+supplierEngagementScore,
+digitalMaturityScore,
+});
+}, [
+activeReport,
+boardReady,
+procurementRiskIndex,
+procurementMaturityScore,
+aiConfidenceScore,
+supplierDependencyRisk,
+concentrationLevel,
+awardPredictionConfidence,
+predictionAccuracy,
+benchmarkReadinessScore,
+boardHealthIndex,
+enterpriseProcurementScore,
+executiveReadinessScore,
+procurementEfficiencyScore,
+supplierEngagementScore,
+digitalMaturityScore,
+]);
 
 const executiveSummary = useMemo(() => {
-if (!activeReport) return "";
+if (!activeReport || !activeReportBody) return "";
 
 return `${activeReport.title}
 
@@ -163,19 +321,15 @@ Audience:
 ${activeReport.audience}
 
 Status:
-${reportStatusLabel}
+${activeReport.id === "cfo" ? activeReport.statusLabel : reportStatusLabel}
 
 Summary:
-This report is not generated because Nexus Pavilion does not yet have enough validated procurement data to produce a board-grade executive report.
+${activeReportBody.summary}
 
-Requirement:
-${activeReport.primaryRequirement}
-
-Required Data Sources:
-${requiredDataSources.map((item) => `- ${item}`).join("\n")}
-
-Recommended Next Steps:
-${operationalNextSteps.map((item, index) => `${index + 1}. ${item}`).join("\n")}
+Report Sections:
+${activeReportBody.sections
+.map((section) => `${section.title}:\n${section.body}`)
+.join("\n\n")}
 
 Executive Metrics:
 - Procurement Risk Index: ${procurementRiskIndex}/100
@@ -193,11 +347,11 @@ Executive Metrics:
 - Supplier Engagement Score: ${supplierEngagementScore}/100
 - Digital Maturity Score: ${digitalMaturityScore}/100
 
-
 Decision Readiness:
-Executive decisions should not be generated from placeholder data, mock scores, or unverified analytics.`;
+Executive decisions are generated only from validated Nexus Pavilion operating intelligence.`;
 }, [
 activeReport,
+activeReportBody,
 reportStatusLabel,
 procurementRiskIndex,
 procurementMaturityScore,
@@ -206,6 +360,13 @@ supplierDependencyRisk,
 concentrationLevel,
 awardPredictionConfidence,
 predictionAccuracy,
+benchmarkReadinessScore,
+boardHealthIndex,
+enterpriseProcurementScore,
+executiveReadinessScore,
+procurementEfficiencyScore,
+supplierEngagementScore,
+digitalMaturityScore,
 ]);
 
 async function copySummary() {
@@ -229,7 +390,7 @@ const printWindow = window.open("", "_blank", "width=1200,height=900");
 if (!printWindow) return;
 
 const styles = Array.from(
-document.querySelectorAll("style, link[rel='stylesheet']")
+document.querySelectorAll("style, link[rel='stylesheet']"),
 )
 .map((node) => node.outerHTML)
 .join("\n");
@@ -347,7 +508,11 @@ Truth-first. Data-first. Decision-ready.
 </div>
 
 <div className="no-print mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-{reports.map((report) => (
+{reports.map((report) => {
+const currentStatusLabel =
+report.id === "cfo" ? report.statusLabel : reportStatusLabel;
+
+return (
 <button
 key={report.id}
 type="button"
@@ -364,12 +529,14 @@ className="group rounded-3xl border border-slate-200 bg-white p-6 text-left tran
 
 <span
 className={
-report.status === "coming-soon"
+report.id === "cfo"
 ? "rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-blue-700"
+: boardReady
+? "rounded-full border border-green-200 bg-green-50 px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-green-700"
 : "rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-amber-700"
 }
 >
-{report.id === "cfo" ? report.statusLabel : reportStatusLabel}
+{currentStatusLabel}
 </span>
 </div>
 
@@ -382,13 +549,14 @@ report.status === "coming-soon"
 </p>
 
 <span className="mt-5 inline-flex rounded-full bg-slate-950 px-4 py-2 text-xs font-black text-white transition group-hover:bg-slate-800">
-Review Status
+Generate Report
 </span>
 </button>
-))}
+);
+})}
 </div>
 
-{activeReport ? (
+{activeReport && activeReportBody ? (
 <div
 id="board-report-print-area"
 className="mt-10 overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-xl"
@@ -431,8 +599,10 @@ Generated
 
 <div
 className={
-activeReport.status === "coming-soon"
+activeReport.id === "cfo"
 ? "rounded-2xl border border-blue-200 bg-blue-50 p-5 text-blue-800"
+: boardReady
+? "rounded-2xl border border-green-200 bg-green-50 p-5 text-green-800"
 : "rounded-2xl border border-amber-200 bg-amber-50 p-5 text-amber-800"
 }
 >
@@ -440,7 +610,9 @@ activeReport.status === "coming-soon"
 Report Status
 </p>
 <p className="mt-2 text-2xl font-black">
-{activeReport.id === "cfo" ? activeReport.statusLabel : reportStatusLabel}
+{activeReport.id === "cfo"
+? activeReport.statusLabel
+: reportStatusLabel}
 </p>
 </div>
 </div>
@@ -477,21 +649,76 @@ Executive Summary
 
 <div className="mt-4 rounded-3xl border border-slate-200 bg-white p-6">
 <p className="text-sm font-semibold leading-7 text-slate-700">
-{boardReady
-? "Nexus Pavilion has sufficient validated procurement intelligence to generate an executive-grade report for this audience."
-: "This report is not generated because Nexus Pavilion does not yet have enough validated procurement data to produce a board-grade executive report."}
-</p>
-
-<p className="mt-4 text-sm leading-7 text-slate-600">
-Executive reporting will remain locked until the platform
-can support the output with real RFQ activity, supplier
-participation, quote responses, award decisions, risk
-intelligence, confidence analytics, and financial impact
-metrics.
+{activeReportBody.summary}
 </p>
 </div>
 </section>
 
+<section className="mt-8">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-slate-400">
+Report Narrative
+</p>
+
+<div className="mt-4 space-y-4">
+{activeReportBody.sections.map((section) => (
+<div
+key={section.title}
+className="rounded-3xl border border-slate-200 bg-slate-50 p-6"
+>
+<p className="text-xs font-black uppercase tracking-[0.2em] text-orange-500">
+{section.title}
+</p>
+<p className="mt-3 text-sm font-semibold leading-7 text-slate-700">
+{section.body}
+</p>
+</div>
+))}
+</div>
+</section>
+
+<section className="mt-8">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-slate-400">
+Executive Metrics
+</p>
+
+<div className="mt-4 grid gap-3 md:grid-cols-2">
+<ReportMetric
+label="Board Health"
+value={`${boardHealthIndex}/100`}
+/>
+<ReportMetric
+label="Enterprise Score"
+value={`${enterpriseProcurementScore}/100`}
+/>
+<ReportMetric
+label="Executive Readiness"
+value={`${executiveReadinessScore}/100`}
+/>
+<ReportMetric
+label="Procurement Risk"
+value={`${procurementRiskIndex}/100`}
+/>
+<ReportMetric
+label="Procurement Maturity"
+value={`${procurementMaturityScore}/100`}
+/>
+<ReportMetric
+label="Supplier Engagement"
+value={`${supplierEngagementScore}/100`}
+/>
+<ReportMetric
+label="AI Confidence"
+value={aiConfidenceScore}
+/>
+<ReportMetric
+label="Award Confidence"
+value={awardPredictionConfidence}
+/>
+</div>
+</section>
+
+{!boardReady || activeReport.id === "cfo" ? (
+<>
 <section className="mt-8">
 <p className="text-xs font-black uppercase tracking-[0.25em] text-slate-400">
 Required Data Sources
@@ -532,16 +759,17 @@ className="flex gap-4 rounded-2xl border border-slate-200 p-4"
 ))}
 </div>
 </section>
+</>
+) : null}
 
 <section className="mt-8 rounded-3xl border border-slate-950 bg-slate-950 p-6 text-white">
 <p className="text-xs font-black uppercase tracking-[0.25em] text-slate-400">
 Decision Readiness
 </p>
 <p className="mt-3 text-sm font-semibold leading-7 text-slate-300">
-Executive decisions should not be generated from placeholder
-data, mock scores, or unverified analytics. This report will
-become available only when the underlying procurement dataset
-is validated.
+Executive decisions are generated only from validated Nexus
+Pavilion operating intelligence. Placeholder reports, fake
+scores, and decorative AI narratives remain blocked.
 </p>
 </section>
 
@@ -577,6 +805,17 @@ return (
 {label}
 </p>
 <p className="mt-2 text-lg font-black text-slate-950">{value}</p>
+</div>
+);
+}
+
+function ReportMetric({ label, value }: { label: string; value: string }) {
+return (
+<div className="rounded-2xl border border-slate-200 bg-white p-4">
+<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+{label}
+</p>
+<p className="mt-2 text-sm font-black text-slate-950">{value}</p>
 </div>
 );
 }

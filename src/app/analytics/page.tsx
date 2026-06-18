@@ -1454,6 +1454,41 @@ industryBenchmarkScore >= 85
 ? "Average"
 : "Below Benchmark";
 
+const benchmarkPeerPosition =
+industryBenchmarkScore >= 85
+? "Top Quartile Performer"
+: industryBenchmarkScore >= 70
+? "Above Peer Median"
+: industryBenchmarkScore >= 55
+? "Median Performer"
+: "Below Peer Benchmark";
+
+const benchmarkConfidence =
+benchmarkReadinessScore >= 80 && dataQualityScore >= 70
+? "High Confidence"
+: benchmarkReadinessScore >= 60 && dataQualityScore >= 50
+? "Moderate Confidence"
+: "Limited Confidence";
+
+const benchmarkNarrative =
+industryBenchmarkScore >= 85
+? "Nexus Pavilion is benchmarking as a top-quartile procurement intelligence environment, with strong operating maturity, supplier participation, and executive decision readiness."
+: industryBenchmarkScore >= 70
+? "Nexus Pavilion is performing above the peer median, with credible procurement maturity and supplier intelligence signals. Continued improvement should focus on supplier depth, award history, and financial validation."
+: industryBenchmarkScore >= 55
+? "Nexus Pavilion is operating near the peer median. The platform has early executive intelligence, but stronger RFQ volume, supplier coverage, and award validation are required before board-level confidence increases."
+: "Nexus Pavilion remains below benchmark readiness. Executive benchmarking should stay in a transparent improvement state until validated procurement activity, supplier participation, and decision history improve.";
+
+const benchmarkBoardRecommendation =
+industryBenchmarkScore >= 85
+? "Maintain governance discipline while scaling procurement intelligence across additional categories and supplier segments."
+: industryBenchmarkScore >= 70
+? "Prioritize supplier network expansion, award workflow completion, and confidence validation to move toward top-quartile positioning."
+: industryBenchmarkScore >= 55
+? "Strengthen RFQ activity, supplier participation, and procurement data quality before positioning the platform as board-ready."
+: "Focus on foundational procurement data capture before using benchmark output for executive decisions.";
+
+
 const benchmarkMatrix = [
 { title: "Industry", score: industryBenchmarkScore },
 { title: "Procurement", score: procurementBenchmarkScore },
@@ -2027,7 +2062,14 @@ Executive Benchmark Engine
 Industry Benchmark Intelligence
 </h2>
 
-<div className="mt-8 grid gap-6 md:grid-cols-4">
+<p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-600">
+Nexus Pavilion converts internal procurement signals into an executive
+benchmark position using procurement health, supplier reliability,
+competition strength, prediction confidence, and construction
+classification maturity.
+</p>
+
+<div className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
 {benchmarkMatrix.map((item) => (
 <MetricCard
 key={item.title}
@@ -2037,20 +2079,44 @@ value={`${item.score}/100`}
 ))}
 </div>
 
-<div className="mt-8 rounded-3xl border border-orange-200 bg-orange-50 p-6">
+<div className="mt-8 grid gap-6 lg:grid-cols-[0.85fr_1.15fr]">
+<div className="rounded-3xl border border-orange-200 bg-orange-50 p-6">
 <p className="text-xs font-black uppercase tracking-[0.2em] text-orange-600">
-Benchmark Status
+Peer Group Position
 </p>
 
 <h3 className="mt-2 text-3xl font-black text-slate-950">
-{benchmarkStatus}
+{benchmarkPeerPosition}
 </h3>
 
-<p className="mt-3 text-sm leading-7 text-slate-700">
-Benchmark analysis compares procurement performance, supplier
-quality, cost optimization, RFQ classification maturity, and
-executive readiness against enterprise procurement standards.
+<p className="mt-3 text-sm font-semibold leading-7 text-slate-700">
+Benchmark Status: {benchmarkStatus}
 </p>
+
+<p className="mt-3 text-sm font-semibold leading-7 text-slate-700">
+Benchmark Confidence: {benchmarkConfidence}
+</p>
+</div>
+
+<div className="rounded-3xl border border-slate-200 bg-slate-50 p-6">
+<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+Benchmark Narrative
+</p>
+
+<p className="mt-4 text-sm font-semibold leading-7 text-slate-700">
+{benchmarkNarrative}
+</p>
+
+<div className="mt-5 rounded-2xl border border-slate-200 bg-white p-5">
+<p className="text-xs font-black uppercase tracking-[0.2em] text-orange-500">
+Board Recommendation
+</p>
+
+<p className="mt-3 text-sm font-semibold leading-7 text-slate-700">
+{benchmarkBoardRecommendation}
+</p>
+</div>
+</div>
 </div>
 </section>
 
@@ -2199,39 +2265,132 @@ Enterprise Procurement Benchmark
 </h2>
 
 <p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-600">
-Benchmark procurement maturity, supplier network strength, award confidence,
-risk exposure, and board readiness using validated Nexus Pavilion operating
-data.
+Benchmark procurement maturity, supplier network strength, award
+confidence, risk exposure, peer positioning, and board readiness using
+validated Nexus Pavilion operating data.
 </p>
 
 <div className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-5">
 <MetricCard title="Benchmark Score" value={`${benchmarkReadinessScore}/100`} />
 <MetricCard title="Benchmark Status" value={executiveBenchmarkStatus} />
+<MetricCard title="Peer Position" value={benchmarkPeerPosition} />
 <MetricCard title="Supplier Network" value={supplierNetworkBenchmark} />
-<MetricCard title="Award Benchmark" value={awardBenchmark} />
 <MetricCard title="Risk Benchmark" value={riskBenchmark} />
+</div>
+
+<div className="mt-8 rounded-3xl border border-slate-950 bg-slate-950 p-6 text-white">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-400">
+Executive Benchmark Interpretation
+</p>
+
+<h3 className="mt-4 text-2xl font-black">
+{benchmarkPeerPosition}
+</h3>
+
+<p className="mt-4 text-sm font-semibold leading-7 text-slate-300">
+{benchmarkNarrative}
+</p>
+
+<p className="mt-4 text-sm font-semibold leading-7 text-slate-300">
+{benchmarkBoardRecommendation}
+</p>
 </div>
 </section>
 <section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
 <p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
-Industry Benchmark Engine
+Executive Procurement Intelligence
 </p>
 
 <h2 className="mt-3 text-3xl font-black text-slate-950">
-Construction Procurement Industry Benchmark
+Board Decision Intelligence
 </h2>
 
 <p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-600">
-Nexus Pavilion estimates internal industry positioning using validated
-procurement maturity, supplier engagement, operational efficiency, data
-quality, and enterprise procurement performance signals.
+Executive interpretation layer converting procurement metrics,
+benchmark intelligence, supplier signals, and risk indicators into
+board-level actions.
 </p>
 
-<div className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-<MetricCard title="Industry Score" value={`${industryBenchmarkScore}/100`} />
-<MetricCard title="Market Position" value={industryBenchmarkPosition} />
-<MetricCard title="Procurement Signal" value={industryProcurementSignal} />
-<MetricCard title="Risk Signal" value={industryRiskSignal} />
+<div className="mt-8 grid gap-6 lg:grid-cols-3">
+
+<div className="rounded-3xl border border-red-200 bg-red-50 p-6">
+<p className="text-xs font-black uppercase tracking-[0.2em] text-red-600">
+Board Risks
+</p>
+
+<div className="mt-4 space-y-3">
+{topQuarterRisks.map((risk) => (
+<div
+key={risk}
+className="rounded-2xl border border-red-100 bg-white p-4"
+>
+<p className="text-sm font-semibold text-slate-700">
+{risk}
+</p>
+</div>
+))}
+</div>
+</div>
+
+<div className="rounded-3xl border border-green-200 bg-green-50 p-6">
+<p className="text-xs font-black uppercase tracking-[0.2em] text-green-700">
+Board Opportunities
+</p>
+
+<div className="mt-4 space-y-3">
+{topQuarterOpportunities.map((opportunity) => (
+<div
+key={opportunity}
+className="rounded-2xl border border-green-100 bg-white p-4"
+>
+<p className="text-sm font-semibold text-slate-700">
+{opportunity}
+</p>
+</div>
+))}
+</div>
+</div>
+
+<div className="rounded-3xl border border-blue-200 bg-blue-50 p-6">
+<p className="text-xs font-black uppercase tracking-[0.2em] text-blue-700">
+Executive Actions
+</p>
+
+<div className="space-y-4 mt-4">
+
+<div className="rounded-2xl border border-blue-100 bg-white p-4">
+<p className="text-xs font-black uppercase tracking-[0.15em] text-blue-600">
+Immediate
+</p>
+
+<p className="mt-2 text-sm font-semibold text-slate-700">
+{boardRecommendation}
+</p>
+</div>
+
+<div className="rounded-2xl border border-blue-100 bg-white p-4">
+<p className="text-xs font-black uppercase tracking-[0.15em] text-blue-600">
+90 Days
+</p>
+
+<p className="mt-2 text-sm font-semibold text-slate-700">
+{executiveCommandRecommendation}
+</p>
+</div>
+
+<div className="rounded-2xl border border-blue-100 bg-white p-4">
+<p className="text-xs font-black uppercase tracking-[0.15em] text-blue-600">
+Strategic Position
+</p>
+
+<p className="mt-2 text-sm font-semibold text-slate-700">
+{executiveBenchmarkStatus}
+</p>
+</div>
+
+</div>
+</div>
+
 </div>
 </section>
 
