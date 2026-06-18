@@ -1488,6 +1488,56 @@ industryBenchmarkScore >= 85
 ? "Strengthen RFQ activity, supplier participation, and procurement data quality before positioning the platform as board-ready."
 : "Focus on foundational procurement data capture before using benchmark output for executive decisions.";
 
+const decisionConfidenceScore = Math.min(
+100,
+Math.round(
+dataQualityScore * 0.3 +
+predictionAccuracy * 0.25 +
+supplierEngagementScore * 0.25 +
+benchmarkReadinessScore * 0.2
+)
+);
+
+const decisionConfidenceLevel =
+decisionConfidenceScore >= 85
+? "High Confidence"
+: decisionConfidenceScore >= 70
+? "Decision-Ready"
+: decisionConfidenceScore >= 55
+? "Requires Review"
+: "Limited Confidence";
+
+const decisionGuidance =
+decisionConfidenceScore >= 85
+? "Proceed with executive decision support. Current procurement intelligence is strong enough for board-level interpretation."
+: decisionConfidenceScore >= 70
+? "Proceed with management review. Decision intelligence is credible, but executive validation should remain active."
+: decisionConfidenceScore >= 55
+? "Require additional validation before board-level decisions. Improve RFQ depth, supplier coverage, and data quality."
+: "Do not use for executive decisions yet. More validated procurement activity is required.";
+
+const decisionConfidenceDrivers = [
+`Data Quality: ${dataQualityScore}/100`,
+`Prediction Accuracy: ${predictionAccuracy}`,
+`Supplier Engagement: ${supplierEngagementScore}/100`,
+`Benchmark Readiness: ${benchmarkReadinessScore}/100`,
+];
+
+const decisionConfidenceRisks = [
+procurementRiskIndex >= 60
+? "Procurement risk exposure may reduce decision confidence."
+: "Procurement risk is not currently blocking decision confidence.",
+supplierEngagementScore < 50
+? "Supplier engagement remains below executive decision threshold."
+: "Supplier engagement supports decision interpretation.",
+dataQualityScore < 60
+? "Data quality requires improvement before stronger executive reliance."
+: "Data quality supports executive reporting confidence.",
+benchmarkReadinessScore < 60
+? "Benchmark readiness is still below board-grade confidence."
+: "Benchmark readiness supports executive-level comparison.",
+];
+
 
 const benchmarkMatrix = [
 { title: "Industry", score: industryBenchmarkScore },
@@ -1798,6 +1848,83 @@ Executive Priority Dashboard
 <MetricCard title="Procurement Health" value={procurementHealth} />
 <MetricCard title="Competition Index" value={competitionIndex} />
 <MetricCard title="Avg Quotes / RFQ" value={avgQuotesPerRfq.toString()} />
+</section>
+
+<section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
+Decision Confidence Layer
+</p>
+
+<h2 className="mt-3 text-3xl font-black text-slate-950">
+Executive Decision Confidence Center
+</h2>
+
+<p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-600">
+Nexus Pavilion evaluates whether procurement intelligence is reliable enough
+to support executive interpretation, board reporting, and strategic decision
+guidance.
+</p>
+
+<div className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+<MetricCard title="Confidence Score" value={`${decisionConfidenceScore}/100`} />
+<MetricCard title="Confidence Level" value={decisionConfidenceLevel} />
+<MetricCard title="AI Confidence" value={aiConfidenceScore} />
+<MetricCard title="Benchmark Confidence" value={benchmarkConfidence} />
+</div>
+
+<div className="mt-8 grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
+<div className="rounded-3xl border border-slate-200 bg-slate-50 p-6">
+<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+Confidence Drivers
+</p>
+
+<div className="mt-4 space-y-3">
+{decisionConfidenceDrivers.map((driver) => (
+<div
+key={driver}
+className="rounded-2xl border border-slate-200 bg-white p-4"
+>
+<p className="text-sm font-semibold text-slate-700">
+{driver}
+</p>
+</div>
+))}
+</div>
+</div>
+
+<div className="rounded-3xl border border-slate-950 bg-slate-950 p-6 text-white">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-400">
+Executive Guidance
+</p>
+
+<h3 className="mt-4 text-2xl font-black">
+{decisionConfidenceLevel}
+</h3>
+
+<p className="mt-4 text-sm font-semibold leading-7 text-slate-300">
+{decisionGuidance}
+</p>
+</div>
+</div>
+
+<div className="mt-8 rounded-3xl border border-amber-200 bg-amber-50 p-6">
+<p className="text-xs font-black uppercase tracking-[0.2em] text-amber-700">
+Confidence Risks
+</p>
+
+<div className="mt-4 grid gap-3 md:grid-cols-2">
+{decisionConfidenceRisks.map((risk) => (
+<div
+key={risk}
+className="rounded-2xl border border-amber-100 bg-white p-4"
+>
+<p className="text-sm font-semibold text-slate-700">
+{risk}
+</p>
+</div>
+))}
+</div>
+</div>
 </section>
 
 <section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
