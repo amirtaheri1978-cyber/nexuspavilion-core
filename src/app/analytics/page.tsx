@@ -1677,6 +1677,39 @@ executiveReadinessScore >= 80
 ? "Operational Control"
 : "Capability Development";
 
+const boardPresentationReadiness =
+benchmarkReadinessScore >= 85
+? "Board Ready"
+: benchmarkReadinessScore >= 70
+? "Executive Ready"
+: "Preparation Required";
+
+const boardNarrative =
+procurementRiskIndex >= 60
+? "Board attention should focus on supplier dependency, concentration risk, and procurement resilience."
+: procurementOpportunityScore >= 80
+? "Board attention should focus on growth opportunities, savings capture, and supplier expansion."
+: "Board attention should focus on maintaining procurement performance and strengthening executive readiness.";
+
+const boardPresentationMetrics = [
+{
+title: "Board Readiness",
+value: `${benchmarkReadinessScore}/100`,
+},
+{
+title: "Board Health",
+value: `${boardHealthIndex}/100`,
+},
+{
+title: "Executive Readiness",
+value: `${executiveReadinessScore}/100`,
+},
+{
+title: "Decision Confidence",
+value: aiConfidenceScore,
+},
+];
+
 const topQuarterOpportunities = [
 `${bestProcurementCategory} category expansion`,
 `${savingsOpportunityLevel} savings capture`,
@@ -2851,6 +2884,45 @@ Command Status
 </div>
 </section>
 
+<section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
+Board Presentation Intelligence
+</p>
+
+<h2 className="mt-3 text-3xl font-black text-slate-950">
+Executive Board Briefing
+</h2>
+
+<p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-600">
+Board-ready procurement intelligence summarizing executive
+performance, strategic risks, decision confidence, and
+procurement opportunities.
+</p>
+
+<div className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+{boardPresentationMetrics.map((item) => (
+<MetricCard
+key={item.title}
+title={item.title}
+value={item.value}
+/>
+))}
+</div>
+
+<div className="mt-8 rounded-3xl border border-slate-200 bg-slate-50 p-6">
+<p className="text-xs font-black uppercase tracking-[0.2em] text-orange-500">
+Board Narrative
+</p>
+
+<h3 className="mt-3 text-2xl font-black text-slate-950">
+{boardPresentationReadiness}
+</h3>
+
+<p className="mt-4 text-sm font-semibold leading-7 text-slate-700">
+{boardNarrative}
+</p>
+</div>
+</section>
 
 <section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
 <p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
