@@ -1503,6 +1503,179 @@ awardRate < 25
 },
 ];
 
+const executiveScenarios = [
+{
+scenario: "Supplier Expansion",
+outcome:
+supplierRanking.length >= 10
+? "Already achieved"
+: "Increase supplier participation to improve competition and pricing.",
+impact: "+ Procurement resilience",
+confidence: "High",
+},
+
+{
+scenario: "Risk Reduction",
+outcome:
+procurementRiskIndex <= 35
+? "Risk profile already optimized"
+: "Reduce supplier dependency and concentration exposure.",
+impact: "+ Executive confidence",
+confidence: "High",
+},
+
+{
+scenario: "Award Optimization",
+outcome:
+awardRate >= 50
+? "Award execution performing well"
+: "Improve RFQ-to-award conversion performance.",
+impact: "+ Procurement velocity",
+confidence: "Medium",
+},
+
+{
+scenario: "Savings Capture",
+outcome:
+potentialSavings > 10000
+? `Capture approximately $${potentialSavings.toLocaleString()} in value.`
+: "Increase procurement competition to unlock savings.",
+impact: "+ Financial performance",
+confidence: "Medium",
+},
+];
+
+const executiveDecisionSimulator = [
+{
+decision: "Expand Supplier Network",
+expectedImpact:
+supplierRanking.length >= 10
+? "Supplier network already operating at scale."
+: "Higher competition and stronger procurement resilience.",
+risk:
+supplierRanking.length >= 10 ? "Low" : "Moderate",
+confidence: aiConfidenceScore,
+},
+
+{
+decision: "Reduce Supplier Dependency",
+expectedImpact:
+procurementRiskIndex <= 35
+? "Risk exposure already optimized."
+: "Lower concentration risk and stronger executive confidence.",
+risk:
+procurementRiskIndex <= 35 ? "Low" : "Moderate",
+confidence: aiConfidenceScore,
+},
+
+{
+decision: "Accelerate Award Decisions",
+expectedImpact:
+awardRate >= 50
+? "Award process performing efficiently."
+: "Faster procurement execution and operational delivery.",
+risk:
+awardRate >= 50 ? "Low" : "Moderate",
+confidence: awardPredictionConfidence,
+},
+
+{
+decision: "Capture Savings Opportunity",
+expectedImpact:
+potentialSavings > 10000
+? `Potential value of $${potentialSavings.toLocaleString()}.`
+: "Limited savings opportunity currently available.",
+risk: "Low",
+confidence:
+procurementOpportunityScore >= 80
+? "High"
+: procurementOpportunityScore >= 60
+? "Medium"
+: "Low",
+},
+];
+
+const executiveForecastCenter = [
+{
+title: "Procurement Outlook",
+forecast:
+procurementHealthScore >= 80
+? "Positive"
+: procurementHealthScore >= 60
+? "Stable"
+: "Improvement Required",
+},
+
+{
+title: "Supplier Outlook",
+forecast:
+supplierEngagementScore >= 80
+? "Expanding"
+: supplierEngagementScore >= 60
+? "Stable"
+: "At Risk",
+},
+
+{
+title: "Risk Outlook",
+forecast:
+procurementRiskIndex <= 35
+? "Controlled"
+: procurementRiskIndex <= 60
+? "Monitor"
+: "Elevated",
+},
+
+{
+title: "Executive Outlook",
+forecast:
+executiveReadinessScore >= 80
+? "Decision Ready"
+: executiveReadinessScore >= 60
+? "Developing"
+: "Limited Visibility",
+},
+];
+
+const procurementCommandRoom = [
+{
+title: "Board Readiness",
+value: executiveBenchmarkStatus,
+},
+{
+title: "Decision Confidence",
+value: aiConfidenceScore,
+},
+{
+title: "Risk Position",
+value: riskBenchmark,
+},
+{
+title: "Opportunity Position",
+value:
+procurementOpportunityScore >= 80
+? "High"
+: procurementOpportunityScore >= 60
+? "Medium"
+: "Low",
+},
+{
+title: "Supplier Strength",
+value: supplierNetworkBenchmark,
+},
+{
+title: "Industry Position",
+value: executiveBenchmarkStatus,
+},
+];
+
+const procurementCommandRoomStatus =
+boardHealthIndex >= 80 &&
+executiveReadinessScore >= 80
+? "Executive Control"
+: boardHealthIndex >= 65
+? "Operational Control"
+: "Capability Development";
 
 const topQuarterOpportunities = [
 `${bestProcurementCategory} category expansion`,
@@ -1572,6 +1745,36 @@ summary:
 },
 ];
 
+const executiveOpportunityIntelligence = executiveOpportunityRanking.map(
+(opportunity, index) => ({
+...opportunity,
+rank: index + 1,
+businessImpact:
+opportunity.impact === "High"
+? "High business impact with direct executive visibility."
+: opportunity.impact === "Medium"
+? "Moderate business impact with operational improvement potential."
+: "Long-term strategic value requiring continued development.",
+executionHorizon:
+opportunity.priority === "Immediate"
+? "Immediate executive action"
+: opportunity.priority === "90 Days"
+? "90-day execution window"
+: "Strategic planning cycle",
+boardPriority:
+opportunity.priority === "Immediate"
+? "High"
+: opportunity.priority === "90 Days"
+? "Medium"
+: "Monitor",
+ceoRecommendation:
+opportunity.priority === "Immediate"
+? "Assign executive ownership and begin action planning immediately."
+: opportunity.priority === "90 Days"
+? "Include in the next quarterly procurement leadership review."
+: "Track as a strategic opportunity for future procurement expansion.",
+}),
+);
 
 const boardRecommendation =
 procurementRiskIndex >= 60
@@ -2285,6 +2488,260 @@ Opportunity Value
 </div>
 </section>
 
+
+<section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
+Executive Opportunity Intelligence
+</p>
+
+<h2 className="mt-3 text-3xl font-black text-slate-950">
+Opportunity Impact Intelligence
+</h2>
+
+<p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-600">
+Nexus Pavilion converts ranked procurement opportunities into executive
+business impact, execution horizon, board priority, and CEO-level
+recommendations.
+</p>
+
+<div className="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+{executiveOpportunityIntelligence.map((opportunity) => (
+<div
+key={opportunity.title}
+className="rounded-3xl border border-green-200 bg-green-50 p-6"
+>
+<p className="text-xs font-black uppercase tracking-[0.2em] text-green-700">
+Opportunity #{opportunity.rank}
+</p>
+
+<h3 className="mt-4 text-xl font-black text-slate-950">
+{opportunity.title}
+</h3>
+
+<p className="mt-4 text-sm font-semibold leading-7 text-slate-700">
+{opportunity.businessImpact}
+</p>
+
+<div className="mt-5 space-y-3">
+<div className="rounded-2xl border border-green-100 bg-white p-4">
+<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+Execution Horizon
+</p>
+<p className="mt-2 text-sm font-black text-slate-950">
+{opportunity.executionHorizon}
+</p>
+</div>
+
+<div className="rounded-2xl border border-green-100 bg-white p-4">
+<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+Board Priority
+</p>
+<p className="mt-2 text-sm font-black text-slate-950">
+{opportunity.boardPriority}
+</p>
+</div>
+
+<div className="rounded-2xl border border-green-100 bg-white p-4">
+<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+CEO Recommendation
+</p>
+<p className="mt-2 text-sm font-semibold leading-7 text-slate-700">
+{opportunity.ceoRecommendation}
+</p>
+</div>
+</div>
+</div>
+))}
+</div>
+</section>
+
+<section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
+Executive Scenario Intelligence
+</p>
+
+<h2 className="mt-3 text-3xl font-black text-slate-950">
+Strategic Scenario Modeling
+</h2>
+
+<p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-600">
+Executive scenario modeling evaluates potential procurement outcomes,
+operational impact, and strategic decision consequences before action
+is taken.
+</p>
+
+<div className="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+{executiveScenarios.map((scenario) => (
+<div
+key={scenario.scenario}
+className="rounded-3xl border border-blue-200 bg-blue-50 p-6"
+>
+<p className="text-xs font-black uppercase tracking-[0.2em] text-blue-700">
+{scenario.scenario}
+</p>
+
+<p className="mt-4 text-sm font-semibold leading-7 text-slate-700">
+{scenario.outcome}
+</p>
+
+<div className="mt-5 rounded-2xl border border-blue-100 bg-white p-4">
+<p className="text-xs font-black uppercase tracking-[0.15em] text-slate-400">
+Impact
+</p>
+
+<p className="mt-2 font-black text-slate-950">
+{scenario.impact}
+</p>
+</div>
+
+<div className="mt-4 rounded-2xl border border-blue-100 bg-white p-4">
+<p className="text-xs font-black uppercase tracking-[0.15em] text-slate-400">
+Confidence
+</p>
+
+<p className="mt-2 font-black text-slate-950">
+{scenario.confidence}
+</p>
+</div>
+</div>
+))}
+</div>
+</section>
+
+<section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
+Executive Decision Simulator
+</p>
+
+<h2 className="mt-3 text-3xl font-black text-slate-950">
+Decision Outcome Modeling
+</h2>
+
+<p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-600">
+Simulate executive procurement decisions and evaluate expected
+operational impact, confidence level, and implementation risk.
+</p>
+
+<div className="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+{executiveDecisionSimulator.map((item) => (
+<div
+key={item.decision}
+className="rounded-3xl border border-purple-200 bg-purple-50 p-6"
+>
+<p className="text-xs font-black uppercase tracking-[0.2em] text-purple-700">
+Decision
+</p>
+
+<h3 className="mt-4 text-xl font-black text-slate-950">
+{item.decision}
+</h3>
+
+<p className="mt-4 text-sm font-semibold leading-7 text-slate-700">
+{item.expectedImpact}
+</p>
+
+<div className="mt-5 rounded-2xl border border-purple-100 bg-white p-4">
+<p className="text-xs font-black uppercase tracking-[0.15em] text-slate-400">
+Risk
+</p>
+
+<p className="mt-2 font-black text-slate-950">
+{item.risk}
+</p>
+</div>
+
+<div className="mt-4 rounded-2xl border border-purple-100 bg-white p-4">
+<p className="text-xs font-black uppercase tracking-[0.15em] text-slate-400">
+Confidence
+</p>
+
+<p className="mt-2 font-black text-slate-950">
+{item.confidence}
+</p>
+</div>
+</div>
+))}
+</div>
+</section>
+
+<section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
+Executive Forecast Center
+</p>
+
+<h2 className="mt-3 text-3xl font-black text-slate-950">
+Forward-Looking Intelligence
+</h2>
+
+<p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-600">
+Forecast procurement readiness, supplier health, executive visibility,
+and enterprise risk trajectory using current operating signals.
+</p>
+
+<div className="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+{executiveForecastCenter.map((forecast) => (
+<div
+key={forecast.title}
+className="rounded-3xl border border-cyan-200 bg-cyan-50 p-6"
+>
+<p className="text-xs font-black uppercase tracking-[0.2em] text-cyan-700">
+{forecast.title}
+</p>
+
+<h3 className="mt-4 text-2xl font-black text-slate-950">
+{forecast.forecast}
+</h3>
+</div>
+))}
+</div>
+</section>
+
+<section className="mt-8 rounded-3xl border border-slate-950 bg-slate-950 p-8 text-white">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-400">
+Procurement Intelligence Command Room
+</p>
+
+<h2 className="mt-3 text-4xl font-black">
+Executive War Room
+</h2>
+
+<p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-300">
+Unified executive command environment combining board readiness,
+procurement performance, risk exposure, supplier strength,
+benchmark intelligence, and decision confidence.
+</p>
+
+<div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+{procurementCommandRoom.map((item) => (
+<div
+key={item.title}
+className="rounded-3xl border border-white/10 bg-white/5 p-6"
+>
+<p className="text-xs font-black uppercase tracking-[0.2em] text-orange-400">
+{item.title}
+</p>
+
+<h3 className="mt-4 text-2xl font-black">
+{item.value}
+</h3>
+</div>
+))}
+</div>
+
+<div className="mt-8 rounded-3xl border border-white/10 bg-white/5 p-6">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-400">
+Command Status
+</p>
+
+<h3 className="mt-4 text-3xl font-black">
+{procurementCommandRoomStatus}
+</h3>
+
+<p className="mt-4 text-sm leading-7 text-slate-300">
+{executiveCommandRecommendation}
+</p>
+</div>
+</section>
 
 <section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
 <p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
