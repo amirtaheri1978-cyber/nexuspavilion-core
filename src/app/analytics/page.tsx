@@ -1511,6 +1511,67 @@ const topQuarterOpportunities = [
 "Supplier network growth",
 ];
 
+const executiveOpportunityRanking = [
+{
+title: `${bestProcurementCategory} Expansion`,
+priority:
+procurementOpportunityScore >= 80
+? "Immediate"
+: procurementOpportunityScore >= 60
+? "90 Days"
+: "Strategic",
+impact:
+procurementOpportunityScore >= 80
+? "High"
+: procurementOpportunityScore >= 60
+? "Medium"
+: "Long-Term",
+value: `${procurementOpportunityScore}/100`,
+summary: `Expand procurement activity within ${bestProcurementCategory} to increase sourcing coverage and operational leverage.`,
+},
+{
+title: "Savings Capture",
+priority:
+potentialSavings >= 10000
+? "Immediate"
+: potentialSavings >= 5000
+? "90 Days"
+: "Strategic",
+impact:
+potentialSavings >= 10000
+? "High"
+: potentialSavings >= 5000
+? "Medium"
+: "Long-Term",
+value: `$${potentialSavings.toLocaleString()}`,
+summary: `Current procurement intelligence indicates a ${savingsOpportunityLevel.toLowerCase()} savings opportunity.`,
+},
+{
+title: "Supplier Network Growth",
+priority:
+supplierEngagementScore < 60
+? "Immediate"
+: supplierEngagementScore < 80
+? "90 Days"
+: "Strategic",
+impact:
+supplierEngagementScore < 60
+? "High"
+: "Medium",
+value: `${supplierEngagementScore}/100`,
+summary:
+"Expand supplier participation to improve competition, quote coverage, and decision confidence.",
+},
+{
+title: `${dominantScope} RFQ Growth`,
+priority: "Strategic",
+impact: "Medium",
+value: dominantScope,
+summary:
+"Increase RFQ volume within the dominant procurement scope to strengthen market intelligence.",
+},
+];
+
 const boardRecommendation =
 procurementRiskIndex >= 60
 ? "Reduce supplier dependency and review award concentration before scaling procurement volume."
@@ -2114,6 +2175,60 @@ Impact
 ))}
 </div>
 </section>
+
+
+<section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
+Executive Opportunity Ranking
+</p>
+
+<h2 className="mt-3 text-3xl font-black text-slate-950">
+Board Opportunity Queue
+</h2>
+
+<p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-600">
+Nexus Pavilion ranks procurement opportunities based on savings potential,
+supplier growth, sourcing expansion, and procurement intelligence signals.
+</p>
+
+<div className="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+{executiveOpportunityRanking.map((opportunity) => (
+<div
+key={opportunity.title}
+className="rounded-3xl border border-green-200 bg-green-50 p-6"
+>
+<div className="flex items-start justify-between gap-3">
+<p className="text-xs font-black uppercase tracking-[0.2em] text-green-700">
+{opportunity.priority}
+</p>
+
+<span className="rounded-full bg-white px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-slate-700">
+{opportunity.impact}
+</span>
+</div>
+
+<h3 className="mt-4 text-xl font-black text-slate-950">
+{opportunity.title}
+</h3>
+
+<p className="mt-4 text-sm font-semibold leading-7 text-slate-700">
+{opportunity.summary}
+</p>
+
+<div className="mt-5 rounded-2xl border border-white bg-white p-4">
+<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+Opportunity Value
+</p>
+
+<p className="mt-2 text-lg font-black text-slate-950">
+{opportunity.value}
+</p>
+</div>
+</div>
+))}
+</div>
+</section>
+
 
 <section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
 <p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
