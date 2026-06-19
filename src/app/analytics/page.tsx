@@ -1572,6 +1572,7 @@ summary:
 },
 ];
 
+
 const boardRecommendation =
 procurementRiskIndex >= 60
 ? "Reduce supplier dependency and review award concentration before scaling procurement volume."
@@ -1681,6 +1682,8 @@ benchmarkReadinessScore * 0.2
 )
 );
 
+
+
 const decisionConfidenceLevel =
 decisionConfidenceScore >= 85
 ? "High Confidence"
@@ -1721,6 +1724,47 @@ benchmarkReadinessScore < 60
 : "Benchmark readiness supports executive-level comparison.",
 ];
 
+const ceoActionCenter = [
+{
+phase: "Immediate",
+title: "Executive Attention",
+summary: boardRecommendation,
+},
+{
+phase: "30 Days",
+title: "Operational Focus",
+summary:
+executiveDecisionQueue[0] ||
+"Maintain procurement operating discipline.",
+},
+{
+phase: "90 Days",
+title: "Growth Initiative",
+summary:
+executiveOpportunityRanking[0]?.summary ||
+"Expand procurement intelligence coverage.",
+},
+{
+phase: "Strategic",
+title: "Enterprise Direction",
+summary: executiveCommandRecommendation,
+},
+];
+
+const ceoOperatingStatus =
+enterpriseProcurementScore >= 80 &&
+executiveReadinessScore >= 80
+? "Executive Growth Mode"
+: enterpriseProcurementScore >= 65
+? "Operational Scaling Mode"
+: "Capability Development Mode";
+
+const ceoDecisionPosture =
+decisionConfidenceLevel === "High Confidence"
+? "Proceed"
+: decisionConfidenceLevel === "Decision-Ready"
+? "Proceed With Review"
+: "Require Validation";
 
 const benchmarkMatrix = [
 { title: "Industry", score: industryBenchmarkScore },
@@ -2229,6 +2273,63 @@ Opportunity Value
 </div>
 </section>
 
+
+<section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
+CEO Action Center
+</p>
+
+<h2 className="mt-3 text-3xl font-black text-slate-950">
+Chief Executive Action Dashboard
+</h2>
+
+<p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-600">
+Executive operating layer translating procurement intelligence,
+risk posture, confidence signals, and opportunity rankings into
+actionable CEO priorities.
+</p>
+
+<div className="mt-8 grid gap-6 md:grid-cols-3">
+<MetricCard title="Operating Status" value={ceoOperatingStatus} />
+<MetricCard title="Decision Posture" value={ceoDecisionPosture} />
+<MetricCard title="Benchmark Status" value={executiveBenchmarkStatus} />
+</div>
+
+<div className="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+{ceoActionCenter.map((action) => (
+<div
+key={action.phase}
+className="rounded-3xl border border-slate-200 bg-slate-50 p-6"
+>
+<p className="text-xs font-black uppercase tracking-[0.2em] text-orange-500">
+{action.phase}
+</p>
+
+<h3 className="mt-4 text-xl font-black text-slate-950">
+{action.title}
+</h3>
+
+<p className="mt-4 text-sm font-semibold leading-7 text-slate-700">
+{action.summary}
+</p>
+</div>
+))}
+</div>
+
+<div className="mt-8 rounded-3xl border border-slate-950 bg-slate-950 p-6 text-white">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-400">
+CEO Recommendation
+</p>
+
+<h3 className="mt-4 text-2xl font-black">
+{ceoDecisionPosture}
+</h3>
+
+<p className="mt-4 text-sm font-semibold leading-7 text-slate-300">
+{executiveCommandRecommendation}
+</p>
+</div>
+</section>
 
 <section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
 <p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
