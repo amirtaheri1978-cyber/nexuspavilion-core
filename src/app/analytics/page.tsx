@@ -2082,29 +2082,6 @@ className="rounded-2xl border border-slate-200 bg-slate-50 p-5"
 </div>
 </section>
 
-<section className="mt-8 rounded-3xl border border-slate-200 bg-slate-950 p-8 text-white">
-<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-400">
-AI Procurement Command Center
-</p>
-
-<h2 className="mt-3 text-4xl font-black">
-Executive Priority Dashboard
-</h2>
-
-<div className="mt-8 grid gap-6 md:grid-cols-4">
-<DarkMetric title="Board Priority" value={`${boardPriorityScore}/100`} />
-<DarkMetric title="Board Health" value={boardHealthStatus} />
-<DarkMetric title="Top Risk" value={topRisk} />
-<DarkMetric title="Top Opportunity" value={topOpportunity} />
-</div>
-
-<div className="mt-8 grid gap-4 md:grid-cols-3">
-<DarkTextCard title="CEO Priority" value={ceoPriority} />
-<DarkTextCard title="CFO Priority" value={cfoPriority} />
-<DarkTextCard title="Procurement Priority" value={procurementPriority} />
-</div>
-</section>
-
 <section className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
 <MetricCard title="Health Score" value={`${procurementHealthScore}/100`} />
 <MetricCard title="Procurement Health" value={procurementHealth} />
@@ -3224,78 +3201,6 @@ Enterprise Risk Center
 <MetricCard title="Vendor Concentration" value={concentrationLevel} />
 <MetricCard title="Maturity Score" value={`${procurementMaturityScore}/100`} />
 <MetricCard title="AI Confidence" value={aiConfidenceScore} />
-</div>
-</section>
-
-
-
-<section className="mt-8 rounded-3xl border border-slate-950 bg-slate-950 p-8 text-white">
-<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-400">
-Procurement Command Center
-</p>
-
-<h2 className="mt-3 text-4xl font-black">
-Executive Procurement Command Center
-</h2>
-
-<p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-300">
-Unified executive decision layer combining board readiness,
-procurement performance, supplier engagement, operational risk,
-and strategic opportunity intelligence.
-</p>
-
-<div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-<DarkMetric
-title="Board Command"
-value={boardCommandStatus}
-/>
-
-<DarkMetric
-title="CEO Command"
-value={ceoCommandStatus}
-/>
-
-<DarkMetric
-title="Risk Level"
-value={ceoRiskLevel}
-/>
-
-<DarkMetric
-title="Opportunity"
-value={ceoOpportunityLevel}
-/>
-</div>
-
-<div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-<DarkMetric
-title="Board Health"
-value={`${boardHealthIndex}/100`}
-/>
-
-<DarkMetric
-title="Enterprise Score"
-value={`${enterpriseProcurementScore}/100`}
-/>
-
-<DarkMetric
-title="Executive Readiness"
-value={`${executiveReadinessScore}/100`}
-/>
-
-<DarkMetric
-title="Benchmark Readiness"
-value={`${benchmarkReadinessScore}/100`}
-/>
-</div>
-
-<div className="mt-6 rounded-3xl border border-white/10 bg-white/5 p-6">
-<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-400">
-Command Recommendation
-</p>
-
-<p className="mt-4 text-sm leading-7 text-slate-300">
-{boardRecommendation}
-</p>
 </div>
 </section>
 
