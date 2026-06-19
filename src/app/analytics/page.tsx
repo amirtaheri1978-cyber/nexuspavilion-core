@@ -1766,6 +1766,41 @@ decisionConfidenceLevel === "High Confidence"
 ? "Proceed With Review"
 : "Require Validation";
 
+const procurementCommandCenter = [
+{
+title: "Top Risk",
+value: boardRiskPriorities[0]?.title || "No Critical Risks",
+status: boardRiskPriorities[0]?.priority || "Monitor",
+},
+{
+title: "Top Opportunity",
+value:
+executiveOpportunityRanking[0]?.title ||
+"No Opportunity Identified",
+status:
+executiveOpportunityRanking[0]?.priority ||
+"Strategic",
+},
+{
+title: "CEO Priority",
+value: ceoActionCenter[0]?.title || "No Active Priority",
+status: ceoDecisionPosture,
+},
+{
+title: "Decision Confidence",
+value: decisionConfidenceLevel,
+status: executiveBenchmarkStatus,
+},
+];
+
+const commandCenterStatus =
+enterpriseProcurementScore >= 80 &&
+decisionConfidenceLevel === "High Confidence"
+? "Command Ready"
+: enterpriseProcurementScore >= 65
+? "Operational Command"
+: "Developing Command"
+
 const benchmarkMatrix = [
 { title: "Industry", score: industryBenchmarkScore },
 { title: "Procurement", score: procurementBenchmarkScore },
@@ -2330,6 +2365,58 @@ CEO Recommendation
 </p>
 </div>
 </section>
+
+
+<section className="mt-8 rounded-3xl border border-slate-950 bg-slate-950 p-8 text-white">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-400">
+Procurement Command Center
+</p>
+
+<h2 className="mt-3 text-4xl font-black">
+Executive Procurement Command
+</h2>
+
+<p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-300">
+Unified command layer consolidating board risks, procurement
+opportunities, executive priorities, and decision confidence.
+</p>
+
+<div className="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+{procurementCommandCenter.map((item) => (
+<div
+key={item.title}
+className="rounded-3xl border border-white/10 bg-white/5 p-6"
+>
+<p className="text-xs font-black uppercase tracking-[0.2em] text-orange-400">
+{item.title}
+</p>
+
+<h3 className="mt-4 text-xl font-black">
+{item.value}
+</h3>
+
+<p className="mt-3 text-sm font-semibold text-slate-300">
+{item.status}
+</p>
+</div>
+))}
+</div>
+
+<div className="mt-8 rounded-3xl border border-white/10 bg-white/5 p-6">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-400">
+Command Status
+</p>
+
+<h3 className="mt-4 text-2xl font-black">
+{commandCenterStatus}
+</h3>
+
+<p className="mt-4 text-sm font-semibold leading-7 text-slate-300">
+{executiveCommandRecommendation}
+</p>
+</div>
+</section>
+
 
 <section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
 <p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
