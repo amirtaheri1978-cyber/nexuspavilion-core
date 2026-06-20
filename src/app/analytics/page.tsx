@@ -4,6 +4,8 @@ import AnalyticsChart from "@/components/analytics-chart";
 import ExecutiveExportPanel from "@/components/executive-export-panel";
 import { BoardroomSnapshot } from "@/components/analytics/boardroom-snapshot";
 import { CEOActionCenter } from "@/components/analytics/ceo-action-center";
+import { ProcurementCommandCenter } from "@/components/analytics/procurement-command-center";
+import { BoardPresentationCenter } from "@/components/analytics/board-presentation-center";
 import BoardReportGenerator from "@/components/board-report-generator";
 import AIBoardNarrativeGenerator from "@/components/ai-board-narrative-generator";
 import AIConfidenceEngine from "@/components/ai-confidence-engine";
@@ -3016,52 +3018,16 @@ className="rounded-3xl border border-cyan-200 bg-cyan-50 p-6"
 </div>
 </section>
 
-<section className="mt-8 rounded-3xl border border-slate-950 bg-slate-950 p-8 text-white">
-<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-400">
-Procurement Intelligence Command Room
-</p>
-
-<h2 className="mt-3 text-4xl font-black">
-Executive War Room
-</h2>
-
-<p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-300">
-Unified executive command environment combining board readiness,
-procurement performance, risk exposure, supplier strength,
-benchmark intelligence, and decision confidence.
-</p>
-
-<div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-{procurementCommandRoom.map((item) => (
-<div
-key={item.title}
-className="rounded-3xl border border-white/10 bg-white/5 p-6"
->
-<p className="text-xs font-black uppercase tracking-[0.2em] text-orange-400">
-{item.title}
-</p>
-
-<h3 className="mt-4 text-2xl font-black">
-{item.value}
-</h3>
-</div>
-))}
+<div className="mt-8">
+<ProcurementCommandCenter
+procurementCommandRoom={procurementCommandRoom}
+procurementCommandRoomStatus={procurementCommandRoomStatus}
+procurementCommandCenter={procurementCommandCenter}
+commandCenterStatus={commandCenterStatus}
+executiveCommandRecommendation={executiveCommandRecommendation}
+/>
 </div>
 
-<div className="mt-8 rounded-3xl border border-white/10 bg-white/5 p-6">
-<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-400">
-Command Status
-</p>
-
-<h3 className="mt-4 text-3xl font-black">
-{procurementCommandRoomStatus}
-</h3>
-
-<p className="mt-4 text-sm leading-7 text-slate-300">
-{executiveCommandRecommendation}
-</p>
-</div>
-</section>
 <div className="mt-8">
 <CEOActionCenter
 ceoOperatingStatus={ceoOperatingStatus}
@@ -3072,136 +3038,14 @@ ceoActionCenter={ceoActionCenter}
 />
 </div>
 
-
-<section className="mt-8 rounded-3xl border border-slate-950 bg-slate-950 p-8 text-white">
-<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-400">
-Procurement Command Center
-</p>
-
-<h2 className="mt-3 text-4xl font-black">
-Executive Procurement Command
-</h2>
-
-<p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-300">
-Unified command layer consolidating board risks, procurement
-opportunities, executive priorities, and decision confidence.
-</p>
-
-<div className="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-{procurementCommandCenter.map((item) => (
-<div
-key={item.title}
-className="rounded-3xl border border-white/10 bg-white/5 p-6"
->
-<p className="text-xs font-black uppercase tracking-[0.2em] text-orange-400">
-{item.title}
-</p>
-
-<h3 className="mt-4 text-xl font-black">
-{item.value}
-</h3>
-
-<p className="mt-3 text-sm font-semibold text-slate-300">
-{item.status}
-</p>
-</div>
-))}
-</div>
-
-<div className="mt-8 rounded-3xl border border-white/10 bg-white/5 p-6">
-<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-400">
-Command Status
-</p>
-
-<h3 className="mt-4 text-2xl font-black">
-{commandCenterStatus}
-</h3>
-
-<p className="mt-4 text-sm font-semibold leading-7 text-slate-300">
-{executiveCommandRecommendation}
-</p>
-</div>
-</section>
-
-<section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
-<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
-Board Presentation Intelligence
-</p>
-
-<h2 className="mt-3 text-3xl font-black text-slate-950">
-Executive Board Briefing
-</h2>
-
-<p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-600">
-Board-ready procurement intelligence summarizing executive
-performance, strategic risks, decision confidence, and
-procurement opportunities.
-</p>
-
-<div className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-{boardPresentationMetrics.map((item) => (
-<MetricCard
-key={item.title}
-title={item.title}
-value={item.value}
+<div className="mt-8">
+<BoardPresentationCenter
+boardPresentationMetrics={boardPresentationMetrics}
+boardPresentationReadiness={boardPresentationReadiness}
+boardNarrative={boardNarrative}
+boardDeckSlides={boardDeckSlides}
 />
-))}
 </div>
-
-<div className="mt-8 rounded-3xl border border-slate-200 bg-slate-50 p-6">
-<p className="text-xs font-black uppercase tracking-[0.2em] text-orange-500">
-Board Narrative
-</p>
-
-<h3 className="mt-3 text-2xl font-black text-slate-950">
-{boardPresentationReadiness}
-</h3>
-
-<p className="mt-4 text-sm font-semibold leading-7 text-slate-700">
-{boardNarrative}
-</p>
-</div>
-</section>
-
-<section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
-<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
-Board Deck Generator
-</p>
-
-<h2 className="mt-3 text-3xl font-black text-slate-950">
-Executive Board Deck Outline
-</h2>
-
-<p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-600">
-Nexus Pavilion converts board presentation intelligence into a structured
-executive board deck outline with narrative-ready slides.
-</p>
-
-<div className="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-{boardDeckSlides.map((slide) => (
-<div
-key={slide.slide}
-className="rounded-3xl border border-slate-200 bg-slate-50 p-6"
->
-<p className="text-xs font-black uppercase tracking-[0.2em] text-orange-500">
-Slide {slide.slide}
-</p>
-
-<h3 className="mt-4 text-xl font-black text-slate-950">
-{slide.title}
-</h3>
-
-<p className="mt-4 text-sm font-black text-slate-800">
-{slide.focus}
-</p>
-
-<p className="mt-4 text-sm font-semibold leading-7 text-slate-700">
-{slide.narrative}
-</p>
-</div>
-))}
-</div>
-</section>
 
 <section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
 <p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
