@@ -2,41 +2,51 @@ import { useId } from "react";
 
 type NexusPavilionMonogramProps = {
 className?: string;
-variant?: "full" | "flat" | "mono" | "white";
+variant?: "full" | "flat" | "mono" | "white" | "seal";
 title?: string;
 };
 
 type NexusPavilionLogoProps = {
 className?: string;
 showTagline?: boolean;
+mode?: "default" | "compact";
+};
+
+type NexusPavilionSealProps = {
+className?: string;
 };
 
 export function NexusPavilionLogo({
 className = "",
 showTagline = true,
+mode = "default",
 }: NexusPavilionLogoProps) {
+const compact = mode === "compact";
+
 return (
-<div className={`flex items-center gap-5 ${className}`.trim()}>
-<NexusPavilionMonogram className="h-16 w-16 shrink-0" />
+<div className={`flex items-center gap-4 ${className}`.trim()}>
+<NexusPavilionMonogram
+className={compact ? "h-11 w-11 shrink-0" : "h-14 w-14 shrink-0"}
+/>
 
 <div className="hidden sm:block">
 <div className="flex items-center gap-4">
-<div className="h-14 w-px bg-nexus-border" />
+<div className="h-12 w-px bg-nexus-border" />
 
 <div>
-<div className="font-sans text-4xl font-logotype uppercase leading-none tracking-np-h1 text-nexus-white">
+<div className="font-sans text-3xl font-logotype uppercase leading-none tracking-np-h1 text-nexus-white">
 Nexus
 </div>
 
-<div className="mt-2 bg-nexus-gradient bg-clip-text font-sans text-xl font-executive uppercase leading-none tracking-np-logo text-transparent">
+<div className="mt-1.5 bg-nexus-gradient bg-clip-text font-sans text-lg font-executive uppercase leading-none tracking-np-logo text-transparent">
 Pavilion
 </div>
 
-{showTagline && (
-<div className="mt-3 font-sans text-xs font-regular uppercase tracking-np-body text-nexus-muted">
-Enterprise Construction Procurement Intelligence
+{showTagline ? (
+<div className="mt-2.5 max-w-sm font-sans text-[10px] font-bold uppercase tracking-[0.18em] text-nexus-muted">
+Executive Procurement Intelligence
 </div>
-)}
+) : null}
 </div>
 </div>
 </div>
@@ -51,31 +61,35 @@ title = "Nexus Pavilion monogram",
 }: NexusPavilionMonogramProps) {
 const id = useId();
 
-const blueGradient = `np-blue-${id}`;
-const violetGradient = `np-violet-${id}`;
+const primaryGradient = `np-primary-${id}`;
+const ribbonGradient = `np-ribbon-${id}`;
 const goldGradient = `np-gold-${id}`;
-const softShadow = `np-shadow-${id}`;
+const innerGlow = `np-glow-${id}`;
+const executiveShadow = `np-shadow-${id}`;
 
 const isMono = variant === "mono";
 const isWhite = variant === "white";
+const isSeal = variant === "seal";
 
-const blueFill = isWhite
+const primaryFill = isWhite
 ? "#F8FAFC"
 : isMono
-? "#0B1220"
-: `url(#${blueGradient})`;
+? "#081220"
+: `url(#${primaryGradient})`;
 
-const violetFill = isWhite
+const ribbonFill = isWhite
 ? "#F8FAFC"
 : isMono
-? "#0B1220"
-: `url(#${violetGradient})`;
+? "#081220"
+: `url(#${ribbonGradient})`;
 
 const goldFill = isWhite
 ? "#F8FAFC"
 : isMono
-? "#0B1220"
+? "#081220"
 : `url(#${goldGradient})`;
+
+const coreFill = isWhite ? "#081220" : "#F8FAFC";
 
 return (
 <svg
@@ -87,92 +101,161 @@ className={`overflow-visible ${className}`.trim()}
 >
 <defs>
 <linearGradient
-id={blueGradient}
-x1="130"
-y1="575"
-x2="420"
-y2="150"
+id={primaryGradient}
+x1="128"
+y1="640"
+x2="520"
+y2="120"
 gradientUnits="userSpaceOnUse"
 >
-<stop offset="0%" stopColor="#7C3AED" />
-<stop offset="34%" stopColor="#2563EB" />
+<stop offset="0%" stopColor="#081220" />
+<stop offset="45%" stopColor="#2563EB" />
+<stop offset="100%" stopColor="#7C3AED" />
+</linearGradient>
+
+<linearGradient
+id={ribbonGradient}
+x1="220"
+y1="620"
+x2="590"
+y2="160"
+gradientUnits="userSpaceOnUse"
+>
+<stop offset="0%" stopColor="#0B1220" />
+<stop offset="45%" stopColor="#2563EB" />
 <stop offset="100%" stopColor="#60A5FA" />
 </linearGradient>
 
 <linearGradient
-id={violetGradient}
-x1="260"
-y1="560"
-x2="455"
-y2="210"
+id={goldGradient}
+x1="610"
+y1="130"
+x2="330"
+y2="650"
 gradientUnits="userSpaceOnUse"
 >
-<stop offset="0%" stopColor="#4C1D95" />
-<stop offset="52%" stopColor="#7C3AED" />
-<stop offset="100%" stopColor="#A78BFA" />
+<stop offset="0%" stopColor="#F5C275" />
+<stop offset="52%" stopColor="#D4A757" />
+<stop offset="100%" stopColor="#A16207" />
 </linearGradient>
 
-<linearGradient
-id={goldGradient}
-x1="640"
-y1="170"
-x2="380"
-y2="610"
-gradientUnits="userSpaceOnUse"
+<radialGradient
+id={innerGlow}
+cx="50%"
+cy="44%"
+r="58%"
 >
-<stop offset="0%" stopColor="#FCD34D" />
-<stop offset="48%" stopColor="#F5C275" />
-<stop offset="100%" stopColor="#D97706" />
-</linearGradient>
+<stop offset="0%" stopColor="#60A5FA" stopOpacity="0.35" />
+<stop offset="58%" stopColor="#2563EB" stopOpacity="0.1" />
+<stop offset="100%" stopColor="#081220" stopOpacity="0" />
+</radialGradient>
 
 <filter
-id={softShadow}
-x="-20%"
-y="-20%"
-width="140%"
-height="140%"
+id={executiveShadow}
+x="-24%"
+y="-24%"
+width="148%"
+height="148%"
 colorInterpolationFilters="sRGB"
 >
 <feDropShadow
 dx="0"
-dy="18"
+dy="20"
 stdDeviation="18"
 floodColor="#000000"
-floodOpacity="0.35"
+floodOpacity="0.32"
 />
 </filter>
 </defs>
 
-<g filter={variant === "full" ? `url(#${softShadow})` : undefined}>
+{isSeal ? (
+<circle
+cx="400"
+cy="400"
+r="324"
+fill="none"
+stroke={goldFill}
+strokeWidth="28"
+opacity="0.9"
+/>
+) : null}
+
+<g filter={variant === "full" || isSeal ? `url(#${executiveShadow})` : undefined}>
 <path
-d="M148 192C148 174.327 162.327 160 180 160H300C310.606 160 320.525 165.257 326.478 174.034L428.478 324.034C435.826 334.839 435.826 349.161 428.478 359.966L326.478 509.966C320.525 518.743 310.606 524 300 524H180C162.327 524 148 509.673 148 492V192Z"
-fill={blueFill}
+d="M168 190C168 172.327 182.327 158 200 158H314C325.008 158 335.245 163.663 341.096 172.986L478.096 391.986C484.633 402.424 484.633 415.576 478.096 426.014L341.096 645.014C335.245 654.337 325.008 660 314 660H200C182.327 660 168 645.673 168 628V190Z"
+fill={primaryFill}
 />
 
 <path
-d="M206 246V438C206 449.046 214.954 458 226 458H280L352 352L280 246H206Z"
-fill="#0B1220"
-opacity={variant === "white" ? 0.9 : 1}
+d="M238 254V564H300L406 410L300 254H238Z"
+fill="#081220"
+opacity={isWhite ? 0.86 : 0.96}
 />
 
 <path
-d="M286 160H338C348.606 160 358.525 165.257 364.478 174.034L466.478 324.034C473.826 334.839 473.826 349.161 466.478 359.966L364.478 509.966C358.525 518.743 348.606 524 338 524H286L394 342L286 160Z"
-fill={violetFill}
-opacity={variant === "flat" ? 0.92 : 1}
+d="M314 158H382C393.008 158 403.245 163.663 409.096 172.986L546.096 391.986C552.633 402.424 552.633 415.576 546.096 426.014L409.096 645.014C403.245 654.337 393.008 660 382 660H314L452 409L314 158Z"
+fill={ribbonFill}
+opacity={variant === "flat" ? 0.9 : 1}
 />
 
 <path
-d="M652 608C652 625.673 637.673 640 620 640H500C489.394 640 479.475 634.743 473.522 625.966L371.522 475.966C364.174 465.161 364.174 450.839 371.522 440.034L473.522 290.034C479.475 281.257 489.394 276 500 276H620C637.673 276 652 290.327 652 308V608Z"
+d="M632 610C632 627.673 617.673 642 600 642H486C474.992 642 464.755 636.337 458.904 627.014L321.904 408.014C315.367 397.576 315.367 384.424 321.904 373.986L458.904 154.986C464.755 145.663 474.992 140 486 140H600C617.673 140 632 154.327 632 172V610Z"
 fill={goldFill}
 />
 
 <path
-d="M594 554V362C594 350.954 585.046 342 574 342H520L448 448L520 554H594Z"
-fill="#0B1220"
-opacity={variant === "white" ? 0.9 : 1}
+d="M562 546V236H500L394 390L500 546H562Z"
+fill="#081220"
+opacity={isWhite ? 0.86 : 0.96}
+/>
+
+<circle
+cx="400"
+cy="400"
+r="74"
+fill={`url(#${innerGlow})`}
+/>
+
+<circle
+cx="400"
+cy="400"
+r="28"
+fill={coreFill}
+opacity={isMono ? 0.18 : 0.9}
+/>
+
+<path
+d="M400 318L468 400L400 482L332 400L400 318Z"
+fill="none"
+stroke={isWhite ? "#081220" : "#F8FAFC"}
+strokeWidth="18"
+strokeLinejoin="round"
+opacity={isMono ? 0.18 : 0.72}
 />
 </g>
 </svg>
+);
+}
+
+export function NexusPavilionSeal({ className = "" }: NexusPavilionSealProps) {
+return (
+<div
+className={[
+"relative inline-flex items-center justify-center rounded-full",
+"border border-yellow-300/25 bg-nexus-dark p-4 shadow-executive",
+className,
+]
+.filter(Boolean)
+.join(" ")}
+>
+<NexusPavilionMonogram
+variant="seal"
+className="h-full w-full"
+title="Nexus Pavilion executive seal"
+/>
+
+<div className="pointer-events-none absolute inset-3 rounded-full border border-white/10" />
+</div>
 );
 }
 
@@ -180,14 +263,14 @@ export function NexusPavilionBrandCard() {
 return (
 <section className="relative overflow-hidden rounded-executive border border-nexus-border bg-nexus-dark bg-nexus-radial p-8 shadow-executive lg:p-10">
 <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-white/[0.035] to-transparent" />
-<div className="pointer-events-none absolute right-0 top-0 h-40 w-40 rounded-full bg-nexus-gold/10 blur-3xl shadow-gold" />
+<div className="pointer-events-none absolute right-0 top-0 h-36 w-36 rounded-full bg-nexus-gold/10 blur-3xl shadow-gold" />
 <div className="pointer-events-none absolute bottom-0 left-0 h-44 w-44 rounded-full bg-nexus-cobalt/10 blur-3xl shadow-nexus" />
 
 <div className="relative z-10 mb-8">
 <NexusPavilionLogo />
 </div>
 
-<p className="relative z-10 font-sans text-sm font-regular uppercase tracking-np-body text-nexus-muted">
+<p className="relative z-10 font-sans text-sm font-bold uppercase tracking-[0.16em] text-nexus-muted">
 <span className="text-nexus-white">Intelligence Connected.</span>{" "}
 <span className="text-nexus-gold">Infrastructure Delivered.</span>
 </p>
