@@ -2,12 +2,15 @@ import Link from "next/link";
 
 import AnalyticsChart from "@/components/analytics-chart";
 import ExecutiveExportPanel from "@/components/executive-export-panel";
+import { BoardroomSnapshot } from "@/components/analytics/boardroom-snapshot";
+import { CEOActionCenter } from "@/components/analytics/ceo-action-center";
 import BoardReportGenerator from "@/components/board-report-generator";
 import AIBoardNarrativeGenerator from "@/components/ai-board-narrative-generator";
 import AIConfidenceEngine from "@/components/ai-confidence-engine";
 import ExecutiveRiskIntelligence from "@/components/executive-risk-intelligence";
 import ProcurementCopilotIntelligence from "@/components/procurement-copilot-intelligence";
 import { createClient } from "@/lib/supabase/server";
+
 
 type ProcurementScope =
 | "material"
@@ -2451,44 +2454,15 @@ className="text-sm font-semibold text-slate-600 hover:text-slate-950"
 ← Back to Dashboard
 </Link>
 
-
-
-<section className="mt-8 rounded-3xl border border-orange-200 bg-white p-8">
-<p className="text-xs font-black uppercase tracking-[0.3em] text-orange-500">
-Boardroom Dashboard
-</p>
-
-<div className="mt-5 grid gap-8 lg:grid-cols-[0.9fr_1.1fr]">
-<div>
-<h2 className="text-4xl font-black text-slate-950">
-CEO Procurement Brief
-</h2>
-
-<p className="mt-4 text-sm leading-7 text-slate-600">
-value={boardReadinessRecommendation}
-</p>
-</div>
-
-<div className="grid gap-4 sm:grid-cols-2">
-<MetricCard
-title="Revenue Under Management"
-value={`$${procurementVolume.toLocaleString()}`}
-/>
-<MetricCard
-title="Savings Forecast"
-value={`$${forecastSavings.toLocaleString()}`}
-/>
-<MetricCard
-title="Enterprise Score"
-value={`${enterpriseProcurementScore}/100`}
-/>
-<MetricCard
-title="RFQ Maturity"
-value={`${constructionClassificationScore}/100`}
+<div className="mt-8">
+<BoardroomSnapshot
+boardReadinessRecommendation={boardReadinessRecommendation}
+procurementVolume={procurementVolume}
+forecastSavings={forecastSavings}
+enterpriseProcurementScore={enterpriseProcurementScore}
+constructionClassificationScore={constructionClassificationScore}
 />
 </div>
-</div>
-</section>
 
 <section className="mt-8 rounded-3xl border border-slate-200 bg-slate-950 p-8 text-white">
 <p className="text-xs font-black uppercase tracking-[0.3em] text-orange-400">
@@ -3088,63 +3062,15 @@ Command Status
 </p>
 </div>
 </section>
-
-<section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
-<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
-CEO Action Center
-</p>
-
-<h2 className="mt-3 text-3xl font-black text-slate-950">
-Chief Executive Action Dashboard
-</h2>
-
-<p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-600">
-Executive operating layer translating procurement intelligence,
-risk posture, confidence signals, and opportunity rankings into
-actionable CEO priorities.
-</p>
-
-<div className="mt-8 grid gap-6 md:grid-cols-3">
-<MetricCard title="Operating Status" value={ceoOperatingStatus} />
-<MetricCard title="Decision Posture" value={ceoDecisionPosture} />
-<MetricCard title="Benchmark Status" value={executiveBenchmarkStatus} />
+<div className="mt-8">
+<CEOActionCenter
+ceoOperatingStatus={ceoOperatingStatus}
+ceoDecisionPosture={ceoDecisionPosture}
+executiveBenchmarkStatus={executiveBenchmarkStatus}
+executiveCommandRecommendation={executiveCommandRecommendation}
+ceoActionCenter={ceoActionCenter}
+/>
 </div>
-
-<div className="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-{ceoActionCenter.map((action) => (
-<div
-key={action.phase}
-className="rounded-3xl border border-slate-200 bg-slate-50 p-6"
->
-<p className="text-xs font-black uppercase tracking-[0.2em] text-orange-500">
-{action.phase}
-</p>
-
-<h3 className="mt-4 text-xl font-black text-slate-950">
-{action.title}
-</h3>
-
-<p className="mt-4 text-sm font-semibold leading-7 text-slate-700">
-{action.summary}
-</p>
-</div>
-))}
-</div>
-
-<div className="mt-8 rounded-3xl border border-slate-950 bg-slate-950 p-6 text-white">
-<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-400">
-CEO Recommendation
-</p>
-
-<h3 className="mt-4 text-2xl font-black">
-{ceoDecisionPosture}
-</h3>
-
-<p className="mt-4 text-sm font-semibold leading-7 text-slate-300">
-{executiveCommandRecommendation}
-</p>
-</div>
-</section>
 
 
 <section className="mt-8 rounded-3xl border border-slate-950 bg-slate-950 p-8 text-white">
