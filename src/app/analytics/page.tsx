@@ -2235,6 +2235,78 @@ enterpriseProcurementScore >= 80
 : enterpriseProcurementScore >= 65
 ? "Procurement operations are improving and forecast indicators remain positive with moderate executive confidence."
 : "Forecast indicators suggest capability development should remain a strategic priority before major procurement expansion.";
+const bestCaseScenario =
+procurementOpportunityScore >= 80
+? "Accelerated procurement growth with expanded supplier participation and higher savings realization."
+: "Improved procurement performance with stronger supplier engagement.";
+
+const expectedCaseScenario =
+enterpriseProcurementScore >= 70
+? "Stable procurement growth with moderate opportunity capture and controlled risk."
+: "Gradual procurement improvement with ongoing capability development.";
+
+const riskCaseScenario =
+procurementRiskIndex >= 60
+? "Supplier dependency and execution risk may reduce forecast confidence and delay strategic objectives."
+: "Risk exposure remains manageable but should be monitored.";
+
+const forecastConfidenceLevel =
+enterpriseProcurementScore >= 80 &&
+benchmarkReadinessScore >= 80
+? "High"
+: enterpriseProcurementScore >= 65
+? "Moderate"
+: "Developing";
+
+const executiveScenarioStatus =
+forecastConfidenceLevel === "High"
+? "Decision Ready"
+: forecastConfidenceLevel === "Moderate"
+? "Review Required"
+: "Validation Required";
+
+const boardForecastBriefing =
+forecastConfidenceLevel === "High"
+? "Forecast indicators support executive confidence. Procurement performance, supplier engagement, and benchmark readiness suggest favorable operating conditions for board-level planning."
+: forecastConfidenceLevel === "Moderate"
+? "Forecast indicators remain positive but require continued monitoring of supplier participation, risk exposure, and procurement execution."
+: "Forecast indicators suggest additional validation and capability development before major strategic decisions are recommended.";
+
+const boardForecastPriority =
+procurementRiskIndex >= 60
+? "Risk Stabilization"
+: procurementOpportunityScore >= 80
+? "Growth Acceleration"
+: "Operational Improvement";
+
+const executivePresentationExports = [
+{
+title: "Board Brief",
+status: boardPresentationReadiness,
+audience: "Board Members",
+},
+{
+title: "CEO Brief",
+status: executiveScenarioStatus,
+audience: "Chief Executive Officer",
+},
+{
+title: "Procurement Brief",
+status: executiveBenchmarkStatus,
+audience: "Procurement Leadership",
+},
+{
+title: "Executive Summary",
+status: executiveForecastStatus,
+audience: "Executive Team",
+},
+];
+
+const exportReadinessStatus =
+benchmarkReadinessScore >= 80 &&
+executiveReadinessScore >= 80
+? "Export Ready"
+: "Review Required";
 
 
 return (
@@ -3138,6 +3210,181 @@ Board Forecast Narrative
 
 <p className="mt-4 text-sm font-semibold leading-7 text-slate-300">
 {boardForecastNarrative}
+</p>
+</div>
+</section>
+
+<section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
+Executive Scenario Center
+</p>
+
+<h2 className="mt-3 text-3xl font-black text-slate-950">
+Strategic Scenario Modeling
+</h2>
+
+<p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-600">
+Nexus Pavilion models best-case, expected-case, and risk-case procurement
+scenarios to support executive planning and board-level decision review.
+</p>
+
+<div className="mt-8 grid gap-5 md:grid-cols-3">
+<div className="rounded-3xl border border-green-200 bg-green-50 p-6">
+<p className="text-xs font-black uppercase tracking-[0.2em] text-green-700">
+Best Case
+</p>
+
+<p className="mt-4 text-sm font-semibold leading-7 text-slate-700">
+{bestCaseScenario}
+</p>
+</div>
+
+<div className="rounded-3xl border border-blue-200 bg-blue-50 p-6">
+<p className="text-xs font-black uppercase tracking-[0.2em] text-blue-700">
+Expected Case
+</p>
+
+<p className="mt-4 text-sm font-semibold leading-7 text-slate-700">
+{expectedCaseScenario}
+</p>
+</div>
+
+<div className="rounded-3xl border border-red-200 bg-red-50 p-6">
+<p className="text-xs font-black uppercase tracking-[0.2em] text-red-700">
+Risk Case
+</p>
+
+<p className="mt-4 text-sm font-semibold leading-7 text-slate-700">
+{riskCaseScenario}
+</p>
+</div>
+</div>
+
+<div className="mt-8 rounded-3xl border border-slate-950 bg-slate-950 p-6 text-white">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-400">
+Forecast Confidence Matrix
+</p>
+
+<div className="mt-6 grid gap-4 md:grid-cols-2">
+<div className="rounded-2xl border border-white/10 bg-white/5 p-5">
+<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+Forecast Confidence
+</p>
+
+<h3 className="mt-3 text-2xl font-black">
+{forecastConfidenceLevel}
+</h3>
+</div>
+
+<div className="rounded-2xl border border-white/10 bg-white/5 p-5">
+<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+Scenario Status
+</p>
+
+<h3 className="mt-3 text-2xl font-black">
+{executiveScenarioStatus}
+</h3>
+</div>
+</div>
+
+<p className="mt-6 text-sm font-semibold leading-7 text-slate-300">
+Scenario intelligence supports executive review by comparing upside
+opportunity, expected operating performance, and downside risk before
+board-level decisions are made.
+</p>
+</div>
+</section>
+
+<section className="mt-8 rounded-3xl border border-slate-950 bg-slate-950 p-8 text-white">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-400">
+Board Forecast Briefing
+</p>
+
+<h2 className="mt-3 text-4xl font-black">
+Executive Forecast Narrative
+</h2>
+
+<div className="mt-8 grid gap-4 md:grid-cols-2">
+<div className="rounded-2xl border border-white/10 bg-white/5 p-5">
+<p className="text-xs font-black uppercase tracking-[0.2em] text-orange-400">
+Board Priority
+</p>
+
+<h3 className="mt-3 text-2xl font-black">
+{boardForecastPriority}
+</h3>
+</div>
+
+<div className="rounded-2xl border border-white/10 bg-white/5 p-5">
+<p className="text-xs font-black uppercase tracking-[0.2em] text-orange-400">
+Forecast Confidence
+</p>
+
+<h3 className="mt-3 text-2xl font-black">
+{forecastConfidenceLevel}
+</h3>
+</div>
+</div>
+
+<div className="mt-8 rounded-3xl border border-white/10 bg-white/5 p-6">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-400">
+Board Narrative
+</p>
+
+<p className="mt-4 text-sm font-semibold leading-7 text-slate-300">
+{boardForecastBriefing}
+</p>
+</div>
+</section>
+
+<section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
+Executive Presentation Export Layer
+</p>
+
+<h2 className="mt-3 text-3xl font-black text-slate-950">
+Executive Presentation Center
+</h2>
+
+<p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-600">
+Executive-ready presentation packages for board members, executive
+leadership, procurement leadership, and strategic planning reviews.
+</p>
+
+<div className="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+{executivePresentationExports.map((item) => (
+<div
+key={item.title}
+className="rounded-3xl border border-slate-200 bg-slate-50 p-6"
+>
+<p className="text-xs font-black uppercase tracking-[0.2em] text-orange-500">
+{item.audience}
+</p>
+
+<h3 className="mt-4 text-xl font-black text-slate-950">
+{item.title}
+</h3>
+
+<p className="mt-4 text-sm font-semibold text-slate-700">
+{item.status}
+</p>
+</div>
+))}
+</div>
+
+<div className="mt-8 rounded-3xl border border-slate-950 bg-slate-950 p-6 text-white">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-400">
+Export Readiness
+</p>
+
+<h3 className="mt-4 text-3xl font-black">
+{exportReadinessStatus}
+</h3>
+
+<p className="mt-4 text-sm font-semibold leading-7 text-slate-300">
+Executive presentation packages are generated only from validated
+procurement intelligence, executive readiness signals, benchmark
+analysis, and board-level decision data.
 </p>
 </div>
 </section>
