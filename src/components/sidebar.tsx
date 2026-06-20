@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { usePathname } from "next/navigation";
 
+import { NexusPavilionMonogram } from "@/components/branding/nexus-pavilion-logo";
 import { createClient } from "@/lib/supabase/client";
 
 type Stats = {
@@ -80,9 +81,15 @@ return "Ready";
 }
 
 function getHealthClass(status: string) {
-if (status === "Needs Review") return "bg-orange-100 text-orange-700";
-if (status === "Healthy") return "bg-green-100 text-green-700";
-return "bg-blue-100 text-blue-700";
+if (status === "Needs Review") {
+return "border-orange-200 bg-orange-50 text-orange-700";
+}
+
+if (status === "Healthy") {
+return "border-green-200 bg-green-50 text-green-700";
+}
+
+return "border-blue-200 bg-blue-50 text-blue-700";
 }
 
 function getNavigation(experience: Experience, stats: Stats): NavSection[] {
@@ -352,8 +359,8 @@ key={`${item.key}-${item.href}`}
 href={item.href}
 className={`group flex items-center justify-between gap-4 rounded-2xl px-4 py-3 transition ${
 isActive
-? "bg-slate-950 text-white shadow-sm"
-: "text-slate-700 hover:bg-slate-100 hover:text-slate-950"
+? "border border-nexus-border bg-nexus-dark text-nexus-white shadow-nexus"
+: "border border-transparent text-slate-700 hover:border-slate-200 hover:bg-slate-50 hover:text-slate-950"
 }`}
 >
 <span className="min-w-0">
@@ -361,7 +368,7 @@ isActive
 
 <span
 className={`mt-0.5 block text-[11px] font-bold leading-4 ${
-isActive ? "text-white/60" : "text-slate-400"
+isActive ? "text-nexus-muted" : "text-slate-400"
 }`}
 >
 {item.description}
@@ -370,9 +377,9 @@ isActive ? "text-white/60" : "text-slate-400"
 
 {hasBadge ? (
 <span
-className={`shrink-0 rounded-full px-2 py-1 text-[10px] font-black uppercase tracking-wide ${
+className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-wide ${
 isActive
-? "bg-white/20 text-white"
+? "bg-white/10 text-nexus-white"
 : item.badge === "Ready" || item.badge === "Live"
 ? "bg-orange-100 text-orange-700"
 : "bg-slate-100 text-slate-600"
@@ -384,23 +391,28 @@ isActive
 </Link>
 );
 }
+
 return (
 <>
 <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/95 px-5 py-4 backdrop-blur lg:hidden">
 <div className="flex items-center justify-between gap-4">
-<Link href="/dashboard" className="min-w-0">
+<Link href="/dashboard" className="flex min-w-0 items-center gap-3">
+<NexusPavilionMonogram className="h-10 w-10 shrink-0" />
+
+<div className="min-w-0">
 <p className="text-[10px] font-black uppercase tracking-[0.3em] text-orange-500">
 Nexus Pavilion
 </p>
 
-<p className="mt-1 truncate text-lg font-black text-slate-950">
+<p className="mt-1 truncate text-sm font-black text-slate-950">
 {context.companyName || "Procurement Workspace"}
 </p>
+</div>
 </Link>
 
 <Link
 href="/notifications"
-className="rounded-full bg-slate-950 px-4 py-2 text-xs font-black text-white"
+className="rounded-full bg-nexus-dark px-4 py-2 text-xs font-black text-white"
 >
 {stats.unreadNotifications > 0
 ? `${stats.unreadNotifications} Alerts`
@@ -421,7 +433,7 @@ key={`mobile-${item.key}-${item.href}`}
 href={item.href}
 className={`shrink-0 rounded-full px-4 py-2 text-xs font-black ${
 isActive
-? "bg-slate-950 text-white"
+? "bg-nexus-dark text-white"
 : "bg-slate-100 text-slate-700"
 }`}
 >
@@ -433,15 +445,21 @@ isActive
 </header>
 
 <aside className="fixed left-0 top-0 z-40 hidden h-screen w-96 border-r border-slate-200 bg-white px-6 py-7 lg:block">
-<Link href="/dashboard" className="block">
+<Link href="/dashboard" className="flex items-center gap-4">
+<NexusPavilionMonogram className="h-14 w-14 shrink-0" />
+
+<div>
 <p className="text-xs font-black uppercase tracking-[0.35em] text-orange-500">
 Nexus
 </p>
 
-<h1 className="mt-2 text-2xl font-black text-slate-950">Pavilion</h1>
+<h1 className="mt-1 text-2xl font-black leading-none text-slate-950">
+Pavilion
+</h1>
+</div>
 </Link>
 
-<div className="mt-6 rounded-[32px] bg-slate-950 p-5 text-white shadow-sm">
+<div className="mt-7 overflow-hidden rounded-executive border border-nexus-border bg-nexus-dark bg-nexus-radial p-5 text-white shadow-executive">
 <p className="text-xs font-black uppercase tracking-[0.22em] text-orange-400">
 Procurement Intelligence
 </p>
@@ -450,19 +468,19 @@ Procurement Intelligence
 {context.companyName || "Company Workspace"}
 </h2>
 
-<div className="mt-3 flex flex-wrap gap-2">
-<span className="rounded-full bg-white/10 px-3 py-1 text-[10px] font-black uppercase tracking-wide text-slate-200">
+<div className="mt-4 flex flex-wrap gap-2">
+<span className="rounded-full border border-white/10 bg-white/10 px-3 py-1 text-[10px] font-black uppercase tracking-wide text-slate-200">
 {getExperienceLabel(experience)}
 </span>
 
-<span className="rounded-full bg-green-400/10 px-3 py-1 text-[10px] font-black uppercase tracking-wide text-green-300">
+<span className="rounded-full border border-green-300/20 bg-green-400/10 px-3 py-1 text-[10px] font-black uppercase tracking-wide text-green-300">
 {context.companyStatus || "Verified"}
 </span>
 </div>
 
-<p className="mt-4 text-xs font-semibold leading-5 text-slate-400">
-Procurement navigation for RFQs, suppliers, quotes, governance, and
-executive reporting.
+<p className="mt-4 text-xs font-semibold leading-5 text-nexus-muted">
+Executive navigation for RFQs, suppliers, quotes, governance,
+board intelligence, and procurement command workflows.
 </p>
 
 <div className="mt-5 grid grid-cols-2 gap-3">
@@ -473,7 +491,7 @@ executive reporting.
 </div>
 </div>
 
-<div className="mt-5 rounded-[28px] border border-slate-200 bg-slate-50 p-4">
+<div className="mt-5 rounded-executive border border-slate-200 bg-slate-50 p-4">
 <p className="text-[10px] font-black uppercase tracking-[0.22em] text-slate-400">
 Today
 </p>
@@ -485,7 +503,7 @@ Today
 </div>
 </div>
 
-<nav className="mt-6 max-h-[calc(100vh-490px)] space-y-5 overflow-y-auto pr-1">
+<nav className="mt-6 max-h-[calc(100vh-505px)] space-y-5 overflow-y-auto pr-1">
 {navSections.map((section) => (
 <div key={section.title}>
 <p className="mb-2 px-4 text-[10px] font-black uppercase tracking-[0.25em] text-slate-400">
@@ -497,7 +515,7 @@ Today
 ))}
 </nav>
 
-<div className="absolute bottom-7 left-6 right-6 rounded-[28px] border border-slate-200 bg-slate-50 p-5">
+<div className="absolute bottom-7 left-6 right-6 rounded-executive border border-slate-200 bg-slate-50 p-5">
 <div className="flex items-center justify-between gap-4">
 <div>
 <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
@@ -510,7 +528,7 @@ Workspace Health
 </div>
 
 <span
-className={`rounded-full px-3 py-1 text-xs font-black ${getHealthClass(
+className={`rounded-full border px-3 py-1 text-xs font-black ${getHealthClass(
 workspaceHealth
 )}`}
 >
@@ -520,7 +538,7 @@ workspaceHealth
 
 <Link
 href="/company/settings"
-className="mt-4 inline-flex w-full items-center justify-center rounded-full bg-slate-950 px-4 py-3 text-xs font-black text-white transition hover:bg-slate-800"
+className="mt-4 inline-flex w-full items-center justify-center rounded-full bg-nexus-dark px-4 py-3 text-xs font-black text-white transition hover:bg-slate-800"
 >
 Open Company Command Center
 </Link>
@@ -540,16 +558,16 @@ System Operational
 
 function Metric({ label, value }: { label: string; value: number }) {
 return (
-<div className="rounded-2xl bg-white/10 p-3">
+<div className="rounded-2xl border border-white/10 bg-white/10 p-3">
 <p className="text-[10px] font-bold uppercase text-white/50">{label}</p>
-<p className="mt-1 text-lg font-black">{value}</p>
+<p className="mt-1 text-lg font-black text-white">{value}</p>
 </div>
 );
 }
 
 function TodaySignal({ label, value }: { label: string; value: number }) {
 return (
-<div className="rounded-2xl bg-white p-3 text-center shadow-sm">
+<div className="rounded-2xl border border-slate-200 bg-white p-3 text-center shadow-sm">
 <p className="text-[10px] font-black uppercase tracking-wide text-slate-400">
 {label}
 </p>
