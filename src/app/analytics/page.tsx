@@ -1710,6 +1710,59 @@ value: aiConfidenceScore,
 },
 ];
 
+const boardDeckSlides = [
+{
+slide: "01",
+title: "Executive Summary",
+focus: boardPresentationReadiness,
+narrative: boardNarrative,
+},
+{
+slide: "02",
+title: "Board Readiness",
+focus: `${benchmarkReadinessScore}/100`,
+narrative:
+"Board readiness reflects procurement maturity, executive confidence, supplier engagement, and benchmark strength.",
+},
+{
+slide: "03",
+title: "Risk Priorities",
+focus: boardRiskPriorities[0]?.title || "Risk Monitoring",
+narrative:
+boardRiskPriorities[0]?.summary ||
+"Procurement risk remains under executive monitoring.",
+},
+{
+slide: "04",
+title: "Opportunity Priorities",
+focus:
+procurementOpportunityScore >= 80
+? "High Opportunity"
+: procurementOpportunityScore >= 60
+? "Medium Opportunity"
+: "Opportunity Monitoring",
+narrative:
+procurementOpportunityScore >= 80
+? "Procurement opportunity is strong and should be reviewed for board-level growth planning."
+: procurementOpportunityScore >= 60
+? "Procurement opportunity is developing and should remain under executive review."
+: "Procurement opportunities remain under executive monitoring.",
+},
+{
+slide: "05",
+title: "Decision Confidence",
+focus: aiConfidenceScore,
+narrative:
+"Decision confidence reflects AI confidence, benchmark readiness, supplier participation, and procurement signal quality.",
+},
+{
+slide: "06",
+title: "Executive Recommendation",
+focus: procurementCommandRoomStatus,
+narrative: executiveCommandRecommendation,
+},
+];
+
 const topQuarterOpportunities = [
 `${bestProcurementCategory} category expansion`,
 `${savingsOpportunityLevel} savings capture`,
@@ -2921,6 +2974,46 @@ Board Narrative
 <p className="mt-4 text-sm font-semibold leading-7 text-slate-700">
 {boardNarrative}
 </p>
+</div>
+</section>
+
+<section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
+Board Deck Generator
+</p>
+
+<h2 className="mt-3 text-3xl font-black text-slate-950">
+Executive Board Deck Outline
+</h2>
+
+<p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-600">
+Nexus Pavilion converts board presentation intelligence into a structured
+executive board deck outline with narrative-ready slides.
+</p>
+
+<div className="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+{boardDeckSlides.map((slide) => (
+<div
+key={slide.slide}
+className="rounded-3xl border border-slate-200 bg-slate-50 p-6"
+>
+<p className="text-xs font-black uppercase tracking-[0.2em] text-orange-500">
+Slide {slide.slide}
+</p>
+
+<h3 className="mt-4 text-xl font-black text-slate-950">
+{slide.title}
+</h3>
+
+<p className="mt-4 text-sm font-black text-slate-800">
+{slide.focus}
+</p>
+
+<p className="mt-4 text-sm font-semibold leading-7 text-slate-700">
+{slide.narrative}
+</p>
+</div>
+))}
 </div>
 </section>
 
