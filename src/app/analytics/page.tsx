@@ -2308,6 +2308,138 @@ executiveReadinessScore >= 80
 ? "Export Ready"
 : "Review Required";
 
+const boardAutomationStatus =
+exportReadinessStatus === "Export Ready"
+? "Automation Ready"
+: "Requires Review";
+
+const boardPackageLifecycle =
+exportReadinessStatus === "Export Ready"
+? "Ready for board package generation"
+: "Pending executive validation";
+
+const boardDistributionStatus =
+benchmarkReadinessScore >= 80 &&
+executiveReadinessScore >= 80
+? "Distribution Ready"
+: "Distribution Hold";
+
+const boardApprovalWorkflow =
+boardDistributionStatus === "Distribution Ready"
+? "Ready for board review"
+: "Requires executive approval";
+
+const boardAutomationItems = [
+{
+title: "Board Package",
+status: boardAutomationStatus,
+},
+{
+title: "Readiness Validation",
+status: exportReadinessStatus,
+},
+{
+title: "Distribution Status",
+status: boardDistributionStatus,
+},
+{
+title: "Approval Workflow",
+status: boardApprovalWorkflow,
+},
+];
+
+const boardPackageStages = [
+{
+stage: "Data Collection",
+status: "Complete",
+},
+{
+stage: "Executive Validation",
+status:
+executiveReadinessScore >= 80
+? "Complete"
+: "In Progress",
+},
+{
+stage: "Board Preparation",
+status:
+benchmarkReadinessScore >= 80
+? "Ready"
+: "Pending",
+},
+{
+stage: "Board Distribution",
+status: boardDistributionStatus,
+},
+];
+
+const boardDistributionChannels = [
+{
+channel: "Board Members",
+status: boardDistributionStatus,
+},
+{
+channel: "CEO Office",
+status: "Ready",
+},
+{
+channel: "Executive Committee",
+status:
+executiveReadinessScore >= 80
+? "Ready"
+: "Pending",
+},
+{
+channel: "Audit Committee",
+status:
+procurementRiskIndex <= 50
+? "Ready"
+: "Review Required",
+},
+];
+
+const boardDistributionReadiness =
+boardDistributionStatus === "Distribution Ready"
+? "Ready For Distribution"
+: "Executive Review Required";
+
+const boardApprovalStages = [
+{
+stage: "Executive Review",
+status:
+executiveReadinessScore >= 80
+? "Approved"
+: "Pending",
+},
+{
+stage: "Risk Validation",
+status:
+procurementRiskIndex <= 50
+? "Approved"
+: "Review Required",
+},
+{
+stage: "Board Package Approval",
+status:
+boardDistributionStatus === "Distribution Ready"
+? "Approved"
+: "Pending",
+},
+{
+stage: "Distribution Authorization",
+status:
+boardDistributionReadiness === "Ready For Distribution"
+? "Authorized"
+: "Hold",
+},
+];
+
+const boardApprovalStatus =
+boardDistributionReadiness === "Ready For Distribution"
+? "Board Approved"
+: "Awaiting Approval";
+
+
 
 return (
 <main className="min-h-screen bg-slate-100 px-8 py-10">
@@ -3389,6 +3521,150 @@ analysis, and board-level decision data.
 </div>
 </section>
 
+<section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
+Board Automation Center
+</p>
+
+<h2 className="mt-3 text-3xl font-black text-slate-950">
+Automated Board Package Workflow
+</h2>
+
+<p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-600">
+Nexus Pavilion validates board package readiness, executive approval
+requirements, distribution status, and board automation lifecycle before
+report generation.
+</p>
+
+<div className="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+{boardAutomationItems.map((item) => (
+<div
+key={item.title}
+className="rounded-3xl border border-slate-200 bg-slate-50 p-6"
+>
+<p className="text-xs font-black uppercase tracking-[0.2em] text-orange-500">
+{item.title}
+</p>
+
+<h3 className="mt-4 text-xl font-black text-slate-950">
+{item.status}
+</h3>
+</div>
+))}
+</div>
+
+<div className="mt-8 rounded-3xl border border-slate-950 bg-slate-950 p-6 text-white">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-400">
+Board Automation Status
+</p>
+
+<h3 className="mt-4 text-3xl font-black">
+{boardAutomationStatus}
+</h3>
+
+<p className="mt-4 text-sm font-semibold leading-7 text-slate-300">
+{boardPackageLifecycle}
+</p>
+</div>
+<div className="mt-8">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
+Board Package Lifecycle
+</p>
+
+<div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+{boardPackageStages.map((stage) => (
+<div
+key={stage.stage}
+className="rounded-3xl border border-slate-200 bg-slate-50 p-5"
+>
+<p className="text-xs font-black uppercase tracking-[0.2em] text-orange-500">
+{stage.stage}
+</p>
+
+<h3 className="mt-3 text-lg font-black text-slate-950">
+{stage.status}
+</h3>
+</div>
+))}
+</div>
+</div>
+<div className="mt-8">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
+Board Distribution Intelligence
+</p>
+
+<div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+{boardDistributionChannels.map((item) => (
+<div
+key={item.channel}
+className="rounded-3xl border border-slate-200 bg-slate-50 p-5"
+>
+<p className="text-xs font-black uppercase tracking-[0.2em] text-orange-500">
+{item.channel}
+</p>
+
+<h3 className="mt-3 text-lg font-black text-slate-950">
+{item.status}
+</h3>
+</div>
+))}
+</div>
+
+<div className="mt-6 rounded-3xl border border-slate-950 bg-slate-950 p-6 text-white">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-400">
+Distribution Readiness
+</p>
+
+<h3 className="mt-4 text-3xl font-black">
+{boardDistributionReadiness}
+</h3>
+
+<p className="mt-4 text-sm font-semibold leading-7 text-slate-300">
+Executive board packages are distributed only after readiness,
+confidence, and governance validation thresholds are achieved.
+</p>
+</div>
+</div>
+<div className="mt-8">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
+Board Approval Workflow
+</p>
+
+<div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+{boardApprovalStages.map((item) => (
+<div
+key={item.stage}
+className="rounded-3xl border border-slate-200 bg-slate-50 p-5"
+>
+<p className="text-xs font-black uppercase tracking-[0.2em] text-orange-500">
+{item.stage}
+</p>
+
+<h3 className="mt-3 text-lg font-black text-slate-950">
+{item.status}
+</h3>
+</div>
+))}
+</div>
+
+<div className="mt-6 rounded-3xl border border-slate-950 bg-slate-950 p-6 text-white">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-400">
+Approval Status
+</p>
+
+<h3 className="mt-4 text-3xl font-black">
+{boardApprovalStatus}
+</h3>
+
+<p className="mt-4 text-sm font-semibold leading-7 text-slate-300">
+Board package approval requires executive readiness, governance review,
+risk validation, and distribution authorization.
+</p>
+</div>
+</div>
+
+</section>
+
 
 <section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
 <p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
@@ -3420,6 +3696,9 @@ AI Signals
 </div>
 </div>
 </section>
+
+
+
 
 <section className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
 <MetricCard title="Total RFQs" value={totalRfqs.toString()} />
