@@ -2183,6 +2183,60 @@ const rfqMixChartData = [
 { name: "Service", value: serviceRfqs },
 ];
 
+const procurementOutlook =
+enterpriseProcurementScore >= 85
+? "Strong Growth Outlook"
+: enterpriseProcurementScore >= 70
+? "Positive Outlook"
+: enterpriseProcurementScore >= 55
+? "Stable Outlook"
+: "Improvement Required";
+
+const forecast30Days =
+procurementRiskIndex >= 60
+? "Risk stabilization required."
+: "Operational procurement growth expected.";
+
+const forecast60Days =
+supplierEngagementScore >= 70
+? "Supplier participation expansion expected."
+: "Supplier engagement initiatives recommended.";
+
+const forecast90Days =
+benchmarkReadinessScore >= 80
+? "Board-ready procurement intelligence expected."
+: "Benchmark maturity improvements recommended.";
+
+const riskTrajectory =
+procurementRiskIndex >= 60
+? "Elevated"
+: procurementRiskIndex >= 40
+? "Moderate"
+: "Controlled";
+
+const opportunityTrajectory =
+procurementOpportunityScore >= 80
+? "Accelerating"
+: procurementOpportunityScore >= 60
+? "Growing"
+: "Emerging";
+
+const executiveForecastStatus =
+enterpriseProcurementScore >= 80 &&
+executiveReadinessScore >= 80
+? "Forecast Confidence High"
+: enterpriseProcurementScore >= 65
+? "Forecast Confidence Moderate"
+: "Forecast Confidence Developing";
+
+const boardForecastNarrative =
+enterpriseProcurementScore >= 80
+? "Enterprise procurement performance supports a positive executive forecast with opportunities for scale, efficiency, and supplier expansion."
+: enterpriseProcurementScore >= 65
+? "Procurement operations are improving and forecast indicators remain positive with moderate executive confidence."
+: "Forecast indicators suggest capability development should remain a strategic priority before major procurement expansion.";
+
+
 return (
 <main className="min-h-screen bg-slate-100 px-8 py-10">
 <div className="mx-auto max-w-7xl">
@@ -2192,6 +2246,8 @@ className="text-sm font-semibold text-slate-600 hover:text-slate-950"
 >
 ← Back to Dashboard
 </Link>
+
+
 
 <section className="mt-8 rounded-3xl border border-orange-200 bg-white p-8">
 <p className="text-xs font-black uppercase tracking-[0.3em] text-orange-500">
@@ -3016,6 +3072,76 @@ Slide {slide.slide}
 ))}
 </div>
 </section>
+
+<section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
+Executive Forecast Engine
+</p>
+
+<h2 className="mt-3 text-3xl font-black text-slate-950">
+30 / 60 / 90 Day Procurement Forecast
+</h2>
+
+<p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-600">
+Forward-looking executive intelligence projecting procurement outlook,
+supplier participation, risk trajectory, opportunity momentum, and board
+readiness over the next operating cycle.
+</p>
+
+<div className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+<MetricCard title="Procurement Outlook" value={procurementOutlook} />
+<MetricCard title="Risk Trajectory" value={riskTrajectory} />
+<MetricCard title="Opportunity Trajectory" value={opportunityTrajectory} />
+<MetricCard title="Forecast Status" value={executiveForecastStatus} />
+</div>
+
+<div className="mt-8 grid gap-5 md:grid-cols-3">
+<div className="rounded-3xl border border-slate-200 bg-slate-50 p-6">
+<p className="text-xs font-black uppercase tracking-[0.2em] text-orange-500">
+30 Days
+</p>
+
+<p className="mt-4 text-sm font-semibold leading-7 text-slate-700">
+{forecast30Days}
+</p>
+</div>
+
+<div className="rounded-3xl border border-slate-200 bg-slate-50 p-6">
+<p className="text-xs font-black uppercase tracking-[0.2em] text-orange-500">
+60 Days
+</p>
+
+<p className="mt-4 text-sm font-semibold leading-7 text-slate-700">
+{forecast60Days}
+</p>
+</div>
+
+<div className="rounded-3xl border border-slate-200 bg-slate-50 p-6">
+<p className="text-xs font-black uppercase tracking-[0.2em] text-orange-500">
+90 Days
+</p>
+
+<p className="mt-4 text-sm font-semibold leading-7 text-slate-700">
+{forecast90Days}
+</p>
+</div>
+</div>
+
+<div className="mt-8 rounded-3xl border border-slate-950 bg-slate-950 p-6 text-white">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-400">
+Board Forecast Narrative
+</p>
+
+<h3 className="mt-4 text-2xl font-black">
+{executiveForecastStatus}
+</h3>
+
+<p className="mt-4 text-sm font-semibold leading-7 text-slate-300">
+{boardForecastNarrative}
+</p>
+</div>
+</section>
+
 
 <section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
 <p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
