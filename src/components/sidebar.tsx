@@ -14,10 +14,8 @@ awardedContracts: number;
 supplierQuotes: number;
 };
 
-type ProfileRole = "owner" | "admin" | "buyer" | "vendor" | string;
-
 type UserContext = {
-role: ProfileRole | null;
+role: string | null;
 networkRole: string | null;
 companyName: string | null;
 companyStatus: string | null;
@@ -74,24 +72,6 @@ if (experience === "consultant") return "Consultant Workspace";
 return "Executive Workspace";
 }
 
-function getWorkspaceHealth(stats: Stats) {
-if (stats.unreadNotifications > 8) return "Needs Review";
-if (stats.activeRfqs > 0 || stats.awardedContracts > 0) return "Healthy";
-return "Ready";
-}
-
-function getHealthClass(status: string) {
-if (status === "Needs Review") {
-return "border-orange-200 bg-orange-50 text-orange-700";
-}
-
-if (status === "Healthy") {
-return "border-green-200 bg-green-50 text-green-700";
-}
-
-return "border-blue-200 bg-blue-50 text-blue-700";
-}
-
 function getNavigation(experience: Experience, stats: Stats): NavSection[] {
 if (experience === "vendor") {
 return [
@@ -99,10 +79,10 @@ return [
 title: "Supplier Command",
 items: [
 {
-label: "Workspace Overview",
+label: "Workspace",
 href: "/dashboard",
 key: "dashboard",
-description: "Supplier command view",
+description: "Supplier operating view",
 badge: "Live",
 },
 {
@@ -116,26 +96,26 @@ badge: String(stats.activeRfqs),
 label: "My Quotes",
 href: "/vendor-dashboard",
 key: "vendor-dashboard",
-description: "Submitted pricing and activity",
+description: "Submitted quote activity",
 badge: String(stats.supplierQuotes),
 },
 ],
 },
 {
-title: "Operations",
+title: "Governance",
 items: [
 {
 label: "Activity Center",
 href: "/notifications",
 key: "notifications",
-description: "Updates, alerts, and workflow signals",
+description: "Updates and workflow signals",
 badge: String(stats.unreadNotifications),
 },
 {
 label: "Company Command",
 href: "/company/settings",
 key: "company",
-description: "Profile, team, access, and governance",
+description: "Profile, team, access, governance",
 },
 ],
 },
@@ -148,36 +128,36 @@ return [
 title: "Consultant Command",
 items: [
 {
-label: "Workspace Overview",
+label: "Workspace",
 href: "/dashboard",
 key: "dashboard",
-description: "Consultant workspace view",
+description: "Consultant operating view",
 badge: "Live",
 },
 {
 label: "Project Opportunities",
 href: "/rfq",
 key: "rfq",
-description: "Open project and procurement activity",
+description: "Open procurement activity",
 badge: String(stats.activeRfqs),
 },
 ],
 },
 {
-title: "Operations",
+title: "Governance",
 items: [
 {
 label: "Activity Center",
 href: "/notifications",
 key: "notifications",
-description: "Updates, alerts, and messages",
+description: "Updates, alerts, messages",
 badge: String(stats.unreadNotifications),
 },
 {
 label: "Company Command",
 href: "/company/settings",
 key: "company",
-description: "Profile, team, access, and governance",
+description: "Profile, team, access, governance",
 },
 ],
 },
@@ -199,7 +179,7 @@ badge: "Live",
 label: "Boardroom Intelligence",
 href: "/analytics",
 key: "analytics",
-description: "Board reporting, executive insights, and procurement intelligence",
+description: "CEO actions, risk, board reporting",
 badge: "Live",
 },
 ],
@@ -211,7 +191,7 @@ items: [
 label: "RFQs",
 href: "/rfq",
 key: "rfq",
-description: "Create, manage, and review RFQs",
+description: "Create, manage, review RFQs",
 badge: String(stats.activeRfqs),
 },
 {
@@ -221,28 +201,16 @@ key: "awards",
 description: "Awarded contracts and outcomes",
 badge: String(stats.awardedContracts),
 },
-],
-},
 {
-title: "Supplier Network",
-items: [
-{
-label: "Supplier Directory",
+label: "Supplier Network",
 href: "/directory",
 key: "directory",
-description: "AVL, suppliers, and partners",
-},
-{
-label: "Quote Activity",
-href: "/vendor-dashboard",
-key: "quotes",
-description: "Supplier quote submissions",
-badge: String(stats.supplierQuotes),
+description: "AVL, suppliers, partners",
 },
 ],
 },
 {
-title: "Operations",
+title: "Governance",
 items: [
 {
 label: "Activity Center",
@@ -255,7 +223,7 @@ badge: String(stats.unreadNotifications),
 label: "Company Governance",
 href: "/company/settings",
 key: "company",
-description: "Profile, team, roles, and controls",
+description: "Profile, team, roles, controls",
 },
 ],
 },
@@ -282,14 +250,10 @@ companyStatus: null,
 
 const experience = getExperience(context);
 const navSections = getNavigation(experience, stats);
-const workspaceHealth = getWorkspaceHealth(stats);
 
 useEffect(() => {
 async function loadStats() {
-const response = await fetch("/api/sidebar-stats", {
-cache: "no-store",
-});
-
+const response = await fetch("/api/sidebar-stats", { cache: "no-store" });
 if (!response.ok) return;
 
 const data = (await response.json()) as Stats;
@@ -338,14 +302,7 @@ loadUserContext();
 }, [supabase]);
 
 function isItemActive(href: string) {
-if (href === "/company/settings") {
-return pathname === href || pathname.startsWith("/company/settings");
-}
-
-if (href === "/dashboard") {
-return pathname === "/dashboard";
-}
-
+if (href === "/dashboard") return pathname === "/dashboard";
 return pathname === href || pathname.startsWith(`${href}/`);
 }
 
@@ -357,33 +314,31 @@ return (
 <Link
 key={`${item.key}-${item.href}`}
 href={item.href}
-className={`group flex items-center justify-between gap-4 rounded-2xl px-4 py-3 transition ${
+className={[
+"group flex items-center justify-between gap-4 rounded-[22px] border px-4 py-3.5 transition",
 isActive
-? "border border-nexus-border bg-nexus-dark text-nexus-white shadow-nexus"
-: "border border-transparent text-slate-700 hover:border-slate-200 hover:bg-slate-50 hover:text-slate-950"
-}`}
+? "border-nexus-gold/35 bg-nexus-gold/10 text-nexus-white shadow-inner-executive"
+: "border-white/10 bg-white/[0.025] text-slate-300 hover:border-white/20 hover:bg-white/[0.07] hover:text-white",
+].join(" ")}
 >
 <span className="min-w-0">
-<span className="block text-sm font-black">{item.label}</span>
+<span className="block text-[15px] font-black leading-5">
+{item.label}
+</span>
 
-<span
-className={`mt-0.5 block text-[11px] font-bold leading-4 ${
-isActive ? "text-nexus-muted" : "text-slate-400"
-}`}
->
+<span className="mt-1 block text-[11px] font-semibold leading-4 text-slate-500">
 {item.description}
 </span>
 </span>
 
 {hasBadge ? (
 <span
-className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-wide ${
-isActive
-? "bg-white/10 text-nexus-white"
-: item.badge === "Ready" || item.badge === "Live"
-? "bg-orange-100 text-orange-700"
-: "bg-slate-100 text-slate-600"
-}`}
+className={[
+"shrink-0 rounded-full border px-2.5 py-1 text-[10px] font-black uppercase tracking-wide",
+item.badge === "Live"
+? "border-emerald-300/20 bg-emerald-400/10 text-emerald-300"
+: "border-white/10 bg-white/10 text-white",
+].join(" ")}
 >
 {item.badge}
 </span>
@@ -397,7 +352,7 @@ return (
 <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/95 px-5 py-4 backdrop-blur lg:hidden">
 <div className="flex items-center justify-between gap-4">
 <Link href="/dashboard" className="flex min-w-0 items-center gap-3">
-<NexusPavilionMonogram className="h-10 w-10 shrink-0" />
+<NexusPavilionMonogram className="h-10 w-10 shrink-0" variant="flat" />
 
 <div className="min-w-0">
 <p className="text-[10px] font-black uppercase tracking-[0.3em] text-orange-500">
@@ -431,11 +386,12 @@ return (
 <Link
 key={`mobile-${item.key}-${item.href}`}
 href={item.href}
-className={`shrink-0 rounded-full px-4 py-2 text-xs font-black ${
+className={[
+"shrink-0 rounded-full px-4 py-2 text-xs font-black",
 isActive
 ? "bg-nexus-dark text-white"
-: "bg-slate-100 text-slate-700"
-}`}
+: "bg-slate-100 text-slate-700",
+].join(" ")}
 >
 {item.label}
 </Link>
@@ -444,111 +400,88 @@ isActive
 </div>
 </header>
 
-<aside className="fixed left-0 top-0 z-40 hidden h-screen w-96 border-r border-slate-200 bg-white px-6 py-7 lg:block">
-<Link href="/dashboard" className="flex items-center gap-4">
-<NexusPavilionMonogram className="h-14 w-14 shrink-0" />
+<aside className="fixed left-0 top-0 z-40 hidden h-screen w-[360px] border-r border-nexus-border bg-nexus-dark text-nexus-white shadow-executive lg:flex lg:flex-col">
+<div className="relative overflow-hidden border-b border-white/10 px-7 py-8">
+<div className="pointer-events-none absolute -right-16 -top-20 h-48 w-48 rounded-full bg-nexus-cobalt/10 blur-3xl" />
+<div className="pointer-events-none absolute -left-16 bottom-0 h-40 w-40 rounded-full bg-nexus-gold/10 blur-3xl" />
 
-<div>
-<p className="text-xs font-black uppercase tracking-[0.35em] text-orange-500">
+<Link href="/dashboard" className="relative z-10 block">
+<div className="mx-auto flex h-12 w-12 items-center justify-center rounded-[36px] border border-white/10 bg-white/[0.075] shadow-nexus">
+<NexusPavilionMonogram className="h-24 w-24" variant="full" />
+</div>
+
+<div className="mt-5 text-center">
+<p className="text-base font-black uppercase tracking-[0.48em] text-nexus-gold">
 Nexus
 </p>
 
-<h1 className="mt-1 text-2xl font-black leading-none text-slate-950">
+<h1 className="mt-2 text-4xl font-black uppercase leading-none tracking-[0.16em] text-white">
 Pavilion
 </h1>
+
+<p className="mx-auto mt-4 max-w-[260px] text-[10px] font-black uppercase leading-5 tracking-[0.18em] text-slate-400">
+Enterprise Procurement Intelligence
+</p>
 </div>
 </Link>
+</div>
 
-<div className="mt-7 overflow-hidden rounded-executive border border-nexus-border bg-nexus-dark bg-nexus-radial p-5 text-white shadow-executive">
-<p className="text-xs font-black uppercase tracking-[0.22em] text-orange-400">
-Procurement Intelligence
+<div className="border-b border-white/10 px-6 py-4">
+<p className="text-[10px] font-black uppercase tracking-[0.26em] text-nexus-gold">
+Workspace
 </p>
 
-<h2 className="mt-3 text-2xl font-black leading-tight">
+<div className="mt-2 flex items-center justify-between gap-3">
+<div className="min-w-0">
+<p className="truncate text-sm font-black text-white">
 {context.companyName || "Company Workspace"}
-</h2>
+</p>
 
-<div className="mt-4 flex flex-wrap gap-2">
-<span className="rounded-full border border-white/10 bg-white/10 px-3 py-1 text-[10px] font-black uppercase tracking-wide text-slate-200">
+<p className="mt-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
 {getExperienceLabel(experience)}
-</span>
+</p>
+</div>
 
-<span className="rounded-full border border-green-300/20 bg-green-400/10 px-3 py-1 text-[10px] font-black uppercase tracking-wide text-green-300">
+<StatusPill tone="success">
 {context.companyStatus || "Verified"}
-</span>
-</div>
-
-<p className="mt-4 text-xs font-semibold leading-5 text-nexus-muted">
-Executive navigation for RFQs, suppliers, quotes, governance,
-board intelligence, and procurement command workflows.
-</p>
-
-<div className="mt-5 grid grid-cols-2 gap-3">
-<Metric label="Active RFQs" value={stats.activeRfqs} />
-<Metric label="Awards" value={stats.awardedContracts} />
-<Metric label="Quotes" value={stats.supplierQuotes} />
-<Metric label="Unread" value={stats.unreadNotifications} />
+</StatusPill>
 </div>
 </div>
 
-<div className="mt-5 rounded-executive border border-slate-200 bg-slate-50 p-4">
-<p className="text-[10px] font-black uppercase tracking-[0.22em] text-slate-400">
-Today
-</p>
-
-<div className="mt-4 grid grid-cols-3 gap-2">
-<TodaySignal label="RFQs" value={stats.activeRfqs} />
-<TodaySignal label="Alerts" value={stats.unreadNotifications} />
-<TodaySignal label="Awards" value={stats.awardedContracts} />
-</div>
-</div>
-
-<nav className="mt-6 max-h-[calc(100vh-505px)] space-y-5 overflow-y-auto pr-1">
+<nav className="flex-1 overflow-y-auto px-5 py-5">
+<div className="space-y-6">
 {navSections.map((section) => (
 <div key={section.title}>
-<p className="mb-2 px-4 text-[10px] font-black uppercase tracking-[0.25em] text-slate-400">
+<p className="mb-3 px-2 text-[10px] font-black uppercase tracking-[0.28em] text-nexus-gold">
 {section.title}
 </p>
 
-<div className="space-y-2">{section.items.map(renderNavItem)}</div>
+<div className="space-y-2.5">{section.items.map(renderNavItem)}</div>
 </div>
 ))}
+</div>
 </nav>
 
-<div className="absolute bottom-7 left-6 right-6 rounded-executive border border-slate-200 bg-slate-50 p-5">
+<div className="border-t border-white/10 bg-black/20 px-5 py-4">
+<div className="rounded-[24px] border border-white/10 bg-white/[0.05] p-4">
 <div className="flex items-center justify-between gap-4">
 <div>
-<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
-Workspace Health
+<p className="text-[10px] font-black uppercase tracking-[0.22em] text-slate-500">
+System
 </p>
 
-<p className="mt-2 text-lg font-black text-slate-950">
-{workspaceHealth}
+<p className="mt-1 text-sm font-black text-white">
+Operational
 </p>
 </div>
 
-<span
-className={`rounded-full border px-3 py-1 text-xs font-black ${getHealthClass(
-workspaceHealth
-)}`}
->
-{workspaceHealth}
-</span>
+<StatusPill tone="success">Live</StatusPill>
 </div>
 
-<Link
-href="/company/settings"
-className="mt-4 inline-flex w-full items-center justify-center rounded-full bg-nexus-dark px-4 py-3 text-xs font-black text-white transition hover:bg-slate-800"
->
-Open Company Command Center
-</Link>
-
-<div className="mt-4 flex items-center gap-2">
-<div className="h-2 w-2 rounded-full bg-green-500" />
-
-<span className="text-xs font-bold text-slate-600">
-System Operational
-</span>
+<div className="mt-4 grid grid-cols-2 gap-2">
+<FooterLink href="/company/settings">Company</FooterLink>
+<FooterLink href="/notifications">Activity</FooterLink>
+</div>
 </div>
 </div>
 </aside>
@@ -556,23 +489,42 @@ System Operational
 );
 }
 
-function Metric({ label, value }: { label: string; value: number }) {
+function StatusPill({
+children,
+tone = "neutral",
+}: {
+children: React.ReactNode;
+tone?: "neutral" | "success" | "warning";
+}) {
+const toneClass =
+tone === "success"
+? "border-emerald-300/20 bg-emerald-400/10 text-emerald-300"
+: tone === "warning"
+? "border-orange-300/20 bg-orange-400/10 text-orange-300"
+: "border-white/10 bg-white/10 text-white";
+
 return (
-<div className="rounded-2xl border border-white/10 bg-white/10 p-3">
-<p className="text-[10px] font-bold uppercase text-white/50">{label}</p>
-<p className="mt-1 text-lg font-black text-white">{value}</p>
-</div>
+<span
+className={`rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-wide ${toneClass}`}
+>
+{children}
+</span>
 );
 }
 
-function TodaySignal({ label, value }: { label: string; value: number }) {
+function FooterLink({
+href,
+children,
+}: {
+href: string;
+children: React.ReactNode;
+}) {
 return (
-<div className="rounded-2xl border border-slate-200 bg-white p-3 text-center shadow-sm">
-<p className="text-[10px] font-black uppercase tracking-wide text-slate-400">
-{label}
-</p>
-
-<p className="mt-1 text-lg font-black text-slate-950">{value}</p>
-</div>
+<Link
+href={href}
+className="inline-flex items-center justify-center rounded-full border border-white/10 bg-white/[0.06] px-3 py-2 text-[10px] font-black uppercase tracking-wide text-slate-300 transition hover:bg-white/10 hover:text-white"
+>
+{children}
+</Link>
 );
 }

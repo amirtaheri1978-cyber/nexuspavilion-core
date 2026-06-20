@@ -1,26 +1,96 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+--background: #ffffff;
+--foreground: #0a0f1c;
+
+--nexus-navy: #0a0f1c;
+--nexus-deep: #0f1624;
+--nexus-slate: #1a2333;
+--nexus-border: #1f2d3f;
+
+--nexus-cobalt: #1e40ff;
+--nexus-blue: #2563eb;
+--nexus-violet: #7c3aed;
+--nexus-gold: #f5c542;
+
+--nexus-success: #22c55e;
+--nexus-warning: #f59e0b;
+--nexus-danger: #ef4444;
+--nexus-info: #38bdf8;
+
+--nexus-white: #ffffff;
+--nexus-muted: #94a3b8;
+
+--radius-executive: 24px;
+--shadow-executive: 0 30px 90px rgba(0, 0, 0, 0.35);
+--shadow-inner-executive: inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+--color-background: var(--background);
+--color-foreground: var(--foreground);
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+--color-nexus-navy: var(--nexus-navy);
+--color-nexus-dark: var(--nexus-navy);
+--color-nexus-deep: var(--nexus-deep);
+--color-nexus-slate: var(--nexus-slate);
+--color-nexus-border: var(--nexus-border);
+
+--color-nexus-cobalt: var(--nexus-cobalt);
+--color-nexus-blue: var(--nexus-blue);
+--color-nexus-violet: var(--nexus-violet);
+--color-nexus-gold: var(--nexus-gold);
+
+--color-nexus-success: var(--nexus-success);
+--color-nexus-warning: var(--nexus-warning);
+--color-nexus-danger: var(--nexus-danger);
+--color-nexus-info: var(--nexus-info);
+
+--color-nexus-white: var(--nexus-white);
+--color-nexus-muted: var(--nexus-muted);
+
+--font-sans: var(--font-geist-sans);
+--font-mono: var(--font-geist-mono);
+
+--radius-executive: var(--radius-executive);
+--shadow-executive: var(--shadow-executive);
+--shadow-inner-executive: var(--shadow-inner-executive);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+background: var(--background);
+color: var(--foreground);
+font-family: Arial, Helvetica, sans-serif;
+}
+
+.bg-nexus-radial {
+background:
+radial-gradient(circle at top left, rgba(37, 99, 235, 0.22), transparent 34%),
+radial-gradient(circle at top right, rgba(245, 197, 66, 0.14), transparent 30%),
+linear-gradient(135deg, #0a0f1c 0%, #0f1624 45%, #081220 100%);
+}
+
+.bg-nexus-gradient {
+background-image: linear-gradient(135deg, #1e40ff, #7c3aed 48%, #f5c542);
+}
+
+.rounded-executive {
+border-radius: var(--radius-executive);
+}
+
+.shadow-executive {
+box-shadow: var(--shadow-executive);
+}
+
+.shadow-inner-executive {
+box-shadow: var(--shadow-inner-executive);
+}
+
+.shadow-nexus {
+box-shadow: 0 24px 70px rgba(37, 99, 235, 0.22);
+}
+
+.shadow-gold {
+box-shadow: 0 24px 70px rgba(245, 197, 66, 0.18);
 }
