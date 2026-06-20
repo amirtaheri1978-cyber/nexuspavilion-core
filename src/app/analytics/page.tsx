@@ -6,6 +6,7 @@ import { BoardroomSnapshot } from "@/components/analytics/boardroom-snapshot";
 import { CEOActionCenter } from "@/components/analytics/ceo-action-center";
 import { ProcurementCommandCenter } from "@/components/analytics/procurement-command-center";
 import { BoardPresentationCenter } from "@/components/analytics/board-presentation-center";
+import { ExecutiveMetricCard } from "@/components/executive/executive-metric-card";
 import BoardReportGenerator from "@/components/board-report-generator";
 import AIBoardNarrativeGenerator from "@/components/ai-board-narrative-generator";
 import AIConfidenceEngine from "@/components/ai-confidence-engine";
@@ -4356,25 +4357,21 @@ awardPredictionConfidence={awardPredictionConfidence}
 
 function MetricCard({ title, value }: { title: string; value: string }) {
 return (
-<div className="rounded-3xl border border-slate-200 bg-white p-7">
-<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">
-{title}
-</p>
-
-<p className="mt-3 text-3xl font-black text-slate-950">{value}</p>
-</div>
+<ExecutiveMetricCard
+label={title}
+value={value}
+tone="blue"
+/>
 );
 }
 
 function DarkMetric({ title, value }: { title: string; value: string }) {
 return (
-<div className="rounded-2xl bg-white/10 p-5">
-<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
-{title}
-</p>
-
-<p className="mt-2 text-2xl font-black text-white">{value}</p>
-</div>
+<ExecutiveMetricCard
+label={title}
+value={value}
+tone="gold"
+/>
 );
 }
 
