@@ -8,11 +8,11 @@ export default function Footer() {
 const year = new Date().getFullYear();
 
 return (
-<footer className="mt-20 border-t border-nexus-border bg-nexus-dark text-nexus-white">
+<footer className="mt-20 border-t border-nexus-border bg-nexus-dark text-nexus-[#07111F]">
 <div className="mx-auto max-w-7xl px-6 py-14 sm:px-8 lg:py-16">
 <div className="grid gap-12 lg:grid-cols-[1.25fr_0.75fr_0.75fr_0.75fr_0.75fr]">
 <div>
-<NexusPavilionLogo showTagline className="max-w-xl" />
+<NexusPavilionLogo variant="footer" size={90} />
 
 <p className="mt-8 max-w-md text-sm font-semibold leading-7 text-nexus-muted">
 Executive-grade construction procurement intelligence for RFQs,
@@ -57,7 +57,7 @@ enterprise decision control.
 </FooterColumn>
 </div>
 
-<div className="mt-12 rounded-executive border border-white/10 bg-white/5 p-6 shadow-inner-executive">
+<div className="mt-12 rounded-executive border border-[#07111F]/10 bg-[#07111F]/5 p-6 shadow-inner-executive">
 <div className="grid gap-6 md:grid-cols-3">
 <TrustItem
 title="Confidential Procurement"
@@ -76,9 +76,9 @@ description="Procurement signals are consolidated into board reporting, command 
 </div>
 </div>
 
-<div className="mt-12 flex flex-col gap-6 border-t border-white/10 pt-8 lg:flex-row lg:items-center lg:justify-between">
+<div className="mt-12 flex flex-col gap-6 border-t border-[#07111F]/10 pt-8 lg:flex-row lg:items-center lg:justify-between">
 <div className="flex items-center gap-4">
-<NexusPavilionMonogram className="h-10 w-10" variant="flat" />
+<NexusPavilionLogo className="h-18 w-18" />
 
 <div>
 <p className="text-sm font-black text-nexus-white">
@@ -142,7 +142,7 @@ className="text-sm font-bold text-nexus-muted transition hover:text-nexus-white"
 
 function FooterBadge({ children }: { children: React.ReactNode }) {
 return (
-<span className="rounded-full border border-white/10 bg-white/10 px-3 py-1 text-xs font-black uppercase tracking-[0.15em] text-slate-300">
+<span className="rounded-full border border-[#07111F]/10 bg-[#07111F]/10 px-3 py-1 text-xs font-black uppercase tracking-[0.15em] text-slate-300">
 {children}
 </span>
 );

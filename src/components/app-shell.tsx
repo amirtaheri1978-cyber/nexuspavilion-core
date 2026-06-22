@@ -25,13 +25,17 @@ const pathname = usePathname();
 const hideSidebar = shouldHideSidebar(pathname);
 
 return (
-<>
+<div className="min-h-screen bg-[#07111F]">
 {hideSidebar ? null : <Sidebar />}
 
-<div className={`min-h-screen ${hideSidebar ? "" : "lg:ml-96"}`}>
+<div
+className={`min-h-screen bg-[#07111F] ${
+hideSidebar ? "" : "lg:ml-[330px]"
+}`}
+>
 {children}
 <Footer />
 </div>
-</>
+</div>
 );
 }

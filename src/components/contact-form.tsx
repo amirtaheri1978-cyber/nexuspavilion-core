@@ -12,12 +12,17 @@ const inquiryTypes = [
 "Technical Support",
 ];
 
+function isValidEmail(value: string) {
+return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
+
 export default function ContactForm() {
 const [name, setName] = useState("");
 const [email, setEmail] = useState("");
 const [company, setCompany] = useState("");
 const [inquiryType, setInquiryType] = useState("General Inquiry");
 const [message, setMessage] = useState("");
+const [website, setWebsite] = useState("");
 
 const [submissionState, setSubmissionState] =
 useState<SubmissionState>("idle");
@@ -27,6 +32,35 @@ const loading = submissionState === "submitting";
 
 async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
 event.preventDefault();
+
+const trimmedName = name.trim();
+const trimmedEmail = email.trim();
+const trimmedCompany = company.trim();
+const trimmedMessage = message.trim();
+
+if (website.trim()) {
+setSubmissionState("success");
+setStatusMessage("Thank you. Your request has been received.");
+return;
+}
+
+if (trimmedName.length < 2) {
+setSubmissionState("error");
+setStatusMessage("Please enter your full name.");
+return;
+}
+
+if (!isValidEmail(trimmedEmail)) {
+setSubmissionState("error");
+setStatusMessage("Please enter a valid business email address.");
+return;
+}
+
+if (trimmedMessage.length < 20) {
+setSubmissionState("error");
+setStatusMessage("Please include a message with at least 20 characters.");
+return;
+}
 
 setSubmissionState("submitting");
 setStatusMessage("");
@@ -38,11 +72,12 @@ headers: {
 "Content-Type": "application/json",
 },
 body: JSON.stringify({
-name: name.trim(),
-email: email.trim(),
-company: company.trim(),
+name: trimmedName,
+email: trimmedEmail,
+company: trimmedCompany,
 inquiryType,
-message: message.trim(),
+message: trimmedMessage,
+website: website.trim(),
 }),
 });
 
@@ -66,7 +101,7 @@ return;
 setSubmissionState("success");
 setStatusMessage(
 data.message ||
-"Your request has been submitted successfully. The Nexus Pavilion team will review it."
+"Your request has been received. The Nexus Pavilion team will review it and follow up shortly."
 );
 
 setName("");
@@ -74,6 +109,7 @@ setEmail("");
 setCompany("");
 setInquiryType("General Inquiry");
 setMessage("");
+setWebsite("");
 } catch {
 setSubmissionState("error");
 setStatusMessage(
@@ -85,33 +121,34 @@ setStatusMessage(
 return (
 <form
 onSubmit={handleSubmit}
-className="mt-8 space-y-5 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6 lg:p-8"
+className="mt-8 space-y-5 rounded-[32px] border border-white/10 bg-slate-950/70 p-5 shadow-[0_24px_80px_rgba(0,0,0,0.35)] sm:p-6 lg:p-8"
 >
-<div className="space-y-2">
-<label
-htmlFor="name"
-className="block text-sm font-semibold text-slate-900"
->
-Full name
-</label>
+<div className="hidden" aria-hidden="true">
+<label htmlFor="website">Website</label>
+<input
+id="website"
+name="website"
+tabIndex={-1}
+autoComplete="off"
+value={website}
+onChange={(event) => setWebsite(event.target.value)}
+/>
+</div>
+
+<FormField label="Full name" htmlFor="name">
 <input
 id="name"
 value={name}
 onChange={(event) => setName(event.target.value)}
 placeholder="Enter your full name"
 required
+minLength={2}
 disabled={loading}
-className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-slate-950 focus:ring-4 focus:ring-slate-100 disabled:cursor-not-allowed disabled:bg-slate-50"
+className={inputClassName}
 />
-</div>
+</FormField>
 
-<div className="space-y-2">
-<label
-htmlFor="email"
-className="block text-sm font-semibold text-slate-900"
->
-Email address
-</label>
+<FormField label="Email address" htmlFor="email">
 <input
 id="email"
 value={email}
@@ -120,73 +157,56 @@ placeholder="name@company.com"
 type="email"
 required
 disabled={loading}
-className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-slate-950 focus:ring-4 focus:ring-slate-100 disabled:cursor-not-allowed disabled:bg-slate-50"
+className={inputClassName}
 />
-</div>
+</FormField>
 
-<div className="space-y-2">
-<label
-htmlFor="company"
-className="block text-sm font-semibold text-slate-900"
->
-Company name
-</label>
+<FormField label="Company name" htmlFor="company">
 <input
 id="company"
 value={company}
 onChange={(event) => setCompany(event.target.value)}
 placeholder="Enter your company name"
 disabled={loading}
-className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-slate-950 focus:ring-4 focus:ring-slate-100 disabled:cursor-not-allowed disabled:bg-slate-50"
+className={inputClassName}
 />
-</div>
+</FormField>
 
-<div className="space-y-2">
-<label
-htmlFor="inquiryType"
-className="block text-sm font-semibold text-slate-900"
->
-Inquiry type
-</label>
+<FormField label="Inquiry type" htmlFor="inquiryType">
 <select
 id="inquiryType"
 value={inquiryType}
 onChange={(event) => setInquiryType(event.target.value)}
 disabled={loading}
-className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-950 outline-none transition focus:border-slate-950 focus:ring-4 focus:ring-slate-100 disabled:cursor-not-allowed disabled:bg-slate-50"
+className={inputClassName}
 >
 {inquiryTypes.map((type) => (
 <option key={type}>{type}</option>
 ))}
 </select>
-</div>
+</FormField>
 
-<div className="space-y-2">
-<label
-htmlFor="message"
-className="block text-sm font-semibold text-slate-900"
->
-Message
-</label>
+<FormField label="Message" htmlFor="message">
 <textarea
 id="message"
 value={message}
 onChange={(event) => setMessage(event.target.value)}
 placeholder="Tell us how Nexus Pavilion can help."
 required
+minLength={20}
 rows={6}
 disabled={loading}
-className="w-full resize-none rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-slate-950 focus:ring-4 focus:ring-slate-100 disabled:cursor-not-allowed disabled:bg-slate-50"
+className={`${inputClassName} resize-none`}
 />
-</div>
+</FormField>
 
 {statusMessage ? (
 <div
 role="status"
 className={
 submissionState === "success"
-? "rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800"
-: "rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-800"
+? "rounded-2xl border border-emerald-300/20 bg-emerald-400/10 px-4 py-3 text-sm font-semibold text-emerald-200"
+: "rounded-2xl border border-red-300/20 bg-red-400/10 px-4 py-3 text-sm font-semibold text-red-200"
 }
 >
 {statusMessage}
@@ -196,10 +216,35 @@ submissionState === "success"
 <button
 type="submit"
 disabled={loading}
-className="w-full rounded-full bg-slate-950 px-6 py-3 text-sm font-bold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+className="w-full rounded-full bg-[#E7B84A] px-6 py-3 text-sm font-black text-slate-950 transition hover:bg-[#f0c85a] disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
 >
-{loading ? "Sending request..." : "Send message"}
+{loading ? "Sending request..." : "Request Executive Consultation"}
 </button>
 </form>
+);
+}
+
+const inputClassName =
+"w-full rounded-2xl border border-white/10 bg-[#07111F] px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-[#E7B84A]/60 focus:ring-4 focus:ring-[#E7B84A]/10 disabled:cursor-not-allowed disabled:opacity-60";
+
+function FormField({
+label,
+htmlFor,
+children,
+}: {
+label: string;
+htmlFor: string;
+children: React.ReactNode;
+}) {
+return (
+<div className="space-y-2">
+<label
+htmlFor={htmlFor}
+className="block text-sm font-bold text-slate-200"
+>
+{label}
+</label>
+{children}
+</div>
 );
 }

@@ -13,14 +13,6 @@ network_role: string | null;
 status: string | null;
 };
 
-type ApprovedVendor = {
-id: string;
-buyer_company_id: string | null;
-vendor_company_id: string | null;
-status: string | null;
-notes: string | null;
-vendor?: Company | null;
-};
 
 type Compliance = {
 id: string;
@@ -44,6 +36,27 @@ amount: number | string | null;
 decision: string | null;
 created_at: string | null;
 awarded_at: string | null;
+};
+
+type ApprovedVendor = {
+id: string;
+buyer_company_id: string | null;
+vendor_company_id: string;
+status: string | null;
+notes: string | null;
+created_by: string | null;
+created_at: string | null;
+approved_at: string | null;
+vendor?: {
+id: string;
+name: string | null;
+slug: string | null;
+category: string | null;
+location: string | null;
+network_role: string | null;
+status: string | null;
+logo_url?: string | null;
+} | null;
 };
 
 function formatStatus(value: string | null | undefined) {
@@ -340,7 +353,7 @@ vendorCompanyIds.length > 0
 .in("company_id", vendorCompanyIds)
 : { data: [] };
 
-const approvedVendors = (approvedVendorsData ?? []) as any[];
+const approvedVendors = (approvedVendorsData ?? []) as unknown as ApprovedVendor[];
 const complianceList = (complianceData ?? []) as Compliance[];
 const quotePerformanceList = (quotePerformanceData ?? []) as QuotePerformance[];
 

@@ -77,7 +77,7 @@ follow: true,
 export const viewport: Viewport = {
 width: "device-width",
 initialScale: 1,
-themeColor: "#f97316",
+themeColor: "#07111F",
 };
 
 export default function RootLayout({
@@ -87,7 +87,7 @@ children: React.ReactNode;
 }>) {
 return (
 <html lang="en">
-<body className={`${inter.className} bg-slate-100 antialiased`}>
+<body className={`${inter.className} bg-[#07111F] antialiased`}>
 <AppShell>{children}</AppShell>
 </body>
 </html>

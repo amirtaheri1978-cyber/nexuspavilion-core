@@ -1,13 +1,13 @@
 @import "tailwindcss";
 
 :root {
---background: #ffffff;
---foreground: #0a0f1c;
+--background: #07111f;
+--foreground: #f8fafc;
 
---nexus-navy: #0a0f1c;
---nexus-deep: #0f1624;
---nexus-slate: #1a2333;
---nexus-border: #1f2d3f;
+--nexus-navy: #07111f;
+--nexus-deep: #0b1220;
+--nexus-slate: #0f172a;
+--nexus-border: #1e293b;
 
 --nexus-cobalt: #1e40ff;
 --nexus-blue: #2563eb;
@@ -58,8 +58,13 @@
 --shadow-inner-executive: var(--shadow-inner-executive);
 }
 
+html {
+background: #07111f;
+}
+
 body {
-background: var(--background);
+min-height: 100vh;
+background: #07111f;
 color: var(--foreground);
 font-family: Arial, Helvetica, sans-serif;
 }
@@ -68,7 +73,7 @@ font-family: Arial, Helvetica, sans-serif;
 background:
 radial-gradient(circle at top left, rgba(37, 99, 235, 0.22), transparent 34%),
 radial-gradient(circle at top right, rgba(245, 197, 66, 0.14), transparent 30%),
-linear-gradient(135deg, #0a0f1c 0%, #0f1624 45%, #081220 100%);
+linear-gradient(135deg, #07111f 0%, #0b1220 45%, #07111f 100%);
 }
 
 .bg-nexus-gradient {
