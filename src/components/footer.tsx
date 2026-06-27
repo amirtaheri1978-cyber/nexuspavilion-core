@@ -1,14 +1,11 @@
-import Link from "next/link"
-import {
-NexusPavilionLogo,
-NexusPavilionMonogram,
-} from "@/components/branding/nexus-pavilion-logo";
+import Link from "next/link";
+import { NexusPavilionLogo } from "@/components/branding/nexus-pavilion-logo";
 
 export default function Footer() {
 const year = new Date().getFullYear();
 
 return (
-<footer className="mt-20 border-t border-nexus-border bg-nexus-dark text-nexus-[#07111F]">
+<footer className="mt-20 border-t border-nexus-border bg-nexus-dark text-nexus-white">
 <div className="mx-auto max-w-7xl px-6 py-14 sm:px-8 lg:py-16">
 <div className="grid gap-12 lg:grid-cols-[1.25fr_0.75fr_0.75fr_0.75fr_0.75fr]">
 <div>
@@ -57,7 +54,7 @@ enterprise decision control.
 </FooterColumn>
 </div>
 
-<div className="mt-12 rounded-executive border border-[#07111F]/10 bg-[#07111F]/5 p-6 shadow-inner-executive">
+<div className="mt-12 rounded-executive border border-white/10 bg-white/[0.03] p-6 shadow-inner-executive">
 <div className="grid gap-6 md:grid-cols-3">
 <TrustItem
 title="Confidential Procurement"
@@ -76,9 +73,9 @@ description="Procurement signals are consolidated into board reporting, command 
 </div>
 </div>
 
-<div className="mt-12 flex flex-col gap-6 border-t border-[#07111F]/10 pt-8 lg:flex-row lg:items-center lg:justify-between">
+<div className="mt-12 flex flex-col gap-6 border-t border-white/10 pt-8 lg:flex-row lg:items-center lg:justify-between">
 <div className="flex items-center gap-4">
-<NexusPavilionLogo className="h-18 w-18" />
+<NexusPavilionLogo variant="icon" size={56} />
 
 <div>
 <p className="text-sm font-black text-nexus-white">
@@ -142,7 +139,7 @@ className="text-sm font-bold text-nexus-muted transition hover:text-nexus-white"
 
 function FooterBadge({ children }: { children: React.ReactNode }) {
 return (
-<span className="rounded-full border border-[#07111F]/10 bg-[#07111F]/10 px-3 py-1 text-xs font-black uppercase tracking-[0.15em] text-slate-300">
+<span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-xs font-black uppercase tracking-[0.15em] text-slate-300">
 {children}
 </span>
 );

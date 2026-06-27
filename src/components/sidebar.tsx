@@ -344,16 +344,16 @@ href={item.href}
 className={[
 "group flex items-center gap-3 rounded-[14px] px-3 py-3 text-sm transition",
 isActive
-? "bg-gradient-to-r from-blue-600/35 to-blue-500/10 text-white shadow-[0_0_32px_rgba(37,99,235,0.28)] ring-1 ring-blue-400/25"
-: "text-slate-300 hover:bg-slate-900/60 hover:text-white",
+? "bg-gradient-to-r from-[#0B3D91]/45 to-[#2CC4E8]/10 text-white shadow-[0_0_32px_rgba(44,196,232,0.2)] ring-1 ring-[#2CC4E8]/25"
+: "text-slate-300 hover:bg-white/[0.045] hover:text-white",
 ].join(" ")}
 >
 <span
 className={[
 "flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] border text-[13px] font-black",
 isActive
-? "border-blue-300/25 bg-blue-400/15 text-blue-200"
-: "border-white/10 bg-slate-900/55 text-slate-400 group-hover:text-nexus-gold",
+? "border-[#2CC4E8]/30 bg-[#2CC4E8]/12 text-[#9BE8F8]"
+: "border-white/10 bg-[#061426]/80 text-slate-400 group-hover:text-[#C8A646]",
 ].join(" ")}
 >
 {getNavGlyph(item.key)}
@@ -374,7 +374,7 @@ className={[
 "shrink-0 rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-wide",
 item.badge === "Live"
 ? "bg-emerald-400/12 text-emerald-300 ring-1 ring-emerald-300/20"
-: "bg-slate-800/90 text-white ring-1 ring-white/10",
+: "bg-white/[0.06] text-white ring-1 ring-white/10",
 ].join(" ")}
 >
 {item.badge}
@@ -386,7 +386,7 @@ item.badge === "Live"
 
 return (
 <>
-<header className="sticky top-0 z-30 border-b border-slate-800 bg-[#07111F]/95 px-5 py-4 text-white backdrop-blur lg:hidden">
+<header className="sticky top-0 z-30 border-b border-white/10 bg-[#07111F]/95 px-5 py-4 text-white backdrop-blur lg:hidden">
 <div className="flex items-center justify-between gap-4">
 <Link href="/dashboard" className="flex min-w-0 items-center gap-3">
 <NexusPavilionLogo
@@ -397,7 +397,7 @@ priority
 />
 
 <div className="min-w-0">
-<p className="text-[10px] font-black uppercase tracking-[0.3em] text-[#E7B84A]">
+<p className="text-[10px] font-black uppercase tracking-[0.3em] text-[#C8A646]">
 Nexus Pavilion
 </p>
 
@@ -409,7 +409,7 @@ Nexus Pavilion
 
 <Link
 href="/notifications"
-className="rounded-full bg-slate-900 px-4 py-2 text-xs font-black text-white ring-1 ring-white/10"
+className="rounded-full bg-white/[0.06] px-4 py-2 text-xs font-black text-white ring-1 ring-white/10"
 >
 {stats.unreadNotifications > 0
 ? `${stats.unreadNotifications} Alerts`
@@ -431,8 +431,8 @@ href={item.href}
 className={[
 "shrink-0 rounded-full px-4 py-2 text-xs font-black",
 isActive
-? "bg-[#E7B84A] text-slate-950"
-: "bg-slate-900 text-slate-300 ring-1 ring-white/10",
+? "bg-[#C8A646] text-[#07111F]"
+: "bg-white/[0.06] text-slate-300 ring-1 ring-white/10",
 ].join(" ")}
 >
 {item.label}
@@ -442,28 +442,24 @@ isActive
 </div>
 </header>
 
-<aside className="fixed left-0 top-0 z-40 hidden h-screen w-[330px] border-r border-white/5 bg-nexus-dark text-nexus-white shadow-executive lg:flex lg:flex-col">
-<div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(37,99,235,0.22),transparent_34%),radial-gradient(circle_at_bottom_left,rgba(214,167,58,0.14),transparent_32%)]" />
+<aside className="fixed left-0 top-0 z-40 hidden h-screen w-[330px] border-r border-white/10 bg-[#061426] text-nexus-white shadow-executive lg:flex lg:flex-col">
+<div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(44,196,232,0.18),transparent_34%),radial-gradient(circle_at_bottom_left,rgba(200,166,70,0.14),transparent_32%)]" />
 
-<div className="relative shrink-0 px-6 pb-6 pt-10">
+<div className="relative shrink-0 px-6 pb-6 pt-8">
 <Link
 href="/dashboard"
-className="block rounded-[28px] px-3 py-2 text-center transition hover:bg-slate-900/60"
+className="block rounded-[28px] px-3 py-3 transition hover:bg-white/[0.045]"
 aria-label="Go to Nexus Pavilion dashboard"
 >
-<NexusPavilionLogo variant="icon" size={104} priority />
+<NexusPavilionLogo variant="horizontal" size={72} priority />
 
-<div className="mt-4 select-none text-center">
-<p className="text-[24px] font-semibold uppercase leading-none tracking-[0.28em] text-white">
-Nexus
+<div className="mt-4 rounded-[20px] border border-white/10 bg-[#07111F]/72 px-4 py-3">
+<p className="text-[9px] font-black uppercase tracking-[0.26em] text-[#C8A646]">
+Intelligence Converges
 </p>
 
-<p className="mt-2 text-[20px] font-semibold uppercase leading-none tracking-[0.22em] text-[#E29A38]">
-Pavilion
-</p>
-
-<p className="mx-auto mt-3 max-w-[210px] text-[8px] font-medium uppercase leading-4 tracking-[0.22em] text-slate-400">
-Enterprise Procurement Intelligence
+<p className="mt-1 text-xs font-semibold text-slate-400">
+Decisions Deliver.
 </p>
 </div>
 </Link>
@@ -472,20 +468,18 @@ Enterprise Procurement Intelligence
 <nav className="relative flex-1 overflow-y-auto px-5 pb-5 [scrollbar-color:#1E293B_#07111F] [scrollbar-width:thin]">
 {navSections.map((section) => (
 <div key={section.title}>
-<p className="mb-3 px-3 text-[10px] font-black uppercase tracking-[0.28em] text-nexus-gold">
+<p className="mb-3 px-3 text-[10px] font-black uppercase tracking-[0.28em] text-[#C8A646]">
 {section.title}
 </p>
 
-<div className="space-y-1.5">
-{section.items.map(renderNavItem)}
-</div>
+<div className="space-y-1.5">{section.items.map(renderNavItem)}</div>
 </div>
 ))}
 </nav>
 
 <div className="relative shrink-0 space-y-4 border-t border-white/10 px-5 py-5">
-<div className="rounded-[22px] border border-blue-300/10 bg-blue-500/[0.055] p-4 shadow-[0_0_45px_rgba(37,99,235,0.16)]">
-<div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl border border-blue-300/20 bg-blue-400/10 text-2xl text-blue-200">
+<div className="rounded-[22px] border border-[#2CC4E8]/10 bg-[#2CC4E8]/[0.055] p-4 shadow-[0_0_45px_rgba(44,196,232,0.12)]">
+<div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl border border-[#2CC4E8]/20 bg-[#2CC4E8]/10 text-2xl text-[#9BE8F8]">
 ◈
 </div>
 
@@ -499,14 +493,14 @@ Your AI Procurement Advisor
 
 <Link
 href="/analytics"
-className="mt-4 flex items-center justify-center gap-2 rounded-[14px] border border-white/10 bg-slate-900/55 px-4 py-2.5 text-xs font-black text-white transition hover:border-blue-300/30 hover:bg-blue-500/15"
+className="mt-4 flex items-center justify-center gap-2 rounded-[14px] border border-white/10 bg-[#07111F]/75 px-4 py-2.5 text-xs font-black text-white transition hover:border-[#2CC4E8]/30 hover:bg-[#2CC4E8]/10"
 >
 Ask Nexus AI
 <span aria-hidden="true">→</span>
 </Link>
 </div>
 
-<div className="flex items-center justify-between rounded-[18px] border border-white/10 bg-slate-900/55 px-4 py-3">
+<div className="flex items-center justify-between rounded-[18px] border border-white/10 bg-[#07111F]/75 px-4 py-3">
 <div className="min-w-0">
 <p className="text-[10px] font-black uppercase tracking-[0.22em] text-slate-500">
 Workspace
@@ -552,7 +546,7 @@ tone === "success"
 ? "bg-emerald-400/10 text-emerald-300 ring-1 ring-emerald-300/20"
 : tone === "warning"
 ? "bg-orange-400/10 text-orange-300 ring-1 ring-orange-300/20"
-: "bg-slate-800/90 text-white ring-1 ring-white/10";
+: "bg-white/[0.06] text-white ring-1 ring-white/10";
 
 return (
 <span
