@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
+import { ExecutiveInsightCard } from "@/components/executive/executive-insight-card";
+import { ExecutiveMetricCard } from "@/components/executive/executive-metric-card";
 import SignOutButton from "@/components/sign-out-button";
 import { createClient } from "@/lib/supabase/server";
-import { ExecutiveMetricCard } from "@/components/executive/executive-metric-card";
-import { ExecutiveInsightCard } from "@/components/executive/executive-insight-card";
 
 type Experience = "owner" | "vendor" | "consultant";
 
@@ -247,15 +247,11 @@ eyebrow: "Supplier Workspace",
 title: "Supplier Opportunity Command Center",
 subtitle:
 "Track open RFQs, submitted quotes, award outcomes, customer activity, and supplier growth signals.",
-heroLabel: "Supplier Growth Center",
-heroTitle: "Construction Opportunity Pipeline",
-heroDescription:
-"Monitor RFQ access by material, trade, equipment, service, sourcing method, and contract framework.",
+briefTitle: "Executive Supplier Brief",
+briefLabel: "Supplier Growth Center",
 recommendation:
-"Prioritize high-fit RFQs, improve quote coverage, and focus on opportunities that match your supplier category and delivery capacity.",
-companyLabel: "My Supplier Company",
-analyticsLabel: "Supplier Intelligence",
-analyticsTitle: "Opportunity & Quote Analytics",
+"Prioritize high-fit RFQs, improve quote coverage, and focus on opportunities aligned with supplier category, delivery capacity, and buyer demand.",
+companyLabel: "Supplier Company",
 activityLabel: "Supplier Activity Center",
 activityTitle: "Live Supplier Timeline",
 };
@@ -267,15 +263,11 @@ eyebrow: "Consultant Workspace",
 title: "Project Advisory Command Center",
 subtitle:
 "Track project opportunities, advisory activity, client signals, and professional service visibility.",
-heroLabel: "Advisory Command Center",
-heroTitle: "Professional Services Intelligence",
-heroDescription:
-"Monitor project RFQs, advisory opportunities, professional service demand, and client engagement signals.",
+briefTitle: "Executive Advisory Brief",
+briefLabel: "Advisory Command Center",
 recommendation:
-"Strengthen company profile, monitor professional service opportunities, and support procurement workflows with advisory expertise.",
-companyLabel: "My Advisory Company",
-analyticsLabel: "Consultant Intelligence",
-analyticsTitle: "Advisory Activity Analytics",
+"Monitor professional service opportunities, strengthen company positioning, and support procurement workflows with advisory expertise.",
+companyLabel: "Advisory Company",
 activityLabel: "Consultant Activity Center",
 activityTitle: "Live Advisory Timeline",
 };
@@ -286,19 +278,16 @@ eyebrow: "Executive Workspace",
 title: "Executive Procurement Command Center",
 subtitle:
 "Monitor RFQ mix, awards, supplier participation, sourcing method, framework agreements, procurement risk, and board-level intelligence.",
-heroLabel: "CEO Command Center",
-heroTitle: "Construction Procurement Control Tower",
-heroDescription:
-"Track procurement health, RFQ classification maturity, supplier concentration, award performance, and executive reporting confidence.",
+briefTitle: "Executive Procurement Brief",
+briefLabel: "CEO Command Center",
 recommendation:
-"Prioritize competitive supplier participation, improve RFQ classification maturity, review award concentration, and scale construction procurement intelligence.",
-companyLabel: "My Enterprise Company",
-analyticsLabel: "Construction Procurement Intelligence",
-analyticsTitle: "Executive Analytics",
+"Review supplier participation, award concentration, RFQ classification maturity, and risk signals before scaling procurement decisions.",
+companyLabel: "Enterprise Company",
 activityLabel: "Activity Command Center",
 activityTitle: "Live Procurement Timeline",
 };
 }
+
 export default async function DashboardPage() {
 const supabase = await createClient();
 
@@ -325,10 +314,7 @@ const { data: company } = await supabase
 .single();
 
 const currentCompany = company as Company | null;
-const experience = getExperience(
-profile.role,
-currentCompany?.network_role || null
-);
+const experience = getExperience(profile.role, currentCompany?.network_role || null);
 const dashboardCopy = getDashboardCopy(experience);
 
 const { data: rfqs } = await supabase
@@ -361,45 +347,32 @@ const { data: notifications } = await supabase
 const notificationList = (notifications ?? []) as Notification[];
 
 const totalRfqs = rfqList.length;
-
 const openRfqs = rfqList.filter(
 (rfq) => !rfq.status || rfq.status === "open"
 ).length;
-
 const awardedRfqs = rfqList.filter((rfq) => rfq.status === "awarded").length;
-const closedRfqs = rfqList.filter((rfq) => rfq.status === "closed").length;
-
 const submittedQuotes = quoteList.length;
-
-const awardedQuotes = quoteList.filter(
-(quote) => quote.decision === "awarded"
-);
+const awardedQuotes = quoteList.filter((quote) => quote.decision === "awarded");
 
 const materialRfqs = rfqList.filter(
 (rfq) => getProcurementScope(rfq.procurement_scope) === "material"
 ).length;
-
 const tradeRfqs = rfqList.filter(
 (rfq) => getProcurementScope(rfq.procurement_scope) === "subcontractor"
 ).length;
-
 const equipmentRfqs = rfqList.filter(
 (rfq) => getProcurementScope(rfq.procurement_scope) === "equipment"
 ).length;
-
 const serviceRfqs = rfqList.filter(
-(rfq) =>
-getProcurementScope(rfq.procurement_scope) === "professional_service"
+(rfq) => getProcurementScope(rfq.procurement_scope) === "professional_service"
 ).length;
 
 const openMarketRfqs = rfqList.filter(
 (rfq) => getSourcingMethod(rfq.sourcing_method) === "open"
 ).length;
-
 const invitedRfqs = rfqList.filter(
 (rfq) => getSourcingMethod(rfq.sourcing_method) === "invited"
 ).length;
-
 const sealedBidRfqs = rfqList.filter(
 (rfq) => getSourcingMethod(rfq.sourcing_method) === "sealed_bid"
 ).length;
@@ -407,10 +380,8 @@ const sealedBidRfqs = rfqList.filter(
 const frameworkRfqs = rfqList.filter(
 (rfq) => getContractFramework(rfq.contract_framework) === "framework"
 ).length;
-
 const projectSpecificRfqs = rfqList.filter(
-(rfq) =>
-getContractFramework(rfq.contract_framework) === "project_specific"
+(rfq) => getContractFramework(rfq.contract_framework) === "project_specific"
 ).length;
 
 const constructionClassificationScore = Math.min(
@@ -434,7 +405,7 @@ constructionClassificationScore >= 80
 ? "Developing RFQ Mix"
 : constructionClassificationScore >= 35
 ? "Early RFQ Mix"
-: "No RFQ Mix Yet";
+: "Insufficient Data";
 
 const dominantScope =
 [
@@ -456,13 +427,7 @@ const amount = Number(quote.amount);
 return total + (Number.isNaN(amount) ? 0 : amount);
 }, 0);
 
-const averageAward =
-awardedQuotes.length > 0
-? Math.round(totalAwardedSpend / awardedQuotes.length)
-: 0;
-
-const awardRate =
-totalRfqs > 0 ? Math.round((awardedRfqs / totalRfqs) * 100) : 0;
+const awardRate = totalRfqs > 0 ? Math.round((awardedRfqs / totalRfqs) * 100) : 0;
 
 const totalBudget = rfqList.reduce((total, rfq) => {
 const budget = Number(rfq.budget);
@@ -482,26 +447,36 @@ constructionClassificationScore * 0.15
 )
 );
 
-const riskIndex = Math.max(0, 100 - procurementHealthScore);
+const hasProcurementData =
+totalRfqs > 0 || submittedQuotes > 0 || awardedQuotes.length > 0;
 
-const forecastAccuracy =
-procurementHealthScore >= 80
+const riskIndex = hasProcurementData
+? Math.max(0, 100 - procurementHealthScore)
+: 0;
+
+const forecastAccuracy = hasProcurementData
+? procurementHealthScore >= 80
 ? 92
 : procurementHealthScore >= 65
 ? 84
 : procurementHealthScore >= 50
 ? 76
-: 65;
+: 65
+: 0;
 
 const supplierConcentration =
-awardedQuotes.length <= 1
+!hasProcurementData || awardedQuotes.length === 0
+? "Insufficient Data"
+: awardedQuotes.length <= 1
 ? "High"
 : awardedQuotes.length <= 3
 ? "Medium"
 : "Low";
 
 const executiveStatus =
-procurementHealthScore >= 85
+!hasProcurementData
+? "Insufficient Data"
+: procurementHealthScore >= 85
 ? "Excellent"
 : procurementHealthScore >= 70
 ? "Healthy"
@@ -510,26 +485,21 @@ procurementHealthScore >= 85
 : "Needs Attention";
 
 const vendorWinRate =
-submittedQuotes > 0
-? Math.round((awardedQuotes.length / submittedQuotes) * 100)
-: 0;
-
-const hasProcurementData =
-totalRfqs > 0 || submittedQuotes > 0 || awardedQuotes.length > 0;
+submittedQuotes > 0 ? Math.round((awardedQuotes.length / submittedQuotes) * 100) : 0;
 
 const enterpriseScoreLabel = hasProcurementData
 ? `${procurementHealthScore}/100`
-: "Setup";
+: "Insufficient Data";
 
 const riskIndexLabel = hasProcurementData ? `${riskIndex}/100` : "Pending";
 
 const forecastAccuracyLabel = hasProcurementData
 ? `${forecastAccuracy}%`
-: "Pending";
+: "Insufficient Data";
 
 const rfqMaturityLabel = hasProcurementData
 ? `${Math.min(100, Math.round((totalRfqs + submittedQuotes) * 12))}/100`
-: "Setup";
+: "Setup Required";
 
 const pipelineValue = quoteList.reduce((total, quote) => {
 const amount = Number(quote.amount);
@@ -543,6 +513,15 @@ awardedQuotes,
 });
 
 const alerts: WorkspaceAlert[] = [];
+
+if (!hasProcurementData) {
+alerts.push({
+level: "warning",
+title: "Insufficient Procurement Data",
+message:
+"Create RFQs, receive supplier quotes, or record award outcomes before relying on executive recommendations.",
+});
+}
 
 if (constructionClassificationScore < 60 && experience === "owner") {
 alerts.push({
@@ -576,7 +555,7 @@ if (vendorWinRate > 0) {
 alerts.push({
 level: "healthy",
 title: "Award Conversion Active",
-message: "Your submitted quotes are converting into award outcomes.",
+message: "Submitted quotes are converting into award outcomes.",
 });
 }
 } else if (experience === "consultant") {
@@ -638,74 +617,86 @@ const topRfqsByBudget = [...rfqList]
 .slice(0, 5);
 
 const recentAwards = awardedQuotes.slice(0, 5);
-const executiveBriefTitle =
-experience === "vendor"
-? "Executive Supplier Brief"
-: experience === "consultant"
-? "Executive Advisory Brief"
-: "Executive Procurement Brief";
 
 const executiveBriefSummary =
 experience === "vendor"
 ? `${submittedQuotes} submitted quotes, ${openRfqs} open opportunities, and ${vendorWinRate}% win rate are currently shaping supplier growth.`
 : experience === "consultant"
 ? `${serviceRfqs} service RFQs and ${openRfqs} active project opportunities are shaping advisory visibility.`
-: `${totalRfqs} RFQs, ${submittedQuotes} supplier quotes, and ${awardRate}% award rate are shaping procurement performance.`;
+: hasProcurementData
+? `${totalRfqs} RFQs, ${submittedQuotes} supplier quotes, and ${awardRate}% award rate are shaping procurement performance.`
+: "Procurement intelligence is available, but more RFQ, quote, and award data is required before board-ready recommendations can be trusted.";
 
-const executiveBriefRecommendation =
-experience === "vendor"
-? "Prioritize high-fit RFQs, improve quote coverage, and focus on categories where your supplier profile has stronger delivery alignment."
-: experience === "consultant"
-? "Monitor professional service opportunities, strengthen company positioning, and support procurement workflows with advisory expertise."
-: "Review supplier participation, award concentration, RFQ classification maturity, and risk signals before scaling procurement decisions.";
-
+const boardNarrative = hasProcurementData
+? `Current procurement activity shows ${totalRfqs} RFQs, ${submittedQuotes} supplier quotes, ${awardedRfqs} awarded RFQs, and ${forecastAccuracy}% forecast confidence. Supplier concentration is ${supplierConcentration.toLowerCase()}, and the current executive status is ${executiveStatus.toLowerCase()}.`
+: "Status: Insufficient Data. Create RFQs, receive supplier quotes, and record award outcomes before presenting procurement recommendations to executives or the board.";
 return (
-<main className="min-h-screen bg-[#f6f6f3]">
-<div className="fixed right-8 top-8 z-50 hidden lg:block">
+<main className="min-h-screen text-white">
+<div className="fixed right-8 top-24 z-30 hidden lg:block">
 <SignOutButton />
 </div>
-<div className="w-full max-w-none px-8 py-10">
-<div className="flex items-start justify-between gap-6">
-<div>
-<p className="text-xs font-black uppercase tracking-[0.35em] text-orange-500">
+
+<div className="w-full max-w-none px-5 py-6 sm:px-8 lg:px-10 lg:py-8">
+<section className="rounded-[34px] border border-white/10 bg-[#061426]/88 p-6 shadow-executive sm:p-8">
+<div className="flex flex-col gap-8 xl:flex-row xl:items-start xl:justify-between">
+<div className="max-w-5xl">
+<p className="text-[11px] font-black uppercase tracking-[0.34em] text-[#C8A646]">
 {dashboardCopy.eyebrow}
 </p>
 
-<h1 className="mt-3 text-5xl font-black text-slate-950">
+<h1 className="mt-4 max-w-5xl text-4xl font-black leading-tight text-white sm:text-5xl xl:text-6xl">
 {dashboardCopy.title}
 </h1>
 
-<p className="mt-3 max-w-4xl text-lg leading-8 text-slate-600">
+<p className="mt-4 max-w-4xl text-base font-semibold leading-8 text-slate-400 sm:text-lg">
 {dashboardCopy.subtitle}
 </p>
 
+<div className="mt-6 flex flex-wrap gap-3">
+<StatusBadge tone={hasProcurementData ? "success" : "warning"}>
+{hasProcurementData ? "Available" : "Insufficient Data"}
+</StatusBadge>
 
+<StatusBadge tone="blue">
+{dashboardCopy.briefLabel}
+</StatusBadge>
+
+<StatusBadge tone="neutral">
+{currentCompany?.name || "Company Workspace"}
+</StatusBadge>
+</div>
 </div>
 
+<div className="grid min-w-full gap-3 sm:grid-cols-3 xl:min-w-[460px]">
+<DarkMetric title="Enterprise Score" value={enterpriseScoreLabel} />
+<DarkMetric title="Risk Index" value={riskIndexLabel} />
+<DarkMetric title="Forecast Trust" value={forecastAccuracyLabel} />
 </div>
+</div>
+</section>
 
-<section className="mt-10 rounded-[36px] border border-slate-200 bg-slate-950 p-8 text-white">
-<p className="text-xs font-black uppercase tracking-[0.3em] text-orange-400">
+<section className="mt-6 rounded-[34px] border border-[#2CC4E8]/15 bg-gradient-to-br from-[#0B3D91]/35 via-[#07111F]/92 to-[#061426] p-6 shadow-[0_0_70px_rgba(44,196,232,0.10)] sm:p-8">
+<div className="grid gap-8 xl:grid-cols-[1.15fr_0.85fr]">
+<div>
+<p className="text-[11px] font-black uppercase tracking-[0.34em] text-[#C8A646]">
 Executive Brief
 </p>
 
-<div className="mt-5 grid gap-8 lg:grid-cols-[1fr_0.9fr]">
-<div>
-<h2 className="text-4xl font-black">
-{executiveBriefTitle}
+<h2 className="mt-4 text-3xl font-black leading-tight text-white sm:text-4xl">
+{dashboardCopy.briefTitle}
 </h2>
 
-<p className="mt-4 max-w-3xl text-base font-semibold leading-8 text-slate-200">
+<p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-300 sm:text-base sm:leading-8">
 {executiveBriefSummary}
 </p>
 
-<div className="mt-6 rounded-[28px] border border-white/10 bg-white/5 p-5">
-<p className="text-xs font-black uppercase tracking-[0.24em] text-orange-300">
+<div className="mt-6 rounded-[26px] border border-white/10 bg-white/[0.045] p-5">
+<p className="text-[10px] font-black uppercase tracking-[0.24em] text-[#C8A646]">
 Recommended Action
 </p>
 
 <p className="mt-3 text-sm font-semibold leading-7 text-slate-300">
-{executiveBriefRecommendation}
+{dashboardCopy.recommendation}
 </p>
 </div>
 </div>
@@ -723,25 +714,24 @@ Recommended Action
 <DarkMetric title="Service RFQs" value={String(serviceRfqs)} />
 <DarkMetric title="Project Activity" value={String(openRfqs)} />
 <DarkMetric title="Service Visibility" value={executiveStatus} />
-<DarkMetric title="Forecast Confidence" value={`${forecastAccuracy}%`} />
+<DarkMetric title="Forecast Trust" value={forecastAccuracyLabel} />
 </>
 ) : (
 <>
-<DarkMetric title="Enterprise Score" value={enterpriseScoreLabel} />
 <DarkMetric title="RFQ Maturity" value={rfqMaturityLabel} />
-<DarkMetric title="Risk Index" value={riskIndexLabel} />
-<DarkMetric title="Forecast Accuracy" value={forecastAccuracyLabel} />
+<DarkMetric title="Board Readiness" value={`${procurementHealthScore}%`} />
+<DarkMetric title="Supplier Concentration" value={supplierConcentration} />
+<DarkMetric title="CEO Actions" value={String(alerts.length)} />
 </>
 )}
 </div>
 </div>
 </section>
 
-<section className="mt-8">
-<div className="grid gap-5 md:grid-cols-2 xl:grid-cols-5">
+<section className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
 <InsightCard
 title="Board Readiness"
-value={`${procurementHealthScore}%`}
+value={hasProcurementData ? `${procurementHealthScore}%` : "Insufficient Data"}
 detail={executiveStatus}
 />
 
@@ -753,127 +743,152 @@ detail={`${supplierConcentration} supplier concentration`}
 
 <InsightCard
 title="Savings Signal"
-value={formatMoney(estimatedSavings)}
+value={hasProcurementData ? formatMoney(estimatedSavings) : "Pending"}
 detail="Budget vs award opportunity"
 />
 
 <InsightCard
 title="Forecast Trust"
-value={`${forecastAccuracy}%`}
+value={forecastAccuracyLabel}
 detail="Executive forecast confidence"
 />
 
 <InsightCard
 title="CEO Actions"
 value={String(alerts.length)}
-detail="Open executive decision signals"
+detail="Open decision signals"
 />
+</section>
+
+<section className="mt-6 grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
+<div className="rounded-[32px] border border-white/10 bg-white/[0.045] p-6 shadow-inner-executive sm:p-7">
+<div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+<div>
+<p className="text-[10px] font-black uppercase tracking-[0.28em] text-[#C8A646]">
+Boardroom Intelligence
+</p>
+
+<h2 className="mt-3 text-2xl font-black text-white">
+Board Summary Narrative
+</h2>
+</div>
+
+<StatusBadge tone={hasProcurementData ? "success" : "warning"}>
+{hasProcurementData ? "Available" : "Insufficient Data"}
+</StatusBadge>
+</div>
+
+<p className="mt-5 text-sm font-semibold leading-7 text-slate-300">
+{boardNarrative}
+</p>
+
+<div className="mt-6 grid gap-3 sm:grid-cols-2">
+<SignalTile label="RFQs" value={String(totalRfqs)} />
+<SignalTile label="Supplier Quotes" value={String(submittedQuotes)} />
+<SignalTile label="Awarded RFQs" value={String(awardedRfqs)} />
+<SignalTile label="Open RFQs" value={String(openRfqs)} />
+</div>
+</div>
+
+<div className="rounded-[32px] border border-white/10 bg-[#061426]/80 p-6 shadow-inner-executive sm:p-7">
+<div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+<div>
+<p className="text-[10px] font-black uppercase tracking-[0.28em] text-[#C8A646]">
+CEO Action Center
+</p>
+
+<h2 className="mt-3 text-2xl font-black text-white">
+Executive Decision Signals
+</h2>
+</div>
+
+<span className="rounded-full border border-white/10 bg-white/[0.055] px-4 py-2 text-xs font-black uppercase tracking-[0.2em] text-slate-300">
+{alerts.length} Signals
+</span>
+</div>
+
+<div className="mt-6 grid gap-4 lg:grid-cols-2">
+{alerts.length > 0 ? (
+alerts.slice(0, 4).map((alert, index) => (
+<CeoActionCard key={`${alert.title}-${index}`} alert={alert} index={index} />
+))
+) : (
+<div className="lg:col-span-2">
+<EmptyState message="No active executive decision signals yet." />
+</div>
+)}
+</div>
 </div>
 </section>
 
-<section className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-<InsightCard title="Material RFQs" value={String(materialRfqs)} detail="Products, materials, and manufactured systems" />
-<InsightCard title="Trade RFQs" value={String(tradeRfqs)} detail="Subcontractor and trade work packages" />
-<InsightCard title="Equipment RFQs" value={String(equipmentRfqs)} detail="Rental equipment and site resources" />
-<InsightCard title="Service RFQs" value={String(serviceRfqs)} detail="Professional and advisory services" />
-</section>
-
-<section className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-5">
-<InsightCard title="Open Market" value={String(openMarketRfqs)} detail="Public or broadly visible RFQs" />
-<InsightCard title="Invited RFQs" value={String(invitedRfqs)} detail="Selective qualified supplier workflows" />
-<InsightCard title="Sealed Bids" value={String(sealedBidRfqs)} detail="Controlled bid submission workflows" />
-<InsightCard title="Project Specific" value={String(projectSpecificRfqs)} detail="Single-project procurement requests" />
-<InsightCard title="Framework RFQs" value={String(frameworkRfqs)} detail="Recurring or long-term agreements" />
-</section>
-
-<section className="mt-8 rounded-[32px] border border-black/5 bg-white p-8">
-<p className="text-xs font-black uppercase tracking-[0.3em] text-orange-500">
-Construction Procurement Mix
+<section className="mt-6 grid gap-6 xl:grid-cols-[1fr_0.85fr]">
+<div className="rounded-[32px] border border-white/10 bg-white/[0.045] p-6 shadow-inner-executive sm:p-7">
+<p className="text-[10px] font-black uppercase tracking-[0.28em] text-[#C8A646]">
+Procurement Command Center
 </p>
 
-<h2 className="mt-3 text-3xl font-black text-slate-950">
+<h2 className="mt-3 text-2xl font-black text-white">
 RFQ Classification Intelligence
 </h2>
 
-<p className="mt-3 max-w-4xl text-sm leading-7 text-slate-600">
-{procurementMixStatus}. Dominant procurement scope is {dominantScope}.
-Dominant sourcing method is {dominantSourcing}. Classification
-maturity score is {constructionClassificationScore}/100.
-</p>
-</section>
-
-<section className="mt-8 rounded-[32px] border border-black/5 bg-white p-8">
-<p className="text-xs font-black uppercase tracking-[0.3em] text-orange-500">
-{experience === "vendor"
-? "Supplier Signals"
-: experience === "consultant"
-? "Advisory Signals"
-: "Executive Alerts"}
+<p className="mt-3 max-w-4xl text-sm font-semibold leading-7 text-slate-400">
+{procurementMixStatus}. Dominant procurement scope is{" "}
+{hasProcurementData ? dominantScope : "Pending"}. Dominant sourcing
+method is {hasProcurementData ? dominantSourcing : "Pending"}.
+Classification maturity score is {constructionClassificationScore}/100.
 </p>
 
-<h2 className="mt-3 text-3xl font-black text-slate-950">
-Real-Time Workspace Signals
-</h2>
-
-<div className="mt-6 space-y-4">
-{alerts.length > 0 ? (
-alerts.map((alert, index) => (
-<div
-key={index}
-className="rounded-2xl border border-slate-200 bg-slate-50 p-5"
->
-<div className="flex items-center gap-3">
-<div
-className={`h-3 w-3 rounded-full ${
-alert.level === "healthy"
-? "bg-green-500"
-: alert.level === "opportunity"
-? "bg-yellow-500"
-: "bg-red-500"
-}`}
-/>
-
-<p className="font-black text-slate-950">{alert.title}</p>
+<div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+<SignalTile label="Material RFQs" value={String(materialRfqs)} />
+<SignalTile label="Trade RFQs" value={String(tradeRfqs)} />
+<SignalTile label="Equipment RFQs" value={String(equipmentRfqs)} />
+<SignalTile label="Service RFQs" value={String(serviceRfqs)} />
 </div>
 
-<p className="mt-2 text-sm text-slate-600">{alert.message}</p>
+<div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+<SignalTile label="Open Market" value={String(openMarketRfqs)} />
+<SignalTile label="Invited" value={String(invitedRfqs)} />
+<SignalTile label="Sealed Bids" value={String(sealedBidRfqs)} />
+<SignalTile label="Project Specific" value={String(projectSpecificRfqs)} />
+<SignalTile label="Framework" value={String(frameworkRfqs)} />
 </div>
-))
-) : (
-<EmptyState message="No active workspace signals yet." />
-)}
 </div>
-</section>
-<section className="mt-8 rounded-[32px] border border-black/5 bg-white p-8">
-<p className="text-xs font-black uppercase tracking-[0.3em] text-orange-500">
+
+<div className="rounded-[32px] border border-white/10 bg-[#061426]/80 p-6 shadow-inner-executive sm:p-7">
+<p className="text-[10px] font-black uppercase tracking-[0.28em] text-[#C8A646]">
 {dashboardCopy.companyLabel}
 </p>
 
+<h2 className="mt-3 text-2xl font-black text-white">
+Workspace Governance
+</h2>
+
 {currentCompany ? (
-<div className="mt-6 flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-<div className="flex items-center gap-5">
+<div className="mt-6">
+<div className="flex items-center gap-4">
 {currentCompany.logo_url ? (
 <img
 src={currentCompany.logo_url}
 alt={currentCompany.name || "Company"}
-className="h-20 w-20 rounded-3xl border border-slate-200 object-contain p-2"
+className="h-16 w-16 rounded-2xl border border-white/10 bg-white p-2 object-contain"
 />
 ) : (
-<div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-slate-100 text-3xl">
-🏗️
+<div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.055] text-2xl">
+◈
 </div>
 )}
 
-<div>
-<h2 className="text-3xl font-black text-slate-950">
+<div className="min-w-0">
+<h3 className="truncate text-xl font-black text-white">
 {currentCompany.name}
-</h2>
+</h3>
 
-<p className="mt-1 text-sm font-semibold text-slate-500">
-{currentCompany.category} · {currentCompany.location}
+<p className="mt-1 text-sm font-semibold text-slate-400">
+{currentCompany.category || "Category N/A"} ·{" "}
+{currentCompany.location || "Location N/A"}
 </p>
 
-<p className="mt-2 text-sm text-slate-600">
+<p className="mt-1 text-xs font-bold uppercase tracking-wide text-slate-500">
 {currentCompany.network_role || "Workspace"}
 </p>
 </div>
@@ -881,148 +896,25 @@ className="h-20 w-20 rounded-3xl border border-slate-200 object-contain p-2"
 
 <Link
 href={`/company/${currentCompany.slug}`}
-className="rounded-full bg-slate-950 px-6 py-3 text-sm font-bold text-white transition hover:bg-slate-800"
+className="mt-6 inline-flex rounded-full border border-[#2CC4E8]/25 bg-[#2CC4E8]/10 px-5 py-3 text-sm font-black text-[#9BE8F8] transition hover:bg-[#2CC4E8]/15"
 >
-Open Company
+Open Company →
 </Link>
 </div>
 ) : (
+<div className="mt-6">
 <EmptyState message="No company connected." />
-)}
-</section>
-
-<section className="mt-8 grid gap-6 md:grid-cols-4">
-<WorkspaceCard
-title="RFQ Marketplace"
-description="Browse and manage procurement opportunities."
-href="/rfq"
-/>
-
-<WorkspaceCard
-title="Executive Analytics"
-description="Procurement intelligence and board reporting."
-href="/analytics"
-/>
-
-<WorkspaceCard
-title="Company Hub"
-description="Manage company profile and visibility."
-href="/company/settings"
-/>
-
-<WorkspaceCard
-title="Activity Center"
-description="Review procurement and workflow activity."
-href="/notifications"
-/>
-</section>
-
-<section className="mt-8 rounded-[36px] border border-slate-200 bg-slate-950 p-8 text-white">
-<div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-<div>
-<p className="text-xs font-black uppercase tracking-[0.3em] text-orange-400">
-CEO Action Center
-</p>
-
-<h2 className="mt-3 text-3xl font-black">
-Executive Decision Signals
-</h2>
-
-<p className="mt-3 max-w-4xl text-sm font-semibold leading-7 text-slate-300">
-Real workspace signals translated into executive priorities using live
-RFQ, quote, award, and notification activity.
-</p>
-</div>
-
-<span className="rounded-full border border-white/10 bg-white/10 px-4 py-2 text-xs font-black uppercase tracking-[0.2em] text-slate-200">
-{alerts.length} Active Signals
-</span>
-</div>
-
-<div className="mt-8 grid gap-5 lg:grid-cols-3">
-{alerts.length > 0 ? (
-alerts.map((alert, index) => {
-const priority =
-alert.level === "warning"
-? "High Priority"
-: alert.level === "opportunity"
-? "Opportunity"
-: "Healthy";
-
-const toneClass =
-alert.level === "healthy"
-? "border-emerald-500/20 bg-emerald-500/5 text-emerald-300"
-: alert.level === "opportunity"
-? "border-yellow-400/20 bg-yellow-400/5 text-yellow-300"
-: "border-red-500/20 bg-red-500/5 text-red-300";
-
-const dotClass =
-alert.level === "healthy"
-? "bg-emerald-400"
-: alert.level === "opportunity"
-? "bg-yellow-400"
-: "bg-red-400";
-
-return (
-<div
-key={index}
-className="rounded-[28px] border border-white/10 bg-white/[0.055] p-6 shadow-inner-executive"
->
-<div className="flex items-start justify-between gap-4">
-<div className="flex items-center gap-3">
-<span className={`h-3 w-3 rounded-full ${dotClass}`} />
-
-<span
-className={`rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-wide ${toneClass}`}
->
-{priority}
-</span>
-</div>
-
-<span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
-#{index + 1}
-</span>
-</div>
-
-<h3 className="mt-5 text-xl font-black leading-tight text-white">
-{alert.title}
-</h3>
-
-<p className="mt-4 text-sm font-semibold leading-7 text-slate-300">
-{alert.message}
-</p>
-
-<div className="mt-5 rounded-2xl border border-white/10 bg-black/20 p-4">
-<p className="text-[10px] font-black uppercase tracking-[0.22em] text-orange-300">
-Recommended Action
-</p>
-
-<p className="mt-2 text-sm font-bold leading-6 text-slate-200">
-{alert.level === "warning"
-? "Review this signal before approving the next procurement decision."
-: alert.level === "opportunity"
-? "Evaluate this opportunity and decide whether it should move into the next action cycle."
-: "Maintain current operating discipline and continue monitoring this signal."}
-</p>
-</div>
-</div>
-);
-})
-) : (
-<div className="lg:col-span-3">
-<EmptyState message="No active executive decision signals yet." />
 </div>
 )}
 </div>
 </section>
-
-<section className="mt-8 grid gap-8 lg:grid-cols-2">
-<div className="rounded-[32px] border border-black/5 bg-white p-8">
-<p className="text-xs font-black uppercase tracking-[0.3em] text-orange-500">
+<section className="mt-6 grid gap-6 xl:grid-cols-2">
+<div className="rounded-[32px] border border-white/10 bg-white/[0.045] p-6 shadow-inner-executive sm:p-7">
+<p className="text-[10px] font-black uppercase tracking-[0.28em] text-[#C8A646]">
 Award Activity
 </p>
 
-<h2 className="mt-3 text-3xl font-black text-slate-950">
+<h2 className="mt-3 text-2xl font-black text-white">
 Recent Award Decisions
 </h2>
 
@@ -1036,11 +928,11 @@ const relatedRfq = rfqList.find(
 return (
 <div
 key={quote.id}
-className="rounded-3xl border border-slate-100 bg-slate-50 p-5"
+className="rounded-[24px] border border-white/10 bg-[#061426]/70 p-5"
 >
 <div className="flex items-start justify-between gap-4">
 <div>
-<p className="text-lg font-black text-slate-950">
+<p className="text-lg font-black text-white">
 {relatedRfq?.title || "Awarded RFQ"}
 </p>
 
@@ -1049,12 +941,10 @@ className="rounded-3xl border border-slate-100 bg-slate-50 p-5"
 </p>
 </div>
 
-<span className="rounded-full bg-green-100 px-3 py-1 text-xs font-black text-green-700">
-Awarded
-</span>
+<StatusBadge tone="success">Awarded</StatusBadge>
 </div>
 
-<p className="mt-4 text-2xl font-black text-slate-950">
+<p className="mt-4 text-2xl font-black text-[#C8A646]">
 {formatMoney(quote.amount)}
 </p>
 </div>
@@ -1065,12 +955,13 @@ Awarded
 )}
 </div>
 </div>
-<div className="rounded-[32px] border border-black/5 bg-white p-8">
-<p className="text-xs font-black uppercase tracking-[0.3em] text-orange-500">
-Portfolio View
+
+<div className="rounded-[32px] border border-white/10 bg-white/[0.045] p-6 shadow-inner-executive sm:p-7">
+<p className="text-[10px] font-black uppercase tracking-[0.28em] text-[#C8A646]">
+Opportunity Ranking
 </p>
 
-<h2 className="mt-3 text-3xl font-black text-slate-950">
+<h2 className="mt-3 text-2xl font-black text-white">
 Top RFQs by Budget
 </h2>
 
@@ -1080,25 +971,25 @@ topRfqsByBudget.map((rfq) => (
 <Link
 key={rfq.id}
 href={rfq.slug ? `/rfq/${rfq.slug}` : "/rfq"}
-className="block rounded-3xl border border-slate-100 bg-slate-50 p-5 transition hover:-translate-y-1 hover:shadow-lg"
+className="block rounded-[24px] border border-white/10 bg-[#061426]/70 p-5 transition hover:-translate-y-1 hover:border-[#2CC4E8]/25 hover:bg-[#07111F]"
 >
 <div className="flex items-start justify-between gap-4">
 <div>
-<p className="text-lg font-black text-slate-950">
+<p className="text-lg font-black text-white">
 {rfq.title || "Untitled RFQ"}
 </p>
 
 <p className="mt-1 text-sm font-semibold text-slate-500">
-{PROCUREMENT_SCOPE_LABELS[
+{
+PROCUREMENT_SCOPE_LABELS[
 getProcurementScope(rfq.procurement_scope)
-]}{" "}
+]
+}{" "}
 · {rfq.location || "Location N/A"}
 </p>
 </div>
 
-<span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-black text-slate-700">
-{rfq.status || "open"}
-</span>
+<StatusBadge tone="neutral">{rfq.status || "open"}</StatusBadge>
 </div>
 
 <div className="mt-4 flex flex-wrap gap-2">
@@ -1119,7 +1010,7 @@ getContractFramework(rfq.contract_framework)
 </SmallBadge>
 </div>
 
-<p className="mt-4 text-2xl font-black text-slate-950">
+<p className="mt-4 text-2xl font-black text-[#C8A646]">
 {formatMoney(rfq.budget)}
 </p>
 </Link>
@@ -1131,19 +1022,19 @@ getContractFramework(rfq.contract_framework)
 </div>
 </section>
 
-<section className="mt-8 rounded-[32px] border border-black/5 bg-white p-8">
-<div className="flex items-end justify-between gap-6">
+<section className="mt-6 rounded-[32px] border border-white/10 bg-[#061426]/80 p-6 shadow-inner-executive sm:p-7">
+<div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
 <div>
-<p className="text-xs font-black uppercase tracking-[0.3em] text-orange-500">
+<p className="text-[10px] font-black uppercase tracking-[0.28em] text-[#C8A646]">
 {dashboardCopy.activityLabel}
 </p>
 
-<h2 className="mt-3 text-3xl font-black text-slate-950">
+<h2 className="mt-3 text-2xl font-black text-white">
 {dashboardCopy.activityTitle}
 </h2>
 </div>
 
-<span className="rounded-full bg-slate-950 px-4 py-2 text-xs font-black uppercase tracking-[0.2em] text-white">
+<span className="rounded-full border border-white/10 bg-white/[0.055] px-4 py-2 text-xs font-black uppercase tracking-[0.2em] text-slate-300">
 {activityFeed.length} Signals
 </span>
 </div>
@@ -1157,6 +1048,32 @@ activityFeed.map((event) => (
 <EmptyState message="No workspace activity has been recorded yet." />
 )}
 </div>
+</section>
+
+<section className="mt-6 grid gap-4 md:grid-cols-4">
+<WorkspaceCard
+title="RFQ Marketplace"
+description="Create, manage, and review procurement opportunities."
+href="/rfq"
+/>
+
+<WorkspaceCard
+title="Executive Analytics"
+description="Board reporting, risk signals, and procurement intelligence."
+href="/analytics"
+/>
+
+<WorkspaceCard
+title="Company Command"
+description="Manage company governance, access, and visibility."
+href="/company/settings"
+/>
+
+<WorkspaceCard
+title="Activity Center"
+description="Review alerts, workflow signals, and procurement events."
+href="/notifications"
+/>
 </section>
 </div>
 </main>
@@ -1175,15 +1092,15 @@ href: string;
 return (
 <Link
 href={href}
-className="rounded-[28px] border border-black/5 bg-white p-7 transition hover:-translate-y-1 hover:shadow-xl"
+className="rounded-[26px] border border-white/10 bg-white/[0.045] p-6 transition hover:-translate-y-1 hover:border-[#2CC4E8]/25 hover:bg-white/[0.06]"
 >
-<h3 className="text-2xl font-black text-slate-950">{title}</h3>
+<h3 className="text-xl font-black text-white">{title}</h3>
 
-<p className="mt-3 text-sm leading-relaxed text-slate-600">
+<p className="mt-3 text-sm font-semibold leading-6 text-slate-400">
 {description}
 </p>
 
-<div className="mt-6 text-sm font-black text-slate-950">Open →</div>
+<div className="mt-5 text-sm font-black text-[#9BE8F8]">Open →</div>
 </Link>
 );
 }
@@ -1208,72 +1125,173 @@ tone="blue"
 }
 
 function DarkMetric({ title, value }: { title: string; value: string }) {
+return <ExecutiveMetricCard label={title} value={value} tone="gold" />;
+}
+
+function SignalTile({ label, value }: { label: string; value: string }) {
 return (
-<ExecutiveMetricCard
-label={title}
-value={value}
-tone="gold"
-/>
+<div className="rounded-[20px] border border-white/10 bg-white/[0.045] p-4">
+<p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
+{label}
+</p>
+
+<p className="mt-2 text-xl font-black text-white">{value}</p>
+</div>
 );
 }
 
 function SmallBadge({ children }: { children: React.ReactNode }) {
 return (
-<span className="rounded-full bg-white px-3 py-1 text-xs font-black text-slate-600 shadow-sm">
+<span className="rounded-full border border-white/10 bg-white/[0.055] px-3 py-1 text-xs font-black text-slate-300">
 {children}
 </span>
+);
+}
+
+function StatusBadge({
+children,
+tone = "neutral",
+}: {
+children: React.ReactNode;
+tone?: "success" | "warning" | "blue" | "neutral";
+}) {
+const toneClass =
+tone === "success"
+? "border-emerald-300/20 bg-emerald-400/10 text-emerald-300"
+: tone === "warning"
+? "border-orange-300/20 bg-orange-400/10 text-orange-300"
+: tone === "blue"
+? "border-[#2CC4E8]/25 bg-[#2CC4E8]/10 text-[#9BE8F8]"
+: "border-white/10 bg-white/[0.055] text-slate-300";
+
+return (
+<span
+className={`inline-flex rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] ${toneClass}`}
+>
+{children}
+</span>
+);
+}
+
+function CeoActionCard({
+alert,
+index,
+}: {
+alert: WorkspaceAlert;
+index: number;
+}) {
+const priority =
+alert.level === "warning"
+? "High Priority"
+: alert.level === "opportunity"
+? "Opportunity"
+: "Healthy";
+
+const dotClass =
+alert.level === "healthy"
+? "bg-emerald-400"
+: alert.level === "opportunity"
+? "bg-yellow-400"
+: "bg-red-400";
+
+return (
+<div className="rounded-[24px] border border-white/10 bg-white/[0.045] p-5">
+<div className="flex items-start justify-between gap-4">
+<div className="flex items-center gap-3">
+<span className={`h-3 w-3 rounded-full ${dotClass}`} />
+
+<StatusBadge
+tone={
+alert.level === "healthy"
+? "success"
+: alert.level === "opportunity"
+? "warning"
+: "warning"
+}
+>
+{priority}
+</StatusBadge>
+</div>
+
+<span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
+#{index + 1}
+</span>
+</div>
+
+<h3 className="mt-5 text-lg font-black leading-tight text-white">
+{alert.title}
+</h3>
+
+<p className="mt-3 text-sm font-semibold leading-7 text-slate-400">
+{alert.message}
+</p>
+
+<div className="mt-5 rounded-2xl border border-white/10 bg-black/20 p-4">
+<p className="text-[10px] font-black uppercase tracking-[0.22em] text-[#C8A646]">
+Recommended Next Step
+</p>
+
+<p className="mt-2 text-sm font-bold leading-6 text-slate-300">
+{alert.level === "warning"
+? "Review this signal before approving the next procurement decision."
+: alert.level === "opportunity"
+? "Evaluate this opportunity and decide whether it should move into the next action cycle."
+: "Maintain current operating discipline and continue monitoring this signal."}
+</p>
+</div>
+</div>
 );
 }
 
 function ActivityFeedItem({ event }: { event: ActivityEvent }) {
 const severityClass =
 event.severity === "success"
-? "bg-green-100 text-green-700"
+? "border-emerald-300/20 bg-emerald-400/10 text-emerald-300"
 : event.severity === "warning"
-? "bg-yellow-100 text-yellow-800"
+? "border-yellow-300/20 bg-yellow-400/10 text-yellow-300"
 : event.severity === "critical"
-? "bg-red-100 text-red-700"
-: "bg-blue-100 text-blue-700";
+? "border-red-300/20 bg-red-400/10 text-red-300"
+: "border-[#2CC4E8]/20 bg-[#2CC4E8]/10 text-[#9BE8F8]";
 
 const dotClass =
 event.severity === "success"
-? "bg-green-500"
+? "bg-emerald-400"
 : event.severity === "warning"
-? "bg-yellow-500"
+? "bg-yellow-400"
 : event.severity === "critical"
-? "bg-red-500"
-: "bg-blue-500";
+? "bg-red-400"
+: "bg-[#2CC4E8]";
 
 return (
 <Link
 href={event.href}
-className="group block rounded-3xl border border-slate-100 bg-slate-50 p-5 transition hover:-translate-y-1 hover:bg-white hover:shadow-lg"
+className="group block rounded-[24px] border border-white/10 bg-white/[0.045] p-5 transition hover:-translate-y-1 hover:border-[#2CC4E8]/25 hover:bg-white/[0.06]"
 >
 <div className="flex items-start gap-4">
 <div className={`mt-2 h-3 w-3 rounded-full ${dotClass}`} />
 
 <div className="min-w-0 flex-1">
 <div className="flex flex-wrap items-center justify-between gap-3">
-<p className="text-lg font-black text-slate-950">{event.title}</p>
+<p className="text-lg font-black text-white">{event.title}</p>
 
 <div className="flex items-center gap-2">
 <span
-className={`rounded-full px-3 py-1 text-xs font-black uppercase ${severityClass}`}
+className={`rounded-full border px-3 py-1 text-xs font-black uppercase ${severityClass}`}
 >
 {event.type}
 </span>
 
-<span className="text-xs font-bold text-slate-400">
+<span className="text-xs font-bold text-slate-500">
 {formatRelativeTime(event.createdAt)}
 </span>
 </div>
 </div>
 
-<p className="mt-2 text-sm leading-relaxed text-slate-600">
+<p className="mt-2 text-sm font-semibold leading-6 text-slate-400">
 {event.description}
 </p>
 
-<p className="mt-3 text-xs font-black uppercase tracking-[0.2em] text-slate-400 transition group-hover:text-slate-950">
+<p className="mt-3 text-xs font-black uppercase tracking-[0.2em] text-slate-500 transition group-hover:text-[#9BE8F8]">
 Open event →
 </p>
 </div>
@@ -1284,7 +1302,7 @@ Open event →
 
 function EmptyState({ message }: { message: string }) {
 return (
-<div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50 p-8 text-center">
+<div className="rounded-[24px] border border-dashed border-white/15 bg-white/[0.035] p-8 text-center">
 <p className="text-sm font-bold text-slate-500">{message}</p>
 </div>
 );

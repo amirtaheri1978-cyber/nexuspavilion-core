@@ -1,41 +1,44 @@
 import Link from "next/link";
-
 import AnalyticsChart from "@/components/analytics-chart";
 import ExecutiveExportPanel from "@/components/executive-export-panel";
 import { BoardroomSnapshot } from "@/components/analytics/boardroom-snapshot";
 import { CEOActionCenter } from "@/components/analytics/ceo-action-center";
-import { ProcurementCommandCenter } from "@/components/analytics/procurement-command-center";
-import { BoardPresentationCenter } from "@/components/analytics/board-presentation-center";
 import { ExecutiveMetricCard } from "@/components/executive/executive-metric-card";
 import BoardReportGenerator from "@/components/board-report-generator";
 import AIBoardNarrativeGenerator from "@/components/ai-board-narrative-generator";
-import AIConfidenceEngine from "@/components/ai-confidence-engine";
 import ExecutiveRiskIntelligence from "@/components/executive-risk-intelligence";
 import ProcurementCopilotIntelligence from "@/components/procurement-copilot-intelligence";
 import { createClient } from "@/lib/supabase/server";
+import { ExecutiveOpportunityRanking } from "@/components/executive/executive-opportunity-ranking";
+import { ExecutiveDashboard } from "@/components/analytics/sections/executive-dashboard";
+import { BoardDashboard } from "@/components/analytics/sections/board-dashboard";
+import { ProcurementDashboard } from "@/components/analytics/sections/procurement-dashboard";
+import { IntelligenceDashboard } from "@/components/analytics/sections/intelligence-dashboard";
+import {
+CONTRACT_FRAMEWORK_LABELS,
+PROCUREMENT_SCOPE_LABELS,
+SOURCING_METHOD_LABELS,
+countByFramework,
+countByScope,
+countBySourcing,
+getCompetitionLabel,
+getContractFramework,
+getHealthLabel,
+getProcurementScope,
+getSourcingMethod,
+type AnalyticsRFQ,
+} from "@/lib/analytics/procurement-utils";
+import { buildSupplierIntelligence } from "@/lib/analytics/supplier-intelligence";
 
-
-type ProcurementScope =
-| "material"
-| "subcontractor"
-| "equipment"
-| "professional_service";
-
-type SourcingMethod = "open" | "invited" | "sealed_bid";
-
-type ContractFramework = "project_specific" | "framework";
-
-type RFQ = {
-id: string;
-title: string;
-category: string | null;
-location: string | null;
-budget: number | string | null;
-status: string | null;
-procurement_scope: ProcurementScope | null;
-sourcing_method: SourcingMethod | null;
-contract_framework: ContractFramework | null;
-};
+import {
+calculateExecutiveScore,
+calculateExecutiveReadiness,
+calculateDigitalMaturity,
+calculateBoardHealth,
+executiveStatus,
+commandStatus,
+boardStatus,
+} from "@/lib/analytics/executive-intelligence";
 
 type Quote = {
 id: string;
@@ -55,69 +58,6 @@ level: "opportunity" | "healthy" | "warning";
 title: string;
 message: string;
 };
-
-const PROCUREMENT_SCOPE_LABELS: Record<ProcurementScope, string> = {
-material: "Material RFQs",
-subcontractor: "Trade RFQs",
-equipment: "Equipment RFQs",
-professional_service: "Service RFQs",
-};
-
-const SOURCING_METHOD_LABELS: Record<SourcingMethod, string> = {
-open: "Open RFQs",
-invited: "Invited RFQs",
-sealed_bid: "Sealed Bid RFQs",
-};
-
-const CONTRACT_FRAMEWORK_LABELS: Record<ContractFramework, string> = {
-project_specific: "Project-Specific",
-framework: "Framework Agreement",
-};
-
-function getHealthLabel(score: number) {
-if (score >= 85) return "Strong";
-if (score >= 70) return "Healthy";
-if (score >= 55) return "Moderate";
-return "Needs Attention";
-}
-
-function getCompetitionLabel(avgQuotesPerRfq: number) {
-if (avgQuotesPerRfq >= 4) return "High Competition";
-if (avgQuotesPerRfq >= 2) return "Healthy Competition";
-if (avgQuotesPerRfq >= 1) return "Limited Competition";
-return "No Competition Yet";
-}
-
-function getProcurementScope(value: ProcurementScope | null | undefined) {
-if (value && PROCUREMENT_SCOPE_LABELS[value]) return value;
-return "subcontractor";
-}
-
-function getSourcingMethod(value: SourcingMethod | null | undefined) {
-if (value && SOURCING_METHOD_LABELS[value]) return value;
-return "invited";
-}
-
-function getContractFramework(value: ContractFramework | null | undefined) {
-if (value && CONTRACT_FRAMEWORK_LABELS[value]) return value;
-return "project_specific";
-}
-
-function countByScope(rfqs: RFQ[], scope: ProcurementScope) {
-return rfqs.filter((rfq) => getProcurementScope(rfq.procurement_scope) === scope)
-.length;
-}
-
-function countBySourcing(rfqs: RFQ[], method: SourcingMethod) {
-return rfqs.filter((rfq) => getSourcingMethod(rfq.sourcing_method) === method)
-.length;
-}
-
-function countByFramework(rfqs: RFQ[], framework: ContractFramework) {
-return rfqs.filter(
-(rfq) => getContractFramework(rfq.contract_framework) === framework
-).length;
-}
 
 export default async function AnalyticsPage() {
 const supabase = await createClient();
@@ -142,7 +82,7 @@ const { data: rfqs } = companyId
 .order("created_at", { ascending: false })
 : { data: [] };
 
-const rfqList = (rfqs ?? []) as RFQ[];
+const rfqList = (rfqs ?? []) as AnalyticsRFQ[];
 const rfqIds = rfqList.map((rfq) => rfq.id);
 
 const { data: quotes } =
@@ -154,32 +94,33 @@ rfqIds.length > 0
 .order("created_at", { ascending: false })
 : { data: [] };
 
-const { data: notifications } = companyId
-? await supabase
-.from("notifications")
-.select("*")
-.eq("company_id", companyId)
-.order("created_at", { ascending: false })
-.limit(5)
-: await supabase
-.from("notifications")
-.select("*")
-.order("created_at", { ascending: false })
-.limit(5);
-
 const { data: companies } = await supabase.from("companies").select("id,name");
 
 const quoteList = (quotes ?? []) as Quote[];
 const companyList = (companies ?? []) as Company[];
 
+const {
+vendorLeaderboard,
+supplierRanking,
+supplierRiskRadar,
+strategicSuppliers,
+preferredSuppliers,
+highRiskSuppliers,
+supplierDiversificationScore,
+supplierReliabilityScore,
+} = buildSupplierIntelligence({
+quoteList,
+companyList,
+});
+
 const totalRfqs = rfqList.length;
 
 const activeRfqs = rfqList.filter(
-(rfq) => !rfq.status || rfq.status === "open"
+(rfq) => !rfq.status || rfq.status === "open",
 ).length;
 
 const awardedContracts = quoteList.filter(
-(quote) => quote.decision === "awarded"
+(quote) => quote.decision === "awarded",
 ).length;
 
 const supplierQuotes = quoteList.length;
@@ -206,8 +147,8 @@ Math.round(
 (serviceRfqs > 0 ? 10 : 0) +
 (openMarketRfqs > 0 ? 8 : 0) +
 (invitedRfqs > 0 ? 8 : 0) +
-(sealedBidRfqs > 0 ? 9 : 0)
-)
+(sealedBidRfqs > 0 ? 9 : 0),
+),
 );
 
 const procurementMixStatus =
@@ -218,13 +159,14 @@ constructionClassificationScore >= 80
 : constructionClassificationScore >= 35
 ? "Early RFQ Mix"
 : "No RFQ Mix Yet";
+
 const quoteAmounts = quoteList
 .map((quote) => Number(quote.amount))
 .filter((amount) => Number.isFinite(amount));
 
 const procurementVolume = quoteAmounts.reduce(
 (total, amount) => total + amount,
-0
+0,
 );
 
 const awardedVolume = quoteList
@@ -258,15 +200,15 @@ const procurementHealthScore = Math.round(
 supplierActivityScore * 0.25 +
 competitionScore * 0.25 +
 awardScore * 0.25 +
-savingsScore * 0.25
+savingsScore * 0.25,
 );
 
 const procurementHealth = getHealthLabel(procurementHealthScore);
 const competitionIndex = getCompetitionLabel(avgQuotesPerRfq);
-
 const categoryCounts = rfqList.reduce((acc: Record<string, number>, rfq) => {
 const category = rfq.category || "Uncategorized";
 acc[category] = (acc[category] || 0) + 1;
+
 return acc;
 }, {});
 
@@ -276,7 +218,7 @@ Object.entries(categoryCounts).sort((a, b) => b[1] - a[1])[0]?.[0] ||
 
 const budgetTotal = rfqList.reduce(
 (total, rfq) => total + Number(rfq.budget || 0),
-0
+0,
 );
 
 const budgetUtilization =
@@ -284,7 +226,7 @@ budgetTotal > 0 ? Math.round((awardedVolume / budgetTotal) * 100) : 0;
 
 const executiveProcurementHealth = Math.min(
 100,
-Math.round(awardRate * 0.4 + budgetUtilization * 0.3 + avgQuotesPerRfq * 10)
+Math.round(awardRate * 0.4 + budgetUtilization * 0.3 + avgQuotesPerRfq * 10),
 );
 
 const marketCompetitionIndex =
@@ -298,24 +240,6 @@ avgQuotesPerRfq >= 4
 
 const forecastAwardVolume = Math.round(awardedVolume * 1.15);
 const forecastSavings = Math.round(potentialSavings * 1.2);
-
-const forecastHealth =
-procurementHealthScore >= 85
-? "Strong Growth"
-: procurementHealthScore >= 70
-? "Stable Growth"
-: procurementHealthScore >= 55
-? "Moderate Risk"
-: "Needs Intervention";
-
-const forecastCompetition =
-competitionScore >= 80
-? "Highly Competitive"
-: competitionScore >= 60
-? "Competitive"
-: competitionScore >= 40
-? "Developing"
-: "Low Activity";
 
 const dominantScope =
 [
@@ -337,13 +261,6 @@ totalRfqs === 0
 ? "No RFQ activity has been created yet. Start by publishing construction procurement opportunities to activate executive intelligence."
 : `${procurementHealth} procurement health. ${competitionIndex}. Dominant RFQ scope is ${dominantScope}, sourcing is ${dominantSourcing}, award conversion is ${awardRate}%, with ${supplierQuotes} supplier quotes and ${potentialSavings.toLocaleString()} dollars in estimated savings opportunity.`;
 
-const aiInsight =
-executiveProcurementHealth >= 85
-? `Procurement operations are performing strongly. Competition remains ${marketCompetitionIndex.toLowerCase()} and estimated savings exceed $${potentialSavings.toLocaleString()}.`
-: executiveProcurementHealth >= 70
-? "Procurement performance is stable, but there is room to improve supplier participation, RFQ classification depth, and award efficiency."
-: "Warning: procurement performance requires attention. Consider improving supplier engagement, RFQ mix maturity, and award conversion rates.";
-
 const aiRecommendation =
 constructionClassificationScore < 60
 ? "Improve RFQ classification coverage across material, trade, equipment, and service procurement to strengthen supplier matching and executive intelligence."
@@ -357,57 +274,58 @@ const strategicRecommendations: string[] = [];
 
 if (constructionClassificationScore < 60) {
 strategicRecommendations.push(
-"Increase RFQ classification depth by separating material, trade, equipment, and service procurement."
+"Increase RFQ classification depth by separating material, trade, equipment, and service procurement.",
 );
 }
 
 if (avgQuotesPerRfq < 2) {
 strategicRecommendations.push(
-"Increase supplier invitations to improve RFQ competition."
+"Increase supplier invitations to improve RFQ competition.",
 );
 }
 
 if (sealedBidRfqs === 0 && totalRfqs > 3) {
 strategicRecommendations.push(
-"Consider sealed-bid workflows for high-value or governance-sensitive procurement packages."
+"Consider sealed-bid workflows for high-value or governance-sensitive procurement packages.",
 );
 }
 
 if (frameworkRfqs === 0 && totalRfqs > 3) {
 strategicRecommendations.push(
-"Use framework RFQs for recurring material or supplier agreements across multiple projects."
+"Use framework RFQs for recurring material or supplier agreements across multiple projects.",
 );
 }
 
 if (budgetUtilization > 85) {
 strategicRecommendations.push(
-"Budget utilization is high. Increase competitive bidding activity."
+"Budget utilization is high. Increase competitive bidding activity.",
 );
 }
 
 if (potentialSavings > 10000) {
 strategicRecommendations.push(
-"Large savings opportunity detected. Review lowest-bid suppliers."
+"Large savings opportunity detected. Review lowest-bid suppliers.",
 );
 }
 
 if (awardRate < 30) {
 strategicRecommendations.push(
-"Award conversion is low. Review RFQ quality and supplier targeting."
+"Award conversion is low. Review RFQ quality and supplier targeting.",
 );
 }
 
 if (topCategory !== "N/A") {
 strategicRecommendations.push(
-`Expand supplier coverage in ${topCategory} procurement category.`
+`Expand supplier coverage in ${topCategory} procurement category.`,
 );
 }
 
 if (strategicRecommendations.length === 0) {
 strategicRecommendations.push(
-"Procurement performance is healthy. Continue scaling supplier participation."
+"Procurement performance is healthy. Continue scaling supplier participation.",
 );
 }
+
 const awardProbabilityForecast = rfqList
 .map((rfq) => {
 const rfqQuotes = quoteList.filter((quote) => quote.rfq_id === rfq.id);
@@ -435,9 +353,9 @@ rfqQuotes.length * 18 +
 (rfq.status === "awarded" ? 35 : 0) +
 (lowestBid > 0 ? 15 : 0) +
 classificationBoost +
-awardRate * 0.2
-)
-)
+awardRate * 0.2,
+),
+),
 );
 
 return {
@@ -452,155 +370,6 @@ status: rfq.status || "open",
 };
 })
 .slice(0, 10);
-
-const vendorLeaderboard = companyList
-.map((company) => {
-const companyQuotes = quoteList.filter(
-(quote) => quote.company_id === company.id
-);
-
-const awardedQuotes = companyQuotes.filter(
-(quote) => quote.decision === "awarded"
-);
-
-const revenue = awardedQuotes.reduce(
-(total, quote) => total + Number(quote.amount || 0),
-0
-);
-
-const winRate =
-companyQuotes.length > 0
-? Math.round((awardedQuotes.length / companyQuotes.length) * 100)
-: 0;
-
-return {
-name: company.name,
-quotes: companyQuotes.length,
-awards: awardedQuotes.length,
-revenue,
-winRate,
-score: winRate * 0.5 + awardedQuotes.length * 10 + revenue / 100000,
-};
-})
-.filter((vendor) => vendor.quotes > 0)
-.sort((a, b) => b.score - a.score)
-.slice(0, 10);
-
-const supplierRanking = companyList
-.map((company) => {
-const companyQuotes = quoteList.filter(
-(quote) => quote.company_id === company.id
-);
-
-const awardedQuotes = companyQuotes.filter(
-(quote) => quote.decision === "awarded"
-);
-
-const revenue = awardedQuotes.reduce(
-(total, quote) => total + Number(quote.amount || 0),
-0
-);
-
-const winRate =
-companyQuotes.length > 0
-? Math.round((awardedQuotes.length / companyQuotes.length) * 100)
-: 0;
-
-const participationScore = Math.min(100, companyQuotes.length * 8);
-const revenueScore = Math.min(100, revenue / 5000);
-
-const financialRisk = Math.max(5, Math.round(100 - revenue / 5000));
-const performanceRisk = Math.max(5, Math.round(100 - winRate));
-const dependencyRisk = revenue > 100000 ? 35 : 70;
-
-const financialScore = Math.max(0, 100 - financialRisk);
-const performanceScore = Math.max(0, 100 - performanceRisk);
-const dependencyScore = Math.max(0, 100 - dependencyRisk);
-
-const aiScore = Math.round(
-financialScore * 0.15 +
-performanceScore * 0.25 +
-dependencyScore * 0.15 +
-winRate * 0.25 +
-participationScore * 0.1 +
-revenueScore * 0.1
-);
-
-const tier =
-aiScore >= 90
-? "Platinum"
-: aiScore >= 80
-? "Gold"
-: aiScore >= 65
-? "Silver"
-: "Bronze";
-
-const recommendation =
-aiScore >= 90
-? "Preferred Supplier"
-: aiScore >= 80
-? "Strategic Supplier"
-: aiScore >= 65
-? "Approved Supplier"
-: "Monitor Supplier";
-
-return {
-name: company.name,
-quotes: companyQuotes.length,
-awards: awardedQuotes.length,
-revenue,
-winRate,
-aiScore,
-tier,
-recommendation,
-};
-})
-.filter((vendor) => vendor.quotes > 0)
-.sort((a, b) => b.aiScore - a.aiScore)
-.slice(0, 20);
-
-const topSupplierRevenue = Math.max(
-...supplierRanking.map((supplier) => supplier.revenue),
-0
-);
-
-const supplierRiskRadar = supplierRanking.map((supplier) => {
-const financialRisk = Math.max(
-5,
-Math.round(100 - supplier.revenue / 5000)
-);
-
-const performanceRisk = Math.max(5, Math.round(100 - supplier.winRate));
-
-const capacityRisk =
-supplier.quotes <= 1 ? 70 : supplier.quotes <= 3 ? 45 : 20;
-
-const dependencyRisk =
-topSupplierRevenue > 0 && supplier.revenue > topSupplierRevenue * 0.5
-? 75
-: 30;
-
-const deliveryRisk = Math.round((performanceRisk + capacityRisk) / 2);
-
-const overallRisk = Math.round(
-(financialRisk +
-performanceRisk +
-capacityRisk +
-dependencyRisk +
-deliveryRisk) /
-5
-);
-
-return {
-...supplier,
-financialRisk,
-performanceRisk,
-capacityRisk,
-dependencyRisk,
-deliveryRisk,
-overallRisk,
-};
-});
 
 const procurementRiskIndex = Math.max(0, 100 - procurementHealthScore);
 
@@ -630,8 +399,8 @@ procurementHealthScore * 0.45 +
 competitionScore * 0.2 +
 awardRate * 0.15 +
 budgetUtilization * 0.1 +
-constructionClassificationScore * 0.1
-)
+constructionClassificationScore * 0.1,
+),
 );
 
 const aiConfidenceScore =
@@ -650,17 +419,9 @@ Math.round(
 (supplierQuotes > 0 ? 25 : 0) +
 (awardedContracts > 0 ? 20 : 0) +
 (budgetTotal > 0 ? 15 : 0) +
-(constructionClassificationScore >= 60 ? 15 : 0)
-)
+(constructionClassificationScore >= 60 ? 15 : 0),
+),
 );
-
-const supplierReliabilityScore =
-supplierRanking.length > 0
-? Math.round(
-supplierRanking.reduce((sum, vendor) => sum + vendor.winRate, 0) /
-supplierRanking.length
-)
-: 0;
 
 const predictionAccuracy =
 procurementHealthScore >= 80
@@ -673,21 +434,17 @@ procurementHealthScore >= 80
 
 const awardPredictionConfidence =
 awardRate >= 50 ? "High" : awardRate >= 25 ? "Moderate" : "Low";
-const enterpriseProcurementScore = Math.round(
-(procurementHealthScore +
-predictionAccuracy +
-dataQualityScore +
-(100 - procurementRiskIndex) +
-constructionClassificationScore) /
-5
-);
 
-const executiveStatus =
-enterpriseProcurementScore >= 80
-? "Excellent"
-: enterpriseProcurementScore >= 60
-? "Healthy"
-: "Needs Attention";
+const {
+score: enterpriseProcurementScore,
+status: executiveStatus,
+} = calculateExecutiveScore(
+procurementHealthScore,
+predictionAccuracy,
+dataQualityScore,
+procurementRiskIndex,
+constructionClassificationScore,
+);
 
 const procurementEfficiencyScore = Math.min(
 100,
@@ -696,8 +453,8 @@ awardRate * 0.35 +
 budgetUtilization * 0.25 +
 avgQuotesPerRfq * 10 +
 procurementHealthScore * 0.2 +
-constructionClassificationScore * 0.1
-)
+constructionClassificationScore * 0.1,
+),
 );
 
 const supplierEngagementScore = Math.min(
@@ -705,37 +462,28 @@ const supplierEngagementScore = Math.min(
 Math.round(
 supplierQuotes * 5 +
 avgQuotesPerRfq * 15 +
-supplierReliabilityScore * 0.3
-)
+supplierReliabilityScore * 0.3,
+),
 );
 
-const executiveReadinessScore = Math.min(
-100,
-Math.round(
-enterpriseProcurementScore * 0.4 +
-predictionAccuracy * 0.3 +
-dataQualityScore * 0.3
-)
+const executiveReadinessScore = calculateExecutiveReadiness(
+enterpriseProcurementScore,
+predictionAccuracy,
+dataQualityScore,
 );
 
-const digitalMaturityScore = Math.min(
-100,
-Math.round(
-procurementMaturityScore * 0.45 +
-dataQualityScore * 0.25 +
-supplierEngagementScore * 0.2 +
-constructionClassificationScore * 0.1
-)
+const digitalMaturityScore = calculateDigitalMaturity(
+procurementMaturityScore,
+dataQualityScore,
+supplierEngagementScore,
+constructionClassificationScore,
 );
 
-const boardHealthIndex = Math.min(
-100,
-Math.round(
-procurementEfficiencyScore * 0.25 +
-executiveReadinessScore * 0.25 +
-digitalMaturityScore * 0.25 +
-procurementHealthScore * 0.25
-)
+const boardHealthIndex = calculateBoardHealth(
+procurementEfficiencyScore,
+executiveReadinessScore,
+digitalMaturityScore,
+procurementHealthScore,
 );
 
 const benchmarkReadinessScore = Math.min(
@@ -745,8 +493,8 @@ procurementMaturityScore * 0.25 +
 supplierEngagementScore * 0.2 +
 executiveReadinessScore * 0.2 +
 dataQualityScore * 0.2 +
-predictionAccuracy * 0.15
-)
+predictionAccuracy * 0.15,
+),
 );
 
 const executiveBenchmarkStatus =
@@ -767,15 +515,6 @@ supplierRanking.length >= 10
 ? "Early"
 : "Insufficient Data";
 
-const awardBenchmark =
-awardRate >= 60
-? "Strong"
-: awardRate >= 35
-? "Developing"
-: awardRate > 0
-? "Early"
-: "No Award History";
-
 const riskBenchmark =
 procurementRiskIndex <= 25
 ? "Low Exposure"
@@ -785,16 +524,6 @@ procurementRiskIndex <= 25
 ? "Elevated Exposure"
 : "Critical Exposure";
 
-
-const boardHealthStatus =
-boardHealthIndex >= 85
-? "Excellent"
-: boardHealthIndex >= 70
-? "Strong"
-: boardHealthIndex >= 55
-? "Moderate"
-: "Needs Action";
-
 const procurementOpportunityScore = Math.min(
 100,
 Math.round(
@@ -802,16 +531,12 @@ potentialSavings / 1000 +
 avgQuotesPerRfq * 15 +
 awardRate * 0.3 +
 budgetUtilization * 0.2 +
-constructionClassificationScore * 0.15
-)
+constructionClassificationScore * 0.15,
+),
 );
 
 const boardCommandStatus =
-boardHealthIndex >= 85
-? "Board Ready"
-: boardHealthIndex >= 70
-? "Executive Review"
-: "Needs Attention";
+boardStatus(boardHealthIndex);
 
 const ceoCommandStatus =
 executiveReadinessScore >= 80
@@ -821,13 +546,7 @@ executiveReadinessScore >= 80
 : "Escalation Required";
 
 const enterpriseCommandStatus =
-enterpriseProcurementScore >= 85
-? "World Class"
-: enterpriseProcurementScore >= 70
-? "High Performance"
-: enterpriseProcurementScore >= 55
-? "Developing"
-: "Needs Improvement";
+commandStatus(enterpriseProcurementScore);
 
 const riskCommandStatus =
 procurementRiskIndex <= 25
@@ -868,17 +587,15 @@ procurementRiskIndex <= 25
 ? "Monitored"
 : "Escalated";
 
-
-
 const boardReadinessScore = Math.min(
 100,
 Math.round(
-boardHealthIndex * 0.30 +
+boardHealthIndex * 0.3 +
 executiveReadinessScore * 0.25 +
-enterpriseProcurementScore * 0.20 +
+enterpriseProcurementScore * 0.2 +
 benchmarkReadinessScore * 0.15 +
-dataQualityScore * 0.10
-)
+dataQualityScore * 0.1,
+),
 );
 
 const boardReadinessRecommendation =
@@ -891,12 +608,12 @@ boardReadinessScore >= 85
 const ceoReadinessScore = Math.min(
 100,
 Math.round(
-boardReadinessScore * 0.30 +
+boardReadinessScore * 0.3 +
 enterpriseProcurementScore * 0.25 +
-executiveReadinessScore * 0.20 +
+executiveReadinessScore * 0.2 +
 benchmarkReadinessScore * 0.15 +
-supplierEngagementScore * 0.10
-)
+supplierEngagementScore * 0.1,
+),
 );
 
 const ceoPriorityLevel =
@@ -921,9 +638,6 @@ procurementOpportunityScore >= 80
 : procurementOpportunityScore >= 60
 ? "Strong Opportunity"
 : "Emerging Opportunity";
-
-
-
 
 const ceoPriorityQueue = [
 `Board Readiness: ${boardReadinessScore}/100`,
@@ -952,72 +666,6 @@ benchmark status. Enterprise procurement performance is
 ${enterpriseProcurementScore}/100 while procurement risk exposure
 remains ${ceoRiskLevel.toLowerCase()}.
 `;
-const boardStatus =
-boardHealthIndex >= 85
-? "Board Ready"
-: boardHealthIndex >= 70
-? "Executive Review"
-: "Needs Attention";
-
-const ceoStatus =
-executiveReadinessScore >= 80
-? "Decision Ready"
-: executiveReadinessScore >= 60
-? "Monitoring"
-: "Escalation Required";
-
-const riskStatus =
-procurementRiskIndex <= 25
-? "Controlled"
-: procurementRiskIndex <= 50
-? "Managed"
-: "Elevated";
-
-const opportunityStatus =
-procurementOpportunityScore >= 80
-? "High Opportunity"
-: procurementOpportunityScore >= 60
-? "Growth Opportunity"
-: "Limited Opportunity";
-
-
-
-const executiveRecommendation =
-procurementRiskIndex > 60
-? "Reduce supplier concentration and mitigate procurement exposure."
-: procurementOpportunityScore > 75
-? "Accelerate sourcing initiatives to capture available savings."
-: boardHealthIndex > 80
-? "Maintain current procurement operating strategy."
-: "Improve procurement maturity before scaling operations.";
-
-
-const industryProcurementSignal =
-procurementEfficiencyScore >= 80 && supplierEngagementScore >= 70
-? "High Performance"
-: procurementEfficiencyScore >= 60 && supplierEngagementScore >= 50
-? "Competitive"
-: procurementEfficiencyScore >= 40
-? "Improving"
-: "Needs Development";
-
-const industryRiskSignal =
-procurementRiskIndex <= 25 && concentrationLevel === "Low"
-? "Low Exposure"
-: procurementRiskIndex <= 50
-? "Moderate Exposure"
-: procurementRiskIndex <= 75
-? "Elevated Exposure"
-: "Critical Exposure";
-
-const opportunityLevel =
-procurementOpportunityScore >= 80
-? "High Opportunity"
-: procurementOpportunityScore >= 60
-? "Strong Opportunity"
-: procurementOpportunityScore >= 40
-? "Developing Opportunity"
-: "Early Opportunity";
 
 const bestProcurementCategory = topCategory;
 
@@ -1044,8 +692,7 @@ procurementRiskIndex <= 35
 : "Continue operational optimization and monitor performance.";
 
 const boardPresentationStatus =
-boardHealthIndex >= 85 &&
-benchmarkReadinessScore >= 80
+boardHealthIndex >= 85 && benchmarkReadinessScore >= 80
 ? "Ready For Board Review"
 : boardHealthIndex >= 70
 ? "Executive Review Required"
@@ -1064,7 +711,6 @@ procurementOpportunityScore >= 70
 : supplierDependencyRisk === "Critical"
 ? "Supplier Diversification Required"
 : "Operational Optimization";
-
 const executiveAlerts: ExecutiveAlert[] = [];
 
 if (constructionClassificationScore < 60) {
@@ -1089,8 +735,7 @@ if (predictionAccuracy >= 75) {
 executiveAlerts.push({
 level: "healthy",
 title: "Forecast Accuracy Above Target",
-message:
-"Prediction models are performing above the target threshold.",
+message: "Prediction models are performing above the target threshold.",
 });
 }
 
@@ -1098,8 +743,7 @@ if (procurementRiskIndex >= 35) {
 executiveAlerts.push({
 level: "warning",
 title: "Supplier Dependency Risk",
-message:
-"Vendor concentration should be reviewed to reduce exposure.",
+message: "Vendor concentration should be reviewed to reduce exposure.",
 });
 }
 
@@ -1107,8 +751,7 @@ if (supplierRanking.length <= 3) {
 executiveAlerts.push({
 level: "warning",
 title: "Limited Supplier Participation",
-message:
-"Expand supplier coverage to improve competition and pricing.",
+message: "Expand supplier coverage to improve competition and pricing.",
 });
 }
 
@@ -1146,22 +789,22 @@ boardHealthIndex >= 70
 const categoryIntelligence = Object.entries(categoryCounts)
 .map(([category, count]) => {
 const categoryRfqs = rfqList.filter(
-(rfq) => (rfq.category || "Uncategorized") === category
+(rfq) => (rfq.category || "Uncategorized") === category,
 );
 
 const categoryRfqIds = categoryRfqs.map((rfq) => rfq.id);
 
 const categoryQuotes = quoteList.filter((quote) =>
-categoryRfqIds.includes(quote.rfq_id)
+categoryRfqIds.includes(quote.rfq_id),
 );
 
 const categoryAwards = categoryQuotes.filter(
-(quote) => quote.decision === "awarded"
+(quote) => quote.decision === "awarded",
 );
 
 const categorySpend = categoryAwards.reduce(
 (total, quote) => total + Number(quote.amount || 0),
-0
+0,
 );
 
 const categoryWinRate =
@@ -1175,8 +818,8 @@ Math.round(
 count * 20 +
 categoryQuotes.length * 10 +
 categoryWinRate * 0.3 +
-Math.min(categorySpend / 10000, 25)
-)
+Math.min(categorySpend / 10000, 25),
+),
 );
 
 return {
@@ -1192,201 +835,199 @@ opportunityScore: categoryOpportunityScore,
 .sort((a, b) => b.opportunityScore - a.opportunityScore)
 .slice(0, 5);
 
-const executivePerformanceMatrix = [
+const executiveScenarios = [
+{
+scenario: "Supplier Expansion",
+outcome:
+supplierRanking.length >= 10
+? "Already achieved"
+: "Increase supplier participation to improve competition and pricing.",
+impact: "+ Procurement resilience",
+confidence: "High",
+},
+{
+scenario: "Risk Reduction",
+outcome:
+procurementRiskIndex <= 35
+? "Risk profile already optimized"
+: "Reduce supplier dependency and concentration exposure.",
+impact: "+ Executive confidence",
+confidence: "High",
+},
+{
+scenario: "Award Optimization",
+outcome:
+awardRate >= 50
+? "Award execution performing well"
+: "Improve RFQ-to-award conversion performance.",
+impact: "+ Procurement velocity",
+confidence: "Medium",
+},
+{
+scenario: "Savings Capture",
+outcome:
+potentialSavings > 10000
+? `Capture approximately $${potentialSavings.toLocaleString()} in value.`
+: "Increase procurement competition to unlock savings.",
+impact: "+ Financial performance",
+confidence: "Medium",
+},
+];
+
+const executiveDecisionSimulator = [
+{
+decision: "Expand Supplier Network",
+expectedImpact:
+supplierRanking.length >= 10
+? "Supplier network already operating at scale."
+: "Higher competition and stronger procurement resilience.",
+risk: supplierRanking.length >= 10 ? "Low" : "Moderate",
+confidence: aiConfidenceScore,
+},
+{
+decision: "Reduce Supplier Dependency",
+expectedImpact:
+procurementRiskIndex <= 35
+? "Risk exposure already optimized."
+: "Lower concentration risk and stronger executive confidence.",
+risk: procurementRiskIndex <= 35 ? "Low" : "Moderate",
+confidence: aiConfidenceScore,
+},
+{
+decision: "Accelerate Award Decisions",
+expectedImpact:
+awardRate >= 50
+? "Award process performing efficiently."
+: "Faster procurement execution and operational delivery.",
+risk: awardRate >= 50 ? "Low" : "Moderate",
+confidence: awardPredictionConfidence,
+},
+{
+decision: "Capture Savings Opportunity",
+expectedImpact:
+potentialSavings > 10000
+? `Potential value of $${potentialSavings.toLocaleString()}.`
+: "Limited savings opportunity currently available.",
+risk: "Low",
+confidence:
+procurementOpportunityScore >= 80
+? "High"
+: procurementOpportunityScore >= 60
+? "Medium"
+: "Low",
+},
+];
+
+const executiveForecastCenter = [
+{
+title: "Procurement Outlook",
+forecast:
+procurementHealthScore >= 80
+? "Positive"
+: procurementHealthScore >= 60
+? "Stable"
+: "Improvement Required",
+},
+{
+title: "Supplier Outlook",
+forecast:
+supplierEngagementScore >= 80
+? "Expanding"
+: supplierEngagementScore >= 60
+? "Stable"
+: "At Risk",
+},
+{
+title: "Risk Outlook",
+forecast:
+procurementRiskIndex <= 35
+? "Controlled"
+: procurementRiskIndex <= 60
+? "Monitor"
+: "Elevated",
+},
+{
+title: "Executive Outlook",
+forecast:
+executiveReadinessScore >= 80
+? "Decision Ready"
+: executiveReadinessScore >= 60
+? "Developing"
+: "Limited Visibility",
+},
+];
+const procurementCommandRoom = [
+{
+title: "Board Readiness",
+value: executiveBenchmarkStatus,
+},
+{
+title: "Decision Confidence",
+value: aiConfidenceScore,
+},
+{
+title: "Risk Position",
+value: riskBenchmark,
+},
+{
+title: "Opportunity Position",
+value:
+procurementOpportunityScore >= 80
+? "High"
+: procurementOpportunityScore >= 60
+? "Medium"
+: "Low",
+},
+{
+title: "Supplier Strength",
+value: supplierNetworkBenchmark,
+},
+{
+title: "Industry Position",
+value: executiveBenchmarkStatus,
+},
+];
+
+const procurementCommandRoomStatus =
+boardHealthIndex >= 80 && executiveReadinessScore >= 80
+? "Executive Control"
+: boardHealthIndex >= 65
+? "Operational Control"
+: "Capability Development";
+
+const boardPresentationReadiness =
+benchmarkReadinessScore >= 85
+? "Board Ready"
+: benchmarkReadinessScore >= 70
+? "Executive Ready"
+: "Preparation Required";
+
+const boardNarrative =
+procurementRiskIndex >= 60
+? "Board attention should focus on supplier dependency, concentration risk, and procurement resilience."
+: procurementOpportunityScore >= 80
+? "Board attention should focus on growth opportunities, savings capture, and supplier expansion."
+: "Board attention should focus on maintaining procurement performance and strengthening executive readiness.";
+
+const boardPresentationMetrics = [
+{
+title: "Board Readiness",
+value: `${benchmarkReadinessScore}/100`,
+},
 {
 title: "Board Health",
 value: `${boardHealthIndex}/100`,
-},
-{
-title: "Efficiency",
-value: `${procurementEfficiencyScore}/100`,
-},
-{
-title: "Supplier Engagement",
-value: `${supplierEngagementScore}/100`,
 },
 {
 title: "Executive Readiness",
 value: `${executiveReadinessScore}/100`,
 },
 {
-title: "RFQ Maturity",
-value: `${constructionClassificationScore}/100`,
+title: "Decision Confidence",
+value: aiConfidenceScore,
 },
 ];
 
-const boardPriorityScore = Math.min(
-100,
-Math.round(
-enterpriseProcurementScore * 0.35 +
-procurementOpportunityScore * 0.25 +
-(100 - procurementRiskIndex) * 0.25 +
-boardHealthIndex * 0.15
-)
-);
-
-const bestCaseProjection = Math.round(
-forecastAwardVolume + forecastSavings + procurementOpportunityScore * 1000
-);
-
-const expectedProjection = Math.round(
-forecastAwardVolume + forecastSavings * 0.6
-);
-
-const riskProjection = Math.max(
-0,
-Math.round(forecastAwardVolume - procurementRiskIndex * 1000)
-);
-
-const simulationConfidence =
-dataQualityScore >= 80 ? "High" : dataQualityScore >= 60 ? "Moderate" : "Low";
-
-const digitalTwinScenario =
-boardPriorityScore >= 80
-? "Growth Scenario"
-: procurementRiskIndex >= 60
-? "Risk Scenario"
-: "Stable Scenario";
-
-const digitalTwinRecommendation =
-digitalTwinScenario === "Growth Scenario"
-? "Prioritize supplier expansion, category growth, RFQ mix maturity, and savings capture."
-: digitalTwinScenario === "Risk Scenario"
-? "Reduce vendor concentration, improve competition, and review award exposure."
-: "Maintain procurement discipline while improving forecast quality, sourcing structure, and supplier coverage.";
-
-const boardPriorityLevel =
-boardPriorityScore >= 80
-? "High Performance"
-: boardPriorityScore >= 60
-? "Growth Opportunity"
-: "Executive Attention";
-
-const topRisk =
-vendorConcentrationRisk >= 70
-? "Vendor concentration exceeds recommended threshold."
-: supplierRanking.length <= 3
-? "Supplier participation remains limited."
-: procurementRiskIndex >= 50
-? "Procurement risk level is elevated."
-: constructionClassificationScore < 60
-? "RFQ classification maturity remains under target."
-: "No major enterprise procurement risks detected.";
-
-const topOpportunity =
-potentialSavings > 0
-? `${bestProcurementCategory} category contains ${potentialSavings.toLocaleString()} dollars in savings opportunity.`
-: `${dominantScope} procurement mix can be expanded to uncover additional savings opportunities.`;
-
-const ceoPriority =
-procurementOpportunityScore >= 70
-? "Scale supplier network, category expansion, and RFQ intelligence maturity."
-: "Improve procurement growth initiatives.";
-
-const cfoPriority =
-forecastSavings > 0
-? `Capture forecast savings of ${forecastSavings.toLocaleString()} dollars.`
-: "Increase budget visibility and spend optimization.";
-
-const procurementPriority =
-avgQuotesPerRfq < 2
-? "Increase RFQ competition and supplier engagement."
-: "Maintain healthy procurement competition levels.";
-
-const procurementCopilotPrompts = [
-{
-question: "Where is our biggest savings opportunity?",
-answer:
-potentialSavings > 0
-? `${bestProcurementCategory} shows the strongest savings signal with $${potentialSavings.toLocaleString()} in estimated opportunity.`
-: "Savings opportunity is currently limited. Increase supplier participation to improve pricing discovery.",
-},
-{
-question: "Which RFQ mix needs attention?",
-answer:
-constructionClassificationScore < 60
-? "RFQ classification maturity is under target. Increase structured material, trade, equipment, service, sourcing, and framework tagging."
-: `RFQ mix is developing. Current dominant scope is ${dominantScope}, and dominant sourcing method is ${dominantSourcing}.`,
-},
-{
-question: "Which area needs executive attention?",
-answer:
-procurementRiskIndex >= 50
-? "Procurement risk is elevated. Review supplier dependency, award concentration, and low-competition categories."
-: "Executive attention should focus on scaling supplier engagement and maintaining forecast confidence.",
-},
-{
-question: "What should the CEO prioritize?",
-answer: ceoPriority,
-},
-{
-question: "What should the CFO monitor?",
-answer: cfoPriority,
-},
-{
-question: "What should Procurement improve?",
-answer: procurementPriority,
-},
-];
-const copilotSummary =
-boardPriorityScore >= 80
-? "Nexus Copilot recommends scaling category growth, supplier coverage, RFQ classification maturity, and savings capture."
-: procurementRiskIndex >= 60
-? "Nexus Copilot recommends reducing risk exposure before expanding procurement volume."
-: "Nexus Copilot recommends improving supplier participation, sourcing structure, and procurement data maturity.";
-
-const copilotModes = [
-{
-mode: "CEO Mode",
-focus: "Growth, market position, supplier network expansion",
-insight: ceoPriority,
-},
-{
-mode: "CFO Mode",
-focus: "Savings, spend control, forecast confidence",
-insight: cfoPriority,
-},
-{
-mode: "Procurement Director Mode",
-focus: "Supplier competition, award quality, category execution",
-insight: procurementPriority,
-},
-];
-
-const copilotFeaturedInsight =
-boardPriorityScore >= 80
-? "Executive momentum is strong. Copilot recommends scaling procurement intelligence adoption."
-: procurementRiskIndex >= 60
-? "Risk exposure is elevated. Copilot recommends prioritizing supplier diversification."
-: "Procurement performance is stable. Copilot recommends increasing supplier coverage and RFQ data maturity.";
-
-const executiveDecisionQueue = [
-procurementRiskIndex >= 50
-? "Review supplier concentration risk."
-: "Maintain supplier diversification strategy.",
-
-potentialSavings > 10000
-? `Capture $${potentialSavings.toLocaleString()} savings opportunity.`
-: "Monitor category savings performance.",
-
-constructionClassificationScore < 60
-? "Improve construction RFQ classification maturity."
-: "Maintain RFQ classification discipline.",
-
-awardRate < 25
-? "Improve RFQ conversion and award execution."
-: "Maintain award conversion performance.",
-];
-
-const topQuarterRisks = [
-procurementRiskIndex >= 50 ? "Supplier dependency" : "Low risk exposure",
-supplierRanking.length <= 3
-? "Limited supplier competition"
-: "Healthy supplier participation",
-constructionClassificationScore < 60
-? "Low RFQ classification maturity"
-: "Structured RFQ intelligence active",
-];
 
 const boardRiskPriorities = [
 {
@@ -1479,9 +1120,7 @@ constructionClassificationScore < 60
 },
 {
 title:
-awardRate < 25
-? "Award Execution Risk"
-: "Award Conversion Health",
+awardRate < 25 ? "Award Execution Risk" : "Award Conversion Health",
 priority:
 awardRate < 25
 ? "Critical"
@@ -1489,230 +1128,15 @@ awardRate < 25
 ? "Moderate"
 : "Monitor",
 impact:
-awardRate < 25
-? "High"
-: awardRate < 45
-? "Medium"
-: "Low",
+awardRate < 25 ? "High" : awardRate < 45 ? "Medium" : "Low",
 attention:
-awardRate < 25
-? "Immediate"
-: awardRate < 45
-? "90 Days"
-: "Ongoing",
+awardRate < 25 ? "Immediate" : awardRate < 45 ? "90 Days" : "Ongoing",
 summary:
 awardRate < 25
 ? "Award execution history is not yet strong enough to support high-confidence procurement decision patterns."
 : awardRate < 45
 ? "Award conversion is developing and should be monitored as RFQ activity increases."
 : "Award conversion supports procurement decision confidence.",
-},
-];
-
-const executiveScenarios = [
-{
-scenario: "Supplier Expansion",
-outcome:
-supplierRanking.length >= 10
-? "Already achieved"
-: "Increase supplier participation to improve competition and pricing.",
-impact: "+ Procurement resilience",
-confidence: "High",
-},
-
-{
-scenario: "Risk Reduction",
-outcome:
-procurementRiskIndex <= 35
-? "Risk profile already optimized"
-: "Reduce supplier dependency and concentration exposure.",
-impact: "+ Executive confidence",
-confidence: "High",
-},
-
-{
-scenario: "Award Optimization",
-outcome:
-awardRate >= 50
-? "Award execution performing well"
-: "Improve RFQ-to-award conversion performance.",
-impact: "+ Procurement velocity",
-confidence: "Medium",
-},
-
-{
-scenario: "Savings Capture",
-outcome:
-potentialSavings > 10000
-? `Capture approximately $${potentialSavings.toLocaleString()} in value.`
-: "Increase procurement competition to unlock savings.",
-impact: "+ Financial performance",
-confidence: "Medium",
-},
-];
-
-const executiveDecisionSimulator = [
-{
-decision: "Expand Supplier Network",
-expectedImpact:
-supplierRanking.length >= 10
-? "Supplier network already operating at scale."
-: "Higher competition and stronger procurement resilience.",
-risk:
-supplierRanking.length >= 10 ? "Low" : "Moderate",
-confidence: aiConfidenceScore,
-},
-
-{
-decision: "Reduce Supplier Dependency",
-expectedImpact:
-procurementRiskIndex <= 35
-? "Risk exposure already optimized."
-: "Lower concentration risk and stronger executive confidence.",
-risk:
-procurementRiskIndex <= 35 ? "Low" : "Moderate",
-confidence: aiConfidenceScore,
-},
-
-{
-decision: "Accelerate Award Decisions",
-expectedImpact:
-awardRate >= 50
-? "Award process performing efficiently."
-: "Faster procurement execution and operational delivery.",
-risk:
-awardRate >= 50 ? "Low" : "Moderate",
-confidence: awardPredictionConfidence,
-},
-
-{
-decision: "Capture Savings Opportunity",
-expectedImpact:
-potentialSavings > 10000
-? `Potential value of $${potentialSavings.toLocaleString()}.`
-: "Limited savings opportunity currently available.",
-risk: "Low",
-confidence:
-procurementOpportunityScore >= 80
-? "High"
-: procurementOpportunityScore >= 60
-? "Medium"
-: "Low",
-},
-];
-
-const executiveForecastCenter = [
-{
-title: "Procurement Outlook",
-forecast:
-procurementHealthScore >= 80
-? "Positive"
-: procurementHealthScore >= 60
-? "Stable"
-: "Improvement Required",
-},
-
-{
-title: "Supplier Outlook",
-forecast:
-supplierEngagementScore >= 80
-? "Expanding"
-: supplierEngagementScore >= 60
-? "Stable"
-: "At Risk",
-},
-
-{
-title: "Risk Outlook",
-forecast:
-procurementRiskIndex <= 35
-? "Controlled"
-: procurementRiskIndex <= 60
-? "Monitor"
-: "Elevated",
-},
-
-{
-title: "Executive Outlook",
-forecast:
-executiveReadinessScore >= 80
-? "Decision Ready"
-: executiveReadinessScore >= 60
-? "Developing"
-: "Limited Visibility",
-},
-];
-
-const procurementCommandRoom = [
-{
-title: "Board Readiness",
-value: executiveBenchmarkStatus,
-},
-{
-title: "Decision Confidence",
-value: aiConfidenceScore,
-},
-{
-title: "Risk Position",
-value: riskBenchmark,
-},
-{
-title: "Opportunity Position",
-value:
-procurementOpportunityScore >= 80
-? "High"
-: procurementOpportunityScore >= 60
-? "Medium"
-: "Low",
-},
-{
-title: "Supplier Strength",
-value: supplierNetworkBenchmark,
-},
-{
-title: "Industry Position",
-value: executiveBenchmarkStatus,
-},
-];
-
-const procurementCommandRoomStatus =
-boardHealthIndex >= 80 &&
-executiveReadinessScore >= 80
-? "Executive Control"
-: boardHealthIndex >= 65
-? "Operational Control"
-: "Capability Development";
-
-const boardPresentationReadiness =
-benchmarkReadinessScore >= 85
-? "Board Ready"
-: benchmarkReadinessScore >= 70
-? "Executive Ready"
-: "Preparation Required";
-
-const boardNarrative =
-procurementRiskIndex >= 60
-? "Board attention should focus on supplier dependency, concentration risk, and procurement resilience."
-: procurementOpportunityScore >= 80
-? "Board attention should focus on growth opportunities, savings capture, and supplier expansion."
-: "Board attention should focus on maintaining procurement performance and strengthening executive readiness.";
-
-const boardPresentationMetrics = [
-{
-title: "Board Readiness",
-value: `${benchmarkReadinessScore}/100`,
-},
-{
-title: "Board Health",
-value: `${boardHealthIndex}/100`,
-},
-{
-title: "Executive Readiness",
-value: `${executiveReadinessScore}/100`,
-},
-{
-title: "Decision Confidence",
-value: aiConfidenceScore,
 },
 ];
 
@@ -1819,10 +1243,7 @@ supplierEngagementScore < 60
 : supplierEngagementScore < 80
 ? "90 Days"
 : "Strategic",
-impact:
-supplierEngagementScore < 60
-? "High"
-: "Medium",
+impact: supplierEngagementScore < 60 ? "High" : "Medium",
 value: `${supplierEngagementScore}/100`,
 summary:
 "Expand supplier participation to improve competition, quote coverage, and decision confidence.",
@@ -1884,17 +1305,9 @@ procurementHealthScore * 0.35 +
 supplierReliabilityScore * 0.2 +
 competitionScore * 0.2 +
 predictionAccuracy * 0.15 +
-constructionClassificationScore * 0.1
-)
+constructionClassificationScore * 0.1,
+),
 );
-const industryBenchmarkPosition =
-industryBenchmarkScore >= 85
-? "Top Quartile"
-: industryBenchmarkScore >= 70
-? "Above Average"
-: industryBenchmarkScore >= 50
-? "Developing"
-: "Below Benchmark";
 
 const procurementBenchmarkScore = Math.min(
 100,
@@ -1902,8 +1315,8 @@ Math.round(
 procurementMaturityScore * 0.45 +
 executiveProcurementHealth * 0.25 +
 boardHealthIndex * 0.2 +
-constructionClassificationScore * 0.1
-)
+constructionClassificationScore * 0.1,
+),
 );
 
 const supplierBenchmarkScore = Math.min(
@@ -1911,8 +1324,8 @@ const supplierBenchmarkScore = Math.min(
 Math.round(
 supplierReliabilityScore * 0.5 +
 supplierEngagementScore * 0.3 +
-competitionScore * 0.2
-)
+competitionScore * 0.2,
+),
 );
 
 const costOptimizationBenchmark = Math.min(
@@ -1920,9 +1333,15 @@ const costOptimizationBenchmark = Math.min(
 Math.round(
 budgetUtilization * 0.3 +
 procurementOpportunityScore * 0.4 +
-savingsScore * 0.3
-)
+savingsScore * 0.3,
+),
 );
+const benchmarkMatrix = [
+{ title: "Industry", score: industryBenchmarkScore },
+{ title: "Procurement", score: procurementBenchmarkScore },
+{ title: "Supplier", score: supplierBenchmarkScore },
+{ title: "Cost", score: costOptimizationBenchmark },
+];
 
 const benchmarkStatus =
 industryBenchmarkScore >= 85
@@ -1973,11 +1392,9 @@ Math.round(
 dataQualityScore * 0.3 +
 predictionAccuracy * 0.25 +
 supplierEngagementScore * 0.25 +
-benchmarkReadinessScore * 0.2
-)
+benchmarkReadinessScore * 0.2,
+),
 );
-
-
 
 const decisionConfidenceLevel =
 decisionConfidenceScore >= 85
@@ -2019,6 +1436,23 @@ benchmarkReadinessScore < 60
 : "Benchmark readiness supports executive-level comparison.",
 ];
 
+
+const executiveDecisionQueue = [
+procurementRiskIndex >= 50
+? "Review supplier concentration risk."
+: "Maintain supplier diversification strategy.",
+potentialSavings > 10000
+? `Capture $${potentialSavings.toLocaleString()} savings opportunity.`
+: "Monitor category savings performance.",
+constructionClassificationScore < 60
+? "Improve construction RFQ classification maturity."
+: "Maintain RFQ classification discipline.",
+awardRate < 25
+? "Improve RFQ conversion and award execution."
+: "Maintain award conversion performance.",
+];
+
+
 const ceoActionCenter = [
 {
 phase: "Immediate",
@@ -2029,8 +1463,7 @@ summary: boardRecommendation,
 phase: "30 Days",
 title: "Operational Focus",
 summary:
-executiveDecisionQueue[0] ||
-"Maintain procurement operating discipline.",
+executiveDecisionQueue[0] || "Maintain procurement operating discipline.",
 },
 {
 phase: "90 Days",
@@ -2047,8 +1480,7 @@ summary: executiveCommandRecommendation,
 ];
 
 const ceoOperatingStatus =
-enterpriseProcurementScore >= 80 &&
-executiveReadinessScore >= 80
+enterpriseProcurementScore >= 80 && executiveReadinessScore >= 80
 ? "Executive Growth Mode"
 : enterpriseProcurementScore >= 65
 ? "Operational Scaling Mode"
@@ -2069,12 +1501,8 @@ status: boardRiskPriorities[0]?.priority || "Monitor",
 },
 {
 title: "Top Opportunity",
-value:
-executiveOpportunityRanking[0]?.title ||
-"No Opportunity Identified",
-status:
-executiveOpportunityRanking[0]?.priority ||
-"Strategic",
+value: executiveOpportunityRanking[0]?.title || "No Opportunity Identified",
+status: executiveOpportunityRanking[0]?.priority || "Strategic",
 },
 {
 title: "CEO Priority",
@@ -2094,37 +1522,15 @@ decisionConfidenceLevel === "High Confidence"
 ? "Command Ready"
 : enterpriseProcurementScore >= 65
 ? "Operational Command"
-: "Developing Command"
-
-const benchmarkMatrix = [
-{ title: "Industry", score: industryBenchmarkScore },
-{ title: "Procurement", score: procurementBenchmarkScore },
-{ title: "Supplier", score: supplierBenchmarkScore },
-{ title: "Cost", score: costOptimizationBenchmark },
-];
-
-const strategicSuppliers = supplierRanking.filter(
-(supplier) => supplier.aiScore >= 85
-).length;
-
-const preferredSuppliers = supplierRanking.filter(
-(supplier) => supplier.aiScore >= 70
-).length;
-
-const highRiskSuppliers = supplierRiskRadar.filter(
-(supplier) => supplier.overallRisk >= 60
-).length;
-
-const supplierDiversificationScore =
-supplierRanking.length >= 10 ? 100 : Math.min(100, supplierRanking.length * 10);
+: "Developing Command";
 
 const portfolioHealthIndex = Math.min(
 100,
 Math.round(
 supplierReliabilityScore * 0.4 +
 supplierDiversificationScore * 0.3 +
-supplierEngagementScore * 0.3
-)
+supplierEngagementScore * 0.3,
+),
 );
 
 const portfolioStatus =
@@ -2144,21 +1550,53 @@ portfolioRecommendations.push("Reduce exposure to high-risk suppliers.");
 
 if (supplierDiversificationScore < 60) {
 portfolioRecommendations.push(
-"Expand supplier network to improve diversification."
+"Expand supplier network to improve diversification.",
 );
 }
 
 if (strategicSuppliers < 3) {
 portfolioRecommendations.push(
-"Develop additional strategic supplier relationships."
+"Develop additional strategic supplier relationships.",
 );
 }
 
 if (portfolioRecommendations.length === 0) {
 portfolioRecommendations.push(
-"Supplier portfolio is performing within target range."
+"Supplier portfolio is performing within target range.",
 );
 }
+
+const topRisk =
+vendorConcentrationRisk >= 70
+? "Vendor concentration exceeds recommended threshold."
+: supplierRanking.length <= 3
+? "Supplier participation remains limited."
+: procurementRiskIndex >= 50
+? "Procurement risk level is elevated."
+: constructionClassificationScore < 60
+? "RFQ classification maturity remains under target."
+: "No major enterprise procurement risks detected.";
+
+const topOpportunity =
+potentialSavings > 0
+? `${bestProcurementCategory} category contains ${potentialSavings.toLocaleString()} dollars in savings opportunity.`
+: `${dominantScope} procurement mix can be expanded to uncover additional savings opportunities.`;
+
+const ceoPriority =
+procurementOpportunityScore >= 70
+? "Scale supplier network, category expansion, and RFQ intelligence maturity."
+: "Improve procurement growth initiatives.";
+
+const cfoPriority =
+forecastSavings > 0
+? `Capture forecast savings of ${forecastSavings.toLocaleString()} dollars.`
+: "Increase budget visibility and spend optimization.";
+
+const procurementPriority =
+avgQuotesPerRfq < 2
+? "Increase RFQ competition and supplier engagement."
+: "Maintain healthy procurement competition levels.";
+
 
 const dailyExecutiveBriefing = [
 { title: "CEO", message: ceoPriority },
@@ -2228,8 +1666,7 @@ procurementOpportunityScore >= 80
 : "Emerging";
 
 const executiveForecastStatus =
-enterpriseProcurementScore >= 80 &&
-executiveReadinessScore >= 80
+enterpriseProcurementScore >= 80 && executiveReadinessScore >= 80
 ? "Forecast Confidence High"
 : enterpriseProcurementScore >= 65
 ? "Forecast Confidence Moderate"
@@ -2241,6 +1678,7 @@ enterpriseProcurementScore >= 80
 : enterpriseProcurementScore >= 65
 ? "Procurement operations are improving and forecast indicators remain positive with moderate executive confidence."
 : "Forecast indicators suggest capability development should remain a strategic priority before major procurement expansion.";
+
 const bestCaseScenario =
 procurementOpportunityScore >= 80
 ? "Accelerated procurement growth with expanded supplier participation and higher savings realization."
@@ -2257,8 +1695,7 @@ procurementRiskIndex >= 60
 : "Risk exposure remains manageable but should be monitored.";
 
 const forecastConfidenceLevel =
-enterpriseProcurementScore >= 80 &&
-benchmarkReadinessScore >= 80
+enterpriseProcurementScore >= 80 && benchmarkReadinessScore >= 80
 ? "High"
 : enterpriseProcurementScore >= 65
 ? "Moderate"
@@ -2309,8 +1746,7 @@ audience: "Executive Team",
 ];
 
 const exportReadinessStatus =
-benchmarkReadinessScore >= 80 &&
-executiveReadinessScore >= 80
+benchmarkReadinessScore >= 80 && executiveReadinessScore >= 80
 ? "Export Ready"
 : "Review Required";
 
@@ -2325,8 +1761,7 @@ exportReadinessStatus === "Export Ready"
 : "Pending executive validation";
 
 const boardDistributionStatus =
-benchmarkReadinessScore >= 80 &&
-executiveReadinessScore >= 80
+benchmarkReadinessScore >= 80 && executiveReadinessScore >= 80
 ? "Distribution Ready"
 : "Distribution Hold";
 
@@ -2353,7 +1788,6 @@ title: "Approval Workflow",
 status: boardApprovalWorkflow,
 },
 ];
-
 const boardPackageStages = [
 {
 stage: "Data Collection",
@@ -2361,17 +1795,11 @@ status: "Complete",
 },
 {
 stage: "Executive Validation",
-status:
-executiveReadinessScore >= 80
-? "Complete"
-: "In Progress",
+status: executiveReadinessScore >= 80 ? "Complete" : "In Progress",
 },
 {
 stage: "Board Preparation",
-status:
-benchmarkReadinessScore >= 80
-? "Ready"
-: "Pending",
+status: benchmarkReadinessScore >= 80 ? "Ready" : "Pending",
 },
 {
 stage: "Board Distribution",
@@ -2390,17 +1818,11 @@ status: "Ready",
 },
 {
 channel: "Executive Committee",
-status:
-executiveReadinessScore >= 80
-? "Ready"
-: "Pending",
+status: executiveReadinessScore >= 80 ? "Ready" : "Pending",
 },
 {
 channel: "Audit Committee",
-status:
-procurementRiskIndex <= 50
-? "Ready"
-: "Review Required",
+status: procurementRiskIndex <= 50 ? "Ready" : "Review Required",
 },
 ];
 
@@ -2412,31 +1834,19 @@ boardDistributionStatus === "Distribution Ready"
 const boardApprovalStages = [
 {
 stage: "Executive Review",
-status:
-executiveReadinessScore >= 80
-? "Approved"
-: "Pending",
+status: executiveReadinessScore >= 80 ? "Approved" : "Pending",
 },
 {
 stage: "Risk Validation",
-status:
-procurementRiskIndex <= 50
-? "Approved"
-: "Review Required",
+status: procurementRiskIndex <= 50 ? "Approved" : "Review Required",
 },
 {
 stage: "Board Package Approval",
-status:
-boardDistributionStatus === "Distribution Ready"
-? "Approved"
-: "Pending",
+status: boardDistributionStatus === "Distribution Ready" ? "Approved" : "Pending",
 },
 {
 stage: "Distribution Authorization",
-status:
-boardDistributionReadiness === "Ready For Distribution"
-? "Authorized"
-: "Hold",
+status: boardDistributionReadiness === "Ready For Distribution" ? "Authorized" : "Hold",
 },
 ];
 
@@ -2445,8 +1855,93 @@ boardDistributionReadiness === "Ready For Distribution"
 ? "Board Approved"
 : "Awaiting Approval";
 
+const procurementCopilotPrompts = [
+{
+question: "Where is our biggest savings opportunity?",
+answer:
+potentialSavings > 0
+? `${bestProcurementCategory} shows the strongest savings signal with $${potentialSavings.toLocaleString()} in estimated opportunity.`
+: "Savings opportunity is currently limited. Increase supplier participation to improve pricing discovery.",
+},
+{
+question: "Which RFQ mix needs attention?",
+answer:
+constructionClassificationScore < 60
+? "RFQ classification maturity is under target. Increase structured material, trade, equipment, service, sourcing, and framework tagging."
+: `RFQ mix is developing. Current dominant scope is ${dominantScope}, and dominant sourcing method is ${dominantSourcing}.`,
+},
+{
+question: "Which area needs executive attention?",
+answer:
+procurementRiskIndex >= 50
+? "Procurement risk is elevated. Review supplier dependency, award concentration, and low-competition categories."
+: "Executive attention should focus on scaling supplier engagement and maintaining forecast confidence.",
+},
+{
+question: "What should the CEO prioritize?",
+answer: ceoPriority,
+},
+{
+question: "What should the CFO monitor?",
+answer: cfoPriority,
+},
+{
+question: "What should Procurement improve?",
+answer: procurementPriority,
+},
+];
 
+const boardPriorityScore = Math.min(
+100,
+Math.round(
+enterpriseProcurementScore * 0.35 +
+procurementOpportunityScore * 0.25 +
+(100 - procurementRiskIndex) * 0.25 +
+boardHealthIndex * 0.15,
+),
+);
 
+const copilotSummary =
+boardPriorityScore >= 80
+? "Nexus Copilot recommends scaling category growth, supplier coverage, RFQ classification maturity, and savings capture."
+: procurementRiskIndex >= 60
+? "Nexus Copilot recommends reducing risk exposure before expanding procurement volume."
+: "Nexus Copilot recommends improving supplier participation, sourcing structure, and procurement data maturity.";
+
+const copilotModes = [
+{
+mode: "CEO Mode",
+focus: "Growth, market position, supplier network expansion",
+insight: ceoPriority,
+},
+{
+mode: "CFO Mode",
+focus: "Savings, spend control, forecast confidence",
+insight: cfoPriority,
+},
+{
+mode: "Procurement Director Mode",
+focus: "Supplier competition, award quality, category execution",
+insight: procurementPriority,
+},
+];
+
+const copilotFeaturedInsight =
+boardPriorityScore >= 80
+? "Executive momentum is strong. Copilot recommends scaling procurement intelligence adoption."
+: procurementRiskIndex >= 60
+? "Risk exposure is elevated. Copilot recommends prioritizing supplier diversification."
+: "Procurement performance is stable. Copilot recommends increasing supplier coverage and RFQ data maturity.";
+
+const topQuarterRisks = [
+procurementRiskIndex >= 50 ? "Supplier dependency" : "Low risk exposure",
+supplierRanking.length <= 3
+? "Limited supplier competition"
+: "Healthy supplier participation",
+constructionClassificationScore < 60
+? "Low RFQ classification maturity"
+: "Structured RFQ intelligence active",
+];
 return (
 <main className="min-h-screen bg-slate-100 px-8 py-10">
 <div className="mx-auto max-w-7xl">
@@ -2474,9 +1969,7 @@ Construction Procurement Intelligence
 
 <div className="mt-5 grid gap-8 lg:grid-cols-[1fr_0.8fr]">
 <div>
-<h1 className="text-5xl font-black">
-Procurement Analytics
-</h1>
+<h1 className="text-5xl font-black">Procurement Analytics</h1>
 
 <p className="mt-4 max-w-3xl text-sm leading-7 text-slate-300">
 {executiveCommandRecommendation}
@@ -2484,10 +1977,22 @@ Procurement Analytics
 </div>
 
 <div className="grid gap-4 sm:grid-cols-2">
-<DarkMetric title="Enterprise Score" value={`${enterpriseProcurementScore}/100`} />
-<DarkMetric title="Opportunity" value={`${procurementOpportunityScore}/100`} />
-<DarkMetric title="Risk Index" value={`${procurementRiskIndex}/100`} />
-<DarkMetric title="Forecast Accuracy" value={`${predictionAccuracy}%`} />
+<DarkMetric
+title="Enterprise Score"
+value={`${enterpriseProcurementScore}/100`}
+/>
+<DarkMetric
+title="Opportunity"
+value={`${procurementOpportunityScore}/100`}
+/>
+<DarkMetric
+title="Risk Index"
+value={`${procurementRiskIndex}/100`}
+/>
+<DarkMetric
+title="Forecast Accuracy"
+value={`${predictionAccuracy}%`}
+/>
 </div>
 </div>
 </section>
@@ -2503,7 +2008,10 @@ Procurement Analytics
 <MetricCard title="Open Market" value={openMarketRfqs.toString()} />
 <MetricCard title="Invited RFQs" value={invitedRfqs.toString()} />
 <MetricCard title="Sealed Bids" value={sealedBidRfqs.toString()} />
-<MetricCard title="Project Specific" value={projectSpecificRfqs.toString()} />
+<MetricCard
+title="Project Specific"
+value={projectSpecificRfqs.toString()}
+/>
 <MetricCard title="Framework RFQs" value={frameworkRfqs.toString()} />
 </section>
 
@@ -2546,75 +2054,29 @@ method is {dominantSourcing}.
 </div>
 </section>
 
-<section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
-<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
-Executive Alerts Center
-</p>
-
-<h2 className="mt-3 text-3xl font-black text-slate-950">
-Real-Time Executive Signals
-</h2>
-
-<div className="mt-6 space-y-4">
-{executiveAlerts.map((alert, index) => (
-<div
-key={index}
-className="rounded-2xl border border-slate-200 p-5"
->
-<div className="flex items-center gap-3">
-<div
-className={`h-3 w-3 rounded-full ${
-alert.level === "healthy"
-? "bg-green-500"
-: alert.level === "opportunity"
-? "bg-yellow-500"
-: "bg-red-500"
-}`}
+<IntelligenceDashboard
+executiveAlerts={executiveAlerts}
+executiveRecommendations={executiveRecommendations}
+dailyExecutiveBriefing={dailyExecutiveBriefing}
+aiConfidenceScore={aiConfidenceScore}
+dataQualityScore={dataQualityScore}
+supplierReliabilityScore={supplierReliabilityScore}
+predictionAccuracy={predictionAccuracy}
+awardPredictionConfidence={awardPredictionConfidence}
 />
 
-<p className="font-black text-slate-950">{alert.title}</p>
-</div>
-
-<p className="mt-2 text-sm text-slate-600">{alert.message}</p>
-</div>
-))}
-</div>
-</section>
-
-<section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
-<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
-AI Executive Recommendations
-</p>
-
-<h2 className="mt-3 text-3xl font-black text-slate-950">
-Executive Action Plan
-</h2>
-
-<div className="mt-6 grid gap-4 md:grid-cols-2">
-{executiveRecommendations.map((item) => (
-<div
-key={item.role}
-className="rounded-2xl border border-slate-200 bg-slate-50 p-5"
->
-<p className="text-xs font-black uppercase tracking-[0.2em] text-orange-500">
-{item.role}
-</p>
-
-<p className="mt-3 text-sm font-semibold leading-7 text-slate-700">
-{item.action}
-</p>
-</div>
-))}
-</div>
-</section>
-
 <section className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-<MetricCard title="Health Score" value={`${procurementHealthScore}/100`} />
+<MetricCard
+title="Health Score"
+value={`${procurementHealthScore}/100`}
+/>
 <MetricCard title="Procurement Health" value={procurementHealth} />
 <MetricCard title="Competition Index" value={competitionIndex} />
-<MetricCard title="Avg Quotes / RFQ" value={avgQuotesPerRfq.toString()} />
+<MetricCard
+title="Avg Quotes / RFQ"
+value={avgQuotesPerRfq.toString()}
+/>
 </section>
-
 <section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
 <p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
 Decision Confidence Layer
@@ -2625,16 +2087,22 @@ Executive Decision Confidence Center
 </h2>
 
 <p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-600">
-Nexus Pavilion evaluates whether procurement intelligence is reliable enough
-to support executive interpretation, board reporting, and strategic decision
-guidance.
+Nexus Pavilion evaluates whether procurement intelligence is
+reliable enough to support executive interpretation, board
+reporting, and strategic decision guidance.
 </p>
 
 <div className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-<MetricCard title="Confidence Score" value={`${decisionConfidenceScore}/100`} />
+<MetricCard
+title="Confidence Score"
+value={`${decisionConfidenceScore}/100`}
+/>
 <MetricCard title="Confidence Level" value={decisionConfidenceLevel} />
 <MetricCard title="AI Confidence" value={aiConfidenceScore} />
-<MetricCard title="Benchmark Confidence" value={benchmarkConfidence} />
+<MetricCard
+title="Benchmark Confidence"
+value={benchmarkConfidence}
+/>
 </div>
 
 <div className="mt-8 grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
@@ -2692,191 +2160,10 @@ className="rounded-2xl border border-amber-100 bg-white p-4"
 </div>
 </section>
 
-<section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
-<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
-Board Risk Prioritization
-</p>
-
-<h2 className="mt-3 text-3xl font-black text-slate-950">
-Executive Risk Priority Queue
-</h2>
-
-<p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-600">
-Nexus Pavilion ranks procurement risks by executive attention, operating
-impact, and board-level urgency using validated procurement, supplier,
-classification, and award signals.
-</p>
-
-<div className="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-{boardRiskPriorities.map((risk) => (
-<div
-key={risk.title}
-className={
-risk.priority === "Critical"
-? "rounded-3xl border border-red-200 bg-red-50 p-6"
-: risk.priority === "Moderate"
-? "rounded-3xl border border-amber-200 bg-amber-50 p-6"
-: "rounded-3xl border border-slate-200 bg-slate-50 p-6"
-}
->
-<div className="flex items-start justify-between gap-3">
-<p
-className={
-risk.priority === "Critical"
-? "text-xs font-black uppercase tracking-[0.2em] text-red-600"
-: risk.priority === "Moderate"
-? "text-xs font-black uppercase tracking-[0.2em] text-amber-700"
-: "text-xs font-black uppercase tracking-[0.2em] text-slate-400"
-}
->
-{risk.priority}
-</p>
-
-<span className="rounded-full bg-white px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-slate-700">
-{risk.attention}
-</span>
-</div>
-
-<h3 className="mt-4 text-xl font-black text-slate-950">
-{risk.title}
-</h3>
-
-<p className="mt-4 text-sm font-semibold leading-7 text-slate-700">
-{risk.summary}
-</p>
-
-<div className="mt-5 rounded-2xl border border-white/60 bg-white p-4">
-<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
-Impact
-</p>
-<p className="mt-2 text-sm font-black text-slate-950">
-{risk.impact}
-</p>
-</div>
-</div>
-))}
-</div>
-</section>
-
-
-<section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
-<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
-Executive Opportunity Ranking
-</p>
-
-<h2 className="mt-3 text-3xl font-black text-slate-950">
-Board Opportunity Queue
-</h2>
-
-<p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-600">
-Nexus Pavilion ranks procurement opportunities based on savings potential,
-supplier growth, sourcing expansion, and procurement intelligence signals.
-</p>
-
-<div className="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-{executiveOpportunityRanking.map((opportunity) => (
-<div
-key={opportunity.title}
-className="rounded-3xl border border-green-200 bg-green-50 p-6"
->
-<div className="flex items-start justify-between gap-3">
-<p className="text-xs font-black uppercase tracking-[0.2em] text-green-700">
-{opportunity.priority}
-</p>
-
-<span className="rounded-full bg-white px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-slate-700">
-{opportunity.impact}
-</span>
-</div>
-
-<h3 className="mt-4 text-xl font-black text-slate-950">
-{opportunity.title}
-</h3>
-
-<p className="mt-4 text-sm font-semibold leading-7 text-slate-700">
-{opportunity.summary}
-</p>
-
-<div className="mt-5 rounded-2xl border border-white bg-white p-4">
-<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
-Opportunity Value
-</p>
-
-<p className="mt-2 text-lg font-black text-slate-950">
-{opportunity.value}
-</p>
-</div>
-</div>
-))}
-</div>
-</section>
-
-
-<section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
-<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
-Executive Opportunity Intelligence
-</p>
-
-<h2 className="mt-3 text-3xl font-black text-slate-950">
-Opportunity Impact Intelligence
-</h2>
-
-<p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-600">
-Nexus Pavilion converts ranked procurement opportunities into executive
-business impact, execution horizon, board priority, and CEO-level
-recommendations.
-</p>
-
-<div className="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-{executiveOpportunityIntelligence.map((opportunity) => (
-<div
-key={opportunity.title}
-className="rounded-3xl border border-green-200 bg-green-50 p-6"
->
-<p className="text-xs font-black uppercase tracking-[0.2em] text-green-700">
-Opportunity #{opportunity.rank}
-</p>
-
-<h3 className="mt-4 text-xl font-black text-slate-950">
-{opportunity.title}
-</h3>
-
-<p className="mt-4 text-sm font-semibold leading-7 text-slate-700">
-{opportunity.businessImpact}
-</p>
-
-<div className="mt-5 space-y-3">
-<div className="rounded-2xl border border-green-100 bg-white p-4">
-<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
-Execution Horizon
-</p>
-<p className="mt-2 text-sm font-black text-slate-950">
-{opportunity.executionHorizon}
-</p>
-</div>
-
-<div className="rounded-2xl border border-green-100 bg-white p-4">
-<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
-Board Priority
-</p>
-<p className="mt-2 text-sm font-black text-slate-950">
-{opportunity.boardPriority}
-</p>
-</div>
-
-<div className="rounded-2xl border border-green-100 bg-white p-4">
-<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
-CEO Recommendation
-</p>
-<p className="mt-2 text-sm font-semibold leading-7 text-slate-700">
-{opportunity.ceoRecommendation}
-</p>
-</div>
-</div>
-</div>
-))}
-</div>
-</section>
+<ExecutiveOpportunityRanking
+opportunities={executiveOpportunityRanking}
+intelligence={executiveOpportunityIntelligence}
+/>
 
 <section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
 <p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
@@ -2888,9 +2175,9 @@ Strategic Scenario Modeling
 </h2>
 
 <p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-600">
-Executive scenario modeling evaluates potential procurement outcomes,
-operational impact, and strategic decision consequences before action
-is taken.
+Executive scenario modeling evaluates potential procurement
+outcomes, operational impact, and strategic decision consequences
+before action is taken.
 </p>
 
 <div className="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
@@ -2930,7 +2217,6 @@ Confidence
 ))}
 </div>
 </section>
-
 <section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
 <p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
 Executive Decision Simulator
@@ -2997,8 +2283,9 @@ Forward-Looking Intelligence
 </h2>
 
 <p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-600">
-Forecast procurement readiness, supplier health, executive visibility,
-and enterprise risk trajectory using current operating signals.
+Forecast procurement readiness, supplier health, executive
+visibility, and enterprise risk trajectory using current operating
+signals.
 </p>
 
 <div className="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
@@ -3020,16 +2307,6 @@ className="rounded-3xl border border-cyan-200 bg-cyan-50 p-6"
 </section>
 
 <div className="mt-8">
-<ProcurementCommandCenter
-procurementCommandRoom={procurementCommandRoom}
-procurementCommandRoomStatus={procurementCommandRoomStatus}
-procurementCommandCenter={procurementCommandCenter}
-commandCenterStatus={commandCenterStatus}
-executiveCommandRecommendation={executiveCommandRecommendation}
-/>
-</div>
-
-<div className="mt-8">
 <CEOActionCenter
 ceoOperatingStatus={ceoOperatingStatus}
 ceoDecisionPosture={ceoDecisionPosture}
@@ -3039,165 +2316,52 @@ ceoActionCenter={ceoActionCenter}
 />
 </div>
 
-<div className="mt-8">
-<BoardPresentationCenter
-boardPresentationMetrics={boardPresentationMetrics}
-boardPresentationReadiness={boardPresentationReadiness}
-boardNarrative={boardNarrative}
-boardDeckSlides={boardDeckSlides}
+<ExecutiveDashboard
+ceoMorningBrief={ceoMorningBrief}
+ceoReadinessScore={ceoReadinessScore}
+ceoPriorityLevel={ceoPriorityLevel}
+ceoRiskLevel={ceoRiskLevel}
+ceoOpportunityLevel={ceoOpportunityLevel}
+ceoPriorityQueue={ceoPriorityQueue}
+ceoCriticalRisks={ceoCriticalRisks}
+ceoStrategicOpportunities={ceoStrategicOpportunities}
+boardHealthIndex={boardHealthIndex}
+benchmarkReadinessScore={benchmarkReadinessScore}
+enterpriseCommandStatus={enterpriseCommandStatus}
+riskCommandStatus={riskCommandStatus}
+opportunityCommandStatus={opportunityCommandStatus}
+executiveCommandRecommendation={executiveCommandRecommendation}
+procurementRiskIndex={procurementRiskIndex}
+supplierDependencyRisk={supplierDependencyRisk}
+concentrationLevel={concentrationLevel}
+procurementMaturityScore={procurementMaturityScore}
+aiConfidenceScore={aiConfidenceScore}
+procurementOutlook={procurementOutlook}
+riskTrajectory={riskTrajectory}
+opportunityTrajectory={opportunityTrajectory}
+executiveForecastStatus={executiveForecastStatus}
+forecast30Days={forecast30Days}
+forecast60Days={forecast60Days}
+forecast90Days={forecast90Days}
+boardForecastNarrative={boardForecastNarrative}
+bestCaseScenario={bestCaseScenario}
+expectedCaseScenario={expectedCaseScenario}
+riskCaseScenario={riskCaseScenario}
+forecastConfidenceLevel={forecastConfidenceLevel}
+executiveScenarioStatus={executiveScenarioStatus}
+executivePresentationExports={executivePresentationExports}
+exportReadinessStatus={exportReadinessStatus}
+benchmarkMatrix={benchmarkMatrix}
+benchmarkPeerPosition={benchmarkPeerPosition}
+benchmarkStatus={benchmarkStatus}
+benchmarkConfidence={benchmarkConfidence}
+benchmarkNarrative={benchmarkNarrative}
+benchmarkBoardRecommendation={benchmarkBoardRecommendation}
+dataQualityScore={dataQualityScore}
+supplierReliabilityScore={supplierReliabilityScore}
+predictionAccuracy={predictionAccuracy}
+awardPredictionConfidence={awardPredictionConfidence}
 />
-</div>
-
-<section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
-<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
-Executive Forecast Engine
-</p>
-
-<h2 className="mt-3 text-3xl font-black text-slate-950">
-30 / 60 / 90 Day Procurement Forecast
-</h2>
-
-<p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-600">
-Forward-looking executive intelligence projecting procurement outlook,
-supplier participation, risk trajectory, opportunity momentum, and board
-readiness over the next operating cycle.
-</p>
-
-<div className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-<MetricCard title="Procurement Outlook" value={procurementOutlook} />
-<MetricCard title="Risk Trajectory" value={riskTrajectory} />
-<MetricCard title="Opportunity Trajectory" value={opportunityTrajectory} />
-<MetricCard title="Forecast Status" value={executiveForecastStatus} />
-</div>
-
-<div className="mt-8 grid gap-5 md:grid-cols-3">
-<div className="rounded-3xl border border-slate-200 bg-slate-50 p-6">
-<p className="text-xs font-black uppercase tracking-[0.2em] text-orange-500">
-30 Days
-</p>
-
-<p className="mt-4 text-sm font-semibold leading-7 text-slate-700">
-{forecast30Days}
-</p>
-</div>
-
-<div className="rounded-3xl border border-slate-200 bg-slate-50 p-6">
-<p className="text-xs font-black uppercase tracking-[0.2em] text-orange-500">
-60 Days
-</p>
-
-<p className="mt-4 text-sm font-semibold leading-7 text-slate-700">
-{forecast60Days}
-</p>
-</div>
-
-<div className="rounded-3xl border border-slate-200 bg-slate-50 p-6">
-<p className="text-xs font-black uppercase tracking-[0.2em] text-orange-500">
-90 Days
-</p>
-
-<p className="mt-4 text-sm font-semibold leading-7 text-slate-700">
-{forecast90Days}
-</p>
-</div>
-</div>
-
-<div className="mt-8 rounded-3xl border border-slate-950 bg-slate-950 p-6 text-white">
-<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-400">
-Board Forecast Narrative
-</p>
-
-<h3 className="mt-4 text-2xl font-black">
-{executiveForecastStatus}
-</h3>
-
-<p className="mt-4 text-sm font-semibold leading-7 text-slate-300">
-{boardForecastNarrative}
-</p>
-</div>
-</section>
-
-<section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
-<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
-Executive Scenario Center
-</p>
-
-<h2 className="mt-3 text-3xl font-black text-slate-950">
-Strategic Scenario Modeling
-</h2>
-
-<p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-600">
-Nexus Pavilion models best-case, expected-case, and risk-case procurement
-scenarios to support executive planning and board-level decision review.
-</p>
-
-<div className="mt-8 grid gap-5 md:grid-cols-3">
-<div className="rounded-3xl border border-green-200 bg-green-50 p-6">
-<p className="text-xs font-black uppercase tracking-[0.2em] text-green-700">
-Best Case
-</p>
-
-<p className="mt-4 text-sm font-semibold leading-7 text-slate-700">
-{bestCaseScenario}
-</p>
-</div>
-
-<div className="rounded-3xl border border-blue-200 bg-blue-50 p-6">
-<p className="text-xs font-black uppercase tracking-[0.2em] text-blue-700">
-Expected Case
-</p>
-
-<p className="mt-4 text-sm font-semibold leading-7 text-slate-700">
-{expectedCaseScenario}
-</p>
-</div>
-
-<div className="rounded-3xl border border-red-200 bg-red-50 p-6">
-<p className="text-xs font-black uppercase tracking-[0.2em] text-red-700">
-Risk Case
-</p>
-
-<p className="mt-4 text-sm font-semibold leading-7 text-slate-700">
-{riskCaseScenario}
-</p>
-</div>
-</div>
-
-<div className="mt-8 rounded-3xl border border-slate-950 bg-slate-950 p-6 text-white">
-<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-400">
-Forecast Confidence Matrix
-</p>
-
-<div className="mt-6 grid gap-4 md:grid-cols-2">
-<div className="rounded-2xl border border-white/10 bg-white/5 p-5">
-<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
-Forecast Confidence
-</p>
-
-<h3 className="mt-3 text-2xl font-black">
-{forecastConfidenceLevel}
-</h3>
-</div>
-
-<div className="rounded-2xl border border-white/10 bg-white/5 p-5">
-<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
-Scenario Status
-</p>
-
-<h3 className="mt-3 text-2xl font-black">
-{executiveScenarioStatus}
-</h3>
-</div>
-</div>
-
-<p className="mt-6 text-sm font-semibold leading-7 text-slate-300">
-Scenario intelligence supports executive review by comparing upside
-opportunity, expected operating performance, and downside risk before
-board-level decisions are made.
-</p>
-</div>
-</section>
-
 <section className="mt-8 rounded-3xl border border-slate-950 bg-slate-950 p-8 text-white">
 <p className="text-xs font-black uppercase tracking-[0.25em] text-orange-400">
 Board Forecast Briefing
@@ -3240,202 +2404,26 @@ Board Narrative
 </div>
 </section>
 
-<section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
-<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
-Executive Presentation Export Layer
-</p>
-
-<h2 className="mt-3 text-3xl font-black text-slate-950">
-Executive Presentation Center
-</h2>
-
-<p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-600">
-Executive-ready presentation packages for board members, executive
-leadership, procurement leadership, and strategic planning reviews.
-</p>
-
-<div className="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-{executivePresentationExports.map((item) => (
-<div
-key={item.title}
-className="rounded-3xl border border-slate-200 bg-slate-50 p-6"
->
-<p className="text-xs font-black uppercase tracking-[0.2em] text-orange-500">
-{item.audience}
-</p>
-
-<h3 className="mt-4 text-xl font-black text-slate-950">
-{item.title}
-</h3>
-
-<p className="mt-4 text-sm font-semibold text-slate-700">
-{item.status}
-</p>
-</div>
-))}
-</div>
-
-<div className="mt-8 rounded-3xl border border-slate-950 bg-slate-950 p-6 text-white">
-<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-400">
-Export Readiness
-</p>
-
-<h3 className="mt-4 text-3xl font-black">
-{exportReadinessStatus}
-</h3>
-
-<p className="mt-4 text-sm font-semibold leading-7 text-slate-300">
-Executive presentation packages are generated only from validated
-procurement intelligence, executive readiness signals, benchmark
-analysis, and board-level decision data.
-</p>
-</div>
-</section>
-
-<section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
-<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
-Board Automation Center
-</p>
-
-<h2 className="mt-3 text-3xl font-black text-slate-950">
-Automated Board Package Workflow
-</h2>
-
-<p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-600">
-Nexus Pavilion validates board package readiness, executive approval
-requirements, distribution status, and board automation lifecycle before
-report generation.
-</p>
-
-<div className="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-{boardAutomationItems.map((item) => (
-<div
-key={item.title}
-className="rounded-3xl border border-slate-200 bg-slate-50 p-6"
->
-<p className="text-xs font-black uppercase tracking-[0.2em] text-orange-500">
-{item.title}
-</p>
-
-<h3 className="mt-4 text-xl font-black text-slate-950">
-{item.status}
-</h3>
-</div>
-))}
-</div>
-
-<div className="mt-8 rounded-3xl border border-slate-950 bg-slate-950 p-6 text-white">
-<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-400">
-Board Automation Status
-</p>
-
-<h3 className="mt-4 text-3xl font-black">
-{boardAutomationStatus}
-</h3>
-
-<p className="mt-4 text-sm font-semibold leading-7 text-slate-300">
-{boardPackageLifecycle}
-</p>
-</div>
-<div className="mt-8">
-<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
-Board Package Lifecycle
-</p>
-
-<div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-{boardPackageStages.map((stage) => (
-<div
-key={stage.stage}
-className="rounded-3xl border border-slate-200 bg-slate-50 p-5"
->
-<p className="text-xs font-black uppercase tracking-[0.2em] text-orange-500">
-{stage.stage}
-</p>
-
-<h3 className="mt-3 text-lg font-black text-slate-950">
-{stage.status}
-</h3>
-</div>
-))}
-</div>
-</div>
-<div className="mt-8">
-<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
-Board Distribution Intelligence
-</p>
-
-<div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-{boardDistributionChannels.map((item) => (
-<div
-key={item.channel}
-className="rounded-3xl border border-slate-200 bg-slate-50 p-5"
->
-<p className="text-xs font-black uppercase tracking-[0.2em] text-orange-500">
-{item.channel}
-</p>
-
-<h3 className="mt-3 text-lg font-black text-slate-950">
-{item.status}
-</h3>
-</div>
-))}
-</div>
-
-<div className="mt-6 rounded-3xl border border-slate-950 bg-slate-950 p-6 text-white">
-<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-400">
-Distribution Readiness
-</p>
-
-<h3 className="mt-4 text-3xl font-black">
-{boardDistributionReadiness}
-</h3>
-
-<p className="mt-4 text-sm font-semibold leading-7 text-slate-300">
-Executive board packages are distributed only after readiness,
-confidence, and governance validation thresholds are achieved.
-</p>
-</div>
-</div>
-<div className="mt-8">
-<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
-Board Approval Workflow
-</p>
-
-<div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-{boardApprovalStages.map((item) => (
-<div
-key={item.stage}
-className="rounded-3xl border border-slate-200 bg-slate-50 p-5"
->
-<p className="text-xs font-black uppercase tracking-[0.2em] text-orange-500">
-{item.stage}
-</p>
-
-<h3 className="mt-3 text-lg font-black text-slate-950">
-{item.status}
-</h3>
-</div>
-))}
-</div>
-
-<div className="mt-6 rounded-3xl border border-slate-950 bg-slate-950 p-6 text-white">
-<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-400">
-Approval Status
-</p>
-
-<h3 className="mt-4 text-3xl font-black">
-{boardApprovalStatus}
-</h3>
-
-<p className="mt-4 text-sm font-semibold leading-7 text-slate-300">
-Board package approval requires executive readiness, governance review,
-risk validation, and distribution authorization.
-</p>
-</div>
-</div>
-
-</section>
-
+<BoardDashboard
+boardReadinessScore={boardReadinessScore}
+governanceReadiness={governanceReadiness}
+financialVisibility={financialVisibility}
+riskVisibility={riskVisibility}
+boardRecommendation={boardRecommendation}
+boardRiskPriorities={boardRiskPriorities}
+boardPresentationMetrics={boardPresentationMetrics}
+boardPresentationReadiness={boardPresentationReadiness}
+boardNarrative={boardNarrative}
+boardDeckSlides={boardDeckSlides}
+boardAutomationItems={boardAutomationItems}
+boardAutomationStatus={boardAutomationStatus}
+boardPackageLifecycle={boardPackageLifecycle}
+boardPackageStages={boardPackageStages}
+boardDistributionChannels={boardDistributionChannels}
+boardDistributionReadiness={boardDistributionReadiness}
+boardApprovalStages={boardApprovalStages}
+boardApprovalStatus={boardApprovalStatus}
+/>
 
 <section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
 <p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
@@ -3459,385 +2447,83 @@ AI Signals
 </p>
 
 <div className="mt-4 space-y-3">
-<SignalRow label="Supplier Activity" value={`${supplierActivityScore}/100`} />
-<SignalRow label="Competition" value={`${competitionScore}/100`} />
-<SignalRow label="Award Conversion" value={`${awardScore}/100`} />
-<SignalRow label="RFQ Maturity" value={`${constructionClassificationScore}/100`} />
+<SignalRow
+label="Supplier Activity"
+value={`${supplierActivityScore}/100`}
+/>
+<SignalRow
+label="Competition"
+value={`${competitionScore}/100`}
+/>
+<SignalRow
+label="Award Conversion"
+value={`${awardScore}/100`}
+/>
+<SignalRow
+label="RFQ Maturity"
+value={`${constructionClassificationScore}/100`}
+/>
 </div>
 </div>
 </div>
 </section>
-
-
-
 
 <section className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
 <MetricCard title="Total RFQs" value={totalRfqs.toString()} />
 <MetricCard title="Active RFQs" value={activeRfqs.toString()} />
-<MetricCard title="Awarded Contracts" value={awardedContracts.toString()} />
+<MetricCard
+title="Awarded Contracts"
+value={awardedContracts.toString()}
+/>
 <MetricCard title="Supplier Quotes" value={supplierQuotes.toString()} />
 </section>
 
 <section className="mt-6 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-<MetricCard title="Procurement Volume" value={`$${procurementVolume.toLocaleString()}`} />
-<MetricCard title="Awarded Volume" value={`$${awardedVolume.toLocaleString()}`} />
-<MetricCard title="Average Quote" value={`$${averageQuote.toLocaleString()}`} />
+<MetricCard
+title="Procurement Volume"
+value={`$${procurementVolume.toLocaleString()}`}
+/>
+<MetricCard
+title="Awarded Volume"
+value={`$${awardedVolume.toLocaleString()}`}
+/>
+<MetricCard
+title="Average Quote"
+value={`$${averageQuote.toLocaleString()}`}
+/>
 <MetricCard title="Award Rate" value={`${awardRate}%`} />
 </section>
 
-<section className="mt-8 grid gap-6 lg:grid-cols-2">
-<div className="rounded-3xl border border-slate-200 bg-white p-8">
-<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
-Pipeline Intelligence
-</p>
-
-<h2 className="mt-3 text-3xl font-black text-slate-950">
-Procurement Activity
-</h2>
-
-<div className="mt-6">
-<AnalyticsChart data={activityChartData} />
-</div>
-</div>
-
-<div className="rounded-3xl border border-slate-200 bg-white p-8">
-<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
-Value Intelligence
-</p>
-
-<h2 className="mt-3 text-3xl font-black text-slate-950">
-Procurement Value
-</h2>
-
-<div className="mt-6">
-<AnalyticsChart data={valueChartData} />
-</div>
-</div>
-</section>
-
-<section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
-<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
-Award Probability Forecast
-</p>
-
-<h2 className="mt-3 text-3xl font-black text-slate-950">
-RFQ Award Forecast Engine
-</h2>
-
-<div className="mt-6 overflow-hidden rounded-2xl border border-slate-200">
-<table className="w-full text-left">
-<thead className="bg-slate-950 text-white">
-<tr>
-<th className="px-5 py-4 text-sm">RFQ</th>
-<th className="px-5 py-4 text-sm">Scope</th>
-<th className="px-5 py-4 text-sm">Sourcing</th>
-<th className="px-5 py-4 text-sm">Quotes</th>
-<th className="px-5 py-4 text-sm">Probability</th>
-<th className="px-5 py-4 text-sm">Status</th>
-</tr>
-</thead>
-
-<tbody>
-{awardProbabilityForecast.map((rfq) => (
-<tr key={rfq.title} className="border-t border-slate-100">
-<td className="px-5 py-4 font-bold text-slate-950">
-{rfq.title}
-</td>
-<td className="px-5 py-4 text-slate-600">{rfq.scope}</td>
-<td className="px-5 py-4 text-slate-600">{rfq.sourcing}</td>
-<td className="px-5 py-4 text-slate-600">{rfq.quotes}</td>
-<td className="px-5 py-4 font-black text-emerald-600">
-{rfq.probability}%
-</td>
-<td className="px-5 py-4">
-<span className="rounded-full bg-slate-100 px-3 py-1 text-sm font-bold text-slate-700">
-{rfq.status}
-</span>
-</td>
-</tr>
-))}
-
-{awardProbabilityForecast.length === 0 ? (
-<tr>
-<td
-colSpan={6}
-className="px-5 py-10 text-center text-sm font-semibold text-slate-500"
->
-No RFQ forecast data available.
-</td>
-</tr>
-) : null}
-</tbody>
-</table>
-</div>
-</section>
-
-<section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
-<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
-Company RFQ Pipeline
-</p>
-
-<div className="mt-6 overflow-hidden rounded-2xl border border-slate-200">
-<table className="w-full text-left">
-<thead className="bg-slate-950 text-white">
-<tr>
-<th className="px-5 py-4 text-sm">RFQ</th>
-<th className="px-5 py-4 text-sm">Category</th>
-<th className="px-5 py-4 text-sm">Scope</th>
-<th className="px-5 py-4 text-sm">Sourcing</th>
-<th className="px-5 py-4 text-sm">Framework</th>
-<th className="px-5 py-4 text-sm">Status</th>
-</tr>
-</thead>
-
-<tbody>
-{rfqList.map((rfq) => (
-<tr key={rfq.id} className="border-t border-slate-100">
-<td className="px-5 py-4 font-bold text-slate-950">
-{rfq.title}
-</td>
-<td className="px-5 py-4 text-slate-600">{rfq.category}</td>
-<td className="px-5 py-4 text-slate-600">
-{PROCUREMENT_SCOPE_LABELS[getProcurementScope(rfq.procurement_scope)]}
-</td>
-<td className="px-5 py-4 text-slate-600">
-{SOURCING_METHOD_LABELS[getSourcingMethod(rfq.sourcing_method)]}
-</td>
-<td className="px-5 py-4 text-slate-600">
-{CONTRACT_FRAMEWORK_LABELS[getContractFramework(rfq.contract_framework)]}
-</td>
-<td className="px-5 py-4">
-<span className="rounded-full bg-slate-100 px-3 py-1 text-sm font-bold text-slate-700">
-{rfq.status || "open"}
-</span>
-</td>
-</tr>
-))}
-
-{rfqList.length === 0 ? (
-<tr>
-<td
-colSpan={6}
-className="px-5 py-10 text-center text-sm font-semibold text-slate-500"
->
-No company RFQs found.
-</td>
-</tr>
-) : null}
-</tbody>
-</table>
-</div>
-</section>
-
-<section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
-<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
-Category Intelligence
-</p>
-
-<h2 className="mt-3 text-3xl font-black text-slate-950">
-Top Procurement Categories
-</h2>
-
-<div className="mt-8 overflow-x-auto">
-<table className="w-full">
-<thead>
-<tr className="border-b border-slate-200 text-left">
-<th className="pb-4 text-xs font-black uppercase tracking-[0.2em] text-slate-400">
-Category
-</th>
-<th className="pb-4 text-xs font-black uppercase tracking-[0.2em] text-slate-400">
-RFQs
-</th>
-<th className="pb-4 text-xs font-black uppercase tracking-[0.2em] text-slate-400">
-Quotes
-</th>
-<th className="pb-4 text-xs font-black uppercase tracking-[0.2em] text-slate-400">
-Awards
-</th>
-<th className="pb-4 text-xs font-black uppercase tracking-[0.2em] text-slate-400">
-Win Rate
-</th>
-<th className="pb-4 text-xs font-black uppercase tracking-[0.2em] text-slate-400">
-Spend
-</th>
-<th className="pb-4 text-xs font-black uppercase tracking-[0.2em] text-slate-400">
-Opportunity
-</th>
-</tr>
-</thead>
-
-<tbody>
-{categoryIntelligence.map((item) => (
-<tr key={item.category} className="border-b border-slate-100">
-<td className="py-4 font-black text-slate-950">
-{item.category}
-</td>
-<td className="py-4 text-slate-700">{item.rfqs}</td>
-<td className="py-4 text-slate-700">{item.quotes}</td>
-<td className="py-4 text-slate-700">{item.awards}</td>
-<td className="py-4 font-bold text-slate-950">
-{item.winRate}%
-</td>
-<td className="py-4 font-bold text-slate-950">
-${item.spend.toLocaleString()}
-</td>
-<td className="py-4">
-<span className="rounded-full bg-orange-100 px-3 py-1 text-xs font-black text-orange-700">
-{item.opportunityScore}/100
-</span>
-</td>
-</tr>
-))}
-</tbody>
-</table>
-</div>
-</section>
-
-<section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
-<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
-Executive Benchmark Engine
-</p>
-
-<h2 className="mt-3 text-3xl font-black text-slate-950">
-Industry Benchmark Intelligence
-</h2>
-
-<p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-600">
-Nexus Pavilion converts internal procurement signals into an executive
-benchmark position using procurement health, supplier reliability,
-competition strength, prediction confidence, and construction
-classification maturity.
-</p>
-
-<div className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-{benchmarkMatrix.map((item) => (
-<MetricCard
-key={item.title}
-title={`${item.title} Benchmark`}
-value={`${item.score}/100`}
+<ProcurementDashboard
+procurementCommandRoom={procurementCommandRoom}
+procurementCommandRoomStatus={procurementCommandRoomStatus}
+procurementCommandCenter={procurementCommandCenter}
+commandCenterStatus={commandCenterStatus}
+executiveCommandRecommendation={executiveCommandRecommendation}
+activityChartData={activityChartData}
+valueChartData={valueChartData}
+awardProbabilityForecast={awardProbabilityForecast}
+rfqList={rfqList}
+procurementScopeLabels={PROCUREMENT_SCOPE_LABELS}
+sourcingMethodLabels={SOURCING_METHOD_LABELS}
+contractFrameworkLabels={CONTRACT_FRAMEWORK_LABELS}
+categoryIntelligence={categoryIntelligence}
+portfolioHealthIndex={portfolioHealthIndex}
+strategicSuppliers={strategicSuppliers}
+preferredSuppliers={preferredSuppliers}
+highRiskSuppliers={highRiskSuppliers}
+supplierDiversificationScore={supplierDiversificationScore}
+portfolioStatus={portfolioStatus}
+portfolioRecommendations={portfolioRecommendations}
 />
-))}
-</div>
-
-<div className="mt-8 grid gap-6 lg:grid-cols-[0.85fr_1.15fr]">
-<div className="rounded-3xl border border-orange-200 bg-orange-50 p-6">
-<p className="text-xs font-black uppercase tracking-[0.2em] text-orange-600">
-Peer Group Position
-</p>
-
-<h3 className="mt-2 text-3xl font-black text-slate-950">
-{benchmarkPeerPosition}
-</h3>
-
-<p className="mt-3 text-sm font-semibold leading-7 text-slate-700">
-Benchmark Status: {benchmarkStatus}
-</p>
-
-<p className="mt-3 text-sm font-semibold leading-7 text-slate-700">
-Benchmark Confidence: {benchmarkConfidence}
-</p>
-</div>
-
-<div className="rounded-3xl border border-slate-200 bg-slate-50 p-6">
-<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
-Benchmark Narrative
-</p>
-
-<p className="mt-4 text-sm font-semibold leading-7 text-slate-700">
-{benchmarkNarrative}
-</p>
-
-<div className="mt-5 rounded-2xl border border-slate-200 bg-white p-5">
-<p className="text-xs font-black uppercase tracking-[0.2em] text-orange-500">
-Board Recommendation
-</p>
-
-<p className="mt-3 text-sm font-semibold leading-7 text-slate-700">
-{benchmarkBoardRecommendation}
-</p>
-</div>
-</div>
-</div>
-</section>
-
-<section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
-<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
-Supplier Portfolio Intelligence
-</p>
-
-<h2 className="mt-3 text-3xl font-black text-slate-950">
-Supplier Portfolio Health
-</h2>
-
-<div className="mt-8 grid gap-6 md:grid-cols-5">
-<MetricCard title="Portfolio Health" value={`${portfolioHealthIndex}/100`} />
-<MetricCard title="Strategic Suppliers" value={strategicSuppliers.toString()} />
-<MetricCard title="Preferred Suppliers" value={preferredSuppliers.toString()} />
-<MetricCard title="High Risk Suppliers" value={highRiskSuppliers.toString()} />
-<MetricCard title="Diversification" value={`${supplierDiversificationScore}/100`} />
-</div>
-
-<div className="mt-8 rounded-3xl border border-orange-200 bg-orange-50 p-6">
-<p className="text-xs font-black uppercase tracking-[0.2em] text-orange-600">
-Portfolio Status
-</p>
-
-<h3 className="mt-2 text-3xl font-black text-slate-950">
-{portfolioStatus}
-</h3>
-</div>
-
-<div className="mt-8 space-y-4">
-{portfolioRecommendations.map((recommendation) => (
-<div
-key={recommendation}
-className="rounded-2xl border border-slate-200 bg-slate-50 p-4"
->
-<p className="text-sm font-semibold text-slate-700">
-{recommendation}
-</p>
-</div>
-))}
-</div>
-</section>
-
-<section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
-<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
-Daily Executive Briefing
-</p>
-
-<h2 className="mt-3 text-3xl font-black text-slate-950">
-Executive Morning Brief
-</h2>
-
-<div className="mt-8 grid gap-4 md:grid-cols-5">
-{dailyExecutiveBriefing.map((item) => (
-<div
-key={item.title}
-className="rounded-2xl border border-slate-200 bg-slate-50 p-5"
->
-<p className="text-xs font-black uppercase tracking-[0.2em] text-orange-500">
-{item.title}
-</p>
-
-<p className="mt-3 text-sm font-semibold leading-7 text-slate-700">
-{item.message}
-</p>
-</div>
-))}
-</div>
-</section>
 
 <ExecutiveExportPanel />
-
 <section className="mt-8 rounded-3xl border border-slate-200 bg-slate-950 p-8 text-white">
 <p className="text-xs font-black uppercase tracking-[0.25em] text-orange-400">
 Enterprise Procurement Copilot
 </p>
 
-<h2 className="mt-3 text-4xl font-black">
-Ask Nexus Copilot
-</h2>
+<h2 className="mt-3 text-4xl font-black">Ask Nexus Copilot</h2>
 
 <p className="mt-3 max-w-4xl text-sm leading-7 text-slate-300">
 {copilotSummary}
@@ -3911,7 +2597,10 @@ validated Nexus Pavilion operating data.
 </p>
 
 <div className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-5">
-<MetricCard title="Benchmark Score" value={`${benchmarkReadinessScore}/100`} />
+<MetricCard
+title="Benchmark Score"
+value={`${benchmarkReadinessScore}/100`}
+/>
 <MetricCard title="Benchmark Status" value={executiveBenchmarkStatus} />
 <MetricCard title="Peer Position" value={benchmarkPeerPosition} />
 <MetricCard title="Supplier Network" value={supplierNetworkBenchmark} />
@@ -3936,6 +2625,7 @@ Executive Benchmark Interpretation
 </p>
 </div>
 </section>
+
 <section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
 <p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
 Executive Procurement Intelligence
@@ -3952,7 +2642,6 @@ board-level actions.
 </p>
 
 <div className="mt-8 grid gap-6 lg:grid-cols-3">
-
 <div className="rounded-3xl border border-red-200 bg-red-50 p-6">
 <p className="text-xs font-black uppercase tracking-[0.2em] text-red-600">
 Board Risks
@@ -3996,8 +2685,7 @@ className="rounded-2xl border border-green-100 bg-white p-4"
 Executive Actions
 </p>
 
-<div className="space-y-4 mt-4">
-
+<div className="mt-4 space-y-4">
 <div className="rounded-2xl border border-blue-100 bg-white p-4">
 <p className="text-xs font-black uppercase tracking-[0.15em] text-blue-600">
 Immediate
@@ -4027,13 +2715,10 @@ Strategic Position
 {executiveBenchmarkStatus}
 </p>
 </div>
-
 </div>
 </div>
-
 </div>
 </section>
-
 <section className="mt-8 rounded-3xl border border-slate-200 bg-slate-950 p-8 text-white">
 <p className="text-xs font-black uppercase tracking-[0.25em] text-orange-400">
 Executive Scorecard
@@ -4045,56 +2730,40 @@ Board-Level Procurement Command Scorecard
 
 <p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-300">
 Nexus Pavilion consolidates procurement maturity, board health,
-benchmark readiness, supplier engagement, digital maturity, and enterprise
-risk posture into a single executive decision layer.
+benchmark readiness, supplier engagement, digital maturity, and
+enterprise risk posture into a single executive decision layer.
 </p>
 
 <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
 <DarkMetric title="Board Health" value={`${boardHealthIndex}/100`} />
-<DarkMetric title="Enterprise Score" value={`${enterpriseProcurementScore}/100`} />
-<DarkMetric title="Executive Readiness" value={`${executiveReadinessScore}/100`} />
-<DarkMetric title="Digital Maturity" value={`${digitalMaturityScore}/100`} />
+<DarkMetric
+title="Enterprise Score"
+value={`${enterpriseProcurementScore}/100`}
+/>
+<DarkMetric
+title="Executive Readiness"
+value={`${executiveReadinessScore}/100`}
+/>
+<DarkMetric
+title="Digital Maturity"
+value={`${digitalMaturityScore}/100`}
+/>
 </div>
 
 <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-<DarkMetric title="Procurement Efficiency" value={`${procurementEfficiencyScore}/100`} />
-<DarkMetric title="Supplier Engagement" value={`${supplierEngagementScore}/100`} />
-<DarkMetric title="Benchmark Status" value={executiveBenchmarkStatus} />
+<DarkMetric
+title="Procurement Efficiency"
+value={`${procurementEfficiencyScore}/100`}
+/>
+<DarkMetric
+title="Supplier Engagement"
+value={`${supplierEngagementScore}/100`}
+/>
+<DarkMetric
+title="Benchmark Status"
+value={executiveBenchmarkStatus}
+/>
 <DarkMetric title="Executive Status" value={executiveStatus} />
-</div>
-</section>
-
-<section className="mt-8 rounded-3xl border border-slate-950 bg-slate-950 p-8 text-white">
-<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-400">
-Executive Operating System
-</p>
-
-<h2 className="mt-3 text-4xl font-black">
-Enterprise Decision Layer
-</h2>
-
-<p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-300">
-Unified executive operating model combining board readiness,
-enterprise performance, risk posture, and strategic opportunity
-intelligence.
-</p>
-
-<div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-<DarkMetric title="Board Status" value={boardCommandStatus} />
-<DarkMetric title="CEO Status" value={ceoCommandStatus} />
-<DarkMetric title="Enterprise" value={enterpriseCommandStatus} />
-<DarkMetric title="Risk" value={riskCommandStatus} />
-<DarkMetric title="Opportunity" value={opportunityCommandStatus} />
-</div>
-
-<div className="mt-6 rounded-3xl border border-white/10 bg-white/5 p-6">
-<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-400">
-Command Recommendation
-</p>
-
-<p className="mt-4 text-sm leading-7 text-slate-300">
-{executiveCommandRecommendation}
-</p>
 </div>
 </section>
 
@@ -4108,16 +2777,25 @@ Board Executive Summary
 </h2>
 
 <p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-600">
-Board-facing procurement summary consolidating readiness, enterprise
-status, risk position, and strategic direction from validated executive
-intelligence.
+Board-facing procurement summary consolidating readiness,
+enterprise status, risk position, and strategic direction from
+validated executive intelligence.
 </p>
 
 <div className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-<MetricCard title="Board Readiness" value={boardPresentationStatus} />
-<MetricCard title="Enterprise Status" value={enterpriseCommandStatus} />
+<MetricCard
+title="Board Readiness"
+value={boardPresentationStatus}
+/>
+<MetricCard
+title="Enterprise Status"
+value={enterpriseCommandStatus}
+/>
 <MetricCard title="Risk Position" value={boardRiskPosition} />
-<MetricCard title="Strategic Position" value={boardStrategicPosition} />
+<MetricCard
+title="Strategic Position"
+value={boardStrategicPosition}
+/>
 </div>
 
 <div className="mt-8 rounded-3xl border border-slate-200 bg-slate-50 p-6">
@@ -4131,137 +2809,22 @@ Board Summary
 </div>
 </section>
 
-<section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
-<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
-Board Readiness Intelligence
-</p>
-
-<h2 className="mt-3 text-3xl font-black text-slate-950">
-Executive Governance Center
-</h2>
-
-<p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-600">
-Evaluate executive governance readiness, board presentation
-confidence, financial visibility, procurement maturity,
-and enterprise risk posture using validated operating data.
-</p>
-
-<div className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-5">
-<MetricCard
-title="Board Readiness"
-value={`${boardReadinessScore}/100`}
-/>
-
-<MetricCard
-title="Governance"
-value={governanceReadiness}
-/>
-
-<MetricCard
-title="Financial Visibility"
-value={financialVisibility}
-/>
-
-<MetricCard
-title="Risk Visibility"
-value={riskVisibility}
-/>
-
-<MetricCard
-title="Recommendation"
-value={boardRecommendation}
-/>
-</div>
-</section>
-<section className="mt-8 rounded-3xl border border-slate-200 bg-slate-950 p-8 text-white">
-<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-400">
-CEO Briefing Intelligence
-</p>
-
-<h2 className="mt-3 text-4xl font-black">
-Executive Morning Brief
-</h2>
-
-<p className="mt-4 max-w-4xl text-sm leading-7 text-slate-300">
-{ceoMorningBrief}
-</p>
-
-<div className="mt-8 grid gap-4 md:grid-cols-4">
-<DarkMetric
-title="CEO Readiness"
-value={`${ceoReadinessScore}/100`}
-/>
-
-<DarkMetric
-title="Priority"
-value={ceoPriorityLevel}
-/>
-
-<DarkMetric
-title="Risk Level"
-value={ceoRiskLevel}
-/>
-
-<DarkMetric
-title="Opportunity"
-value={ceoOpportunityLevel}
-/>
-</div>
-
-<div className="mt-8 grid gap-6 md:grid-cols-3">
-<DarkList
-title="Priority Queue"
-items={ceoPriorityQueue}
-/>
-
-<DarkList
-title="Critical Risks"
-items={ceoCriticalRisks}
-/>
-
-<DarkList
-title="Strategic Opportunities"
-items={ceoStrategicOpportunities}
-/>
-</div>
-</section>
-
 <ExecutiveRiskIntelligence
 supplierRiskRadar={supplierRiskRadar}
 supplierRanking={supplierRanking}
 />
-
-<section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
-<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
-Executive Risk Intelligence
-</p>
-
-<h2 className="mt-3 text-3xl font-black text-slate-950">
-Enterprise Risk Center
-</h2>
-
-<div className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-5">
-<MetricCard title="Risk Index" value={`${procurementRiskIndex}/100`} />
-<MetricCard title="Supplier Dependency" value={supplierDependencyRisk} />
-<MetricCard title="Vendor Concentration" value={concentrationLevel} />
-<MetricCard title="Maturity Score" value={`${procurementMaturityScore}/100`} />
-<MetricCard title="AI Confidence" value={aiConfidenceScore} />
-</div>
-</section>
 
 <section className="mt-8 rounded-3xl border border-slate-950 bg-slate-950 p-8 text-white">
 <p className="text-xs font-black uppercase tracking-[0.25em] text-orange-400">
 Executive Operating System
 </p>
 
-<h2 className="mt-3 text-4xl font-black">
-Enterprise Command Layer
-</h2>
+<h2 className="mt-3 text-4xl font-black">Enterprise Command Layer</h2>
 
 <p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-300">
 Unified executive operating view across procurement performance,
-benchmark readiness, board health, enterprise risk, supplier engagement,
-and opportunity intelligence.
+benchmark readiness, board health, enterprise risk, supplier
+engagement, and opportunity intelligence.
 </p>
 
 <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
@@ -4275,20 +2838,11 @@ title="Benchmark"
 value={`${benchmarkReadinessScore}/100`}
 />
 
-<DarkMetric
-title="Enterprise"
-value={enterpriseCommandStatus}
-/>
+<DarkMetric title="Enterprise" value={enterpriseCommandStatus} />
 
-<DarkMetric
-title="Risk"
-value={riskCommandStatus}
-/>
+<DarkMetric title="Risk" value={riskCommandStatus} />
 
-<DarkMetric
-title="Opportunity"
-value={opportunityCommandStatus}
-/>
+<DarkMetric title="Opportunity" value={opportunityCommandStatus} />
 </div>
 
 <div className="mt-6 rounded-3xl border border-white/10 bg-white/5 p-6">
@@ -4309,14 +2863,6 @@ awardPredictionConfidence={awardPredictionConfidence}
 predictionAccuracy={predictionAccuracy}
 executiveStatus={executiveStatus}
 />
-
-<AIConfidenceEngine
-aiConfidenceScore={aiConfidenceScore}
-dataQualityScore={dataQualityScore}
-supplierReliabilityScore={supplierReliabilityScore}
-predictionAccuracy={predictionAccuracy}
-awardPredictionConfidence={awardPredictionConfidence}
-/>
 </div>
 
 <BoardReportGenerator
@@ -4329,7 +2875,6 @@ awardPredictionConfidence={awardPredictionConfidence}
 predictionAccuracy={predictionAccuracy}
 benchmarkReadinessScore={benchmarkReadinessScore}
 boardHealthIndex={boardHealthIndex}
-
 enterpriseProcurementScore={enterpriseProcurementScore}
 executiveReadinessScore={executiveReadinessScore}
 procurementEfficiencyScore={procurementEfficiencyScore}
@@ -4356,35 +2901,11 @@ awardPredictionConfidence={awardPredictionConfidence}
 }
 
 function MetricCard({ title, value }: { title: string; value: string }) {
-return (
-<ExecutiveMetricCard
-label={title}
-value={value}
-tone="blue"
-/>
-);
+return <ExecutiveMetricCard label={title} value={value} tone="blue" />;
 }
 
 function DarkMetric({ title, value }: { title: string; value: string }) {
-return (
-<ExecutiveMetricCard
-label={title}
-value={value}
-tone="gold"
-/>
-);
-}
-
-function DarkTextCard({ title, value }: { title: string; value: string }) {
-return (
-<div className="rounded-2xl bg-white/5 p-5">
-<p className="text-xs font-black uppercase tracking-[0.2em] text-orange-400">
-{title}
-</p>
-
-<p className="mt-3 text-sm leading-7 text-slate-300">{value}</p>
-</div>
-);
+return <ExecutiveMetricCard label={title} value={value} tone="gold" />;
 }
 
 function DarkList({ title, items }: { title: string; items: string[] }) {
@@ -4396,7 +2917,10 @@ return (
 
 <div className="mt-4 space-y-3">
 {items.map((item) => (
-<div key={item} className="rounded-xl bg-white/5 p-3 text-sm text-slate-300">
+<div
+key={item}
+className="rounded-xl bg-white/5 p-3 text-sm text-slate-300"
+>
 {item}
 </div>
 ))}

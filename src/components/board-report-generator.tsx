@@ -15,6 +15,14 @@ statusLabel: string;
 primaryRequirement: string;
 };
 
+type GeneratedReportBody = {
+summary: string;
+sections: {
+title: string;
+body: string;
+}[];
+};
+
 type BoardReportGeneratorProps = {
 procurementRiskIndex: number;
 procurementMaturityScore: number;
@@ -97,8 +105,22 @@ const operationalNextSteps = [
 "Generate executive reports only after sufficient validated data exists.",
 ];
 
-function getReport(type: ReportType) {
-return reports.find((report) => report.id === type) || reports[0];
+function getReportStatusClass({
+status,
+boardReady,
+}: {
+status: ReportStatus;
+boardReady: boolean;
+}) {
+if (status === "coming-soon") {
+return "border-[#2CC4E8]/25 bg-[#2CC4E8]/10 text-[#9BE8F8]";
+}
+
+if (boardReady) {
+return "border-emerald-300/20 bg-emerald-400/10 text-emerald-300";
+}
+
+return "border-orange-300/20 bg-orange-400/10 text-orange-300";
 }
 
 function getRiskNarrative(procurementRiskIndex: number) {
@@ -133,7 +155,7 @@ digitalMaturityScore,
 }: {
 report: ExecutiveReport;
 boardReady: boolean;
-} & BoardReportGeneratorProps) {
+} & BoardReportGeneratorProps): GeneratedReportBody {
 if (!boardReady || report.id === "cfo") {
 return {
 summary:
@@ -165,7 +187,7 @@ summary: `Nexus Pavilion is ready to produce a CEO-level executive brief. Execut
 sections: [
 {
 title: "Executive Momentum",
-body: `Procurement performance shows an enterprise score of ${enterpriseProcurementScore}/100 with digital maturity at ${digitalMaturityScore}/100. These indicators provide leadership with a high-level view of operating readiness and platform maturity.`,
+body: `Procurement performance shows an enterprise score of ${enterpriseProcurementScore}/100 with digital maturity at ${digitalMaturityScore}/100.`,
 },
 {
 title: "Supplier Network Health",
@@ -189,7 +211,7 @@ summary: `Nexus Pavilion is ready to produce a procurement leadership report. Pr
 sections: [
 {
 title: "Procurement Execution",
-body: `Procurement maturity is ${procurementMaturityScore}/100 and efficiency is ${procurementEfficiencyScore}/100. These signals indicate the current strength of workflow quality, RFQ execution, and operational readiness.`,
+body: `Procurement maturity is ${procurementMaturityScore}/100 and efficiency is ${procurementEfficiencyScore}/100.`,
 },
 {
 title: "Supplier Participation",
@@ -197,7 +219,7 @@ body: `Supplier engagement is ${supplierEngagementScore}/100. Dependency risk is
 },
 {
 title: "Award Intelligence",
-body: `Award prediction confidence is ${awardPredictionConfidence}, with prediction accuracy at ${predictionAccuracy}. Procurement leadership should use this as a directional confidence layer, not as a substitute for validated award governance.`,
+body: `Award prediction confidence is ${awardPredictionConfidence}, with prediction accuracy at ${predictionAccuracy}.`,
 },
 {
 title: "Operational Focus",
@@ -224,11 +246,11 @@ body: `${riskNarrative} Supplier dependency risk is ${supplierDependencyRisk}, v
 },
 {
 title: "Award Confidence",
-body: `Award prediction confidence is ${awardPredictionConfidence}, with prediction accuracy at ${predictionAccuracy}. This gives the board a directional view of procurement decision reliability.`,
+body: `Award prediction confidence is ${awardPredictionConfidence}, with prediction accuracy at ${predictionAccuracy}.`,
 },
 {
 title: "Benchmark Position",
-body: `Benchmark readiness is ${benchmarkReadinessScore}/100. This creates an executive reference point for comparing procurement maturity, decision readiness, and operating discipline.`,
+body: `Benchmark readiness is ${benchmarkReadinessScore}/100.`,
 },
 {
 title: "Board Recommendation",
@@ -238,7 +260,8 @@ body: "Continue scaling validated procurement activity while maintaining governa
 };
 }
 
-export default function BoardReportGenerator({
+export default function BoardReportGenerator(props: BoardReportGeneratorProps) {
+const {
 procurementRiskIndex,
 procurementMaturityScore,
 aiConfidenceScore,
@@ -253,64 +276,32 @@ executiveReadinessScore,
 procurementEfficiencyScore,
 supplierEngagementScore,
 digitalMaturityScore,
-}: BoardReportGeneratorProps) {
+} = props;
+
 const [activeReport, setActiveReport] = useState<ExecutiveReport | null>(null);
+const [activeReportBody, setActiveReportBody] =
+useState<GeneratedReportBody | null>(null);
+const [isGenerating, setIsGenerating] = useState(false);
+const [errorMessage, setErrorMessage] = useState("");
 const [copied, setCopied] = useState(false);
 
-const generatedAt = useMemo(() => {
-return new Date().toLocaleDateString("en-US", {
+const generatedAt = useMemo(
+() =>
+new Date().toLocaleDateString("en-US", {
 year: "numeric",
 month: "long",
 day: "numeric",
-});
-}, []);
+}),
+[],
+);
 
 const boardReady =
 procurementMaturityScore >= 50 &&
-procurementRiskIndex > 0 &&
+benchmarkReadinessScore >= 50 &&
+enterpriseProcurementScore >= 50 &&
 aiConfidenceScore !== "Insufficient Data";
 
 const reportStatusLabel = boardReady ? "Ready" : "Insufficient Data";
-
-const activeReportBody = useMemo(() => {
-if (!activeReport) return null;
-
-return generateReportBody({
-report: activeReport,
-boardReady,
-procurementRiskIndex,
-procurementMaturityScore,
-aiConfidenceScore,
-supplierDependencyRisk,
-concentrationLevel,
-awardPredictionConfidence,
-predictionAccuracy,
-benchmarkReadinessScore,
-boardHealthIndex,
-enterpriseProcurementScore,
-executiveReadinessScore,
-procurementEfficiencyScore,
-supplierEngagementScore,
-digitalMaturityScore,
-});
-}, [
-activeReport,
-boardReady,
-procurementRiskIndex,
-procurementMaturityScore,
-aiConfidenceScore,
-supplierDependencyRisk,
-concentrationLevel,
-awardPredictionConfidence,
-predictionAccuracy,
-benchmarkReadinessScore,
-boardHealthIndex,
-enterpriseProcurementScore,
-executiveReadinessScore,
-procurementEfficiencyScore,
-supplierEngagementScore,
-digitalMaturityScore,
-]);
 
 const executiveSummary = useMemo(() => {
 if (!activeReport || !activeReportBody) return "";
@@ -369,6 +360,31 @@ supplierEngagementScore,
 digitalMaturityScore,
 ]);
 
+async function generateReport(report: ExecutiveReport) {
+setIsGenerating(true);
+setErrorMessage("");
+setCopied(false);
+
+try {
+window.setTimeout(() => {
+const body = generateReportBody({
+report,
+boardReady,
+...props,
+});
+
+setActiveReport(report);
+setActiveReportBody(body);
+setIsGenerating(false);
+}, 450);
+} catch {
+setErrorMessage(
+"Unable to generate this executive report. Please try again.",
+);
+setIsGenerating(false);
+}
+}
+
 async function copySummary() {
 if (!executiveSummary) return;
 
@@ -402,20 +418,9 @@ printWindow.document.write(`
 <title>Nexus Pavilion Executive Report</title>
 ${styles}
 <style>
-@page {
-size: A4;
-margin: 14mm;
-}
-
-body {
-margin: 0;
-background: white;
-}
-
-.no-print {
-display: none !important;
-}
-
+@page { size: A4; margin: 14mm; }
+body { margin: 0; background: white; }
+.no-print { display: none !important; }
 #board-report-print-area {
 margin: 0 !important;
 box-shadow: none !important;
@@ -423,10 +428,8 @@ border: none !important;
 }
 </style>
 </head>
-
 <body>
 ${reportElement.outerHTML}
-
 <script>
 window.onload = function () {
 setTimeout(function () {
@@ -443,113 +446,94 @@ printWindow.document.close();
 }
 
 return (
-<section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
-<style>
-{`
-@media print {
-@page {
-size: A4;
-margin: 14mm;
-}
-
-body * {
-visibility: hidden !important;
-}
-
-#board-report-print-area,
-#board-report-print-area * {
-visibility: visible !important;
-}
-
-#board-report-print-area {
-position: absolute !important;
-left: 0 !important;
-top: 0 !important;
-width: 100% !important;
-margin: 0 !important;
-padding: 0 !important;
-border: 0 !important;
-box-shadow: none !important;
-background: white !important;
-}
-
-.no-print {
-display: none !important;
-}
-}
-`}
-</style>
-
-<div className="no-print flex flex-wrap items-start justify-between gap-6">
+<section className="mt-8 rounded-[34px] border border-white/10 bg-[#061426]/88 p-6 text-white shadow-executive sm:p-8">
+<div className="no-print flex flex-col gap-6 xl:flex-row xl:items-start xl:justify-between">
 <div>
-<p className="text-xs font-black uppercase tracking-[0.3em] text-slate-400">
+<p className="text-[11px] font-black uppercase tracking-[0.34em] text-[#C8A646]">
 Executive Reporting Center
 </p>
 
-<h2 className="mt-3 text-4xl font-black text-slate-950">
+<h2 className="mt-4 text-3xl font-black leading-tight text-white sm:text-4xl">
 Board Presentation Generator
 </h2>
 
-<p className="mt-4 max-w-4xl text-sm leading-7 text-slate-600">
-Generate executive reports only when validated procurement data is
-available. Placeholder metrics, fake scores, and unverified AI
-narratives are intentionally blocked.
+<p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-400">
+Generate board-ready procurement reports only when validated
+operating data is available. Placeholder metrics, fake scores, and
+unverified AI narratives remain blocked.
 </p>
 </div>
 
-<div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
-<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">
+<div className="rounded-[26px] border border-[#2CC4E8]/15 bg-[#2CC4E8]/[0.055] p-5">
+<p className="text-[10px] font-black uppercase tracking-[0.24em] text-[#9BE8F8]">
 Reporting Standard
 </p>
-<p className="mt-2 text-sm font-semibold text-slate-700">
+
+<p className="mt-2 text-sm font-black text-white">
 Truth-first. Data-first. Decision-ready.
+</p>
+
+<p className="mt-2 text-xs font-semibold leading-5 text-slate-500">
+Reports are generated only from validated Nexus Pavilion operating
+intelligence.
 </p>
 </div>
 </div>
+
+{errorMessage ? (
+<div className="no-print mt-6 rounded-2xl border border-red-400/20 bg-red-400/10 p-4 text-sm font-bold text-red-200">
+{errorMessage}
+</div>
+) : null}
 
 <div className="no-print mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
 {reports.map((report) => {
 const currentStatusLabel =
 report.id === "cfo" ? report.statusLabel : reportStatusLabel;
 
+const statusClass = getReportStatusClass({
+status: report.id === "cfo" ? "coming-soon" : report.status,
+boardReady,
+});
+
+const isActive = activeReport?.id === report.id;
+const isButtonLoading = isGenerating && isActive;
+
 return (
 <button
 key={report.id}
 type="button"
-onClick={() => {
-setActiveReport(getReport(report.id));
-setCopied(false);
-}}
-className="group rounded-3xl border border-slate-200 bg-white p-6 text-left transition hover:-translate-y-1 hover:border-slate-400 hover:shadow-xl"
+disabled={isGenerating}
+onClick={() => generateReport(report)}
+className={[
+"group rounded-[28px] border p-6 text-left transition hover:-translate-y-1 disabled:cursor-not-allowed disabled:opacity-70",
+isActive
+? "border-[#2CC4E8]/35 bg-[#2CC4E8]/10 shadow-[0_0_55px_rgba(44,196,232,0.12)]"
+: "border-white/10 bg-white/[0.045] hover:border-[#2CC4E8]/25 hover:bg-white/[0.06]",
+].join(" ")}
 >
 <div className="flex items-center justify-between gap-3">
-<p className="text-xs font-black uppercase tracking-[0.25em] text-slate-400">
+<p className="text-[10px] font-black uppercase tracking-[0.24em] text-slate-500">
 {report.title}
 </p>
 
 <span
-className={
-report.id === "cfo"
-? "rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-blue-700"
-: boardReady
-? "rounded-full border border-green-200 bg-green-50 px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-green-700"
-: "rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-amber-700"
-}
+className={`rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] ${statusClass}`}
 >
 {currentStatusLabel}
 </span>
 </div>
 
-<h3 className="mt-5 text-xl font-black text-slate-950">
+<h3 className="mt-5 text-xl font-black text-white">
 {report.audience}
 </h3>
 
-<p className="mt-4 text-sm leading-7 text-slate-600">
+<p className="mt-4 text-sm font-semibold leading-7 text-slate-400">
 {report.subtitle}
 </p>
 
-<span className="mt-5 inline-flex rounded-full bg-slate-950 px-4 py-2 text-xs font-black text-white transition group-hover:bg-slate-800">
-Generate Report
+<span className="mt-5 inline-flex rounded-full border border-[#2CC4E8]/25 bg-[#2CC4E8]/10 px-4 py-2 text-xs font-black text-[#9BE8F8] transition group-hover:bg-[#2CC4E8]/15">
+{isButtonLoading ? "Generating..." : "Generate Report"}
 </span>
 </button>
 );
@@ -559,20 +543,20 @@ Generate Report
 {activeReport && activeReportBody ? (
 <div
 id="board-report-print-area"
-className="mt-10 overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-xl"
+className="mt-10 overflow-hidden rounded-[30px] border border-white/10 bg-white text-slate-950 shadow-xl"
 >
-<header className="border-b border-slate-200 bg-white p-10">
-<div className="flex flex-wrap items-start justify-between gap-8">
+<header className="border-b border-slate-200 bg-white p-8 sm:p-10">
+<div className="flex flex-col gap-8 xl:flex-row xl:items-start xl:justify-between">
 <div>
 <p className="text-xs font-black uppercase tracking-[0.35em] text-slate-400">
 Nexus Pavilion Executive Intelligence
 </p>
 
-<h3 className="mt-5 text-4xl font-black text-slate-950">
+<h3 className="mt-5 text-3xl font-black text-slate-950 sm:text-4xl">
 {activeReport.title}
 </h3>
 
-<p className="mt-4 max-w-3xl text-sm leading-7 text-slate-600">
+<p className="mt-4 max-w-3xl text-sm font-semibold leading-7 text-slate-600">
 {activeReport.subtitle}
 </p>
 
@@ -635,6 +619,7 @@ Data Policy
 <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
 Primary Requirement
 </p>
+
 <p className="mt-3 text-sm font-semibold leading-7 text-slate-700">
 {activeReport.primaryRequirement}
 </p>
@@ -665,9 +650,10 @@ Report Narrative
 key={section.title}
 className="rounded-3xl border border-slate-200 bg-slate-50 p-6"
 >
-<p className="text-xs font-black uppercase tracking-[0.2em] text-orange-500">
+<p className="text-xs font-black uppercase tracking-[0.2em] text-[#0B3D91]">
 {section.title}
 </p>
+
 <p className="mt-3 text-sm font-semibold leading-7 text-slate-700">
 {section.body}
 </p>
@@ -706,10 +692,7 @@ value={`${procurementMaturityScore}/100`}
 label="Supplier Engagement"
 value={`${supplierEngagementScore}/100`}
 />
-<ReportMetric
-label="AI Confidence"
-value={aiConfidenceScore}
-/>
+<ReportMetric label="AI Confidence" value={aiConfidenceScore} />
 <ReportMetric
 label="Award Confidence"
 value={awardPredictionConfidence}
@@ -717,55 +700,11 @@ value={awardPredictionConfidence}
 </div>
 </section>
 
-{!boardReady || activeReport.id === "cfo" ? (
-<>
-<section className="mt-8">
-<p className="text-xs font-black uppercase tracking-[0.25em] text-slate-400">
-Required Data Sources
-</p>
-
-<div className="mt-4 grid gap-3 md:grid-cols-2">
-{requiredDataSources.map((source) => (
-<div
-key={source}
-className="rounded-2xl border border-slate-200 bg-slate-50 p-4"
->
-<p className="text-sm font-bold text-slate-800">
-{source}
-</p>
-</div>
-))}
-</div>
-</section>
-
-<section className="mt-8">
-<p className="text-xs font-black uppercase tracking-[0.25em] text-slate-400">
-Operational Next Steps
-</p>
-
-<div className="mt-4 space-y-3">
-{operationalNextSteps.map((step, index) => (
-<div
-key={step}
-className="flex gap-4 rounded-2xl border border-slate-200 p-4"
->
-<p className="text-sm font-black text-slate-400">
-{String(index + 1).padStart(2, "0")}
-</p>
-<p className="text-sm font-semibold leading-7 text-slate-700">
-{step}
-</p>
-</div>
-))}
-</div>
-</section>
-</>
-) : null}
-
 <section className="mt-8 rounded-3xl border border-slate-950 bg-slate-950 p-6 text-white">
 <p className="text-xs font-black uppercase tracking-[0.25em] text-slate-400">
 Decision Readiness
 </p>
+
 <p className="mt-3 text-sm font-semibold leading-7 text-slate-300">
 Executive decisions are generated only from validated Nexus
 Pavilion operating intelligence. Placeholder reports, fake
@@ -804,6 +743,7 @@ return (
 <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
 {label}
 </p>
+
 <p className="mt-2 text-lg font-black text-slate-950">{value}</p>
 </div>
 );
@@ -815,6 +755,7 @@ return (
 <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
 {label}
 </p>
+
 <p className="mt-2 text-sm font-black text-slate-950">{value}</p>
 </div>
 );
