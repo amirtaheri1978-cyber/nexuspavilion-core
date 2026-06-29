@@ -5,6 +5,7 @@ import { ExecutiveInsightCard } from "@/components/executive/executive-insight-c
 import { ExecutiveMetricCard } from "@/components/executive/executive-metric-card";
 import SignOutButton from "@/components/sign-out-button";
 import { createClient } from "@/lib/supabase/server";
+import { ExecutiveHero } from "@/components/dashboard/executive-hero";
 
 type Experience = "owner" | "vendor" | "consultant";
 
@@ -75,6 +76,13 @@ title: string;
 message: string;
 };
 
+type ReadinessItem = {
+title: string;
+description: string;
+completed: boolean;
+href: string;
+};
+
 const PROCUREMENT_SCOPE_LABELS: Record<ProcurementScope, string> = {
 material: "Material RFQs",
 subcontractor: "Trade RFQs",
@@ -97,7 +105,10 @@ function normalizeText(value: string | null | undefined) {
 return String(value || "").trim().toLowerCase();
 }
 
-function getExperience(role: string | null, networkRole: string | null): Experience {
+function getExperience(
+role: string | null,
+networkRole: string | null
+): Experience {
 const normalizedRole = normalizeText(role);
 const normalizedNetworkRole = normalizeText(networkRole);
 
@@ -169,7 +180,9 @@ if (days < 7) return `${days} day${days === 1 ? "" : "s"} ago`;
 return date.toLocaleDateString();
 }
 
-function getNotificationSeverity(type: string | null): ActivityEvent["severity"] {
+function getNotificationSeverity(
+type: string | null
+): ActivityEvent["severity"] {
 const normalized = String(type || "").toLowerCase();
 
 if (normalized.includes("award")) return "success";
@@ -199,7 +212,8 @@ href: "/notifications",
 }));
 
 const rfqEvents: ActivityEvent[] = rfqs.slice(0, 5).map((rfq) => {
-const scope = PROCUREMENT_SCOPE_LABELS[getProcurementScope(rfq.procurement_scope)];
+const scope =
+PROCUREMENT_SCOPE_LABELS[getProcurementScope(rfq.procurement_scope)];
 
 return {
 id: `rfq-${rfq.id}`,
@@ -239,7 +253,6 @@ return dateB - dateA;
 })
 .slice(0, 8);
 }
-
 function getDashboardCopy(experience: Experience) {
 if (experience === "vendor") {
 return {
@@ -254,6 +267,9 @@ recommendation:
 companyLabel: "Supplier Company",
 activityLabel: "Supplier Activity Center",
 activityTitle: "Live Supplier Timeline",
+welcomeTitle: "Welcome to your supplier workspace.",
+welcomeDescription:
+"Your company workspace is active. Complete your profile, strengthen marketplace visibility, and start building procurement credibility.",
 };
 }
 
@@ -270,6 +286,9 @@ recommendation:
 companyLabel: "Advisory Company",
 activityLabel: "Consultant Activity Center",
 activityTitle: "Live Advisory Timeline",
+welcomeTitle: "Welcome to your advisory workspace.",
+welcomeDescription:
+"Your consultant workspace is active. Complete your company profile, showcase advisory expertise, and prepare for project collaboration.",
 };
 }
 
@@ -285,7 +304,67 @@ recommendation:
 companyLabel: "Enterprise Company",
 activityLabel: "Activity Command Center",
 activityTitle: "Live Procurement Timeline",
+welcomeTitle: "Welcome to Nexus Pavilion.",
+welcomeDescription:
+"Your enterprise workspace is active. Complete setup to unlock a stronger procurement command center, team governance, and executive reporting readiness.",
 };
+}
+
+function buildReadinessItems({
+company,
+totalRfqs,
+submittedQuotes,
+}: {
+company: Company | null;
+totalRfqs: number;
+submittedQuotes: number;
+}): ReadinessItem[] {
+return [
+{
+title: "Company Created",
+description: "Your enterprise workspace has been activated.",
+completed: Boolean(company?.id),
+href: "/company/settings",
+},
+{
+title: "Company Logo",
+description: "Upload an official company logo for marketplace trust.",
+completed: Boolean(company?.logo_url),
+href: "/company/settings",
+},
+{
+title: "Regional Hub",
+description: "Confirm market presence and regional context.",
+completed: Boolean(company?.location),
+href: "/company/settings",
+},
+{
+title: "Organization Role",
+description: "Confirm the company role used for workspace behavior.",
+completed: Boolean(company?.network_role),
+href: "/company/settings",
+},
+{
+title: "First RFQ",
+description: "Create the first procurement opportunity.",
+completed: totalRfqs > 0,
+href: "/rfq/new",
+},
+{
+title: "Supplier Activity",
+description: "Receive or submit quote activity to activate intelligence.",
+completed: submittedQuotes > 0,
+href: "/rfq",
+},
+];
+}
+
+function calculateReadinessScore(items: ReadinessItem[]) {
+if (items.length === 0) return 0;
+
+const completed = items.filter((item) => item.completed).length;
+
+return Math.round((completed / items.length) * 100);
 }
 
 export default async function DashboardPage() {
@@ -314,7 +393,10 @@ const { data: company } = await supabase
 .single();
 
 const currentCompany = company as Company | null;
-const experience = getExperience(profile.role, currentCompany?.network_role || null);
+const experience = getExperience(
+profile.role,
+currentCompany?.network_role || null
+);
 const dashboardCopy = getDashboardCopy(experience);
 
 const { data: rfqs } = await supabase
@@ -354,6 +436,15 @@ const awardedRfqs = rfqList.filter((rfq) => rfq.status === "awarded").length;
 const submittedQuotes = quoteList.length;
 const awardedQuotes = quoteList.filter((quote) => quote.decision === "awarded");
 
+const readinessItems = buildReadinessItems({
+company: currentCompany,
+totalRfqs,
+submittedQuotes,
+});
+const readinessScore = calculateReadinessScore(readinessItems);
+const incompleteReadinessItems = readinessItems.filter((item) => !item.completed);
+const firstIncompleteItem = incompleteReadinessItems[0];
+
 const materialRfqs = rfqList.filter(
 (rfq) => getProcurementScope(rfq.procurement_scope) === "material"
 ).length;
@@ -383,7 +474,6 @@ const frameworkRfqs = rfqList.filter(
 const projectSpecificRfqs = rfqList.filter(
 (rfq) => getContractFramework(rfq.contract_framework) === "project_specific"
 ).length;
-
 const constructionClassificationScore = Math.min(
 100,
 Math.round(
@@ -427,7 +517,8 @@ const amount = Number(quote.amount);
 return total + (Number.isNaN(amount) ? 0 : amount);
 }, 0);
 
-const awardRate = totalRfqs > 0 ? Math.round((awardedRfqs / totalRfqs) * 100) : 0;
+const awardRate =
+totalRfqs > 0 ? Math.round((awardedRfqs / totalRfqs) * 100) : 0;
 
 const totalBudget = rfqList.reduce((total, rfq) => {
 const budget = Number(rfq.budget);
@@ -485,7 +576,9 @@ const executiveStatus =
 : "Needs Attention";
 
 const vendorWinRate =
-submittedQuotes > 0 ? Math.round((awardedQuotes.length / submittedQuotes) * 100) : 0;
+submittedQuotes > 0
+? Math.round((awardedQuotes.length / submittedQuotes) * 100)
+: 0;
 
 const enterpriseScoreLabel = hasProcurementData
 ? `${procurementHealthScore}/100`
@@ -630,6 +723,17 @@ experience === "vendor"
 const boardNarrative = hasProcurementData
 ? `Current procurement activity shows ${totalRfqs} RFQs, ${submittedQuotes} supplier quotes, ${awardedRfqs} awarded RFQs, and ${forecastAccuracy}% forecast confidence. Supplier concentration is ${supplierConcentration.toLowerCase()}, and the current executive status is ${executiveStatus.toLowerCase()}.`
 : "Status: Insufficient Data. Create RFQs, receive supplier quotes, and record award outcomes before presenting procurement recommendations to executives or the board.";
+
+
+
+const readinessTone =
+readinessScore >= 85 ? "success" : readinessScore >= 55 ? "warning" : "blue";
+
+const completedTasks = readinessItems.filter(
+(item) => item.completed
+).length;
+
+
 return (
 <main className="min-h-screen text-white">
 <div className="fixed right-8 top-24 z-30 hidden lg:block">
@@ -637,16 +741,30 @@ return (
 </div>
 
 <div className="w-full max-w-none px-5 py-6 sm:px-8 lg:px-10 lg:py-8">
-<section className="rounded-[34px] border border-white/10 bg-[#061426]/88 p-6 shadow-executive sm:p-8">
+<ExecutiveHero
+welcomeTitle={dashboardCopy.title}
+welcomeDescription={dashboardCopy.subtitle}
+briefLabel={dashboardCopy.briefLabel}
+companyName={currentCompany?.name || "Company Workspace"}
+readinessScore={readinessScore}
+readinessTone={readinessTone}
+readinessItems={readinessItems}
+incompleteTasksCount={readinessItems.length - completedTasks}
+continueHref="/company/settings"
+continueLabel="Continue Setup"
+/>
+
+
+<section className="mt-6 rounded-[34px] border border-white/10 bg-[#061426]/88 p-6 shadow-executive sm:p-8">
 <div className="flex flex-col gap-8 xl:flex-row xl:items-start xl:justify-between">
 <div className="max-w-5xl">
 <p className="text-[11px] font-black uppercase tracking-[0.34em] text-[#C8A646]">
 {dashboardCopy.eyebrow}
 </p>
 
-<h1 className="mt-4 max-w-5xl text-4xl font-black leading-tight text-white sm:text-5xl xl:text-6xl">
+<h2 className="mt-4 max-w-5xl text-4xl font-black leading-tight text-white sm:text-5xl xl:text-6xl">
 {dashboardCopy.title}
-</h1>
+</h2>
 
 <p className="mt-4 max-w-4xl text-base font-semibold leading-8 text-slate-400 sm:text-lg">
 {dashboardCopy.subtitle}
@@ -674,7 +792,6 @@ return (
 </div>
 </div>
 </section>
-
 <section className="mt-6 rounded-[34px] border border-[#2CC4E8]/15 bg-gradient-to-br from-[#0B3D91]/35 via-[#07111F]/92 to-[#061426] p-6 shadow-[0_0_70px_rgba(44,196,232,0.10)] sm:p-8">
 <div className="grid gap-8 xl:grid-cols-[1.15fr_0.85fr]">
 <div>
@@ -810,7 +927,11 @@ Executive Decision Signals
 <div className="mt-6 grid gap-4 lg:grid-cols-2">
 {alerts.length > 0 ? (
 alerts.slice(0, 4).map((alert, index) => (
-<CeoActionCard key={`${alert.title}-${index}`} alert={alert} index={index} />
+<CeoActionCard
+key={`${alert.title}-${index}`}
+alert={alert}
+index={index}
+/>
 ))
 ) : (
 <div className="lg:col-span-2">
@@ -820,7 +941,6 @@ alerts.slice(0, 4).map((alert, index) => (
 </div>
 </div>
 </section>
-
 <section className="mt-6 grid gap-6 xl:grid-cols-[1fr_0.85fr]">
 <div className="rounded-[32px] border border-white/10 bg-white/[0.045] p-6 shadow-inner-executive sm:p-7">
 <p className="text-[10px] font-black uppercase tracking-[0.28em] text-[#C8A646]">
@@ -895,7 +1015,11 @@ className="h-16 w-16 rounded-2xl border border-white/10 bg-white p-2 object-cont
 </div>
 
 <Link
-href={`/company/${currentCompany.slug}`}
+href={
+currentCompany.slug
+? `/company/${currentCompany.slug}`
+: "/company/settings"
+}
 className="mt-6 inline-flex rounded-full border border-[#2CC4E8]/25 bg-[#2CC4E8]/10 px-5 py-3 text-sm font-black text-[#9BE8F8] transition hover:bg-[#2CC4E8]/15"
 >
 Open Company →
@@ -908,6 +1032,7 @@ Open Company →
 )}
 </div>
 </section>
+
 <section className="mt-6 grid gap-6 xl:grid-cols-2">
 <div className="rounded-[32px] border border-white/10 bg-white/[0.045] p-6 shadow-inner-executive sm:p-7">
 <p className="text-[10px] font-black uppercase tracking-[0.28em] text-[#C8A646]">
@@ -1021,7 +1146,6 @@ getContractFramework(rfq.contract_framework)
 </div>
 </div>
 </section>
-
 <section className="mt-6 rounded-[32px] border border-white/10 bg-[#061426]/80 p-6 shadow-inner-executive sm:p-7">
 <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
 <div>
@@ -1147,7 +1271,6 @@ return (
 </span>
 );
 }
-
 function StatusBadge({
 children,
 tone = "neutral",
@@ -1170,6 +1293,35 @@ className={`inline-flex rounded-full border px-3 py-1 text-[10px] font-black upp
 >
 {children}
 </span>
+);
+}
+
+function ReadinessRow({ item }: { item: ReadinessItem }) {
+return (
+<Link
+href={item.href}
+className="flex items-start gap-3 rounded-2xl border border-white/10 bg-[#07111F]/75 px-4 py-3 transition hover:bg-white/[0.06]"
+>
+<span
+className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-xs font-black ${
+item.completed
+? "border-emerald-300/20 bg-emerald-400/10 text-emerald-300"
+: "border-[#C8A646]/30 bg-[#C8A646]/10 text-[#F5D77B]"
+}`}
+>
+{item.completed ? "✓" : "→"}
+</span>
+
+<span className="min-w-0">
+<span className="block text-sm font-black text-white">
+{item.title}
+</span>
+
+<span className="mt-1 block text-xs font-semibold leading-5 text-slate-500">
+{item.description}
+</span>
+</span>
+</Link>
 );
 }
 

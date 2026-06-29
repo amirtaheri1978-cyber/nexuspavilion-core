@@ -29,16 +29,20 @@ useState<SubmissionState>("idle");
 const [statusMessage, setStatusMessage] = useState("");
 
 const loading = submissionState === "submitting";
+const hasError = submissionState === "error";
 
 async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
 event.preventDefault();
+
+if (loading) return;
 
 const trimmedName = name.trim();
 const trimmedEmail = email.trim();
 const trimmedCompany = company.trim();
 const trimmedMessage = message.trim();
+const trimmedWebsite = website.trim();
 
-if (website.trim()) {
+if (trimmedWebsite) {
 setSubmissionState("success");
 setStatusMessage("Thank you. Your request has been received.");
 return;
@@ -77,7 +81,7 @@ email: trimmedEmail,
 company: trimmedCompany,
 inquiryType,
 message: trimmedMessage,
-website: website.trim(),
+website: trimmedWebsite,
 }),
 });
 
@@ -93,7 +97,7 @@ if (!response.ok) {
 setSubmissionState("error");
 setStatusMessage(
 data.message ||
-"Your request could not be submitted. Please review the form and try again."
+"Your request could not be submitted. Please review the form and try again.",
 );
 return;
 }
@@ -101,7 +105,7 @@ return;
 setSubmissionState("success");
 setStatusMessage(
 data.message ||
-"Your request has been received. The Nexus Pavilion team will review it and follow up shortly."
+"Your request has been received. The Nexus Pavilion team will review it and follow up shortly.",
 );
 
 setName("");
@@ -113,7 +117,7 @@ setWebsite("");
 } catch {
 setSubmissionState("error");
 setStatusMessage(
-"The contact service is currently unavailable. Please try again later."
+"The contact service is currently unavailable. Please try again later.",
 );
 }
 }
@@ -121,6 +125,7 @@ setStatusMessage(
 return (
 <form
 onSubmit={handleSubmit}
+aria-describedby={statusMessage ? "contact-form-status" : undefined}
 className="mt-8 space-y-5 rounded-[32px] border border-white/10 bg-slate-950/70 p-5 shadow-[0_24px_80px_rgba(0,0,0,0.35)] sm:p-6 lg:p-8"
 >
 <div className="hidden" aria-hidden="true">
@@ -138,12 +143,14 @@ onChange={(event) => setWebsite(event.target.value)}
 <FormField label="Full name" htmlFor="name">
 <input
 id="name"
+name="name"
 value={name}
 onChange={(event) => setName(event.target.value)}
 placeholder="Enter your full name"
 required
 minLength={2}
 disabled={loading}
+aria-invalid={hasError && name.trim().length < 2}
 className={inputClassName}
 />
 </FormField>
@@ -151,12 +158,14 @@ className={inputClassName}
 <FormField label="Email address" htmlFor="email">
 <input
 id="email"
+name="email"
 value={email}
 onChange={(event) => setEmail(event.target.value)}
 placeholder="name@company.com"
 type="email"
 required
 disabled={loading}
+aria-invalid={hasError && !isValidEmail(email.trim())}
 className={inputClassName}
 />
 </FormField>
@@ -164,6 +173,7 @@ className={inputClassName}
 <FormField label="Company name" htmlFor="company">
 <input
 id="company"
+name="company"
 value={company}
 onChange={(event) => setCompany(event.target.value)}
 placeholder="Enter your company name"
@@ -175,6 +185,7 @@ className={inputClassName}
 <FormField label="Inquiry type" htmlFor="inquiryType">
 <select
 id="inquiryType"
+name="inquiryType"
 value={inquiryType}
 onChange={(event) => setInquiryType(event.target.value)}
 disabled={loading}
@@ -189,6 +200,7 @@ className={inputClassName}
 <FormField label="Message" htmlFor="message">
 <textarea
 id="message"
+name="message"
 value={message}
 onChange={(event) => setMessage(event.target.value)}
 placeholder="Tell us how Nexus Pavilion can help."
@@ -196,13 +208,15 @@ required
 minLength={20}
 rows={6}
 disabled={loading}
+aria-invalid={hasError && message.trim().length < 20}
 className={`${inputClassName} resize-none`}
 />
 </FormField>
 
 {statusMessage ? (
 <div
-role="status"
+id="contact-form-status"
+role={submissionState === "error" ? "alert" : "status"}
 className={
 submissionState === "success"
 ? "rounded-2xl border border-emerald-300/20 bg-emerald-400/10 px-4 py-3 text-sm font-semibold text-emerald-200"
@@ -238,10 +252,7 @@ children: React.ReactNode;
 }) {
 return (
 <div className="space-y-2">
-<label
-htmlFor={htmlFor}
-className="block text-sm font-bold text-slate-200"
->
+<label htmlFor={htmlFor} className="block text-sm font-bold text-slate-200">
 {label}
 </label>
 {children}

@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import CompanyCommandCenter from "@/components/company-command-center";
 import CompanyGovernanceCenter from "@/components/company-governance-center";
 import CompanyMembersCenter from "@/components/company-members-center";
@@ -47,6 +49,7 @@ if (role === "owner") return "Owner";
 if (role === "admin") return "Admin";
 if (role === "buyer") return "Buyer";
 if (role === "vendor") return "Vendor";
+
 return role || "Member";
 }
 
@@ -90,6 +93,7 @@ function getWorkspaceStage(score: number, rfqCount: number) {
 if (score >= 90) return "Launch Ready";
 if (score >= 75) return "Healthy";
 if (rfqCount === 0) return "Onboarding";
+
 return "Needs Setup";
 }
 
@@ -155,27 +159,7 @@ const { data: profile } = user
 const currentProfile = profile as Profile | null;
 
 if (!user || !currentProfile?.company_id) {
-return (
-<main className="flex min-h-screen items-center justify-center bg-[#f6f6f3] p-8">
-<div className="max-w-xl rounded-[32px] border border-black/5 bg-white p-8 text-center">
-<h1 className="text-2xl font-black text-slate-950">
-Company workspace unavailable
-</h1>
-
-<p className="mt-3 text-sm leading-6 text-slate-600">
-You need to be signed in and connected to a company workspace to
-manage company account settings.
-</p>
-
-<a
-href="/dashboard"
-className="mt-6 inline-flex rounded-full bg-slate-950 px-6 py-3 text-sm font-bold text-white"
->
-Back to Dashboard
-</a>
-</div>
-</main>
-);
+return <WorkspaceUnavailable />;
 }
 
 const companyId = currentProfile.company_id;
@@ -191,26 +175,7 @@ const { data: companyData } = await supabase
 const company = companyData as Company | null;
 
 if (!company) {
-return (
-<main className="flex min-h-screen items-center justify-center bg-[#f6f6f3] p-8">
-<div className="max-w-xl rounded-[32px] border border-black/5 bg-white p-8 text-center">
-<h1 className="text-2xl font-black text-slate-950">
-Company not found
-</h1>
-
-<p className="mt-3 text-sm leading-6 text-slate-600">
-We could not locate your company workspace.
-</p>
-
-<a
-href="/dashboard"
-className="mt-6 inline-flex rounded-full bg-slate-950 px-6 py-3 text-sm font-bold text-white"
->
-Back to Dashboard
-</a>
-</div>
-</main>
-);
+return <CompanyNotFound />;
 }
 
 const { data: members } = await supabase
@@ -298,8 +263,10 @@ pendingInviteCount: pendingInvitations.length,
 });
 
 return (
-<main className="min-h-screen bg-[#f6f6f3] px-8 py-10">
-<div className="mx-auto max-w-7xl">
+<main className="relative min-h-screen overflow-hidden bg-[#061426] px-4 py-6 text-white sm:px-6 lg:px-10">
+<div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(circle_at_top_left,rgba(44,196,232,0.18),transparent_34%),radial-gradient(circle_at_top_right,rgba(200,166,70,0.15),transparent_30%),linear-gradient(180deg,#061426_0%,#07111F_45%,#020617_100%)]" />
+
+<div className="mx-auto w-full max-w-[1680px]">
 <CompanyCommandCenter
 companyName={company.name || "Company Workspace"}
 companyStatus={company.status || "verified"}
@@ -359,6 +326,88 @@ siteUrl={SITE_URL}
 );
 }
 
+function WorkspaceUnavailable() {
+return (
+<SystemState
+eyebrow="Workspace Access Required"
+title="Company workspace unavailable."
+description="You need to be signed in and connected to a company workspace before managing company account settings."
+primaryHref="/login"
+primaryLabel="Sign In"
+secondaryHref="/dashboard"
+secondaryLabel="Back to Dashboard"
+/>
+);
+}
+
+function CompanyNotFound() {
+return (
+<SystemState
+eyebrow="Workspace Not Found"
+title="We could not locate your company workspace."
+description="Your account is signed in, but the connected company workspace could not be loaded securely."
+primaryHref="/create-company"
+primaryLabel="Create Workspace"
+secondaryHref="/dashboard"
+secondaryLabel="Back to Dashboard"
+/>
+);
+}
+
+function SystemState({
+eyebrow,
+title,
+description,
+primaryHref,
+primaryLabel,
+secondaryHref,
+secondaryLabel,
+}: {
+eyebrow: string;
+title: string;
+description: string;
+primaryHref: string;
+primaryLabel: string;
+secondaryHref: string;
+secondaryLabel: string;
+}) {
+return (
+<main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#061426] px-4 py-10 text-white sm:px-6 lg:px-10">
+<div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(circle_at_top_left,rgba(44,196,232,0.18),transparent_34%),radial-gradient(circle_at_top_right,rgba(200,166,70,0.15),transparent_30%),linear-gradient(180deg,#061426_0%,#07111F_45%,#020617_100%)]" />
+
+<section className="w-full max-w-2xl rounded-[40px] border border-white/10 bg-white/[0.065] p-8 text-center shadow-[0_36px_120px_rgba(0,0,0,0.52)] backdrop-blur-2xl sm:p-10">
+<p className="text-xs font-black uppercase tracking-[0.34em] text-[#C8A646]">
+{eyebrow}
+</p>
+
+<h1 className="mt-4 text-4xl font-black tracking-[-0.05em] text-white sm:text-5xl">
+{title}
+</h1>
+
+<p className="mt-5 text-base font-semibold leading-8 text-slate-300">
+{description}
+</p>
+
+<div className="mt-8 grid gap-3 sm:grid-cols-2">
+<Link
+href={primaryHref}
+className="flex h-[56px] items-center justify-center rounded-2xl bg-gradient-to-r from-[#B9902F] via-[#C8A646] to-[#F5D77B] px-6 text-sm font-black uppercase tracking-[0.12em] text-slate-950 shadow-[0_18px_55px_rgba(200,166,70,0.3)] transition hover:scale-[1.01]"
+>
+{primaryLabel}
+</Link>
+
+<Link
+href={secondaryHref}
+className="flex h-[56px] items-center justify-center rounded-2xl border border-white/10 bg-white/[0.045] px-6 text-sm font-black text-white transition hover:bg-white/[0.08]"
+>
+{secondaryLabel}
+</Link>
+</div>
+</section>
+</main>
+);
+}
+
 function FooterMetric({
 title,
 value,
@@ -367,12 +416,12 @@ title: string;
 value: number | string;
 }) {
 return (
-<div className="rounded-3xl border border-black/5 bg-white p-6 shadow-sm">
-<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+<div className="rounded-3xl border border-white/10 bg-white/[0.045] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.26)]">
+<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">
 {title}
 </p>
 
-<p className="mt-2 text-3xl font-black text-slate-950">{value}</p>
+<p className="mt-2 text-3xl font-black text-white">{value}</p>
 </div>
 );
 }

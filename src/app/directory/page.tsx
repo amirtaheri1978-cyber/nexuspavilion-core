@@ -48,6 +48,7 @@ reliabilitySignal: string;
 
 function formatMoney(value: number) {
 if (!Number.isFinite(value)) return "$0";
+
 return `$${value.toLocaleString()}`;
 }
 
@@ -74,6 +75,7 @@ if (score >= 90) return "Top Tier";
 if (score >= 80) return "Preferred";
 if (score >= 70) return "Qualified";
 if (score >= 50) return "Developing";
+
 return "Emerging";
 }
 
@@ -82,23 +84,26 @@ if (score >= 90) return "Excellent";
 if (score >= 80) return "Strong";
 if (score >= 70) return "Reliable";
 if (score >= 50) return "Developing";
+
 return "Limited Data";
 }
 
-function getRankClass(rank: string) {
-if (rank === "Top Tier") return "bg-green-100 text-green-800";
-if (rank === "Preferred") return "bg-blue-100 text-blue-800";
-if (rank === "Qualified") return "bg-orange-100 text-orange-800";
-if (rank === "Developing") return "bg-yellow-100 text-yellow-800";
-return "bg-slate-100 text-slate-700";
+function getRankTone(rank: string) {
+if (rank === "Top Tier") return "success";
+if (rank === "Preferred") return "blue";
+if (rank === "Qualified") return "warning";
+if (rank === "Developing") return "warning";
+
+return "neutral";
 }
 
-function getAvlStatusClass(status: string | null | undefined) {
-if (status === "approved") return "bg-green-100 text-green-800";
-if (status === "conditional") return "bg-yellow-100 text-yellow-800";
-if (status === "suspended") return "bg-red-100 text-red-800";
-if (status === "rejected") return "bg-slate-200 text-slate-700";
-return "bg-slate-100 text-slate-700";
+function getAvlTone(status: string | null | undefined) {
+if (status === "approved") return "success";
+if (status === "conditional") return "warning";
+if (status === "suspended") return "danger";
+if (status === "rejected") return "neutral";
+
+return "neutral";
 }
 
 function getAvlStatusLabel(status: string | null | undefined) {
@@ -106,6 +111,7 @@ if (status === "approved") return "Approved";
 if (status === "conditional") return "Conditional";
 if (status === "suspended") return "Suspended";
 if (status === "rejected") return "Rejected";
+
 return "Not in AVL";
 }
 
@@ -366,23 +372,25 @@ setActionMessage("Something went wrong while updating AVL.");
 setSavingVendorId(null);
 }
 }
-const canManageApprovedVendors = canManageAvl(profile?.role);
 
+const canManageApprovedVendors = canManageAvl(profile?.role);
 return (
-<main className="min-h-screen bg-[#f6f6f3] px-6 py-10">
-<div className="mx-auto max-w-7xl">
-<section className="rounded-[40px] border border-black/5 bg-white p-8 shadow-sm lg:p-10">
+<main className="relative min-h-screen overflow-hidden bg-[#061426] px-4 py-6 text-white sm:px-6 lg:px-10">
+<div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(circle_at_top_left,rgba(44,196,232,0.18),transparent_34%),radial-gradient(circle_at_top_right,rgba(200,166,70,0.15),transparent_30%),linear-gradient(180deg,#061426_0%,#07111F_45%,#020617_100%)]" />
+
+<div className="mx-auto w-full max-w-[1680px]">
+<section className="rounded-[40px] border border-white/10 bg-white/[0.065] p-7 shadow-[0_36px_120px_rgba(0,0,0,0.52)] backdrop-blur-2xl sm:p-10">
 <div className="flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
 <div>
-<p className="text-xs font-black uppercase tracking-[0.35em] text-orange-500">
+<p className="text-xs font-black uppercase tracking-[0.35em] text-[#C8A646]">
 Supplier Network
 </p>
 
-<h1 className="mt-4 max-w-4xl text-5xl font-black leading-tight text-slate-950">
+<h1 className="mt-4 max-w-4xl text-5xl font-black leading-tight tracking-[-0.05em] text-white">
 Construction Supplier Network
 </h1>
 
-<p className="mt-4 max-w-3xl text-sm font-semibold leading-7 text-slate-600">
+<p className="mt-4 max-w-3xl text-sm font-semibold leading-7 text-slate-300">
 Discover verified construction companies, suppliers,
 contractors, manufacturers, consultants, architects, and
 engineers with procurement activity, award history, supplier
@@ -390,26 +398,26 @@ intelligence, and approved vendor list controls.
 </p>
 </div>
 
-<div className="flex w-full flex-col gap-3 lg:w-auto lg:min-w-[360px]">
+<div className="flex w-full flex-col gap-3 lg:w-auto lg:min-w-[380px]">
 <input
 type="text"
 placeholder="Search companies, categories, regions, ranks, or AVL status..."
 value={search}
 onChange={(event) => setSearch(event.target.value)}
-className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 text-sm font-bold text-slate-950 outline-none transition focus:border-slate-950 focus:bg-white"
+className="h-[58px] w-full rounded-2xl border border-white/10 bg-[#07111F] px-5 text-sm font-semibold text-white outline-none transition placeholder:text-slate-500 focus:border-[#C8A646] focus:bg-[#081827] focus:ring-4 focus:ring-[#C8A646]/15"
 />
 
 <div className="grid grid-cols-2 gap-3">
 <Link
 href="/login"
-className="rounded-full border border-slate-200 bg-white px-5 py-3 text-center text-sm font-black text-slate-700 transition hover:border-slate-950 hover:text-slate-950"
+className="flex h-[52px] items-center justify-center rounded-2xl border border-white/10 bg-white/[0.045] px-5 text-center text-sm font-black text-white transition hover:bg-white/[0.08]"
 >
 Sign In
 </Link>
 
 <Link
 href="/signup"
-className="rounded-full bg-slate-950 px-5 py-3 text-center text-sm font-black text-white transition hover:bg-slate-800"
+className="flex h-[52px] items-center justify-center rounded-2xl bg-gradient-to-r from-[#B9902F] via-[#C8A646] to-[#F5D77B] px-5 text-center text-sm font-black text-slate-950 transition hover:scale-[1.01]"
 >
 Join Network
 </Link>
@@ -419,7 +427,7 @@ Join Network
 </section>
 
 {actionMessage ? (
-<div className="mt-6 rounded-3xl border border-orange-200 bg-orange-50 px-6 py-4 text-sm font-black text-orange-700">
+<div className="mt-6 rounded-3xl border border-[#C8A646]/25 bg-[#C8A646]/10 px-6 py-4 text-sm font-black text-[#F5D77B]">
 {actionMessage}
 </div>
 ) : null}
@@ -471,18 +479,18 @@ detail="Restricted supplier access"
 </section>
 
 {topSupplier ? (
-<section className="mt-8 overflow-hidden rounded-[36px] border border-black/5 bg-slate-950 text-white">
-<div className="grid gap-8 p-8 lg:grid-cols-[1.2fr_0.8fr]">
+<section className="mt-8 overflow-hidden rounded-[36px] border border-[#2CC4E8]/15 bg-gradient-to-br from-[#0B3D91]/35 via-[#07111F]/92 to-[#061426] p-8 shadow-[0_0_70px_rgba(44,196,232,0.10)]">
+<div className="grid gap-8 lg:grid-cols-[1.2fr_0.8fr]">
 <div>
-<p className="text-xs font-black uppercase tracking-[0.3em] text-orange-400">
+<p className="text-xs font-black uppercase tracking-[0.3em] text-[#C8A646]">
 Supplier Intelligence
 </p>
 
-<h2 className="mt-4 text-4xl font-black leading-tight">
+<h2 className="mt-4 text-4xl font-black leading-tight text-white">
 Top ranked supplier: {topSupplier.name}
 </h2>
 
-<p className="mt-4 max-w-3xl text-sm font-semibold leading-7 text-white/65">
+<p className="mt-4 max-w-3xl text-sm font-semibold leading-7 text-slate-300">
 Nexus Pavilion ranks suppliers using quote volume, award
 history, win rate, awarded revenue, and network performance
 signals.
@@ -499,12 +507,12 @@ signals.
 ) : null}
 
 {loading ? (
-<div className="mt-12 rounded-3xl border border-slate-200 bg-white p-10 text-center text-sm font-bold text-slate-500">
+<div className="mt-12 rounded-3xl border border-white/10 bg-white/[0.045] p-10 text-center text-sm font-bold text-slate-500">
 Loading supplier network...
 </div>
 ) : filteredCompanies.length === 0 ? (
-<div className="mt-12 rounded-3xl border border-dashed border-slate-300 bg-white p-10 text-center">
-<h2 className="text-xl font-black text-slate-950">
+<div className="mt-12 rounded-3xl border border-dashed border-white/15 bg-white/[0.035] p-10 text-center">
+<h2 className="text-xl font-black text-white">
 No verified companies found
 </h2>
 
@@ -525,7 +533,7 @@ isSupplierCompany(company);
 return (
 <div
 key={company.id}
-className="group rounded-[32px] border border-black/5 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
+className="group rounded-[32px] border border-white/10 bg-white/[0.055] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.26)] transition hover:-translate-y-1 hover:border-[#2CC4E8]/25 hover:bg-white/[0.07]"
 >
 <Link href={`/company/${company.slug}`} className="block">
 <div className="flex items-start justify-between gap-4">
@@ -534,28 +542,26 @@ className="group rounded-[32px] border border-black/5 bg-white p-6 shadow-sm tra
 <img
 src={company.logo_url}
 alt={company.name}
-className="h-14 w-14 rounded-2xl border border-slate-200 bg-white object-cover"
+className="h-14 w-14 rounded-2xl border border-white/10 bg-white object-cover"
 />
 ) : (
-<div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-xl font-black text-slate-600">
+<div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.055] text-xl font-black text-slate-400">
 {company.name.charAt(0)}
 </div>
 )}
 
 <div>
-<h2 className="text-xl font-black text-slate-950">
+<h2 className="text-xl font-black text-white">
 {company.name}
 </h2>
 
-<p className="mt-2 text-sm font-semibold leading-6 text-slate-500">
+<p className="mt-2 text-sm font-semibold leading-6 text-slate-400">
 {company.category} · {company.location}
 </p>
 </div>
 </div>
 
-<span className="rounded-full bg-emerald-100 px-3 py-1 text-[10px] font-black uppercase tracking-wide text-emerald-800">
-{company.status}
-</span>
+<StatusPill tone="success">{company.status}</StatusPill>
 </div>
 
 <div className="mt-6 grid gap-3 md:grid-cols-2">
@@ -564,55 +570,60 @@ className="h-14 w-14 rounded-2xl border border-slate-200 bg-white object-cover"
 </div>
 </Link>
 <div className="mt-5 grid gap-3 md:grid-cols-3">
-<SmallMetric title="Score" value={`${company.supplierScore}/100`} />
-<SmallMetric title="Win" value={`${company.winRate}%`} />
-<SmallMetric title="Awards" value={String(company.awardsWon)} />
+<SmallMetric
+title="Score"
+value={`${company.supplierScore}/100`}
+/>
+
+<SmallMetric
+title="Win"
+value={`${company.winRate}%`}
+/>
+
+<SmallMetric
+title="Awards"
+value={String(company.awardsWon)}
+/>
 </div>
 
 <div className="mt-5 flex flex-wrap gap-2">
-<span
-className={`rounded-full px-3 py-1 text-xs font-black ${getRankClass(
-company.supplierRank
-)}`}
->
+<StatusPill tone={getRankTone(company.supplierRank)}>
 {company.supplierRank}
-</span>
+</StatusPill>
 
-<span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-black text-slate-700">
+<StatusPill tone="blue">
 {company.reliabilitySignal}
-</span>
+</StatusPill>
 
-<span
-className={`rounded-full px-3 py-1 text-xs font-black ${getAvlStatusClass(
-avlRecord?.status
-)}`}
->
+<StatusPill tone={getAvlTone(avlRecord?.status)}>
 {getAvlStatusLabel(avlRecord?.status)}
-</span>
+</StatusPill>
 
-{company.awardedRevenue > 0 ? (
-<span className="rounded-full bg-green-100 px-3 py-1 text-xs font-black text-green-700">
-{formatMoney(company.awardedRevenue)} awarded
-</span>
-) : null}
+{company.awardedRevenue > 0 && (
+<StatusPill tone="success">
+{formatMoney(company.awardedRevenue)}
+</StatusPill>
+)}
 </div>
 
 {canShowAvlActions ? (
-<div className="mt-6 rounded-3xl border border-slate-200 bg-slate-50 p-4">
-<p className="text-xs font-black uppercase tracking-[0.25em] text-slate-400">
-Approved Vendor List Controls
+<div className="mt-6 rounded-3xl border border-white/10 bg-[#07111F] p-4">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-[#C8A646]">
+Approved Vendor List
 </p>
 
 <div className="mt-4 grid gap-2 sm:grid-cols-2">
 <button
 type="button"
 disabled={savingVendorId === company.id}
-onClick={() => updateApprovedVendor(company.id, "approved")}
-className="rounded-full bg-slate-950 px-4 py-3 text-xs font-black text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
+onClick={() =>
+updateApprovedVendor(company.id, "approved")
+}
+className="rounded-full bg-gradient-to-r from-[#B9902F] via-[#C8A646] to-[#F5D77B] px-4 py-3 text-xs font-black text-slate-950 transition hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-50"
 >
 {savingVendorId === company.id
 ? "Saving..."
-: "Approve Vendor"}
+: "Approve"}
 </button>
 
 <button
@@ -621,7 +632,7 @@ disabled={savingVendorId === company.id}
 onClick={() =>
 updateApprovedVendor(company.id, "conditional")
 }
-className="rounded-full bg-yellow-100 px-4 py-3 text-xs font-black text-yellow-800 transition hover:bg-yellow-200 disabled:cursor-not-allowed disabled:opacity-50"
+className="rounded-full border border-yellow-500/30 bg-yellow-500/10 px-4 py-3 text-xs font-black text-yellow-300 transition hover:bg-yellow-500/20 disabled:cursor-not-allowed disabled:opacity-50"
 >
 Conditional
 </button>
@@ -629,8 +640,10 @@ Conditional
 <button
 type="button"
 disabled={savingVendorId === company.id}
-onClick={() => updateApprovedVendor(company.id, "suspended")}
-className="rounded-full bg-red-100 px-4 py-3 text-xs font-black text-red-800 transition hover:bg-red-200 disabled:cursor-not-allowed disabled:opacity-50"
+onClick={() =>
+updateApprovedVendor(company.id, "suspended")
+}
+className="rounded-full border border-red-500/30 bg-red-500/10 px-4 py-3 text-xs font-black text-red-300 transition hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-50"
 >
 Suspend
 </button>
@@ -638,17 +651,18 @@ Suspend
 <button
 type="button"
 disabled={savingVendorId === company.id}
-onClick={() => updateApprovedVendor(company.id, "rejected")}
-className="rounded-full bg-slate-200 px-4 py-3 text-xs font-black text-slate-700 transition hover:bg-slate-300 disabled:cursor-not-allowed disabled:opacity-50"
+onClick={() =>
+updateApprovedVendor(company.id, "rejected")
+}
+className="rounded-full border border-white/10 bg-white/[0.06] px-4 py-3 text-xs font-black text-slate-300 transition hover:bg-white/[0.12] disabled:cursor-not-allowed disabled:opacity-50"
 >
 Reject
 </button>
 </div>
 
-<p className="mt-4 text-xs font-semibold leading-5 text-slate-500">
-AVL status controls future selective routing, framework
-invitations, supplier governance, and procurement access
-decisions.
+<p className="mt-4 text-xs font-semibold leading-5 text-slate-400">
+AVL status affects preferred supplier routing,
+procurement governance and future RFQ invitations.
 </p>
 </div>
 ) : null}
@@ -660,7 +674,7 @@ Verified company profile
 
 <Link
 href={`/company/${company.slug}`}
-className="text-sm font-black text-slate-950 transition hover:text-orange-600"
+className="text-sm font-black text-[#9BE8F8] transition hover:text-white"
 >
 View Profile →
 </Link>
@@ -685,50 +699,105 @@ value: string;
 detail: string;
 }) {
 return (
-<div className="rounded-3xl border border-black/5 bg-white p-6 shadow-sm">
+<div className="rounded-[28px] border border-white/10 bg-white/[0.055] p-6 shadow-[0_16px_50px_rgba(0,0,0,.25)]">
+<p className="text-[10px] font-black uppercase tracking-[0.22em] text-slate-500">
+{title}
+</p>
+
+<p className="mt-3 text-3xl font-black text-white">
+{value}
+</p>
+
+<p className="mt-2 text-sm font-semibold text-slate-400">
+{detail}
+</p>
+</div>
+);
+}
+
+function DarkSignal({
+title,
+value,
+}: {
+title: string;
+value: string;
+}) {
+return (
+<div className="rounded-3xl border border-white/10 bg-white/[0.08] px-5 py-5 text-center">
 <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
 {title}
 </p>
 
-<p className="mt-3 text-3xl font-black text-slate-950">{value}</p>
-
-<p className="mt-2 text-sm font-semibold text-slate-500">{detail}</p>
+<p className="mt-2 text-xl font-black text-white">
+{value}
+</p>
 </div>
 );
 }
 
-function DarkSignal({ title, value }: { title: string; value: string }) {
+function InfoBox({
+title,
+value,
+}: {
+title: string;
+value: string;
+}) {
 return (
-<div className="rounded-3xl bg-white/10 px-5 py-5 text-center">
-<p className="text-xs font-black uppercase tracking-[0.2em] text-white/40">
+<div className="rounded-2xl border border-white/10 bg-[#07111F] p-4">
+<p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
 {title}
 </p>
 
-<p className="mt-2 text-lg font-black text-white">{value}</p>
+<p className="mt-2 text-sm font-black text-white">
+{value}
+</p>
 </div>
 );
 }
 
-function InfoBox({ title, value }: { title: string; value: string }) {
+function SmallMetric({
+title,
+value,
+}: {
+title: string;
+value: string;
+}) {
 return (
-<div className="rounded-2xl bg-slate-50 p-4">
-<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+<div className="rounded-2xl border border-white/10 bg-[#07111F] px-3 py-3">
+<p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
 {title}
 </p>
 
-<p className="mt-2 text-sm font-black text-slate-950">{value}</p>
+<p className="mt-1 text-sm font-black text-white">
+{value}
+</p>
 </div>
 );
 }
 
-function SmallMetric({ title, value }: { title: string; value: string }) {
-return (
-<div className="rounded-2xl bg-slate-50 px-3 py-3">
-<p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
-{title}
-</p>
+function StatusPill({
+children,
+tone = "neutral",
+}: {
+children: React.ReactNode;
+tone?: "success" | "warning" | "danger" | "blue" | "neutral";
+}) {
+const classes =
+tone === "success"
+? "border-emerald-300/20 bg-emerald-400/10 text-emerald-300"
+: tone === "warning"
+? "border-yellow-300/20 bg-yellow-400/10 text-yellow-300"
+: tone === "danger"
+? "border-red-300/20 bg-red-400/10 text-red-300"
+: tone === "blue"
+? "border-[#2CC4E8]/25 bg-[#2CC4E8]/10 text-[#9BE8F8]"
+: "border-white/10 bg-white/[0.055] text-slate-300";
 
-<p className="mt-1 text-sm font-black text-slate-950">{value}</p>
-</div>
+return (
+<span
+className={`inline-flex rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] ${classes}`}
+>
+{children}
+</span>
 );
 }

@@ -114,6 +114,12 @@ description: "Updates and workflow signals",
 badge: String(stats.unreadNotifications),
 },
 {
+label: "Pricing",
+href: "/pricing",
+key: "pricing",
+description: "Plans and billing options",
+},
+{
 label: "Company Command",
 href: "/company/settings",
 key: "company",
@@ -149,6 +155,12 @@ href: "/notifications",
 key: "notifications",
 description: "Updates, alerts, messages",
 badge: String(stats.unreadNotifications),
+},
+{
+label: "Pricing",
+href: "/pricing",
+key: "pricing",
+description: "Plans and billing options",
 },
 {
 label: "Company Command",
@@ -191,6 +203,12 @@ href: "/rfq",
 key: "opportunities",
 description: "RFQs and opportunity signals",
 badge: String(stats.activeRfqs),
+},
+{
+label: "Supplier Intelligence",
+href: "/directory",
+key: "directory",
+description: "AVL, suppliers, partners",
 },
 {
 label: "Supplier Intelligence",
@@ -570,6 +588,7 @@ notifications: "!",
 settings: "⚙",
 "vendor-dashboard": "◷",
 company: "◼",
+pricing: "$",
 };
 
 return glyphs[key] || "•";

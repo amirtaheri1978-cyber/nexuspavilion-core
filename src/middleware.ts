@@ -5,7 +5,6 @@ const PROTECTED_ROUTES = [
 "/dashboard",
 "/connections",
 "/rfq",
-"/verify",
 "/analytics",
 "/company",
 "/vendor-dashboard",
@@ -23,11 +22,22 @@ const COMPANY_SETUP_ALLOWED_ROUTES = [
 "/signup",
 "/set-password",
 "/forgot-password",
+"/verify",
 "/rfq/invite",
 ];
 
 function startsWithAny(pathname: string, routes: string[]) {
-return routes.some((route) => pathname === route || pathname.startsWith(`${route}/`));
+return routes.some(
+(route) => pathname === route || pathname.startsWith(`${route}/`)
+);
+}
+
+function redirectToLogin(request: NextRequest, message: string) {
+const loginUrl = new URL("/login", request.url);
+loginUrl.searchParams.set("authStatus", "attention");
+loginUrl.searchParams.set("message", message);
+
+return NextResponse.redirect(loginUrl);
 }
 
 export async function middleware(request: NextRequest) {
@@ -37,7 +47,10 @@ const pathname = request.nextUrl.pathname;
 
 const isProtectedRoute = startsWithAny(pathname, PROTECTED_ROUTES);
 const isAuthRoute = startsWithAny(pathname, AUTH_ROUTES);
-const isCompanySetupRoute = startsWithAny(pathname, COMPANY_SETUP_ALLOWED_ROUTES);
+const isCompanySetupRoute = startsWithAny(
+pathname,
+COMPANY_SETUP_ALLOWED_ROUTES
+);
 
 const supabase = createServerClient(
 process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -72,7 +85,10 @@ data: { user },
 } = await supabase.auth.getUser();
 
 if (isProtectedRoute && !user) {
-return NextResponse.redirect(new URL("/login", request.url));
+return redirectToLogin(
+request,
+"Your secure workspace session has expired. Please sign in again to continue."
+);
 }
 
 if (isAuthRoute && user) {
@@ -109,7 +125,6 @@ matcher: [
 "/dashboard/:path*",
 "/connections/:path*",
 "/rfq/:path*",
-"/verify/:path*",
 "/analytics/:path*",
 "/company/:path*",
 "/vendor-dashboard/:path*",

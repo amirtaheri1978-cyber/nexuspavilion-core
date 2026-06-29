@@ -27,6 +27,7 @@ budget: number | string | null;
 status: string | null;
 created_at: string | null;
 };
+
 type Quote = {
 id: string;
 rfq_id: string;
@@ -34,15 +35,6 @@ company_id: string | null;
 amount: number | string | null;
 decision: string | null;
 created_at: string | null;
-};
-
-type VendorPerformance = {
-submittedQuotes: number;
-awardedQuotes: number;
-awardedRevenue: number;
-totalBidValue: number;
-averageBid: number;
-winRate: number;
 };
 
 type ActivityLog = {
@@ -69,15 +61,17 @@ if (value === "rejected") return "REJECTED";
 return "SANDBOX";
 }
 
-function getRFQStatusClass(status: string | null) {
-if (status === "awarded") return "bg-green-100 text-green-700";
-if (status === "closed") return "bg-slate-200 text-slate-600";
-return "bg-orange-100 text-orange-700";
+function getRFQStatusTone(status: string | null) {
+if (status === "awarded") return "success";
+if (status === "closed") return "neutral";
+
+return "warning";
 }
 
 function getRFQStatusLabel(status: string | null) {
 if (status === "awarded") return "Awarded";
 if (status === "closed") return "Closed";
+
 return "Open";
 }
 
@@ -89,6 +83,16 @@ month: "short",
 day: "numeric",
 year: "numeric",
 }).format(new Date(value));
+}
+
+function formatMoney(value: number | string | null | undefined) {
+const amount = Number(value);
+
+if (!Number.isFinite(amount)) {
+return "$0";
+}
+
+return `$${amount.toLocaleString()}`;
 }
 
 function getActivityLabel(action: string | null) {
@@ -184,20 +188,15 @@ const company = data?.[0] as Company | undefined;
 
 if (!company) {
 return (
-<main className="min-h-screen bg-[#f6f6f3] p-8">
-<div className="mx-auto max-w-3xl rounded-[32px] border border-black/5 bg-white p-8">
-<h1 className="text-2xl font-black text-slate-950">
-Public company not found
-</h1>
-
-<Link
-href="/directory"
-className="mt-6 inline-block text-sm font-bold text-slate-700 hover:text-slate-950"
->
-← Back to Public Directory
-</Link>
-</div>
-</main>
+<SystemState
+eyebrow="Public Company Profile"
+title="Company profile unavailable."
+description="This company profile does not exist, is not approved for public visibility, or is no longer available in the Nexus Pavilion directory."
+primaryHref="/directory"
+primaryLabel="Back to Directory"
+secondaryHref="/"
+secondaryLabel="Home"
+/>
 );
 }
 
@@ -234,7 +233,6 @@ const openRfqs = rfqList.filter(
 (rfq) => !rfq.status || rfq.status === "open"
 ).length;
 const awardedRfqs = rfqList.filter((rfq) => rfq.status === "awarded").length;
-
 const totalBudget = rfqList.reduce((total, rfq) => {
 const budget = Number(rfq.budget);
 return total + (Number.isNaN(budget) ? 0 : budget);
@@ -377,67 +375,69 @@ vendorSubmittedQuotes <= 1
 : "Dependency and capacity should continue to be monitored.";
 
 return (
-<main className="min-h-screen bg-[#f6f6f3] p-8">
-<div className="mx-auto max-w-7xl">
-<div className="flex items-center justify-between gap-6">
+<main className="relative min-h-screen overflow-hidden bg-[#061426] px-4 py-6 text-white sm:px-6 lg:px-10">
+<div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(circle_at_top_left,rgba(44,196,232,0.18),transparent_34%),radial-gradient(circle_at_top_right,rgba(200,166,70,0.15),transparent_30%),linear-gradient(180deg,#061426_0%,#07111F_45%,#020617_100%)]" />
+
+<div className="mx-auto w-full max-w-[1680px]">
+<div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 <Link
 href="/directory"
-className="text-sm font-bold text-slate-500 hover:text-slate-950"
+className="inline-flex w-fit rounded-full border border-white/10 bg-white/[0.045] px-5 py-3 text-sm font-black text-slate-300 transition hover:bg-white/[0.08] hover:text-white"
 >
 ← Back to Public Directory
 </Link>
 
-<div className="flex items-center gap-3">
+<div className="flex flex-wrap gap-3">
 <Link
 href="/rfq/new"
-className="rounded-full bg-white px-5 py-3 text-sm font-bold text-slate-950 shadow-sm transition hover:shadow-md"
+className="rounded-full border border-white/10 bg-white/[0.045] px-5 py-3 text-sm font-black text-white transition hover:bg-white/[0.08]"
 >
 Create RFQ
 </Link>
 
 <Link
 href="/rfq"
-className="rounded-full bg-slate-950 px-5 py-3 text-sm font-bold text-white transition hover:bg-slate-800"
+className="rounded-full bg-gradient-to-r from-[#B9902F] via-[#C8A646] to-[#F5D77B] px-5 py-3 text-sm font-black text-slate-950 transition hover:scale-[1.01]"
 >
 View Marketplace
 </Link>
 </div>
 </div>
 
-<section className="mt-8 rounded-[36px] border border-black/5 bg-white p-10">
+<section className="mt-8 rounded-[40px] border border-white/10 bg-white/[0.065] p-7 shadow-[0_36px_120px_rgba(0,0,0,0.52)] backdrop-blur-2xl sm:p-10">
 <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between">
 <div className="flex items-start gap-6">
 {company.logo_url ? (
 <img
 src={company.logo_url}
 alt={company.name}
-className="h-24 w-24 rounded-3xl border border-slate-200 object-contain p-2"
+className="h-24 w-24 rounded-3xl border border-white/10 bg-white object-contain p-2"
 />
 ) : (
-<div className="flex h-24 w-24 items-center justify-center rounded-3xl bg-slate-100 text-4xl font-black text-slate-600">
+<div className="flex h-24 w-24 items-center justify-center rounded-3xl border border-white/10 bg-white/[0.055] text-4xl font-black text-slate-400">
 {company.name.charAt(0)}
 </div>
 )}
 
 <div>
-<p className="text-xs font-black uppercase tracking-[0.35em] text-orange-500">
+<p className="text-xs font-black uppercase tracking-[0.35em] text-[#C8A646]">
 Enterprise Company Profile
 </p>
 
 <div className="mt-3 flex flex-wrap items-center gap-3">
-<h1 className="text-5xl font-black text-slate-950">
+<h1 className="text-5xl font-black tracking-[-0.05em] text-white">
 {company.name}
 </h1>
 
 <StatusBadge status={normalizeStatus(company.status)} />
 </div>
 
-<p className="mt-4 text-lg font-semibold text-slate-600">
+<p className="mt-4 text-lg font-semibold text-slate-300">
 {company.category || "Enterprise"} ·{" "}
 {company.location || "Location N/A"}
 </p>
 
-<p className="mt-2 text-sm font-bold uppercase tracking-[0.2em] text-slate-400">
+<p className="mt-2 text-sm font-bold uppercase tracking-[0.2em] text-slate-500">
 {company.network_role || "Enterprise Workspace"}
 </p>
 </div>
@@ -455,19 +455,19 @@ Enterprise Company Profile
 <section className="mt-8 grid gap-6 md:grid-cols-4">
 <MetricCard
 title="Procurement Volume"
-value={`$${totalBudget.toLocaleString()}`}
+value={formatMoney(totalBudget)}
 detail="Total RFQ budget portfolio"
 />
 
 <MetricCard
 title="Awarded Spend"
-value={`$${awardedSpend.toLocaleString()}`}
+value={formatMoney(awardedSpend)}
 detail="Total awarded contract value"
 />
 
 <MetricCard
 title="Estimated Savings"
-value={`$${estimatedSavings.toLocaleString()}`}
+value={formatMoney(estimatedSavings)}
 detail="Budget less awarded value"
 />
 
@@ -477,29 +477,28 @@ value={`${awardRate}%`}
 detail={`${awardedRfqs} of ${totalRfqs} RFQs awarded`}
 />
 </section>
-
-<section className="mt-8 grid gap-8 lg:grid-cols-3">
-<div className="rounded-[32px] border border-black/5 bg-white p-8 lg:col-span-2">
-<div className="flex items-end justify-between gap-6">
+<section className="mt-8 grid gap-8 xl:grid-cols-[1.2fr_0.8fr]">
+<div className="rounded-[34px] border border-white/10 bg-white/[0.055] p-8 shadow-[0_30px_80px_rgba(0,0,0,0.35)]">
+<div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
 <div>
-<p className="text-xs font-black uppercase tracking-[0.3em] text-orange-500">
+<p className="text-xs font-black uppercase tracking-[0.30em] text-[#C8A646]">
 Procurement Portfolio
 </p>
 
-<h2 className="mt-3 text-3xl font-black text-slate-950">
+<h2 className="mt-3 text-3xl font-black text-white">
 Company RFQs
 </h2>
 </div>
 
 <Link
 href="/rfq"
-className="rounded-full bg-slate-950 px-5 py-3 text-sm font-bold text-white"
+className="inline-flex rounded-full bg-gradient-to-r from-[#B9902F] via-[#C8A646] to-[#F5D77B] px-5 py-3 text-sm font-black text-slate-950 transition hover:scale-[1.02]"
 >
 Open Marketplace
 </Link>
 </div>
 
-<div className="mt-6 space-y-4">
+<div className="mt-7 space-y-5">
 {recentRfqs.length > 0 ? (
 recentRfqs.map((rfq) => {
 const relatedQuotes = quoteList.filter(
@@ -519,41 +518,48 @@ return (
 <Link
 key={rfq.id}
 href={rfq.slug ? `/rfq/${rfq.slug}` : "/rfq"}
-className="block rounded-3xl border border-slate-100 bg-slate-50 p-5 transition hover:-translate-y-1 hover:shadow-lg"
+className="group block rounded-[28px] border border-white/10 bg-[#07111F]/80 p-6 transition hover:-translate-y-1 hover:border-[#2CC4E8]/25 hover:bg-[#081827]"
 >
-<div className="flex items-start justify-between gap-4">
-<div>
-<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
+<div className="flex items-start justify-between gap-6">
+<div className="min-w-0 flex-1">
+<p className="text-xs font-black uppercase tracking-[0.22em] text-[#C8A646]">
 {rfq.category || "Procurement"}
 </p>
 
-<h3 className="mt-2 text-2xl font-black text-slate-950">
+<h3 className="mt-3 text-2xl font-black text-white">
 {rfq.title || "Untitled RFQ"}
 </h3>
 
-<p className="mt-2 max-w-2xl text-sm text-slate-600">
-{rfq.description || "No description provided."}
+<p className="mt-3 line-clamp-2 text-sm leading-7 text-slate-400">
+{rfq.description ||
+"No description has been provided for this procurement opportunity."}
 </p>
 </div>
 
-<span
-className={`rounded-full px-3 py-1 text-xs font-black ${getRFQStatusClass(
-rfq.status
-)}`}
->
+<StatusPill tone={getRFQStatusTone(rfq.status)}>
 {getRFQStatusLabel(rfq.status)}
-</span>
+</StatusPill>
 </div>
 
-<div className="mt-5 flex flex-wrap gap-3 text-xs font-black text-slate-600">
-<Pill>{rfq.location || "Location N/A"}</Pill>
-<Pill>
-Budget ${Number(rfq.budget || 0).toLocaleString()}
-</Pill>
-<Pill>{relatedQuotes.length} quotes</Pill>
-{lowestQuote !== null && Number.isFinite(lowestQuote) && (
-<Pill>Lowest ${lowestQuote.toLocaleString()}</Pill>
-)}
+<div className="mt-6 flex flex-wrap gap-3">
+<InfoPill>
+{rfq.location || "Location N/A"}
+</InfoPill>
+
+<InfoPill>
+Budget {formatMoney(rfq.budget)}
+</InfoPill>
+
+<InfoPill>
+{relatedQuotes.length} Quotes
+</InfoPill>
+
+{lowestQuote !== null &&
+Number.isFinite(lowestQuote) ? (
+<InfoPill>
+Lowest {formatMoney(lowestQuote)}
+</InfoPill>
+) : null}
 </div>
 </Link>
 );
@@ -564,16 +570,16 @@ Budget ${Number(rfq.budget || 0).toLocaleString()}
 </div>
 </div>
 
-<aside className="rounded-[32px] border border-black/5 bg-white p-8">
-<p className="text-xs font-black uppercase tracking-[0.3em] text-orange-500">
+<aside className="rounded-[34px] border border-white/10 bg-white/[0.055] p-8 shadow-[0_30px_80px_rgba(0,0,0,0.35)]">
+<p className="text-xs font-black uppercase tracking-[0.30em] text-[#C8A646]">
 Award History
 </p>
 
-<h2 className="mt-3 text-3xl font-black text-slate-950">
+<h2 className="mt-3 text-3xl font-black text-white">
 Recent Awards
 </h2>
 
-<div className="mt-6 space-y-4">
+<div className="mt-7 space-y-5">
 {recentAwards.length > 0 ? (
 recentAwards.map((quote) => {
 const relatedRfq = rfqList.find(
@@ -583,26 +589,30 @@ const relatedRfq = rfqList.find(
 return (
 <div
 key={quote.id}
-className="rounded-3xl border border-slate-100 bg-slate-50 p-5"
+className="rounded-[28px] border border-white/10 bg-[#07111F]/80 p-6"
 >
-<div className="flex items-start justify-between gap-4">
+<div className="flex items-start justify-between gap-5">
 <div>
-<p className="text-lg font-black text-slate-950">
+<p className="text-lg font-black text-white">
 {relatedRfq?.title || "Awarded RFQ"}
 </p>
 
-<p className="mt-1 text-sm font-semibold text-slate-500">
+<p className="mt-2 text-sm font-semibold text-slate-500">
 {relatedRfq?.location || "Location N/A"}
 </p>
 </div>
 
-<span className="rounded-full bg-green-100 px-3 py-1 text-xs font-black text-green-700">
+<StatusPill tone="success">
 Awarded
-</span>
+</StatusPill>
 </div>
 
-<p className="mt-4 text-2xl font-black text-slate-950">
-${Number(quote.amount || 0).toLocaleString()}
+<p className="mt-6 text-3xl font-black text-[#C8A646]">
+{formatMoney(quote.amount)}
+</p>
+
+<p className="mt-3 text-xs font-bold uppercase tracking-[0.18em] text-slate-500">
+{formatDate(quote.created_at)}
 </p>
 </div>
 );
@@ -613,114 +623,86 @@ ${Number(quote.amount || 0).toLocaleString()}
 </div>
 </aside>
 </section>
+
 {isVendorProfile ? (
-<section className="mt-8 rounded-[36px] border border-slate-200 bg-slate-950 p-8 text-white">
-<p className="text-xs font-black uppercase tracking-[0.3em] text-orange-400">
-AI Supplier Profile Intelligence
+<section className="mt-8 rounded-[36px] border border-[#2CC4E8]/15 bg-gradient-to-br from-[#0B3D91]/30 via-[#07111F] to-[#061426] p-8 shadow-[0_0_80px_rgba(44,196,232,0.12)]">
+<p className="text-xs font-black uppercase tracking-[0.30em] text-[#C8A646]">
+AI Supplier Intelligence
 </p>
 
-<div className="mt-5 grid gap-8 lg:grid-cols-[1fr_0.9fr]">
+<div className="mt-6 grid gap-8 xl:grid-cols-[1fr_0.95fr]">
 <div>
-<h2 className="text-4xl font-black">
-Supplier Intelligence Profile
+<h2 className="text-4xl font-black text-white">
+Executive Supplier Assessment
 </h2>
 
-<p className="mt-4 max-w-3xl text-sm leading-7 text-slate-300">
+<p className="mt-5 max-w-3xl text-sm leading-8 text-slate-300">
 {supplierExecutiveAction}
 </p>
 </div>
 
 <div className="grid gap-4 sm:grid-cols-2">
-<div className="rounded-2xl bg-white/10 p-5">
-<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
-Supplier Score
-</p>
-<p className="mt-2 text-3xl font-black">
-{supplierIntelligenceScore}/100
-</p>
-</div>
+<MetricCard
+title="Supplier Score"
+value={`${supplierIntelligenceScore}/100`}
+detail="Executive AI rating"
+/>
 
-<div className="rounded-2xl bg-white/10 p-5">
-<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
-Supplier Tier
-</p>
-<p className="mt-2 text-3xl font-black">
-{supplierTier}
-</p>
-</div>
+<MetricCard
+title="Supplier Tier"
+value={supplierTier}
+detail="Current performance band"
+/>
 
-<div className="rounded-2xl bg-white/10 p-5">
-<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
-Procurement Fit
-</p>
-<p className="mt-2 text-3xl font-black">
-{procurementFitScore}/100
-</p>
-</div>
+<MetricCard
+title="Procurement Fit"
+value={`${procurementFitScore}/100`}
+detail="Buyer suitability"
+/>
 
-<div className="rounded-2xl bg-white/10 p-5">
-<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
-Recommendation
-</p>
-<p className="mt-2 text-2xl font-black">
-{supplierRecommendation}
-</p>
-</div>
+<MetricCard
+title="Recommendation"
+value={supplierRecommendation}
+detail="Executive recommendation"
+/>
 </div>
 </div>
 
 <div className="mt-8 grid gap-4 md:grid-cols-4">
-<div className="rounded-2xl bg-white/5 p-5">
-<p className="text-xs font-black uppercase tracking-[0.2em] text-orange-400">
-Risk Level
-</p>
-<p className="mt-3 text-sm font-semibold text-slate-300">
-{supplierRiskLevel}
-</p>
-</div>
+<SignalCard
+title="Risk Level"
+value={supplierRiskLevel}
+/>
 
-<div className="rounded-2xl bg-white/5 p-5">
-<p className="text-xs font-black uppercase tracking-[0.2em] text-orange-400">
-Strength
-</p>
-<p className="mt-3 text-sm font-semibold text-slate-300">
-{supplierStrength}
-</p>
-</div>
+<SignalCard
+title="Primary Strength"
+value={supplierStrength}
+/>
 
-<div className="rounded-2xl bg-white/5 p-5">
-<p className="text-xs font-black uppercase tracking-[0.2em] text-orange-400">
-Watch Item
-</p>
-<p className="mt-3 text-sm font-semibold text-slate-300">
-{supplierWeakness}
-</p>
-</div>
+<SignalCard
+title="Watch Item"
+value={supplierWeakness}
+/>
 
-<div className="rounded-2xl bg-white/5 p-5">
-<p className="text-xs font-black uppercase tracking-[0.2em] text-orange-400">
-Win Probability
-</p>
-<p className="mt-3 text-sm font-semibold text-slate-300">
-{vendorWinRate}%
-</p>
-</div>
+<SignalCard
+title="Win Probability"
+value={`${vendorWinRate}%`}
+/>
 </div>
 </section>
 ) : null}
-
-<section className="mt-8 rounded-[32px] border border-black/5 bg-white p-8">
+<section className="mt-8 rounded-[34px] border border-white/10 bg-white/[0.055] p-8 shadow-[0_30px_80px_rgba(0,0,0,0.35)]">
 <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
 <div>
-<p className="text-xs font-black uppercase tracking-[0.3em] text-orange-500">
+<p className="text-xs font-black uppercase tracking-[0.30em] text-[#C8A646]">
 Procurement Activity
 </p>
 
-<h2 className="mt-3 text-3xl font-black text-slate-950">
+<h2 className="mt-3 text-3xl font-black text-white">
 Recent Procurement Activity
 </h2>
 
-<p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">
+<p className="mt-3 max-w-3xl text-sm font-semibold leading-7 text-slate-400">
 Live company activity from RFQ creation, supplier submissions,
 contract awards, invitations, and workspace management.
 </p>
@@ -728,42 +710,42 @@ contract awards, invitations, and workspace management.
 
 <Link
 href="/analytics"
-className="rounded-full bg-slate-950 px-5 py-3 text-sm font-bold text-white"
+className="inline-flex rounded-full bg-gradient-to-r from-[#B9902F] via-[#C8A646] to-[#F5D77B] px-5 py-3 text-sm font-black text-slate-950 transition hover:scale-[1.02]"
 >
 Open Analytics
 </Link>
 </div>
 
-<div className="mt-6 space-y-4">
+<div className="mt-7 space-y-5">
 {activityList.length > 0 ? (
 activityList.map((log) => (
 <div
 key={log.id}
-className="rounded-3xl border border-slate-100 bg-slate-50 p-5"
+className="rounded-[28px] border border-white/10 bg-[#07111F]/80 p-6"
 >
-<div className="flex items-start gap-4">
-<div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white text-2xl shadow-sm">
+<div className="flex items-start gap-5">
+<div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.06] text-2xl">
 {getActivityIcon(log.action)}
 </div>
 
 <div className="min-w-0 flex-1">
-<div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+<div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
 <div>
-<p className="text-lg font-black text-slate-950">
+<p className="text-lg font-black text-white">
 {getActivityLabel(log.action)}
 </p>
 
-<p className="mt-1 text-sm leading-6 text-slate-600">
+<p className="mt-2 text-sm font-semibold leading-7 text-slate-400">
 {getActivityDetail(log)}
 </p>
 </div>
 
-<span className="rounded-full bg-white px-3 py-1 text-xs font-black text-slate-500 shadow-sm">
+<span className="rounded-full border border-white/10 bg-white/[0.055] px-3 py-1 text-xs font-black text-slate-400">
 {formatDate(log.created_at)}
 </span>
 </div>
 
-<p className="mt-3 text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+<p className="mt-4 text-xs font-black uppercase tracking-[0.2em] text-slate-500">
 {log.entity_type || "activity"}
 </p>
 </div>
@@ -775,17 +757,18 @@ className="rounded-3xl border border-slate-100 bg-slate-50 p-5"
 )}
 </div>
 </section>
+
 {isVendorProfile ? (
-<section className="mt-8 rounded-[32px] border border-black/5 bg-white p-8">
-<p className="text-xs font-black uppercase tracking-[0.3em] text-orange-500">
+<section className="mt-8 rounded-[34px] border border-white/10 bg-white/[0.055] p-8 shadow-[0_30px_80px_rgba(0,0,0,0.35)]">
+<p className="text-xs font-black uppercase tracking-[0.30em] text-[#C8A646]">
 Vendor Performance
 </p>
 
-<h2 className="mt-3 text-3xl font-black text-slate-950">
+<h2 className="mt-3 text-3xl font-black text-white">
 Supplier Scorecard
 </h2>
 
-<p className="mt-4 max-w-4xl text-sm leading-7 text-slate-600">
+<p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-400">
 Performance summary based on submitted quotes, awarded contracts,
 win rate, awarded revenue, and average bid value across the Nexus
 Pavilion procurement network.
@@ -812,31 +795,31 @@ detail="Awards vs quotes"
 
 <MetricCard
 title="Awarded Revenue"
-value={`$${vendorAwardedRevenue.toLocaleString()}`}
+value={formatMoney(vendorAwardedRevenue)}
 detail="Total won value"
 />
 
 <MetricCard
 title="Average Bid"
-value={`$${vendorAverageBid.toLocaleString()}`}
+value={formatMoney(vendorAverageBid)}
 detail="Average submitted quote"
 />
 
 <MetricCard
 title="Bid Volume"
-value={`$${vendorTotalBidValue.toLocaleString()}`}
+value={formatMoney(vendorTotalBidValue)}
 detail="Total quoted value"
 />
 </div>
 
-<div className="mt-8 rounded-3xl border border-slate-100 bg-slate-50 p-6">
+<div className="mt-8 rounded-[28px] border border-white/10 bg-[#07111F]/80 p-6">
 <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
 <div>
-<p className="text-xs font-black uppercase tracking-[0.25em] text-slate-400">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-slate-500">
 Vendor Ranking Signal
 </p>
 
-<h3 className="mt-2 text-2xl font-black text-slate-950">
+<h3 className="mt-2 text-2xl font-black text-white">
 {vendorWinRate >= 50
 ? "Preferred Vendor"
 : vendorWinRate >= 25
@@ -844,29 +827,30 @@ Vendor Ranking Signal
 : "Emerging Vendor"}
 </h3>
 
-<p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+<p className="mt-2 max-w-2xl text-sm font-semibold leading-6 text-slate-400">
 This scorecard helps buyers evaluate supplier reliability,
 pricing activity, and historical award performance.
 </p>
 </div>
 
-<span className="rounded-full bg-white px-5 py-3 text-sm font-black text-slate-700 shadow-sm">
+<span className="rounded-full border border-[#C8A646]/25 bg-[#C8A646]/10 px-5 py-3 text-sm font-black text-[#F5D77B]">
 {vendorWinRate}% Win Rate
 </span>
 </div>
 </div>
 </section>
 ) : null}
-<section className="mt-8 rounded-[32px] border border-black/5 bg-white p-8">
-<p className="text-xs font-black uppercase tracking-[0.3em] text-orange-500">
+
+<section className="mt-8 rounded-[34px] border border-white/10 bg-white/[0.055] p-8 shadow-[0_30px_80px_rgba(0,0,0,0.35)]">
+<p className="text-xs font-black uppercase tracking-[0.30em] text-[#C8A646]">
 Public Procurement Profile
 </p>
 
-<h2 className="mt-3 text-3xl font-black text-slate-950">
+<h2 className="mt-3 text-3xl font-black text-white">
 Network Visibility
 </h2>
 
-<p className="mt-4 max-w-4xl text-sm leading-7 text-slate-600">
+<p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-400">
 This verified enterprise profile is publicly visible in the Nexus
 Pavilion supply network. RFQ portfolio metrics, awarded spend, and
 procurement activity are summarized for executive visibility.
@@ -879,14 +863,20 @@ workspace administration require authenticated access.
 );
 }
 
-function MiniMetric({ title, value }: { title: string; value: number | string }) {
+function MiniMetric({
+title,
+value,
+}: {
+title: string;
+value: number | string;
+}) {
 return (
-<div className="rounded-3xl bg-slate-50 p-5">
-<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+<div className="rounded-3xl border border-white/10 bg-white/[0.045] p-5">
+<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">
 {title}
 </p>
 
-<p className="mt-2 text-3xl font-black text-slate-950">{value}</p>
+<p className="mt-2 text-3xl font-black text-white">{value}</p>
 </div>
 );
 }
@@ -901,29 +891,122 @@ value: string;
 detail: string;
 }) {
 return (
-<div className="rounded-3xl border border-black/5 bg-white p-7">
+<div className="rounded-3xl border border-white/10 bg-white/[0.045] p-7">
 <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">
 {title}
 </p>
 
-<p className="mt-3 text-3xl font-black text-slate-950">{value}</p>
+<p className="mt-3 text-3xl font-black text-white">{value}</p>
 
-<p className="mt-2 text-sm text-slate-600">{detail}</p>
+<p className="mt-2 text-sm font-semibold leading-6 text-slate-400">
+{detail}
+</p>
 </div>
 );
 }
 
-function Pill({ children }: { children: React.ReactNode }) {
+function StatusPill({
+children,
+tone = "neutral",
+}: {
+children: React.ReactNode;
+tone?: "success" | "warning" | "neutral";
+}) {
+const toneClass =
+tone === "success"
+? "border-emerald-300/20 bg-emerald-400/10 text-emerald-300"
+: tone === "warning"
+? "border-orange-300/20 bg-orange-400/10 text-orange-300"
+: "border-white/10 bg-white/[0.055] text-slate-300";
+
 return (
-<span className="rounded-full bg-white px-3 py-1 shadow-sm">
+<span
+className={`shrink-0 rounded-full border px-3 py-1 text-xs font-black uppercase tracking-[0.14em] ${toneClass}`}
+>
 {children}
 </span>
 );
 }
 
+function InfoPill({ children }: { children: React.ReactNode }) {
+return (
+<span className="rounded-full border border-white/10 bg-white/[0.055] px-3 py-1 text-xs font-black text-slate-300">
+{children}
+</span>
+);
+}
+
+function SignalCard({ title, value }: { title: string; value: string }) {
+return (
+<div className="rounded-3xl border border-white/10 bg-white/[0.045] p-5">
+<p className="text-xs font-black uppercase tracking-[0.2em] text-[#C8A646]">
+{title}
+</p>
+
+<p className="mt-3 text-sm font-semibold leading-6 text-slate-300">
+{value}
+</p>
+</div>
+);
+}
+
+function SystemState({
+eyebrow,
+title,
+description,
+primaryHref,
+primaryLabel,
+secondaryHref,
+secondaryLabel,
+}: {
+eyebrow: string;
+title: string;
+description: string;
+primaryHref: string;
+primaryLabel: string;
+secondaryHref: string;
+secondaryLabel: string;
+}) {
+return (
+<main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#061426] px-4 py-10 text-white sm:px-6 lg:px-10">
+<div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(circle_at_top_left,rgba(44,196,232,0.18),transparent_34%),radial-gradient(circle_at_top_right,rgba(200,166,70,0.15),transparent_30%),linear-gradient(180deg,#061426_0%,#07111F_45%,#020617_100%)]" />
+
+<section className="w-full max-w-2xl rounded-[40px] border border-white/10 bg-white/[0.065] p-8 text-center shadow-[0_36px_120px_rgba(0,0,0,0.52)] backdrop-blur-2xl sm:p-10">
+<p className="text-xs font-black uppercase tracking-[0.34em] text-[#C8A646]">
+{eyebrow}
+</p>
+
+<h1 className="mt-4 text-4xl font-black tracking-[-0.05em] text-white sm:text-5xl">
+{title}
+</h1>
+
+<p className="mt-5 text-base font-semibold leading-8 text-slate-300">
+{description}
+</p>
+
+<div className="mt-8 grid gap-3 sm:grid-cols-2">
+<Link
+href={primaryHref}
+className="flex h-[56px] items-center justify-center rounded-2xl bg-gradient-to-r from-[#B9902F] via-[#C8A646] to-[#F5D77B] px-6 text-sm font-black uppercase tracking-[0.12em] text-slate-950 shadow-[0_18px_55px_rgba(200,166,70,0.3)] transition hover:scale-[1.01]"
+>
+{primaryLabel}
+</Link>
+
+<Link
+href={secondaryHref}
+className="flex h-[56px] items-center justify-center rounded-2xl border border-white/10 bg-white/[0.045] px-6 text-sm font-black text-white transition hover:bg-white/[0.08]"
+>
+{secondaryLabel}
+</Link>
+</div>
+</section>
+</main>
+);
+}
+
 function EmptyState({ message }: { message: string }) {
 return (
-<div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50 p-8 text-center">
+<div className="rounded-3xl border border-dashed border-white/15 bg-white/[0.035] p-8 text-center">
 <p className="text-sm font-bold text-slate-500">{message}</p>
 </div>
 );

@@ -48,6 +48,7 @@ enterprise decision control.
 
 <FooterColumn title="Company">
 <FooterLink href="/about">About</FooterLink>
+<FooterLink href="/pricing">Pricing</FooterLink>
 <FooterLink href="/contact">Contact</FooterLink>
 <FooterLink href="/privacy">Privacy</FooterLink>
 <FooterLink href="/terms">Terms</FooterLink>

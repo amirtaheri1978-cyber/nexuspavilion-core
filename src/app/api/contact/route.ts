@@ -8,6 +8,7 @@ email?: string;
 company?: string;
 inquiryType?: string;
 message?: string;
+website?: string;
 };
 
 function isValidEmail(email: string) {
@@ -32,14 +33,22 @@ const email = body.email?.trim().toLowerCase() || "";
 const company = body.company?.trim() || "Not provided";
 const inquiryType = body.inquiryType?.trim() || "General Inquiry";
 const message = body.message?.trim() || "";
+const website = body.website?.trim() || "";
 
-if (!name || !email || !message) {
+if (website) {
+return NextResponse.json({
+success: true,
+message: "Contact request sent successfully.",
+});
+}
+
+if (name.length < 2) {
 return NextResponse.json(
 {
 success: false,
-message: "Name, email, and message are required.",
+message: "Please enter your full name.",
 },
-{ status: 400 }
+{ status: 400 },
 );
 }
 
@@ -49,7 +58,17 @@ return NextResponse.json(
 success: false,
 message: "Please provide a valid email address.",
 },
-{ status: 400 }
+{ status: 400 },
+);
+}
+
+if (message.length < 20) {
+return NextResponse.json(
+{
+success: false,
+message: "Please include a message with at least 20 characters.",
+},
+{ status: 400 },
 );
 }
 
@@ -96,7 +115,7 @@ success: false,
 message:
 "Contact request received, but email delivery is not configured.",
 },
-{ status: 503 }
+{ status: 503 },
 );
 }
 
@@ -106,7 +125,7 @@ return NextResponse.json(
 success: false,
 message: emailResult.error || "Failed to send contact request.",
 },
-{ status: 500 }
+{ status: 500 },
 );
 }
 
@@ -122,7 +141,7 @@ return NextResponse.json(
 success: false,
 message: "Unable to process contact request.",
 },
-{ status: 500 }
+{ status: 500 },
 );
 }
 }

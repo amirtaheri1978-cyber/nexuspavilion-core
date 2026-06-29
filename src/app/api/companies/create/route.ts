@@ -4,7 +4,11 @@ import { companyWelcomeEmail } from "@/lib/email/templates/company-welcome-email
 import { sendEmail } from "@/lib/email/send-email";
 import { createClient } from "@/lib/supabase/server";
 
-type AccountType = "buyer_owner" | "vendor_supplier" | "consultant_service";
+type AccountType =
+| "buyer_owner"
+| "vendor_supplier"
+| "consultant"
+| "service_provider";
 
 const ACCOUNT_TYPE_CONFIG: Record<
 AccountType,
@@ -16,11 +20,10 @@ allowedNetworkRoles: string[];
 > = {
 buyer_owner: {
 profileRole: "owner",
-defaultNetworkRole: "Owner / Developer",
+defaultNetworkRole: "Project Owner",
 allowedNetworkRoles: [
-"Owner / Developer",
 "Project Owner",
-"Real Estate Developer",
+"Owner / Developer",
 "General Contractor",
 "Construction Manager",
 "Procurement Team",
@@ -28,32 +31,50 @@ allowedNetworkRoles: [
 },
 vendor_supplier: {
 profileRole: "vendor",
-defaultNetworkRole: "Supplier / Vendor",
+defaultNetworkRole: "Building Products Supplier",
 allowedNetworkRoles: [
-"Supplier / Vendor",
-"Vendor / Supplier",
-"Manufacturer",
-"Distributor",
-"Distributor / Supplier",
+"Building Products Supplier",
+"Building Materials Supplier",
+"Architectural Products Supplier",
+"Building Systems Supplier",
+"Construction Product Distributor",
+"Construction Equipment Supplier",
+"Supplier",
 "Material Supplier",
-"Subcontractor",
-"Specialty Trade",
-"Specialty Contractor",
 ],
 },
-consultant_service: {
+consultant: {
 profileRole: "vendor",
-defaultNetworkRole: "Consultant / Service Provider",
+defaultNetworkRole: "Professional Consultant",
 allowedNetworkRoles: [
-"Consultant / Service Provider",
-"Architect / Designer",
-"Architect",
-"Engineer",
-"Design Consultant",
-"Cost Consultant",
-"Project Consultant",
-"Professional Services Consultant",
+"Professional Consultant",
 "Consultant",
+"Architecture & Design Firm",
+"Structural Engineering Firm",
+"Civil Engineering Firm",
+"MEP Engineering Firm",
+"Geotechnical Engineering Firm",
+"Environmental Consulting Firm",
+"Cost Management & Quantity Surveying Firm",
+"Project & Construction Management Firm",
+],
+},
+service_provider: {
+profileRole: "vendor",
+defaultNetworkRole: "Construction Service Provider",
+allowedNetworkRoles: [
+"Construction Service Provider",
+"Service Provider",
+"Specialty Trade Contractor",
+"Building Envelope Contractor",
+"Interior Fit-Out Contractor",
+"Mechanical Contractor",
+"Electrical Contractor",
+"Fire Protection Contractor",
+"Commissioning & Start-up Provider",
+"Testing & Inspection Firm",
+"Construction Logistics Provider",
+"Facility Maintenance Contractor",
 ],
 },
 };
@@ -75,7 +96,8 @@ function isAccountType(value: string): value is AccountType {
 return (
 value === "buyer_owner" ||
 value === "vendor_supplier" ||
-value === "consultant_service"
+value === "consultant" ||
+value === "service_provider"
 );
 }
 
@@ -88,14 +110,30 @@ return accountConfig.defaultNetworkRole;
 }
 
 const aliases: Record<string, string> = {
-"Supplier / Vendor": "Supplier / Vendor",
-"Vendor / Supplier": "Supplier / Vendor",
-"Specialty Contractor": "Specialty Trade",
-"Distributor / Supplier": "Distributor",
-"Consultant": "Consultant / Service Provider",
-"Professional Services Consultant": "Consultant / Service Provider",
-"Architect / Designer": "Architect",
-"Project Owner": "Owner / Developer",
+"Supplier / Vendor": "Building Products Supplier",
+"Vendor / Supplier": "Building Products Supplier",
+Manufacturer: "Building Products Supplier",
+Distributor: "Construction Product Distributor",
+"Distributor / Supplier": "Construction Product Distributor",
+"Material Supplier": "Building Materials Supplier",
+Supplier: "Building Products Supplier",
+
+Consultant: "Professional Consultant",
+"Professional Services Consultant": "Professional Consultant",
+"Consultant / Service Provider": "Professional Consultant",
+"Architect / Designer": "Architecture & Design Firm",
+Architect: "Architecture & Design Firm",
+Engineer: "Professional Consultant",
+"Design Consultant": "Architecture & Design Firm",
+"Cost Consultant": "Cost Management & Quantity Surveying Firm",
+"Project Consultant": "Project & Construction Management Firm",
+
+"Service Provider": "Construction Service Provider",
+"Specialty Contractor": "Specialty Trade Contractor",
+"Specialty Trade": "Specialty Trade Contractor",
+
+"Project Owner": "Project Owner",
+"Owner / Developer": "Owner / Developer",
 };
 
 return aliases[normalizedValue] || normalizedValue;
@@ -106,8 +144,6 @@ try {
 const body = await request.json();
 
 const name = normalizeText(String(body.name || ""));
-const category =
-normalizeText(String(body.category || "")) || "General Construction";
 const location = normalizeText(String(body.location || ""));
 const rawAccountType = normalizeText(String(body.accountType || ""));
 const rawNetworkRole = normalizeText(String(body.networkRole || ""));
@@ -115,21 +151,21 @@ const rawNetworkRole = normalizeText(String(body.networkRole || ""));
 if (!name) {
 return NextResponse.json(
 { error: "Company name is required." },
-{ status: 400 }
+{ status: 400 },
 );
 }
 
 if (!location) {
 return NextResponse.json(
 { error: "Regional hub is required." },
-{ status: 400 }
+{ status: 400 },
 );
 }
 
 if (!isAccountType(rawAccountType)) {
 return NextResponse.json(
 { error: "A valid organization type is required." },
-{ status: 400 }
+{ status: 400 },
 );
 }
 
@@ -139,7 +175,7 @@ const networkRole = normalizeNetworkRole(rawAccountType, rawNetworkRole);
 if (!accountConfig.allowedNetworkRoles.includes(networkRole)) {
 return NextResponse.json(
 { error: "Network role is not valid for this organization type." },
-{ status: 400 }
+{ status: 400 },
 );
 }
 
@@ -163,7 +199,7 @@ const { data: profile } = await supabase
 if (profile?.company_id) {
 return NextResponse.json(
 { error: "This account is already connected to a company." },
-{ status: 409 }
+{ status: 409 },
 );
 }
 
@@ -172,7 +208,7 @@ const baseSlug = createSlug(name);
 if (!baseSlug) {
 return NextResponse.json(
 { error: "Company name must include letters or numbers." },
-{ status: 400 }
+{ status: 400 },
 );
 }
 
@@ -183,7 +219,7 @@ const { data: company, error: companyError } = await supabase
 .insert({
 name,
 slug,
-category,
+category: networkRole,
 location,
 network_role: networkRole,
 status: "verified",
@@ -197,7 +233,7 @@ console.error(companyError);
 
 return NextResponse.json(
 { error: "Failed to create company." },
-{ status: 500 }
+{ status: 500 },
 );
 }
 
@@ -215,7 +251,7 @@ console.error(profileError);
 
 return NextResponse.json(
 { error: "Company created, but failed to connect your profile." },
-{ status: 500 }
+{ status: 500 },
 );
 }
 
@@ -236,7 +272,7 @@ company_id: company.id,
 metadata: {
 name,
 slug,
-category,
+category: networkRole,
 location,
 account_type: rawAccountType,
 profile_role: accountConfig.profileRole,
@@ -273,7 +309,7 @@ console.error(error);
 
 return NextResponse.json(
 { error: "Internal server error." },
-{ status: 500 }
+{ status: 500 },
 );
 }
 }

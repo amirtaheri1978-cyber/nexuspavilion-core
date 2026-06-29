@@ -1,12 +1,13 @@
 import { Resend } from "resend";
 
-const fallbackEmailFrom = "Nexus Pavilion <onboarding@resend.dev>";
+const fallbackEmailFrom = "Nexus Pavilion <no-reply@nexuspavilion.com>";
 
 export type SendEmailInput = {
 to: string;
 subject: string;
 html: string;
 text?: string;
+replyTo?: string;
 };
 
 export type SendEmailResult = {
@@ -20,11 +21,20 @@ function getEmailFrom() {
 return process.env.EMAIL_FROM || fallbackEmailFrom;
 }
 
+function getFriendlyEmailError(error: unknown) {
+if (error instanceof Error && error.message) {
+return error.message;
+}
+
+return "Email delivery could not be completed.";
+}
+
 export async function sendEmail({
 to,
 subject,
 html,
 text,
+replyTo,
 }: SendEmailInput): Promise<SendEmailResult> {
 const resendApiKey = process.env.RESEND_API_KEY;
 const emailFrom = getEmailFrom();
@@ -36,7 +46,7 @@ return {
 success: false,
 skipped: true,
 id: null,
-error: "RESEND_API_KEY is not configured.",
+error: "Email delivery is not configured.",
 };
 }
 
@@ -45,7 +55,7 @@ return {
 success: false,
 skipped: false,
 id: null,
-error: "Missing required email fields.",
+error: "Email delivery is missing required fields.",
 };
 }
 
@@ -58,16 +68,17 @@ to,
 subject,
 html,
 text,
+replyTo,
 });
 
 if (error) {
-console.error("Resend email error:", error);
+console.error("Nexus Pavilion email delivery error:", error);
 
 return {
 success: false,
 skipped: false,
 id: null,
-error: error.message || "Failed to send email.",
+error: error.message || "Email delivery failed.",
 };
 }
 
@@ -78,16 +89,13 @@ id: data?.id || null,
 error: null,
 };
 } catch (error) {
-console.error("Unexpected email error:", error);
+console.error("Unexpected Nexus Pavilion email delivery error:", error);
 
 return {
 success: false,
 skipped: false,
 id: null,
-error:
-error instanceof Error
-? error.message
-: "Unexpected email sending error.",
+error: getFriendlyEmailError(error),
 };
 }
 }

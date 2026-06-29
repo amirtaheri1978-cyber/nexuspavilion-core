@@ -68,6 +68,7 @@ if (role === "admin") return "Admin";
 if (role === "buyer") return "Buyer";
 if (role === "vendor") return "Vendor";
 if (role === "owner") return "Owner";
+
 return role || "Member";
 }
 
@@ -175,89 +176,50 @@ const canDelete = canDeleteWorkspace(userRole);
 
 if (!user) {
 return (
-<main className="flex min-h-screen items-center justify-center bg-[#f6f6f3] px-6 py-10">
-<div className="w-full max-w-lg rounded-[32px] border border-black/5 bg-white p-8 text-center">
-<h1 className="text-3xl font-black text-slate-950">
-Sign in required
-</h1>
-
-<p className="mt-3 text-sm leading-6 text-slate-600">
-Please sign in to access your company workspace.
-</p>
-
-<Link
-href="/login"
-className="mt-6 inline-flex rounded-full bg-slate-950 px-6 py-3 text-sm font-bold text-white"
->
-Sign in
-</Link>
-</div>
-</main>
+<SystemState
+eyebrow="Secure Access Required"
+title="Sign in required."
+description="Please sign in to access your company workspace and manage enterprise account settings."
+primaryHref="/login"
+primaryLabel="Sign In"
+secondaryHref="/"
+secondaryLabel="Back Home"
+/>
 );
 }
 
 if (!typedCompany) {
 return (
-<main className="min-h-screen bg-[#f6f6f3] px-6 py-12">
-<div className="mx-auto max-w-4xl">
-<Link
-href="/dashboard"
-className="text-sm font-bold text-slate-500 hover:text-slate-950"
->
-← Back to dashboard
-</Link>
-
-<section className="mt-8 rounded-[36px] border border-black/5 bg-white p-10">
-<p className="text-xs font-black uppercase tracking-[0.35em] text-orange-500">
-Company Workspace
-</p>
-
-<h1 className="mt-3 text-5xl font-black text-slate-950">
-No company connected
-</h1>
-
-<p className="mt-4 max-w-2xl text-sm leading-6 text-slate-600">
-Your profile is not attached to a company workspace yet. Create a
-company workspace or accept an invitation from a company admin.
-</p>
-
-<div className="mt-6 flex flex-wrap gap-3">
-<Link
-href="/create-company"
-className="inline-flex rounded-full bg-slate-950 px-6 py-3 text-sm font-bold text-white transition hover:bg-slate-800"
->
-Create Company Workspace
-</Link>
-
-<Link
-href="/dashboard"
-className="inline-flex rounded-full bg-white px-6 py-3 text-sm font-bold text-slate-950 shadow-sm transition hover:shadow-md"
->
-Back to Dashboard
-</Link>
-</div>
-</section>
-</div>
-</main>
+<SystemState
+eyebrow="Company Workspace"
+title="No company connected."
+description="Your profile is not attached to a company workspace yet. Create a workspace or accept an invitation from a company administrator."
+primaryHref="/create-company"
+primaryLabel="Create Workspace"
+secondaryHref="/dashboard"
+secondaryLabel="Back to Dashboard"
+/>
 );
 }
 
 return (
-<main className="min-h-screen bg-[#f6f6f3] px-6 py-12">
-<div className="mx-auto max-w-7xl space-y-8">
-<div className="flex items-center justify-between gap-6">
+<main className="relative min-h-screen overflow-hidden bg-[#061426] px-4 py-6 text-white sm:px-6 lg:px-10">
+<div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(circle_at_top_left,rgba(44,196,232,0.18),transparent_34%),radial-gradient(circle_at_top_right,rgba(200,166,70,0.15),transparent_30%),linear-gradient(180deg,#061426_0%,#07111F_45%,#020617_100%)]" />
+
+<div className="mx-auto w-full max-w-[1680px] space-y-8">
+<div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 <Link
 href="/dashboard"
-className="text-sm font-bold text-slate-500 hover:text-slate-950"
+className="inline-flex w-fit rounded-full border border-white/10 bg-white/[0.045] px-5 py-3 text-sm font-black text-slate-300 transition hover:bg-white/[0.08] hover:text-white"
 >
-← Back to dashboard
+← Back to Dashboard
 </Link>
 
-<div className="flex items-center gap-3">
+<div className="flex flex-wrap gap-3">
 {typedCompany.slug ? (
 <Link
 href={`/company/${typedCompany.slug}`}
-className="rounded-full bg-white px-5 py-3 text-sm font-bold text-slate-950 shadow-sm transition hover:shadow-md"
+className="rounded-full border border-white/10 bg-white/[0.045] px-5 py-3 text-sm font-black text-white transition hover:bg-white/[0.08]"
 >
 Public Profile
 </Link>
@@ -265,49 +227,49 @@ Public Profile
 
 <Link
 href="/rfq"
-className="rounded-full bg-slate-950 px-5 py-3 text-sm font-bold text-white transition hover:bg-slate-800"
+className="rounded-full bg-gradient-to-r from-[#B9902F] via-[#C8A646] to-[#F5D77B] px-5 py-3 text-sm font-black text-slate-950 transition hover:scale-[1.01]"
 >
 Open Marketplace
 </Link>
 </div>
 </div>
 
-<section className="rounded-[36px] border border-black/5 bg-white p-10">
+<section className="rounded-[40px] border border-white/10 bg-white/[0.065] p-7 shadow-[0_36px_120px_rgba(0,0,0,0.52)] backdrop-blur-2xl sm:p-10">
 <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between">
 <div className="flex items-start gap-6">
 {typedCompany.logo_url ? (
 <img
 src={typedCompany.logo_url}
 alt={typedCompany.name || "Company"}
-className="h-24 w-24 rounded-3xl border border-slate-200 bg-white object-contain p-2"
+className="h-24 w-24 rounded-3xl border border-white/10 bg-white object-contain p-2"
 />
 ) : (
-<div className="flex h-24 w-24 items-center justify-center rounded-3xl bg-slate-100 text-4xl font-black text-slate-400">
+<div className="flex h-24 w-24 items-center justify-center rounded-3xl border border-white/10 bg-white/[0.055] text-4xl font-black text-slate-400">
 {typedCompany.name?.charAt(0) || "C"}
 </div>
 )}
 
 <div>
-<p className="text-xs font-black uppercase tracking-[0.35em] text-orange-500">
-Workspace Center
+<p className="text-xs font-black uppercase tracking-[0.35em] text-[#C8A646]">
+Company Command Center
 </p>
 
 <div className="mt-3 flex flex-wrap items-center gap-3">
-<h1 className="text-5xl font-black text-slate-950">
+<h1 className="text-5xl font-black tracking-[-0.05em] text-white">
 {typedCompany.name || "Company"}
 </h1>
 
-<span className="rounded-full bg-emerald-100 px-4 py-1 text-sm font-bold capitalize text-emerald-700">
+<span className="rounded-full border border-emerald-300/20 bg-emerald-400/10 px-4 py-1 text-sm font-black capitalize text-emerald-300">
 {typedCompany.status || "verified"}
 </span>
 </div>
 
-<p className="mt-3 text-lg font-semibold text-slate-600">
+<p className="mt-3 text-lg font-semibold text-slate-300">
 {typedCompany.category || "Enterprise"} ·{" "}
 {typedCompany.location || "Location N/A"}
 </p>
 
-<p className="mt-2 text-sm font-bold uppercase tracking-[0.2em] text-slate-400">
+<p className="mt-2 text-sm font-bold uppercase tracking-[0.2em] text-slate-500">
 Signed in as {typedProfile?.email || user.email} ·{" "}
 {getRoleLabel(userRole)}
 </p>
@@ -333,16 +295,8 @@ value={typedCompany.network_role || "Enterprise Workspace"}
 </section>
 
 <section className="grid gap-8 lg:grid-cols-[1.15fr_0.85fr]">
-<div className="rounded-[32px] border border-black/5 bg-white p-8">
-<p className="text-xs font-black uppercase tracking-[0.3em] text-orange-500">
-Company Profile
-</p>
-
-<h2 className="mt-3 text-3xl font-black text-slate-950">
-Company Information
-</h2>
-
-<p className="mt-3 text-sm leading-6 text-slate-600">
+<Panel eyebrow="Company Profile" title="Company Information">
+<p className="mt-3 text-sm font-semibold leading-6 text-slate-400">
 Keep your company identity, market role, and location accurate
 across Nexus Pavilion.
 </p>
@@ -353,15 +307,13 @@ companyId={typedCompany.id}
 initialName={typedCompany.name || ""}
 initialCategory={typedCompany.category || ""}
 initialLocation={typedCompany.location || ""}
-initialNetworkRole={
-typedCompany.network_role || "Vendor / Supplier"
-}
+initialNetworkRole={typedCompany.network_role || "Vendor / Supplier"}
 currentUserRole={userRole}
 />
 ) : (
 <EmptyState message="You have read-only access to this company profile." />
 )}
-</div>
+</Panel>
 
 <div className="space-y-8">
 <CompanyLogoUpload
@@ -369,38 +321,22 @@ companyId={typedCompany.id}
 currentLogoUrl={typedCompany.logo_url}
 />
 
-<div className="rounded-[32px] border border-black/5 bg-white p-8">
-<p className="text-xs font-black uppercase tracking-[0.3em] text-orange-500">
-Workspace Health
-</p>
-
-<h2 className="mt-3 text-3xl font-black text-slate-950">
-Access Summary
-</h2>
-
+<Panel eyebrow="Workspace Health" title="Access Summary">
 <div className="mt-6 space-y-4">
 <RoleRow label="Admins" value={adminCount} />
 <RoleRow label="Buyers" value={buyerCount} />
 <RoleRow label="Vendors" value={vendorCount} />
 <RoleRow label="Total Members" value={teamList.length} />
 </div>
-</div>
+</Panel>
 </div>
 </section>
 
 <InviteUserForm />
 
 <section className="grid gap-8 lg:grid-cols-2">
-<div className="rounded-[32px] border border-black/5 bg-white p-8">
-<p className="text-xs font-black uppercase tracking-[0.3em] text-orange-500">
-People & Access
-</p>
-
-<h2 className="mt-3 text-3xl font-black text-slate-950">
-Company Members
-</h2>
-
-<p className="mt-3 text-sm leading-6 text-slate-600">
+<Panel eyebrow="People & Access" title="Company Members">
+<p className="mt-3 text-sm font-semibold leading-6 text-slate-400">
 Active users currently connected to this company workspace.
 </p>
 
@@ -409,24 +345,24 @@ Active users currently connected to this company workspace.
 teamList.map((member) => (
 <div
 key={member.id}
-className="rounded-3xl border border-slate-100 bg-slate-50 p-5"
+className="rounded-3xl border border-white/10 bg-[#07111F]/75 p-5"
 >
 <div className="flex items-start justify-between gap-4">
 <div>
-<p className="text-lg font-black text-slate-950">
+<p className="text-lg font-black text-white">
 {member.email || "User"}
 </p>
 
-<p className="mt-1 text-sm font-bold text-slate-500">
+<p className="mt-1 text-sm font-bold text-slate-400">
 {getRoleLabel(member.role)}
 </p>
 
-<p className="mt-2 text-xs font-bold text-slate-400">
+<p className="mt-2 text-xs font-bold text-slate-500">
 Joined {formatDate(member.created_at)}
 </p>
 </div>
 
-<span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-black text-emerald-700">
+<span className="rounded-full border border-emerald-300/20 bg-emerald-400/10 px-3 py-1 text-xs font-black text-emerald-300">
 Active
 </span>
 </div>
@@ -444,18 +380,10 @@ currentUserRole={userRole}
 <EmptyState message="No team members found yet." />
 )}
 </div>
-</div>
+</Panel>
 
-<div className="rounded-[32px] border border-black/5 bg-white p-8">
-<p className="text-xs font-black uppercase tracking-[0.3em] text-orange-500">
-Invitations
-</p>
-
-<h2 className="mt-3 text-3xl font-black text-slate-950">
-Recent Invitations
-</h2>
-
-<p className="mt-3 text-sm leading-6 text-slate-600">
+<Panel eyebrow="Invitations" title="Recent Invitations">
+<p className="mt-3 text-sm font-semibold leading-6 text-slate-400">
 Manage pending and historical invitations for this workspace.
 </p>
 
@@ -467,24 +395,24 @@ const inviteUrl = getInviteUrl(invite.token);
 return (
 <div
 key={invite.id}
-className="rounded-3xl border border-slate-100 bg-slate-50 p-5"
+className="rounded-3xl border border-white/10 bg-[#07111F]/75 p-5"
 >
 <div className="flex items-start justify-between gap-4">
 <div>
-<p className="text-lg font-black text-slate-950">
+<p className="text-lg font-black text-white">
 {invite.email || "No email"}
 </p>
 
-<p className="mt-1 text-sm font-bold text-slate-500">
+<p className="mt-1 text-sm font-bold text-slate-400">
 {getRoleLabel(invite.role)}
 </p>
 
-<p className="mt-2 text-xs font-bold text-slate-400">
+<p className="mt-2 text-xs font-bold text-slate-500">
 Created {formatDate(invite.created_at)}
 </p>
 </div>
 
-<span className="rounded-full bg-orange-100 px-3 py-1 text-xs font-black capitalize text-orange-700">
+<span className="rounded-full border border-orange-300/20 bg-orange-400/10 px-3 py-1 text-xs font-black capitalize text-orange-300">
 {invite.status || "pending"}
 </span>
 </div>
@@ -501,20 +429,12 @@ status={invite.status}
 <EmptyState message="No invitations have been created yet." />
 )}
 </div>
-</div>
+</Panel>
 </section>
 
 <section className="grid gap-8 lg:grid-cols-[1fr_0.8fr]">
-<div className="rounded-[32px] border border-black/5 bg-white p-8">
-<p className="text-xs font-black uppercase tracking-[0.3em] text-orange-500">
-Activity History
-</p>
-
-<h2 className="mt-3 text-3xl font-black text-slate-950">
-Recent Workspace Activity
-</h2>
-
-<p className="mt-3 text-sm leading-6 text-slate-600">
+<Panel eyebrow="Activity History" title="Recent Workspace Activity">
+<p className="mt-3 text-sm font-semibold leading-6 text-slate-400">
 A record of important company, invitation, member, and procurement
 updates.
 </p>
@@ -524,13 +444,13 @@ updates.
 activityList.map((log) => (
 <div
 key={log.id}
-className="rounded-3xl border border-slate-100 bg-slate-50 p-5"
+className="rounded-3xl border border-white/10 bg-[#07111F]/75 p-5"
 >
-<p className="text-sm font-black text-slate-950">
+<p className="text-sm font-black text-white">
 {getActivityLabel(log.action)}
 </p>
 
-<p className="mt-2 text-xs font-bold text-slate-400">
+<p className="mt-2 text-xs font-bold text-slate-500">
 {formatDate(log.created_at)} ·{" "}
 {log.entity_type || "workspace"}
 </p>
@@ -540,30 +460,25 @@ className="rounded-3xl border border-slate-100 bg-slate-50 p-5"
 <EmptyState message="No workspace activity has been recorded yet." />
 )}
 </div>
-</div>
+</Panel>
 
-<div className="rounded-[32px] border border-slate-200 bg-white p-8">
-<p className="text-xs font-black uppercase tracking-[0.3em] text-orange-500">
-Workspace Governance
-</p>
-
-<h2 className="mt-3 text-3xl font-black text-slate-950">
-Company Ownership & Controls
-</h2>
-
-<p className="mt-4 text-sm leading-7 text-slate-600">
+<Panel
+eyebrow="Workspace Governance"
+title="Company Ownership & Controls"
+>
+<p className="mt-4 text-sm font-semibold leading-7 text-slate-400">
 Manage high-impact workspace actions such as ownership, archival,
 and permanent removal. These controls are restricted to authorized
 company leaders.
 </p>
 
 {canDelete ? (
-<div className="mt-6 rounded-3xl border border-red-200 bg-red-50 p-5">
-<p className="text-sm font-black text-red-700">
+<div className="mt-6 rounded-3xl border border-red-300/20 bg-red-400/10 p-5">
+<p className="text-sm font-black text-red-200">
 Permanent Workspace Removal
 </p>
 
-<p className="mt-2 text-sm leading-6 text-red-700">
+<p className="mt-2 text-sm font-semibold leading-6 text-red-200">
 Removing this workspace permanently deletes the company record.
 Use this only when the company workspace must be retired from
 Nexus Pavilion.
@@ -579,10 +494,86 @@ companyName={typedCompany.name || "Company Workspace"}
 ) : (
 <EmptyState message="Only authorized company leaders can manage workspace governance controls." />
 )}
-</div>
+</Panel>
 </section>
 </div>
 </main>
+);
+}
+
+function SystemState({
+eyebrow,
+title,
+description,
+primaryHref,
+primaryLabel,
+secondaryHref,
+secondaryLabel,
+}: {
+eyebrow: string;
+title: string;
+description: string;
+primaryHref: string;
+primaryLabel: string;
+secondaryHref: string;
+secondaryLabel: string;
+}) {
+return (
+<main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#061426] px-4 py-10 text-white sm:px-6 lg:px-10">
+<div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(circle_at_top_left,rgba(44,196,232,0.18),transparent_34%),radial-gradient(circle_at_top_right,rgba(200,166,70,0.15),transparent_30%),linear-gradient(180deg,#061426_0%,#07111F_45%,#020617_100%)]" />
+
+<section className="w-full max-w-2xl rounded-[40px] border border-white/10 bg-white/[0.065] p-8 text-center shadow-[0_36px_120px_rgba(0,0,0,0.52)] backdrop-blur-2xl sm:p-10">
+<p className="text-xs font-black uppercase tracking-[0.34em] text-[#C8A646]">
+{eyebrow}
+</p>
+
+<h1 className="mt-4 text-4xl font-black tracking-[-0.05em] text-white sm:text-5xl">
+{title}
+</h1>
+
+<p className="mt-5 text-base font-semibold leading-8 text-slate-300">
+{description}
+</p>
+
+<div className="mt-8 grid gap-3 sm:grid-cols-2">
+<Link
+href={primaryHref}
+className="flex h-[56px] items-center justify-center rounded-2xl bg-gradient-to-r from-[#B9902F] via-[#C8A646] to-[#F5D77B] px-6 text-sm font-black uppercase tracking-[0.12em] text-slate-950 shadow-[0_18px_55px_rgba(200,166,70,0.3)] transition hover:scale-[1.01]"
+>
+{primaryLabel}
+</Link>
+
+<Link
+href={secondaryHref}
+className="flex h-[56px] items-center justify-center rounded-2xl border border-white/10 bg-white/[0.045] px-6 text-sm font-black text-white transition hover:bg-white/[0.08]"
+>
+{secondaryLabel}
+</Link>
+</div>
+</section>
+</main>
+);
+}
+
+function Panel({
+eyebrow,
+title,
+children,
+}: {
+eyebrow: string;
+title: string;
+children: React.ReactNode;
+}) {
+return (
+<section className="rounded-[32px] border border-white/10 bg-white/[0.045] p-8 shadow-[0_24px_80px_rgba(0,0,0,0.26)]">
+<p className="text-xs font-black uppercase tracking-[0.3em] text-[#C8A646]">
+{eyebrow}
+</p>
+
+<h2 className="mt-3 text-3xl font-black text-white">{title}</h2>
+
+{children}
+</section>
 );
 }
 
@@ -594,42 +585,40 @@ title: string;
 value: number | string;
 }) {
 return (
-<div className="rounded-3xl bg-slate-50 p-5">
-<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+<div className="rounded-3xl border border-white/10 bg-white/[0.045] p-5">
+<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">
 {title}
 </p>
 
-<p className="mt-2 truncate text-2xl font-black text-slate-950">
-{value}
-</p>
+<p className="mt-2 truncate text-2xl font-black text-white">{value}</p>
 </div>
 );
 }
 
 function InfoCard({ title, value }: { title: string; value: string }) {
 return (
-<div className="rounded-3xl bg-slate-50 p-6">
-<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+<div className="rounded-3xl border border-white/10 bg-[#07111F]/75 p-6">
+<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">
 {title}
 </p>
 
-<p className="mt-2 text-xl font-black text-slate-950">{value}</p>
+<p className="mt-2 text-xl font-black text-white">{value}</p>
 </div>
 );
 }
 
 function RoleRow({ label, value }: { label: string; value: number }) {
 return (
-<div className="flex items-center justify-between rounded-3xl bg-slate-50 p-5">
-<p className="text-sm font-black text-slate-700">{label}</p>
-<p className="text-2xl font-black text-slate-950">{value}</p>
+<div className="flex items-center justify-between rounded-3xl border border-white/10 bg-[#07111F]/75 p-5">
+<p className="text-sm font-black text-slate-300">{label}</p>
+<p className="text-2xl font-black text-white">{value}</p>
 </div>
 );
 }
 
 function EmptyState({ message }: { message: string }) {
 return (
-<div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50 p-8 text-center">
+<div className="rounded-3xl border border-dashed border-white/15 bg-white/[0.035] p-8 text-center">
 <p className="text-sm font-bold text-slate-500">{message}</p>
 </div>
 );

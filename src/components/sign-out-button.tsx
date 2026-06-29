@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { NexusPavilionLogo } from "@/components/branding/nexus-pavilion-logo";
@@ -9,17 +10,55 @@ import { createClient } from "@/lib/supabase/client";
 export default function SignOutButton() {
 const router = useRouter();
 const supabase = createClient();
+const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+const [open, setOpen] = useState(false);
+const [signingOut, setSigningOut] = useState(false);
+
+function clearCloseTimer() {
+if (closeTimerRef.current) {
+clearTimeout(closeTimerRef.current);
+closeTimerRef.current = null;
+}
+}
+
+function openMenu() {
+clearCloseTimer();
+setOpen(true);
+}
+
+function scheduleCloseMenu() {
+clearCloseTimer();
+
+closeTimerRef.current = setTimeout(() => {
+setOpen(false);
+}, 180);
+}
 
 async function handleSignOut() {
+if (signingOut) return;
+
+setSigningOut(true);
+
 await supabase.auth.signOut();
+
 router.push("/login");
 router.refresh();
 }
 
 return (
-<div className="group relative">
+<div
+className="relative z-[120]"
+onMouseEnter={openMenu}
+onMouseLeave={scheduleCloseMenu}
+onFocus={openMenu}
+onBlur={scheduleCloseMenu}
+>
 <button
 type="button"
+onClick={() => setOpen((current) => !current)}
+aria-expanded={open}
+aria-haspopup="menu"
 className="flex items-center gap-3 rounded-full border border-white/10 bg-[#061426]/90 px-3 py-2 text-left text-white shadow-executive backdrop-blur transition hover:border-[#2CC4E8]/30 hover:bg-[#07111F]"
 >
 <NexusPavilionLogo variant="icon" size={32} />
@@ -33,12 +72,16 @@ Verified Access
 </p>
 </div>
 
-<span className="hidden text-slate-500 transition group-hover:text-[#9BE8F8] xl:inline">
-▾
+<span className="hidden text-slate-500 transition xl:inline">
+{open ? "▴" : "▾"}
 </span>
 </button>
 
-<div className="invisible absolute right-0 z-50 mt-3 w-72 translate-y-2 rounded-[24px] border border-white/10 bg-[#061426] p-3 opacity-0 shadow-executive transition group-hover:visible group-hover:translate-y-0 group-hover:opacity-100">
+{open ? (
+<div
+role="menu"
+className="absolute right-0 z-[130] mt-3 w-72 rounded-[24px] border border-white/10 bg-[#061426] p-3 opacity-100 shadow-[0_28px_90px_rgba(0,0,0,0.55)] backdrop-blur"
+>
 <div className="rounded-[18px] border border-white/10 bg-white/[0.045] p-4">
 <p className="text-[10px] font-black uppercase tracking-[0.24em] text-[#C8A646]">
 Nexus Pavilion
@@ -62,13 +105,15 @@ Secure enterprise session
 <button
 type="button"
 onClick={handleSignOut}
-className="flex w-full items-center justify-between rounded-[16px] border border-red-300/15 bg-red-400/10 px-4 py-3 text-sm font-black text-red-300 transition hover:bg-red-400/15"
+disabled={signingOut}
+className="flex w-full items-center justify-between rounded-[16px] border border-red-300/15 bg-red-400/10 px-4 py-3 text-sm font-black text-red-300 transition hover:bg-red-400/15 disabled:cursor-not-allowed disabled:opacity-60"
 >
-Secure Logout
+{signingOut ? "Signing out..." : "Secure Logout"}
 <span aria-hidden="true">⏻</span>
 </button>
 </div>
 </div>
+) : null}
 </div>
 );
 }
