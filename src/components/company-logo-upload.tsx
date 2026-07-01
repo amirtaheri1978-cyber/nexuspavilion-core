@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState } from "react";
 
 import { createClient } from "@/lib/supabase/client";
@@ -44,9 +45,7 @@ setUploading(false);
 return;
 }
 
-const { data } = supabase.storage
-.from("Company-logos")
-.getPublicUrl(filePath);
+const { data } = supabase.storage.from("Company-logos").getPublicUrl(filePath);
 
 const publicUrl = data.publicUrl;
 
@@ -75,19 +74,19 @@ return (
 Company Branding
 </p>
 
-<h2 className="mt-3 text-3xl font-black text-slate-900">
-Company Logo
-</h2>
+<h2 className="mt-3 text-3xl font-black text-slate-900">Company Logo</h2>
 
-{logoUrl && (
+{logoUrl ? (
 <div className="mt-6">
-<img
+<Image
 src={logoUrl}
 alt="Company logo"
+width={112}
+height={112}
 className="h-28 w-28 rounded-2xl border border-slate-200 object-contain p-3"
 />
 </div>
-)}
+) : null}
 
 <div className="mt-6">
 <input
@@ -99,17 +98,13 @@ className="w-full rounded-2xl border border-slate-200 p-4"
 />
 </div>
 
-{message && (
-<p className="mt-4 text-sm font-semibold text-slate-700">
-{message}
-</p>
-)}
+{message ? (
+<p className="mt-4 text-sm font-semibold text-slate-700">{message}</p>
+) : null}
 
-{uploading && (
-<p className="mt-4 text-sm text-slate-500">
-Uploading logo...
-</p>
-)}
+{uploading ? (
+<p className="mt-4 text-sm text-slate-500">Uploading logo...</p>
+) : null}
 </div>
 );
 }

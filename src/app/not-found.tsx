@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 
 const BRAND_LOGO_SRC = "/branding/logo-horizontal-512.png";
@@ -124,9 +125,12 @@ function BrandTile() {
 return (
 <div className="inline-flex rounded-[30px] border border-white/10 bg-white/[0.06] p-2 shadow-[0_22px_70px_rgba(0,0,0,0.42)] backdrop-blur-xl">
 <div className="rounded-[24px] border border-white/10 bg-black px-6 py-5">
-<img
+<Image
 src={BRAND_LOGO_SRC}
 alt="Nexus Pavilion"
+width={320}
+height={88}
+priority
 className="h-[72px] w-auto object-contain sm:h-[82px] xl:h-[88px]"
 />
 </div>

@@ -12,8 +12,8 @@ type ProcurementScope =
 | "professional_service";
 
 type SourcingMethod = "open" | "invited" | "sealed_bid";
-
 type ContractFramework = "project_specific" | "framework";
+type BidModel = "lump_sum" | "best_value" | "construction_management";
 
 const PROCUREMENT_SCOPES: ProcurementScope[] = [
 "material",
@@ -23,11 +23,8 @@ const PROCUREMENT_SCOPES: ProcurementScope[] = [
 ];
 
 const SOURCING_METHODS: SourcingMethod[] = ["open", "invited", "sealed_bid"];
-
-const CONTRACT_FRAMEWORKS: ContractFramework[] = [
-"project_specific",
-"framework",
-];
+const CONTRACT_FRAMEWORKS: ContractFramework[] = ["project_specific", "framework"];
+const BID_MODELS: BidModel[] = ["lump_sum", "best_value", "construction_management"];
 
 function createSlug(title: string) {
 return `${title
@@ -45,34 +42,36 @@ function normalizeText(value: unknown) {
 return String(value || "").trim();
 }
 
-function normalizeProcurementScope(value: unknown): ProcurementScope {
-const normalized = normalizeText(value) as ProcurementScope;
-
-if (PROCUREMENT_SCOPES.includes(normalized)) {
-return normalized;
+function normalizeBoolean(value: unknown) {
+return value === true || value === "true";
 }
 
-return "subcontractor";
+function normalizeTimezone(value: unknown) {
+const timezone = normalizeText(value);
+
+if (!timezone) return "America/Toronto";
+
+return timezone;
+}
+
+function normalizeProcurementScope(value: unknown): ProcurementScope {
+const normalized = normalizeText(value) as ProcurementScope;
+return PROCUREMENT_SCOPES.includes(normalized) ? normalized : "subcontractor";
 }
 
 function normalizeSourcingMethod(value: unknown): SourcingMethod {
 const normalized = normalizeText(value) as SourcingMethod;
-
-if (SOURCING_METHODS.includes(normalized)) {
-return normalized;
-}
-
-return "invited";
+return SOURCING_METHODS.includes(normalized) ? normalized : "invited";
 }
 
 function normalizeContractFramework(value: unknown): ContractFramework {
 const normalized = normalizeText(value) as ContractFramework;
-
-if (CONTRACT_FRAMEWORKS.includes(normalized)) {
-return normalized;
+return CONTRACT_FRAMEWORKS.includes(normalized) ? normalized : "project_specific";
 }
 
-return "project_specific";
+function normalizeBidModel(value: unknown): BidModel {
+const normalized = normalizeText(value) as BidModel;
+return BID_MODELS.includes(normalized) ? normalized : "lump_sum";
 }
 
 function getProcurementScopeLabel(value: ProcurementScope) {
@@ -137,16 +136,33 @@ const category = normalizeText(body.category);
 const location = normalizeText(body.location);
 const budget = normalizeText(body.budget);
 const deadline = normalizeText(body.deadline);
+const deadlineTimezone = normalizeTimezone(body.deadline_timezone);
+
+const projectName = normalizeText(body.project_name);
+const ownerClient = normalizeText(body.owner_client);
+const internalProjectId = normalizeText(body.internal_project_id);
+const rfiDeadline = normalizeText(body.rfi_deadline);
+const rfiDeadlineTimezone = normalizeTimezone(body.rfi_deadline_timezone);
+const mobilizationDate = normalizeText(body.mobilization_date);
+const substantialCompletionDate = normalizeText(
+body.substantial_completion_date
+);
 
 const procurementScope = normalizeProcurementScope(body.procurement_scope);
 const sourcingMethod = normalizeSourcingMethod(body.sourcing_method);
-const contractFramework = normalizeContractFramework(
-body.contract_framework
-);
+const contractFramework = normalizeContractFramework(body.contract_framework);
+const bidModel = normalizeBidModel(body.bid_model);
 
 if (!title) {
 return NextResponse.json(
 { error: "RFQ title is required." },
+{ status: 400 }
+);
+}
+
+if (!deadline) {
+return NextResponse.json(
+{ error: "Submission closing date and time are required." },
 { status: 400 }
 );
 }
@@ -163,9 +179,26 @@ category,
 location,
 budget,
 deadline,
+deadline_timezone: deadlineTimezone,
+project_name: projectName,
+owner_client: ownerClient,
+internal_project_id: internalProjectId,
+rfi_deadline: rfiDeadline || null,
+rfi_deadline_timezone: rfiDeadlineTimezone,
+mobilization_date: mobilizationDate || null,
+substantial_completion_date: substantialCompletionDate || null,
 procurement_scope: procurementScope,
 sourcing_method: sourcingMethod,
 contract_framework: contractFramework,
+bid_model: bidModel,
+nda_required: normalizeBoolean(body.nda_required),
+performance_bond_required: normalizeBoolean(body.performance_bond_required),
+bid_bond_required: normalizeBoolean(body.bid_bond_required),
+insurance_required: normalizeBoolean(body.insurance_required),
+insurance_notes: normalizeText(body.insurance_notes),
+safety_requirements: normalizeText(body.safety_requirements),
+prequalification_notes: normalizeText(body.prequalification_notes),
+advanced_controls_enabled: normalizeBoolean(body.advanced_controls_enabled),
 status: "open",
 company_id: profile.company_id,
 user_id: user.id,
@@ -187,6 +220,9 @@ sourcing_method: sourcingMethod,
 sourcing_method_label: getSourcingMethodLabel(sourcingMethod),
 contract_framework: contractFramework,
 contract_framework_label: getContractFrameworkLabel(contractFramework),
+bid_model: bidModel,
+deadline_timezone: deadlineTimezone,
+rfi_deadline_timezone: rfiDeadlineTimezone,
 };
 
 await supabase.from("audit_logs").insert({
@@ -199,7 +235,9 @@ metadata: {
 title: rfq.title,
 budget: rfq.budget,
 category: rfq.category,
+location: rfq.location,
 slug: rfq.slug,
+deadline: rfq.deadline,
 ...procurementMetadata,
 },
 });
@@ -217,6 +255,7 @@ budget: rfq.budget,
 category: rfq.category,
 location: rfq.location,
 slug: rfq.slug,
+deadline: rfq.deadline,
 ...procurementMetadata,
 },
 });

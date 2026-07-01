@@ -27,26 +27,26 @@ networkRole,
 }: CompanyGovernanceCenterProps) {
 return (
 <>
-<section className="mt-8 rounded-[36px] border border-black/5 bg-white p-8">
+<section className="mt-8 rounded-[36px] border border-white/10 bg-white/[0.045] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.28)] backdrop-blur-xl sm:p-8">
 <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
 <div>
-<p className="text-xs font-black uppercase tracking-[0.3em] text-orange-500">
+<p className="text-xs font-black uppercase tracking-[0.3em] text-[#C8A646]">
 Governance & Access Center
 </p>
 
-<h2 className="mt-3 text-3xl font-black text-slate-950">
+<h2 className="mt-3 text-3xl font-black text-white">
 Workspace Governance Overview
 </h2>
 
-<p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">
+<p className="mt-3 max-w-3xl text-sm font-semibold leading-7 text-slate-400">
 Nexus Pavilion monitors ownership, admin coverage, invitations,
 audit activity, and procurement readiness without alarming new
 users with unnecessary critical warnings.
 </p>
 </div>
 
-<div className="rounded-3xl bg-slate-950 px-6 py-5 text-white">
-<p className="text-xs font-black uppercase tracking-[0.25em] text-slate-400">
+<div className="rounded-[28px] border border-[#C8A646]/20 bg-[#C8A646]/10 px-6 py-5 text-white">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-[#F5D77B]">
 Workspace Stage
 </p>
 
@@ -71,9 +71,7 @@ status={activityCount > 0 ? "Active" : "Ready"}
 
 <SecurityCheck
 label="Invitations"
-status={
-pendingInviteCount > 0 ? `${pendingInviteCount} Pending` : "Clear"
-}
+status={pendingInviteCount > 0 ? `${pendingInviteCount} Pending` : "Clear"}
 />
 
 <SecurityCheck
@@ -82,8 +80,8 @@ status={rfqCount > 0 ? "Active" : "Ready"}
 />
 </div>
 
-<div className="mt-6 rounded-3xl bg-slate-50 p-5">
-<p className="text-sm font-bold leading-6 text-slate-700">
+<div className="mt-6 rounded-[28px] border border-white/10 bg-[#061426]/70 p-5">
+<p className="text-sm font-bold leading-7 text-slate-300">
 {governanceMessage}
 </p>
 </div>
@@ -101,24 +99,24 @@ status={rfqCount > 0 ? "Active" : "Ready"}
 
 function SecurityCheck({ label, status }: { label: string; status: string }) {
 return (
-<div className="rounded-3xl bg-slate-50 p-5">
-<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+<div className="rounded-[26px] border border-white/10 bg-[#061426]/70 p-5">
+<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">
 {label}
 </p>
 
-<p className="mt-2 text-lg font-black text-slate-950">{status}</p>
+<p className="mt-2 text-lg font-black text-white">{status}</p>
 </div>
 );
 }
 
 function InfoCard({ title, value }: { title: string; value: string }) {
 return (
-<div className="rounded-3xl bg-white p-6 shadow-sm">
-<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+<div className="rounded-[28px] border border-white/10 bg-white/[0.045] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.26)] backdrop-blur-xl">
+<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">
 {title}
 </p>
 
-<p className="mt-2 text-xl font-black text-slate-950">{value}</p>
+<p className="mt-3 text-xl font-black text-white">{value}</p>
 </div>
 );
 }

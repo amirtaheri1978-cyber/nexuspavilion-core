@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 type CompanySettingsFormProps = {
 companyId: string;
@@ -16,6 +16,15 @@ type UpdateCompanyResponse = {
 success?: boolean;
 error?: string;
 };
+
+const NETWORK_ROLE_OPTIONS = [
+"Owner / Developer",
+"General Contractor",
+"Architect / Designer",
+"Manufacturer",
+"Vendor / Supplier",
+"Consultant",
+];
 
 export default function CompanySettingsForm({
 companyId,
@@ -77,8 +86,8 @@ return;
 
 setMessage("Company settings updated successfully.");
 router.refresh();
-} catch (error) {
-console.error(error);
+} catch (requestError) {
+console.error(requestError);
 setError("Request failed. Please try again.");
 } finally {
 setLoading(false);
@@ -88,9 +97,7 @@ setLoading(false);
 return (
 <form onSubmit={handleUpdateCompany} className="mt-8 space-y-5">
 <label className="block">
-<span className="mb-2 block text-xs font-black uppercase tracking-[0.2em] text-slate-500">
-Company Name
-</span>
+<FormLabel>Company Name</FormLabel>
 
 <input
 type="text"
@@ -99,15 +106,13 @@ disabled={!canUpdateCompany || loading}
 placeholder="Northline Development Group"
 value={name}
 onChange={(event) => setName(event.target.value)}
-className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-950 outline-none transition focus:border-slate-950 focus:bg-white disabled:cursor-not-allowed disabled:opacity-60"
+className="w-full rounded-2xl border border-white/10 bg-[#061426]/80 px-4 py-4 text-sm font-bold text-white outline-none transition placeholder:text-slate-600 focus:border-[#2CC4E8]/40 focus:bg-[#07111F] disabled:cursor-not-allowed disabled:opacity-60"
 />
 </label>
 
 <div className="grid gap-5 md:grid-cols-2">
 <label className="block">
-<span className="mb-2 block text-xs font-black uppercase tracking-[0.2em] text-slate-500">
-Category
-</span>
+<FormLabel>Category</FormLabel>
 
 <input
 type="text"
@@ -115,14 +120,12 @@ disabled={!canUpdateCompany || loading}
 placeholder="General Contractor"
 value={category}
 onChange={(event) => setCategory(event.target.value)}
-className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-950 outline-none transition focus:border-slate-950 focus:bg-white disabled:cursor-not-allowed disabled:opacity-60"
+className="w-full rounded-2xl border border-white/10 bg-[#061426]/80 px-4 py-4 text-sm font-bold text-white outline-none transition placeholder:text-slate-600 focus:border-[#2CC4E8]/40 focus:bg-[#07111F] disabled:cursor-not-allowed disabled:opacity-60"
 />
 </label>
 
 <label className="block">
-<span className="mb-2 block text-xs font-black uppercase tracking-[0.2em] text-slate-500">
-Location
-</span>
+<FormLabel>Location</FormLabel>
 
 <input
 type="text"
@@ -130,56 +133,74 @@ disabled={!canUpdateCompany || loading}
 placeholder="Toronto, ON"
 value={location}
 onChange={(event) => setLocation(event.target.value)}
-className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-950 outline-none transition focus:border-slate-950 focus:bg-white disabled:cursor-not-allowed disabled:opacity-60"
+className="w-full rounded-2xl border border-white/10 bg-[#061426]/80 px-4 py-4 text-sm font-bold text-white outline-none transition placeholder:text-slate-600 focus:border-[#2CC4E8]/40 focus:bg-[#07111F] disabled:cursor-not-allowed disabled:opacity-60"
 />
 </label>
 </div>
 
 <label className="block">
-<span className="mb-2 block text-xs font-black uppercase tracking-[0.2em] text-slate-500">
-Network Role
-</span>
+<FormLabel>Network Role</FormLabel>
 
 <select
 disabled={!canUpdateCompany || loading}
 value={networkRole}
 onChange={(event) => setNetworkRole(event.target.value)}
-className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-950 outline-none transition focus:border-slate-950 focus:bg-white disabled:cursor-not-allowed disabled:opacity-60"
+className="w-full rounded-2xl border border-white/10 bg-[#061426]/80 px-4 py-4 text-sm font-bold text-white outline-none transition focus:border-[#2CC4E8]/40 focus:bg-[#07111F] disabled:cursor-not-allowed disabled:opacity-60"
 >
-<option value="Owner / Developer">Owner / Developer</option>
-<option value="General Contractor">General Contractor</option>
-<option value="Architect / Designer">Architect / Designer</option>
-<option value="Manufacturer">Manufacturer</option>
-<option value="Vendor / Supplier">Vendor / Supplier</option>
-<option value="Consultant">Consultant</option>
+{NETWORK_ROLE_OPTIONS.map((option) => (
+<option key={option} value={option} className="bg-[#061426] text-white">
+{option}
+</option>
+))}
 </select>
 </label>
 
 {!canUpdateCompany ? (
-<div className="rounded-2xl bg-amber-50 px-4 py-3 text-sm font-bold leading-6 text-amber-700">
+<Notice tone="warning">
 Your current role has read-only access to company profile settings.
-</div>
+</Notice>
 ) : null}
 
-{message ? (
-<div className="rounded-2xl bg-green-50 px-4 py-3 text-sm font-bold leading-6 text-green-700">
-{message}
-</div>
-) : null}
+{message ? <Notice tone="success">{message}</Notice> : null}
 
-{error ? (
-<div className="rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold leading-6 text-red-600">
-{error}
-</div>
-) : null}
+{error ? <Notice tone="danger">{error}</Notice> : null}
 
 <button
 type="submit"
 disabled={loading || !canUpdateCompany}
-className="rounded-full bg-slate-950 px-7 py-4 text-sm font-bold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
+className="rounded-full bg-gradient-to-r from-[#B9902F] via-[#C8A646] to-[#F5D77B] px-7 py-4 text-sm font-black text-slate-950 shadow-[0_18px_55px_rgba(200,166,70,0.22)] transition hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-50"
 >
 {loading ? "Saving changes..." : "Save Company Settings"}
 </button>
 </form>
+);
+}
+
+function FormLabel({ children }: { children: React.ReactNode }) {
+return (
+<span className="mb-2 block text-xs font-black uppercase tracking-[0.2em] text-slate-500">
+{children}
+</span>
+);
+}
+
+function Notice({
+children,
+tone,
+}: {
+children: React.ReactNode;
+tone: "success" | "warning" | "danger";
+}) {
+const toneClass =
+tone === "success"
+? "border-emerald-300/20 bg-emerald-400/10 text-emerald-200"
+: tone === "warning"
+? "border-orange-300/20 bg-orange-400/10 text-orange-200"
+: "border-red-300/20 bg-red-400/10 text-red-200";
+
+return (
+<div className={`rounded-2xl border px-4 py-3 text-sm font-bold leading-6 ${toneClass}`}>
+{children}
+</div>
 );
 }

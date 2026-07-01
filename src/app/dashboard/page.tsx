@@ -1,11 +1,13 @@
+import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import type { ReactNode } from "react";
 
+import { ExecutiveHero } from "@/components/dashboard/executive-hero";
 import { ExecutiveInsightCard } from "@/components/executive/executive-insight-card";
 import { ExecutiveMetricCard } from "@/components/executive/executive-metric-card";
 import SignOutButton from "@/components/sign-out-button";
 import { createClient } from "@/lib/supabase/server";
-import { ExecutiveHero } from "@/components/dashboard/executive-hero";
 
 type Experience = "owner" | "vendor" | "consultant";
 
@@ -253,13 +255,14 @@ return dateB - dateA;
 })
 .slice(0, 8);
 }
+
 function getDashboardCopy(experience: Experience) {
 if (experience === "vendor") {
 return {
 eyebrow: "Supplier Workspace",
 title: "Supplier Opportunity Command Center",
 subtitle:
-"Track open RFQs, submitted quotes, award outcomes, customer activity, and supplier growth signals.",
+"Track open RFQs, submitted quotes, award outcomes, customer activity, supplier growth signals, and executive opportunity readiness.",
 briefTitle: "Executive Supplier Brief",
 briefLabel: "Supplier Growth Center",
 recommendation:
@@ -267,9 +270,6 @@ recommendation:
 companyLabel: "Supplier Company",
 activityLabel: "Supplier Activity Center",
 activityTitle: "Live Supplier Timeline",
-welcomeTitle: "Welcome to your supplier workspace.",
-welcomeDescription:
-"Your company workspace is active. Complete your profile, strengthen marketplace visibility, and start building procurement credibility.",
 };
 }
 
@@ -278,7 +278,7 @@ return {
 eyebrow: "Consultant Workspace",
 title: "Project Advisory Command Center",
 subtitle:
-"Track project opportunities, advisory activity, client signals, and professional service visibility.",
+"Track project opportunities, advisory activity, client signals, professional service visibility, and board-level advisory readiness.",
 briefTitle: "Executive Advisory Brief",
 briefLabel: "Advisory Command Center",
 recommendation:
@@ -286,9 +286,6 @@ recommendation:
 companyLabel: "Advisory Company",
 activityLabel: "Consultant Activity Center",
 activityTitle: "Live Advisory Timeline",
-welcomeTitle: "Welcome to your advisory workspace.",
-welcomeDescription:
-"Your consultant workspace is active. Complete your company profile, showcase advisory expertise, and prepare for project collaboration.",
 };
 }
 
@@ -296,17 +293,14 @@ return {
 eyebrow: "Executive Workspace",
 title: "Executive Procurement Command Center",
 subtitle:
-"Monitor RFQ mix, awards, supplier participation, sourcing method, framework agreements, procurement risk, and board-level intelligence.",
+"Monitor RFQ mix, awards, supplier participation, sourcing method, framework agreements, procurement risk, savings potential, and board-level intelligence.",
 briefTitle: "Executive Procurement Brief",
 briefLabel: "CEO Command Center",
 recommendation:
-"Review supplier participation, award concentration, RFQ classification maturity, and risk signals before scaling procurement decisions.",
+"Review supplier participation, award concentration, RFQ classification maturity, savings signals, and risk exposure before scaling procurement decisions.",
 companyLabel: "Enterprise Company",
 activityLabel: "Activity Command Center",
 activityTitle: "Live Procurement Timeline",
-welcomeTitle: "Welcome to Nexus Pavilion.",
-welcomeDescription:
-"Your enterprise workspace is active. Complete setup to unlock a stronger procurement command center, team governance, and executive reporting readiness.",
 };
 }
 
@@ -442,8 +436,7 @@ totalRfqs,
 submittedQuotes,
 });
 const readinessScore = calculateReadinessScore(readinessItems);
-const incompleteReadinessItems = readinessItems.filter((item) => !item.completed);
-const firstIncompleteItem = incompleteReadinessItems[0];
+const completedTasks = readinessItems.filter((item) => item.completed).length;
 
 const materialRfqs = rfqList.filter(
 (rfq) => getProcurementScope(rfq.procurement_scope) === "material"
@@ -472,8 +465,10 @@ const frameworkRfqs = rfqList.filter(
 (rfq) => getContractFramework(rfq.contract_framework) === "framework"
 ).length;
 const projectSpecificRfqs = rfqList.filter(
-(rfq) => getContractFramework(rfq.contract_framework) === "project_specific"
+(rfq) =>
+getContractFramework(rfq.contract_framework) === "project_specific"
 ).length;
+
 const constructionClassificationScore = Math.min(
 100,
 Math.round(
@@ -526,6 +521,12 @@ return total + (Number.isNaN(budget) ? 0 : budget);
 }, 0);
 
 const estimatedSavings = Math.max(totalBudget - totalAwardedSpend, 0);
+
+const procurementVelocity =
+totalRfqs > 0 ? Math.round((awardedRfqs / totalRfqs) * 100) : 0;
+
+const budgetUtilization =
+totalBudget > 0 ? Math.round((totalAwardedSpend / totalBudget) * 100) : 0;
 
 const procurementHealthScore = Math.min(
 100,
@@ -705,11 +706,35 @@ message:
 }
 }
 
-const topRfqsByBudget = [...rfqList]
-.sort((a, b) => Number(b.budget || 0) - Number(a.budget || 0))
-.slice(0, 5);
-
-const recentAwards = awardedQuotes.slice(0, 5);
+const aiRecommendations = [
+{
+title: "Strengthen Supplier Competition",
+value: submittedQuotes < 3 ? "High Priority" : "Monitoring",
+detail:
+submittedQuotes < 3
+? "Supplier participation is below executive-grade confidence threshold."
+: "Supplier participation is active and should continue to be monitored.",
+},
+{
+title: "Improve RFQ Classification",
+value:
+constructionClassificationScore >= 80
+? "Mature"
+: constructionClassificationScore >= 60
+? "Developing"
+: "Needs Work",
+detail:
+"Classification quality directly affects forecasting, benchmarking, and board reporting confidence.",
+},
+{
+title: "Review Savings Opportunity",
+value: estimatedSavings > 0 ? formatMoney(estimatedSavings) : "Pending",
+detail:
+estimatedSavings > 0
+? "Budget-to-award spread indicates measurable procurement value."
+: "Savings intelligence will activate after budget and award data mature.",
+},
+];
 
 const executiveBriefSummary =
 experience === "vendor"
@@ -717,28 +742,28 @@ experience === "vendor"
 : experience === "consultant"
 ? `${serviceRfqs} service RFQs and ${openRfqs} active project opportunities are shaping advisory visibility.`
 : hasProcurementData
-? `${totalRfqs} RFQs, ${submittedQuotes} supplier quotes, and ${awardRate}% award rate are shaping procurement performance.`
+? `${totalRfqs} RFQs, ${submittedQuotes} supplier quotes, ${awardRate}% award rate, and ${formatMoney(
+estimatedSavings
+)} in estimated savings are shaping procurement performance.`
 : "Procurement intelligence is available, but more RFQ, quote, and award data is required before board-ready recommendations can be trusted.";
 
 const boardNarrative = hasProcurementData
-? `Current procurement activity shows ${totalRfqs} RFQs, ${submittedQuotes} supplier quotes, ${awardedRfqs} awarded RFQs, and ${forecastAccuracy}% forecast confidence. Supplier concentration is ${supplierConcentration.toLowerCase()}, and the current executive status is ${executiveStatus.toLowerCase()}.`
+? `Current procurement activity shows ${totalRfqs} RFQs, ${submittedQuotes} supplier quotes, ${awardedRfqs} awarded RFQs, ${formatMoney(
+totalAwardedSpend
+)} in awarded spend, and ${forecastAccuracy}% forecast confidence. Supplier concentration is ${supplierConcentration.toLowerCase()}, and the current executive status is ${executiveStatus.toLowerCase()}.`
 : "Status: Insufficient Data. Create RFQs, receive supplier quotes, and record award outcomes before presenting procurement recommendations to executives or the board.";
-
-
 
 const readinessTone =
 readinessScore >= 85 ? "success" : readinessScore >= 55 ? "warning" : "blue";
 
-const completedTasks = readinessItems.filter(
-(item) => item.completed
-).length;
+const topRfqsByBudget = [...rfqList]
+.sort((a, b) => Number(b.budget || 0) - Number(a.budget || 0))
+.slice(0, 5);
 
+const recentAwards = awardedQuotes.slice(0, 5);
 
 return (
 <main className="min-h-screen text-white">
-<div className="fixed right-8 top-24 z-30 hidden lg:block">
-<SignOutButton />
-</div>
 
 <div className="w-full max-w-none px-5 py-6 sm:px-8 lg:px-10 lg:py-8">
 <ExecutiveHero
@@ -754,7 +779,6 @@ continueHref="/company/settings"
 continueLabel="Continue Setup"
 />
 
-
 <section className="mt-6 rounded-[34px] border border-white/10 bg-[#061426]/88 p-6 shadow-executive sm:p-8">
 <div className="flex flex-col gap-8 xl:flex-row xl:items-start xl:justify-between">
 <div className="max-w-5xl">
@@ -762,9 +786,9 @@ continueLabel="Continue Setup"
 {dashboardCopy.eyebrow}
 </p>
 
-<h2 className="mt-4 max-w-5xl text-4xl font-black leading-tight text-white sm:text-5xl xl:text-6xl">
+<h1 className="mt-4 max-w-5xl text-4xl font-black leading-tight text-white sm:text-5xl xl:text-6xl">
 {dashboardCopy.title}
-</h2>
+</h1>
 
 <p className="mt-4 max-w-4xl text-base font-semibold leading-8 text-slate-400 sm:text-lg">
 {dashboardCopy.subtitle}
@@ -775,9 +799,7 @@ continueLabel="Continue Setup"
 {hasProcurementData ? "Available" : "Insufficient Data"}
 </StatusBadge>
 
-<StatusBadge tone="blue">
-{dashboardCopy.briefLabel}
-</StatusBadge>
+<StatusBadge tone="blue">{dashboardCopy.briefLabel}</StatusBadge>
 
 <StatusBadge tone="neutral">
 {currentCompany?.name || "Company Workspace"}
@@ -792,6 +814,7 @@ continueLabel="Continue Setup"
 </div>
 </div>
 </section>
+
 <section className="mt-6 rounded-[34px] border border-[#2CC4E8]/15 bg-gradient-to-br from-[#0B3D91]/35 via-[#07111F]/92 to-[#061426] p-6 shadow-[0_0_70px_rgba(44,196,232,0.10)] sm:p-8">
 <div className="grid gap-8 xl:grid-cols-[1.15fr_0.85fr]">
 <div>
@@ -809,7 +832,7 @@ Executive Brief
 
 <div className="mt-6 rounded-[26px] border border-white/10 bg-white/[0.045] p-5">
 <p className="text-[10px] font-black uppercase tracking-[0.24em] text-[#C8A646]">
-Recommended Action
+Recommended Executive Action
 </p>
 
 <p className="mt-3 text-sm font-semibold leading-7 text-slate-300">
@@ -822,22 +845,37 @@ Recommended Action
 {experience === "vendor" ? (
 <>
 <DarkMetric title="Open Opportunities" value={String(openRfqs)} />
-<DarkMetric title="Submitted Quotes" value={String(submittedQuotes)} />
+<DarkMetric
+title="Submitted Quotes"
+value={String(submittedQuotes)}
+/>
 <DarkMetric title="Win Rate" value={`${vendorWinRate}%`} />
-<DarkMetric title="Pipeline Value" value={formatMoney(pipelineValue)} />
+<DarkMetric
+title="Pipeline Value"
+value={formatMoney(pipelineValue)}
+/>
 </>
 ) : experience === "consultant" ? (
 <>
 <DarkMetric title="Service RFQs" value={String(serviceRfqs)} />
 <DarkMetric title="Project Activity" value={String(openRfqs)} />
 <DarkMetric title="Service Visibility" value={executiveStatus} />
-<DarkMetric title="Forecast Trust" value={forecastAccuracyLabel} />
+<DarkMetric
+title="Forecast Trust"
+value={forecastAccuracyLabel}
+/>
 </>
 ) : (
 <>
 <DarkMetric title="RFQ Maturity" value={rfqMaturityLabel} />
-<DarkMetric title="Board Readiness" value={`${procurementHealthScore}%`} />
-<DarkMetric title="Supplier Concentration" value={supplierConcentration} />
+<DarkMetric
+title="Board Readiness"
+value={`${procurementHealthScore}%`}
+/>
+<DarkMetric
+title="Supplier Concentration"
+value={supplierConcentration}
+/>
 <DarkMetric title="CEO Actions" value={String(alerts.length)} />
 </>
 )}
@@ -845,35 +883,47 @@ Recommended Action
 </div>
 </section>
 
-<section className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+<section className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-7">
 <InsightCard
-title="Board Readiness"
-value={hasProcurementData ? `${procurementHealthScore}%` : "Insufficient Data"}
-detail={executiveStatus}
+title="Total Spend"
+value={formatMoney(totalAwardedSpend)}
+detail="Awarded procurement spend"
 />
 
 <InsightCard
-title="Risk Exposure"
-value={riskIndexLabel}
-detail={`${supplierConcentration} supplier concentration`}
-/>
-
-<InsightCard
-title="Savings Signal"
+title="Savings"
 value={hasProcurementData ? formatMoney(estimatedSavings) : "Pending"}
-detail="Budget vs award opportunity"
+detail="Budget vs award signal"
 />
 
 <InsightCard
-title="Forecast Trust"
-value={forecastAccuracyLabel}
-detail="Executive forecast confidence"
+title="Award Rate"
+value={`${awardRate}%`}
+detail="RFQ award conversion"
 />
 
 <InsightCard
-title="CEO Actions"
-value={String(alerts.length)}
-detail="Open decision signals"
+title="Velocity"
+value={`${procurementVelocity}%`}
+detail="Procurement movement"
+/>
+
+<InsightCard
+title="Budget Use"
+value={`${budgetUtilization}%`}
+detail="Awarded vs planned budget"
+/>
+
+<InsightCard
+title="Supplier Health"
+value={supplierConcentration}
+detail="Concentration exposure"
+/>
+
+<InsightCard
+title="RFQ Pipeline"
+value={String(openRfqs)}
+detail="Open procurement activity"
 />
 </section>
 
@@ -882,28 +932,40 @@ detail="Open decision signals"
 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
 <div>
 <p className="text-[10px] font-black uppercase tracking-[0.28em] text-[#C8A646]">
-Boardroom Intelligence
+Procurement Health
 </p>
 
 <h2 className="mt-3 text-2xl font-black text-white">
-Board Summary Narrative
+Executive Operating Score
 </h2>
 </div>
 
 <StatusBadge tone={hasProcurementData ? "success" : "warning"}>
-{hasProcurementData ? "Available" : "Insufficient Data"}
+{executiveStatus}
 </StatusBadge>
 </div>
 
-<p className="mt-5 text-sm font-semibold leading-7 text-slate-300">
-{boardNarrative}
+<div className="mt-6 rounded-[28px] border border-[#C8A646]/20 bg-[#C8A646]/10 p-6">
+<p className="text-[11px] font-black uppercase tracking-[0.28em] text-[#F5D77B]">
+Overall Health
 </p>
 
-<div className="mt-6 grid gap-3 sm:grid-cols-2">
-<SignalTile label="RFQs" value={String(totalRfqs)} />
-<SignalTile label="Supplier Quotes" value={String(submittedQuotes)} />
-<SignalTile label="Awarded RFQs" value={String(awardedRfqs)} />
-<SignalTile label="Open RFQs" value={String(openRfqs)} />
+<p className="mt-3 text-6xl font-black text-white">
+{hasProcurementData ? procurementHealthScore : 0}
+<span className="text-2xl text-slate-500">/100</span>
+</p>
+
+<p className="mt-4 text-sm font-semibold leading-7 text-slate-300">
+This score combines award rate, supplier activity, awarded
+outcomes, savings signal, and RFQ classification maturity.
+</p>
+</div>
+
+<div className="mt-5 grid gap-3 sm:grid-cols-2">
+<SignalTile label="Risk Index" value={riskIndexLabel} />
+<SignalTile label="Forecast Trust" value={forecastAccuracyLabel} />
+<SignalTile label="Award Rate" value={`${awardRate}%`} />
+<SignalTile label="RFQ Maturity" value={rfqMaturityLabel} />
 </div>
 </div>
 
@@ -941,6 +1003,69 @@ index={index}
 </div>
 </div>
 </section>
+
+<section className="mt-6 grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+<div className="rounded-[32px] border border-white/10 bg-white/[0.045] p-6 shadow-inner-executive sm:p-7">
+<div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+<div>
+<p className="text-[10px] font-black uppercase tracking-[0.28em] text-[#C8A646]">
+Boardroom Intelligence
+</p>
+
+<h2 className="mt-3 text-2xl font-black text-white">
+Board Summary Narrative
+</h2>
+</div>
+
+<StatusBadge tone={hasProcurementData ? "success" : "warning"}>
+{hasProcurementData ? "Available" : "Insufficient Data"}
+</StatusBadge>
+</div>
+
+<p className="mt-5 text-sm font-semibold leading-7 text-slate-300">
+{boardNarrative}
+</p>
+
+<div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+<SignalTile label="RFQs" value={String(totalRfqs)} />
+<SignalTile label="Supplier Quotes" value={String(submittedQuotes)} />
+<SignalTile label="Awarded RFQs" value={String(awardedRfqs)} />
+<SignalTile label="Open RFQs" value={String(openRfqs)} />
+</div>
+</div>
+
+<div className="rounded-[32px] border border-[#2CC4E8]/15 bg-[#061426]/80 p-6 shadow-inner-executive sm:p-7">
+<p className="text-[10px] font-black uppercase tracking-[0.28em] text-[#C8A646]">
+AI Executive Recommendations
+</p>
+
+<h2 className="mt-3 text-2xl font-black text-white">
+Procurement Action Suggestions
+</h2>
+
+<div className="mt-6 space-y-4">
+{aiRecommendations.map((item) => (
+<div
+key={item.title}
+className="rounded-[24px] border border-white/10 bg-white/[0.045] p-5"
+>
+<div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+<h3 className="text-lg font-black text-white">
+{item.title}
+</h3>
+
+<StatusBadge tone="blue">{item.value}</StatusBadge>
+</div>
+
+<p className="mt-3 text-sm font-semibold leading-7 text-slate-400">
+{item.detail}
+</p>
+</div>
+))}
+</div>
+</div>
+</section>
+
 <section className="mt-6 grid gap-6 xl:grid-cols-[1fr_0.85fr]">
 <div className="rounded-[32px] border border-white/10 bg-white/[0.045] p-6 shadow-inner-executive sm:p-7">
 <p className="text-[10px] font-black uppercase tracking-[0.28em] text-[#C8A646]">
@@ -953,8 +1078,8 @@ RFQ Classification Intelligence
 
 <p className="mt-3 max-w-4xl text-sm font-semibold leading-7 text-slate-400">
 {procurementMixStatus}. Dominant procurement scope is{" "}
-{hasProcurementData ? dominantScope : "Pending"}. Dominant sourcing
-method is {hasProcurementData ? dominantSourcing : "Pending"}.
+{hasProcurementData ? dominantScope : "Pending"}. Dominant
+sourcing method is {hasProcurementData ? dominantSourcing : "Pending"}.
 Classification maturity score is {constructionClassificationScore}/100.
 </p>
 
@@ -969,7 +1094,10 @@ Classification maturity score is {constructionClassificationScore}/100.
 <SignalTile label="Open Market" value={String(openMarketRfqs)} />
 <SignalTile label="Invited" value={String(invitedRfqs)} />
 <SignalTile label="Sealed Bids" value={String(sealedBidRfqs)} />
-<SignalTile label="Project Specific" value={String(projectSpecificRfqs)} />
+<SignalTile
+label="Project Specific"
+value={String(projectSpecificRfqs)}
+/>
 <SignalTile label="Framework" value={String(frameworkRfqs)} />
 </div>
 </div>
@@ -987,9 +1115,11 @@ Workspace Governance
 <div className="mt-6">
 <div className="flex items-center gap-4">
 {currentCompany.logo_url ? (
-<img
+<Image
 src={currentCompany.logo_url}
 alt={currentCompany.name || "Company"}
+width={64}
+height={64}
 className="h-16 w-16 rounded-2xl border border-white/10 bg-white p-2 object-contain"
 />
 ) : (
@@ -1146,6 +1276,7 @@ getContractFramework(rfq.contract_framework)
 </div>
 </div>
 </section>
+
 <section className="mt-6 rounded-[32px] border border-white/10 bg-[#061426]/80 p-6 shadow-inner-executive sm:p-7">
 <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
 <div>
@@ -1239,12 +1370,7 @@ value: string;
 detail: string;
 }) {
 return (
-<ExecutiveInsightCard
-title={title}
-insight={detail}
-impact={value}
-tone="blue"
-/>
+<ExecutiveInsightCard title={title} insight={detail} impact={value} tone="blue" />
 );
 }
 
@@ -1264,18 +1390,19 @@ return (
 );
 }
 
-function SmallBadge({ children }: { children: React.ReactNode }) {
+function SmallBadge({ children }: { children: ReactNode }) {
 return (
 <span className="rounded-full border border-white/10 bg-white/[0.055] px-3 py-1 text-xs font-black text-slate-300">
 {children}
 </span>
 );
 }
+
 function StatusBadge({
 children,
 tone = "neutral",
 }: {
-children: React.ReactNode;
+children: ReactNode;
 tone?: "success" | "warning" | "blue" | "neutral";
 }) {
 const toneClass =
@@ -1293,35 +1420,6 @@ className={`inline-flex rounded-full border px-3 py-1 text-[10px] font-black upp
 >
 {children}
 </span>
-);
-}
-
-function ReadinessRow({ item }: { item: ReadinessItem }) {
-return (
-<Link
-href={item.href}
-className="flex items-start gap-3 rounded-2xl border border-white/10 bg-[#07111F]/75 px-4 py-3 transition hover:bg-white/[0.06]"
->
-<span
-className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-xs font-black ${
-item.completed
-? "border-emerald-300/20 bg-emerald-400/10 text-emerald-300"
-: "border-[#C8A646]/30 bg-[#C8A646]/10 text-[#F5D77B]"
-}`}
->
-{item.completed ? "✓" : "→"}
-</span>
-
-<span className="min-w-0">
-<span className="block text-sm font-black text-white">
-{item.title}
-</span>
-
-<span className="mt-1 block text-xs font-semibold leading-5 text-slate-500">
-{item.description}
-</span>
-</span>
-</Link>
 );
 }
 

@@ -32,7 +32,11 @@ const [copied, setCopied] = useState(false);
 const [message, setMessage] = useState("");
 const [error, setError] = useState("");
 
-const isPending = status === "pending";
+const normalizedStatus = String(status || "").toLowerCase();
+const isPending =
+!normalizedStatus ||
+normalizedStatus === "pending" ||
+normalizedStatus === "sent";
 const hasInviteUrl = inviteUrl.trim().length > 0;
 
 async function handleCopy() {
@@ -87,6 +91,8 @@ if (data.email?.sent) {
 setMessage("Invitation email resent.");
 } else if (data.email?.error) {
 setError(`Invitation resend failed: ${data.email.error}`);
+} else if (data.email?.skipped) {
+setMessage("Invitation resend completed. Email delivery was skipped.");
 } else {
 setMessage("Invitation resend completed.");
 }
@@ -147,7 +153,7 @@ return (
 type="button"
 onClick={handleCopy}
 disabled={!hasInviteUrl || loadingAction !== ""}
-className="rounded-full bg-white px-4 py-2 text-xs font-black text-slate-950 shadow-sm transition hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50"
+className="rounded-full border border-white/10 bg-white/[0.055] px-4 py-2 text-xs font-black text-white transition hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-50"
 >
 {copied ? "Copied" : "Copy Link"}
 </button>
@@ -158,7 +164,7 @@ className="rounded-full bg-white px-4 py-2 text-xs font-black text-slate-950 sha
 type="button"
 onClick={handleResend}
 disabled={loadingAction === "resend"}
-className="rounded-full bg-slate-950 px-4 py-2 text-xs font-black text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
+className="rounded-full border border-[#C8A646]/25 bg-[#C8A646]/10 px-4 py-2 text-xs font-black text-[#F5D77B] transition hover:bg-[#C8A646]/15 disabled:cursor-not-allowed disabled:opacity-50"
 >
 {loadingAction === "resend" ? "Resending..." : "Resend"}
 </button>
@@ -167,7 +173,7 @@ className="rounded-full bg-slate-950 px-4 py-2 text-xs font-black text-white tra
 type="button"
 onClick={handleRevoke}
 disabled={loadingAction === "revoke"}
-className="rounded-full bg-red-700 px-4 py-2 text-xs font-black text-white transition hover:bg-red-800 disabled:cursor-not-allowed disabled:opacity-50"
+className="rounded-full border border-red-300/20 bg-red-400/10 px-4 py-2 text-xs font-black text-red-200 transition hover:bg-red-400/15 disabled:cursor-not-allowed disabled:opacity-50"
 >
 {loadingAction === "revoke" ? "Revoking..." : "Revoke"}
 </button>
@@ -176,11 +182,15 @@ className="rounded-full bg-red-700 px-4 py-2 text-xs font-black text-white trans
 </div>
 
 {message ? (
-<p className="text-xs font-bold leading-5 text-green-700">{message}</p>
+<p className="rounded-2xl border border-emerald-300/20 bg-emerald-400/10 px-4 py-3 text-xs font-bold leading-5 text-emerald-200">
+{message}
+</p>
 ) : null}
 
 {error ? (
-<p className="text-xs font-bold leading-5 text-red-600">{error}</p>
+<p className="rounded-2xl border border-red-300/20 bg-red-400/10 px-4 py-3 text-xs font-bold leading-5 text-red-200">
+{error}
+</p>
 ) : null}
 </div>
 );

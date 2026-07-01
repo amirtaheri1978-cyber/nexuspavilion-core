@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 
 type CompanyCommandCenterProps = {
@@ -33,6 +34,8 @@ rfqCount,
 hasOwner,
 hasCompanyProfile,
 }: CompanyCommandCenterProps) {
+const companyInitial = companyName.trim().charAt(0) || "C";
+
 return (
 <>
 <div className="flex items-center justify-between gap-6">
@@ -78,14 +81,16 @@ Executive Workspace Command Center
 
 <div className="mt-6 flex flex-col gap-6 md:flex-row md:items-start">
 {companyLogoUrl ? (
-<img
+<Image
 src={companyLogoUrl}
 alt={companyName}
+width={96}
+height={96}
 className="h-24 w-24 rounded-3xl border border-white/10 bg-white object-contain p-2"
 />
 ) : (
 <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-3xl bg-white/10 text-4xl font-black text-white/50">
-{companyName.charAt(0) || "C"}
+{companyInitial}
 </div>
 )}
 
@@ -101,9 +106,9 @@ className="h-24 w-24 rounded-3xl border border-white/10 bg-white object-contain 
 </div>
 
 <p className="mt-4 max-w-3xl text-sm leading-7 text-slate-300">
-Your procurement workspace is live. Complete setup, invite
-your team, create your first RFQ, and activate executive
-procurement intelligence.
+Your procurement workspace is live. Complete setup, invite your
+team, create your first RFQ, and activate executive procurement
+intelligence.
 </p>
 
 <p className="mt-4 text-xs font-bold uppercase tracking-[0.2em] text-slate-500">
@@ -157,19 +162,14 @@ Launch Readiness
 
 <p className="mt-5 text-7xl font-black">{readinessScore}%</p>
 
-<p className="mt-4 text-xl font-black text-white">
-{workspaceStage}
-</p>
+<p className="mt-4 text-xl font-black text-white">{workspaceStage}</p>
 
 <p className="mt-4 text-sm leading-7 text-slate-300">
 {workspaceMessage}
 </p>
 
 <div className="mt-8 space-y-4">
-<ReadinessItem
-label="Company profile"
-ready={hasCompanyProfile}
-/>
+<ReadinessItem label="Company profile" ready={hasCompanyProfile} />
 <ReadinessItem label="Owner assigned" ready={hasOwner} />
 <ReadinessItem label="Team member active" ready={memberCount >= 1} />
 <ReadinessItem label="First RFQ created" ready={rfqCount > 0} />
@@ -184,16 +184,19 @@ title="Invite Team"
 value="Add procurement, finance, operations, or executive stakeholders."
 href="#invite-users"
 />
+
 <ActionCard
 title="Create First RFQ"
 value="Start the first procurement workflow and activate RFQ intelligence."
 href="/rfq/new"
 />
+
 <ActionCard
 title="Supplier Network"
 value="Review supplier visibility and company marketplace readiness."
 href="/directory"
 />
+
 <ActionCard
 title="Executive Analytics"
 value="Open procurement intelligence, risk, confidence, and board reporting."

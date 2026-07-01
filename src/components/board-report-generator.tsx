@@ -172,6 +172,10 @@ title: "Required Data Sources",
 body: requiredDataSources.join(", "),
 },
 {
+title: "Operational Next Steps",
+body: operationalNextSteps.join(" "),
+},
+{
 title: "Decision Readiness",
 body: "Executive decisions should not be generated from placeholder data, mock scores, or unverified analytics.",
 },
@@ -292,7 +296,7 @@ year: "numeric",
 month: "long",
 day: "numeric",
 }),
-[],
+[]
 );
 
 const boardReady =
@@ -378,9 +382,7 @@ setActiveReportBody(body);
 setIsGenerating(false);
 }, 450);
 } catch {
-setErrorMessage(
-"Unable to generate this executive report. Please try again.",
-);
+setErrorMessage("Unable to generate this executive report. Please try again.");
 setIsGenerating(false);
 }
 }
@@ -406,7 +408,7 @@ const printWindow = window.open("", "_blank", "width=1200,height=900");
 if (!printWindow) return;
 
 const styles = Array.from(
-document.querySelectorAll("style, link[rel='stylesheet']"),
+document.querySelectorAll("style, link[rel='stylesheet']")
 )
 .map((node) => node.outerHTML)
 .join("\n");
@@ -540,6 +542,31 @@ className={`rounded-full border px-3 py-1 text-[10px] font-black uppercase track
 })}
 </div>
 
+{!boardReady ? (
+<div className="no-print mt-8 rounded-[28px] border border-orange-300/15 bg-orange-400/10 p-6">
+<p className="text-[10px] font-black uppercase tracking-[0.28em] text-orange-300">
+Operational Next Steps
+</p>
+
+<div className="mt-5 grid gap-3 md:grid-cols-2">
+{operationalNextSteps.map((step, index) => (
+<div
+key={step}
+className="rounded-2xl border border-white/10 bg-black/15 p-4"
+>
+<p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
+Step {index + 1}
+</p>
+
+<p className="mt-2 text-sm font-bold leading-6 text-slate-300">
+{step}
+</p>
+</div>
+))}
+</div>
+</div>
+) : null}
+
 {activeReport && activeReportBody ? (
 <div
 id="board-report-print-area"
@@ -668,10 +695,7 @@ Executive Metrics
 </p>
 
 <div className="mt-4 grid gap-3 md:grid-cols-2">
-<ReportMetric
-label="Board Health"
-value={`${boardHealthIndex}/100`}
-/>
+<ReportMetric label="Board Health" value={`${boardHealthIndex}/100`} />
 <ReportMetric
 label="Enterprise Score"
 value={`${enterpriseProcurementScore}/100`}

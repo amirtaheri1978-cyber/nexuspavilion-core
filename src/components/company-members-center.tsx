@@ -69,23 +69,23 @@ return role || "Member";
 }
 
 function getRoleClass(role: string | null) {
-if (role === "owner") return "bg-purple-100 text-purple-700";
-if (role === "admin") return "bg-green-100 text-green-700";
-if (role === "buyer") return "bg-blue-100 text-blue-700";
-if (role === "vendor") return "bg-orange-100 text-orange-700";
-return "bg-slate-100 text-slate-600";
+if (role === "owner") return "border-purple-300/20 bg-purple-400/10 text-purple-200";
+if (role === "admin") return "border-emerald-300/20 bg-emerald-400/10 text-emerald-200";
+if (role === "buyer") return "border-[#2CC4E8]/25 bg-[#2CC4E8]/10 text-[#9BE8F8]";
+if (role === "vendor") return "border-[#C8A646]/25 bg-[#C8A646]/10 text-[#F5D77B]";
+return "border-white/10 bg-white/[0.055] text-slate-300";
 }
 
 function getStatusClass(status: string | null) {
 if (status === "accepted" || status === "approved") {
-return "bg-green-100 text-green-700";
+return "border-emerald-300/20 bg-emerald-400/10 text-emerald-200";
 }
 
 if (status === "revoked" || status === "rejected") {
-return "bg-red-100 text-red-700";
+return "border-red-300/20 bg-red-400/10 text-red-200";
 }
 
-return "bg-yellow-100 text-yellow-700";
+return "border-orange-300/20 bg-orange-400/10 text-orange-200";
 }
 
 function formatDate(value: string | null | undefined) {
@@ -142,20 +142,11 @@ return (
 id="company-profile"
 className="mt-8 grid gap-8 lg:grid-cols-[1.15fr_0.85fr]"
 >
-<div className="rounded-[32px] border border-black/5 bg-white p-8">
-<p className="text-xs font-black uppercase tracking-[0.3em] text-orange-500">
-Company Profile
-</p>
-
-<h2 className="mt-3 text-3xl font-black text-slate-950">
-Company Information
-</h2>
-
-<p className="mt-4 max-w-3xl text-sm leading-6 text-slate-600">
-Keep company details accurate across procurement workflows, supplier
-profiles, RFQs, and marketplace visibility.
-</p>
-
+<ExecutivePanel
+eyebrow="Company Profile"
+title="Company Information"
+description="Keep company details accurate across procurement workflows, supplier profiles, RFQs, and marketplace visibility."
+>
 {canManage ? (
 <CompanySettingsForm
 companyId={company.id}
@@ -168,53 +159,32 @@ currentUserRole={currentProfile.role || ""}
 ) : (
 <EmptyState message="You have read-only access to company profile settings." />
 )}
-</div>
+</ExecutivePanel>
 
 <div className="space-y-8">
-<CompanyLogoUpload
-companyId={company.id}
-currentLogoUrl={company.logo_url}
-/>
+<CompanyLogoUpload companyId={company.id} currentLogoUrl={company.logo_url} />
 
-<div className="rounded-[32px] border border-black/5 bg-white p-8">
-<p className="text-xs font-black uppercase tracking-[0.3em] text-orange-500">
-Access Summary
-</p>
-
-<h2 className="mt-3 text-3xl font-black text-slate-950">
-Team Readiness
-</h2>
-
+<ExecutivePanel
+eyebrow="Access Summary"
+title="Team Readiness"
+description="Review workspace access distribution before scaling procurement activity."
+>
 <div className="mt-6 space-y-4">
-<RoleRow
-label="Owners/Admins"
-value={adminsCount + (hasOwner ? 1 : 0)}
-/>
+<RoleRow label="Owners/Admins" value={adminsCount + (hasOwner ? 1 : 0)} />
 <RoleRow label="Buyers" value={buyersCount} />
 <RoleRow label="Vendors" value={vendorsCount} />
 <RoleRow label="Total Members" value={members.length} />
 </div>
-</div>
+</ExecutivePanel>
 </div>
 </section>
 
-<section
+<ExecutivePanel
 id="invite-users"
-className="mt-8 rounded-[32px] border border-black/5 bg-white p-8"
+eyebrow="Team Activation"
+title="Invite Workspace Members"
+description="Bring buyers, admins, vendors, and project stakeholders into this company workspace."
 >
-<p className="text-xs font-black uppercase tracking-[0.3em] text-orange-500">
-Team Activation
-</p>
-
-<h2 className="mt-3 text-3xl font-black text-slate-950">
-Invite Workspace Members
-</h2>
-
-<p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">
-Bring buyers, admins, vendors, and project stakeholders into this
-company workspace.
-</p>
-
 {canManage ? (
 <div className="mt-6">
 <InviteUserForm />
@@ -222,67 +192,65 @@ company workspace.
 ) : (
 <EmptyState message="You have read-only access to workspace invitations." />
 )}
-</section>
+</ExecutivePanel>
 
 <section className="mt-8 grid gap-8 lg:grid-cols-[1.4fr_0.8fr]">
-<div className="rounded-[32px] border border-black/5 bg-white p-8">
-<div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-<div>
-<p className="text-xs font-black uppercase tracking-[0.3em] text-orange-500">
-People & Access
-</p>
-
-<h2 className="mt-3 text-3xl font-black text-slate-950">
-Company Members
-</h2>
-</div>
-
-<span className="rounded-full bg-slate-950 px-5 py-3 text-sm font-bold text-white">
+<ExecutivePanel
+eyebrow="People & Access"
+title="Company Members"
+description="Manage team roles, access levels, and active workspace participants."
+action={
+<span className="rounded-full border border-white/10 bg-white/[0.055] px-5 py-3 text-sm font-black text-white">
 {canManage ? "Access Enabled" : "Read Only"}
 </span>
-</div>
-
-<div className="mt-6 overflow-hidden rounded-2xl border border-slate-200">
-<table className="w-full text-left">
-<thead className="bg-slate-950 text-white">
+}
+>
+<div className="mt-6 overflow-hidden rounded-[26px] border border-white/10 bg-[#061426]/70">
+<div className="overflow-x-auto">
+<table className="w-full min-w-[780px] text-left">
+<thead className="border-b border-white/10 bg-white/[0.055] text-white">
 <tr>
-<th className="px-5 py-4 text-sm">Email</th>
-<th className="px-5 py-4 text-sm">Role</th>
-<th className="px-5 py-4 text-sm">Access</th>
-<th className="px-5 py-4 text-sm">Actions</th>
+<th className="px-5 py-4 text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+Email
+</th>
+<th className="px-5 py-4 text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+Role
+</th>
+<th className="px-5 py-4 text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+Access
+</th>
+<th className="px-5 py-4 text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+Actions
+</th>
 </tr>
 </thead>
 
 <tbody>
 {members.length > 0 ? (
 members.map((member) => (
-<tr key={member.id} className="border-t border-slate-100">
+<tr key={member.id} className="border-t border-white/10">
 <td className="px-5 py-4 align-top">
-<p className="font-bold text-slate-950">
+<p className="font-black text-white">
 {member.email || "No email"}
 </p>
 
 {member.id === currentProfile.id ? (
-<p className="mt-1 text-xs font-bold text-orange-500">
+<p className="mt-1 text-xs font-black text-[#F5D77B]">
 Current user
 </p>
 ) : null}
 </td>
 
 <td className="px-5 py-4 align-top">
-<span
-className={`rounded-full px-3 py-1 text-xs font-black ${getRoleClass(
-member.role
-)}`}
->
+<StatusPill className={getRoleClass(member.role)}>
 {getRoleLabel(member.role)}
-</span>
+</StatusPill>
 </td>
 
 <td className="px-5 py-4 align-top">
-<span className="rounded-full bg-green-100 px-3 py-1 text-xs font-black text-green-700">
+<StatusPill className="border-emerald-300/20 bg-emerald-400/10 text-emerald-200">
 Active
-</span>
+</StatusPill>
 </td>
 
 <td className="px-5 py-4 align-top">
@@ -298,11 +266,8 @@ currentUserRole={currentProfile.role}
 ))
 ) : (
 <tr>
-<td
-colSpan={4}
-className="px-5 py-10 text-center text-sm font-bold text-slate-500"
->
-No members found.
+<td colSpan={4} className="px-5 py-10">
+<EmptyState message="No members found." />
 </td>
 </tr>
 )}
@@ -310,43 +275,35 @@ No members found.
 </table>
 </div>
 </div>
+</ExecutivePanel>
 
-<aside className="space-y-8">
-<section className="rounded-[32px] border border-black/5 bg-white p-8">
-<p className="text-xs font-black uppercase tracking-[0.3em] text-orange-500">
-Invitation Pipeline
-</p>
-
-<h2 className="mt-3 text-3xl font-black text-slate-950">
-Pending Invites
-</h2>
-
+<ExecutivePanel
+eyebrow="Invitation Pipeline"
+title="Pending Invites"
+description="Track open invitations and secure workspace activation links."
+>
 <div className="mt-6 space-y-4">
 {pendingInvitations.length > 0 ? (
 pendingInvitations.slice(0, 6).map((invitation) => (
 <div
 key={invitation.id}
-className="rounded-3xl border border-slate-100 bg-slate-50 p-5"
+className="rounded-[26px] border border-white/10 bg-[#061426]/70 p-5"
 >
-<p className="font-black text-slate-950">
+<p className="font-black text-white">
 {invitation.email || "No email"}
 </p>
 
 <div className="mt-3 flex flex-wrap items-center gap-2">
-<span
-className={`rounded-full px-3 py-1 text-xs font-black ${getStatusClass(
-invitation.status
-)}`}
->
+<StatusPill className={getStatusClass(invitation.status)}>
 {invitation.status || "pending"}
-</span>
+</StatusPill>
 
-<span className="rounded-full bg-white px-3 py-1 text-xs font-black text-slate-600 shadow-sm">
+<StatusPill className="border-white/10 bg-white/[0.055] text-slate-300">
 {getRoleLabel(invitation.role)}
-</span>
+</StatusPill>
 </div>
 
-<p className="mt-3 text-xs font-bold text-slate-400">
+<p className="mt-3 text-xs font-bold text-slate-500">
 Sent {formatDate(invitation.created_at)}
 </p>
 
@@ -361,37 +318,31 @@ status={invitation.status}
 <EmptyState message="No pending invitations." />
 )}
 </div>
-</section>
-</aside>
+</ExecutivePanel>
 </section>
 
 <section
 id="activity-history"
 className="mt-8 grid gap-8 lg:grid-cols-[1fr_0.85fr]"
 >
-<div className="rounded-[32px] border border-black/5 bg-white p-8">
-<p className="text-xs font-black uppercase tracking-[0.3em] text-orange-500">
-Activity History
-</p>
-
-<h2 className="mt-3 text-3xl font-black text-slate-950">
-Recent Workspace Activity
-</h2>
-
+<ExecutivePanel
+eyebrow="Activity History"
+title="Recent Workspace Activity"
+description="Review governance, invitation, RFQ, quote, and award activity."
+>
 <div className="mt-6 space-y-4">
 {activityList.length > 0 ? (
 activityList.map((log) => (
 <div
 key={log.id}
-className="rounded-3xl border border-slate-100 bg-slate-50 p-5"
+className="rounded-[26px] border border-white/10 bg-[#061426]/70 p-5"
 >
-<p className="text-sm font-black text-slate-950">
+<p className="text-sm font-black text-white">
 {getActivityLabel(log.action)}
 </p>
 
-<p className="mt-2 text-xs font-bold text-slate-400">
-{formatDate(log.created_at)} ·{" "}
-{log.entity_type || "workspace"}
+<p className="mt-2 text-xs font-bold text-slate-500">
+{formatDate(log.created_at)} · {log.entity_type || "workspace"}
 </p>
 </div>
 ))
@@ -399,46 +350,33 @@ className="rounded-3xl border border-slate-100 bg-slate-50 p-5"
 <EmptyState message="No workspace activity has been recorded yet." />
 )}
 </div>
-</div>
+</ExecutivePanel>
 
-<div
+<ExecutivePanel
 id="governance"
-className="rounded-[32px] border border-slate-200 bg-white p-8"
+eyebrow="Workspace Governance"
+title="Company Ownership & Controls"
+description="Manage ownership, recovery, and permanent workspace controls. These actions are restricted to authorized company leaders."
 >
-<p className="text-xs font-black uppercase tracking-[0.3em] text-orange-500">
-Workspace Governance
-</p>
-
-<h2 className="mt-3 text-3xl font-black text-slate-950">
-Company Ownership & Controls
-</h2>
-
-<p className="mt-4 text-sm leading-7 text-slate-600">
-Manage ownership, recovery, and permanent workspace controls. These
-actions are restricted to authorized company leaders.
-</p>
-
-<div className="mt-6 rounded-3xl bg-slate-50 p-5">
-<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+<div className="mt-6 rounded-[26px] border border-white/10 bg-[#061426]/70 p-5">
+<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">
 Security posture
 </p>
 
-<p className="mt-2 text-3xl font-black text-slate-950">
-{workspaceStage}
-</p>
+<p className="mt-2 text-3xl font-black text-white">{workspaceStage}</p>
 
-<p className="mt-2 text-sm font-semibold leading-6 text-slate-600">
+<p className="mt-2 text-sm font-semibold leading-6 text-slate-400">
 {governanceMessage}
 </p>
 </div>
 
 {!company.user_id ? (
-<div className="mt-6 rounded-3xl border border-orange-200 bg-orange-50 p-5">
-<p className="text-sm font-black text-orange-700">
+<div className="mt-6 rounded-[26px] border border-orange-300/20 bg-orange-400/10 p-5">
+<p className="text-sm font-black text-orange-200">
 Emergency Ownership Recovery
 </p>
 
-<p className="mt-2 text-sm leading-6 text-orange-700">
+<p className="mt-2 text-sm leading-6 text-orange-200/80">
 If this workspace has no assigned owner, recover ownership for
 the current authenticated workspace member.
 </p>
@@ -446,25 +384,24 @@ the current authenticated workspace member.
 <RecoverOwnershipButton />
 </div>
 ) : (
-<div className="mt-6 rounded-3xl border border-green-200 bg-green-50 p-5">
-<p className="text-sm font-black text-green-700">
+<div className="mt-6 rounded-[26px] border border-emerald-300/20 bg-emerald-400/10 p-5">
+<p className="text-sm font-black text-emerald-200">
 Ownership Active
 </p>
 
-<p className="mt-2 text-sm leading-6 text-green-700">
-This workspace has an assigned owner and recovery mode is
-disabled.
+<p className="mt-2 text-sm leading-6 text-emerald-200/80">
+This workspace has an assigned owner and recovery mode is disabled.
 </p>
 </div>
 )}
 
 {canDelete ? (
-<div className="mt-6 rounded-3xl border border-red-200 bg-red-50 p-5">
-<p className="text-sm font-black text-red-700">
+<div className="mt-6 rounded-[26px] border border-red-300/20 bg-red-400/10 p-5">
+<p className="text-sm font-black text-red-200">
 Permanent Workspace Removal
 </p>
 
-<p className="mt-2 text-sm leading-6 text-red-700">
+<p className="mt-2 text-sm leading-6 text-red-200/80">
 Removing this workspace permanently deletes the company record.
 Use this only when the company workspace must be retired from
 Nexus Pavilion.
@@ -480,24 +417,83 @@ companyName={company.name || "Company Workspace"}
 ) : (
 <EmptyState message="Only authorized company leaders can manage workspace governance controls." />
 )}
-</div>
+</ExecutivePanel>
 </section>
 </>
 );
 }
 
+function ExecutivePanel({
+id,
+eyebrow,
+title,
+description,
+action,
+children,
+}: {
+id?: string;
+eyebrow: string;
+title: string;
+description?: string;
+action?: React.ReactNode;
+children: React.ReactNode;
+}) {
+return (
+<section
+id={id}
+className="mt-8 rounded-[32px] border border-white/10 bg-white/[0.045] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.28)] backdrop-blur-xl sm:p-8"
+>
+<div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+<div>
+<p className="text-xs font-black uppercase tracking-[0.3em] text-[#C8A646]">
+{eyebrow}
+</p>
+
+<h2 className="mt-3 text-3xl font-black text-white">{title}</h2>
+
+{description ? (
+<p className="mt-3 max-w-3xl text-sm font-semibold leading-7 text-slate-400">
+{description}
+</p>
+) : null}
+</div>
+
+{action}
+</div>
+
+{children}
+</section>
+);
+}
+
 function RoleRow({ label, value }: { label: string; value: number }) {
 return (
-<div className="flex items-center justify-between rounded-3xl bg-slate-50 p-5">
-<p className="text-sm font-black text-slate-700">{label}</p>
-<p className="text-2xl font-black text-slate-950">{value}</p>
+<div className="flex items-center justify-between rounded-[24px] border border-white/10 bg-[#061426]/70 p-5">
+<p className="text-sm font-black text-slate-300">{label}</p>
+<p className="text-2xl font-black text-white">{value}</p>
 </div>
+);
+}
+
+function StatusPill({
+children,
+className,
+}: {
+children: React.ReactNode;
+className: string;
+}) {
+return (
+<span
+className={`inline-flex rounded-full border px-3 py-1 text-xs font-black uppercase tracking-[0.12em] ${className}`}
+>
+{children}
+</span>
 );
 }
 
 function EmptyState({ message }: { message: string }) {
 return (
-<div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50 p-8 text-center">
+<div className="rounded-[26px] border border-dashed border-white/15 bg-white/[0.035] p-8 text-center">
 <p className="text-sm font-bold text-slate-500">{message}</p>
 </div>
 );

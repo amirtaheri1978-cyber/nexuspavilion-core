@@ -25,6 +25,12 @@ error?: string;
 
 type EditableRole = "admin" | "buyer" | "vendor";
 
+const ROLE_OPTIONS: { value: EditableRole; label: string }[] = [
+{ value: "vendor", label: "Vendor" },
+{ value: "buyer", label: "Buyer" },
+{ value: "admin", label: "Admin" },
+];
+
 function normalizeRole(role: string | null): EditableRole {
 if (role === "admin") return "admin";
 if (role === "buyer") return "buyer";
@@ -160,7 +166,7 @@ setLoadingAction("");
 
 if (!canManageMemberAccess && !canChangeMemberRoles) {
 return (
-<div className="mt-4 rounded-2xl bg-white px-4 py-3">
+<div className="mt-4 rounded-[22px] border border-white/10 bg-white/[0.035] px-4 py-3">
 <p className="text-xs font-bold leading-5 text-slate-500">
 {getPermissionMessage({
 isCurrentUser,
@@ -173,24 +179,26 @@ canChangeMemberRoles,
 }
 
 return (
-<div className="mt-4 rounded-2xl bg-white p-4">
+<div className="mt-4 rounded-[22px] border border-white/10 bg-[#061426]/80 p-4">
 <div className="grid gap-3 sm:grid-cols-[1fr_auto_auto]">
 <select
 value={selectedRole}
 onChange={(event) => setSelectedRole(event.target.value as EditableRole)}
 disabled={!canChangeMemberRoles || loadingAction !== ""}
-className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-black uppercase tracking-[0.15em] text-slate-700 outline-none transition focus:border-slate-950 focus:bg-white disabled:cursor-not-allowed disabled:opacity-50"
+className="rounded-2xl border border-white/10 bg-[#07111F] px-3 py-2 text-xs font-black uppercase tracking-[0.15em] text-white outline-none transition focus:border-[#2CC4E8]/40 disabled:cursor-not-allowed disabled:opacity-50"
 >
-<option value="vendor">Vendor</option>
-<option value="buyer">Buyer</option>
-<option value="admin">Admin</option>
+{ROLE_OPTIONS.map((option) => (
+<option key={option.value} value={option.value} className="bg-[#061426]">
+{option.label}
+</option>
+))}
 </select>
 
 <button
 type="button"
 onClick={handleUpdateRole}
 disabled={!canChangeMemberRoles || loadingAction === "role"}
-className="rounded-full bg-slate-950 px-4 py-2 text-xs font-black text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
+className="rounded-full border border-[#C8A646]/25 bg-[#C8A646]/10 px-4 py-2 text-xs font-black text-[#F5D77B] transition hover:bg-[#C8A646]/15 disabled:cursor-not-allowed disabled:opacity-50"
 >
 {loadingAction === "role" ? "Saving..." : "Save Role"}
 </button>
@@ -199,22 +207,20 @@ className="rounded-full bg-slate-950 px-4 py-2 text-xs font-black text-white tra
 type="button"
 onClick={handleRemoveMember}
 disabled={!canManageMemberAccess || loadingAction === "remove"}
-className="rounded-full bg-red-700 px-4 py-2 text-xs font-black text-white transition hover:bg-red-800 disabled:cursor-not-allowed disabled:opacity-50"
+className="rounded-full border border-red-300/20 bg-red-400/10 px-4 py-2 text-xs font-black text-red-200 transition hover:bg-red-400/15 disabled:cursor-not-allowed disabled:opacity-50"
 >
 {loadingAction === "remove" ? "Removing..." : "Remove"}
 </button>
 </div>
 
 {message ? (
-<p className="mt-3 text-xs font-bold leading-5 text-green-700">
+<p className="mt-3 text-xs font-bold leading-5 text-emerald-300">
 {message}
 </p>
 ) : null}
 
 {error ? (
-<p className="mt-3 text-xs font-bold leading-5 text-red-600">
-{error}
-</p>
+<p className="mt-3 text-xs font-bold leading-5 text-red-300">{error}</p>
 ) : null}
 </div>
 );

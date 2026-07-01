@@ -265,8 +265,52 @@ pendingInviteCount: pendingInvitations.length,
 return (
 <main className="relative min-h-screen overflow-hidden bg-[#061426] px-4 py-6 text-white sm:px-6 lg:px-10">
 <div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(circle_at_top_left,rgba(44,196,232,0.18),transparent_34%),radial-gradient(circle_at_top_right,rgba(200,166,70,0.15),transparent_30%),linear-gradient(180deg,#061426_0%,#07111F_45%,#020617_100%)]" />
+<div className="pointer-events-none fixed inset-0 -z-10 bg-[linear-gradient(120deg,rgba(255,255,255,0.055),transparent_32%,rgba(200,166,70,0.05)_66%,transparent)]" />
 
 <div className="mx-auto w-full max-w-[1680px]">
+<section className="mb-8 rounded-[34px] border border-white/10 bg-white/[0.045] p-6 shadow-[0_28px_90px_rgba(0,0,0,0.32)] backdrop-blur-2xl sm:p-8">
+<div className="flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
+<div>
+<p className="text-[11px] font-black uppercase tracking-[0.34em] text-[#C8A646]">
+Enterprise Workspace Settings
+</p>
+
+<h1 className="mt-4 text-4xl font-black tracking-[-0.05em] text-white sm:text-5xl">
+Company Command & Governance
+</h1>
+
+<p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-300 sm:text-base">
+Manage company identity, access governance, team structure,
+invitations, procurement readiness, and workspace launch
+controls from one executive-grade command layer.
+</p>
+</div>
+
+<div className="flex flex-wrap gap-3">
+<Link
+href="/dashboard"
+className="rounded-full border border-white/10 bg-white/[0.055] px-5 py-3 text-sm font-black text-white transition hover:bg-white/[0.08]"
+>
+Dashboard
+</Link>
+
+<Link
+href="/rfq/new"
+className="rounded-full bg-gradient-to-r from-[#B9902F] via-[#C8A646] to-[#F5D77B] px-5 py-3 text-sm font-black text-slate-950 shadow-[0_18px_55px_rgba(200,166,70,0.24)] transition hover:scale-[1.01]"
+>
+Create RFQ
+</Link>
+
+<Link
+href="/analytics"
+className="rounded-full border border-[#2CC4E8]/25 bg-[#2CC4E8]/10 px-5 py-3 text-sm font-black text-[#9BE8F8] transition hover:bg-[#2CC4E8]/15"
+>
+Executive Analytics
+</Link>
+</div>
+</div>
+</section>
+
 <CompanyCommandCenter
 companyName={company.name || "Company Workspace"}
 companyStatus={company.status || "verified"}
@@ -283,6 +327,13 @@ rfqCount={rfqCount || 0}
 hasOwner={hasOwner}
 hasCompanyProfile={hasCompanyProfile}
 />
+
+<section className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+<FooterMetric title="Total RFQs" value={rfqCount || 0} />
+<FooterMetric title="Active RFQs" value={activeRfqCount || 0} />
+<FooterMetric title="Quotes" value={quoteCount || 0} />
+<FooterMetric title="Awards" value={awardedCount || 0} />
+</section>
 
 <CompanyGovernanceCenter
 workspaceStage={workspaceStage}
@@ -314,13 +365,6 @@ workspaceStage={workspaceStage}
 governanceMessage={governanceMessage}
 siteUrl={SITE_URL}
 />
-
-<section className="mt-8 grid gap-6 md:grid-cols-4">
-<FooterMetric title="Total RFQs" value={rfqCount || 0} />
-<FooterMetric title="Active RFQs" value={activeRfqCount || 0} />
-<FooterMetric title="Quotes" value={quoteCount || 0} />
-<FooterMetric title="Awards" value={awardedCount || 0} />
-</section>
 </div>
 </main>
 );
@@ -416,12 +460,12 @@ title: string;
 value: number | string;
 }) {
 return (
-<div className="rounded-3xl border border-white/10 bg-white/[0.045] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.26)]">
+<div className="rounded-[28px] border border-white/10 bg-white/[0.045] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.26)] backdrop-blur-xl">
 <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">
 {title}
 </p>
 
-<p className="mt-2 text-3xl font-black text-white">{value}</p>
+<p className="mt-3 text-4xl font-black text-white">{value}</p>
 </div>
 );
 }

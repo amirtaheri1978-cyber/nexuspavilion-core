@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 
 import { createClient } from "@/lib/supabase/server";
 
@@ -68,10 +69,10 @@ if (status === "closed") return "Closed";
 return "Open";
 }
 
-function getStatusClass(status: string | null) {
-if (status === "awarded") return "bg-green-100 text-green-700";
-if (status === "closed") return "bg-slate-200 text-slate-600";
-return "bg-orange-100 text-orange-700";
+function getStatusTone(status: string | null) {
+if (status === "awarded") return "success";
+if (status === "closed") return "neutral";
+return "warning";
 }
 
 function getActionLabel(status: string | null) {
@@ -171,6 +172,13 @@ return "Not specified";
 return `$${amount.toLocaleString()}`;
 }
 
+function getTotalBudget(rfqs: RFQ[]) {
+return rfqs.reduce((total, rfq) => {
+const amount = Number(rfq.budget || 0);
+return total + (Number.isFinite(amount) ? amount : 0);
+}, 0);
+}
+
 function isSupplierVisibleRfq(rfq: RFQ, invitedRfqIds: Set<string>) {
 const sourcingMethod = getSourcingMethod(rfq.sourcing_method);
 const contractFramework = getContractFramework(rfq.contract_framework);
@@ -194,7 +202,11 @@ return invitedRfqIds.has(rfq.id);
 return false;
 }
 
-function getVisibilityBadge(rfq: RFQ, supplierMode: boolean, invitedRfqIds: Set<string>) {
+function getVisibilityBadge(
+rfq: RFQ,
+supplierMode: boolean,
+invitedRfqIds: Set<string>
+) {
 const sourcingMethod = getSourcingMethod(rfq.sourcing_method);
 const contractFramework = getContractFramework(rfq.contract_framework);
 
@@ -209,6 +221,24 @@ if (invitedRfqIds.has(rfq.id)) return "Invited Access";
 if (sourcingMethod === "open") return "Open Marketplace";
 
 return "Restricted";
+}
+
+function getProcurementHealth({
+total,
+open,
+awarded,
+closed,
+}: {
+total: number;
+open: number;
+awarded: number;
+closed: number;
+}) {
+if (total === 0) return "Insufficient Data";
+if (awarded > 0 && open > 0) return "Active";
+if (open > 0) return "Pipeline Active";
+if (closed > 0 || awarded > 0) return "Completed";
+return "Ready";
 }
 
 export default async function RFQMarketplacePage() {
@@ -275,11 +305,7 @@ const rfqList = supplierMode
 : rawRfqList;
 
 const openCount = rfqList.filter((rfq) => isOpenRFQ(rfq.status)).length;
-
-const awardedCount = rfqList.filter(
-(rfq) => rfq.status === "awarded"
-).length;
-
+const awardedCount = rfqList.filter((rfq) => rfq.status === "awarded").length;
 const closedCount = rfqList.filter((rfq) => rfq.status === "closed").length;
 
 const materialCount = rfqList.filter(
@@ -314,82 +340,148 @@ const frameworkCount = rfqList.filter(
 (rfq) => getContractFramework(rfq.contract_framework) === "framework"
 ).length;
 
+const totalBudget = getTotalBudget(rfqList);
+
+const procurementHealth = getProcurementHealth({
+total: rfqList.length,
+open: openCount,
+awarded: awardedCount,
+closed: closedCount,
+});
+
 return (
-<main className="min-h-screen bg-[#f6f6f3] px-8 py-10">
-<div className="mx-auto max-w-7xl">
-<div className="flex items-start justify-between gap-6">
+<main className="relative min-h-screen overflow-hidden bg-[#061426] px-4 py-6 text-white sm:px-6 lg:px-10">
+<div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(circle_at_top_left,rgba(44,196,232,0.18),transparent_34%),radial-gradient(circle_at_top_right,rgba(200,166,70,0.15),transparent_30%),linear-gradient(180deg,#061426_0%,#07111F_45%,#020617_100%)]" />
+<div className="pointer-events-none fixed inset-0 -z-10 bg-[linear-gradient(120deg,rgba(255,255,255,0.055),transparent_32%,rgba(200,166,70,0.05)_66%,transparent)]" />
+
+<div className="mx-auto w-full max-w-[1680px]">
+<section className="rounded-[38px] border border-white/10 bg-white/[0.045] p-6 shadow-[0_32px_110px_rgba(0,0,0,0.42)] backdrop-blur-2xl sm:p-8 lg:p-10">
+<div className="flex flex-col gap-8 xl:flex-row xl:items-start xl:justify-between">
 <div>
-<p className="text-xs font-black uppercase tracking-[0.35em] text-orange-500">
-Construction Procurement Marketplace
+<p className="text-xs font-black uppercase tracking-[0.34em] text-[#C8A646]">
+Executive Procurement Workspace
 </p>
 
-<h1 className="mt-3 text-5xl font-black text-slate-950">
-RFQ Marketplace
+<h1 className="mt-4 max-w-5xl text-4xl font-black tracking-[-0.05em] text-white sm:text-5xl xl:text-[64px] xl:leading-[0.98]">
+RFQ Command Center
 </h1>
 
-<p className="mt-4 max-w-3xl text-sm leading-6 text-slate-600">
+<p className="mt-5 max-w-4xl text-sm font-semibold leading-7 text-slate-300 sm:text-base">
 {getPageDescription(company?.network_role)}
 </p>
 
-<p className="mt-3 text-xs font-black uppercase tracking-[0.2em] text-slate-400">
-Marketplace Mode: {getMarketplaceMode(company?.network_role)}
-</p>
+<div className="mt-6 flex flex-wrap gap-3">
+<ExecutiveBadge tone="blue">
+{getMarketplaceMode(company?.network_role)}
+</ExecutiveBadge>
+
+<ExecutiveBadge tone={rfqList.length > 0 ? "success" : "warning"}>
+{rfqList.length > 0 ? "Available" : "Insufficient Data"}
+</ExecutiveBadge>
+
+<ExecutiveBadge tone="neutral">
+{supplierMode ? "Supplier View" : "Buyer Workspace"}
+</ExecutiveBadge>
+</div>
 </div>
 
+<div className="grid min-w-full gap-4 sm:grid-cols-2 xl:min-w-[520px]">
+<HeroMetric title="Visible RFQs" value={String(rfqList.length)} />
+<HeroMetric title="Procurement Health" value={procurementHealth} />
+<HeroMetric title="Open Pipeline" value={String(openCount)} />
+<HeroMetric title="Total Budget" value={getBudgetLabel(totalBudget)} />
+</div>
+</div>
+
+<div className="mt-8 flex flex-wrap gap-3">
 {canCreateRFQ(profile?.role, company?.network_role) ? (
 <Link
 href="/rfq/new"
-className="rounded-full bg-slate-950 px-6 py-3 text-sm font-bold text-white transition hover:bg-slate-800"
+className="rounded-full bg-gradient-to-r from-[#B9902F] via-[#C8A646] to-[#F5D77B] px-6 py-3 text-sm font-black text-slate-950 shadow-[0_18px_55px_rgba(200,166,70,0.24)] transition hover:scale-[1.01]"
 >
 Create RFQ
 </Link>
 ) : null}
-</div>
 
-<section className="mt-8 grid gap-4 md:grid-cols-4">
+<Link
+href="/dashboard"
+className="rounded-full border border-white/10 bg-white/[0.055] px-6 py-3 text-sm font-black text-white transition hover:bg-white/[0.08]"
+>
+Dashboard
+</Link>
+
+<Link
+href="/analytics"
+className="rounded-full border border-[#2CC4E8]/25 bg-[#2CC4E8]/10 px-6 py-3 text-sm font-black text-[#9BE8F8] transition hover:bg-[#2CC4E8]/15"
+>
+Executive Analytics
+</Link>
+</div>
+</section>
+
+<section className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
 <StatusCard title="Visible RFQs" value={rfqList.length} />
 <StatusCard title="Open" value={openCount} />
 <StatusCard title="Awarded" value={awardedCount} />
 <StatusCard title="Closed" value={closedCount} />
 </section>
 
-<section className="mt-6 grid gap-4 md:grid-cols-4">
+<section className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
 <StatusCard title="Material RFQs" value={materialCount} />
 <StatusCard title="Trade RFQs" value={tradeCount} />
 <StatusCard title="Equipment RFQs" value={equipmentCount} />
 <StatusCard title="Service RFQs" value={serviceCount} />
 </section>
 
-<section className="mt-6 grid gap-4 md:grid-cols-4">
+<section className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
 <StatusCard title="Open Tender" value={openTenderCount} />
 <StatusCard title="Invited" value={invitedCount} />
 <StatusCard title="Sealed Bid" value={sealedBidCount} />
 <StatusCard title="Framework" value={frameworkCount} />
 </section>
 
-<section className="mt-10 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+<section className="mt-10 rounded-[36px] border border-white/10 bg-white/[0.045] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.28)] backdrop-blur-xl sm:p-8">
+<div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+<div>
+<p className="text-xs font-black uppercase tracking-[0.3em] text-[#C8A646]">
+Procurement Pipeline
+</p>
+
+<h2 className="mt-3 text-3xl font-black text-white">
+Active RFQ Records
+</h2>
+
+<p className="mt-3 max-w-3xl text-sm font-semibold leading-7 text-slate-400">
+Review procurement opportunities, sourcing controls, contract
+framework, budget visibility, and marketplace access from one
+executive RFQ workspace.
+</p>
+</div>
+
+<ExecutiveBadge tone="blue">
+{rfqList.length} Records
+</ExecutiveBadge>
+</div>
+
+<div className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
 {rfqList.length > 0 ? (
 rfqList.map((rfq) => (
 <Link
 key={rfq.id}
 href={`/rfq/${rfq.slug}`}
-className="group rounded-[28px] border border-black/5 bg-white p-7 transition hover:-translate-y-1 hover:shadow-xl"
+className="group rounded-[30px] border border-white/10 bg-[#061426]/72 p-6 shadow-[0_22px_70px_rgba(0,0,0,0.22)] transition hover:-translate-y-1 hover:border-[#2CC4E8]/25 hover:bg-[#07111F]"
 >
 <div className="flex items-start justify-between gap-4">
-<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-[#C8A646]">
 {rfq.category || "Procurement"}
 </p>
 
-<span
-className={`rounded-full px-3 py-1 text-xs font-black ${getStatusClass(
-rfq.status
-)}`}
->
+<ExecutiveBadge tone={getStatusTone(rfq.status)}>
 {getStatusLabel(rfq.status)}
-</span>
+</ExecutiveBadge>
 </div>
 
-<h2 className="mt-3 text-2xl font-black text-slate-950">
+<h2 className="mt-4 text-2xl font-black leading-tight text-white">
 {rfq.title || "Untitled RFQ"}
 </h2>
 
@@ -399,81 +491,144 @@ rfq.status
 <Badge>{getFrameworkLabel(rfq.contract_framework)}</Badge>
 </div>
 
-<p className="mt-4 line-clamp-3 text-sm leading-relaxed text-slate-600">
+<p className="mt-4 line-clamp-3 text-sm font-semibold leading-7 text-slate-400">
 {rfq.description || "No description provided."}
 </p>
 
 <div className="mt-6 grid grid-cols-2 gap-4 text-sm">
-<div>
-<p className="font-bold text-slate-400">Location</p>
-<p className="mt-1 font-semibold text-slate-700">
-{rfq.location || "N/A"}
-</p>
-</div>
-
-<div>
-<p className="font-bold text-slate-400">Budget</p>
-<p className="mt-1 font-semibold text-slate-700">
-{getBudgetLabel(rfq.budget)}
-</p>
-</div>
+<SignalBlock label="Location" value={rfq.location || "N/A"} />
+<SignalBlock label="Budget" value={getBudgetLabel(rfq.budget)} />
 </div>
 
 <div className="mt-6 flex items-center justify-between gap-4">
-<span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-black text-slate-600">
+<span className="rounded-full border border-white/10 bg-white/[0.055] px-3 py-1 text-xs font-black text-slate-300">
 {getVisibilityBadge(rfq, supplierMode, invitedRfqIds)}
 </span>
 
-<span className="text-sm font-black text-slate-950 transition group-hover:translate-x-1">
+<span className="text-sm font-black text-[#9BE8F8] transition group-hover:translate-x-1">
 {getActionLabel(rfq.status)}
 </span>
 </div>
 </Link>
 ))
 ) : (
-<div className="col-span-full rounded-[28px] border border-dashed border-slate-300 bg-white p-12 text-center">
-<h2 className="text-2xl font-black text-slate-950">
-No RFQs found
-</h2>
-
-<p className="mt-2 text-sm leading-6 text-slate-600">
-{supplierMode
+<div className="col-span-full">
+<EmptyState
+title="No RFQs Found"
+description={
+supplierMode
 ? "No public or invited RFQs are currently available for your supplier account."
-: "Create your first classified construction procurement opportunity."}
-</p>
-
-{canCreateRFQ(profile?.role, company?.network_role) ? (
-<Link
-href="/rfq/new"
-className="mt-6 inline-flex rounded-full bg-slate-950 px-6 py-3 text-sm font-bold text-white"
->
-Create RFQ
-</Link>
-) : null}
+: "Create your first classified construction procurement opportunity."
+}
+canCreate={canCreateRFQ(profile?.role, company?.network_role)}
+/>
 </div>
 )}
+</div>
 </section>
 </div>
 </main>
 );
 }
 
-function StatusCard({ title, value }: { title: string; value: number }) {
+function HeroMetric({ title, value }: { title: string; value: string }) {
 return (
-<div className="rounded-3xl border border-black/5 bg-white p-6">
-<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+<div className="rounded-[26px] border border-white/10 bg-[#061426]/75 p-5">
+<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">
 {title}
 </p>
 
-<p className="mt-3 text-3xl font-black text-slate-950">{value}</p>
+<p className="mt-2 text-2xl font-black text-white">{value}</p>
 </div>
 );
 }
 
-function Badge({ children }: { children: React.ReactNode }) {
+function StatusCard({ title, value }: { title: string; value: number }) {
 return (
-<span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-black text-slate-600">
+<div className="rounded-[28px] border border-white/10 bg-white/[0.045] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.26)] backdrop-blur-xl">
+<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">
+{title}
+</p>
+
+<p className="mt-3 text-4xl font-black text-white">{value}</p>
+</div>
+);
+}
+
+function Badge({ children }: { children: ReactNode }) {
+return (
+<span className="rounded-full border border-white/10 bg-white/[0.055] px-3 py-1 text-xs font-black text-slate-300">
 {children}
 </span>
+);
+}
+
+function ExecutiveBadge({
+children,
+tone = "neutral",
+}: {
+children: ReactNode;
+tone?: "success" | "warning" | "blue" | "neutral";
+}) {
+const toneClass =
+tone === "success"
+? "border-emerald-300/20 bg-emerald-400/10 text-emerald-300"
+: tone === "warning"
+? "border-orange-300/20 bg-orange-400/10 text-orange-300"
+: tone === "blue"
+? "border-[#2CC4E8]/25 bg-[#2CC4E8]/10 text-[#9BE8F8]"
+: "border-white/10 bg-white/[0.055] text-slate-300";
+
+return (
+<span
+className={`inline-flex rounded-full border px-3 py-1 text-xs font-black uppercase tracking-[0.16em] ${toneClass}`}
+>
+{children}
+</span>
+);
+}
+
+function SignalBlock({ label, value }: { label: string; value: string }) {
+return (
+<div className="rounded-[22px] border border-white/10 bg-white/[0.035] p-4">
+<p className="text-xs font-black uppercase tracking-[0.18em] text-slate-500">
+{label}
+</p>
+
+<p className="mt-2 text-sm font-black text-white">{value}</p>
+</div>
+);
+}
+
+function EmptyState({
+title,
+description,
+canCreate,
+}: {
+title: string;
+description: string;
+canCreate: boolean;
+}) {
+return (
+<div className="rounded-[30px] border border-dashed border-white/15 bg-white/[0.035] p-10 text-center">
+<p className="text-xs font-black uppercase tracking-[0.3em] text-[#C8A646]">
+Procurement Pipeline
+</p>
+
+<h2 className="mt-4 text-3xl font-black text-white">{title}</h2>
+
+<p className="mx-auto mt-3 max-w-2xl text-sm font-semibold leading-7 text-slate-400">
+{description}
+</p>
+
+{canCreate ? (
+<Link
+href="/rfq/new"
+className="mt-7 inline-flex rounded-full bg-gradient-to-r from-[#B9902F] via-[#C8A646] to-[#F5D77B] px-6 py-3 text-sm font-black text-slate-950 shadow-[0_18px_55px_rgba(200,166,70,0.24)] transition hover:scale-[1.01]"
+>
+Create RFQ
+</Link>
+) : null}
+</div>
 );
 }
