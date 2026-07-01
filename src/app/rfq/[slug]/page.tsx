@@ -10,7 +10,7 @@ import RFQDocumentLibrary from "@/components/rfq-document-library";
 import RFQDocumentUpload from "@/components/rfq-document-upload";
 import { createClient } from "@/lib/supabase/server";
 import { ExecutiveOpportunityRanking } from "@/components/executive/executive-opportunity-ranking";
-
+import { ExecutiveDecisionCenter } from "@/components/rfq-workspace/executive-decision-center";
 type PageProps = {
 params: Promise<{ slug: string }>;
 };
@@ -1522,6 +1522,20 @@ RFQ deadline has passed.
 {isOwner ? (
 <RFQAIAdvisor rfqId={rfq.id} initialReview={latestAiReview} />
 ) : null}
+
+<ExecutiveDecisionCenter
+rfqSlug={rfq.slug}
+isOwner={isOwner}
+isOpen={isOpen}
+commercialEvaluationUnlocked={commercialEvaluationUnlocked}
+healthScore={healthScore}
+quoteCount={quoteList.length}
+documentCount={rfqAttachments.length}
+addendaCount={rfqAddenda.length}
+potentialSavings={potentialSavings}
+recommendedQuote={recommendedQuote}
+/>
+
 
 {isOwner && recommendedQuote && commercialEvaluationUnlocked ? (
 <section className="mt-8 rounded-[36px] bg-slate-950 p-6 text-white shadow-[0_24px_80px_rgba(2,6,23,0.24)] sm:p-8">
