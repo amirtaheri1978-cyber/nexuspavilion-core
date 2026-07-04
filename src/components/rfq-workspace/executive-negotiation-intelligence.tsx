@@ -1,3 +1,4 @@
+import { ExecutiveMiniTile } from "@/components/rfq-workspace/shared/executive-mini-tile";
 type NegotiationQuote = {
 amountNumber: number;
 awardConfidence: number;

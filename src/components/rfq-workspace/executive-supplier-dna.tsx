@@ -1,3 +1,4 @@
+import { ExecutiveMiniTile } from "@/components/rfq-workspace/shared/executive-mini-tile";
 type SupplierDNAQuote = {
 rank: number;
 amountNumber: number;
