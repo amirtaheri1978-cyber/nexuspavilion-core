@@ -17,6 +17,7 @@ import { ExecutiveReadinessMeter } from "@/components/rfq-workspace/executive-re
 import { ExecutiveAIExplainability } from "@/components/rfq-workspace/executive-ai-explainability";
 import { ExecutiveSupplierDNA } from "@/components/rfq-workspace/executive-supplier-dna";
 import { ExecutiveNegotiationIntelligence } from "@/components/rfq-workspace/executive-negotiation-intelligence";
+import { AwardScenarioSimulator } from "@/components/rfq-workspace/award-scenario-simulator";
 
 type PageProps = {
 params: Promise<{ slug: string }>;
@@ -1607,6 +1608,16 @@ recommendedQuote={recommendedQuote}
 averageBid={averageBid}
 lowestAmount={lowestAmount}
 quoteCount={quoteList.length}
+budget={budget}
+/>
+
+<AwardScenarioSimulator
+isOwner={isOwner}
+commercialEvaluationUnlocked={commercialEvaluationUnlocked}
+recommendedQuote={recommendedQuote}
+averageBid={averageBid}
+quoteCount={quoteList.length}
+healthScore={healthScore}
 budget={budget}
 />
 
