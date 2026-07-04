@@ -4,24 +4,12 @@ calculateSupplierReliability,
 } from "@/lib/analytics/executive-intelligence";
 import { ExecutiveMiniTile } from "@/components/rfq-workspace/shared/executive-mini-tile";
 import { ExecutiveProgress } from "@/components/rfq-workspace/shared/executive-progress";
-type SupplierDNAQuote = {
-rank: number;
-amountNumber: number;
-awardConfidence: number;
-riskLevel: string;
-totalScore: number;
-priceScore: number;
-timelineScore: number;
-riskScore: number;
-performanceScore: number;
-budgetVariance: number;
-lowestBidVariance: number;
-};
+import type { ExecutiveQuote } from "@/types/executive";
 
 type ExecutiveSupplierDNAProps = {
 isOwner: boolean;
 commercialEvaluationUnlocked: boolean;
-recommendedQuote: SupplierDNAQuote | null;
+recommendedQuote: ExecutiveQuote | null;
 averageBid: number;
 lowestAmount: number | null;
 quoteCount: number;
@@ -44,7 +32,7 @@ quote,
 averageBid,
 lowestAmount,
 }: {
-quote: SupplierDNAQuote;
+quote: ExecutiveQuote;
 averageBid: number;
 lowestAmount: number | null;
 }) {
