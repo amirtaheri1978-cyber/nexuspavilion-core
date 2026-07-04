@@ -1,6 +1,11 @@
 
 import Link from "next/link";
 
+import {
+calculateDecisionReadiness,
+calculateScenarioRecommendation,
+} from "@/lib/analytics/executive-intelligence";
+
 type DecisionStatus = "ready" | "locked" | "watch" | "not_ready";
 
 type ExecutiveDecisionCenterProps = {
@@ -56,36 +61,6 @@ if (status === "ready") return "Award Ready";
 if (status === "locked") return "Commercial Locked";
 if (status === "watch") return "Executive Review";
 return "Not Ready";
-}
-
-function getDecisionNarrative({
-status,
-recommendedQuote,
-quoteCount,
-documentCount,
-}: {
-status: DecisionStatus;
-recommendedQuote: ExecutiveDecisionCenterProps["recommendedQuote"];
-quoteCount: number;
-documentCount: number;
-}) {
-if (status === "ready" && recommendedQuote) {
-return `Nexus Pavilion has identified a recommended award path with ${recommendedQuote.awardConfidence}% confidence. Executive review should validate commercial fit, scope alignment, and final governance before award.`;
-}
-
-if (status === "locked") {
-return "Commercial submissions remain protected under blind bidding control. Buyer-side users can monitor participation and readiness, but award decisions should wait until commercial opening.";
-}
-
-if (quoteCount > 0) {
-return "Supplier participation exists, but the workspace needs stronger decision intelligence before executive award validation.";
-}
-
-if (documentCount === 0) {
-return "This RFQ needs a stronger document package before supplier engagement and executive decision review.";
-}
-
-return "This RFQ is still building toward decision readiness. Continue improving supplier coverage, documentation, and commercial intelligence.";
 }
 
 function getChecklist({
@@ -160,7 +135,25 @@ healthScore,
 });
 
 const completedItems = checklist.filter((item) => item.complete).length;
-const readinessScore = Math.round((completedItems / checklist.length) * 100);
+
+const decisionReadiness = calculateDecisionReadiness({
+healthScore,
+quoteCount,
+documentCount,
+addendaCount,
+commercialEvaluationUnlocked,
+hasRecommendedQuote: Boolean(recommendedQuote),
+});
+
+const scenarioRecommendation = recommendedQuote
+? calculateScenarioRecommendation({
+awardConfidence: recommendedQuote.awardConfidence,
+healthScore,
+quoteCount,
+riskLevel: recommendedQuote.riskLevel,
+commercialEvaluationUnlocked,
+})
+: null;
 
 return (
 <section className="mt-8 overflow-hidden rounded-[40px] border border-white/10 bg-slate-950 text-white shadow-[0_30px_100px_rgba(2,6,23,0.26)]">
@@ -180,7 +173,7 @@ Executive Decision Center
 </span>
 
 <span className="rounded-full border border-cyan-300/20 bg-cyan-400/10 px-4 py-2 text-xs font-black uppercase tracking-[0.16em] text-cyan-300">
-Readiness {readinessScore}%
+Readiness {decisionReadiness.score}%
 </span>
 </div>
 
@@ -189,18 +182,14 @@ Executive award path and decision readiness
 </h2>
 
 <p className="mt-4 max-w-3xl text-sm font-semibold leading-7 text-slate-300">
-{getDecisionNarrative({
-status,
-recommendedQuote,
-quoteCount,
-documentCount,
-})}
+{scenarioRecommendation?.recommendation ??
+decisionReadiness.recommendation}
 </p>
 
 <div className="mt-8 grid gap-4 sm:grid-cols-2">
 <DecisionMetric
 title="Award Readiness"
-value={`${readinessScore}%`}
+value={`${decisionReadiness.score}%`}
 detail={`${completedItems}/${checklist.length} controls complete`}
 />
 
@@ -219,7 +208,9 @@ detail={quoteCount >= 3 ? "Healthy competition" : "Needs coverage"}
 <DecisionMetric
 title="Health Score"
 value={`${healthScore}/100`}
-detail={healthScore >= 72 ? "Executive threshold met" : "Needs attention"}
+detail={
+healthScore >= 72 ? "Executive threshold met" : "Needs attention"
+}
 />
 </div>
 
@@ -309,9 +300,18 @@ Recommended Supplier Intelligence
 <MiniScore title="Overall" value={`${recommendedQuote.totalScore}/100`} />
 <MiniScore title="Risk" value={recommendedQuote.riskLevel} />
 <MiniScore title="Price" value={`${recommendedQuote.priceScore}/100`} />
-<MiniScore title="Timeline" value={`${recommendedQuote.timelineScore}/100`} />
-<MiniScore title="Performance" value={`${recommendedQuote.performanceScore}/100`} />
-<MiniScore title="Risk Score" value={`${recommendedQuote.riskScore}/100`} />
+<MiniScore
+title="Timeline"
+value={`${recommendedQuote.timelineScore}/100`}
+/>
+<MiniScore
+title="Performance"
+value={`${recommendedQuote.performanceScore}/100`}
+/>
+<MiniScore
+title="Risk Score"
+value={`${recommendedQuote.riskScore}/100`}
+/>
 </div>
 </div>
 ) : (
@@ -361,7 +361,9 @@ return (
 
 <p className="mt-3 text-3xl font-black text-white">{value}</p>
 
-<p className="mt-2 text-xs font-bold leading-5 text-slate-300">{detail}</p>
+<p className="mt-2 text-xs font-bold leading-5 text-slate-300">
+{detail}
+</p>
 </div>
 );
 }
@@ -388,14 +390,22 @@ complete ? "bg-emerald-400 text-slate-950" : "bg-orange-400 text-slate-950"
 );
 }
 
-function MiniScore({ title, value }: { title: string; value: string }) {
+function MiniScore({
+title,
+value,
+}: {
+title: string;
+value: string;
+}) {
 return (
 <div className="rounded-2xl border border-white/10 bg-white/[0.045] p-4">
 <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
 {title}
 </p>
 
-<p className="mt-2 text-lg font-black text-white">{value}</p>
+<p className="mt-2 text-lg font-black text-white">
+{value}
+</p>
 </div>
 );
 }
