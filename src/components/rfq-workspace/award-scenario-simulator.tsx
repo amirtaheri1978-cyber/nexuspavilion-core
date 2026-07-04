@@ -1,21 +1,11 @@
 import { calculateScenarioRecommendation } from "@/lib/analytics/executive-intelligence";
 import { ExecutiveStatusBadge } from "@/components/rfq-workspace/shared/executive-status-badge";
-
-type ScenarioQuote = {
-amountNumber: number;
-awardConfidence: number;
-riskLevel: string;
-totalScore: number;
-priceScore: number;
-timelineScore: number;
-riskScore: number;
-performanceScore: number;
-};
+import type { ExecutiveQuote } from "@/types/executive";
 
 type AwardScenarioSimulatorProps = {
 isOwner: boolean;
 commercialEvaluationUnlocked: boolean;
-recommendedQuote: ScenarioQuote | null;
+recommendedQuote: ExecutiveQuote | null;
 averageBid: number;
 quoteCount: number;
 healthScore: number;
@@ -70,7 +60,7 @@ healthScore,
 budget,
 primaryRecommendation,
 }: {
-recommendedQuote: ScenarioQuote;
+recommendedQuote: ExecutiveQuote;
 averageBid: number;
 quoteCount: number;
 healthScore: number;
