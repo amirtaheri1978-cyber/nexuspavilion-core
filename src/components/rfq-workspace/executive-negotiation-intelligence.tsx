@@ -1,22 +1,12 @@
 import { calculateNegotiationStrength } from "@/lib/analytics/executive-intelligence";
 import { ExecutiveMiniTile } from "@/components/rfq-workspace/shared/executive-mini-tile";
 import { ExecutiveSignal } from "@/components/rfq-workspace/shared/executive-signal";
-
-type NegotiationQuote = {
-amountNumber: number;
-awardConfidence: number;
-riskLevel: string;
-totalScore: number;
-priceScore: number;
-timelineScore: number;
-riskScore: number;
-performanceScore: number;
-};
+import type { ExecutiveQuote } from "@/types/executive";
 
 type ExecutiveNegotiationIntelligenceProps = {
 isOwner: boolean;
 commercialEvaluationUnlocked: boolean;
-recommendedQuote: NegotiationQuote | null;
+recommendedQuote: ExecutiveQuote | null;
 averageBid: number;
 lowestAmount: number | null;
 quoteCount: number;
