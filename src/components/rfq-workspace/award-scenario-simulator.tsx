@@ -1,3 +1,5 @@
+import { calculateScenarioRecommendation } from "@/lib/analytics/executive-intelligence";
+
 type ScenarioQuote = {
 amountNumber: number;
 awardConfidence: number;
@@ -52,57 +54,71 @@ return "border-orange-300/25 bg-orange-400/10 text-orange-200";
 return "border-red-300/25 bg-red-400/10 text-red-200";
 }
 
+function getPrimaryTone(status: string): ScenarioTone {
+if (status === "Award Now") return "success";
+if (status === "Negotiate First") return "info";
+if (status === "Extend or Rebid") return "warning";
+return "risk";
+}
+
 function buildScenarios({
 recommendedQuote,
 averageBid,
 quoteCount,
 healthScore,
 budget,
+primaryRecommendation,
 }: {
 recommendedQuote: ScenarioQuote;
 averageBid: number;
 quoteCount: number;
 healthScore: number;
 budget: number;
+primaryRecommendation: string;
 }): AwardScenario[] {
 const savingsVsAverage =
 averageBid > 0 ? averageBid - recommendedQuote.amountNumber : 0;
 const budgetDelta = budget > 0 ? budget - recommendedQuote.amountNumber : 0;
-const strongConfidence = recommendedQuote.awardConfidence >= 85;
 const lowRisk = recommendedQuote.riskLevel.toLowerCase() === "low";
 const strongCompetition = quoteCount >= 3;
-const healthyWorkspace = healthScore >= 72;
 
 return [
 {
 title: "Award Now",
-tone: strongConfidence && lowRisk && healthyWorkspace ? "success" : "info",
+tone: getPrimaryTone(primaryRecommendation),
 recommendation:
-strongConfidence && lowRisk
+primaryRecommendation === "Award Now"
 ? "Proceed if scope, compliance, and internal approval are aligned."
 : "Proceed only after validating risk, scope, and commercial assumptions.",
 costImpact:
 savingsVsAverage > 0
 ? `${formatMoney(savingsVsAverage)} below average bid`
+: budgetDelta >= 0
+? `${formatMoney(budgetDelta)} under budget`
 : "Limited savings signal versus current average",
 timeImpact: "Fastest path to contract execution",
 riskImpact: lowRisk
 ? "Low risk based on current supplier profile"
 : `${recommendedQuote.riskLevel} risk requires validation`,
 boardView:
-strongConfidence && lowRisk
+primaryRecommendation === "Award Now"
 ? "Board-ready with executive validation"
 : "Requires management review before board-level confidence",
 },
 {
 title: "Negotiate First",
-tone: savingsVsAverage > 0 || strongCompetition ? "success" : "warning",
+tone:
+primaryRecommendation === "Negotiate First"
+? "success"
+: savingsVsAverage > 0 || strongCompetition
+? "info"
+: "warning",
 recommendation:
 "Request targeted commercial improvement while preserving scope, schedule, warranty, and supplier commitment.",
 costImpact:
 savingsVsAverage > 0
 ? `Protects current savings and may improve ${formatMoney(
-Math.max(0, recommendedQuote.amountNumber * 0.03)
+Math.max(0, recommendedQuote.amountNumber * 0.03),
 )}+`
 : "May create incremental commercial improvement",
 timeImpact: "Adds short negotiation cycle",
@@ -112,7 +128,12 @@ boardView:
 },
 {
 title: "Extend RFQ",
-tone: quoteCount < 3 ? "warning" : "info",
+tone:
+primaryRecommendation === "Extend or Rebid"
+? "warning"
+: quoteCount < 3
+? "warning"
+: "info",
 recommendation:
 quoteCount < 3
 ? "Consider extending if supplier coverage is below target and schedule allows."
@@ -173,15 +194,26 @@ once Nexus Pavilion has a recommended supplier path to evaluate.
 );
 }
 
+const scenarioRecommendation = calculateScenarioRecommendation({
+awardConfidence: recommendedQuote.awardConfidence,
+healthScore,
+quoteCount,
+riskLevel: recommendedQuote.riskLevel,
+commercialEvaluationUnlocked,
+});
+
 const scenarios = buildScenarios({
 recommendedQuote,
 averageBid,
 quoteCount,
 healthScore,
 budget,
+primaryRecommendation: scenarioRecommendation.status,
 });
 
-const primaryScenario = scenarios[0];
+const primaryScenario =
+scenarios.find((scenario) => scenario.title === scenarioRecommendation.status) ??
+scenarios[0];
 
 return (
 <section className="mt-8 overflow-hidden rounded-[40px] border border-white/10 bg-[#061426] text-white shadow-[0_24px_80px_rgba(0,0,0,0.26)]">
@@ -213,7 +245,7 @@ Primary Path
 </p>
 
 <p className="mt-2 max-w-xs text-xs font-bold leading-5 text-slate-400">
-{primaryScenario.boardView}
+{scenarioRecommendation.recommendation}
 </p>
 </div>
 </div>
@@ -231,10 +263,7 @@ Executive Recommendation
 </p>
 
 <p className="mt-4 max-w-4xl text-sm font-bold leading-7 text-slate-300">
-If award confidence, risk control, and procurement health are strong,
-the preferred path is to validate the recommended supplier and proceed
-toward award. If competition is weak or documentation is incomplete,
-extend or renegotiate before committing.
+{scenarioRecommendation.recommendation}
 </p>
 </div>
 </section>
@@ -249,7 +278,7 @@ return (
 
 <span
 className={`rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] ${getToneClass(
-scenario.tone
+scenario.tone,
 )}`}
 >
 {scenario.tone}
