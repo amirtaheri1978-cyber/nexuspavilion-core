@@ -1,4 +1,5 @@
 import { ExecutiveProgress } from "@/components/rfq-workspace/shared/executive-progress";
+import { ExecutiveStatusBadge } from "@/components/rfq-workspace/shared/executive-status-badge";
 
 type TimelineStatus = "complete" | "active" | "locked" | "pending" | "watch";
 
@@ -37,24 +38,14 @@ if (status === "watch") return "Watch";
 return "Pending";
 }
 
-function getStatusClass(status: TimelineStatus) {
-if (status === "complete") {
-return "border-emerald-300/25 bg-emerald-400/10 text-emerald-200";
-}
-
-if (status === "active") {
-return "border-cyan-300/25 bg-cyan-400/10 text-cyan-200";
-}
-
-if (status === "locked") {
-return "border-orange-300/25 bg-orange-400/10 text-orange-200";
-}
-
-if (status === "watch") {
-return "border-yellow-300/25 bg-yellow-400/10 text-yellow-200";
-}
-
-return "border-white/10 bg-white/[0.055] text-slate-300";
+function mapTimelineStatusTone(
+status: TimelineStatus,
+): "success" | "info" | "warning" | "risk" | "neutral" {
+if (status === "complete") return "success";
+if (status === "active") return "info";
+if (status === "locked") return "warning";
+if (status === "watch") return "warning";
+return "neutral";
 }
 
 function getDotClass(status: TimelineStatus) {
@@ -168,7 +159,7 @@ detail:
 "Supplier-side users can monitor their own submission and document obligations while buyer-side award analysis remains confidential.",
 signal: "Confidential",
 }
-: step
+: step,
 );
 }
 
@@ -212,7 +203,6 @@ Timeline Progress
 </div>
 
 <ExecutiveProgress value={progress} className="mt-4" />
-
 </div>
 
 <div className="grid gap-0 lg:grid-cols-2">
@@ -225,7 +215,7 @@ className="relative border-b border-white/10 p-6 sm:p-8 lg:border-r"
 <div className="flex flex-col items-center">
 <div
 className={`flex h-11 w-11 items-center justify-center rounded-full text-sm font-black ${getDotClass(
-step.status
+step.status,
 )}`}
 >
 {step.status === "complete" ? "✓" : index + 1}
@@ -248,13 +238,9 @@ Step {index + 1}
 </h3>
 </div>
 
-<span
-className={`rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] ${getStatusClass(
-step.status
-)}`}
->
+<ExecutiveStatusBadge tone={mapTimelineStatusTone(step.status)}>
 {getStatusLabel(step.status)}
-</span>
+</ExecutiveStatusBadge>
 </div>
 
 <p className="mt-4 text-sm font-semibold leading-7 text-slate-400">

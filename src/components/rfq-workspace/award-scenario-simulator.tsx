@@ -1,4 +1,5 @@
 import { calculateScenarioRecommendation } from "@/lib/analytics/executive-intelligence";
+import { ExecutiveStatusBadge } from "@/components/rfq-workspace/shared/executive-status-badge";
 
 type ScenarioQuote = {
 amountNumber: number;
@@ -276,13 +277,10 @@ return (
 <div className="flex items-start justify-between gap-4">
 <h3 className="text-2xl font-black text-white">{scenario.title}</h3>
 
-<span
-className={`rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] ${getToneClass(
-scenario.tone,
-)}`}
->
+<ExecutiveStatusBadge tone={scenario.tone}>
 {scenario.tone}
-</span>
+</ExecutiveStatusBadge>
+
 </div>
 
 <p className="mt-4 text-sm font-bold leading-7 text-slate-300">

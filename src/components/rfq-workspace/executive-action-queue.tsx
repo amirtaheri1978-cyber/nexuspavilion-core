@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { ExecutiveStatusBadge } from "@/components/rfq-workspace/shared/executive-status-badge";
+
 type ActionPriority = "critical" | "high" | "medium" | "low";
 
 type ExecutiveAction = {
@@ -30,20 +32,13 @@ riskLevel: string;
 | null;
 };
 
-function getPriorityClass(priority: ActionPriority) {
-if (priority === "critical") {
-return "border-red-300/25 bg-red-400/10 text-red-200";
-}
-
-if (priority === "high") {
-return "border-orange-300/25 bg-orange-400/10 text-orange-200";
-}
-
-if (priority === "medium") {
-return "border-cyan-300/25 bg-cyan-400/10 text-cyan-200";
-}
-
-return "border-emerald-300/25 bg-emerald-400/10 text-emerald-200";
+function mapPriorityTone(
+priority: ActionPriority,
+): "success" | "info" | "warning" | "risk" {
+if (priority === "critical") return "risk";
+if (priority === "high") return "warning";
+if (priority === "medium") return "info";
+return "success";
 }
 
 function getPriorityRank(priority: ActionPriority) {
@@ -139,7 +134,8 @@ if (commercialEvaluationUnlocked && recommendedQuote) {
 actions.push({
 title: "Validate Recommended Award Path",
 priority:
-recommendedQuote.awardConfidence >= 85 && recommendedQuote.riskLevel === "Low"
+recommendedQuote.awardConfidence >= 85 &&
+recommendedQuote.riskLevel.toLowerCase() === "low"
 ? "high"
 : "medium",
 category: "Award Decision",
@@ -180,7 +176,7 @@ actionLabel: "Review Workspace",
 }
 
 return actions.sort(
-(a, b) => getPriorityRank(a.priority) - getPriorityRank(b.priority)
+(a, b) => getPriorityRank(a.priority) - getPriorityRank(b.priority),
 );
 }
 
@@ -204,8 +200,7 @@ priority: "high",
 category: "Supplier Readiness",
 rationale:
 "The buyer has provided RFQ documents that should be reviewed before submitting or validating pricing.",
-outcome:
-"Improves proposal accuracy and reduces scope assumptions.",
+outcome: "Improves proposal accuracy and reduces scope assumptions.",
 anchorHref: "#document-center",
 actionLabel: "Open Documents",
 });
@@ -244,8 +239,7 @@ actions.push({
 title: "Monitor RFQ Workspace",
 priority: "low",
 category: "Supplier Visibility",
-rationale:
-"There are no urgent supplier-side actions currently available.",
+rationale: "There are no urgent supplier-side actions currently available.",
 outcome:
 "Keeps your company aware of documents, addenda, and RFQ status changes.",
 anchorHref: "#document-center",
@@ -254,7 +248,7 @@ actionLabel: "Review Workspace",
 }
 
 return actions.sort(
-(a, b) => getPriorityRank(a.priority) - getPriorityRank(b.priority)
+(a, b) => getPriorityRank(a.priority) - getPriorityRank(b.priority),
 );
 }
 
@@ -352,13 +346,9 @@ Priority {index + 1} · {action.category}
 </h3>
 </div>
 
-<span
-className={`rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] ${getPriorityClass(
-action.priority
-)}`}
->
+<ExecutiveStatusBadge tone={mapPriorityTone(action.priority)}>
 {action.priority}
-</span>
+</ExecutiveStatusBadge>
 </div>
 
 <p className="mt-4 text-sm font-semibold leading-7 text-slate-600">
