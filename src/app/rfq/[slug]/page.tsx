@@ -15,6 +15,7 @@ import { ExecutiveActionQueue } from "@/components/rfq-workspace/executive-actio
 import { ExecutiveDecisionTimeline } from "@/components/rfq-workspace/executive-decision-timeline";
 import { ExecutiveReadinessMeter } from "@/components/rfq-workspace/executive-readiness-meter";
 import { ExecutiveAIExplainability } from "@/components/rfq-workspace/executive-ai-explainability";
+import { ExecutiveSupplierDNA } from "@/components/rfq-workspace/executive-supplier-dna";
 
 type PageProps = {
 params: Promise<{ slug: string }>;
@@ -1587,6 +1588,15 @@ averageBid={averageBid}
 quoteCount={quoteList.length}
 healthScore={healthScore}
 documentCount={rfqAttachments.length}
+/>
+
+<ExecutiveSupplierDNA
+isOwner={isOwner}
+commercialEvaluationUnlocked={commercialEvaluationUnlocked}
+recommendedQuote={recommendedQuote}
+averageBid={averageBid}
+lowestAmount={lowestAmount}
+quoteCount={quoteList.length}
 />
 
 {isOwner && recommendedQuote && commercialEvaluationUnlocked ? (
