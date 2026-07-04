@@ -14,6 +14,7 @@ import { ExecutiveDecisionCenter } from "@/components/rfq-workspace/executive-de
 import { ExecutiveActionQueue } from "@/components/rfq-workspace/executive-action-queue";
 import { ExecutiveDecisionTimeline } from "@/components/rfq-workspace/executive-decision-timeline";
 import { ExecutiveReadinessMeter } from "@/components/rfq-workspace/executive-readiness-meter";
+import { ExecutiveAIExplainability } from "@/components/rfq-workspace/executive-ai-explainability";
 
 type PageProps = {
 params: Promise<{ slug: string }>;
@@ -1576,6 +1577,16 @@ documentCount={rfqAttachments.length}
 addendaCount={rfqAddenda.length}
 commercialEvaluationUnlocked={commercialEvaluationUnlocked}
 recommendedQuote={recommendedQuote}
+/>
+
+<ExecutiveAIExplainability
+isOwner={isOwner}
+commercialEvaluationUnlocked={commercialEvaluationUnlocked}
+recommendedQuote={recommendedQuote}
+averageBid={averageBid}
+quoteCount={quoteList.length}
+healthScore={healthScore}
+documentCount={rfqAttachments.length}
 />
 
 {isOwner && recommendedQuote && commercialEvaluationUnlocked ? (
