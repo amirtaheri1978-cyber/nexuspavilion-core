@@ -4,6 +4,8 @@ calculateCommercialHealth,
 calculateSupplierReliability,
 } from "@/lib/analytics/executive-intelligence";
 import { ExecutiveProgress } from "@/components/rfq-workspace/shared/executive-progress";
+import { ExecutiveSignal } from "@/components/rfq-workspace/shared/executive-signal";
+
 type ExplainabilityQuote = {
 rank: number;
 amountNumber: number;
@@ -248,15 +250,7 @@ Explainable Reasons
 key={reason.label}
 className="flex items-start gap-3 rounded-2xl border border-white/10 bg-slate-950/50 p-4"
 >
-<span
-className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs font-black ${
-reason.strong
-? "bg-emerald-400 text-slate-950"
-: "bg-orange-400 text-slate-950"
-}`}
->
-{reason.strong ? "✓" : "!"}
-</span>
+<ExecutiveSignal positive={reason.strong} />
 
 <div>
 <p className="text-sm font-black text-white">

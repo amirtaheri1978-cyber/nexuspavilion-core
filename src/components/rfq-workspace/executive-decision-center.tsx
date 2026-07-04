@@ -5,7 +5,7 @@ import {
 calculateDecisionReadiness,
 calculateScenarioRecommendation,
 } from "@/lib/analytics/executive-intelligence";
-
+import { ExecutiveSignal } from "@/components/rfq-workspace/shared/executive-signal";
 type DecisionStatus = "ready" | "locked" | "watch" | "not_ready";
 
 type ExecutiveDecisionCenterProps = {
@@ -377,13 +377,7 @@ label: string;
 }) {
 return (
 <div className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/[0.045] p-4">
-<span
-className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs font-black ${
-complete ? "bg-emerald-400 text-slate-950" : "bg-orange-400 text-slate-950"
-}`}
->
-{complete ? "✓" : "!"}
-</span>
+<ExecutiveSignal positive={complete} />
 
 <p className="text-sm font-bold leading-6 text-slate-300">{label}</p>
 </div>

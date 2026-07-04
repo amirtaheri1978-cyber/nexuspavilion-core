@@ -1,5 +1,6 @@
 import { calculateNegotiationStrength } from "@/lib/analytics/executive-intelligence";
 import { ExecutiveMiniTile } from "@/components/rfq-workspace/shared/executive-mini-tile";
+import { ExecutiveSignal } from "@/components/rfq-workspace/shared/executive-signal";
 
 type NegotiationQuote = {
 amountNumber: number;
@@ -180,15 +181,7 @@ What strengthens negotiation position
 key={signal.label}
 className="flex items-start gap-4 rounded-3xl border border-white/10 bg-white/[0.045] p-5"
 >
-<span
-className={`mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-black ${
-signal.positive
-? "bg-emerald-400 text-slate-950"
-: "bg-orange-400 text-slate-950"
-}`}
->
-{signal.positive ? "✓" : "!"}
-</span>
+<ExecutiveSignal positive={signal.positive} />
 
 <div>
 <p className="text-sm font-black text-white">
