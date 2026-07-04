@@ -5,25 +5,13 @@ calculateSupplierReliability,
 } from "@/lib/analytics/executive-intelligence";
 import { ExecutiveProgress } from "@/components/rfq-workspace/shared/executive-progress";
 import { ExecutiveSignal } from "@/components/rfq-workspace/shared/executive-signal";
+import type { ExecutiveQuote } from "@/types/executive";
 
-type ExplainabilityQuote = {
-rank: number;
-amountNumber: number;
-awardConfidence: number;
-riskLevel: string;
-totalScore: number;
-priceScore: number;
-timelineScore: number;
-riskScore: number;
-performanceScore: number;
-budgetVariance: number;
-lowestBidVariance: number;
-};
 
 type ExecutiveAIExplainabilityProps = {
 isOwner: boolean;
 commercialEvaluationUnlocked: boolean;
-recommendedQuote: ExplainabilityQuote | null;
+recommendedQuote: ExecutiveQuote | null;
 averageBid: number;
 quoteCount: number;
 healthScore: number;
@@ -47,7 +35,7 @@ recommendedQuote,
 averageBid,
 documentCount,
 }: {
-recommendedQuote: ExplainabilityQuote;
+recommendedQuote: ExecutiveQuote;
 averageBid: number;
 documentCount: number;
 }) {
