@@ -1,3 +1,9 @@
+import {
+calculateAwardConfidence,
+calculateCommercialHealth,
+calculateSupplierReliability,
+} from "@/lib/analytics/executive-intelligence";
+
 type ExplainabilityQuote = {
 rank: number;
 amountNumber: number;
@@ -32,37 +38,6 @@ if (score >= 88) return "Strong";
 if (score >= 72) return "Healthy";
 if (score >= 56) return "Watch";
 return "Weak";
-}
-
-function getVerdict({
-recommendedQuote,
-averageBid,
-quoteCount,
-healthScore,
-}: {
-recommendedQuote: ExplainabilityQuote;
-averageBid: number;
-quoteCount: number;
-healthScore: number;
-}) {
-const savingsSignal =
-averageBid > 0 && recommendedQuote.amountNumber < averageBid
-? `The recommended bid is ${formatMoney(
-averageBid - recommendedQuote.amountNumber
-)} below the current average bid.`
-: "Commercial savings are not yet strongly differentiated from the current bid set.";
-
-const competitionSignal =
-quoteCount >= 3
-? "Supplier competition is strong enough to support executive comparison."
-: "Supplier coverage is still below the preferred executive threshold.";
-
-const healthSignal =
-healthScore >= 72
-? "Procurement health is within executive review range."
-: "Procurement health needs stronger readiness signals before final award.";
-
-return `${savingsSignal} ${competitionSignal} ${healthSignal}`;
 }
 
 function getReasonSignals({
@@ -123,9 +98,7 @@ quoteCount,
 healthScore,
 documentCount,
 }: ExecutiveAIExplainabilityProps) {
-if (!isOwner) {
-return null;
-}
+if (!isOwner) return null;
 
 if (!commercialEvaluationUnlocked || !recommendedQuote) {
 return (
@@ -147,6 +120,27 @@ the recommended award path.
 );
 }
 
+const awardConfidence = calculateAwardConfidence({
+priceScore: recommendedQuote.priceScore,
+timelineScore: recommendedQuote.timelineScore,
+performanceScore: recommendedQuote.performanceScore,
+riskScore: recommendedQuote.riskScore,
+});
+
+const commercialHealth = calculateCommercialHealth({
+recommendedAmount: recommendedQuote.amountNumber,
+averageBid,
+budget: recommendedQuote.amountNumber + recommendedQuote.budgetVariance,
+quoteCount,
+});
+
+const supplierReliability = calculateSupplierReliability({
+timelineScore: recommendedQuote.timelineScore,
+performanceScore: recommendedQuote.performanceScore,
+riskScore: recommendedQuote.riskScore,
+awardConfidence: recommendedQuote.awardConfidence,
+});
+
 const drivers = [
 { label: "Price", score: recommendedQuote.priceScore },
 { label: "Timeline", score: recommendedQuote.timelineScore },
@@ -161,12 +155,7 @@ averageBid,
 documentCount,
 });
 
-const verdict = getVerdict({
-recommendedQuote,
-averageBid,
-quoteCount,
-healthScore,
-});
+const verdict = `${awardConfidence.recommendation} ${commercialHealth.recommendation} ${supplierReliability.recommendation}`;
 
 return (
 <section className="mt-8 overflow-hidden rounded-[40px] border border-white/10 bg-slate-950 text-white shadow-[0_30px_100px_rgba(2,6,23,0.26)]">
@@ -203,7 +192,7 @@ value={`#${recommendedQuote.rank}`}
 />
 <MiniMetric
 title="Award Confidence"
-value={`${recommendedQuote.awardConfidence}%`}
+value={`${awardConfidence.score}%`}
 />
 <MiniMetric
 title="Recommended Bid"
