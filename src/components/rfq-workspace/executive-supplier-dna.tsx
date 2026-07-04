@@ -1,4 +1,9 @@
+import {
+calculateCommercialHealth,
+calculateSupplierReliability,
+} from "@/lib/analytics/executive-intelligence";
 import { ExecutiveMiniTile } from "@/components/rfq-workspace/shared/executive-mini-tile";
+
 type SupplierDNAQuote = {
 rank: number;
 amountNumber: number;
@@ -90,13 +95,28 @@ averageBid,
 lowestAmount,
 });
 
+const budget = recommendedQuote.amountNumber + recommendedQuote.budgetVariance;
 const savingsVsAverage =
 averageBid > 0 ? averageBid - recommendedQuote.amountNumber : 0;
+
+const commercialHealth = calculateCommercialHealth({
+recommendedAmount: recommendedQuote.amountNumber,
+averageBid,
+budget,
+quoteCount,
+});
+
+const supplierReliability = calculateSupplierReliability({
+timelineScore: recommendedQuote.timelineScore,
+performanceScore: recommendedQuote.performanceScore,
+riskScore: recommendedQuote.riskScore,
+awardConfidence: recommendedQuote.awardConfidence,
+});
 
 const dnaScores = [
 {
 label: "Commercial",
-score: recommendedQuote.priceScore,
+score: commercialHealth.score,
 detail: commercialPosition,
 },
 {
@@ -115,9 +135,9 @@ score: recommendedQuote.riskScore,
 detail: `${recommendedQuote.riskLevel} risk`,
 },
 {
-label: "Award Confidence",
-score: recommendedQuote.awardConfidence,
-detail: "Executive confidence",
+label: "Supplier Reliability",
+score: supplierReliability.score,
+detail: supplierReliability.status,
 },
 ];
 
@@ -149,27 +169,23 @@ Rank #{recommendedQuote.rank}
 </p>
 
 <p className="mt-3 text-sm font-bold leading-6 text-slate-300">
-Proceed to executive validation with{" "}
-{recommendedQuote.awardConfidence}% confidence and{" "}
-{recommendedQuote.riskLevel.toLowerCase()} risk.
+{supplierReliability.recommendation}
 </p>
 </div>
 
 <div className="mt-6 grid gap-4 sm:grid-cols-2">
-<MiniTile
+<ExecutiveMiniTile
 title="Recommended Bid"
 value={formatMoney(recommendedQuote.amountNumber)}
 />
-<MiniTile title="Competition" value={`${quoteCount} bids`} />
-<MiniTile
+<ExecutiveMiniTile title="Competition" value={`${quoteCount} bids`} />
+<ExecutiveMiniTile
 title="Savings Signal"
 value={
-savingsVsAverage > 0
-? formatMoney(savingsVsAverage)
-: "Pending"
+savingsVsAverage > 0 ? formatMoney(savingsVsAverage) : "Pending"
 }
 />
-<MiniTile title="Risk" value={recommendedQuote.riskLevel} />
+<ExecutiveMiniTile title="Risk" value={recommendedQuote.riskLevel} />
 </div>
 </div>
 
@@ -178,9 +194,7 @@ savingsVsAverage > 0
 Supplier Intelligence Scorecard
 </p>
 
-<h3 className="mt-3 text-3xl font-black text-white">
-DNA Signals
-</h3>
+<h3 className="mt-3 text-3xl font-black text-white">DNA Signals</h3>
 
 <div className="mt-6 grid gap-4">
 {dnaScores.map((item) => (
@@ -199,9 +213,7 @@ className="rounded-3xl border border-white/10 bg-white/[0.045] p-5"
 </p>
 </div>
 
-<p className="text-2xl font-black text-white">
-{item.score}
-</p>
+<p className="text-2xl font-black text-white">{item.score}</p>
 </div>
 
 <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/10">
@@ -220,27 +232,11 @@ AI Executive Summary
 </p>
 
 <p className="mt-4 text-sm font-bold leading-7 text-slate-300">
-The recommended supplier demonstrates a balanced procurement
-profile across commercial competitiveness, delivery reliability,
-performance strength, and risk control. This profile is suitable
-for executive award validation when aligned with final scope,
-governance, and internal approval requirements.
+{commercialHealth.recommendation} {supplierReliability.recommendation}
 </p>
 </div>
 </div>
 </div>
 </section>
-);
-}
-
-function MiniTile({ title, value }: { title: string; value: string }) {
-return (
-<div className="rounded-3xl border border-white/10 bg-white/[0.055] p-5">
-<p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
-{title}
-</p>
-
-<p className="mt-3 text-2xl font-black text-white">{value}</p>
-</div>
 );
 }
