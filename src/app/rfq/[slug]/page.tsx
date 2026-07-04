@@ -11,6 +11,10 @@ import RFQDocumentUpload from "@/components/rfq-document-upload";
 import { createClient } from "@/lib/supabase/server";
 import { ExecutiveOpportunityRanking } from "@/components/executive/executive-opportunity-ranking";
 import { ExecutiveDecisionCenter } from "@/components/rfq-workspace/executive-decision-center";
+import { ExecutiveActionQueue } from "@/components/rfq-workspace/executive-action-queue";
+import { ExecutiveDecisionTimeline } from "@/components/rfq-workspace/executive-decision-timeline";
+import { ExecutiveReadinessMeter } from "@/components/rfq-workspace/executive-readiness-meter";
+
 type PageProps = {
 params: Promise<{ slug: string }>;
 };
@@ -1536,6 +1540,43 @@ potentialSavings={potentialSavings}
 recommendedQuote={recommendedQuote}
 />
 
+<ExecutiveActionQueue
+rfqSlug={rfq.slug}
+isOwner={isOwner}
+isOpen={isOpen}
+commercialEvaluationUnlocked={commercialEvaluationUnlocked}
+quoteCount={quoteList.length}
+documentCount={rfqAttachments.length}
+addendaCount={rfqAddenda.length}
+healthScore={healthScore}
+recommendedQuote={recommendedQuote}
+/>
+
+<ExecutiveDecisionTimeline
+isOwner={isOwner}
+isOpen={isOpen}
+commercialEvaluationUnlocked={commercialEvaluationUnlocked}
+quoteCount={quoteList.length}
+documentCount={rfqAttachments.length}
+addendaCount={rfqAddenda.length}
+recommendedQuote={recommendedQuote}
+awardedQuote={
+awardedQuote
+? {
+amountNumber: awardedQuote.amountNumber,
+}
+: null
+}
+/>
+
+<ExecutiveReadinessMeter
+healthScore={healthScore}
+quoteCount={quoteList.length}
+documentCount={rfqAttachments.length}
+addendaCount={rfqAddenda.length}
+commercialEvaluationUnlocked={commercialEvaluationUnlocked}
+recommendedQuote={recommendedQuote}
+/>
 
 {isOwner && recommendedQuote && commercialEvaluationUnlocked ? (
 <section className="mt-8 rounded-[36px] bg-slate-950 p-6 text-white shadow-[0_24px_80px_rgba(2,6,23,0.24)] sm:p-8">
@@ -1769,7 +1810,11 @@ initialAcknowledgements={rfqAcknowledgements}
 </div>
 </section>
 
-<section className="mt-8 rounded-[36px] border border-black/5 bg-white p-6 shadow-sm sm:p-8">
+<section
+id="quote-intelligence"
+className="mt-8 rounded-[36px] border border-black/5 bg-white p-6 shadow-sm sm:p-8"
+>
+
 <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
 <div>
 <p className="text-xs font-black uppercase tracking-[0.3em] text-orange-500">
