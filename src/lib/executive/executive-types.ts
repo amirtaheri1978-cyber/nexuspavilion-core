@@ -103,8 +103,8 @@ amountNumber: number;
 
 export type ExecutiveIntelligence = {
 readiness: ExecutiveReadiness;
+recommendation: ExecutiveResult;
 risks: ExecutiveRisk[];
-opportunities: ExecutiveOpportunity[];
 actions: ExecutiveAction[];
 scenarios: ExecutiveScenario[];
 negotiation: ExecutiveNegotiation | null;
