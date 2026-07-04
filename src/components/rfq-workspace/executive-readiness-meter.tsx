@@ -1,3 +1,5 @@
+import { calculateDecisionReadiness } from "@/lib/analytics/executive-intelligence";
+
 type ReadinessFactor = {
 label: string;
 score: number;
@@ -17,13 +19,6 @@ riskLevel: string;
 }
 | null;
 };
-
-function getReadinessLabel(score: number) {
-if (score >= 88) return "Decision Ready";
-if (score >= 74) return "Executive Review Ready";
-if (score >= 58) return "Needs Validation";
-return "Not Ready";
-}
 
 function getReadinessFactors({
 healthScore,
@@ -86,10 +81,16 @@ commercialEvaluationUnlocked && recommendedQuote
 
 export function ExecutiveReadinessMeter(props: ExecutiveReadinessMeterProps) {
 const factors = getReadinessFactors(props);
-const score = Math.round(
-factors.reduce((total, factor) => total + factor.score, 0) / factors.length
-);
-const label = getReadinessLabel(score);
+
+const readiness = calculateDecisionReadiness({
+healthScore: props.healthScore,
+quoteCount: props.quoteCount,
+documentCount: props.documentCount,
+addendaCount: props.addendaCount,
+commercialEvaluationUnlocked: props.commercialEvaluationUnlocked,
+hasRecommendedQuote: Boolean(props.recommendedQuote),
+});
+
 const blockerCount = factors.filter((factor) => factor.score < 60).length;
 
 return (
@@ -102,21 +103,25 @@ Executive Readiness Meter
 
 <div className="mt-8 flex aspect-square max-w-[280px] items-center justify-center rounded-full border-[18px] border-white/10 bg-white/[0.045]">
 <div className="text-center">
-<p className="text-6xl font-black text-white">{score}</p>
+<p className="text-6xl font-black text-white">
+{readiness.score}
+</p>
 <p className="mt-2 text-xs font-black uppercase tracking-[0.24em] text-slate-400">
 out of 100
 </p>
 </div>
 </div>
 
-<h2 className="mt-8 text-3xl font-black text-white">{label}</h2>
+<h2 className="mt-8 text-3xl font-black text-white">
+{readiness.status}
+</h2>
 
 <p className="mt-3 text-sm font-semibold leading-7 text-slate-400">
 {blockerCount > 0
 ? `${blockerCount} readiness factor${
 blockerCount === 1 ? "" : "s"
 } require attention before confident executive decision-making.`
-: "All key readiness factors are within executive decision range."}
+: readiness.recommendation}
 </p>
 </div>
 
