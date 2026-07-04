@@ -1,4 +1,5 @@
 import { calculateDecisionReadiness } from "@/lib/analytics/executive-intelligence";
+import { ExecutiveProgress } from "@/components/rfq-workspace/shared/executive-progress";
 
 type ReadinessFactor = {
 label: string;
@@ -156,12 +157,7 @@ className="rounded-3xl border border-slate-100 bg-slate-50 p-5"
 </p>
 </div>
 
-<div className="mt-4 h-2 overflow-hidden rounded-full bg-slate-200">
-<div
-className="h-full rounded-full bg-slate-950"
-style={{ width: `${factor.score}%` }}
-/>
-</div>
+<ExecutiveProgress value={factor.score} className="mt-4 bg-slate-200" />
 </div>
 ))}
 </div>

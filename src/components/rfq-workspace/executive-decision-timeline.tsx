@@ -1,3 +1,5 @@
+import { ExecutiveProgress } from "@/components/rfq-workspace/shared/executive-progress";
+
 type TimelineStatus = "complete" | "active" | "locked" | "pending" | "watch";
 
 type TimelineStep = {
@@ -209,12 +211,8 @@ Timeline Progress
 </div>
 </div>
 
-<div className="mt-6 h-2 overflow-hidden rounded-full bg-white/10">
-<div
-className="h-full rounded-full bg-[#C8A646]"
-style={{ width: `${progress}%` }}
-/>
-</div>
+<ExecutiveProgress value={progress} className="mt-4" />
+
 </div>
 
 <div className="grid gap-0 lg:grid-cols-2">

@@ -3,7 +3,7 @@ calculateCommercialHealth,
 calculateSupplierReliability,
 } from "@/lib/analytics/executive-intelligence";
 import { ExecutiveMiniTile } from "@/components/rfq-workspace/shared/executive-mini-tile";
-
+import { ExecutiveProgress } from "@/components/rfq-workspace/shared/executive-progress";
 type SupplierDNAQuote = {
 rank: number;
 amountNumber: number;
@@ -216,12 +216,7 @@ className="rounded-3xl border border-white/10 bg-white/[0.045] p-5"
 <p className="text-2xl font-black text-white">{item.score}</p>
 </div>
 
-<div className="mt-4 h-2 overflow-hidden rounded-full bg-white/10">
-<div
-className="h-full rounded-full bg-[#C8A646]"
-style={{ width: `${item.score}%` }}
-/>
-</div>
+<ExecutiveProgress value={item.score} className="mt-4" />
 </div>
 ))}
 </div>

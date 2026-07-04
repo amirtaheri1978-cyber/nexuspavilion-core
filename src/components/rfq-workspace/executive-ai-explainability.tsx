@@ -3,7 +3,7 @@ calculateAwardConfidence,
 calculateCommercialHealth,
 calculateSupplierReliability,
 } from "@/lib/analytics/executive-intelligence";
-
+import { ExecutiveProgress } from "@/components/rfq-workspace/shared/executive-progress";
 type ExplainabilityQuote = {
 rank: number;
 amountNumber: number;
@@ -232,12 +232,7 @@ className="rounded-3xl border border-white/10 bg-white/[0.045] p-5"
 </p>
 </div>
 
-<div className="mt-4 h-2 overflow-hidden rounded-full bg-white/10">
-<div
-className="h-full rounded-full bg-[#C8A646]"
-style={{ width: `${driver.score}%` }}
-/>
-</div>
+<ExecutiveProgress value={driver.score} className="mt-4" />
 </div>
 ))}
 </div>
