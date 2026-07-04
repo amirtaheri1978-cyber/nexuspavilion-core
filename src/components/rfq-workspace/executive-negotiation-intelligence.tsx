@@ -1,4 +1,6 @@
+import { calculateNegotiationStrength } from "@/lib/analytics/executive-intelligence";
 import { ExecutiveMiniTile } from "@/components/rfq-workspace/shared/executive-mini-tile";
+
 type NegotiationQuote = {
 amountNumber: number;
 awardConfidence: number;
@@ -23,55 +25,6 @@ budget: number;
 function formatMoney(value: number) {
 if (!Number.isFinite(value)) return "$0";
 return `$${Math.max(0, Math.round(value)).toLocaleString()}`;
-}
-
-function getNegotiationPotential({
-recommendedQuote,
-averageBid,
-quoteCount,
-}: {
-recommendedQuote: NegotiationQuote;
-averageBid: number;
-quoteCount: number;
-}) {
-if (averageBid <= 0) return 0;
-
-const spread = averageBid - recommendedQuote.amountNumber;
-const spreadPercent = (spread / averageBid) * 100;
-const competitionBoost = quoteCount >= 3 ? 1.2 : quoteCount >= 2 ? 1 : 0.75;
-
-return Math.max(0, Math.min(12, Math.round(spreadPercent * 0.35 * competitionBoost)));
-}
-
-function getLeverageLabel(score: number) {
-if (score >= 8) return "High Leverage";
-if (score >= 5) return "Moderate Leverage";
-if (score >= 2) return "Limited Leverage";
-return "Low Leverage";
-}
-
-function getStrategy({
-potential,
-quoteCount,
-riskLevel,
-}: {
-potential: number;
-quoteCount: number;
-riskLevel: string;
-}) {
-if (potential >= 8 && quoteCount >= 3) {
-return "Use competitive tension to request best-and-final pricing while preserving scope, schedule, and warranty commitments.";
-}
-
-if (potential >= 5) {
-return "Negotiate targeted commercial improvement while validating that no scope exclusions or schedule risks are introduced.";
-}
-
-if (riskLevel.toLowerCase() !== "low") {
-return "Prioritize risk clarification before pricing pressure. Commercial reduction should not increase delivery or execution exposure.";
-}
-
-return "Proceed with light negotiation focused on final terms, validity period, and contract execution readiness.";
 }
 
 export function ExecutiveNegotiationIntelligence({
@@ -104,13 +57,17 @@ once Nexus Pavilion has a recommended supplier path to analyze.
 );
 }
 
-const potential = getNegotiationPotential({
-recommendedQuote,
+const negotiationStrength = calculateNegotiationStrength({
+recommendedAmount: recommendedQuote.amountNumber,
 averageBid,
 quoteCount,
+riskLevel: recommendedQuote.riskLevel,
 });
 
-const targetReduction = Math.round(recommendedQuote.amountNumber * (potential / 100));
+const potential = Math.min(12, Math.round(negotiationStrength.score * 0.12));
+const targetReduction = Math.round(
+recommendedQuote.amountNumber * (potential / 100)
+);
 const targetPrice = recommendedQuote.amountNumber - targetReduction;
 const savingsVsAverage =
 averageBid > 0 ? averageBid - recommendedQuote.amountNumber : 0;
@@ -118,17 +75,11 @@ const budgetDelta = budget > 0 ? budget - recommendedQuote.amountNumber : 0;
 const isLowest =
 lowestAmount !== null && recommendedQuote.amountNumber === lowestAmount;
 
-const strategy = getStrategy({
-potential,
-quoteCount,
-riskLevel: recommendedQuote.riskLevel,
-});
-
 const commercialSignals = [
 {
 label: "Negotiation Potential",
 value: `${potential}%`,
-detail: getLeverageLabel(potential),
+detail: negotiationStrength.status,
 },
 {
 label: "Target Improvement",
@@ -166,7 +117,7 @@ budget <= 0
 : budgetDelta >= 0
 ? `${formatMoney(budgetDelta)} under budget`
 : `${formatMoney(Math.abs(budgetDelta))} over budget`,
-positive: budget <= 0 ? false : budgetDelta >= 0,
+positive: budget > 0 && budgetDelta >= 0,
 },
 {
 label: "Risk Position",
@@ -198,13 +149,13 @@ Recommended Strategy
 </p>
 
 <p className="mt-4 text-sm font-bold leading-7 text-slate-300">
-{strategy}
+{negotiationStrength.recommendation}
 </p>
 </div>
 
 <div className="mt-6 grid gap-4 sm:grid-cols-2">
 {commercialSignals.map((signal) => (
-<MiniTile
+<ExecutiveMiniTile
 key={signal.label}
 title={signal.label}
 value={signal.value}
@@ -258,38 +209,11 @@ Executive Negotiation Brief
 </p>
 
 <p className="mt-4 text-sm font-bold leading-7 text-slate-300">
-Use negotiation only where it preserves scope certainty, schedule
-confidence, supplier commitment, and procurement fairness. The
-target should improve commercial value without weakening delivery
-or governance controls.
+{negotiationStrength.recommendation}
 </p>
 </div>
 </div>
 </div>
 </section>
-);
-}
-
-function MiniTile({
-title,
-value,
-detail,
-}: {
-title: string;
-value: string;
-detail: string;
-}) {
-return (
-<div className="rounded-3xl border border-white/10 bg-white/[0.055] p-5">
-<p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
-{title}
-</p>
-
-<p className="mt-3 text-2xl font-black text-white">{value}</p>
-
-<p className="mt-2 text-xs font-bold leading-5 text-slate-400">
-{detail}
-</p>
-</div>
 );
 }
