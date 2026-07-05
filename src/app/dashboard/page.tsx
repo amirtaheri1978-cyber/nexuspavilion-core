@@ -6,7 +6,6 @@ import type { ReactNode } from "react";
 import { ExecutiveHero } from "@/components/dashboard/executive-hero";
 import { ExecutiveInsightCard } from "@/components/executive/executive-insight-card";
 import { ExecutiveMetricCard } from "@/components/executive/executive-metric-card";
-import SignOutButton from "@/components/sign-out-button";
 import { createClient } from "@/lib/supabase/server";
 
 type Experience = "owner" | "vendor" | "consultant";
@@ -763,7 +762,7 @@ const topRfqsByBudget = [...rfqList]
 const recentAwards = awardedQuotes.slice(0, 5);
 
 return (
-<main className="min-h-screen text-white">
+<main className="min-h-screen bg-[#030712] text-white">
 
 <div className="w-full max-w-none px-5 py-6 sm:px-8 lg:px-10 lg:py-8">
 <ExecutiveHero
