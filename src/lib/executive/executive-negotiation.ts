@@ -25,7 +25,7 @@ return "critical";
 
 export function buildExecutiveNegotiation({
 recommendedQuote,
-averageBid,
+averageBid = 0,
 quoteCount,
 }: ExecutiveIntelligenceInput): ExecutiveNegotiation | null {
 if (!recommendedQuote) return null;

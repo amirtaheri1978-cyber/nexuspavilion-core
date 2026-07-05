@@ -7,11 +7,7 @@ export type ExecutiveTone =
 | "risk"
 | "neutral";
 
-export type ExecutivePriority =
-| "critical"
-| "high"
-| "medium"
-| "low";
+export type ExecutivePriority = "critical" | "high" | "medium" | "low";
 
 export type ExecutiveResult = {
 score: number;
@@ -89,9 +85,9 @@ healthScore: number;
 quoteCount: number;
 documentCount: number;
 addendaCount: number;
-averageBid: number;
-lowestAmount: number | null;
-budget: number;
+averageBid?: number;
+lowestAmount?: number | null;
+budget?: number;
 potentialSavings: number;
 recommendedQuote: ExecutiveQuote | null;
 awardedQuote:

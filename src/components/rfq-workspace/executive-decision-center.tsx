@@ -6,6 +6,8 @@ calculateDecisionReadiness,
 calculateScenarioRecommendation,
 } from "@/lib/analytics/executive-intelligence";
 import { ExecutiveSignal } from "@/components/rfq-workspace/shared/executive-signal";
+import { buildExecutiveIntelligence } from "@/lib/executive/executive-engine";
+
 type DecisionStatus = "ready" | "locked" | "watch" | "not_ready";
 
 type ExecutiveDecisionCenterProps = {
@@ -118,6 +120,29 @@ addendaCount,
 potentialSavings,
 recommendedQuote,
 }: ExecutiveDecisionCenterProps) {
+const executiveRecommendedQuote = recommendedQuote
+? {
+...recommendedQuote,
+budgetVariance: 0,
+lowestBidVariance: 0,
+}
+: null;
+
+const executive = buildExecutiveIntelligence({
+rfqSlug,
+isOwner,
+isOpen,
+commercialEvaluationUnlocked,
+healthScore,
+quoteCount,
+documentCount,
+addendaCount,
+potentialSavings,
+recommendedQuote: executiveRecommendedQuote,
+awardedQuote: null,
+});
+
+void executive; // This line is just to avoid unused variable warning, you can remove it if you use `executive` later in the code.
 const status = getDecisionStatus({
 isOwner,
 commercialEvaluationUnlocked,
