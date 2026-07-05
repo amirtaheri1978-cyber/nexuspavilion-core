@@ -1143,7 +1143,7 @@ amountNumber: awardedQuote.amountNumber,
 });
 
 return (
-<main className="min-h-screen bg-[#f6f6f3] px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
+<main className="min-h-screen bg-[#061426] px-4 py-8 text-whitesm:px-6 lg:px-8 lg:py-10">
 <div className="mx-auto max-w-7xl">
 <Link
 href="/rfq"
