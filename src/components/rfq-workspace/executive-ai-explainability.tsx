@@ -1,12 +1,7 @@
-import {
-calculateAwardConfidence,
-calculateCommercialHealth,
-calculateSupplierReliability,
-} from "@/lib/analytics/executive-intelligence";
 import { ExecutiveProgress } from "@/components/rfq-workspace/shared/executive-progress";
 import { ExecutiveSignal } from "@/components/rfq-workspace/shared/executive-signal";
+import { buildExecutiveIntelligence } from "@/lib/executive/executive-engine";
 import type { ExecutiveQuote } from "@/types/executive";
-
 
 type ExecutiveAIExplainabilityProps = {
 isOwner: boolean;
@@ -28,55 +23,6 @@ if (score >= 88) return "Strong";
 if (score >= 72) return "Healthy";
 if (score >= 56) return "Watch";
 return "Weak";
-}
-
-function getReasonSignals({
-recommendedQuote,
-averageBid,
-documentCount,
-}: {
-recommendedQuote: ExecutiveQuote;
-averageBid: number;
-documentCount: number;
-}) {
-return [
-{
-label: "Commercial Position",
-value:
-averageBid > 0 && recommendedQuote.amountNumber < averageBid
-? "Below average bid"
-: "Needs commercial validation",
-strong: averageBid > 0 && recommendedQuote.amountNumber <= averageBid,
-},
-{
-label: "Award Confidence",
-value: `${recommendedQuote.awardConfidence}% confidence`,
-strong: recommendedQuote.awardConfidence >= 80,
-},
-{
-label: "Risk Position",
-value: `${recommendedQuote.riskLevel} risk`,
-strong: recommendedQuote.riskLevel.toLowerCase() === "low",
-},
-{
-label: "Performance Signals",
-value: `${recommendedQuote.performanceScore}/100 performance score`,
-strong: recommendedQuote.performanceScore >= 75,
-},
-{
-label: "Timeline Strength",
-value: `${recommendedQuote.timelineScore}/100 timeline score`,
-strong: recommendedQuote.timelineScore >= 75,
-},
-{
-label: "Document Context",
-value:
-documentCount > 0
-? `${documentCount} RFQ document${documentCount === 1 ? "" : "s"} available`
-: "Document package needs attention",
-strong: documentCount > 0,
-},
-];
 }
 
 export function ExecutiveAIExplainability({
@@ -110,25 +56,22 @@ the recommended award path.
 );
 }
 
-const awardConfidence = calculateAwardConfidence({
-priceScore: recommendedQuote.priceScore,
-timelineScore: recommendedQuote.timelineScore,
-performanceScore: recommendedQuote.performanceScore,
-riskScore: recommendedQuote.riskScore,
-});
-
-const commercialHealth = calculateCommercialHealth({
-recommendedAmount: recommendedQuote.amountNumber,
-averageBid,
-budget: recommendedQuote.amountNumber + recommendedQuote.budgetVariance,
+const executive = buildExecutiveIntelligence({
+rfqSlug: "",
+isOwner,
+isOpen: true,
+commercialEvaluationUnlocked,
+healthScore,
 quoteCount,
-});
-
-const supplierReliability = calculateSupplierReliability({
-timelineScore: recommendedQuote.timelineScore,
-performanceScore: recommendedQuote.performanceScore,
-riskScore: recommendedQuote.riskScore,
-awardConfidence: recommendedQuote.awardConfidence,
+documentCount,
+addendaCount: 0,
+averageBid,
+lowestAmount: null,
+budget: recommendedQuote.amountNumber + recommendedQuote.budgetVariance,
+potentialSavings:
+averageBid > 0 ? averageBid - recommendedQuote.amountNumber : 0,
+recommendedQuote,
+awardedQuote: null,
 });
 
 const drivers = [
@@ -139,13 +82,11 @@ const drivers = [
 { label: "Overall", score: recommendedQuote.totalScore },
 ];
 
-const reasonSignals = getReasonSignals({
-recommendedQuote,
-averageBid,
-documentCount,
-});
-
-const verdict = `${awardConfidence.recommendation} ${commercialHealth.recommendation} ${supplierReliability.recommendation}`;
+const reasonSignals = executive.risks.map((risk) => ({
+label: risk.title,
+value: risk.summary,
+strong: risk.severity === "success" || risk.severity === "info",
+}));
 
 return (
 <section className="mt-8 overflow-hidden rounded-[40px] border border-white/10 bg-slate-950 text-white shadow-[0_30px_100px_rgba(2,6,23,0.26)]">
@@ -171,7 +112,8 @@ AI Verdict
 </p>
 
 <p className="mt-4 text-sm font-bold leading-7 text-slate-300">
-{verdict}
+{executive.recommendation.recommendation}{" "}
+{executive.board.boardRecommendation}
 </p>
 </div>
 
@@ -182,7 +124,7 @@ value={`#${recommendedQuote.rank}`}
 />
 <MiniMetric
 title="Award Confidence"
-value={`${awardConfidence.score}%`}
+value={`${executive.recommendation.score}%`}
 />
 <MiniMetric
 title="Recommended Bid"
