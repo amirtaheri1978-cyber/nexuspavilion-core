@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 type OrganizationType =
 | "owner_developer"
@@ -728,10 +729,13 @@ function BrandTile() {
 return (
 <div className="inline-flex rounded-[30px] border border-white/10 bg-white/[0.06] p-2 shadow-[0_22px_70px_rgba(0,0,0,0.42)] backdrop-blur-xl">
 <div className="rounded-[24px] border border-white/10 bg-black px-6 py-5">
-<img
+<Image
 src={BRAND_LOGO_SRC}
 alt="Nexus Pavilion"
+width={240}
+height={82}
 className="h-[72px] w-auto object-contain sm:h-[82px]"
+priority
 />
 </div>
 </div>

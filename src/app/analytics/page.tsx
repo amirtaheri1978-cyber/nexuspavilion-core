@@ -35,9 +35,7 @@ calculateExecutiveScore,
 calculateExecutiveReadiness,
 calculateDigitalMaturity,
 calculateBoardHealth,
-executiveStatus,
 commandStatus,
-boardStatus,
 } from "@/lib/analytics/executive-intelligence";
 
 type Quote = {
@@ -228,17 +226,6 @@ const executiveProcurementHealth = Math.min(
 100,
 Math.round(awardRate * 0.4 + budgetUtilization * 0.3 + avgQuotesPerRfq * 10),
 );
-
-const marketCompetitionIndex =
-avgQuotesPerRfq >= 4
-? "High"
-: avgQuotesPerRfq >= 2
-? "Healthy"
-: avgQuotesPerRfq >= 1
-? "Limited"
-: "None";
-
-const forecastAwardVolume = Math.round(awardedVolume * 1.15);
 const forecastSavings = Math.round(potentialSavings * 1.2);
 const dominantScope =
 [
@@ -259,15 +246,6 @@ const executiveSummary =
 totalRfqs === 0
 ? "No RFQ activity has been created yet. Start by publishing construction procurement opportunities to activate executive intelligence."
 : `${procurementHealth} procurement health. ${competitionIndex}. Dominant RFQ scope is ${dominantScope}, sourcing is ${dominantSourcing}, award conversion is ${awardRate}%, with ${supplierQuotes} supplier quotes and ${potentialSavings.toLocaleString()} dollars in estimated savings opportunity.`;
-
-const aiRecommendation =
-constructionClassificationScore < 60
-? "Improve RFQ classification coverage across material, trade, equipment, and service procurement to strengthen supplier matching and executive intelligence."
-: potentialSavings > 10000
-? "Focus on competitive bidding strategies to unlock additional savings."
-: awardedVolume > budgetTotal * 0.7
-? "Award conversion is healthy. Continue scaling high-performing supplier relationships."
-: "Review supplier participation and RFQ attractiveness to improve procurement outcomes.";
 
 const strategicRecommendations: string[] = [];
 
@@ -526,14 +504,6 @@ budgetUtilization * 0.2 +
 constructionClassificationScore * 0.15,
 ),
 );
-const boardCommandStatus = boardStatus(boardHealthIndex);
-
-const ceoCommandStatus =
-executiveReadinessScore >= 80
-? "Decision Ready"
-: executiveReadinessScore >= 60
-? "Monitoring"
-: "Escalation Required";
 
 const enterpriseCommandStatus = commandStatus(enterpriseProcurementScore);
 

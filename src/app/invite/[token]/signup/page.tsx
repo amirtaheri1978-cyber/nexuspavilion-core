@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
 import { createClient } from "@/lib/supabase/client";
+import Image from "next/image";
 
 const SITE_URL =
 process.env.NEXT_PUBLIC_SITE_URL ||
@@ -267,9 +268,11 @@ account will be connected automatically after signup.
 <div className="mt-8 rounded-3xl bg-slate-50 p-6">
 <div className="flex items-start gap-5">
 {company?.logo_url ? (
-<img
+<Image
 src={company.logo_url}
 alt={company.name || "Company"}
+width={80}
+height={80}
 className="h-20 w-20 rounded-3xl border border-slate-200 bg-white object-contain p-2"
 />
 ) : (

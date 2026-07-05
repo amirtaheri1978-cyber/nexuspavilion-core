@@ -3,17 +3,6 @@ import { redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
 
-type Company = {
-id: string;
-name: string | null;
-slug: string | null;
-category: string | null;
-location: string | null;
-network_role: string | null;
-status: string | null;
-};
-
-
 type Compliance = {
 id: string;
 vendor_company_id: string | null;
@@ -165,13 +154,6 @@ if (score >= 60) return "Medium";
 return "High";
 }
 
-function getVendorRiskClass(risk: string) {
-if (risk === "Low") return "bg-green-100 text-green-700";
-if (risk === "Medium") return "bg-orange-100 text-orange-700";
-if (risk === "High") return "bg-red-100 text-red-700";
-return "bg-slate-950 text-white";
-}
-
 function hasExpiredOrCriticalExpiry(compliance: Compliance | null) {
 if (!compliance) return true;
 
@@ -185,15 +167,6 @@ return expiries.some((expiry) => {
 const days = daysUntil(expiry);
 return days !== null && days <= 30;
 });
-}
-
-function getExecutiveAction(compliance: Compliance | null) {
-const risk = getVendorRiskLevel(compliance);
-
-if (risk === "Critical") return "Block RFQ participation until compliance is completed.";
-if (risk === "High") return "Escalate compliance review before award decision.";
-if (risk === "Medium") return "Request renewal documents before next procurement cycle.";
-return "Eligible for active procurement workflows.";
 }
 
 function getVendorQuotes(
@@ -252,14 +225,6 @@ function getWinRate(quotes: QuotePerformance[]) {
 if (quotes.length === 0) return 0;
 
 return Math.round((getAwardedQuotes(quotes).length / quotes.length) * 100);
-}
-
-function getAverageAwardValue(quotes: QuotePerformance[]) {
-const awardedQuotes = getAwardedQuotes(quotes);
-
-if (awardedQuotes.length === 0) return 0;
-
-return Math.round(getAwardedRevenue(quotes) / awardedQuotes.length);
 }
 
 function getPerformanceScore(quotes: QuotePerformance[]) {
@@ -609,7 +574,6 @@ supplierIntelligenceScore
 
 const vendorWinRate = getWinRate(vendorQuotes);
 const awardedRevenue = getAwardedRevenue(vendorQuotes);
-const averageAwardValue = getAverageAwardValue(vendorQuotes);
 const performanceScore = getPerformanceScore(vendorQuotes);
 const performanceRank = getPerformanceRank(performanceScore);
 

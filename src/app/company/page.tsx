@@ -7,6 +7,7 @@ import InvitationActions from "@/components/invitation-actions";
 import InviteUserForm from "@/components/invite-user-form";
 import MemberActions from "@/components/member-actions";
 import { createClient } from "@/lib/supabase/server";
+import Image from "next/image";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "";
 
@@ -238,9 +239,11 @@ Open Marketplace
 <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between">
 <div className="flex items-start gap-6">
 {typedCompany.logo_url ? (
-<img
+<Image
 src={typedCompany.logo_url}
 alt={typedCompany.name || "Company"}
+width={96}
+height={96}
 className="h-24 w-24 rounded-3xl border border-white/10 bg-white object-contain p-2"
 />
 ) : (

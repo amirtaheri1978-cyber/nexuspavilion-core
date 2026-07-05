@@ -5,6 +5,7 @@ import CompanyGovernanceCenter from "@/components/company-governance-center";
 import CompanyMembersCenter from "@/components/company-members-center";
 import { createClient } from "@/lib/supabase/server";
 
+
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "";
 
 type Profile = {

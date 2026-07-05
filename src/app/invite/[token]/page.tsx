@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import { createClient } from "@/lib/supabase/server";
-
+import Image from "next/image";
 const SITE_URL =
 "https://scaling-invention-5g7q4p5rwrwj3vwq7-3000.app.github.dev";
 
@@ -134,9 +134,11 @@ company and assign your role.
 <div className="mt-10 rounded-3xl bg-slate-50 p-6">
 <div className="flex items-start gap-5">
 {invitation.companies?.logo_url ? (
-<img
+<Image
 src={invitation.companies.logo_url}
 alt={invitation.companies.name || "Company"}
+width={80}
+height={80}
 className="h-20 w-20 rounded-3xl border border-slate-200 bg-white object-contain p-2"
 />
 ) : (

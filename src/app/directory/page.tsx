@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
 import { createClient } from "@/lib/supabase/client";
+import Image from "next/image";
 
 type Company = {
 id: string;
@@ -35,16 +36,6 @@ status: string | null;
 rating: number | null;
 };
 
-type RankedCompany = Company & {
-quotesSubmitted: number;
-awardsWon: number;
-awardedRevenue: number;
-averageBid: number;
-winRate: number;
-supplierScore: number;
-supplierRank: string;
-reliabilitySignal: string;
-};
 
 function formatMoney(value: number) {
 if (!Number.isFinite(value)) return "$0";
@@ -539,10 +530,12 @@ className="group rounded-[32px] border border-white/10 bg-white/[0.055] p-6 shad
 <div className="flex items-start justify-between gap-4">
 <div className="flex items-start gap-4">
 {company.logo_url ? (
-<img
+<Image
 src={company.logo_url}
 alt={company.name}
-className="h-14 w-14 rounded-2xl border border-white/10 bg-white object-cover"
+width={56}
+height={56}
+className="h-14 w-14 rounded-2xl border border-white/10 bg-white object-contain"
 />
 ) : (
 <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.055] text-xl font-black text-slate-400">

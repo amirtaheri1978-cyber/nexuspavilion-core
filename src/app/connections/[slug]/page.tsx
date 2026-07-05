@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import StatusBadge from "@/components/ui/StatusBadge";
 import DeleteCompanyButton from "@/components/connections/DeleteCompanyButton";
 import { createClient } from "@/lib/supabase/server";
-
+import Image from "next/image";
 type StatusBadgeValue = "SANDBOX" | "PENDING" | "APPROVED" | "REJECTED";
 
 type Company = {
@@ -110,10 +110,12 @@ className="text-sm font-medium text-slate-600 hover:text-slate-900"
 <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
 <div className="flex items-start gap-5">
 {company.logo_url ? (
-<img
+<Image
 src={company.logo_url}
 alt={company.name}
-className="h-20 w-20 rounded-2xl border border-slate-200 object-cover"
+width={80}
+height={80}
+className="h-20 w-20 rounded-2xl border border-slate-200 object-contain ..."
 />
 ) : (
 <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-slate-100 text-2xl font-bold text-slate-600">
