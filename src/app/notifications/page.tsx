@@ -24,6 +24,16 @@ return "No date";
 return date.toLocaleString();
 }
 
+function getNotificationTone(type: string | null) {
+const value = String(type || "").toLowerCase();
+
+if (value.includes("award")) return "success";
+if (value.includes("risk") || value.includes("warning")) return "warning";
+if (value.includes("invite")) return "blue";
+
+return "neutral";
+}
+
 export default async function NotificationsPage() {
 const supabase = await createClient();
 
@@ -54,90 +64,183 @@ const { data: notifications } = await supabase
 const notificationList = (notifications ?? []) as Notification[];
 
 const unreadCount = notificationList.filter(
-(notification) => !notification.is_read
+(notification) => !notification.is_read,
 ).length;
 
+const awardCount = notificationList.filter((notification) =>
+String(notification.type || "").toLowerCase().includes("award"),
+).length;
+
+const inviteCount = notificationList.filter((notification) =>
+String(notification.type || "").toLowerCase().includes("invite"),
+).length;
+
+const totalCount = notificationList.length;
+
 return (
-<main className="min-h-screen bg-slate-100 px-8 py-10">
-<div className="mx-auto max-w-5xl">
-<div className="rounded-3xl border border-slate-200 bg-white p-10">
-<div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
+<main className="relative min-h-screen overflow-hidden bg-[#061426] px-4 py-6 text-white sm:px-6 lg:px-10">
+<div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(circle_at_top_left,rgba(44,196,232,0.18),transparent_34%),radial-gradient(circle_at_top_right,rgba(200,166,70,0.15),transparent_30%),linear-gradient(180deg,#061426_0%,#07111F_45%,#020617_100%)]" />
+<div className="pointer-events-none fixed inset-0 -z-10 bg-[linear-gradient(120deg,rgba(255,255,255,0.055),transparent_32%,rgba(200,166,70,0.05)_66%,transparent)]" />
+
+<div className="mx-auto w-full max-w-[1400px]">
+<section className="rounded-[38px] border border-white/10 bg-white/[0.045] p-6 shadow-[0_32px_110px_rgba(0,0,0,0.42)] backdrop-blur-2xl sm:p-8 lg:p-10">
+<div className="flex flex-col gap-8 xl:flex-row xl:items-start xl:justify-between">
 <div>
-<p className="text-xs font-black uppercase tracking-[0.35em] text-orange-500">
-Activity Center
+<p className="text-xs font-black uppercase tracking-[0.35em] text-[#C8A646]">
+Executive Activity Center
 </p>
 
-<h1 className="mt-3 text-5xl font-black text-slate-950">
+<h1 className="mt-4 max-w-4xl text-4xl font-black tracking-[-0.05em] text-white sm:text-5xl xl:text-[64px] xl:leading-[0.98]">
 Notifications
 </h1>
 
-<p className="mt-4 max-w-2xl text-sm leading-6 text-slate-600">
+<p className="mt-5 max-w-4xl text-sm font-semibold leading-7 text-slate-300 sm:text-base">
 Monitor procurement events, supplier actions, contract awards,
-and platform activity scoped to your company workspace only.
+invitations, risk signals, and platform activity scoped to your
+company workspace.
 </p>
 </div>
 
-<div className="rounded-3xl bg-slate-950 px-6 py-5 text-white">
-<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
-Unread
+<div className="grid min-w-full gap-4 sm:grid-cols-2 xl:min-w-[520px]">
+<ActivityMetric title="Total Activity" value={totalCount} />
+<ActivityMetric title="Unread" value={unreadCount} />
+<ActivityMetric title="Awards" value={awardCount} />
+<ActivityMetric title="Invitations" value={inviteCount} />
+</div>
+</div>
+</section>
+
+<section className="mt-8 rounded-[36px] border border-white/10 bg-white/[0.045] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.28)] backdrop-blur-xl sm:p-8">
+<div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+<div>
+<p className="text-xs font-black uppercase tracking-[0.3em] text-[#C8A646]">
+Workspace Timeline
 </p>
 
-<p className="mt-2 text-3xl font-black">{unreadCount}</p>
+<h2 className="mt-3 text-3xl font-black text-white">
+Live Activity Feed
+</h2>
+
+<p className="mt-3 max-w-3xl text-sm font-semibold leading-7 text-slate-400">
+Every activity shown here belongs to your company workspace and
+supports procurement governance, visibility, and executive
+follow-up.
+</p>
 </div>
-</div>
+
+<StatusBadge tone={unreadCount > 0 ? "warning" : "success"}>
+{unreadCount > 0 ? `${unreadCount} Unread` : "All Clear"}
+</StatusBadge>
 </div>
 
 <div className="mt-8 space-y-4">
 {notificationList.length > 0 ? (
 notificationList.map((notification) => (
-<div
+<article
 key={notification.id}
-className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm"
+className="rounded-[30px] border border-white/10 bg-[#061426]/72 p-6 shadow-[0_22px_70px_rgba(0,0,0,0.22)]"
 >
 <div className="flex items-start justify-between gap-6">
-<div>
-<h2 className="text-lg font-black text-slate-950">
-{notification.title || "Notification"}
-</h2>
+<div className="min-w-0">
+<div className="flex flex-wrap items-center gap-3">
+<StatusBadge
+tone={getNotificationTone(notification.type)}
+>
+{notification.type || "Activity"}
+</StatusBadge>
 
-<p className="mt-2 text-sm leading-6 text-slate-600">
-{notification.message || "No message provided."}
-</p>
-
-<div className="mt-4 flex flex-wrap items-center gap-3">
-<span className="rounded-full bg-orange-100 px-3 py-1 text-xs font-bold uppercase tracking-wide text-orange-700">
-{notification.type || "activity"}
-</span>
-
-<span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-500">
+<span className="rounded-full border border-white/10 bg-white/[0.055] px-3 py-1 text-xs font-black uppercase tracking-[0.14em] text-slate-300">
 Company Workspace
 </span>
 
-<span className="text-xs font-semibold text-slate-400">
-{formatNotificationDate(notification.created_at)}
+{!notification.is_read ? (
+<span className="rounded-full border border-orange-300/20 bg-orange-400/10 px-3 py-1 text-xs font-black uppercase tracking-[0.14em] text-orange-300">
+Unread
 </span>
+) : null}
 </div>
+
+<h3 className="mt-4 text-xl font-black text-white">
+{notification.title || "Notification"}
+</h3>
+
+<p className="mt-3 max-w-4xl text-sm font-semibold leading-7 text-slate-400">
+{notification.message || "No message provided."}
+</p>
+
+<p className="mt-4 text-xs font-bold uppercase tracking-[0.18em] text-slate-500">
+{formatNotificationDate(notification.created_at)}
+</p>
 </div>
 
 {!notification.is_read ? (
-<div className="mt-2 h-3 w-3 rounded-full bg-orange-500" />
+<div className="mt-2 h-3 w-3 shrink-0 rounded-full bg-[#C8A646] shadow-[0_0_24px_rgba(200,166,70,0.55)]" />
 ) : null}
 </div>
-</div>
+</article>
 ))
 ) : (
-<div className="rounded-3xl border border-dashed border-slate-300 bg-white p-12 text-center">
-<p className="text-lg font-bold text-slate-700">
-No notifications yet
-</p>
-
-<p className="mt-2 text-sm text-slate-500">
-Procurement activity for this company workspace will appear here.
-</p>
-</div>
+<EmptyState />
 )}
 </div>
+</section>
 </div>
 </main>
+);
+}
+
+function ActivityMetric({ title, value }: { title: string; value: number }) {
+return (
+<div className="rounded-[26px] border border-white/10 bg-[#061426]/75 p-5">
+<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">
+{title}
+</p>
+
+<p className="mt-2 text-3xl font-black text-white">{value}</p>
+</div>
+);
+}
+
+function StatusBadge({
+children,
+tone = "neutral",
+}: {
+children: React.ReactNode;
+tone?: "success" | "warning" | "blue" | "neutral";
+}) {
+const toneClass =
+tone === "success"
+? "border-emerald-300/20 bg-emerald-400/10 text-emerald-300"
+: tone === "warning"
+? "border-orange-300/20 bg-orange-400/10 text-orange-300"
+: tone === "blue"
+? "border-[#2CC4E8]/25 bg-[#2CC4E8]/10 text-[#9BE8F8]"
+: "border-white/10 bg-white/[0.055] text-slate-300";
+
+return (
+<span
+className={`inline-flex rounded-full border px-3 py-1 text-xs font-black uppercase tracking-[0.16em] ${toneClass}`}
+>
+{children}
+</span>
+);
+}
+
+function EmptyState() {
+return (
+<div className="rounded-[30px] border border-dashed border-white/15 bg-white/[0.035] p-12 text-center">
+<p className="text-xs font-black uppercase tracking-[0.3em] text-[#C8A646]">
+Activity Center
+</p>
+
+<h3 className="mt-4 text-3xl font-black text-white">
+No notifications yet
+</h3>
+
+<p className="mx-auto mt-3 max-w-2xl text-sm font-semibold leading-7 text-slate-400">
+Procurement activity, supplier actions, contract awards, invitations,
+and workspace events will appear here once your team starts operating.
+</p>
+</div>
 );
 }
