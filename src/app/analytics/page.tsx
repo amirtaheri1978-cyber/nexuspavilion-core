@@ -124,7 +124,6 @@ const awardedContracts = quoteList.filter(
 ).length;
 
 const supplierQuotes = quoteList.length;
-
 const materialRfqs = countByScope(rfqList, "material");
 const tradeRfqs = countByScope(rfqList, "subcontractor");
 const equipmentRfqs = countByScope(rfqList, "equipment");
@@ -205,6 +204,7 @@ savingsScore * 0.25,
 
 const procurementHealth = getHealthLabel(procurementHealthScore);
 const competitionIndex = getCompetitionLabel(avgQuotesPerRfq);
+
 const categoryCounts = rfqList.reduce((acc: Record<string, number>, rfq) => {
 const category = rfq.category || "Uncategorized";
 acc[category] = (acc[category] || 0) + 1;
@@ -240,7 +240,6 @@ avgQuotesPerRfq >= 4
 
 const forecastAwardVolume = Math.round(awardedVolume * 1.15);
 const forecastSavings = Math.round(potentialSavings * 1.2);
-
 const dominantScope =
 [
 { label: "Material", value: materialRfqs },
@@ -379,7 +378,6 @@ vendorLeaderboard.length <= 1
 : vendorLeaderboard.length <= 3
 ? "Medium"
 : "Low";
-
 const topVendorRevenue = vendorLeaderboard[0]?.revenue || 0;
 
 const vendorConcentrationRisk =
@@ -435,10 +433,8 @@ procurementHealthScore >= 80
 const awardPredictionConfidence =
 awardRate >= 50 ? "High" : awardRate >= 25 ? "Moderate" : "Low";
 
-const {
-score: enterpriseProcurementScore,
-status: executiveStatus,
-} = calculateExecutiveScore(
+const { score: enterpriseProcurementScore, status: executiveStatus } =
+calculateExecutiveScore(
 procurementHealthScore,
 predictionAccuracy,
 dataQualityScore,
@@ -459,11 +455,7 @@ constructionClassificationScore * 0.1,
 
 const supplierEngagementScore = Math.min(
 100,
-Math.round(
-supplierQuotes * 5 +
-avgQuotesPerRfq * 15 +
-supplierReliabilityScore * 0.3,
-),
+Math.round(supplierQuotes * 5 + avgQuotesPerRfq * 15 + supplierReliabilityScore * 0.3),
 );
 
 const executiveReadinessScore = calculateExecutiveReadiness(
@@ -534,9 +526,7 @@ budgetUtilization * 0.2 +
 constructionClassificationScore * 0.15,
 ),
 );
-
-const boardCommandStatus =
-boardStatus(boardHealthIndex);
+const boardCommandStatus = boardStatus(boardHealthIndex);
 
 const ceoCommandStatus =
 executiveReadinessScore >= 80
@@ -545,8 +535,7 @@ executiveReadinessScore >= 80
 ? "Monitoring"
 : "Escalation Required";
 
-const enterpriseCommandStatus =
-commandStatus(enterpriseProcurementScore);
+const enterpriseCommandStatus = commandStatus(enterpriseProcurementScore);
 
 const riskCommandStatus =
 procurementRiskIndex <= 25
@@ -711,8 +700,8 @@ procurementOpportunityScore >= 70
 : supplierDependencyRisk === "Critical"
 ? "Supplier Diversification Required"
 : "Operational Optimization";
-const executiveAlerts: ExecutiveAlert[] = [];
 
+const executiveAlerts: ExecutiveAlert[] = [];
 if (constructionClassificationScore < 60) {
 executiveAlerts.push({
 level: "warning",
@@ -873,7 +862,6 @@ impact: "+ Financial performance",
 confidence: "Medium",
 },
 ];
-
 const executiveDecisionSimulator = [
 {
 decision: "Expand Supplier Network",
@@ -956,6 +944,7 @@ executiveReadinessScore >= 80
 : "Limited Visibility",
 },
 ];
+
 const procurementCommandRoom = [
 {
 title: "Board Readiness",
@@ -1027,8 +1016,6 @@ title: "Decision Confidence",
 value: aiConfidenceScore,
 },
 ];
-
-
 const boardRiskPriorities = [
 {
 title:
@@ -1119,18 +1106,15 @@ constructionClassificationScore < 60
 : "Structured RFQ intelligence is active and supports executive interpretation.",
 },
 {
-title:
-awardRate < 25 ? "Award Execution Risk" : "Award Conversion Health",
+title: awardRate < 25 ? "Award Execution Risk" : "Award Conversion Health",
 priority:
 awardRate < 25
 ? "Critical"
 : awardRate < 45
 ? "Moderate"
 : "Monitor",
-impact:
-awardRate < 25 ? "High" : awardRate < 45 ? "Medium" : "Low",
-attention:
-awardRate < 25 ? "Immediate" : awardRate < 45 ? "90 Days" : "Ongoing",
+impact: awardRate < 25 ? "High" : awardRate < 45 ? "Medium" : "Low",
+attention: awardRate < 25 ? "Immediate" : awardRate < 45 ? "90 Days" : "Ongoing",
 summary:
 awardRate < 25
 ? "Award execution history is not yet strong enough to support high-confidence procurement decision patterns."
@@ -1199,7 +1183,6 @@ const topQuarterOpportunities = [
 `${dominantScope} RFQ mix growth`,
 "Supplier network growth",
 ];
-
 const executiveOpportunityRanking = [
 {
 title: `${bestProcurementCategory} Expansion`,
@@ -1336,13 +1319,13 @@ procurementOpportunityScore * 0.4 +
 savingsScore * 0.3,
 ),
 );
+
 const benchmarkMatrix = [
 { title: "Industry", score: industryBenchmarkScore },
 { title: "Procurement", score: procurementBenchmarkScore },
 { title: "Supplier", score: supplierBenchmarkScore },
 { title: "Cost", score: costOptimizationBenchmark },
 ];
-
 const benchmarkStatus =
 industryBenchmarkScore >= 85
 ? "Top Quartile"
@@ -1436,7 +1419,6 @@ benchmarkReadinessScore < 60
 : "Benchmark readiness supports executive-level comparison.",
 ];
 
-
 const executiveDecisionQueue = [
 procurementRiskIndex >= 50
 ? "Review supplier concentration risk."
@@ -1451,8 +1433,6 @@ awardRate < 25
 ? "Improve RFQ conversion and award execution."
 : "Maintain award conversion performance.",
 ];
-
-
 const ceoActionCenter = [
 {
 phase: "Immediate",
@@ -1463,7 +1443,8 @@ summary: boardRecommendation,
 phase: "30 Days",
 title: "Operational Focus",
 summary:
-executiveDecisionQueue[0] || "Maintain procurement operating discipline.",
+executiveDecisionQueue[0] ||
+"Maintain procurement operating discipline.",
 },
 {
 phase: "90 Days",
@@ -1501,7 +1482,9 @@ status: boardRiskPriorities[0]?.priority || "Monitor",
 },
 {
 title: "Top Opportunity",
-value: executiveOpportunityRanking[0]?.title || "No Opportunity Identified",
+value:
+executiveOpportunityRanking[0]?.title ||
+"No Opportunity Identified",
 status: executiveOpportunityRanking[0]?.priority || "Strategic",
 },
 {
@@ -1545,7 +1528,9 @@ portfolioHealthIndex >= 85
 const portfolioRecommendations: string[] = [];
 
 if (highRiskSuppliers > 0) {
-portfolioRecommendations.push("Reduce exposure to high-risk suppliers.");
+portfolioRecommendations.push(
+"Reduce exposure to high-risk suppliers.",
+);
 }
 
 if (supplierDiversificationScore < 60) {
@@ -1596,8 +1581,6 @@ const procurementPriority =
 avgQuotesPerRfq < 2
 ? "Increase RFQ competition and supplier engagement."
 : "Maintain healthy procurement competition levels.";
-
-
 const dailyExecutiveBriefing = [
 { title: "CEO", message: ceoPriority },
 { title: "CFO", message: cfoPriority },
@@ -1721,7 +1704,6 @@ procurementRiskIndex >= 60
 : procurementOpportunityScore >= 80
 ? "Growth Acceleration"
 : "Operational Improvement";
-
 const executivePresentationExports = [
 {
 title: "Board Brief",
@@ -1788,6 +1770,7 @@ title: "Approval Workflow",
 status: boardApprovalWorkflow,
 },
 ];
+
 const boardPackageStages = [
 {
 stage: "Data Collection",
@@ -1842,11 +1825,15 @@ status: procurementRiskIndex <= 50 ? "Approved" : "Review Required",
 },
 {
 stage: "Board Package Approval",
-status: boardDistributionStatus === "Distribution Ready" ? "Approved" : "Pending",
+status:
+boardDistributionStatus === "Distribution Ready" ? "Approved" : "Pending",
 },
 {
 stage: "Distribution Authorization",
-status: boardDistributionReadiness === "Ready For Distribution" ? "Authorized" : "Hold",
+status:
+boardDistributionReadiness === "Ready For Distribution"
+? "Authorized"
+: "Hold",
 },
 ];
 
@@ -1854,7 +1841,6 @@ const boardApprovalStatus =
 boardDistributionReadiness === "Ready For Distribution"
 ? "Board Approved"
 : "Awaiting Approval";
-
 const procurementCopilotPrompts = [
 {
 question: "Where is our biggest savings opportunity?",
@@ -1906,7 +1892,7 @@ boardPriorityScore >= 80
 ? "Nexus Copilot recommends scaling category growth, supplier coverage, RFQ classification maturity, and savings capture."
 : procurementRiskIndex >= 60
 ? "Nexus Copilot recommends reducing risk exposure before expanding procurement volume."
-: "Nexus Copilot recommends improving supplier participation, sourcing structure, and procurement data maturity.";
+: "Procurement performance is stable. Copilot recommends improving supplier participation, sourcing structure, and procurement data maturity.";
 
 const copilotModes = [
 {
@@ -1934,7 +1920,9 @@ boardPriorityScore >= 80
 : "Procurement performance is stable. Copilot recommends increasing supplier coverage and RFQ data maturity.";
 
 const topQuarterRisks = [
-procurementRiskIndex >= 50 ? "Supplier dependency" : "Low risk exposure",
+procurementRiskIndex >= 50
+? "Supplier dependency"
+: "Low risk exposure",
 supplierRanking.length <= 3
 ? "Limited supplier competition"
 : "Healthy supplier participation",
@@ -1942,12 +1930,13 @@ constructionClassificationScore < 60
 ? "Low RFQ classification maturity"
 : "Structured RFQ intelligence active",
 ];
+
 return (
-<main className="min-h-screen bg-slate-100 px-8 py-10">
+<main className="min-h-screen bg-[#030712] px-8 py-10">
 <div className="mx-auto max-w-7xl">
 <Link
 href="/dashboard"
-className="text-sm font-semibold text-slate-600 hover:text-slate-950"
+className="text-sm font-semibold text-slate-400 transition hover:text-white"
 >
 ← Back to Dashboard
 </Link>
@@ -1958,12 +1947,13 @@ boardReadinessRecommendation={boardReadinessRecommendation}
 procurementVolume={procurementVolume}
 forecastSavings={forecastSavings}
 enterpriseProcurementScore={enterpriseProcurementScore}
-constructionClassificationScore={constructionClassificationScore}
+constructionClassificationScore={
+constructionClassificationScore
+}
 />
 </div>
-
-<section className="mt-8 rounded-3xl border border-slate-200 bg-slate-950 p-8 text-white">
-<p className="text-xs font-black uppercase tracking-[0.3em] text-orange-400">
+<section className="mt-8 rounded-3xl border border-white/10 bg-[#061426]/88 p-8 text-white shadow-executive">
+<p className="text-xs font-black uppercase tracking-[0.3em] text-[#C8A646]">
 Construction Procurement Intelligence
 </p>
 
@@ -2015,16 +2005,16 @@ value={projectSpecificRfqs.toString()}
 <MetricCard title="Framework RFQs" value={frameworkRfqs.toString()} />
 </section>
 
-<section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
-<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
+<section className="mt-8 rounded-3xl border border-white/10 bg-[#061426]/88 p-8 text-white shadow-executive">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-[#C8A646]">
 RFQ Classification Intelligence
 </p>
 
-<h2 className="mt-3 text-3xl font-black text-slate-950">
+<h2 className="mt-3 text-3xl font-black text-white">
 Construction Procurement Mix
 </h2>
 
-<p className="mt-3 max-w-4xl text-sm leading-7 text-slate-600">
+<p className="mt-3 max-w-4xl text-sm leading-7 text-slate-400">
 Nexus Pavilion now separates material, trade, equipment, service,
 sourcing method, and framework agreement activity to improve
 supplier matching, quote comparison, risk scoring, and executive
@@ -2032,20 +2022,20 @@ intelligence.
 </p>
 
 <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_0.8fr]">
-<div>
+<div className="rounded-3xl border border-white/10 bg-black/15 p-4">
 <AnalyticsChart data={rfqMixChartData} />
 </div>
 
-<div className="rounded-3xl bg-slate-50 p-6">
-<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+<div className="rounded-3xl border border-white/10 bg-white/[0.045] p-6">
+<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">
 RFQ Mix Status
 </p>
 
-<h3 className="mt-3 text-3xl font-black text-slate-950">
+<h3 className="mt-3 text-3xl font-black text-white">
 {procurementMixStatus}
 </h3>
 
-<p className="mt-3 text-sm leading-7 text-slate-600">
+<p className="mt-3 text-sm leading-7 text-slate-400">
 Classification score is {constructionClassificationScore}/100.
 Dominant procurement scope is {dominantScope}. Dominant sourcing
 method is {dominantSourcing}.
@@ -2077,16 +2067,16 @@ title="Avg Quotes / RFQ"
 value={avgQuotesPerRfq.toString()}
 />
 </section>
-<section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
-<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
+<section className="mt-8 rounded-3xl border border-white/10 bg-[#061426]/88 p-8 text-white shadow-executive">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-[#C8A646]">
 Decision Confidence Layer
 </p>
 
-<h2 className="mt-3 text-3xl font-black text-slate-950">
+<h2 className="mt-3 text-3xl font-black text-white">
 Executive Decision Confidence Center
 </h2>
 
-<p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-600">
+<p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-400">
 Nexus Pavilion evaluates whether procurement intelligence is
 reliable enough to support executive interpretation, board
 reporting, and strategic decision guidance.
@@ -2099,15 +2089,12 @@ value={`${decisionConfidenceScore}/100`}
 />
 <MetricCard title="Confidence Level" value={decisionConfidenceLevel} />
 <MetricCard title="AI Confidence" value={aiConfidenceScore} />
-<MetricCard
-title="Benchmark Confidence"
-value={benchmarkConfidence}
-/>
+<MetricCard title="Benchmark Confidence" value={benchmarkConfidence} />
 </div>
 
 <div className="mt-8 grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
-<div className="rounded-3xl border border-slate-200 bg-slate-50 p-6">
-<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+<div className="rounded-3xl border border-white/10 bg-white/[0.045] p-6">
+<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">
 Confidence Drivers
 </p>
 
@@ -2115,9 +2102,9 @@ Confidence Drivers
 {decisionConfidenceDrivers.map((driver) => (
 <div
 key={driver}
-className="rounded-2xl border border-slate-200 bg-white p-4"
+className="rounded-2xl border border-white/10 bg-[#061426]/70 p-4"
 >
-<p className="text-sm font-semibold text-slate-700">
+<p className="text-sm font-semibold text-slate-300">
 {driver}
 </p>
 </div>
@@ -2125,8 +2112,8 @@ className="rounded-2xl border border-slate-200 bg-white p-4"
 </div>
 </div>
 
-<div className="rounded-3xl border border-slate-950 bg-slate-950 p-6 text-white">
-<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-400">
+<div className="rounded-3xl border border-white/10 bg-slate-950 p-6 text-white">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-[#C8A646]">
 Executive Guidance
 </p>
 
@@ -2140,8 +2127,8 @@ Executive Guidance
 </div>
 </div>
 
-<div className="mt-8 rounded-3xl border border-amber-200 bg-amber-50 p-6">
-<p className="text-xs font-black uppercase tracking-[0.2em] text-amber-700">
+<div className="mt-8 rounded-3xl border border-amber-300/20 bg-amber-400/10 p-6">
+<p className="text-xs font-black uppercase tracking-[0.2em] text-amber-300">
 Confidence Risks
 </p>
 
@@ -2149,9 +2136,9 @@ Confidence Risks
 {decisionConfidenceRisks.map((risk) => (
 <div
 key={risk}
-className="rounded-2xl border border-amber-100 bg-white p-4"
+className="rounded-2xl border border-white/10 bg-[#061426]/70 p-4"
 >
-<p className="text-sm font-semibold text-slate-700">
+<p className="text-sm font-semibold text-slate-300">
 {risk}
 </p>
 </div>
@@ -2165,16 +2152,16 @@ opportunities={executiveOpportunityRanking}
 intelligence={executiveOpportunityIntelligence}
 />
 
-<section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
-<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
+<section className="mt-8 rounded-3xl border border-white/10 bg-[#061426]/88 p-8 text-white shadow-executive">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-[#C8A646]">
 Executive Scenario Intelligence
 </p>
 
-<h2 className="mt-3 text-3xl font-black text-slate-950">
+<h2 className="mt-3 text-3xl font-black text-white">
 Strategic Scenario Modeling
 </h2>
 
-<p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-600">
+<p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-400">
 Executive scenario modeling evaluates potential procurement
 outcomes, operational impact, and strategic decision consequences
 before action is taken.
@@ -2184,32 +2171,30 @@ before action is taken.
 {executiveScenarios.map((scenario) => (
 <div
 key={scenario.scenario}
-className="rounded-3xl border border-blue-200 bg-blue-50 p-6"
+className="rounded-3xl border border-[#2CC4E8]/15 bg-[#2CC4E8]/[0.055] p-6"
 >
-<p className="text-xs font-black uppercase tracking-[0.2em] text-blue-700">
+<p className="text-xs font-black uppercase tracking-[0.2em] text-[#9BE8F8]">
 {scenario.scenario}
 </p>
 
-<p className="mt-4 text-sm font-semibold leading-7 text-slate-700">
+<p className="mt-4 text-sm font-semibold leading-7 text-slate-300">
 {scenario.outcome}
 </p>
 
-<div className="mt-5 rounded-2xl border border-blue-100 bg-white p-4">
-<p className="text-xs font-black uppercase tracking-[0.15em] text-slate-400">
+<div className="mt-5 rounded-2xl border border-white/10 bg-[#061426]/70 p-4">
+<p className="text-xs font-black uppercase tracking-[0.15em] text-slate-500">
 Impact
 </p>
 
-<p className="mt-2 font-black text-slate-950">
-{scenario.impact}
-</p>
+<p className="mt-2 font-black text-white">{scenario.impact}</p>
 </div>
 
-<div className="mt-4 rounded-2xl border border-blue-100 bg-white p-4">
-<p className="text-xs font-black uppercase tracking-[0.15em] text-slate-400">
+<div className="mt-4 rounded-2xl border border-white/10 bg-[#061426]/70 p-4">
+<p className="text-xs font-black uppercase tracking-[0.15em] text-slate-500">
 Confidence
 </p>
 
-<p className="mt-2 font-black text-slate-950">
+<p className="mt-2 font-black text-white">
 {scenario.confidence}
 </p>
 </div>
@@ -2217,16 +2202,16 @@ Confidence
 ))}
 </div>
 </section>
-<section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
-<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
+<section className="mt-8 rounded-3xl border border-white/10 bg-[#061426]/88 p-8 text-white shadow-executive">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-[#C8A646]">
 Executive Decision Simulator
 </p>
 
-<h2 className="mt-3 text-3xl font-black text-slate-950">
+<h2 className="mt-3 text-3xl font-black text-white">
 Decision Outcome Modeling
 </h2>
 
-<p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-600">
+<p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-400">
 Simulate executive procurement decisions and evaluate expected
 operational impact, confidence level, and implementation risk.
 </p>
@@ -2235,36 +2220,34 @@ operational impact, confidence level, and implementation risk.
 {executiveDecisionSimulator.map((item) => (
 <div
 key={item.decision}
-className="rounded-3xl border border-purple-200 bg-purple-50 p-6"
+className="rounded-3xl border border-purple-300/15 bg-purple-400/[0.055] p-6"
 >
-<p className="text-xs font-black uppercase tracking-[0.2em] text-purple-700">
+<p className="text-xs font-black uppercase tracking-[0.2em] text-purple-300">
 Decision
 </p>
 
-<h3 className="mt-4 text-xl font-black text-slate-950">
+<h3 className="mt-4 text-xl font-black text-white">
 {item.decision}
 </h3>
 
-<p className="mt-4 text-sm font-semibold leading-7 text-slate-700">
+<p className="mt-4 text-sm font-semibold leading-7 text-slate-300">
 {item.expectedImpact}
 </p>
 
-<div className="mt-5 rounded-2xl border border-purple-100 bg-white p-4">
-<p className="text-xs font-black uppercase tracking-[0.15em] text-slate-400">
+<div className="mt-5 rounded-2xl border border-white/10 bg-[#061426]/70 p-4">
+<p className="text-xs font-black uppercase tracking-[0.15em] text-slate-500">
 Risk
 </p>
 
-<p className="mt-2 font-black text-slate-950">
-{item.risk}
-</p>
+<p className="mt-2 font-black text-white">{item.risk}</p>
 </div>
 
-<div className="mt-4 rounded-2xl border border-purple-100 bg-white p-4">
-<p className="text-xs font-black uppercase tracking-[0.15em] text-slate-400">
+<div className="mt-4 rounded-2xl border border-white/10 bg-[#061426]/70 p-4">
+<p className="text-xs font-black uppercase tracking-[0.15em] text-slate-500">
 Confidence
 </p>
 
-<p className="mt-2 font-black text-slate-950">
+<p className="mt-2 font-black text-white">
 {item.confidence}
 </p>
 </div>
@@ -2273,16 +2256,16 @@ Confidence
 </div>
 </section>
 
-<section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
-<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
+<section className="mt-8 rounded-3xl border border-white/10 bg-[#061426]/88 p-8 text-white shadow-executive">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-[#C8A646]">
 Executive Forecast Center
 </p>
 
-<h2 className="mt-3 text-3xl font-black text-slate-950">
+<h2 className="mt-3 text-3xl font-black text-white">
 Forward-Looking Intelligence
 </h2>
 
-<p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-600">
+<p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-400">
 Forecast procurement readiness, supplier health, executive
 visibility, and enterprise risk trajectory using current operating
 signals.
@@ -2292,13 +2275,13 @@ signals.
 {executiveForecastCenter.map((forecast) => (
 <div
 key={forecast.title}
-className="rounded-3xl border border-cyan-200 bg-cyan-50 p-6"
+className="rounded-3xl border border-[#2CC4E8]/15 bg-[#2CC4E8]/[0.055] p-6"
 >
-<p className="text-xs font-black uppercase tracking-[0.2em] text-cyan-700">
+<p className="text-xs font-black uppercase tracking-[0.2em] text-[#9BE8F8]">
 {forecast.title}
 </p>
 
-<h3 className="mt-4 text-2xl font-black text-slate-950">
+<h3 className="mt-4 text-2xl font-black text-white">
 {forecast.forecast}
 </h3>
 </div>
@@ -2362,8 +2345,8 @@ supplierReliabilityScore={supplierReliabilityScore}
 predictionAccuracy={predictionAccuracy}
 awardPredictionConfidence={awardPredictionConfidence}
 />
-<section className="mt-8 rounded-3xl border border-slate-950 bg-slate-950 p-8 text-white">
-<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-400">
+<section className="mt-8 rounded-3xl border border-white/10 bg-slate-950 p-8 text-white shadow-executive">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-[#C8A646]">
 Board Forecast Briefing
 </p>
 
@@ -2373,7 +2356,7 @@ Executive Forecast Narrative
 
 <div className="mt-8 grid gap-4 md:grid-cols-2">
 <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
-<p className="text-xs font-black uppercase tracking-[0.2em] text-orange-400">
+<p className="text-xs font-black uppercase tracking-[0.2em] text-[#C8A646]">
 Board Priority
 </p>
 
@@ -2383,7 +2366,7 @@ Board Priority
 </div>
 
 <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
-<p className="text-xs font-black uppercase tracking-[0.2em] text-orange-400">
+<p className="text-xs font-black uppercase tracking-[0.2em] text-[#C8A646]">
 Forecast Confidence
 </p>
 
@@ -2394,7 +2377,7 @@ Forecast Confidence
 </div>
 
 <div className="mt-8 rounded-3xl border border-white/10 bg-white/5 p-6">
-<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-400">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-[#C8A646]">
 Board Narrative
 </p>
 
@@ -2425,24 +2408,24 @@ boardApprovalStages={boardApprovalStages}
 boardApprovalStatus={boardApprovalStatus}
 />
 
-<section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
-<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
+<section className="mt-8 rounded-3xl border border-white/10 bg-[#061426]/88 p-8 text-white shadow-executive">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-[#C8A646]">
 Executive Procurement Intelligence
 </p>
 
 <div className="mt-4 grid gap-6 lg:grid-cols-[1.3fr_0.7fr]">
 <div>
-<h2 className="text-3xl font-black text-slate-950">
+<h2 className="text-3xl font-black text-white">
 Procurement Health Summary
 </h2>
 
-<p className="mt-3 max-w-4xl text-sm leading-7 text-slate-600">
+<p className="mt-3 max-w-4xl text-sm leading-7 text-slate-400">
 {executiveSummary}
 </p>
 </div>
 
-<div className="rounded-3xl bg-slate-50 p-6">
-<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+<div className="rounded-3xl border border-white/10 bg-white/[0.045] p-6">
+<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">
 AI Signals
 </p>
 
@@ -2518,12 +2501,14 @@ portfolioRecommendations={portfolioRecommendations}
 />
 
 <ExecutiveExportPanel />
-<section className="mt-8 rounded-3xl border border-slate-200 bg-slate-950 p-8 text-white">
-<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-400">
+<section className="mt-8 rounded-3xl border border-white/10 bg-slate-950 p-8 text-white shadow-executive">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-[#C8A646]">
 Enterprise Procurement Copilot
 </p>
 
-<h2 className="mt-3 text-4xl font-black">Ask Nexus Copilot</h2>
+<h2 className="mt-3 text-4xl font-black">
+Ask Nexus Copilot
+</h2>
 
 <p className="mt-3 max-w-4xl text-sm leading-7 text-slate-300">
 {copilotSummary}
@@ -2531,8 +2516,11 @@ Enterprise Procurement Copilot
 
 <div className="mt-8 grid gap-4 md:grid-cols-2">
 {procurementCopilotPrompts.map((prompt) => (
-<div key={prompt.question} className="rounded-2xl bg-white/10 p-5">
-<p className="text-xs font-black uppercase tracking-[0.2em] text-orange-400">
+<div
+key={prompt.question}
+className="rounded-2xl border border-white/10 bg-white/5 p-5"
+>
+<p className="text-xs font-black uppercase tracking-[0.2em] text-[#C8A646]">
 {prompt.question}
 </p>
 
@@ -2544,7 +2532,7 @@ Enterprise Procurement Copilot
 </div>
 
 <div className="mt-8 rounded-3xl border border-white/10 bg-white/5 p-6">
-<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-400">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-[#C8A646]">
 Featured Insight
 </p>
 
@@ -2559,11 +2547,11 @@ Featured Insight
 key={mode.mode}
 className="rounded-2xl border border-white/10 bg-white/5 p-5"
 >
-<p className="text-xs font-black uppercase tracking-[0.2em] text-orange-400">
+<p className="text-xs font-black uppercase tracking-[0.2em] text-[#C8A646]">
 {mode.mode}
 </p>
 
-<p className="mt-3 text-xs font-semibold uppercase tracking-[0.15em] text-slate-400">
+<p className="mt-3 text-xs font-semibold uppercase tracking-[0.15em] text-slate-500">
 {mode.focus}
 </p>
 
@@ -2575,25 +2563,34 @@ className="rounded-2xl border border-white/10 bg-white/5 p-5"
 </div>
 
 <div className="mt-8 grid gap-6 md:grid-cols-3">
-<DarkList title="Executive Decision Queue" items={executiveDecisionQueue} />
-<DarkList title="Top Risks This Quarter" items={topQuarterRisks} />
-<DarkList title="Top Opportunities" items={topQuarterOpportunities} />
+<DarkList
+title="Executive Decision Queue"
+items={executiveDecisionQueue}
+/>
+<DarkList
+title="Top Risks This Quarter"
+items={topQuarterRisks}
+/>
+<DarkList
+title="Top Opportunities"
+items={topQuarterOpportunities}
+/>
 </div>
 </section>
 
-<section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
-<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
+<section className="mt-8 rounded-3xl border border-white/10 bg-[#061426]/88 p-8 text-white shadow-executive">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-[#C8A646]">
 Executive Benchmark Center
 </p>
 
-<h2 className="mt-3 text-3xl font-black text-slate-950">
+<h2 className="mt-3 text-3xl font-black text-white">
 Enterprise Procurement Benchmark
 </h2>
 
-<p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-600">
-Benchmark procurement maturity, supplier network strength, award
-confidence, risk exposure, peer positioning, and board readiness using
-validated Nexus Pavilion operating data.
+<p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-400">
+Benchmark procurement maturity, supplier network strength,
+award confidence, risk exposure, peer positioning, and board
+readiness using validated Nexus Pavilion operating data.
 </p>
 
 <div className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-5">
@@ -2601,18 +2598,30 @@ validated Nexus Pavilion operating data.
 title="Benchmark Score"
 value={`${benchmarkReadinessScore}/100`}
 />
-<MetricCard title="Benchmark Status" value={executiveBenchmarkStatus} />
-<MetricCard title="Peer Position" value={benchmarkPeerPosition} />
-<MetricCard title="Supplier Network" value={supplierNetworkBenchmark} />
-<MetricCard title="Risk Benchmark" value={riskBenchmark} />
+<MetricCard
+title="Benchmark Status"
+value={executiveBenchmarkStatus}
+/>
+<MetricCard
+title="Peer Position"
+value={benchmarkPeerPosition}
+/>
+<MetricCard
+title="Supplier Network"
+value={supplierNetworkBenchmark}
+/>
+<MetricCard
+title="Risk Benchmark"
+value={riskBenchmark}
+/>
 </div>
 
-<div className="mt-8 rounded-3xl border border-slate-950 bg-slate-950 p-6 text-white">
-<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-400">
+<div className="mt-8 rounded-3xl border border-white/10 bg-slate-950 p-6">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-[#C8A646]">
 Executive Benchmark Interpretation
 </p>
 
-<h3 className="mt-4 text-2xl font-black">
+<h3 className="mt-4 text-2xl font-black text-white">
 {benchmarkPeerPosition}
 </h3>
 
@@ -2626,24 +2635,23 @@ Executive Benchmark Interpretation
 </div>
 </section>
 
-<section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
-<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
+<section className="mt-8 rounded-3xl border border-white/10 bg-[#061426]/88 p-8 text-white shadow-executive">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-[#C8A646]">
 Executive Procurement Intelligence
 </p>
 
-<h2 className="mt-3 text-3xl font-black text-slate-950">
+<h2 className="mt-3 text-3xl font-black text-white">
 Board Decision Intelligence
 </h2>
 
-<p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-600">
+<p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-400">
 Executive interpretation layer converting procurement metrics,
-benchmark intelligence, supplier signals, and risk indicators into
-board-level actions.
+benchmark intelligence, supplier signals, and risk indicators
+into board-level actions.
 </p>
-
 <div className="mt-8 grid gap-6 lg:grid-cols-3">
-<div className="rounded-3xl border border-red-200 bg-red-50 p-6">
-<p className="text-xs font-black uppercase tracking-[0.2em] text-red-600">
+<div className="rounded-3xl border border-red-300/20 bg-red-400/10 p-6">
+<p className="text-xs font-black uppercase tracking-[0.2em] text-red-300">
 Board Risks
 </p>
 
@@ -2651,9 +2659,9 @@ Board Risks
 {topQuarterRisks.map((risk) => (
 <div
 key={risk}
-className="rounded-2xl border border-red-100 bg-white p-4"
+className="rounded-2xl border border-white/10 bg-[#061426]/70 p-4"
 >
-<p className="text-sm font-semibold text-slate-700">
+<p className="text-sm font-semibold text-slate-300">
 {risk}
 </p>
 </div>
@@ -2661,8 +2669,8 @@ className="rounded-2xl border border-red-100 bg-white p-4"
 </div>
 </div>
 
-<div className="rounded-3xl border border-green-200 bg-green-50 p-6">
-<p className="text-xs font-black uppercase tracking-[0.2em] text-green-700">
+<div className="rounded-3xl border border-emerald-300/20 bg-emerald-400/10 p-6">
+<p className="text-xs font-black uppercase tracking-[0.2em] text-emerald-300">
 Board Opportunities
 </p>
 
@@ -2670,9 +2678,9 @@ Board Opportunities
 {topQuarterOpportunities.map((opportunity) => (
 <div
 key={opportunity}
-className="rounded-2xl border border-green-100 bg-white p-4"
+className="rounded-2xl border border-white/10 bg-[#061426]/70 p-4"
 >
-<p className="text-sm font-semibold text-slate-700">
+<p className="text-sm font-semibold text-slate-300">
 {opportunity}
 </p>
 </div>
@@ -2680,38 +2688,38 @@ className="rounded-2xl border border-green-100 bg-white p-4"
 </div>
 </div>
 
-<div className="rounded-3xl border border-blue-200 bg-blue-50 p-6">
-<p className="text-xs font-black uppercase tracking-[0.2em] text-blue-700">
+<div className="rounded-3xl border border-[#2CC4E8]/20 bg-[#2CC4E8]/10 p-6">
+<p className="text-xs font-black uppercase tracking-[0.2em] text-[#9BE8F8]">
 Executive Actions
 </p>
 
 <div className="mt-4 space-y-4">
-<div className="rounded-2xl border border-blue-100 bg-white p-4">
-<p className="text-xs font-black uppercase tracking-[0.15em] text-blue-600">
+<div className="rounded-2xl border border-white/10 bg-[#061426]/70 p-4">
+<p className="text-xs font-black uppercase tracking-[0.15em] text-[#9BE8F8]">
 Immediate
 </p>
 
-<p className="mt-2 text-sm font-semibold text-slate-700">
+<p className="mt-2 text-sm font-semibold text-slate-300">
 {boardRecommendation}
 </p>
 </div>
 
-<div className="rounded-2xl border border-blue-100 bg-white p-4">
-<p className="text-xs font-black uppercase tracking-[0.15em] text-blue-600">
+<div className="rounded-2xl border border-white/10 bg-[#061426]/70 p-4">
+<p className="text-xs font-black uppercase tracking-[0.15em] text-[#9BE8F8]">
 90 Days
 </p>
 
-<p className="mt-2 text-sm font-semibold text-slate-700">
+<p className="mt-2 text-sm font-semibold text-slate-300">
 {executiveCommandRecommendation}
 </p>
 </div>
 
-<div className="rounded-2xl border border-blue-100 bg-white p-4">
-<p className="text-xs font-black uppercase tracking-[0.15em] text-blue-600">
+<div className="rounded-2xl border border-white/10 bg-[#061426]/70 p-4">
+<p className="text-xs font-black uppercase tracking-[0.15em] text-[#9BE8F8]">
 Strategic Position
 </p>
 
-<p className="mt-2 text-sm font-semibold text-slate-700">
+<p className="mt-2 text-sm font-semibold text-slate-300">
 {executiveBenchmarkStatus}
 </p>
 </div>
@@ -2719,8 +2727,9 @@ Strategic Position
 </div>
 </div>
 </section>
-<section className="mt-8 rounded-3xl border border-slate-200 bg-slate-950 p-8 text-white">
-<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-400">
+
+<section className="mt-8 rounded-3xl border border-white/10 bg-slate-950 p-8 text-white shadow-executive">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-[#C8A646]">
 Executive Scorecard
 </p>
 
@@ -2767,16 +2776,16 @@ value={executiveBenchmarkStatus}
 </div>
 </section>
 
-<section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
-<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
+<section className="mt-8 rounded-3xl border border-white/10 bg-[#061426]/88 p-8 text-white shadow-executive">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-[#C8A646]">
 Board Presentation Layer
 </p>
 
-<h2 className="mt-3 text-3xl font-black text-slate-950">
+<h2 className="mt-3 text-3xl font-black text-white">
 Board Executive Summary
 </h2>
 
-<p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-600">
+<p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-400">
 Board-facing procurement summary consolidating readiness,
 enterprise status, risk position, and strategic direction from
 validated executive intelligence.
@@ -2798,12 +2807,12 @@ value={boardStrategicPosition}
 />
 </div>
 
-<div className="mt-8 rounded-3xl border border-slate-200 bg-slate-50 p-6">
-<p className="text-xs font-black uppercase tracking-[0.25em] text-slate-400">
+<div className="mt-8 rounded-3xl border border-white/10 bg-white/[0.045] p-6">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-slate-500">
 Board Summary
 </p>
 
-<p className="mt-4 text-sm font-semibold leading-7 text-slate-700">
+<p className="mt-4 text-sm font-semibold leading-7 text-slate-300">
 {executiveCommandRecommendation}
 </p>
 </div>
@@ -2814,12 +2823,14 @@ supplierRiskRadar={supplierRiskRadar}
 supplierRanking={supplierRanking}
 />
 
-<section className="mt-8 rounded-3xl border border-slate-950 bg-slate-950 p-8 text-white">
-<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-400">
+<section className="mt-8 rounded-3xl border border-white/10 bg-slate-950 p-8 text-white shadow-executive">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-[#C8A646]">
 Executive Operating System
 </p>
 
-<h2 className="mt-3 text-4xl font-black">Enterprise Command Layer</h2>
+<h2 className="mt-3 text-4xl font-black">
+Enterprise Command Layer
+</h2>
 
 <p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-300">
 Unified executive operating view across procurement performance,
@@ -2828,25 +2839,15 @@ engagement, and opportunity intelligence.
 </p>
 
 <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-<DarkMetric
-title="Board Health"
-value={`${boardHealthIndex}/100`}
-/>
-
-<DarkMetric
-title="Benchmark"
-value={`${benchmarkReadinessScore}/100`}
-/>
-
+<DarkMetric title="Board Health" value={`${boardHealthIndex}/100`} />
+<DarkMetric title="Benchmark" value={`${benchmarkReadinessScore}/100`} />
 <DarkMetric title="Enterprise" value={enterpriseCommandStatus} />
-
 <DarkMetric title="Risk" value={riskCommandStatus} />
-
 <DarkMetric title="Opportunity" value={opportunityCommandStatus} />
 </div>
 
 <div className="mt-6 rounded-3xl border border-white/10 bg-white/5 p-6">
-<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-400">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-[#C8A646]">
 Executive Recommendation
 </p>
 
@@ -2863,7 +2864,6 @@ awardPredictionConfidence={awardPredictionConfidence}
 predictionAccuracy={predictionAccuracy}
 executiveStatus={executiveStatus}
 />
-</div>
 
 <BoardReportGenerator
 procurementRiskIndex={procurementRiskIndex}
@@ -2896,6 +2896,7 @@ boardRecommendation={boardRecommendation}
 procurementMaturityScore={procurementMaturityScore}
 awardPredictionConfidence={awardPredictionConfidence}
 />
+</div>
 </main>
 );
 }
@@ -2911,7 +2912,7 @@ return <ExecutiveMetricCard label={title} value={value} tone="gold" />;
 function DarkList({ title, items }: { title: string; items: string[] }) {
 return (
 <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
-<p className="text-xs font-black uppercase tracking-[0.2em] text-orange-400">
+<p className="text-xs font-black uppercase tracking-[0.2em] text-[#C8A646]">
 {title}
 </p>
 
@@ -2919,7 +2920,7 @@ return (
 {items.map((item) => (
 <div
 key={item}
-className="rounded-xl bg-white/5 p-3 text-sm text-slate-300"
+className="rounded-xl border border-white/10 bg-white/5 p-3 text-sm text-slate-300"
 >
 {item}
 </div>
@@ -2931,9 +2932,9 @@ className="rounded-xl bg-white/5 p-3 text-sm text-slate-300"
 
 function SignalRow({ label, value }: { label: string; value: string }) {
 return (
-<div className="flex items-center justify-between rounded-2xl bg-white px-4 py-3 shadow-sm">
-<p className="text-sm font-black text-slate-600">{label}</p>
-<p className="text-sm font-black text-slate-950">{value}</p>
+<div className="flex items-center justify-between rounded-2xl border border-white/10 bg-[#061426]/70 px-4 py-3">
+<p className="text-sm font-black text-slate-400">{label}</p>
+<p className="text-sm font-black text-white">{value}</p>
 </div>
 );
 }
