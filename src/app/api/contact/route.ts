@@ -84,6 +84,7 @@ process.env.CONTACT_EMAIL || "a.mirtaheri1978@gmail.com";
 const emailResult = await sendEmail({
 to: contactEmail,
 subject: `New Nexus Pavilion contact request: ${inquiryType}`,
+replyTo: email,
 html: `
 <div style="font-family:Arial,sans-serif;line-height:1.6;color:#0f172a;">
 <h2>New Nexus Pavilion Contact Request</h2>
