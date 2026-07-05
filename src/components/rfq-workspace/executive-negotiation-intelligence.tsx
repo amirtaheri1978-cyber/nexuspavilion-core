@@ -1,6 +1,6 @@
-import { calculateNegotiationStrength } from "@/lib/analytics/executive-intelligence";
 import { ExecutiveMiniTile } from "@/components/rfq-workspace/shared/executive-mini-tile";
 import { ExecutiveSignal } from "@/components/rfq-workspace/shared/executive-signal";
+import { buildExecutiveIntelligence } from "@/lib/executive/executive-engine";
 import type { ExecutiveQuote } from "@/types/executive";
 
 type ExecutiveNegotiationIntelligenceProps = {
@@ -48,43 +48,59 @@ once Nexus Pavilion has a recommended supplier path to analyze.
 );
 }
 
-const negotiationStrength = calculateNegotiationStrength({
-recommendedAmount: recommendedQuote.amountNumber,
-averageBid,
+const executive = buildExecutiveIntelligence({
+rfqSlug: "",
+isOwner,
+isOpen: true,
+commercialEvaluationUnlocked,
+healthScore: recommendedQuote.totalScore,
 quoteCount,
-riskLevel: recommendedQuote.riskLevel,
+documentCount: 1,
+addendaCount: 0,
+averageBid,
+lowestAmount,
+budget,
+potentialSavings:
+averageBid > 0 ? averageBid - recommendedQuote.amountNumber : 0,
+recommendedQuote,
+awardedQuote: null,
 });
 
-const potential = Math.min(12, Math.round(negotiationStrength.score * 0.12));
-const targetReduction = Math.round(
-recommendedQuote.amountNumber * (potential / 100)
-);
-const targetPrice = recommendedQuote.amountNumber - targetReduction;
-const savingsVsAverage =
-averageBid > 0 ? averageBid - recommendedQuote.amountNumber : 0;
+const negotiation = executive.negotiation;
+
+if (!negotiation) return null;
+
 const budgetDelta = budget > 0 ? budget - recommendedQuote.amountNumber : 0;
 const isLowest =
 lowestAmount !== null && recommendedQuote.amountNumber === lowestAmount;
+
+const potential =
+recommendedQuote.amountNumber > 0
+? Math.round((negotiation.targetImprovement / recommendedQuote.amountNumber) * 100)
+: 0;
 
 const commercialSignals = [
 {
 label: "Negotiation Potential",
 value: `${potential}%`,
-detail: negotiationStrength.status,
+detail: negotiation.status,
 },
 {
 label: "Target Improvement",
-value: formatMoney(targetReduction),
+value: formatMoney(negotiation.targetImprovement),
 detail: "Estimated achievable reduction",
 },
 {
 label: "Target Price",
-value: formatMoney(targetPrice),
+value: formatMoney(negotiation.targetPrice),
 detail: "Suggested negotiation target",
 },
 {
 label: "Savings vs Average",
-value: savingsVsAverage > 0 ? formatMoney(savingsVsAverage) : "Limited",
+value:
+negotiation.expectedSavings > 0
+? formatMoney(negotiation.expectedSavings)
+: "Limited",
 detail: "Compared to average bid",
 },
 ];
@@ -140,7 +156,7 @@ Recommended Strategy
 </p>
 
 <p className="mt-4 text-sm font-bold leading-7 text-slate-300">
-{negotiationStrength.recommendation}
+{negotiation.recommendation}
 </p>
 </div>
 
@@ -192,7 +208,7 @@ Executive Negotiation Brief
 </p>
 
 <p className="mt-4 text-sm font-bold leading-7 text-slate-300">
-{negotiationStrength.recommendation}
+{negotiation.recommendation}
 </p>
 </div>
 </div>
