@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import StatusBadge from "@/components/ui/StatusBadge";
 import { createClient } from "@/lib/supabase/server";
+import Image from "next/image";
 
 type StatusBadgeValue = "SANDBOX" | "PENDING" | "APPROVED" | "REJECTED";
 
@@ -298,9 +299,6 @@ Math.round(100 - vendorAwardedRevenue / 5000)
 
 const supplierPerformanceRisk = Math.max(5, Math.round(100 - vendorWinRate));
 
-const supplierCapacityRisk =
-vendorSubmittedQuotes <= 1 ? 70 : vendorSubmittedQuotes <= 3 ? 45 : 20;
-
 const supplierDependencyRisk = vendorAwardedRevenue > 100000 ? 35 : 70;
 
 const supplierFinancialScore = Math.max(0, 100 - supplierFinancialRisk);
@@ -408,9 +406,11 @@ View Marketplace
 <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between">
 <div className="flex items-start gap-6">
 {company.logo_url ? (
-<img
+<Image
 src={company.logo_url}
 alt={company.name}
+width={96}
+height={96}
 className="h-24 w-24 rounded-3xl border border-white/10 bg-white object-contain p-2"
 />
 ) : (
