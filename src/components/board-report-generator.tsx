@@ -232,7 +232,6 @@ body: "Prioritize RFQ completion, supplier response depth, quote coverage, award
 ],
 };
 }
-
 return {
 summary: `Nexus Pavilion is ready to produce a board-grade executive report. Board Health is ${boardHealthIndex}/100, Enterprise Procurement Score is ${enterpriseProcurementScore}/100, Executive Readiness is ${executiveReadinessScore}/100, and AI Confidence is ${aiConfidenceScore}.`,
 sections: [
@@ -286,6 +285,8 @@ const [activeReport, setActiveReport] = useState<ExecutiveReport | null>(null);
 const [activeReportBody, setActiveReportBody] =
 useState<GeneratedReportBody | null>(null);
 const [isGenerating, setIsGenerating] = useState(false);
+const [generatingReportId, setGeneratingReportId] =
+useState<ReportType | null>(null);
 const [errorMessage, setErrorMessage] = useState("");
 const [copied, setCopied] = useState(false);
 
@@ -296,7 +297,7 @@ year: "numeric",
 month: "long",
 day: "numeric",
 }),
-[]
+[],
 );
 
 const boardReady =
@@ -366,6 +367,7 @@ digitalMaturityScore,
 
 async function generateReport(report: ExecutiveReport) {
 setIsGenerating(true);
+setGeneratingReportId(report.id);
 setErrorMessage("");
 setCopied(false);
 
@@ -380,10 +382,12 @@ boardReady,
 setActiveReport(report);
 setActiveReportBody(body);
 setIsGenerating(false);
+setGeneratingReportId(null);
 }, 450);
 } catch {
 setErrorMessage("Unable to generate this executive report. Please try again.");
 setIsGenerating(false);
+setGeneratingReportId(null);
 }
 }
 
@@ -408,7 +412,7 @@ const printWindow = window.open("", "_blank", "width=1200,height=900");
 if (!printWindow) return;
 
 const styles = Array.from(
-document.querySelectorAll("style, link[rel='stylesheet']")
+document.querySelectorAll("style, link[rel='stylesheet']"),
 )
 .map((node) => node.outerHTML)
 .join("\n");
@@ -481,7 +485,6 @@ intelligence.
 </p>
 </div>
 </div>
-
 {errorMessage ? (
 <div className="no-print mt-6 rounded-2xl border border-red-400/20 bg-red-400/10 p-4 text-sm font-bold text-red-200">
 {errorMessage}
@@ -499,7 +502,7 @@ boardReady,
 });
 
 const isActive = activeReport?.id === report.id;
-const isButtonLoading = isGenerating && isActive;
+const isButtonLoading = generatingReportId === report.id;
 
 return (
 <button
@@ -535,7 +538,15 @@ className={`rounded-full border px-3 py-1 text-[10px] font-black uppercase track
 </p>
 
 <span className="mt-5 inline-flex rounded-full border border-[#2CC4E8]/25 bg-[#2CC4E8]/10 px-4 py-2 text-xs font-black text-[#9BE8F8] transition group-hover:bg-[#2CC4E8]/15">
-{isButtonLoading ? "Generating..." : "Generate Report"}
+{isButtonLoading
+? "Generating..."
+: report.id === "board"
+? "Generate Board Deck"
+: report.id === "ceo"
+? "Generate CEO Brief"
+: report.id === "cfo"
+? "Preview CFO Brief"
+: "Generate Procurement Report"}
 </span>
 </button>
 );
@@ -628,7 +639,6 @@ Report Status
 </div>
 </div>
 </header>
-
 <main className="grid gap-0 lg:grid-cols-[0.85fr_1.15fr]">
 <aside className="border-r border-slate-200 bg-slate-50 p-8">
 <p className="text-xs font-black uppercase tracking-[0.25em] text-slate-400">
