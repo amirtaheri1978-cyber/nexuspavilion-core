@@ -1,9 +1,6 @@
-import {
-calculateCommercialHealth,
-calculateSupplierReliability,
-} from "@/lib/analytics/executive-intelligence";
 import { ExecutiveMiniTile } from "@/components/rfq-workspace/shared/executive-mini-tile";
 import { ExecutiveProgress } from "@/components/rfq-workspace/shared/executive-progress";
+import { buildExecutiveIntelligence } from "@/lib/executive/executive-engine";
 import type { ExecutiveQuote } from "@/types/executive";
 
 type ExecutiveSupplierDNAProps = {
@@ -25,26 +22,6 @@ if (score >= 88) return "Excellent";
 if (score >= 74) return "Strong";
 if (score >= 58) return "Developing";
 return "Watch";
-}
-
-function getCommercialPosition({
-quote,
-averageBid,
-lowestAmount,
-}: {
-quote: ExecutiveQuote;
-averageBid: number;
-lowestAmount: number | null;
-}) {
-if (lowestAmount !== null && quote.amountNumber === lowestAmount) {
-return "Lowest evaluated bid";
-}
-
-if (averageBid > 0 && quote.amountNumber <= averageBid) {
-return "Below average bid";
-}
-
-return "Above average bid";
 }
 
 export function ExecutiveSupplierDNA({
@@ -77,35 +54,32 @@ supplier profile.
 );
 }
 
-const commercialPosition = getCommercialPosition({
-quote: recommendedQuote,
-averageBid,
-lowestAmount,
-});
-
 const budget = recommendedQuote.amountNumber + recommendedQuote.budgetVariance;
 const savingsVsAverage =
 averageBid > 0 ? averageBid - recommendedQuote.amountNumber : 0;
 
-const commercialHealth = calculateCommercialHealth({
-recommendedAmount: recommendedQuote.amountNumber,
-averageBid,
-budget,
+const executive = buildExecutiveIntelligence({
+rfqSlug: "",
+isOwner,
+isOpen: true,
+commercialEvaluationUnlocked,
+healthScore: recommendedQuote.totalScore,
 quoteCount,
-});
-
-const supplierReliability = calculateSupplierReliability({
-timelineScore: recommendedQuote.timelineScore,
-performanceScore: recommendedQuote.performanceScore,
-riskScore: recommendedQuote.riskScore,
-awardConfidence: recommendedQuote.awardConfidence,
+documentCount: 1,
+addendaCount: 0,
+averageBid,
+lowestAmount,
+budget,
+potentialSavings: savingsVsAverage,
+recommendedQuote,
+awardedQuote: null,
 });
 
 const dnaScores = [
 {
 label: "Commercial",
-score: commercialHealth.score,
-detail: commercialPosition,
+score: executive.recommendation.score,
+detail: executive.recommendation.status,
 },
 {
 label: "Delivery",
@@ -124,8 +98,8 @@ detail: `${recommendedQuote.riskLevel} risk`,
 },
 {
 label: "Supplier Reliability",
-score: supplierReliability.score,
-detail: supplierReliability.status,
+score: executive.board.confidence,
+detail: executive.board.status,
 },
 ];
 
@@ -157,7 +131,7 @@ Rank #{recommendedQuote.rank}
 </p>
 
 <p className="mt-3 text-sm font-bold leading-6 text-slate-300">
-{supplierReliability.recommendation}
+{executive.board.boardRecommendation}
 </p>
 </div>
 
@@ -169,9 +143,7 @@ value={formatMoney(recommendedQuote.amountNumber)}
 <ExecutiveMiniTile title="Competition" value={`${quoteCount} bids`} />
 <ExecutiveMiniTile
 title="Savings Signal"
-value={
-savingsVsAverage > 0 ? formatMoney(savingsVsAverage) : "Pending"
-}
+value={savingsVsAverage > 0 ? formatMoney(savingsVsAverage) : "Pending"}
 />
 <ExecutiveMiniTile title="Risk" value={recommendedQuote.riskLevel} />
 </div>
@@ -215,7 +187,7 @@ AI Executive Summary
 </p>
 
 <p className="mt-4 text-sm font-bold leading-7 text-slate-300">
-{commercialHealth.recommendation} {supplierReliability.recommendation}
+{executive.summary.recommendation} {executive.summary.nextStep}
 </p>
 </div>
 </div>
