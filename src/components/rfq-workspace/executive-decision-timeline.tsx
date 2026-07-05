@@ -1,5 +1,6 @@
 import { ExecutiveProgress } from "@/components/rfq-workspace/shared/executive-progress";
 import { ExecutiveStatusBadge } from "@/components/rfq-workspace/shared/executive-status-badge";
+import { buildExecutiveIntelligence } from "@/lib/executive/executive-engine";
 
 type TimelineStatus = "complete" | "active" | "locked" | "pending" | "watch";
 
@@ -56,7 +57,7 @@ if (status === "watch") return "bg-yellow-300 text-slate-950";
 return "bg-white/15 text-slate-400";
 }
 
-function buildTimeline({
+export function ExecutiveDecisionTimeline({
 isOwner,
 isOpen,
 commercialEvaluationUnlocked,
@@ -65,7 +66,37 @@ documentCount,
 addendaCount,
 recommendedQuote,
 awardedQuote,
-}: ExecutiveDecisionTimelineProps): TimelineStep[] {
+}: ExecutiveDecisionTimelineProps) {
+const executiveRecommendedQuote = recommendedQuote
+? {
+rank: 1,
+amountNumber: awardedQuote?.amountNumber ?? 0,
+awardConfidence: recommendedQuote.awardConfidence,
+riskLevel: recommendedQuote.riskLevel,
+totalScore: recommendedQuote.awardConfidence,
+priceScore: recommendedQuote.awardConfidence,
+timelineScore: recommendedQuote.awardConfidence,
+riskScore: recommendedQuote.awardConfidence,
+performanceScore: recommendedQuote.awardConfidence,
+budgetVariance: 0,
+lowestBidVariance: 0,
+}
+: null;
+
+const executive = buildExecutiveIntelligence({
+rfqSlug: "",
+isOwner,
+isOpen,
+commercialEvaluationUnlocked,
+healthScore: recommendedQuote?.awardConfidence ?? 50,
+quoteCount,
+documentCount,
+addendaCount,
+potentialSavings: 0,
+recommendedQuote: executiveRecommendedQuote,
+awardedQuote,
+});
+
 const steps: TimelineStep[] = [
 {
 title: "RFQ Workspace Published",
@@ -80,7 +111,7 @@ status: documentCount > 0 ? "complete" : "watch",
 detail:
 documentCount > 0
 ? "Documents are available for RFQ review and supplier pricing."
-: "Upload drawings, specifications, BOQ, or supporting files to strengthen supplier clarity.",
+: "Upload RFQ documents to strengthen supplier clarity.",
 signal: documentCount > 0 ? `${documentCount} files` : "No files yet",
 },
 {
@@ -88,45 +119,31 @@ title: "Supplier Engagement",
 status: quoteCount > 0 ? "complete" : isOpen ? "active" : "pending",
 detail:
 quoteCount > 0
-? "Supplier participation has started and the workspace is collecting commercial intelligence."
+? "Supplier participation has started."
 : isOpen
-? "The RFQ is open. Invite suppliers or wait for submitted quotes."
+? "The RFQ is open for supplier submissions."
 : "Supplier engagement is not currently active.",
 signal: `${quoteCount} quote${quoteCount === 1 ? "" : "s"}`,
-},
-{
-title: "Addenda & Clarifications",
-status: addendaCount > 0 ? "complete" : "pending",
-detail:
-addendaCount > 0
-? "Addenda and clarification history are available for governance review."
-: "No addenda have been issued yet. Use addenda when scope clarifications are required.",
-signal: `${addendaCount} addenda`,
 },
 {
 title: "Commercial Opening",
 status: commercialEvaluationUnlocked ? "complete" : "locked",
 detail: commercialEvaluationUnlocked
-? "Commercial evaluation is available for authorized buyer-side review."
-: "Commercial submissions remain protected until the RFQ deadline or opening condition is met.",
+? "Commercial evaluation is available for authorized review."
+: "Commercial submissions remain protected.",
 signal: commercialEvaluationUnlocked ? "Open" : "Blind locked",
 },
 {
-title: "Executive Review",
-status:
-commercialEvaluationUnlocked && recommendedQuote
+title: isOwner ? "Executive Review" : "Supplier Visibility",
+status: recommendedQuote
 ? "active"
 : commercialEvaluationUnlocked
 ? "watch"
 : "locked",
-detail:
-commercialEvaluationUnlocked && recommendedQuote
-? `Recommended award path is available with ${recommendedQuote.awardConfidence}% confidence and ${recommendedQuote.riskLevel.toLowerCase()} risk.`
-: commercialEvaluationUnlocked
-? "Evaluation is open but award intelligence needs stronger quote data."
-: "Executive review becomes available after commercial opening.",
-signal:
-commercialEvaluationUnlocked && recommendedQuote
+detail: isOwner
+? executive.recommendation.recommendation
+: "Supplier-side users can monitor their own submission while buyer-side award analysis remains confidential.",
+signal: recommendedQuote
 ? `${recommendedQuote.awardConfidence}% confidence`
 : "Awaiting intelligence",
 },
@@ -135,39 +152,13 @@ title: "Award Decision",
 status: awardedQuote ? "complete" : recommendedQuote ? "active" : "pending",
 detail: awardedQuote
 ? "The RFQ has an awarded supplier decision recorded."
-: recommendedQuote
-? "Recommended award path is ready for buyer-side validation."
-: "Award decision is pending commercial evaluation and executive review.",
+: executive.summary.nextStep,
 signal: awardedQuote ? "Awarded" : recommendedQuote ? "Ready" : "Pending",
-},
-{
-title: "Contract Execution",
-status: awardedQuote ? "active" : "pending",
-detail: awardedQuote
-? "Contract execution should proceed through internal governance, documentation, and supplier onboarding."
-: "Contract execution becomes active after award decision.",
-signal: awardedQuote ? "Next step" : "Pending award",
 },
 ];
 
-return steps.map((step) =>
-!isOwner && step.title === "Executive Review"
-? {
-...step,
-title: "Supplier Visibility",
-detail:
-"Supplier-side users can monitor their own submission and document obligations while buyer-side award analysis remains confidential.",
-signal: "Confidential",
-}
-: step,
-);
-}
-
-export function ExecutiveDecisionTimeline(props: ExecutiveDecisionTimelineProps) {
-const steps = buildTimeline(props);
-const completedSteps = steps.filter((step) => step.status === "complete").length;
 const activeStep = steps.find((step) => step.status === "active");
-const progress = Math.round((completedSteps / steps.length) * 100);
+const progress = executive.readiness.score;
 
 return (
 <section className="mt-8 overflow-hidden rounded-[40px] border border-white/10 bg-[#061426] text-white shadow-[0_24px_80px_rgba(0,0,0,0.26)]">
