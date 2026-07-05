@@ -18,6 +18,9 @@ import { ExecutiveAIExplainability } from "@/components/rfq-workspace/executive-
 import { ExecutiveSupplierDNA } from "@/components/rfq-workspace/executive-supplier-dna";
 import { ExecutiveNegotiationIntelligence } from "@/components/rfq-workspace/executive-negotiation-intelligence";
 import { AwardScenarioSimulator } from "@/components/rfq-workspace/award-scenario-simulator";
+import { ExecutiveIntelligenceProvider } from "@/components/rfq-workspace/shared/executive-intelligence-context";
+import { buildExecutiveIntelligence } from "@/lib/executive/executive-engine";
+
 
 type PageProps = {
 params: Promise<{ slug: string }>;
@@ -1118,6 +1121,26 @@ opportunity.title === "Commercial Savings Opportunity"
 })
 );
 
+const executive = buildExecutiveIntelligence({
+rfqSlug: rfq.slug,
+isOwner,
+isOpen,
+commercialEvaluationUnlocked,
+healthScore,
+quoteCount: quoteList.length,
+documentCount: rfqAttachments.length,
+addendaCount: rfqAddenda.length,
+averageBid,
+lowestAmount,
+budget,
+potentialSavings,
+recommendedQuote,
+awardedQuote: awardedQuote
+? {
+amountNumber: awardedQuote.amountNumber,
+}
+: null,
+});
 
 return (
 <main className="min-h-screen bg-[#f6f6f3] px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
@@ -1530,6 +1553,7 @@ RFQ deadline has passed.
 {isOwner ? (
 <RFQAIAdvisor rfqId={rfq.id} initialReview={latestAiReview} />
 ) : null}
+<ExecutiveIntelligenceProvider executive={executive}>
 
 <ExecutiveDecisionCenter
 rfqSlug={rfq.slug}
@@ -1620,6 +1644,7 @@ quoteCount={quoteList.length}
 healthScore={healthScore}
 budget={budget}
 />
+</ExecutiveIntelligenceProvider>
 
 {isOwner && recommendedQuote && commercialEvaluationUnlocked ? (
 <section className="mt-8 rounded-[36px] bg-slate-950 p-6 text-white shadow-[0_24px_80px_rgba(2,6,23,0.24)] sm:p-8">
