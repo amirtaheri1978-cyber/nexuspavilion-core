@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+
 type ExecutiveBadgeTone =
 | "neutral"
 | "blue"
@@ -10,7 +12,7 @@ type ExecutiveBadgeTone =
 type ExecutiveBadgeSize = "sm" | "md";
 
 type ExecutiveBadgeProps = {
-children: React.ReactNode;
+children: ReactNode;
 tone?: ExecutiveBadgeTone;
 size?: ExecutiveBadgeSize;
 className?: string;
@@ -41,6 +43,8 @@ return (
 <span
 className={[
 "inline-flex items-center rounded-full border font-black uppercase tracking-[0.16em]",
+"transition-all duration-200",
+"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2CC4E8]/40",
 toneClasses[tone],
 sizeClasses[size],
 className,

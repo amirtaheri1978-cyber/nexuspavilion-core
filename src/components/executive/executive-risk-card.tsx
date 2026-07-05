@@ -1,5 +1,5 @@
-import { ExecutivePanel } from "@/components/executive/executive-panel";
 import { ExecutiveBadge } from "@/components/executive/executive-badge";
+import { ExecutivePanel } from "@/components/executive/executive-panel";
 
 type RiskSeverity = "low" | "medium" | "high" | "critical";
 
@@ -19,6 +19,13 @@ high: "risk",
 critical: "risk",
 };
 
+const severityLabel: Record<RiskSeverity, string> = {
+low: "Low Risk",
+medium: "Medium Risk",
+high: "High Risk",
+critical: "Critical Risk",
+};
+
 export function ExecutiveRiskCard({
 title,
 description,
@@ -28,22 +35,18 @@ exposure,
 className = "",
 }: ExecutiveRiskCardProps) {
 return (
-<ExecutivePanel
-className={className}
-padding="md"
-tone="risk"
->
-<div className="flex items-center justify-between gap-4">
+<ExecutivePanel className={className} padding="md" tone="risk">
+<div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 <p className="text-[10px] font-black uppercase tracking-[0.22em] text-nexus-muted">
 Risk Intelligence
 </p>
 
 <ExecutiveBadge tone={severityTone[severity]}>
-{severity}
+{severityLabel[severity]}
 </ExecutiveBadge>
 </div>
 
-<h3 className="mt-4 text-lg font-black text-nexus-white">
+<h3 className="mt-4 text-lg font-black leading-tight text-nexus-white">
 {title}
 </h3>
 
@@ -57,7 +60,7 @@ Risk Intelligence
 Recommendation
 </p>
 
-<p className="mt-2 text-sm font-bold text-nexus-white">
+<p className="mt-2 text-sm font-bold leading-6 text-nexus-white">
 {recommendation}
 </p>
 </div>
@@ -69,7 +72,7 @@ Recommendation
 Exposure
 </p>
 
-<p className="mt-2 text-sm font-bold text-red-200">
+<p className="mt-2 text-sm font-bold leading-6 text-red-200">
 {exposure}
 </p>
 </div>

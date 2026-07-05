@@ -1,11 +1,6 @@
 import { ExecutivePanel } from "@/components/executive/executive-panel";
 
-type InsightTone =
-| "neutral"
-| "blue"
-| "gold"
-| "risk"
-| "success";
+type InsightTone = "neutral" | "blue" | "gold" | "risk" | "success";
 
 type ExecutiveInsightCardProps = {
 title: string;
@@ -24,6 +19,14 @@ risk: "text-red-300",
 success: "text-emerald-300",
 };
 
+const recommendationToneClasses: Record<InsightTone, string> = {
+neutral: "text-nexus-gold",
+blue: "text-[#9BE8F8]",
+gold: "text-yellow-300",
+risk: "text-red-300",
+success: "text-emerald-300",
+};
+
 export function ExecutiveInsightCard({
 title,
 insight,
@@ -33,18 +36,12 @@ tone = "blue",
 className = "",
 }: ExecutiveInsightCardProps) {
 return (
-<ExecutivePanel
-className={className}
-padding="md"
-tone={tone}
->
+<ExecutivePanel className={className} padding="md" tone={tone}>
 <p className="text-[10px] font-black uppercase tracking-[0.22em] text-nexus-muted">
 Executive Insight
 </p>
 
-<h3
-className={`mt-3 text-lg font-black leading-tight ${toneClasses[tone]}`}
->
+<h3 className={`mt-3 text-lg font-black leading-tight ${toneClasses[tone]}`}>
 {title}
 </h3>
 
@@ -54,11 +51,13 @@ className={`mt-3 text-lg font-black leading-tight ${toneClasses[tone]}`}
 
 {recommendation ? (
 <div className="mt-5 rounded-2xl border border-white/10 bg-white/5 p-4">
-<p className="text-[10px] font-black uppercase tracking-[0.2em] text-orange-300">
+<p
+className={`text-[10px] font-black uppercase tracking-[0.2em] ${recommendationToneClasses[tone]}`}
+>
 Recommendation
 </p>
 
-<p className="mt-2 text-sm font-bold text-nexus-white">
+<p className="mt-2 text-sm font-bold leading-6 text-nexus-white">
 {recommendation}
 </p>
 </div>
@@ -70,7 +69,7 @@ Recommendation
 Potential Impact
 </p>
 
-<p className="mt-2 text-sm font-bold text-emerald-200">
+<p className="mt-2 text-sm font-bold leading-6 text-emerald-200">
 {impact}
 </p>
 </div>
