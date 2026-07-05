@@ -1318,7 +1318,22 @@ Supplier Workspace Ready
 
 <div className="flex items-center gap-3 text-sm font-semibold text-slate-300">
 <span className="text-emerald-300">✓</span>
-Document Center Ready
+Executive Dashboard Ready
+</div>
+<div className="mt-8 border-t border-white/10 pt-5">
+<p className="text-center text-xs font-black uppercase tracking-[0.24em] text-slate-500">
+Opening RFQ Workspace
+</p>
+
+<div className="mt-3 flex items-center justify-center gap-3">
+<div className="h-2 w-2 animate-pulse rounded-full bg-emerald-400" />
+
+<p className="text-3xl font-black text-[#F5D77B]">
+{redirectCountdown}
+</p>
+
+<div className="h-2 w-2 animate-pulse rounded-full bg-emerald-400" />
+</div>
 </div>
 
 <div className="flex items-center gap-3 text-sm font-semibold text-slate-300">
