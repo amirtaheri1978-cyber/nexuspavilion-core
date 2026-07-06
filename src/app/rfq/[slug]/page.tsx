@@ -1,6 +1,5 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
-
 import AwardContractButton from "@/components/award-contract-button";
 import InviteVendorForm from "@/components/invite-vendor-form";
 import RFQAddendaManager from "@/components/rfq-addenda-manager";
@@ -20,28 +19,26 @@ import { ExecutiveNegotiationIntelligence } from "@/components/rfq-workspace/exe
 import { AwardScenarioSimulator } from "@/components/rfq-workspace/award-scenario-simulator";
 import { ExecutiveIntelligenceProvider } from "@/components/rfq-workspace/shared/executive-intelligence-context";
 import { buildExecutiveIntelligence } from "@/lib/executive/executive-engine";
-
-
+import { ExecutiveInsightCard } from "@/components/executive/executive-insight-card";
+import { ExecutiveMetricCard } from "@/components/executive/executive-metric-card";
+import { ExecutivePanel } from "@/components/executive/executive-panel";
+import { ExecutiveRiskCard } from "@/components/executive/executive-risk-card";
 type PageProps = {
 params: Promise<{ slug: string }>;
 };
-
 type ProcurementScope =
 | "material"
 | "subcontractor"
 | "equipment"
 | "professional_service";
-
 type SourcingMethod = "open" | "invited" | "sealed_bid";
 type ContractFramework = "project_specific" | "framework";
-
 type Profile = {
 id: string;
 email: string | null;
 role: string | null;
 company_id: string | null;
 };
-
 type Quote = {
 id: string;
 company_id: string | null;
@@ -52,7 +49,6 @@ message: string | null;
 decision: string | null;
 validity_days?: number | null;
 };
-
 type RFQ = {
 id: string;
 slug: string;
@@ -71,7 +67,6 @@ procurement_scope: ProcurementScope | null;
 sourcing_method: SourcingMethod | null;
 contract_framework: ContractFramework | null;
 };
-
 type ScoredQuote = Quote & {
 amountNumber: number;
 rank: number;
@@ -85,38 +80,30 @@ riskLevel: string;
 budgetVariance: number;
 lowestBidVariance: number;
 };
-
 const PROCUREMENT_SCOPE_LABELS: Record<ProcurementScope, string> = {
 material: "Material / Product RFQ",
 subcontractor: "Subcontractor / Trade RFQ",
 equipment: "Equipment Rental RFQ",
 professional_service: "Professional Service RFQ",
 };
-
 const SOURCING_METHOD_LABELS: Record<SourcingMethod, string> = {
 open: "Open RFQ",
 invited: "Invited / Selective RFQ",
 sealed_bid: "Sealed Bid RFQ",
 };
-
 const CONTRACT_FRAMEWORK_LABELS: Record<ContractFramework, string> = {
 project_specific: "Project-Specific RFQ",
 framework: "Master / Framework RFQ",
 };
-
 const RIGHT_TO_REJECT_NOTICE =
 "The Buyer reserves the right to accept or reject any or all submissions, request clarifications, negotiate commercial terms, or cancel the RFQ process at any time without liability or obligation to justify the decision.";
-
 function formatMoney(value: number | string | null | undefined) {
 const amount = Number(value);
-
 if (!Number.isFinite(amount)) {
 return "$0";
 }
-
 return `$${amount.toLocaleString()}`;
 }
-
 function formatDateTime(
 value: string | null | undefined,
 timeZone?: string | null
@@ -1143,7 +1130,7 @@ amountNumber: awardedQuote.amountNumber,
 });
 
 return (
-<main className="min-h-screen bg-[#061426] px-4 py-8 text-whitesm:px-6 lg:px-8 lg:py-10">
+<main className="min-h-screen bg-[#061426] px-4 py-8 text-white sm:px-6 lg:px-8 lg:py-10">
 <div className="mx-auto max-w-7xl">
 <Link
 href="/rfq"
@@ -1286,204 +1273,181 @@ Awarded at {formatMoney(awardedQuote.amountNumber)}
 <CommandStripCard title="Addenda" value={String(rfqAddenda.length)} />
 </div>
 </section>
-
 <section className="mt-8 grid gap-6 xl:grid-cols-[1fr_0.85fr]">
-<div className="rounded-[36px] border border-black/5 bg-white p-6 shadow-sm sm:p-8">
+<ExecutivePanel padding="lg" tone="gold">
 <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
 <div>
-<p className="text-xs font-black uppercase tracking-[0.3em] text-orange-500">
+<p className="text-xs font-black uppercase tracking-[0.3em] text-nexus-gold">
 Procurement Health Engine
 </p>
 
-<h2 className="mt-3 text-3xl font-black text-slate-950">
+<h2 className="mt-3 text-3xl font-black text-nexus-white">
 Health Breakdown
 </h2>
 
-<p className="mt-3 max-w-3xl text-sm font-semibold leading-7 text-slate-600">
+<p className="mt-3 max-w-3xl text-sm font-semibold leading-7 text-nexus-muted">
 Nexus Pavilion evaluates RFQ readiness across competition,
 documentation, governance, and award decision readiness.
 </p>
 </div>
 
-<div className="rounded-3xl bg-slate-950 px-6 py-5 text-white">
-<p className="text-xs font-black uppercase tracking-[0.25em] text-slate-400">
-Overall
-</p>
-
-<p className={`mt-2 text-4xl font-black ${getHealthTone(healthScore)}`}>
-{healthScore}
-</p>
-
-<p className="mt-1 text-xs font-bold text-slate-300">
-{getHealthLabel(healthScore)}
-</p>
-</div>
+<ExecutiveMetricCard
+label="Overall"
+value={`${healthScore}`}
+insight={getHealthLabel(healthScore)}
+tone={healthScore >= 80 ? "success" : healthScore >= 60 ? "gold" : "risk"}
+className="min-w-[180px]"
+/>
 </div>
 
 <div className="mt-8 grid gap-4">
 {healthBreakdown.map((item) => (
-<div
-key={item.label}
-className="rounded-3xl border border-slate-100 bg-slate-50 p-5"
->
+<ExecutivePanel key={item.label} variant="operational" padding="sm">
 <div className="flex items-start justify-between gap-4">
 <div>
-<p className="text-sm font-black text-slate-950">
+<p className="text-sm font-black text-nexus-white">
 {item.label}
 </p>
 
-<p className="mt-1 text-xs font-bold text-slate-500">
+<p className="mt-1 text-xs font-bold leading-5 text-nexus-muted">
 {item.detail}
 </p>
 </div>
 
 <div className="text-right">
-<p className="text-2xl font-black text-slate-950">
+<p className="text-2xl font-black text-nexus-white">
 {item.score}
 </p>
 
-<p className="text-xs font-black uppercase tracking-[0.18em] text-slate-400">
+<p className="text-xs font-black uppercase tracking-[0.18em] text-nexus-muted">
 {getScoreTone(item.score)}
 </p>
 </div>
 </div>
 
-<div className="mt-4 h-2 overflow-hidden rounded-full bg-slate-200">
+<div className="mt-4 h-2 overflow-hidden rounded-full bg-white/10">
 <div
-className="h-full rounded-full bg-slate-950"
+className="h-full rounded-full bg-nexus-gold"
 style={{ width: `${item.score}%` }}
 />
 </div>
-</div>
+</ExecutivePanel>
 ))}
 </div>
-</div>
+</ExecutivePanel>
 
 <div className="grid gap-6">
-<div className="rounded-[36px] border border-black/5 bg-slate-950 p-6 text-white shadow-sm sm:p-8">
-<p className="text-xs font-black uppercase tracking-[0.3em] text-[#C8A646]">
+<ExecutivePanel padding="lg" tone="risk">
+<p className="text-xs font-black uppercase tracking-[0.3em] text-nexus-gold">
 Executive Risk Matrix
 </p>
 
-<h2 className="mt-3 text-3xl font-black text-white">
+<h2 className="mt-3 text-3xl font-black text-nexus-white">
 Risk Control Board
 </h2>
 
 <div className="mt-6 grid gap-3">
 {executiveRiskMatrix.map((risk) => (
-<div
+<ExecutiveRiskCard
 key={risk.label}
-className="rounded-3xl border border-white/10 bg-white/10 p-5"
->
-<div className="flex items-start justify-between gap-4">
-<div>
-<p className="text-sm font-black text-white">
-{risk.label}
-</p>
-
-<p className="mt-1 text-xs font-bold leading-5 text-slate-400">
-{risk.detail}
-</p>
-</div>
-
-<span className="rounded-full bg-white px-3 py-1 text-xs font-black text-slate-950">
-{risk.level}
-</span>
-</div>
-</div>
+title={risk.label}
+description={risk.detail}
+severity={
+risk.level.toLowerCase().includes("critical")
+? "critical"
+: risk.level.toLowerCase().includes("high")
+? "high"
+: risk.level.toLowerCase().includes("low")
+? "low"
+: "medium"
+}
+/>
 ))}
 </div>
-</div>
+</ExecutivePanel>
 
-<div className="rounded-[36px] border border-black/5 bg-white p-6 shadow-sm sm:p-8">
-<p className="text-xs font-black uppercase tracking-[0.3em] text-orange-500">
+<ExecutivePanel padding="lg" tone="blue">
+<p className="text-xs font-black uppercase tracking-[0.3em] text-[#9BE8F8]">
 Executive Timeline Prediction
 </p>
 
-<h2 className="mt-3 text-3xl font-black text-slate-950">
+<h2 className="mt-3 text-3xl font-black text-nexus-white">
 Forecasted Procurement Path
 </h2>
 
 <div className="mt-6 grid gap-3">
 {predictedTimeline.map((item, index) => (
-<div
-key={item.label}
-className="flex items-center gap-4 rounded-3xl border border-slate-100 bg-slate-50 p-5"
->
-<div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-950 text-sm font-black text-white">
+<ExecutivePanel key={item.label} variant="operational" padding="sm">
+<div className="flex items-center gap-4">
+<div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/10 text-sm font-black text-nexus-white">
 {index + 1}
 </div>
 
 <div>
-<p className="text-sm font-black text-slate-950">
+<p className="text-sm font-black text-nexus-white">
 {item.label}
 </p>
 
-<p className="mt-1 text-sm font-bold text-slate-500">
+<p className="mt-1 text-sm font-bold text-nexus-muted">
 {item.value}
 </p>
 </div>
 </div>
+</ExecutivePanel>
 ))}
 </div>
-</div>
+</ExecutivePanel>
 
-<div className="rounded-[36px] border border-cyan-200 bg-cyan-50 p-6 shadow-sm sm:p-8">
-<p className="text-xs font-black uppercase tracking-[0.3em] text-cyan-700">
-Procurement Copilot
-</p>
-
-<h2 className="mt-3 text-3xl font-black text-slate-950">
-Smart Recommendations
-</h2>
-
-<div className="mt-6 grid gap-3">
-{copilotSuggestions.map((suggestion) => (
-<div
-key={suggestion}
-className="rounded-3xl border border-cyan-100 bg-white p-5"
->
-<p className="text-sm font-bold leading-6 text-slate-700">
-{suggestion}
-</p>
-</div>
-))}
-</div>
-</div>
+<ExecutiveInsightCard
+title="Smart Recommendations"
+insight="Nexus Pavilion is monitoring this RFQ and surfacing procurement actions that can improve readiness, supplier clarity, and award confidence."
+recommendation={copilotSuggestions.join(" ")}
+tone="blue"
+/>
 </div>
 </section>
 
-
 <section className="mt-8 grid gap-6 lg:grid-cols-[1fr_0.85fr]">
-<div className="rounded-[36px] border border-black/5 bg-white p-6 shadow-sm sm:p-8">
-<p className="text-xs font-black uppercase tracking-[0.3em] text-orange-500">
+<ExecutivePanel padding="lg" tone="blue">
+<p className="text-xs font-black uppercase tracking-[0.3em] text-[#9BE8F8]">
 Procurement Intelligence Context
 </p>
 
-<h2 className="mt-3 text-3xl font-black text-slate-950">
+<h2 className="mt-3 text-3xl font-black text-nexus-white">
 RFQ Operating Model
 </h2>
 
-<p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-700">
+<p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-nexus-muted">
 {getProcurementFitMessage(rfq)}
 </p>
 
 <div className="mt-6 grid gap-4 md:grid-cols-3">
-<InfoCard title="Sourcing" value={getSourcingLabel(rfq.sourcing_method)} />
-<InfoCard title="Framework" value={getFrameworkLabel(rfq.contract_framework)} />
-<InfoCard
-title="Commercial Control"
+<ExecutiveMetricCard
+label="Sourcing"
+value={getSourcingLabel(rfq.sourcing_method)}
+tone="blue"
+/>
+
+<ExecutiveMetricCard
+label="Framework"
+value={getFrameworkLabel(rfq.contract_framework)}
+tone="gold"
+/>
+
+<ExecutiveMetricCard
+label="Commercial Control"
 value={blindBiddingEnabled ? "Blind Bidding" : "Open Evaluation"}
+tone={blindBiddingEnabled ? "gold" : "success"}
 />
 </div>
-</div>
+</ExecutivePanel>
 
-<div className="rounded-[36px] border border-black/5 bg-white p-6 shadow-sm sm:p-8">
-<p className="text-xs font-black uppercase tracking-[0.3em] text-orange-500">
+<ExecutivePanel padding="lg" tone="gold">
+<p className="text-xs font-black uppercase tracking-[0.3em] text-nexus-gold">
 CEO Action Center
 </p>
 
-<h2 className="mt-3 text-3xl font-black text-slate-950">
+<h2 className="mt-3 text-3xl font-black text-nexus-white">
 Priority Actions
 </h2>
 
@@ -1514,30 +1478,30 @@ intelligence={executiveOpportunityIntelligence}
 ) : null}
 
 {isOwner && !commercialEvaluationUnlocked ? (
-<div className="rounded-2xl border border-orange-200 bg-orange-50 p-4">
-<p className="text-sm font-black text-orange-800">
+<ExecutivePanel variant="operational" padding="sm" tone="gold">
+<p className="text-sm font-black leading-6 text-nexus-gold">
 Commercial evaluation is locked until the deadline.
 </p>
-</div>
+</ExecutivePanel>
 ) : null}
 
 {!isOwner && hasMyQuote ? (
-<div className="rounded-2xl border border-green-200 bg-green-50 p-4">
-<p className="text-sm font-black text-green-800">
+<ExecutivePanel variant="operational" padding="sm" tone="success">
+<p className="text-sm font-black leading-6 text-emerald-300">
 Your company has submitted a quote.
 </p>
-</div>
+</ExecutivePanel>
 ) : null}
 
 {!isOwner && deadlinePassed && !hasMyQuote ? (
-<div className="rounded-2xl border border-red-200 bg-red-50 p-4">
-<p className="text-sm font-black text-red-800">
+<ExecutivePanel variant="operational" padding="sm" tone="risk">
+<p className="text-sm font-black leading-6 text-red-300">
 RFQ deadline has passed.
 </p>
-</div>
+</ExecutivePanel>
 ) : null}
 </div>
-</div>
+</ExecutivePanel>
 </section>
 
 {isOwner && blindBiddingEnabled && !commercialEvaluationUnlocked ? (
@@ -2256,18 +2220,6 @@ className="mt-6 inline-flex rounded-full bg-slate-950 px-6 py-3 text-sm font-bol
 Submit Quote
 </Link>
 ) : null}
-</div>
-);
-}
-
-function InfoCard({ title, value }: { title: string; value: string }) {
-return (
-<div className="rounded-3xl bg-slate-50 p-5">
-<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
-{title}
-</p>
-
-<p className="mt-2 text-lg font-black text-slate-950">{value}</p>
 </div>
 );
 }
