@@ -23,6 +23,7 @@ import { ExecutiveInsightCard } from "@/components/executive/executive-insight-c
 import { ExecutiveMetricCard } from "@/components/executive/executive-metric-card";
 import { ExecutivePanel } from "@/components/executive/executive-panel";
 import { ExecutiveRiskCard } from "@/components/executive/executive-risk-card";
+import { ExecutiveBadge } from "@/components/executive/executive-badge";
 type PageProps = {
 params: Promise<{ slug: string }>;
 };
@@ -330,11 +331,6 @@ if (status === "closed") return "Closed";
 return "Open";
 }
 
-function getDecisionClass(decision: string | null) {
-if (decision === "awarded") return "bg-green-100 text-green-700";
-if (decision === "rejected") return "bg-red-100 text-red-700";
-return "bg-yellow-100 text-yellow-700";
-}
 
 function getScoreClass(score: number) {
 if (score >= 90) return "text-green-700";
@@ -775,8 +771,23 @@ const rfq = rfqData as RFQ | null;
 
 if (!rfq) {
 return (
-<main className="flex min-h-screen items-center justify-center bg-[#f6f6f3]">
-<p className="text-xl font-bold text-slate-950">RFQ not found</p>
+<main className="flex min-h-screen items-center justify-center bg-[#061426] px-6 text-white">
+<ExecutivePanel padding="lg" tone="risk" className="max-w-xl text-center">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-red-300">
+RFQ Not Found
+</p>
+
+<h1 className="mt-3 text-3xl font-black text-nexus-white">
+This RFQ workspace could not be found.
+</h1>
+
+<Link
+href="/rfq"
+className="mt-6 inline-flex rounded-full border border-white/10 bg-white/10 px-6 py-3 text-sm font-black text-white transition hover:bg-white/15"
+>
+Back to RFQ Marketplace
+</Link>
+</ExecutivePanel>
 </main>
 );
 }
@@ -1134,7 +1145,7 @@ return (
 <div className="mx-auto max-w-7xl">
 <Link
 href="/rfq"
-className="text-sm font-semibold text-slate-500 hover:text-slate-950"
+className="text-sm font-semibold text-nexus-muted transition hover:text-nexus-white"
 >
 ← Back to RFQ Marketplace
 </Link>
@@ -1611,124 +1622,152 @@ budget={budget}
 </ExecutiveIntelligenceProvider>
 
 {isOwner && recommendedQuote && commercialEvaluationUnlocked ? (
-<section className="mt-8 rounded-[36px] bg-slate-950 p-6 text-white shadow-[0_24px_80px_rgba(2,6,23,0.24)] sm:p-8">
-<p className="text-xs font-black uppercase tracking-[0.3em] text-[#C8A646]">
+<ExecutivePanel className="mt-8" padding="lg" tone="gold">
+<p className="text-xs font-black uppercase tracking-[0.3em] text-nexus-gold">
 Decision Intelligence Layer
 </p>
 
 <div className="mt-5 grid gap-8 lg:grid-cols-[1fr_0.9fr]">
 <div>
-<h2 className="text-3xl font-black sm:text-4xl">
+<h2 className="text-3xl font-black text-nexus-white sm:text-4xl">
 Recommended Award Path: Rank #{recommendedQuote.rank}
 </h2>
 
-<p className="mt-4 max-w-3xl text-sm leading-7 text-slate-300">
-Nexus Pavilion recommends this supplier based on weighted
-analysis of price competitiveness, delivery timeline, proposal
-strength, procurement risk, proposal validity, and RFQ
-classification.
+<p className="mt-4 max-w-3xl text-sm font-semibold leading-7 text-nexus-muted">
+Nexus Pavilion recommends this supplier based on weighted analysis of
+price competitiveness, delivery timeline, proposal strength,
+procurement risk, proposal validity, and RFQ classification.
 </p>
 
 <div className="mt-6 flex flex-wrap gap-3">
-<DarkBadge>Overall {recommendedQuote.totalScore}/100</DarkBadge>
-<DarkBadge>Risk {recommendedQuote.riskLevel}</DarkBadge>
-<DarkBadge>Confidence {recommendedQuote.awardConfidence}%</DarkBadge>
-<DarkBadge>{getScopeLabel(rfq.procurement_scope)}</DarkBadge>
+<ExecutiveBadge tone="gold">
+Overall {recommendedQuote.totalScore}/100
+</ExecutiveBadge>
+
+<ExecutiveBadge tone="risk">
+Risk {recommendedQuote.riskLevel}
+</ExecutiveBadge>
+
+<ExecutiveBadge tone="blue">
+Confidence {recommendedQuote.awardConfidence}%
+</ExecutiveBadge>
+
+<ExecutiveBadge tone="neutral">
+{getScopeLabel(rfq.procurement_scope)}
+</ExecutiveBadge>
 </div>
 </div>
 
 <div className="grid gap-4 sm:grid-cols-2">
-<DarkMetric
-title="Price Score"
+<ExecutiveMetricCard
+label="Price Score"
 value={`${recommendedQuote.priceScore}/100`}
+tone="blue"
 />
-<DarkMetric
-title="Timeline Score"
+
+<ExecutiveMetricCard
+label="Timeline Score"
 value={`${recommendedQuote.timelineScore}/100`}
+tone="gold"
 />
-<DarkMetric
-title="Performance"
+
+<ExecutiveMetricCard
+label="Performance"
 value={`${recommendedQuote.performanceScore}/100`}
+tone="success"
 />
-<DarkMetric
-title="Risk Score"
+
+<ExecutiveMetricCard
+label="Risk Score"
 value={`${recommendedQuote.riskScore}/100`}
+tone="risk"
 />
 </div>
 </div>
-</section>
+</ExecutivePanel>
 ) : null}
 
 {isOwner && isOpen ? (
-<section
+<ExecutivePanel
 id="supplier-invitations"
-className="mt-8 rounded-[36px] border border-black/5 bg-white p-6 shadow-sm sm:p-8"
+className="mt-8"
+padding="lg"
+tone="blue"
 >
-<p className="text-xs font-black uppercase tracking-[0.3em] text-orange-500">
+<p className="text-xs font-black uppercase tracking-[0.3em] text-[#9BE8F8]">
 Supplier Invitation Center
 </p>
 
-<h2 className="mt-3 text-3xl font-black text-slate-950">
+<h2 className="mt-3 text-3xl font-black text-nexus-white">
 Build Competitive Bid Coverage
 </h2>
 
-<p className="mt-3 max-w-3xl text-sm font-semibold leading-7 text-slate-600">
+<p className="mt-3 max-w-3xl text-sm font-semibold leading-7 text-nexus-muted">
 Invite qualified suppliers directly into this RFQ workspace while
-preserving buyer-side control, commercial confidentiality, and the
-current governance workflow.
+preserving buyer-side control, commercial confidentiality, and the current
+governance workflow.
 </p>
 
 <div className="mt-6">
 <InviteVendorForm rfqId={rfq.id} />
 </div>
-</section>
+</ExecutivePanel>
 ) : null}
-<section
-id="document-center"
-className="mt-8 overflow-hidden rounded-[40px] border border-white/10 bg-[#061426] text-white shadow-[0_24px_80px_rgba(0,0,0,0.28)]"
->
-<div className="border-b border-white/10 p-6 sm:p-8">
+<ExecutivePanel id="document-center" className="mt-8" padding="lg" tone="blue">
 <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
 <div>
-<p className="text-xs font-black uppercase tracking-[0.3em] text-[#C8A646]">
+<p className="text-xs font-black uppercase tracking-[0.3em] text-nexus-gold">
 Executive Document Center
 </p>
 
-<h2 className="mt-3 text-3xl font-black text-white sm:text-4xl">
+<h2 className="mt-3 text-3xl font-black text-nexus-white sm:text-4xl">
 Procurement Package Control Room
 </h2>
 
-<p className="mt-3 max-w-4xl text-sm font-semibold leading-7 text-slate-400">
-A single controlled environment for drawings, specifications,
-BOQ files, photos, supporting documents, addenda, supplier
-acknowledgements, and procurement package governance.
+<p className="mt-3 max-w-4xl text-sm font-semibold leading-7 text-nexus-muted">
+A single controlled environment for drawings, specifications, BOQ files,
+photos, supporting documents, addenda, supplier acknowledgements, and
+procurement package governance.
 </p>
 </div>
 
 <div className="grid min-w-full gap-3 sm:grid-cols-3 lg:min-w-[420px]">
-<DarkMetric title="Documents" value={String(rfqAttachments.length)} />
-<DarkMetric title="Addenda" value={String(rfqAddenda.length)} />
-<DarkMetric title="Access" value={isOwner ? "Buyer" : "Supplier"} />
-</div>
+<ExecutiveMetricCard
+label="Documents"
+value={String(rfqAttachments.length)}
+tone="blue"
+/>
+
+<ExecutiveMetricCard
+label="Addenda"
+value={String(rfqAddenda.length)}
+tone="gold"
+/>
+
+<ExecutiveMetricCard
+label="Access"
+value={isOwner ? "Buyer" : "Supplier"}
+tone={isOwner ? "success" : "blue"}
+/>
 </div>
 </div>
 
 {isOwner && rfq.company_id ? (
-<div className="border-b border-white/10 p-6 sm:p-8">
+<ExecutivePanel className="mt-8" variant="operational" padding="md" tone="blue">
 <div className="mb-6">
-<p className="text-xs font-black uppercase tracking-[0.25em] text-cyan-300">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-[#9BE8F8]">
 Upload Center
 </p>
 
-<h3 className="mt-3 text-2xl font-black text-white">
+<h3 className="mt-3 text-2xl font-black text-nexus-white">
 Upload RFQ Documents
 </h3>
 
-<p className="mt-3 max-w-3xl text-sm font-semibold leading-7 text-slate-400">
-Add drawings, specifications, BOQ files, site photos,
-clarifications, and supporting documents to the live RFQ
-workspace. Uploading here keeps the supplier-facing package
-current without changing the RFQ creation wizard.
+<p className="mt-3 max-w-3xl text-sm font-semibold leading-7 text-nexus-muted">
+Add drawings, specifications, BOQ files, site photos, clarifications,
+and supporting documents to the live RFQ workspace. Uploading here keeps
+the supplier-facing package current without changing the RFQ creation
+wizard.
 </p>
 </div>
 
@@ -1781,23 +1820,22 @@ title="Upload Supporting Documents"
 description="Schedules, reports, forms, calculations, compliance documents, or other files."
 />
 </div>
-</div>
+</ExecutivePanel>
 ) : null}
 
-<div className="bg-white p-6 text-slate-950 sm:p-8">
+<ExecutivePanel className="mt-8" variant="operational" padding="md" tone="gold">
 <div className="mb-6">
-<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-nexus-gold">
 Document Library
 </p>
 
-<h3 className="mt-3 text-2xl font-black text-slate-950">
+<h3 className="mt-3 text-2xl font-black text-nexus-white">
 Active RFQ Package
 </h3>
 
-<p className="mt-3 max-w-3xl text-sm font-semibold leading-7 text-slate-600">
-Review all available RFQ files, drawings, specifications, BOQ
-documents, photos, and supporting materials connected to this
-procurement workspace.
+<p className="mt-3 max-w-3xl text-sm font-semibold leading-7 text-nexus-muted">
+Review all available RFQ files, drawings, specifications, BOQ documents,
+photos, and supporting materials connected to this procurement workspace.
 </p>
 </div>
 
@@ -1806,22 +1844,21 @@ rfqId={rfq.id}
 initialDocuments={rfqAttachments}
 canManage={isOwner}
 />
-</div>
+</ExecutivePanel>
 
-<div className="border-t border-slate-100 bg-slate-50 p-6 text-slate-950 sm:p-8">
+<ExecutivePanel className="mt-8" variant="operational" padding="md" tone="gold">
 <div className="mb-6">
-<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-nexus-gold">
 RFQ Addenda & Clarifications
 </p>
 
-<h3 className="mt-3 text-2xl font-black text-slate-950">
+<h3 className="mt-3 text-2xl font-black text-nexus-white">
 Revisions, Bulletins & Supplier Acknowledgements
 </h3>
 
-<p className="mt-3 max-w-3xl text-sm font-semibold leading-7 text-slate-600">
-Manage issued addenda and supplier acknowledgements from the
-same executive RFQ workspace without duplicating document
-workflows.
+<p className="mt-3 max-w-3xl text-sm font-semibold leading-7 text-nexus-muted">
+Manage issued addenda and supplier acknowledgements from the same
+executive RFQ workspace without duplicating document workflows.
 </p>
 </div>
 
@@ -1839,21 +1876,17 @@ initialAddenda={rfqAddenda}
 initialAcknowledgements={rfqAcknowledgements}
 />
 )}
-</div>
-</section>
+</ExecutivePanel>
+</ExecutivePanel>
 
-<section
-id="quote-intelligence"
-className="mt-8 rounded-[36px] border border-black/5 bg-white p-6 shadow-sm sm:p-8"
->
-
+<ExecutivePanel id="quote-intelligence" className="mt-8" padding="lg" tone="blue">
 <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
 <div>
-<p className="text-xs font-black uppercase tracking-[0.3em] text-orange-500">
+<p className="text-xs font-black uppercase tracking-[0.3em] text-[#9BE8F8]">
 {isOwner ? "Quote Intelligence" : "Supplier Submission"}
 </p>
 
-<h2 className="mt-3 text-3xl font-black text-slate-950">
+<h2 className="mt-3 text-3xl font-black text-nexus-white">
 {isOwner
 ? commercialEvaluationUnlocked
 ? "AI Supplier Ranking"
@@ -1861,33 +1894,20 @@ className="mt-8 rounded-[36px] border border-black/5 bg-white p-6 shadow-sm sm:p
 : "Your Company Quote"}
 </h2>
 
-{!isOwner ? (
-<p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
-Supplier pricing is confidential. You can only view your own
-submission. Competitor pricing and award controls are visible
-only to authorized buyer-side users after the proper commercial
-opening stage.
+<p className="mt-3 max-w-2xl text-sm font-semibold leading-7 text-nexus-muted">
+{!isOwner
+? "Supplier pricing is confidential. You can only view your own submission. Competitor pricing and award controls are visible only to authorized buyer-side users after the proper commercial opening stage."
+: commercialEvaluationUnlocked
+? "Ranking uses weighted scoring: 38% price, 22% timeline, 18% performance signals, 14% procurement risk, and 8% proposal validity."
+: "Commercial submissions are locked until the RFQ deadline. Buyer-side users can monitor participation count, but pricing, ranking, supplier comparison, and award actions are hidden."}
 </p>
-) : commercialEvaluationUnlocked ? (
-<p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
-Ranking uses weighted scoring: 38% price, 22% timeline, 18%
-performance signals, 14% procurement risk, and 8% proposal
-validity.
-</p>
-) : (
-<p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
-Commercial submissions are locked until the RFQ deadline.
-Buyer-side users can monitor participation count, but pricing,
-ranking, supplier comparison, and award actions are hidden.
-</p>
-)}
 </div>
 
 <div className="flex flex-wrap gap-3">
 {canSubmitQuote ? (
 <Link
 href={`/rfq/${rfq.slug}/submit`}
-className="rounded-full bg-slate-950 px-6 py-3 text-sm font-bold text-white transition hover:bg-slate-800"
+className="rounded-full border border-[#2CC4E8]/25 bg-[#2CC4E8]/10 px-6 py-3 text-sm font-black text-[#9BE8F8] transition hover:bg-[#2CC4E8]/15"
 >
 Submit Quote
 </Link>
@@ -1896,7 +1916,7 @@ Submit Quote
 {isOwner && commercialEvaluationUnlocked ? (
 <Link
 href={`/rfq/${rfq.slug}/compare`}
-className="rounded-full bg-slate-950 px-6 py-3 text-sm font-bold text-white transition hover:bg-slate-800"
+className="rounded-full border border-[#C8A646]/25 bg-[#C8A646]/10 px-6 py-3 text-sm font-black text-[#F5D77B] transition hover:bg-[#C8A646]/15"
 >
 Open Compare View
 </Link>
@@ -1905,43 +1925,38 @@ Open Compare View
 </div>
 
 {isOwner && !commercialEvaluationUnlocked ? (
-<div className="mt-6 overflow-hidden rounded-2xl border border-slate-200">
-<div className="grid grid-cols-4 bg-slate-950 px-6 py-4 text-xs font-bold uppercase tracking-[0.15em] text-white">
-<div>Submissions</div>
-<div>Commercial Data</div>
-<div>Evaluation</div>
-<div>Status</div>
-</div>
+<ExecutivePanel className="mt-6" variant="operational" padding="md" tone="gold">
+<div className="grid gap-4 md:grid-cols-4">
+<ExecutiveMetricCard
+label="Submissions"
+value={String(quoteList.length)}
+insight="Quotes submitted"
+tone="gold"
+/>
 
-<div className="grid grid-cols-4 items-center border-t border-slate-100 px-6 py-6">
-<div>
-<p className="text-3xl font-black text-slate-950">
-{quoteList.length}
-</p>
-<p className="mt-1 text-xs font-bold text-slate-500">
-Quotes submitted
-</p>
-</div>
+<ExecutiveMetricCard
+label="Commercial Data"
+value="Locked"
+insight="Until deadline"
+tone="gold"
+/>
 
-<div className="text-sm font-black text-slate-600">
-Locked until deadline
-</div>
+<ExecutiveMetricCard
+label="Evaluation"
+value="Not Opened"
+insight="Blind bidding active"
+tone="blue"
+/>
 
-<div className="text-sm font-black text-slate-600">
-Not opened
-</div>
-
-<div>
-<span className="rounded-full bg-orange-100 px-3 py-1 text-xs font-black text-orange-700">
-Blind Bidding Active
-</span>
+<div className="flex items-center">
+<ExecutiveBadge tone="warning">Blind Bidding Active</ExecutiveBadge>
 </div>
 </div>
-</div>
+</ExecutivePanel>
 ) : isOwner ? (
-<div className="mt-6 overflow-x-auto rounded-2xl border border-slate-200">
+<div className="mt-6 overflow-x-auto rounded-[28px] border border-white/10 bg-white/[0.035]">
 <div className="min-w-[1180px]">
-<div className="grid grid-cols-9 bg-slate-950 px-6 py-4 text-xs font-bold uppercase tracking-[0.15em] text-white">
+<div className="grid grid-cols-9 border-b border-white/10 bg-white/[0.055] px-6 py-4 text-xs font-black uppercase tracking-[0.15em] text-nexus-muted">
 <div>Rank</div>
 <div>Amount</div>
 <div>Timeline</div>
@@ -1961,42 +1976,39 @@ const isHighest =
 highestAmount !== null &&
 highestAmount !== lowestAmount &&
 quote.amountNumber === highestAmount;
-const belowAverage =
-averageBid > 0 && quote.amountNumber <= averageBid;
+const belowAverage = averageBid > 0 && quote.amountNumber <= averageBid;
 const canAward = isOpen && quote.decision !== "awarded";
 
 return (
 <div
 key={quote.id}
-className="grid grid-cols-9 items-center border-t border-slate-100 px-6 py-5"
+className="grid grid-cols-9 items-center border-t border-white/10 px-6 py-5"
 >
 <div>
-<p className="text-2xl font-black text-slate-950">
+<p className="text-2xl font-black text-nexus-white">
 #{quote.rank}
 </p>
-{isRecommended ? <Badge>Recommended</Badge> : null}
+{isRecommended ? (
+<ExecutiveBadge tone="gold">Recommended</ExecutiveBadge>
+) : null}
 </div>
 
-<div className="text-lg font-black text-slate-950">
+<div className="text-lg font-black text-nexus-white">
 {formatMoney(quote.amountNumber)}
 </div>
 
-<div className="text-sm font-semibold text-slate-600">
+<div className="text-sm font-semibold text-nexus-muted">
 {quote.timeline || "N/A"}
 </div>
 
-<div className="text-sm font-semibold text-slate-600">
+<div className="text-sm font-semibold text-nexus-muted">
 {quote.validity_days ? `${quote.validity_days} days` : "30 days"}
 </div>
 
 <div>
-<span
-className={`rounded-full px-3 py-1 text-xs font-bold ${getDecisionClass(
-quote.decision
-)}`}
->
-{quote.decision || "pending"}
-</span>
+<ExecutiveBadge tone="neutral">
+{quote.decision || "Pending"}
+</ExecutiveBadge>
 </div>
 
 <div>
@@ -2004,42 +2016,44 @@ quote.decision
 {quote.totalScore}/100
 </p>
 
-<p className="mt-1 text-xs text-slate-400">
+<p className="mt-1 text-xs text-nexus-muted">
 P {quote.priceScore} · T {quote.timelineScore} · R{" "}
 {quote.riskScore}
 </p>
 </div>
 
 <div>
-<p className="text-sm font-black text-slate-950">
+<p className="text-sm font-black text-nexus-white">
 {quote.riskLevel}
 </p>
-<p className="text-xs text-slate-400">
+<p className="text-xs text-nexus-muted">
 Confidence {quote.awardConfidence}%
 </p>
 </div>
 
 <div>
-<p className="text-xs font-bold text-slate-500">
+<p className="text-xs font-bold text-nexus-muted">
 Budget: {formatMoney(quote.budgetVariance)}
 </p>
-<p className="mt-1 text-xs font-bold text-slate-500">
+<p className="mt-1 text-xs font-bold text-nexus-muted">
 Lowest: {formatMoney(quote.lowestBidVariance)}
 </p>
 </div>
 
 <div className="space-y-3">
 <div className="space-y-2">
-{isLowest ? <Badge>Lowest Bid</Badge> : null}
-{belowAverage ? <Badge>Below Average</Badge> : null}
-{quote.timelineScore >= 84 ? <Badge>Strong Timeline</Badge> : null}
-{isHighest ? <Badge>Highest Bid</Badge> : null}
+{isLowest ? <ExecutiveBadge tone="success">Lowest Bid</ExecutiveBadge> : null}
+{belowAverage ? <ExecutiveBadge tone="blue">Below Average</ExecutiveBadge> : null}
+{quote.timelineScore >= 84 ? (
+<ExecutiveBadge tone="success">Strong Timeline</ExecutiveBadge>
+) : null}
+{isHighest ? <ExecutiveBadge tone="warning">Highest Bid</ExecutiveBadge> : null}
 </div>
 
 {canAward ? <AwardContractButton quoteId={quote.id} /> : null}
 
 {quote.decision === "awarded" ? (
-<p className="text-xs font-black text-green-700">
+<p className="text-xs font-black text-emerald-300">
 Contract awarded
 </p>
 ) : null}
@@ -2058,9 +2072,9 @@ canSubmitQuote={false}
 </div>
 </div>
 ) : (
-<div className="mt-6 overflow-x-auto rounded-2xl border border-slate-200">
+<div className="mt-6 overflow-x-auto rounded-[28px] border border-white/10 bg-white/[0.035]">
 <div className="min-w-[860px]">
-<div className="grid grid-cols-5 bg-slate-950 px-6 py-4 text-sm font-bold text-white">
+<div className="grid grid-cols-5 border-b border-white/10 bg-white/[0.055] px-6 py-4 text-sm font-black text-nexus-muted">
 <div>Your Amount</div>
 <div>Timeline</div>
 <div>Validity</div>
@@ -2072,31 +2086,27 @@ canSubmitQuote={false}
 quoteList.map((quote) => (
 <div
 key={quote.id}
-className="grid grid-cols-5 items-center border-t border-slate-100 px-6 py-5"
+className="grid grid-cols-5 items-center border-t border-white/10 px-6 py-5"
 >
-<div className="text-xl font-black text-slate-950">
+<div className="text-xl font-black text-nexus-white">
 {formatMoney(quote.amount)}
 </div>
 
-<div className="text-sm font-semibold text-slate-600">
+<div className="text-sm font-semibold text-nexus-muted">
 {quote.timeline || "N/A"}
 </div>
 
-<div className="text-sm font-semibold text-slate-600">
+<div className="text-sm font-semibold text-nexus-muted">
 {quote.validity_days ? `${quote.validity_days} days` : "30 days"}
 </div>
 
 <div>
-<span
-className={`rounded-full px-3 py-1 text-xs font-bold ${getDecisionClass(
-quote.decision
-)}`}
->
-{quote.decision || "submitted"}
-</span>
+<ExecutiveBadge tone="neutral">
+{quote.decision || "Submitted"}
+</ExecutiveBadge>
 </div>
 
-<div className="text-sm text-slate-600">
+<div className="text-sm text-nexus-muted">
 {quote.message || "No message"}
 </div>
 </div>
@@ -2111,7 +2121,7 @@ canSubmitQuote={canSubmitQuote}
 </div>
 </div>
 )}
-</section>
+</ExecutivePanel>
 
 <section className="mt-8">
 <GovernanceNotice />
@@ -2129,17 +2139,16 @@ rfq: RFQ;
 quoteCount: number;
 }) {
 return (
-<div className="overflow-hidden rounded-[36px] border border-orange-200 bg-orange-50">
-<div className="p-6 sm:p-8">
-<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-600">
+<ExecutivePanel padding="lg" tone="gold">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-nexus-gold">
 Blind Bidding Enforcement
 </p>
 
-<h3 className="mt-3 text-2xl font-black text-slate-950">
+<h3 className="mt-3 text-2xl font-black text-nexus-white">
 Commercial bids are locked until closing
 </h3>
 
-<p className="mt-3 max-w-4xl text-sm font-bold leading-7 text-slate-700">
+<p className="mt-3 max-w-4xl text-sm font-bold leading-7 text-nexus-muted">
 {getBlindBiddingMessage(rfq)}
 </p>
 
@@ -2148,48 +2157,45 @@ Commercial bids are locked until closing
 <MiniLockCard title="Commercial Pricing" value="Locked" />
 <MiniLockCard title="Evaluation Room" value="Closed" />
 </div>
-</div>
-</div>
+</ExecutivePanel>
 );
 }
 
 function MiniLockCard({ title, value }: { title: string; value: string }) {
 return (
-<div className="rounded-2xl bg-white p-4">
-<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
-{title}
-</p>
-
-<p className="mt-2 text-lg font-black text-slate-950">{value}</p>
-</div>
+<ExecutiveMetricCard
+label={title}
+value={value}
+tone="gold"
+/>
 );
 }
 
 function GovernanceNotice() {
 return (
-<div className="rounded-[36px] border border-black/5 bg-white p-6 shadow-sm sm:p-8">
-<div className="rounded-3xl border border-red-200 bg-red-50 p-6">
-<p className="text-xs font-black uppercase tracking-[0.25em] text-red-600">
+<ExecutivePanel padding="lg" tone="risk">
+<ExecutivePanel variant="operational" padding="md" tone="risk">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-red-300">
 Buyer Reservation Rights
 </p>
 
-<p className="mt-3 max-w-4xl text-sm font-bold leading-7 text-red-800">
+<p className="mt-3 max-w-4xl text-sm font-bold leading-7 text-nexus-muted">
 {RIGHT_TO_REJECT_NOTICE}
 </p>
-</div>
+</ExecutivePanel>
 
-<div className="mt-4 rounded-3xl border border-orange-200 bg-orange-50 p-6">
-<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-600">
+<ExecutivePanel className="mt-4" variant="operational" padding="md" tone="gold">
+<p className="text-xs font-black uppercase tracking-[0.25em] text-nexus-gold">
 Confidentiality & Anti-Collusion
 </p>
 
-<p className="mt-3 max-w-4xl text-sm font-bold leading-7 text-orange-800">
+<p className="mt-3 max-w-4xl text-sm font-bold leading-7 text-nexus-muted">
 Supplier submissions are confidential. Competing suppliers cannot view
 each other’s pricing, proposal notes, validity periods, or commercial
 submission data.
 </p>
-</div>
-</div>
+</ExecutivePanel>
+</ExecutivePanel>
 );
 }
 
@@ -2204,9 +2210,11 @@ canSubmitQuote: boolean;
 }) {
 return (
 <div className="px-6 py-12 text-center">
-<p className="text-lg font-black text-slate-950">No quote submitted yet.</p>
+<p className="text-lg font-black text-nexus-white">
+No quote submitted yet.
+</p>
 
-<p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-slate-500">
+<p className="mx-auto mt-2 max-w-xl text-sm font-semibold leading-6 text-nexus-muted">
 {isOpen
 ? "This RFQ is open and ready for supplier pricing."
 : "This RFQ is no longer accepting quotes."}
@@ -2215,7 +2223,7 @@ return (
 {canSubmitQuote ? (
 <Link
 href={`/rfq/${rfqSlug}/submit`}
-className="mt-6 inline-flex rounded-full bg-slate-950 px-6 py-3 text-sm font-bold text-white transition hover:bg-slate-800"
+className="mt-6 inline-flex rounded-full border border-[#2CC4E8]/25 bg-[#2CC4E8]/10 px-6 py-3 text-sm font-black text-[#9BE8F8] transition hover:bg-[#2CC4E8]/15"
 >
 Submit Quote
 </Link>
@@ -2276,7 +2284,7 @@ function ActionAnchor({ href, label }: { href: string; label: string }) {
 return (
 <a
 href={href}
-className="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 text-sm font-black text-slate-950 transition hover:bg-white hover:shadow-sm"
+className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.045] px-5 py-4 text-sm font-black text-nexus-white transition hover:border-[#2CC4E8]/25 hover:bg-white/[0.07]"
 >
 <span>{label}</span>
 <span>↓</span>
@@ -2284,17 +2292,7 @@ className="flex items-center justify-between rounded-2xl border border-slate-200
 );
 }
 
-function DarkMetric({ title, value }: { title: string; value: string }) {
-return (
-<div className="rounded-2xl bg-white/10 p-5">
-<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
-{title}
-</p>
 
-<p className="mt-2 text-3xl font-black text-white">{value}</p>
-</div>
-);
-}
 
 function DarkBadge({ children }: { children: ReactNode }) {
 return (
@@ -2304,10 +2302,4 @@ return (
 );
 }
 
-function Badge({ children }: { children: ReactNode }) {
-return (
-<span className="block rounded-full bg-orange-100 px-3 py-1 text-xs font-bold text-orange-700">
-{children}
-</span>
-);
-}
+

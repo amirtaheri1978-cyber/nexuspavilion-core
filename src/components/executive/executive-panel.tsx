@@ -5,6 +5,7 @@ type ExecutivePanelPadding = "sm" | "md" | "lg";
 type ExecutivePanelTone = "neutral" | "blue" | "gold" | "risk" | "success";
 
 type ExecutivePanelProps = {
+id?: string;
 children: ReactNode;
 className?: string;
 variant?: ExecutivePanelVariant;
@@ -39,6 +40,7 @@ success: "ring-1 ring-emerald-500/25",
 };
 
 export function ExecutivePanel({
+id,
 children,
 className = "",
 variant = "executive",
@@ -47,6 +49,7 @@ tone = "neutral",
 }: ExecutivePanelProps) {
 return (
 <section
+id={id}
 className={[
 basePanelClass,
 variantClasses[variant],
