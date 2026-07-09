@@ -24,6 +24,11 @@ import { ExecutiveMetricCard } from "@/components/executive/executive-metric-car
 import { ExecutivePanel } from "@/components/executive/executive-panel";
 import { ExecutiveRiskCard } from "@/components/executive/executive-risk-card";
 import { ExecutiveBadge } from "@/components/executive/executive-badge";
+import { ExecutiveActionAnchor } from "@/components/executive/actions/executive-action-anchor";
+import { ExecutiveActionLink } from "@/components/executive/actions/executive-action-link";
+import { ExecutiveCommandMetric } from "@/components/executive/workspace/executive-command-metric";
+import { ExecutiveCommandStripCard } from "@/components/executive/workspace/executive-command-strip-card";
+
 type PageProps = {
 params: Promise<{ slug: string }>;
 };
@@ -1187,14 +1192,14 @@ deadlinePassed ? "closed" : rfq.status
 </p>
 
 <div className="mt-8 grid gap-4 md:grid-cols-3">
-<CommandMetric
+<ExecutiveCommandMetric
 title="Procurement Health"
 value={`${healthScore}/100`}
 detail={getHealthLabel(healthScore)}
 accentClassName={getHealthTone(healthScore)}
 />
 
-<CommandMetric
+<ExecutiveCommandMetric
 title="Deadline"
 value={
 deadlinePassed
@@ -1209,7 +1214,7 @@ detail={formatDateTime(rfq.deadline, rfq.deadline_timezone)}
 accentClassName="text-cyan-300"
 />
 
-<CommandMetric
+<ExecutiveCommandMetric
 title={isOwner ? "Decision Status" : "Supplier Status"}
 value={
 isOwner
@@ -1276,12 +1281,12 @@ Awarded at {formatMoney(awardedQuote.amountNumber)}
 </div>
 
 <div className="grid border-t border-white/10 bg-white/[0.03] md:grid-cols-2 xl:grid-cols-6">
-<CommandStripCard title="Category" value={rfq.category || "N/A"} />
-<CommandStripCard title="Location" value={rfq.location || "N/A"} />
-<CommandStripCard title="Budget" value={formatMoney(rfq.budget)} />
-<CommandStripCard title="Quotes" value={String(quoteList.length)} />
-<CommandStripCard title="Documents" value={String(rfqAttachments.length)} />
-<CommandStripCard title="Addenda" value={String(rfqAddenda.length)} />
+<ExecutiveCommandStripCard title="Category" value={rfq.category || "N/A"} />
+<ExecutiveCommandStripCard title="Location" value={rfq.location || "N/A"} />
+<ExecutiveCommandStripCard title="Budget" value={formatMoney(rfq.budget)} />
+<ExecutiveCommandStripCard title="Quotes" value={String(quoteList.length)} />
+<ExecutiveCommandStripCard title="Documents" value={String(rfqAttachments.length)} />
+<ExecutiveCommandStripCard title="Addenda" value={String(rfqAddenda.length)} />
 </div>
 </section>
 <section className="mt-8 grid gap-6 xl:grid-cols-[1fr_0.85fr]">
@@ -1464,7 +1469,7 @@ Priority Actions
 
 <div className="mt-6 grid gap-3">
 {canSubmitQuote ? (
-<ActionLink href={`/rfq/${rfq.slug}/submit`} label="Submit Quote" />
+<ExecutiveActionLink href={`/rfq/${rfq.slug}/submit`} label="Submit Quote" />
 ) : null}
 
 {isOwner ? (
@@ -1475,17 +1480,17 @@ intelligence={executiveOpportunityIntelligence}
 ) : null}
 
 {isOwner && isOpen ? (
-<ActionAnchor href="#supplier-invitations" label="Invite Suppliers" />
+<ExecutiveActionAnchor href="#supplier-invitations" label="Invite Suppliers" />
 ) : null}
 
 {isOwner && rfq.company_id ? (
-<ActionAnchor href="#document-center" label="Upload Documents" />
+<ExecutiveActionAnchor href="#document-center" label="Upload Documents" />
 ) : null}
 
-<ActionAnchor href="#document-center" label="Review Document Center" />
+<ExecutiveActionAnchor href="#document-center" label="Review Document Center" />
 
 {isOwner && commercialEvaluationUnlocked ? (
-<ActionLink href={`/rfq/${rfq.slug}/compare`} label="Open Compare View" />
+<ExecutiveActionLink href={`/rfq/${rfq.slug}/compare`} label="Open Compare View" />
 ) : null}
 
 {isOwner && !commercialEvaluationUnlocked ? (
@@ -2229,66 +2234,6 @@ Submit Quote
 </Link>
 ) : null}
 </div>
-);
-}
-
-function CommandMetric({
-title,
-value,
-detail,
-accentClassName,
-}: {
-title: string;
-value: string;
-detail: string;
-accentClassName: string;
-}) {
-return (
-<div className="rounded-3xl border border-white/10 bg-white/10 p-5 backdrop-blur">
-<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
-{title}
-</p>
-
-<p className={`mt-3 text-3xl font-black ${accentClassName}`}>{value}</p>
-
-<p className="mt-2 text-xs font-bold leading-5 text-slate-300">{detail}</p>
-</div>
-);
-}
-
-function CommandStripCard({ title, value }: { title: string; value: string }) {
-return (
-<div className="border-t border-white/10 p-5 md:border-r md:border-t-0">
-<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">
-{title}
-</p>
-
-<p className="mt-2 text-lg font-black text-white">{value}</p>
-</div>
-);
-}
-
-function ActionLink({ href, label }: { href: string; label: string }) {
-return (
-<Link
-href={href}
-className="flex items-center justify-between rounded-2xl bg-slate-950 px-5 py-4 text-sm font-black text-white transition hover:bg-slate-800"
->
-<span>{label}</span>
-<span>→</span>
-</Link>
-);
-}
-
-function ActionAnchor({ href, label }: { href: string; label: string }) {
-return (
-<a
-href={href}
-className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.045] px-5 py-4 text-sm font-black text-nexus-white transition hover:border-[#2CC4E8]/25 hover:bg-white/[0.07]"
->
-<span>{label}</span>
-<span>↓</span>
-</a>
 );
 }
 
