@@ -21,12 +21,12 @@ import { buildExecutiveIntelligence } from "@/lib/executive/executive-engine";
 import { ExecutiveInsightCard } from "@/components/executive/executive-insight-card";
 import { ExecutiveMetricCard } from "@/components/executive/executive-metric-card";
 import { ExecutivePanel } from "@/components/executive/executive-panel";
-import { ExecutiveRiskCard } from "@/components/executive/executive-risk-card";
 import { ExecutiveBadge } from "@/components/executive/executive-badge";
 import { ExecutiveActionAnchor } from "@/components/executive/actions/executive-action-anchor";
 import { ExecutiveActionLink } from "@/components/executive/actions/executive-action-link";
 import { RFQCommandCenter } from "@/components/rfq-workspace/rfq-command-center";
 import { RFQProcurementHealth } from "@/components/rfq-workspace/rfq-procurement-health";
+import { RFQExecutiveRiskMatrix } from "@/components/rfq-workspace/rfq-executive-risk-matrix";
 type PageProps = {
 params: Promise<{ slug: string }>;
 };
@@ -1245,34 +1245,7 @@ return (
   healthBreakdown={healthBreakdown}
 />
 <div className="grid gap-6">
-<ExecutivePanel padding="lg" tone="risk">
-<p className="text-xs font-black uppercase tracking-[0.3em] text-nexus-gold">
-Executive Risk Matrix
-</p>
-
-<h2 className="mt-3 text-3xl font-black text-nexus-white">
-Risk Control Board
-</h2>
-
-<div className="mt-6 grid gap-3">
-{executiveRiskMatrix.map((risk) => (
-<ExecutiveRiskCard
-key={risk.label}
-title={risk.label}
-description={risk.detail}
-severity={
-risk.level.toLowerCase().includes("critical")
-? "critical"
-: risk.level.toLowerCase().includes("high")
-? "high"
-: risk.level.toLowerCase().includes("low")
-? "low"
-: "medium"
-}
-/>
-))}
-</div>
-</ExecutivePanel>
+<RFQExecutiveRiskMatrix risks={executiveRiskMatrix} />
 
 <ExecutivePanel padding="lg" tone="blue">
 <p className="text-xs font-black uppercase tracking-[0.3em] text-[#9BE8F8]">
