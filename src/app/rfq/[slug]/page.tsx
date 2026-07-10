@@ -1,4 +1,3 @@
-import type { ReactNode } from "react";
 import Link from "next/link";
 import AwardContractButton from "@/components/award-contract-button";
 import InviteVendorForm from "@/components/invite-vendor-form";
@@ -26,9 +25,7 @@ import { ExecutiveRiskCard } from "@/components/executive/executive-risk-card";
 import { ExecutiveBadge } from "@/components/executive/executive-badge";
 import { ExecutiveActionAnchor } from "@/components/executive/actions/executive-action-anchor";
 import { ExecutiveActionLink } from "@/components/executive/actions/executive-action-link";
-import { ExecutiveCommandMetric } from "@/components/executive/workspace/executive-command-metric";
-import { ExecutiveCommandStripCard } from "@/components/executive/workspace/executive-command-strip-card";
-
+import { RFQCommandCenter } from "@/components/rfq-workspace/rfq-command-center";
 type PageProps = {
 params: Promise<{ slug: string }>;
 };
@@ -1148,147 +1145,103 @@ amountNumber: awardedQuote.amountNumber,
 return (
 <main className="min-h-screen bg-[#061426] px-4 py-8 text-white sm:px-6 lg:px-8 lg:py-10">
 <div className="mx-auto max-w-7xl">
-<Link
-href="/rfq"
-className="text-sm font-semibold text-nexus-muted transition hover:text-nexus-white"
->
-← Back to RFQ Marketplace
-</Link>
-
-<section className="mt-8 overflow-hidden rounded-[40px] border border-white/10 bg-slate-950 text-white shadow-[0_30px_100px_rgba(2,6,23,0.28)]">
-<div className="relative overflow-hidden p-6 sm:p-8 lg:p-10">
-<div className="absolute right-0 top-0 h-72 w-72 rounded-full bg-cyan-400/10 blur-3xl" />
-<div className="absolute bottom-0 left-0 h-72 w-72 rounded-full bg-orange-400/10 blur-3xl" />
-
-<div className="relative grid gap-10 lg:grid-cols-[1.25fr_0.75fr]">
-<div>
-<p className="text-xs font-black uppercase tracking-[0.35em] text-[#C8A646]">
-Procurement Command Center
-</p>
-
-<div className="mt-4 flex flex-wrap items-center gap-3">
-<span
-className={`rounded-full px-4 py-2 text-sm font-black ${getRFQStatusClass(
-deadlinePassed ? "closed" : rfq.status
-)}`}
->
-{deadlinePassed
-? "Submission Closed"
-: getRFQStatusLabel(rfq.status)}
-</span>
-
-<DarkBadge>{getScopeLabel(rfq.procurement_scope)}</DarkBadge>
-<DarkBadge>{getSourcingLabel(rfq.sourcing_method)}</DarkBadge>
-<DarkBadge>{getFrameworkLabel(rfq.contract_framework)}</DarkBadge>
-{blindBiddingEnabled ? <DarkBadge>Blind Bidding</DarkBadge> : null}
-</div>
-
-<h1 className="mt-6 text-4xl font-black leading-tight sm:text-5xl lg:text-6xl">
-{rfq.title}
-</h1>
-
-<p className="mt-5 max-w-4xl text-sm font-semibold leading-7 text-slate-300">
-{rfq.description || "No description provided."}
-</p>
-
-<div className="mt-8 grid gap-4 md:grid-cols-3">
-<ExecutiveCommandMetric
-title="Procurement Health"
-value={`${healthScore}/100`}
-detail={getHealthLabel(healthScore)}
-accentClassName={getHealthTone(healthScore)}
+<RFQCommandCenter
+  statusLabel={
+    deadlinePassed
+      ? "Submission Closed"
+      : getRFQStatusLabel(rfq.status)
+  }
+  statusClassName={getRFQStatusClass(
+    deadlinePassed ? "closed" : rfq.status
+  )}
+  classificationBadges={[
+    getScopeLabel(rfq.procurement_scope),
+    getSourcingLabel(rfq.sourcing_method),
+    getFrameworkLabel(rfq.contract_framework),
+    ...(blindBiddingEnabled ? ["Blind Bidding"] : []),
+  ]}
+  title={rfq.title || "Untitled RFQ"}
+  description={rfq.description || "No description provided."}
+  commandMetrics={[
+    {
+      title: "Procurement Health",
+      value: `${healthScore}/100`,
+      detail: getHealthLabel(healthScore),
+      accentClassName: getHealthTone(healthScore),
+    },
+    {
+      title: "Deadline",
+      value: deadlinePassed
+        ? "Closed"
+        : daysUntilDeadline === null
+          ? "N/A"
+          : daysUntilDeadline <= 0
+            ? "Due Today"
+            : `${daysUntilDeadline} Days`,
+      detail: formatDateTime(rfq.deadline, rfq.deadline_timezone),
+      accentClassName: "text-cyan-300",
+    },
+    {
+      title: isOwner ? "Decision Status" : "Supplier Status",
+      value: isOwner
+        ? commercialEvaluationUnlocked
+          ? "Evaluation"
+          : "Locked"
+        : hasMyQuote
+          ? "Submitted"
+          : canSubmitQuote
+            ? "Open"
+            : "Pending",
+      detail: isOwner
+        ? commercialEvaluationUnlocked
+          ? "Commercial review available"
+          : "Blind bidding active"
+        : "Company-level confidential access",
+      accentClassName: "text-[#C8A646]",
+    },
+  ]}
+  executiveBrief={executiveBrief}
+  nextBestAction={nextBestAction}
+  award={
+    isOwner &&
+    rfqStatus === "awarded" &&
+    awardedQuote &&
+    commercialEvaluationUnlocked
+      ? {
+          label: "Award Complete",
+          value: `Awarded at ${formatMoney(
+            awardedQuote.amountNumber
+          )}`,
+        }
+      : null
+  }
+  stripItems={[
+    {
+      title: "Category",
+      value: rfq.category || "N/A",
+    },
+    {
+      title: "Location",
+      value: rfq.location || "N/A",
+    },
+    {
+      title: "Budget",
+      value: formatMoney(rfq.budget),
+    },
+    {
+      title: "Quotes",
+      value: String(quoteList.length),
+    },
+    {
+      title: "Documents",
+      value: String(rfqAttachments.length),
+    },
+    {
+      title: "Addenda",
+      value: String(rfqAddenda.length),
+    },
+  ]}
 />
-
-<ExecutiveCommandMetric
-title="Deadline"
-value={
-deadlinePassed
-? "Closed"
-: daysUntilDeadline === null
-? "N/A"
-: daysUntilDeadline <= 0
-? "Due Today"
-: `${daysUntilDeadline} Days`
-}
-detail={formatDateTime(rfq.deadline, rfq.deadline_timezone)}
-accentClassName="text-cyan-300"
-/>
-
-<ExecutiveCommandMetric
-title={isOwner ? "Decision Status" : "Supplier Status"}
-value={
-isOwner
-? commercialEvaluationUnlocked
-? "Evaluation"
-: "Locked"
-: hasMyQuote
-? "Submitted"
-: canSubmitQuote
-? "Open"
-: "Pending"
-}
-detail={
-isOwner
-? commercialEvaluationUnlocked
-? "Commercial review available"
-: "Blind bidding active"
-: "Company-level confidential access"
-}
-accentClassName="text-[#C8A646]"
-/>
-</div>
-</div>
-
-<div className="relative rounded-[32px] border border-white/10 bg-white/10 p-6 backdrop-blur">
-<p className="text-xs font-black uppercase tracking-[0.3em] text-cyan-300">
-Executive Brief
-</p>
-
-<h2 className="mt-4 text-2xl font-black text-white">
-Current Procurement Readout
-</h2>
-
-<p className="mt-4 text-sm font-semibold leading-7 text-slate-300">
-{executiveBrief}
-</p>
-
-<div className="mt-6 rounded-3xl border border-white/10 bg-slate-950/60 p-5">
-<p className="text-xs font-black uppercase tracking-[0.25em] text-[#C8A646]">
-Next Best Action
-</p>
-
-<p className="mt-3 text-sm font-bold leading-6 text-white">
-{nextBestAction}
-</p>
-</div>
-
-{isOwner &&
-rfqStatus === "awarded" &&
-awardedQuote &&
-commercialEvaluationUnlocked ? (
-<div className="mt-4 rounded-3xl border border-green-400/20 bg-green-400/10 p-5">
-<p className="text-xs font-black uppercase tracking-[0.25em] text-green-300">
-Award Complete
-</p>
-
-<p className="mt-3 text-sm font-bold text-white">
-Awarded at {formatMoney(awardedQuote.amountNumber)}
-</p>
-</div>
-) : null}
-</div>
-</div>
-</div>
-
-<div className="grid border-t border-white/10 bg-white/[0.03] md:grid-cols-2 xl:grid-cols-6">
-<ExecutiveCommandStripCard title="Category" value={rfq.category || "N/A"} />
-<ExecutiveCommandStripCard title="Location" value={rfq.location || "N/A"} />
-<ExecutiveCommandStripCard title="Budget" value={formatMoney(rfq.budget)} />
-<ExecutiveCommandStripCard title="Quotes" value={String(quoteList.length)} />
-<ExecutiveCommandStripCard title="Documents" value={String(rfqAttachments.length)} />
-<ExecutiveCommandStripCard title="Addenda" value={String(rfqAddenda.length)} />
-</div>
-</section>
 <section className="mt-8 grid gap-6 xl:grid-cols-[1fr_0.85fr]">
 <ExecutivePanel padding="lg" tone="gold">
 <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
@@ -2239,12 +2192,5 @@ Submit Quote
 
 
 
-function DarkBadge({ children }: { children: ReactNode }) {
-return (
-<span className="rounded-full bg-white/10 px-4 py-2 text-xs font-black uppercase tracking-[0.15em] text-white">
-{children}
-</span>
-);
-}
 
 
