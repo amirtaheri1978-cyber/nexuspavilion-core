@@ -7,7 +7,6 @@ import RFQAIAdvisor from "@/components/rfq-ai-advisor";
 import RFQDocumentLibrary from "@/components/rfq-document-library";
 import RFQDocumentUpload from "@/components/rfq-document-upload";
 import { createClient } from "@/lib/supabase/server";
-import { ExecutiveOpportunityRanking } from "@/components/executive/executive-opportunity-ranking";
 import { ExecutiveDecisionCenter } from "@/components/rfq-workspace/executive-decision-center";
 import { ExecutiveActionQueue } from "@/components/rfq-workspace/executive-action-queue";
 import { ExecutiveDecisionTimeline } from "@/components/rfq-workspace/executive-decision-timeline";
@@ -21,12 +20,12 @@ import { buildExecutiveIntelligence } from "@/lib/executive/executive-engine";
 import { ExecutiveMetricCard } from "@/components/executive/executive-metric-card";
 import { ExecutivePanel } from "@/components/executive/executive-panel";
 import { ExecutiveBadge } from "@/components/executive/executive-badge";
-import { ExecutiveActionAnchor } from "@/components/executive/actions/executive-action-anchor";
-import { ExecutiveActionLink } from "@/components/executive/actions/executive-action-link";
 import { RFQCommandCenter } from "@/components/rfq-workspace/rfq-command-center";
 import { RFQProcurementHealth } from "@/components/rfq-workspace/rfq-procurement-health";
 import { RFQExecutiveRiskMatrix } from "@/components/rfq-workspace/rfq-executive-risk-matrix";
 import { RFQExecutiveGuidance } from "@/components/rfq-workspace/rfq-executive-guidance";
+import { RFQExecutiveActions } from "@/components/rfq-workspace/rfq-executive-actions";
+import { RFQProcurementContext } from "@/components/rfq-workspace/rfq-procurement-context";
 type PageProps = {
 params: Promise<{ slug: string }>;
 };
@@ -1255,100 +1254,25 @@ return (
 </section>
 
 <section className="mt-8 grid gap-6 lg:grid-cols-[1fr_0.85fr]">
-<ExecutivePanel padding="lg" tone="blue">
-<p className="text-xs font-black uppercase tracking-[0.3em] text-[#9BE8F8]">
-Procurement Intelligence Context
-</p>
+  <RFQProcurementContext
+    description={getProcurementFitMessage(rfq)}
+    sourcingLabel={getSourcingLabel(rfq.sourcing_method)}
+    frameworkLabel={getFrameworkLabel(rfq.contract_framework)}
+    blindBiddingEnabled={blindBiddingEnabled}
+  />
 
-<h2 className="mt-3 text-3xl font-black text-nexus-white">
-RFQ Operating Model
-</h2>
-
-<p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-nexus-muted">
-{getProcurementFitMessage(rfq)}
-</p>
-
-<div className="mt-6 grid gap-4 md:grid-cols-3">
-<ExecutiveMetricCard
-label="Sourcing"
-value={getSourcingLabel(rfq.sourcing_method)}
-tone="blue"
-/>
-
-<ExecutiveMetricCard
-label="Framework"
-value={getFrameworkLabel(rfq.contract_framework)}
-tone="gold"
-/>
-
-<ExecutiveMetricCard
-label="Commercial Control"
-value={blindBiddingEnabled ? "Blind Bidding" : "Open Evaluation"}
-tone={blindBiddingEnabled ? "gold" : "success"}
-/>
-</div>
-</ExecutivePanel>
-
-<ExecutivePanel padding="lg" tone="gold">
-<p className="text-xs font-black uppercase tracking-[0.3em] text-nexus-gold">
-CEO Action Center
-</p>
-
-<h2 className="mt-3 text-3xl font-black text-nexus-white">
-Priority Actions
-</h2>
-
-<div className="mt-6 grid gap-3">
-{canSubmitQuote ? (
-<ExecutiveActionLink href={`/rfq/${rfq.slug}/submit`} label="Submit Quote" />
-) : null}
-
-{isOwner ? (
-<ExecutiveOpportunityRanking
-opportunities={executiveOpportunities}
-intelligence={executiveOpportunityIntelligence}
-/>
-) : null}
-
-{isOwner && isOpen ? (
-<ExecutiveActionAnchor href="#supplier-invitations" label="Invite Suppliers" />
-) : null}
-
-{isOwner && rfq.company_id ? (
-<ExecutiveActionAnchor href="#document-center" label="Upload Documents" />
-) : null}
-
-<ExecutiveActionAnchor href="#document-center" label="Review Document Center" />
-
-{isOwner && commercialEvaluationUnlocked ? (
-<ExecutiveActionLink href={`/rfq/${rfq.slug}/compare`} label="Open Compare View" />
-) : null}
-
-{isOwner && !commercialEvaluationUnlocked ? (
-<ExecutivePanel variant="operational" padding="sm" tone="gold">
-<p className="text-sm font-black leading-6 text-nexus-gold">
-Commercial evaluation is locked until the deadline.
-</p>
-</ExecutivePanel>
-) : null}
-
-{!isOwner && hasMyQuote ? (
-<ExecutivePanel variant="operational" padding="sm" tone="success">
-<p className="text-sm font-black leading-6 text-emerald-300">
-Your company has submitted a quote.
-</p>
-</ExecutivePanel>
-) : null}
-
-{!isOwner && deadlinePassed && !hasMyQuote ? (
-<ExecutivePanel variant="operational" padding="sm" tone="risk">
-<p className="text-sm font-black leading-6 text-red-300">
-RFQ deadline has passed.
-</p>
-</ExecutivePanel>
-) : null}
-</div>
-</ExecutivePanel>
+  <RFQExecutiveActions
+    rfqSlug={rfq.slug}
+    isOwner={isOwner}
+    isOpen={isOpen}
+    canSubmitQuote={canSubmitQuote}
+    hasCompany={Boolean(rfq.company_id)}
+    hasMyQuote={hasMyQuote}
+    deadlinePassed={deadlinePassed}
+    commercialEvaluationUnlocked={commercialEvaluationUnlocked}
+    opportunities={executiveOpportunities}
+    intelligence={executiveOpportunityIntelligence}
+  />
 </section>
 
 {isOwner && blindBiddingEnabled && !commercialEvaluationUnlocked ? (
