@@ -4,365 +4,382 @@ import { ExecutiveSignal } from "@/components/rfq-workspace/shared/executive-sig
 import { buildExecutiveIntelligence } from "@/lib/executive/executive-engine";
 
 type ExecutiveDecisionCenterProps = {
-rfqSlug: string;
-isOwner: boolean;
-isOpen: boolean;
-commercialEvaluationUnlocked: boolean;
-healthScore: number;
-quoteCount: number;
-documentCount: number;
-addendaCount: number;
-potentialSavings: number;
-recommendedQuote:
-| {
-rank: number;
-amountNumber: number;
-awardConfidence: number;
-riskLevel: string;
-totalScore: number;
-timelineScore: number;
-priceScore: number;
-riskScore: number;
-performanceScore: number;
-}
-| null;
+  rfqSlug: string;
+  isOwner: boolean;
+  isOpen: boolean;
+  commercialEvaluationUnlocked: boolean;
+  healthScore: number;
+  quoteCount: number;
+  documentCount: number;
+  addendaCount: number;
+  potentialSavings: number;
+  recommendedQuote:
+    | {
+        rank: number;
+        amountNumber: number;
+        awardConfidence: number;
+        riskLevel: string;
+        totalScore: number;
+        timelineScore: number;
+        priceScore: number;
+        riskScore: number;
+        performanceScore: number;
+      }
+    | null;
 };
 
 function formatMoney(value: number) {
-if (!Number.isFinite(value)) return "$0";
-return `$${Math.max(value, 0).toLocaleString()}`;
+  if (!Number.isFinite(value)) return "$0";
+
+  return `$${Math.max(value, 0).toLocaleString()}`;
 }
 
 function getChecklist({
-commercialEvaluationUnlocked,
-recommendedQuote,
-quoteCount,
-documentCount,
-addendaCount,
-healthScore,
+  commercialEvaluationUnlocked,
+  recommendedQuote,
+  quoteCount,
+  documentCount,
+  addendaCount,
+  healthScore,
 }: {
-commercialEvaluationUnlocked: boolean;
-recommendedQuote: ExecutiveDecisionCenterProps["recommendedQuote"];
-quoteCount: number;
-documentCount: number;
-addendaCount: number;
-healthScore: number;
+  commercialEvaluationUnlocked: boolean;
+  recommendedQuote: ExecutiveDecisionCenterProps["recommendedQuote"];
+  quoteCount: number;
+  documentCount: number;
+  addendaCount: number;
+  healthScore: number;
 }) {
-return [
-{
-label: "Commercial opening available",
-complete: commercialEvaluationUnlocked,
-},
-{
-label: "Supplier bids received",
-complete: quoteCount > 0,
-},
-{
-label: "RFQ document package active",
-complete: documentCount > 0,
-},
-{
-label: "Governance and addenda trackable",
-complete: addendaCount > 0,
-},
-{
-label: "AI recommendation available",
-complete: Boolean(recommendedQuote),
-},
-{
-label: "Procurement health above executive threshold",
-complete: healthScore >= 72,
-},
-];
+  return [
+    {
+      label: "Comparative evaluation available",
+      complete: commercialEvaluationUnlocked,
+    },
+    {
+      label: "Supplier quotations received",
+      complete: quoteCount > 0,
+    },
+    {
+      label: "RFQ procurement package active",
+      complete: documentCount > 0,
+    },
+    {
+      label: "Governance and addenda trail established",
+      complete: addendaCount > 0,
+    },
+    {
+      label: "Award recommendation available",
+      complete: Boolean(recommendedQuote),
+    },
+    {
+      label: "Procurement health above executive threshold",
+      complete: healthScore >= 72,
+    },
+  ];
 }
 
 export function ExecutiveDecisionCenter({
-rfqSlug,
-isOwner,
-isOpen,
-commercialEvaluationUnlocked,
-healthScore,
-quoteCount,
-documentCount,
-addendaCount,
-potentialSavings,
-recommendedQuote,
+  rfqSlug,
+  isOwner,
+  isOpen,
+  commercialEvaluationUnlocked,
+  healthScore,
+  quoteCount,
+  documentCount,
+  addendaCount,
+  potentialSavings,
+  recommendedQuote,
 }: ExecutiveDecisionCenterProps) {
-const executiveRecommendedQuote = recommendedQuote
-? {
-...recommendedQuote,
-budgetVariance: 0,
-lowestBidVariance: 0,
-}
-: null;
+  const executiveRecommendedQuote = recommendedQuote
+    ? {
+        ...recommendedQuote,
+        budgetVariance: 0,
+        lowestBidVariance: 0,
+      }
+    : null;
 
-const executive = buildExecutiveIntelligence({
-rfqSlug,
-isOwner,
-isOpen,
-commercialEvaluationUnlocked,
-healthScore,
-quoteCount,
-documentCount,
-addendaCount,
-potentialSavings,
-recommendedQuote: executiveRecommendedQuote,
-awardedQuote: null,
-});
+  const executive = buildExecutiveIntelligence({
+    rfqSlug,
+    isOwner,
+    isOpen,
+    commercialEvaluationUnlocked,
+    healthScore,
+    quoteCount,
+    documentCount,
+    addendaCount,
+    potentialSavings,
+    recommendedQuote: executiveRecommendedQuote,
+    awardedQuote: null,
+  });
 
-const checklist = getChecklist({
-commercialEvaluationUnlocked,
-recommendedQuote,
-quoteCount,
-documentCount,
-addendaCount,
-healthScore,
-});
+  const checklist = getChecklist({
+    commercialEvaluationUnlocked,
+    recommendedQuote,
+    quoteCount,
+    documentCount,
+    addendaCount,
+    healthScore,
+  });
 
-return (
-<section className="mt-8 overflow-hidden rounded-[40px] border border-white/10 bg-slate-950 text-white shadow-[0_30px_100px_rgba(2,6,23,0.26)]">
-<div className="grid gap-0 lg:grid-cols-[1.05fr_0.95fr]">
-<div className="relative overflow-hidden p-6 sm:p-8">
-<div className="absolute right-0 top-0 h-72 w-72 rounded-full bg-cyan-400/10 blur-3xl" />
-<div className="absolute bottom-0 left-0 h-72 w-72 rounded-full bg-orange-400/10 blur-3xl" />
+  return (
+    <section className="mt-8 overflow-hidden rounded-[40px] border border-white/10 bg-slate-950 text-white shadow-[0_30px_100px_rgba(2,6,23,0.26)]">
+      <div className="grid gap-0 lg:grid-cols-[1.05fr_0.95fr]">
+        <div className="relative min-w-0 overflow-hidden p-6 sm:p-8">
+          <div className="absolute right-0 top-0 h-72 w-72 rounded-full bg-cyan-400/10 blur-3xl" />
+          <div className="absolute bottom-0 left-0 h-72 w-72 rounded-full bg-orange-400/10 blur-3xl" />
 
-<div className="relative">
-<p className="text-xs font-black uppercase tracking-[0.32em] text-[#C8A646]">
-Executive Decision Center
-</p>
+          <div className="relative">
+            <p className="text-xs font-black uppercase tracking-[0.32em] text-[#C8A646]">
+              Executive Decision Center
+            </p>
 
-<div className="mt-4 flex flex-wrap items-center gap-3">
-<span className="rounded-full border border-white/10 bg-white/10 px-4 py-2 text-xs font-black uppercase tracking-[0.16em] text-white">
-{executive.recommendation.status}
-</span>
+            <div className="mt-4 flex flex-wrap items-center gap-3">
+              <span className="rounded-full border border-white/10 bg-white/10 px-4 py-2 text-xs font-black uppercase tracking-[0.16em] text-white">
+                {executive.recommendation.status}
+              </span>
 
-<span className="rounded-full border border-cyan-300/20 bg-cyan-400/10 px-4 py-2 text-xs font-black uppercase tracking-[0.16em] text-cyan-300">
-Readiness {executive.readiness.score}%
-</span>
-</div>
+              <span className="rounded-full border border-cyan-300/20 bg-cyan-400/10 px-4 py-2 text-xs font-black uppercase tracking-[0.16em] text-cyan-300">
+                Readiness {executive.readiness.score}%
+              </span>
+            </div>
 
-<h2 className="mt-6 text-3xl font-black leading-tight sm:text-4xl">
-Executive award path and decision readiness
-</h2>
+            <h2 className="mt-6 text-3xl font-black leading-tight sm:text-4xl">
+              Executive Award Path and Decision Readiness
+            </h2>
 
-<p className="mt-4 max-w-3xl text-sm font-semibold leading-7 text-slate-300">
-{executive.recommendation.recommendation}
-</p>
+            <p className="mt-4 max-w-3xl text-sm font-semibold leading-7 text-slate-300">
+              {executive.recommendation.recommendation}
+            </p>
 
-<div className="mt-8 grid gap-4 sm:grid-cols-2">
-<DecisionMetric
-title="Award Readiness"
-value={`${executive.readiness.score}%`}
-detail={`${executive.readiness.completedControls}/${executive.readiness.totalControls} controls complete`}
-/>
+            <div className="mt-8 grid gap-4 sm:grid-cols-2">
+              <DecisionMetric
+                title="Award Readiness"
+                value={`${executive.readiness.score}%`}
+                detail={`${executive.readiness.completedControls}/${executive.readiness.totalControls} controls complete`}
+              />
 
-<DecisionMetric
-title="Potential Savings"
-value={formatMoney(potentialSavings)}
-detail="Versus current average bid"
-/>
+              <DecisionMetric
+                title="Potential Savings"
+                value={formatMoney(potentialSavings)}
+                detail="Compared with the current average quotation"
+              />
 
-<DecisionMetric
-title="Supplier Coverage"
-value={String(quoteCount)}
-detail={quoteCount >= 3 ? "Healthy competition" : "Needs coverage"}
-/>
+              <DecisionMetric
+                title="Supplier Coverage"
+                value={String(quoteCount)}
+                detail={
+                  quoteCount >= 3
+                    ? "Competitive coverage established"
+                    : "Additional coverage recommended"
+                }
+              />
 
-<DecisionMetric
-title="Health Score"
-value={`${healthScore}/100`}
-detail={
-healthScore >= 72
-? "Executive threshold met"
-: "Needs attention"
-}
-/>
-</div>
+              <DecisionMetric
+                title="Procurement Health"
+                value={`${healthScore}/100`}
+                detail={
+                  healthScore >= 72
+                    ? "Executive threshold achieved"
+                    : "Readiness improvement required"
+                }
+              />
+            </div>
 
-<div className="mt-8 flex flex-wrap gap-3">
-{isOwner && commercialEvaluationUnlocked ? (
-<Link
-href={`/rfq/${rfqSlug}/compare`}
-className="rounded-full bg-white px-6 py-3 text-sm font-black text-slate-950 transition hover:bg-slate-100"
->
-Open Compare View
-</Link>
-) : null}
+            <div className="mt-8 flex flex-wrap gap-3">
+              {isOwner && commercialEvaluationUnlocked ? (
+                <Link
+                  href={`/rfq/${rfqSlug}/compare`}
+                  className="rounded-full bg-white px-6 py-3 text-sm font-black text-slate-950 transition hover:bg-slate-100"
+                >
+                  Launch Comparative Evaluation
+                </Link>
+              ) : null}
 
-{!isOwner && isOpen ? (
-<Link
-href={`/rfq/${rfqSlug}/submit`}
-className="rounded-full bg-white px-6 py-3 text-sm font-black text-slate-950 transition hover:bg-slate-100"
->
-Submit Quote
-</Link>
-) : null}
+              {!isOwner && isOpen ? (
+                <Link
+                  href={`/rfq/${rfqSlug}/submit`}
+                  className="rounded-full bg-white px-6 py-3 text-sm font-black text-slate-950 transition hover:bg-slate-100"
+                >
+                  Submit Quote
+                </Link>
+              ) : null}
 
-<a
-href="#document-center"
-className="rounded-full border border-white/10 bg-white/10 px-6 py-3 text-sm font-black text-white transition hover:bg-white/15"
->
-Review Documents
-</a>
-</div>
-</div>
-</div>
+              <a
+                href="#document-center"
+                className="rounded-full border border-white/10 bg-white/10 px-6 py-3 text-sm font-black text-white transition hover:bg-white/15"
+              >
+                Review Procurement Package
+              </a>
+            </div>
+          </div>
+        </div>
 
-<div className="border-t border-white/10 bg-white/[0.04] p-6 sm:p-8 lg:border-l lg:border-t-0">
-<p className="text-xs font-black uppercase tracking-[0.32em] text-cyan-300">
-AI Explainability
-</p>
+        <div className="min-w-0 border-t border-white/10 bg-white/[0.04] p-6 sm:p-8 lg:border-l lg:border-t-0">
+          <p className="text-xs font-black uppercase tracking-[0.32em] text-cyan-300">
+            Decision Rationale
+          </p>
 
-<h3 className="mt-4 text-2xl font-black text-white">
-Why this decision path matters
-</h3>
+          <h3 className="mt-4 text-2xl font-black text-white">
+            Decision Basis and Readiness Factors
+          </h3>
 
-<div className="mt-6 grid gap-3">
-<ExplainabilityItem
-complete={Boolean(recommendedQuote)}
-label={
-recommendedQuote
-? `Recommended supplier ranked #${recommendedQuote.rank}`
-: "No recommended supplier yet"
-}
-/>
+          <div className="mt-6 grid gap-3">
+            <ExplainabilityItem
+              complete={Boolean(recommendedQuote)}
+              label={
+                recommendedQuote
+                  ? `Recommended supplier ranked #${recommendedQuote.rank}`
+                  : "Award recommendation not yet available"
+              }
+            />
 
-<ExplainabilityItem
-complete={commercialEvaluationUnlocked}
-label={
-commercialEvaluationUnlocked
-? "Commercial evaluation is open"
-: "Commercial data remains protected"
-}
-/>
+            <ExplainabilityItem
+              complete={commercialEvaluationUnlocked}
+              label={
+                commercialEvaluationUnlocked
+                  ? "Comparative evaluation is available"
+                  : "Commercial submissions remain protected"
+              }
+            />
 
-<ExplainabilityItem
-complete={quoteCount >= 3}
-label={
-quoteCount >= 3
-? "Supplier competition is healthy"
-: "Supplier competition can improve"
-}
-/>
+            <ExplainabilityItem
+              complete={quoteCount >= 3}
+              label={
+                quoteCount >= 3
+                  ? "Competitive supplier coverage established"
+                  : "Supplier competition requires improvement"
+              }
+            />
 
-<ExplainabilityItem
-complete={documentCount > 0}
-label={
-documentCount > 0
-? "Document package supports supplier clarity"
-: "Document package requires attention"
-}
-/>
-</div>
+            <ExplainabilityItem
+              complete={documentCount > 0}
+              label={
+                documentCount > 0
+                  ? "Procurement package supports supplier clarity"
+                  : "Procurement package requires attention"
+              }
+            />
+          </div>
 
-{recommendedQuote ? (
-<div className="mt-6 rounded-[28px] border border-white/10 bg-slate-950/60 p-5">
-<p className="text-xs font-black uppercase tracking-[0.24em] text-[#C8A646]">
-Recommended Supplier Intelligence
-</p>
+          {recommendedQuote ? (
+            <div className="mt-6 rounded-[28px] border border-white/10 bg-slate-950/60 p-5">
+              <p className="text-xs font-black uppercase tracking-[0.24em] text-[#C8A646]">
+                Recommended Supplier Evaluation
+              </p>
 
-<div className="mt-5 grid gap-3 sm:grid-cols-2">
-<MiniScore
-title="Overall"
-value={`${recommendedQuote.totalScore}/100`}
-/>
-<MiniScore title="Risk" value={recommendedQuote.riskLevel} />
-<MiniScore
-title="Price"
-value={`${recommendedQuote.priceScore}/100`}
-/>
-<MiniScore
-title="Timeline"
-value={`${recommendedQuote.timelineScore}/100`}
-/>
-<MiniScore
-title="Performance"
-value={`${recommendedQuote.performanceScore}/100`}
-/>
-<MiniScore
-title="Risk Score"
-value={`${recommendedQuote.riskScore}/100`}
-/>
-</div>
-</div>
-) : (
-<div className="mt-6 rounded-[28px] border border-orange-300/20 bg-orange-400/10 p-5">
-<p className="text-sm font-bold leading-6 text-orange-200">
-Award intelligence will activate once supplier submissions and
-commercial evaluation are available.
-</p>
-</div>
-)}
+              <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                <MiniScore
+                  title="Overall"
+                  value={`${recommendedQuote.totalScore}/100`}
+                />
 
-<div className="mt-6 rounded-[28px] border border-white/10 bg-white/[0.04] p-5">
-<p className="text-xs font-black uppercase tracking-[0.24em] text-slate-400">
-Decision Checklist
-</p>
+                <MiniScore title="Risk" value={recommendedQuote.riskLevel} />
 
-<div className="mt-4 grid gap-3">
-{checklist.map((item) => (
-<ExplainabilityItem
-key={item.label}
-complete={item.complete}
-label={item.label}
-/>
-))}
-</div>
-</div>
-</div>
-</div>
-</section>
-);
+                <MiniScore
+                  title="Price"
+                  value={`${recommendedQuote.priceScore}/100`}
+                />
+
+                <MiniScore
+                  title="Timeline"
+                  value={`${recommendedQuote.timelineScore}/100`}
+                />
+
+                <MiniScore
+                  title="Performance"
+                  value={`${recommendedQuote.performanceScore}/100`}
+                />
+
+                <MiniScore
+                  title="Risk Score"
+                  value={`${recommendedQuote.riskScore}/100`}
+                />
+              </div>
+            </div>
+          ) : (
+            <div className="mt-6 rounded-[28px] border border-orange-300/20 bg-orange-400/10 p-5">
+              <p className="text-sm font-bold leading-6 text-orange-200">
+                Award recommendation intelligence becomes available once
+                supplier quotations and comparative evaluation data are
+                available.
+              </p>
+            </div>
+          )}
+
+          <div className="mt-6 rounded-[28px] border border-white/10 bg-white/[0.04] p-5">
+            <p className="text-xs font-black uppercase tracking-[0.24em] text-slate-400">
+              Award Readiness Checklist
+            </p>
+
+            <div className="mt-4 grid gap-3">
+              {checklist.map((item) => (
+                <ExplainabilityItem
+                  key={item.label}
+                  complete={item.complete}
+                  label={item.label}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
 }
 
 function DecisionMetric({
-title,
-value,
-detail,
+  title,
+  value,
+  detail,
 }: {
-title: string;
-value: string;
-detail: string;
+  title: string;
+  value: string;
+  detail: string;
 }) {
-return (
-<div className="rounded-[28px] border border-white/10 bg-white/10 p-5">
-<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
-{title}
-</p>
+  return (
+    <div className="h-full min-w-0 rounded-[28px] border border-white/10 bg-white/10 p-5">
+      <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+        {title}
+      </p>
 
-<p className="mt-3 text-3xl font-black text-white">{value}</p>
+      <p className="mt-3 break-words text-3xl font-black text-white">
+        {value}
+      </p>
 
-<p className="mt-2 text-xs font-bold leading-5 text-slate-300">
-{detail}
-</p>
-</div>
-);
+      <p className="mt-2 text-xs font-bold leading-5 text-slate-300">
+        {detail}
+      </p>
+    </div>
+  );
 }
 
 function ExplainabilityItem({
-complete,
-label,
+  complete,
+  label,
 }: {
-complete: boolean;
-label: string;
+  complete: boolean;
+  label: string;
 }) {
-return (
-<div className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/[0.045] p-4">
-<ExecutiveSignal positive={complete} />
+  return (
+    <div className="flex min-w-0 items-start gap-3 rounded-2xl border border-white/10 bg-white/[0.045] p-4">
+      <ExecutiveSignal positive={complete} />
 
-<p className="text-sm font-bold leading-6 text-slate-300">{label}</p>
-</div>
-);
+      <p className="min-w-0 break-words text-sm font-bold leading-6 text-slate-300">
+        {label}
+      </p>
+    </div>
+  );
 }
 
 function MiniScore({ title, value }: { title: string; value: string }) {
-return (
-<div className="rounded-2xl border border-white/10 bg-white/[0.045] p-4">
-<p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
-{title}
-</p>
+  return (
+    <div className="min-w-0 rounded-2xl border border-white/10 bg-white/[0.045] p-4">
+      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
+        {title}
+      </p>
 
-<p className="mt-2 text-lg font-black text-white">{value}</p>
-</div>
-);
+      <p className="mt-2 break-words text-lg font-black text-white">
+        {value}
+      </p>
+    </div>
+  );
 }
