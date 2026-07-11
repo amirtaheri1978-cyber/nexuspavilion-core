@@ -260,7 +260,7 @@ const recentAwardItems = recentAwards.map((quote) => ({
 }));
 
 return (
-<main className="min-h-screen bg-[#f6f6f3] px-8 py-10">
+<main className="min-h-screen bg-[#061426] px-4 py-8 text-white sm:px-6 lg:px-8 lg:py-10">
 <div className="mx-auto max-w-7xl">
 <SupplierCommandCenter
   supplierTier={supplierTier}
