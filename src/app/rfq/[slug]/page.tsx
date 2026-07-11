@@ -1,5 +1,5 @@
 import Link from "next/link";
-import AwardContractButton from "@/components/award-contract-button";
+
 import InviteVendorForm from "@/components/invite-vendor-form";
 import RFQAIAdvisor from "@/components/rfq-ai-advisor";
 import { createClient } from "@/lib/supabase/server";
@@ -23,6 +23,8 @@ import { RFQExecutiveGuidance } from "@/components/rfq-workspace/rfq-executive-g
 import { RFQExecutiveActions } from "@/components/rfq-workspace/rfq-executive-actions";
 import { RFQProcurementContext } from "@/components/rfq-workspace/rfq-procurement-context";
 import { RFQDocumentWorkspace } from "@/components/rfq-workspace/rfq-document-workspace";
+import { RFQQuoteWorkspace } from "@/components/rfq-workspace/rfq-quote-workspace";
+
 type PageProps = {
 params: Promise<{ slug: string }>;
 };
@@ -331,11 +333,6 @@ return "Open";
 }
 
 
-function getScoreClass(score: number) {
-if (score >= 90) return "text-green-700";
-if (score >= 75) return "text-orange-700";
-return "text-red-700";
-}
 
 function getHealthScore({
 isOpen,
@@ -1479,249 +1476,19 @@ governance workflow.
   acknowledgements={rfqAcknowledgements}
 />
 
-<ExecutivePanel id="quote-intelligence" className="mt-8" padding="lg" tone="blue">
-<div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
-<div>
-<p className="text-xs font-black uppercase tracking-[0.3em] text-[#9BE8F8]">
-{isOwner ? "Quote Intelligence" : "Supplier Submission"}
-</p>
-
-<h2 className="mt-3 text-3xl font-black text-nexus-white">
-{isOwner
-? commercialEvaluationUnlocked
-? "AI Supplier Ranking"
-: "Blind Bid Lockbox"
-: "Your Company Quote"}
-</h2>
-
-<p className="mt-3 max-w-2xl text-sm font-semibold leading-7 text-nexus-muted">
-{!isOwner
-? "Supplier pricing is confidential. You can only view your own submission. Competitor pricing and award controls are visible only to authorized buyer-side users after the proper commercial opening stage."
-: commercialEvaluationUnlocked
-? "Ranking uses weighted scoring: 38% price, 22% timeline, 18% performance signals, 14% procurement risk, and 8% proposal validity."
-: "Commercial submissions are locked until the RFQ deadline. Buyer-side users can monitor participation count, but pricing, ranking, supplier comparison, and award actions are hidden."}
-</p>
-</div>
-
-<div className="flex flex-wrap gap-3">
-{canSubmitQuote ? (
-<Link
-href={`/rfq/${rfq.slug}/submit`}
-className="rounded-full border border-[#2CC4E8]/25 bg-[#2CC4E8]/10 px-6 py-3 text-sm font-black text-[#9BE8F8] transition hover:bg-[#2CC4E8]/15"
->
-Submit Quote
-</Link>
-) : null}
-
-{isOwner && commercialEvaluationUnlocked ? (
-<Link
-href={`/rfq/${rfq.slug}/compare`}
-className="rounded-full border border-[#C8A646]/25 bg-[#C8A646]/10 px-6 py-3 text-sm font-black text-[#F5D77B] transition hover:bg-[#C8A646]/15"
->
-Open Compare View
-</Link>
-) : null}
-</div>
-</div>
-
-{isOwner && !commercialEvaluationUnlocked ? (
-<ExecutivePanel className="mt-6" variant="operational" padding="md" tone="gold">
-<div className="grid gap-4 md:grid-cols-4">
-<ExecutiveMetricCard
-label="Submissions"
-value={String(quoteList.length)}
-insight="Quotes submitted"
-tone="gold"
+<RFQQuoteWorkspace
+  rfqSlug={rfq.slug}
+  isOwner={isOwner}
+  isOpen={isOpen}
+  canSubmitQuote={canSubmitQuote}
+  commercialEvaluationUnlocked={commercialEvaluationUnlocked}
+  quoteList={quoteList}
+  scoredQuotes={scoredQuotes}
+  recommendedQuoteId={recommendedQuote?.id ?? null}
+  lowestAmount={lowestAmount}
+  highestAmount={highestAmount}
+  averageBid={averageBid}
 />
-
-<ExecutiveMetricCard
-label="Commercial Data"
-value="Locked"
-insight="Until deadline"
-tone="gold"
-/>
-
-<ExecutiveMetricCard
-label="Evaluation"
-value="Not Opened"
-insight="Blind bidding active"
-tone="blue"
-/>
-
-<div className="flex items-center">
-<ExecutiveBadge tone="warning">Blind Bidding Active</ExecutiveBadge>
-</div>
-</div>
-</ExecutivePanel>
-) : isOwner ? (
-<div className="mt-6 overflow-x-auto rounded-[28px] border border-white/10 bg-white/[0.035]">
-<div className="min-w-[1180px]">
-<div className="grid grid-cols-9 border-b border-white/10 bg-white/[0.055] px-6 py-4 text-xs font-black uppercase tracking-[0.15em] text-nexus-muted">
-<div>Rank</div>
-<div>Amount</div>
-<div>Timeline</div>
-<div>Validity</div>
-<div>Decision</div>
-<div>AI Score</div>
-<div>Risk</div>
-<div>Variance</div>
-<div>Actions</div>
-</div>
-
-{scoredQuotes.map((quote) => {
-const isRecommended = recommendedQuote?.id === quote.id;
-const isLowest =
-lowestAmount !== null && quote.amountNumber === lowestAmount;
-const isHighest =
-highestAmount !== null &&
-highestAmount !== lowestAmount &&
-quote.amountNumber === highestAmount;
-const belowAverage = averageBid > 0 && quote.amountNumber <= averageBid;
-const canAward = isOpen && quote.decision !== "awarded";
-
-return (
-<div
-key={quote.id}
-className="grid grid-cols-9 items-center border-t border-white/10 px-6 py-5"
->
-<div>
-<p className="text-2xl font-black text-nexus-white">
-#{quote.rank}
-</p>
-{isRecommended ? (
-<ExecutiveBadge tone="gold">Recommended</ExecutiveBadge>
-) : null}
-</div>
-
-<div className="text-lg font-black text-nexus-white">
-{formatMoney(quote.amountNumber)}
-</div>
-
-<div className="text-sm font-semibold text-nexus-muted">
-{quote.timeline || "N/A"}
-</div>
-
-<div className="text-sm font-semibold text-nexus-muted">
-{quote.validity_days ? `${quote.validity_days} days` : "30 days"}
-</div>
-
-<div>
-<ExecutiveBadge tone="neutral">
-{quote.decision || "Pending"}
-</ExecutiveBadge>
-</div>
-
-<div>
-<p className={`text-lg font-black ${getScoreClass(quote.totalScore)}`}>
-{quote.totalScore}/100
-</p>
-
-<p className="mt-1 text-xs text-nexus-muted">
-P {quote.priceScore} · T {quote.timelineScore} · R{" "}
-{quote.riskScore}
-</p>
-</div>
-
-<div>
-<p className="text-sm font-black text-nexus-white">
-{quote.riskLevel}
-</p>
-<p className="text-xs text-nexus-muted">
-Confidence {quote.awardConfidence}%
-</p>
-</div>
-
-<div>
-<p className="text-xs font-bold text-nexus-muted">
-Budget: {formatMoney(quote.budgetVariance)}
-</p>
-<p className="mt-1 text-xs font-bold text-nexus-muted">
-Lowest: {formatMoney(quote.lowestBidVariance)}
-</p>
-</div>
-
-<div className="space-y-3">
-<div className="space-y-2">
-{isLowest ? <ExecutiveBadge tone="success">Lowest Bid</ExecutiveBadge> : null}
-{belowAverage ? <ExecutiveBadge tone="blue">Below Average</ExecutiveBadge> : null}
-{quote.timelineScore >= 84 ? (
-<ExecutiveBadge tone="success">Strong Timeline</ExecutiveBadge>
-) : null}
-{isHighest ? <ExecutiveBadge tone="warning">Highest Bid</ExecutiveBadge> : null}
-</div>
-
-{canAward ? <AwardContractButton quoteId={quote.id} /> : null}
-
-{quote.decision === "awarded" ? (
-<p className="text-xs font-black text-emerald-300">
-Contract awarded
-</p>
-) : null}
-</div>
-</div>
-);
-})}
-
-{scoredQuotes.length === 0 ? (
-<EmptyQuoteState
-isOpen={isOpen}
-rfqSlug={rfq.slug}
-canSubmitQuote={false}
-/>
-) : null}
-</div>
-</div>
-) : (
-<div className="mt-6 overflow-x-auto rounded-[28px] border border-white/10 bg-white/[0.035]">
-<div className="min-w-[860px]">
-<div className="grid grid-cols-5 border-b border-white/10 bg-white/[0.055] px-6 py-4 text-sm font-black text-nexus-muted">
-<div>Your Amount</div>
-<div>Timeline</div>
-<div>Validity</div>
-<div>Status</div>
-<div>Message</div>
-</div>
-
-{quoteList.length > 0 ? (
-quoteList.map((quote) => (
-<div
-key={quote.id}
-className="grid grid-cols-5 items-center border-t border-white/10 px-6 py-5"
->
-<div className="text-xl font-black text-nexus-white">
-{formatMoney(quote.amount)}
-</div>
-
-<div className="text-sm font-semibold text-nexus-muted">
-{quote.timeline || "N/A"}
-</div>
-
-<div className="text-sm font-semibold text-nexus-muted">
-{quote.validity_days ? `${quote.validity_days} days` : "30 days"}
-</div>
-
-<div>
-<ExecutiveBadge tone="neutral">
-{quote.decision || "Submitted"}
-</ExecutiveBadge>
-</div>
-
-<div className="text-sm text-nexus-muted">
-{quote.message || "No message"}
-</div>
-</div>
-))
-) : (
-<EmptyQuoteState
-isOpen={isOpen}
-rfqSlug={rfq.slug}
-canSubmitQuote={canSubmitQuote}
-/>
-)}
-</div>
-</div>
-)}
-</ExecutivePanel>
 
 <section className="mt-8">
 <GovernanceNotice />
@@ -1798,41 +1565,6 @@ submission data.
 </ExecutivePanel>
 );
 }
-
-function EmptyQuoteState({
-isOpen,
-rfqSlug,
-canSubmitQuote,
-}: {
-isOpen: boolean;
-rfqSlug: string;
-canSubmitQuote: boolean;
-}) {
-return (
-<div className="px-6 py-12 text-center">
-<p className="text-lg font-black text-nexus-white">
-No quote submitted yet.
-</p>
-
-<p className="mx-auto mt-2 max-w-xl text-sm font-semibold leading-6 text-nexus-muted">
-{isOpen
-? "This RFQ is open and ready for supplier pricing."
-: "This RFQ is no longer accepting quotes."}
-</p>
-
-{canSubmitQuote ? (
-<Link
-href={`/rfq/${rfqSlug}/submit`}
-className="mt-6 inline-flex rounded-full border border-[#2CC4E8]/25 bg-[#2CC4E8]/10 px-6 py-3 text-sm font-black text-[#9BE8F8] transition hover:bg-[#2CC4E8]/15"
->
-Submit Quote
-</Link>
-) : null}
-</div>
-);
-}
-
-
 
 
 
