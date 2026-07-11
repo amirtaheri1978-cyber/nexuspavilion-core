@@ -1,6 +1,7 @@
-import Link from "next/link";
 import { ExecutiveMetricCard } from "@/components/executive/executive-metric-card";
 import { SupplierCommandCenter } from "@/components/vendor-workspace/supplier-command-center";
+import { SupplierDecisionSidebar } from "@/components/vendor-workspace/supplier-decision-sidebar";
+import { SupplierOpportunityPipeline } from "@/components/vendor-workspace/supplier-opportunity-pipeline";
 import { SupplierScorecard } from "@/components/vendor-workspace/supplier-scorecard";
 import { createClient } from "@/lib/supabase/server";
 
@@ -36,17 +37,7 @@ return "$0";
 return `$${amount.toLocaleString()}`;
 }
 
-function getStatusClass(status: string | null) {
-if (status === "awarded") return "bg-green-100 text-green-700";
-if (status === "closed") return "bg-slate-200 text-slate-600";
-return "bg-orange-100 text-orange-700";
-}
 
-function getStatusLabel(status: string | null) {
-if (status === "awarded") return "Awarded";
-if (status === "closed") return "Closed";
-return "Open";
-}
 
 function getSupplierTier(score: number) {
 if (score >= 95) return "Elite Supplier";
@@ -258,6 +249,16 @@ isPendingDecision,
 
 const recentAwards = awardedQuotes.slice(0, 5);
 
+const pendingReviewItems = pendingDecisionRfqs.slice(0, 5).map((rfq) => ({
+  rfq,
+  quoteCount: quoteList.filter((quote) => quote.rfq_id === rfq.id).length,
+}));
+
+const recentAwardItems = recentAwards.map((quote) => ({
+  quote,
+  rfq: rfqList.find((item) => item.id === quote.rfq_id) ?? null,
+}));
+
 return (
 <main className="min-h-screen bg-[#f6f6f3] px-8 py-10">
 <div className="mx-auto max-w-7xl">
@@ -417,190 +418,12 @@ return (
 />
 
 <section className="mt-8 grid gap-8 lg:grid-cols-[1.5fr_0.8fr]">
-<div className="rounded-[32px] border border-black/5 bg-white p-8">
-<div className="flex items-center justify-between gap-6">
-<div>
-<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
-Live Opportunities
-</p>
+<SupplierOpportunityPipeline pipelineRows={pipelineRows} />
 
-<h2 className="mt-3 text-3xl font-black text-slate-950">
-Company RFQ Pipeline
-</h2>
-</div>
-
-<Link
-href="/rfq"
-className="rounded-full bg-slate-950 px-5 py-3 text-sm font-bold text-white"
->
-Open Marketplace
-</Link>
-</div>
-
-<div className="mt-6 grid gap-5">
-{pipelineRows.length > 0 ? (
-pipelineRows.map(
-({
-rfq,
-rfqQuotes,
-lowestQuote,
-awardedQuote,
-isPendingDecision,
-}) => (
-<div
-key={rfq.id}
-className="rounded-[28px] border border-slate-200 bg-slate-50 p-6"
->
-<div className="flex items-start justify-between gap-6">
-<div>
-<div className="flex flex-wrap items-center gap-3">
-<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
-{rfq.category || "Procurement"}
-</p>
-
-{isPendingDecision ? (
-<span className="rounded-full bg-yellow-100 px-3 py-1 text-xs font-black text-yellow-700">
-Decision Needed
-</span>
-) : null}
-</div>
-
-<h3 className="mt-2 text-2xl font-black text-slate-950">
-{rfq.title || "Untitled RFQ"}
-</h3>
-
-<p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
-{rfq.description || "No description provided."}
-</p>
-
-<div className="mt-5 flex flex-wrap gap-3">
-<Badge className={getStatusClass(rfq.status)}>
-{getStatusLabel(rfq.status)}
-</Badge>
-
-<Badge>{rfq.location || "No location"}</Badge>
-<Badge>Budget {formatMoney(rfq.budget)}</Badge>
-<Badge>{rfqQuotes.length} quotes</Badge>
-
-{lowestQuote !== null ? (
-<Badge>Lowest {formatMoney(lowestQuote)}</Badge>
-) : null}
-
-{awardedQuote ? (
-<Badge className="bg-green-100 text-green-700">
-Awarded {formatMoney(awardedQuote.amount)}
-</Badge>
-) : null}
-</div>
-</div>
-
-<Link
-href={`/rfq/${rfq.slug}`}
-className="rounded-full bg-white px-5 py-3 text-sm font-black text-slate-950 shadow-sm transition hover:shadow-md"
->
-Review →
-</Link>
-</div>
-</div>
-)
-)
-) : (
-<EmptyState message="No company RFQs found. Create RFQs from the marketplace to start building supplier activity." />
-)}
-</div>
-</div>
-
-<aside className="space-y-8">
-<section className="rounded-[32px] border border-black/5 bg-white p-8">
-<p className="text-xs font-black uppercase tracking-[0.3em] text-orange-500">
-Decision Queue
-</p>
-
-<h2 className="mt-3 text-3xl font-black text-slate-950">
-Pending Reviews
-</h2>
-
-<div className="mt-6 space-y-4">
-{pendingDecisionRfqs.length > 0 ? (
-pendingDecisionRfqs.slice(0, 5).map((rfq) => {
-const rfqQuotes = quoteList.filter(
-(quote) => quote.rfq_id === rfq.id
-);
-
-return (
-<Link
-key={rfq.id}
-href={`/rfq/${rfq.slug}/compare`}
-className="block rounded-3xl border border-yellow-100 bg-yellow-50 p-5 transition hover:-translate-y-1 hover:shadow-lg"
->
-<p className="text-lg font-black text-slate-950">
-{rfq.title || "Untitled RFQ"}
-</p>
-
-<p className="mt-1 text-sm font-semibold text-yellow-700">
-{rfqQuotes.length} quote
-{rfqQuotes.length === 1 ? "" : "s"} ready for review
-</p>
-
-<p className="mt-4 text-sm font-black text-slate-950">
-Open Compare →
-</p>
-</Link>
-);
-})
-) : (
-<EmptyState message="No RFQs are waiting for award decisions." />
-)}
-</div>
-</section>
-
-<section className="rounded-[32px] border border-black/5 bg-white p-8">
-<p className="text-xs font-black uppercase tracking-[0.3em] text-orange-500">
-Award Activity
-</p>
-
-<h2 className="mt-3 text-3xl font-black text-slate-950">
-Recent Awards
-</h2>
-
-<div className="mt-6 space-y-4">
-{recentAwards.length > 0 ? (
-recentAwards.map((quote) => {
-const rfq = rfqList.find((item) => item.id === quote.rfq_id);
-
-return (
-<div
-key={quote.id}
-className="rounded-3xl border border-slate-100 bg-slate-50 p-5"
->
-<div className="flex items-start justify-between gap-4">
-<div>
-<p className="text-lg font-black text-slate-950">
-{rfq?.title || "Awarded RFQ"}
-</p>
-
-<p className="mt-1 text-sm font-semibold text-slate-500">
-{rfq?.location || "Location N/A"}
-</p>
-</div>
-
-<span className="rounded-full bg-green-100 px-3 py-1 text-xs font-black text-green-700">
-Awarded
-</span>
-</div>
-
-<p className="mt-4 text-2xl font-black text-slate-950">
-{formatMoney(quote.amount)}
-</p>
-</div>
-);
-})
-) : (
-<EmptyState message="No awards have been recorded yet." />
-)}
-</div>
-</section>
-</aside>
+<SupplierDecisionSidebar
+  pendingReviews={pendingReviewItems}
+  recentAwards={recentAwardItems}
+/>
 </section>
 </div>
 </main>
@@ -608,26 +431,4 @@ Awarded
 }
 
 
-function Badge({
-children,
-className = "bg-white text-slate-600",
-}: {
-children: React.ReactNode;
-className?: string;
-}) {
-return (
-<span
-className={`rounded-full px-3 py-1 text-xs font-bold shadow-sm ${className}`}
->
-{children}
-</span>
-);
-}
 
-function EmptyState({ message }: { message: string }) {
-return (
-<div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50 p-8 text-center">
-<p className="text-sm font-bold text-slate-500">{message}</p>
-</div>
-);
-}
