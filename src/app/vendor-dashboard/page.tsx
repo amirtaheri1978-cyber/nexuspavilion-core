@@ -1,5 +1,7 @@
 import Link from "next/link";
-
+import { ExecutiveMetricCard } from "@/components/executive/executive-metric-card";
+import { SupplierCommandCenter } from "@/components/vendor-workspace/supplier-command-center";
+import { SupplierScorecard } from "@/components/vendor-workspace/supplier-scorecard";
 import { createClient } from "@/lib/supabase/server";
 
 type RFQ = {
@@ -222,6 +224,15 @@ supplierScore >= 90
 ? "This supplier has a developing performance profile. Continue collecting quote history and monitor win rate, revenue conversion, and risk signals."
 : "Supplier data is limited. Increase RFQ participation and award history before assigning strategic supplier status.";
 
+const nextBestAction =
+  submittedQuotes === 0
+    ? "Explore active RFQ opportunities and submit the first competitive quotation."
+    : winRate < 25
+      ? "Review pricing competitiveness and proposal quality before the next quotation submission."
+      : pendingDecisions > 0
+        ? "Monitor pending award decisions and prepare for clarification or negotiation requests."
+        : "Maintain quotation discipline and expand participation in strategically aligned RFQ opportunities.";
+        
 const pipelineRows = rfqList.map((rfq) => {
 const rfqQuotes = quoteList.filter((quote) => quote.rfq_id === rfq.id);
 
@@ -250,182 +261,160 @@ const recentAwards = awardedQuotes.slice(0, 5);
 return (
 <main className="min-h-screen bg-[#f6f6f3] px-8 py-10">
 <div className="mx-auto max-w-7xl">
-<section className="rounded-[36px] border border-black/5 bg-white p-10">
-<div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
-<div>
-<p className="text-xs font-black uppercase tracking-[0.35em] text-orange-500">
-Supplier Performance Center
-</p>
+<SupplierCommandCenter
+  supplierTier={supplierTier}
+  supplierHealth={supplierHealth}
+  supplierRisk={supplierRisk}
+  supplierRecommendation={supplierRecommendation}
+  supplierScore={supplierScore}
+  awardProbability={awardProbability}
+  winRate={winRate}
+  executiveBrief={executiveRecommendation}
+  nextBestAction={nextBestAction}
+  commandMetrics={[
+    {
+      title: "Commercial Score",
+      value: `${commercialScore}/100`,
+      detail: "Award conversion, revenue, and quotation participation",
+      accentClassName: "text-cyan-300",
+    },
+    {
+      title: "Delivery Score",
+      value: `${deliveryScore}/100`,
+      detail: "Estimated schedule reliability",
+      accentClassName: "text-[#F5D77B]",
+    },
+    {
+      title: "Quality Score",
+      value: `${qualityScore}/100`,
+      detail: "Award consistency and proposal quality",
+      accentClassName: "text-emerald-300",
+    },
+  ]}
+  stripItems={[
+    {
+      title: "Submitted Quotes",
+      value: String(submittedQuotes),
+    },
+    {
+      title: "Awarded Revenue",
+      value: formatMoney(awardedRevenue),
+    },
+    {
+      title: "Pending Decisions",
+      value: String(pendingDecisions),
+    },
+    {
+      title: "Open RFQs",
+      value: String(openRfqs.length),
+    },
+  ]}
+/>
 
-<h1 className="mt-3 text-5xl font-black text-slate-950">
-Vendor Dashboard
-</h1>
+<section className="mt-8 grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
+  <ExecutiveMetricCard
+    label="Supplier Score"
+    value={`${supplierScore}/100`}
+    insight={supplierTier}
+    tone={supplierScore >= 80 ? "success" : "gold"}
+  />
 
-<p className="mt-4 max-w-3xl text-sm leading-6 text-slate-600">
-Monitor RFQ pipeline, quote activity, awarded revenue, win
-rate, supplier scorecards, procurement risk, and executive
-supplier intelligence connected to your workspace.
-</p>
-</div>
+  <ExecutiveMetricCard
+    label="Commercial Score"
+    value={`${commercialScore}/100`}
+    insight="Win rate, awarded revenue, and quotation participation"
+    tone="blue"
+  />
 
-<Link
-href="/rfq"
-className="rounded-full bg-slate-950 px-6 py-3 text-sm font-bold text-white transition hover:bg-slate-800"
->
-Open Marketplace
-</Link>
-</div>
+  <ExecutiveMetricCard
+    label="Delivery Score"
+    value={`${deliveryScore}/100`}
+    insight="Estimated schedule reliability"
+    tone="blue"
+  />
+
+  <ExecutiveMetricCard
+    label="Quality Score"
+    value={`${qualityScore}/100`}
+    insight="Award consistency and proposal quality"
+    tone="success"
+  />
+
+  <ExecutiveMetricCard
+    label="Submitted Quotes"
+    value={String(submittedQuotes)}
+    insight="Total supplier quotations submitted"
+    tone="neutral"
+  />
+
+  <ExecutiveMetricCard
+    label="Win Rate"
+    value={`${winRate}%`}
+    insight="Awards secured relative to submitted quotations"
+    tone={winRate >= 50 ? "success" : "gold"}
+  />
+
+  <ExecutiveMetricCard
+    label="Awarded Revenue"
+    value={formatMoney(awardedRevenue)}
+    insight={`${awardedQuotes.length} awarded quotation${
+      awardedQuotes.length === 1 ? "" : "s"
+    }`}
+    tone="success"
+    valueClassName="text-2xl"
+  />
+
+  <ExecutiveMetricCard
+    label="Average Award"
+    value={formatMoney(averageAward)}
+    insight="Average awarded contract value"
+    tone="gold"
+    valueClassName="text-2xl"
+  />
+
+  <ExecutiveMetricCard
+    label="Average Bid"
+    value={formatMoney(averageBid)}
+    insight="Average submitted quotation value"
+    tone="blue"
+    valueClassName="text-2xl"
+  />
+
+  <ExecutiveMetricCard
+    label="Pending Decisions"
+    value={String(pendingDecisions)}
+    insight="Open RFQs with submitted quotations awaiting review"
+    tone={pendingDecisions > 0 ? "gold" : "neutral"}
+  />
+
+  <ExecutiveMetricCard
+    label="Unsuccessful Quotes"
+    value={String(lostQuotes.length)}
+    insight="Rejected or non-awarded quotations"
+    tone={lostQuotes.length > 0 ? "risk" : "neutral"}
+  />
+
+  <ExecutiveMetricCard
+    label="Open RFQs"
+    value={String(openRfqs.length)}
+    insight="Active opportunities accepting or reviewing quotations"
+    tone="blue"
+  />
 </section>
-
-<section className="mt-8 rounded-[36px] border border-slate-200 bg-slate-950 p-8 text-white">
-<p className="text-xs font-black uppercase tracking-[0.3em] text-orange-400">
-Executive Supplier Intelligence
-</p>
-
-<div className="mt-5 grid gap-8 lg:grid-cols-[1fr_0.9fr]">
-<div>
-<h2 className="text-4xl font-black">
-Supplier Performance Control Tower
-</h2>
-
-<p className="mt-4 max-w-3xl text-sm leading-7 text-slate-300">
-{executiveRecommendation}
-</p>
-
-<div className="mt-6 flex flex-wrap gap-3">
-<DarkBadge>{supplierTier}</DarkBadge>
-<DarkBadge>{supplierRisk}</DarkBadge>
-<DarkBadge>{supplierRecommendation}</DarkBadge>
-</div>
-</div>
-
-<div className="grid gap-4 sm:grid-cols-2">
-<DarkMetric title="Supplier Score" value={`${supplierScore}/100`} />
-<DarkMetric title="Health" value={supplierHealth} />
-<DarkMetric title="Award Probability" value={`${awardProbability}%`} />
-<DarkMetric title="Win Rate" value={`${winRate}%`} />
-</div>
-</div>
-</section>
-
-<section className="mt-8 grid gap-6 md:grid-cols-4">
-<MetricCard
-title="Supplier Score"
-value={`${supplierScore}/100`}
-detail={supplierTier}
-highlight={supplierScore >= 80}
+<SupplierScorecard
+  commercialScore={commercialScore}
+  deliveryScore={deliveryScore}
+  qualityScore={qualityScore}
+  riskScore={riskScore}
+  supplierTier={supplierTier}
+  supplierRecommendation={supplierRecommendation}
+  supplierRisk={supplierRisk}
+  supplierHealth={supplierHealth}
+  awardProbability={awardProbability}
+  totalBidVolume={formatMoney(totalBidVolume)}
+  awardedRevenue={formatMoney(awardedRevenue)}
+  submittedQuotes={submittedQuotes}
 />
-
-<MetricCard
-title="Commercial Score"
-value={`${commercialScore}/100`}
-detail="Win rate, revenue, and quote participation"
-/>
-
-<MetricCard
-title="Delivery Score"
-value={`${deliveryScore}/100`}
-detail="Estimated schedule reliability"
-/>
-
-<MetricCard
-title="Quality Score"
-value={`${qualityScore}/100`}
-detail="Award consistency and proposal quality"
-/>
-
-<MetricCard
-title="Submitted Quotes"
-value={String(submittedQuotes)}
-detail="Total supplier bids"
-/>
-
-<MetricCard
-title="Win Rate"
-value={`${winRate}%`}
-detail="Awards won vs submitted quotes"
-/>
-
-<MetricCard
-title="Awarded Revenue"
-value={formatMoney(awardedRevenue)}
-detail={`${awardedQuotes.length} awarded quotes`}
-/>
-
-<MetricCard
-title="Average Award"
-value={formatMoney(averageAward)}
-detail="Average awarded contract value"
-/>
-
-<MetricCard
-title="Average Bid"
-value={formatMoney(averageBid)}
-detail="Average submitted quote"
-/>
-
-<MetricCard
-title="Pending Decisions"
-value={String(pendingDecisions)}
-detail="Open RFQs with submitted quotes"
-highlight={pendingDecisions > 0}
-/>
-
-<MetricCard
-title="Lost Quotes"
-value={String(lostQuotes.length)}
-detail="Rejected or non-awarded bids"
-/>
-
-<MetricCard
-title="Open RFQs"
-value={String(openRfqs.length)}
-detail="Still accepting or reviewing bids"
-/>
-</section>
-<section className="mt-8 rounded-[32px] border border-black/5 bg-white p-8">
-<p className="text-xs font-black uppercase tracking-[0.3em] text-orange-500">
-Supplier Scorecard
-</p>
-
-<div className="mt-4 grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
-<div>
-<h2 className="text-3xl font-black text-slate-950">
-Performance Breakdown
-</h2>
-
-<p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">
-Nexus Pavilion evaluates supplier performance using commercial
-performance, delivery reliability, quality signals, quote
-participation, award conversion, and risk exposure.
-</p>
-
-<div className="mt-8 grid gap-4 md:grid-cols-2">
-<ScoreBar title="Commercial Performance" value={commercialScore} />
-<ScoreBar title="Delivery Reliability" value={deliveryScore} />
-<ScoreBar title="Quality Signal" value={qualityScore} />
-<ScoreBar title="Risk Strength" value={riskScore} />
-</div>
-</div>
-
-<div className="rounded-3xl bg-slate-50 p-6">
-<p className="text-xs font-black uppercase tracking-[0.25em] text-slate-400">
-Supplier Classification
-</p>
-
-<div className="mt-4 space-y-3">
-<SignalRow label="Supplier Tier" value={supplierTier} />
-<SignalRow label="Recommendation" value={supplierRecommendation} />
-<SignalRow label="Risk Profile" value={supplierRisk} />
-<SignalRow label="Supplier Health" value={supplierHealth} />
-<SignalRow label="Award Probability" value={`${awardProbability}%`} />
-<SignalRow label="Total Bid Volume" value={formatMoney(totalBidVolume)} />
-<SignalRow label="Awarded Revenue" value={formatMoney(awardedRevenue)} />
-<SignalRow label="Quote Volume" value={String(submittedQuotes)} />
-</div>
-</div>
-</div>
-</section>
 
 <section className="mt-8 grid gap-8 lg:grid-cols-[1.5fr_0.8fr]">
 <div className="rounded-[32px] border border-black/5 bg-white p-8">
@@ -618,80 +607,6 @@ Awarded
 );
 }
 
-function MetricCard({
-title,
-value,
-detail,
-highlight,
-}: {
-title: string;
-value: string;
-detail: string;
-highlight?: boolean;
-}) {
-return (
-<div
-className={`rounded-3xl border p-7 ${
-highlight ? "border-yellow-200 bg-yellow-50" : "border-black/5 bg-white"
-}`}
->
-<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">
-{title}
-</p>
-
-<p className="mt-3 text-3xl font-black text-slate-950">{value}</p>
-
-<p className="mt-2 text-sm font-semibold text-slate-500">{detail}</p>
-</div>
-);
-}
-
-function DarkMetric({ title, value }: { title: string; value: string }) {
-return (
-<div className="rounded-2xl bg-white/10 p-5">
-<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
-{title}
-</p>
-
-<p className="mt-2 text-3xl font-black">{value}</p>
-</div>
-);
-}
-
-function DarkBadge({ children }: { children: React.ReactNode }) {
-return (
-<span className="rounded-full bg-white/10 px-4 py-2 text-xs font-black uppercase tracking-[0.15em] text-white">
-{children}
-</span>
-);
-}
-
-function SignalRow({ label, value }: { label: string; value: string }) {
-return (
-<div className="flex items-center justify-between rounded-2xl bg-white px-4 py-3 shadow-sm">
-<p className="text-sm font-black text-slate-600">{label}</p>
-<p className="text-sm font-black text-slate-950">{value}</p>
-</div>
-);
-}
-
-function ScoreBar({ title, value }: { title: string; value: number }) {
-return (
-<div className="rounded-3xl bg-slate-50 p-5">
-<div className="flex items-center justify-between gap-4">
-<p className="text-sm font-black text-slate-700">{title}</p>
-<p className="text-sm font-black text-slate-950">{value}/100</p>
-</div>
-
-<div className="mt-4 h-3 overflow-hidden rounded-full bg-slate-200">
-<div
-className="h-full rounded-full bg-slate-950"
-style={{ width: `${Math.min(100, Math.max(0, value))}%` }}
-/>
-</div>
-</div>
-);
-}
 
 function Badge({
 children,
