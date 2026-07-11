@@ -53,7 +53,7 @@ export function RFQCommandCenter({
         href={backHref}
         className="text-sm font-semibold text-nexus-muted transition hover:text-nexus-white"
       >
-        ← Back to RFQ Marketplace
+       ← Return to RFQ Marketplace
       </Link>
 
       <section className="mt-8 overflow-hidden rounded-[40px] border border-white/10 bg-slate-950 text-white shadow-[0_30px_100px_rgba(2,6,23,0.28)]">
@@ -106,8 +106,8 @@ export function RFQCommandCenter({
               </p>
 
               <h2 className="mt-4 text-2xl font-black text-white">
-                Current Procurement Readout
-              </h2>
+  Executive Procurement Summary
+</h2>
 
               <p className="mt-4 text-sm font-semibold leading-7 text-slate-300">
                 {executiveBrief}
@@ -115,8 +115,8 @@ export function RFQCommandCenter({
 
               <div className="mt-6 rounded-3xl border border-white/10 bg-slate-950/60 p-5">
                 <p className="text-xs font-black uppercase tracking-[0.25em] text-[#C8A646]">
-                  Next Best Action
-                </p>
+  Recommended Executive Action
+</p>
 
                 <p className="mt-3 text-sm font-bold leading-6 text-white">
                   {nextBestAction}
