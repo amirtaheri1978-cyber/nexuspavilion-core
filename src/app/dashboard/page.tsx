@@ -1,9 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import type { ReactNode } from "react";
-
 import { ExecutiveHero } from "@/components/dashboard/executive-hero";
+import { ExecutiveBadge } from "@/components/executive/executive-badge";
 import { ExecutiveMetricCard } from "@/components/executive/executive-metric-card";
 import { ExecutivePanel } from "@/components/executive/executive-panel";
 import { ExecutiveCommandMetric } from "@/components/executive/workspace/executive-command-metric";
@@ -811,9 +810,12 @@ Executive Operating Score
 </h2>
 </div>
 
-<StatusBadge tone={hasProcurementData ? "success" : "warning"}>
-{executiveStatus}
-</StatusBadge>
+<ExecutiveBadge
+  tone={hasProcurementData ? "success" : "warning"}
+  size="sm"
+>
+  {executiveStatus}
+</ExecutiveBadge>
 </div>
 
 <div className="mt-6 rounded-[28px] border border-[#C8A646]/20 bg-[#C8A646]/10 p-6">
@@ -989,9 +991,12 @@ Board Summary Narrative
 </h2>
 </div>
 
-<StatusBadge tone={hasProcurementData ? "success" : "warning"}>
-{hasProcurementData ? "Available" : "Insufficient Data"}
-</StatusBadge>
+<ExecutiveBadge
+  tone={hasProcurementData ? "success" : "warning"}
+  size="sm"
+>
+  {hasProcurementData ? "Available" : "Insufficient Data"}
+</ExecutiveBadge>
 </div>
 
 <p className="mt-5 text-sm font-semibold leading-7 text-slate-300">
@@ -1026,7 +1031,9 @@ className="rounded-[24px] border border-white/10 bg-white/[0.045] p-5"
 {item.title}
 </h3>
 
-<StatusBadge tone="blue">{item.value}</StatusBadge>
+<ExecutiveBadge tone="blue" size="sm">
+  {item.value}
+</ExecutiveBadge>
 </div>
 
 <p className="mt-3 text-sm font-semibold leading-7 text-slate-400">
@@ -1241,7 +1248,9 @@ className="rounded-[24px] border border-white/10 bg-[#061426]/70 p-5"
 </p>
 </div>
 
-<StatusBadge tone="success">Awarded</StatusBadge>
+<ExecutiveBadge tone="success" size="sm">
+  Awarded
+</ExecutiveBadge>
 </div>
 
 <p className="mt-4 text-2xl font-black text-[#C8A646]">
@@ -1289,25 +1298,27 @@ getProcurementScope(rfq.procurement_scope)
 </p>
 </div>
 
-<StatusBadge tone="neutral">{rfq.status || "open"}</StatusBadge>
+<ExecutiveBadge tone="neutral" size="sm">
+  {rfq.status || "open"}
+</ExecutiveBadge>
 </div>
 
 <div className="mt-4 flex flex-wrap gap-2">
-<SmallBadge>
-{
-SOURCING_METHOD_LABELS[
-getSourcingMethod(rfq.sourcing_method)
-]
-}
-</SmallBadge>
+<ExecutiveBadge tone="neutral" size="sm">
+  {
+    SOURCING_METHOD_LABELS[
+      getSourcingMethod(rfq.sourcing_method)
+    ]
+  }
+</ExecutiveBadge>
 
-<SmallBadge>
-{
-CONTRACT_FRAMEWORK_LABELS[
-getContractFramework(rfq.contract_framework)
-]
-}
-</SmallBadge>
+<ExecutiveBadge tone="neutral" size="sm">
+  {
+    CONTRACT_FRAMEWORK_LABELS[
+      getContractFramework(rfq.contract_framework)
+    ]
+  }
+</ExecutiveBadge>
 </div>
 
 <p className="mt-4 text-2xl font-black text-[#C8A646]">
@@ -1417,38 +1428,6 @@ return (
 );
 }
 
-function SmallBadge({ children }: { children: ReactNode }) {
-return (
-<span className="rounded-full border border-white/10 bg-white/[0.055] px-3 py-1 text-xs font-black text-slate-300">
-{children}
-</span>
-);
-}
-
-function StatusBadge({
-children,
-tone = "neutral",
-}: {
-children: ReactNode;
-tone?: "success" | "warning" | "blue" | "neutral";
-}) {
-const toneClass =
-tone === "success"
-? "border-emerald-300/20 bg-emerald-400/10 text-emerald-300"
-: tone === "warning"
-? "border-orange-300/20 bg-orange-400/10 text-orange-300"
-: tone === "blue"
-? "border-[#2CC4E8]/25 bg-[#2CC4E8]/10 text-[#9BE8F8]"
-: "border-white/10 bg-white/[0.055] text-slate-300";
-
-return (
-<span
-className={`inline-flex rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] ${toneClass}`}
->
-{children}
-</span>
-);
-}
 
 function CeoActionCard({
 alert,
@@ -1477,17 +1456,18 @@ return (
 <div className="flex items-center gap-3">
 <span className={`h-3 w-3 rounded-full ${dotClass}`} />
 
-<StatusBadge
-tone={
-alert.level === "healthy"
-? "success"
-: alert.level === "opportunity"
-? "warning"
-: "warning"
-}
+<ExecutiveBadge
+  tone={
+    alert.level === "healthy"
+      ? "success"
+      : alert.level === "opportunity"
+        ? "warning"
+        : "warning"
+  }
+  size="sm"
 >
-{priority}
-</StatusBadge>
+  {priority}
+</ExecutiveBadge>
 </div>
 
 <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
