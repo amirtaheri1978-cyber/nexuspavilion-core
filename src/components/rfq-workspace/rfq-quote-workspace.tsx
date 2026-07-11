@@ -54,8 +54,8 @@ export function RFQQuoteWorkspace({
             {isOwner
               ? commercialEvaluationUnlocked
                 ? "AI Supplier Ranking"
-                : "Blind Bid Lockbox"
-              : "Your Company Quote"}
+                : "Commercial Submission Lockbox"
+              : "Your Organization's Quote"}
           </h2>
 
           <p className="mt-3 max-w-2xl text-sm font-semibold leading-7 text-nexus-muted">
@@ -82,7 +82,7 @@ export function RFQQuoteWorkspace({
               href={`/rfq/${rfqSlug}/compare`}
               className="rounded-full border border-[#C8A646]/25 bg-[#C8A646]/10 px-6 py-3 text-sm font-black text-[#F5D77B] transition hover:bg-[#C8A646]/15"
             >
-              Open Compare View
+              Launch Comparative Evaluation
             </Link>
           ) : null}
         </div>
@@ -112,7 +112,7 @@ export function RFQQuoteWorkspace({
 
             <ExecutiveMetricCard
               label="Evaluation"
-              value="Not Opened"
+              value="Awaiting Commercial Opening"
               insight="Blind bidding active"
               tone="blue"
             />

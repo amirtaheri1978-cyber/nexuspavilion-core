@@ -1170,21 +1170,21 @@ return (
       accentClassName: "text-cyan-300",
     },
     {
-      title: isOwner ? "Decision Status" : "Supplier Status",
+    title: isOwner ? "Commercial Status" : "Participation Status",
       value: isOwner
-        ? commercialEvaluationUnlocked
-          ? "Evaluation"
-          : "Locked"
-        : hasMyQuote
-          ? "Submitted"
-          : canSubmitQuote
-            ? "Open"
-            : "Pending",
+  ? commercialEvaluationUnlocked
+    ? "Commercial Evaluation"
+    : "Commercially Locked"
+  : hasMyQuote
+    ? "Quote Submitted"
+    : canSubmitQuote
+      ? "Ready for Submission"
+      : "Awaiting Submission",
       detail: isOwner
-        ? commercialEvaluationUnlocked
-          ? "Commercial review available"
-          : "Blind bidding active"
-        : "Company-level confidential access",
+  ? commercialEvaluationUnlocked
+    ? "Comparative evaluation available"
+    : "Commercial submissions protected"
+  : "Organization-level confidential access",
       accentClassName: "text-[#C8A646]",
     },
   ]}
