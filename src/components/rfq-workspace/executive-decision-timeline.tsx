@@ -131,7 +131,9 @@ status: commercialEvaluationUnlocked ? "complete" : "locked",
 detail: commercialEvaluationUnlocked
 ? "Commercial evaluation is available for authorized review."
 : "Commercial submissions remain protected.",
-signal: commercialEvaluationUnlocked ? "Open" : "Blind locked",
+signal: commercialEvaluationUnlocked
+  ? "Evaluation Open"
+  : "Awaiting Commercial Opening",
 },
 {
 title: isOwner ? "Executive Review" : "Supplier Visibility",
