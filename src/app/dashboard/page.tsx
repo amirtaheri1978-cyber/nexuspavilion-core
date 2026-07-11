@@ -6,6 +6,8 @@ import type { ReactNode } from "react";
 import { ExecutiveHero } from "@/components/dashboard/executive-hero";
 import { ExecutiveInsightCard } from "@/components/executive/executive-insight-card";
 import { ExecutiveMetricCard } from "@/components/executive/executive-metric-card";
+import { ExecutivePanel } from "@/components/executive/executive-panel";
+import { ExecutiveCommandStripCard } from "@/components/executive/workspace/executive-command-strip-card";
 import { createClient } from "@/lib/supabase/server";
 
 type Experience = "owner" | "vendor" | "consultant";
@@ -778,41 +780,23 @@ continueHref="/company/settings"
 continueLabel="Continue Setup"
 />
 
-<section className="mt-6 rounded-[34px] border border-white/10 bg-[#061426]/88 p-6 shadow-executive sm:p-8">
-<div className="flex flex-col gap-8 xl:flex-row xl:items-start xl:justify-between">
-<div className="max-w-5xl">
-<p className="text-[11px] font-black uppercase tracking-[0.34em] text-[#C8A646]">
-{dashboardCopy.eyebrow}
-</p>
-
-<h1 className="mt-4 max-w-5xl text-4xl font-black leading-tight text-white sm:text-5xl xl:text-6xl">
-{dashboardCopy.title}
-</h1>
-
-<p className="mt-4 max-w-4xl text-base font-semibold leading-8 text-slate-400 sm:text-lg">
-{dashboardCopy.subtitle}
-</p>
-
-<div className="mt-6 flex flex-wrap gap-3">
-<StatusBadge tone={hasProcurementData ? "success" : "warning"}>
-{hasProcurementData ? "Available" : "Insufficient Data"}
-</StatusBadge>
-
-<StatusBadge tone="blue">{dashboardCopy.briefLabel}</StatusBadge>
-
-<StatusBadge tone="neutral">
-{currentCompany?.name || "Company Workspace"}
-</StatusBadge>
+<ExecutivePanel
+variant="operational"
+padding="sm"
+className="mt-6"
+>
+<div className="grid sm:grid-cols-3">
+<ExecutiveCommandStripCard
+  title="Enterprise Score"
+  value={enterpriseScoreLabel}
+/>
+<ExecutiveCommandStripCard title="Risk Index" value={riskIndexLabel} />
+<ExecutiveCommandStripCard
+  title="Decision Data Confidence"
+  value={forecastAccuracyLabel}
+/>
 </div>
-</div>
-
-<div className="grid min-w-full gap-3 sm:grid-cols-3 xl:min-w-[460px]">
-<DarkMetric title="Enterprise Score" value={enterpriseScoreLabel} />
-<DarkMetric title="Risk Index" value={riskIndexLabel} />
-<DarkMetric title="Forecast Trust" value={forecastAccuracyLabel} />
-</div>
-</div>
-</section>
+</ExecutivePanel>
 
 <section className="mt-6 rounded-[34px] border border-[#2CC4E8]/15 bg-gradient-to-br from-[#0B3D91]/35 via-[#07111F]/92 to-[#061426] p-6 shadow-[0_0_70px_rgba(44,196,232,0.10)] sm:p-8">
 <div className="grid gap-8 xl:grid-cols-[1.15fr_0.85fr]">
