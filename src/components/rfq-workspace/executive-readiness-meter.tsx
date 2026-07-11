@@ -1,5 +1,5 @@
 import { ExecutivePanel } from "@/components/executive/executive-panel";
-import { ExecutiveProgress } from "@/components/rfq-workspace/shared/executive-progress";
+import { ExecutiveProgress } from "@/components/executive/executive-progress";
 import { calculateDecisionReadiness } from "@/lib/analytics/executive-intelligence";
 
 type ReadinessFactor = {

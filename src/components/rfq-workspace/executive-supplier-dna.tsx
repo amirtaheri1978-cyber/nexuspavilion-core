@@ -1,5 +1,5 @@
 import { ExecutiveMiniTile } from "@/components/rfq-workspace/shared/executive-mini-tile";
-import { ExecutiveProgress } from "@/components/rfq-workspace/shared/executive-progress";
+import { ExecutiveProgress } from "@/components/executive/executive-progress";
 import { buildExecutiveIntelligence } from "@/lib/executive/executive-engine";
 import type { ExecutiveQuote } from "@/types/executive";
 

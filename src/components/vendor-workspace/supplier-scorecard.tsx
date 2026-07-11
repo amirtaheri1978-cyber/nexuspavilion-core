@@ -1,5 +1,5 @@
 import { ExecutivePanel } from "@/components/executive/executive-panel";
-import { ExecutiveProgress } from "@/components/rfq-workspace/shared/executive-progress";
+import { ExecutiveProgress } from "@/components/executive/executive-progress";
 
 type SupplierScorecardProps = {
   commercialScore: number;

@@ -1,4 +1,4 @@
-import { ExecutiveProgress } from "@/components/rfq-workspace/shared/executive-progress";
+import { ExecutiveProgress } from "@/components/executive/executive-progress";
 import { ExecutiveStatusBadge } from "@/components/rfq-workspace/shared/executive-status-badge";
 import { buildExecutiveIntelligence } from "@/lib/executive/executive-engine";
 
