@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ExecutiveHero } from "@/components/dashboard/executive-hero";
+import { ExecutiveMiniTile } from "@/components/rfq-workspace/shared/executive-mini-tile";
 import { ExecutiveBadge } from "@/components/executive/executive-badge";
 import { ExecutiveMetricCard } from "@/components/executive/executive-metric-card";
 import { ExecutivePanel } from "@/components/executive/executive-panel";
@@ -835,10 +836,13 @@ outcomes, savings signal, and RFQ classification maturity.
 </div>
 
 <div className="mt-5 grid gap-3 sm:grid-cols-2">
-<SignalTile label="Risk Index" value={riskIndexLabel} />
-<SignalTile label="Forecast Trust" value={forecastAccuracyLabel} />
-<SignalTile label="Award Rate" value={`${awardRate}%`} />
-<SignalTile label="RFQ Maturity" value={rfqMaturityLabel} />
+<ExecutiveMiniTile title="Risk Index" value={riskIndexLabel} />
+<ExecutiveMiniTile
+title="Decision Data Confidence"
+value={forecastAccuracyLabel}
+/>
+<ExecutiveMiniTile title="Award Rate" value={`${awardRate}%`} />
+<ExecutiveMiniTile title="RFQ Maturity" value={rfqMaturityLabel} />
 </div>
 </div>
 
@@ -1004,10 +1008,13 @@ Board Summary Narrative
 </p>
 
 <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-<SignalTile label="RFQs" value={String(totalRfqs)} />
-<SignalTile label="Supplier Quotes" value={String(submittedQuotes)} />
-<SignalTile label="Awarded RFQs" value={String(awardedRfqs)} />
-<SignalTile label="Open RFQs" value={String(openRfqs)} />
+<ExecutiveMiniTile title="RFQs" value={String(totalRfqs)} />
+<ExecutiveMiniTile
+title="Supplier Quotes"
+value={String(submittedQuotes)}
+/>
+<ExecutiveMiniTile title="Awarded RFQs" value={String(awardedRfqs)} />
+<ExecutiveMiniTile title="Open RFQs" value={String(openRfqs)} />
 </div>
 </div>
 
@@ -1135,22 +1142,47 @@ sourcing method is {hasProcurementData ? dominantSourcing : "Pending"}.
 Classification maturity score is {constructionClassificationScore}/100.
 </p>
 
-<div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-<SignalTile label="Material RFQs" value={String(materialRfqs)} />
-<SignalTile label="Trade RFQs" value={String(tradeRfqs)} />
-<SignalTile label="Equipment RFQs" value={String(equipmentRfqs)} />
-<SignalTile label="Service RFQs" value={String(serviceRfqs)} />
+<div className="mt-6 overflow-hidden rounded-[24px] border border-white/10 bg-white/[0.035]">
+<div className="grid md:grid-cols-2 xl:grid-cols-4">
+<ExecutiveCommandStripCard
+title="Material RFQs"
+value={String(materialRfqs)}
+/>
+<ExecutiveCommandStripCard
+title="Trade RFQs"
+value={String(tradeRfqs)}
+/>
+<ExecutiveCommandStripCard
+title="Equipment RFQs"
+value={String(equipmentRfqs)}
+/>
+<ExecutiveCommandStripCard
+title="Service RFQs"
+value={String(serviceRfqs)}
+/>
+</div>
 </div>
 
-<div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-<SignalTile label="Open Market" value={String(openMarketRfqs)} />
-<SignalTile label="Invited" value={String(invitedRfqs)} />
-<SignalTile label="Sealed Bids" value={String(sealedBidRfqs)} />
-<SignalTile
-label="Project Specific"
+<div className="mt-4 overflow-hidden rounded-[24px] border border-white/10 bg-white/[0.035]">
+<div className="grid md:grid-cols-2 xl:grid-cols-5">
+<ExecutiveCommandStripCard
+title="Open Market"
+value={String(openMarketRfqs)}
+/>
+<ExecutiveCommandStripCard title="Invited" value={String(invitedRfqs)} />
+<ExecutiveCommandStripCard
+title="Sealed Bids"
+value={String(sealedBidRfqs)}
+/>
+<ExecutiveCommandStripCard
+title="Project Specific"
 value={String(projectSpecificRfqs)}
 />
-<SignalTile label="Framework" value={String(frameworkRfqs)} />
+<ExecutiveCommandStripCard
+title="Framework"
+value={String(frameworkRfqs)}
+/>
+</div>
 </div>
 </div>
 
@@ -1413,18 +1445,6 @@ className="rounded-[26px] border border-white/10 bg-white/[0.045] p-6 transition
 
 <div className="mt-5 text-sm font-black text-[#9BE8F8]">Open →</div>
 </Link>
-);
-}
-
-function SignalTile({ label, value }: { label: string; value: string }) {
-return (
-<div className="rounded-[20px] border border-white/10 bg-white/[0.045] p-4">
-<p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
-{label}
-</p>
-
-<p className="mt-2 text-xl font-black text-white">{value}</p>
-</div>
 );
 }
 
