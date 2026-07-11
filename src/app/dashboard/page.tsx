@@ -4,9 +4,9 @@ import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
 
 import { ExecutiveHero } from "@/components/dashboard/executive-hero";
-import { ExecutiveInsightCard } from "@/components/executive/executive-insight-card";
 import { ExecutiveMetricCard } from "@/components/executive/executive-metric-card";
 import { ExecutivePanel } from "@/components/executive/executive-panel";
+import { ExecutiveCommandMetric } from "@/components/executive/workspace/executive-command-metric";
 import { ExecutiveCommandStripCard } from "@/components/executive/workspace/executive-command-strip-card";
 import { createClient } from "@/lib/supabase/server";
 
@@ -904,39 +904,72 @@ Recommended Executive Action
 <div className="grid gap-4 sm:grid-cols-2">
 {experience === "vendor" ? (
 <>
-<DarkMetric title="Open Opportunities" value={String(openRfqs)} />
-<DarkMetric
-title="Submitted Quotes"
-value={String(submittedQuotes)}
+<ExecutiveMetricCard
+label="Open Opportunities"
+value={String(openRfqs)}
+tone="blue"
 />
-<DarkMetric title="Win Rate" value={`${vendorWinRate}%`} />
-<DarkMetric
-title="Pipeline Value"
+<ExecutiveMetricCard
+label="Submitted Quotes"
+value={String(submittedQuotes)}
+tone="neutral"
+/>
+<ExecutiveMetricCard
+label="Win Rate"
+value={`${vendorWinRate}%`}
+tone="success"
+/>
+<ExecutiveMetricCard
+label="Pipeline Value"
 value={formatMoney(pipelineValue)}
+tone="gold"
 />
 </>
 ) : experience === "consultant" ? (
 <>
-<DarkMetric title="Service RFQs" value={String(serviceRfqs)} />
-<DarkMetric title="Project Activity" value={String(openRfqs)} />
-<DarkMetric title="Service Visibility" value={executiveStatus} />
-<DarkMetric
-title="Forecast Trust"
+<ExecutiveMetricCard
+label="Service RFQs"
+value={String(serviceRfqs)}
+tone="neutral"
+/>
+<ExecutiveMetricCard
+label="Project Activity"
+value={String(openRfqs)}
+tone="blue"
+/>
+<ExecutiveMetricCard
+label="Service Visibility"
+value={executiveStatus}
+tone="gold"
+/>
+<ExecutiveMetricCard
+label="Decision Data Confidence"
 value={forecastAccuracyLabel}
+tone="blue"
 />
 </>
 ) : (
 <>
-<DarkMetric title="RFQ Maturity" value={rfqMaturityLabel} />
-<DarkMetric
-title="Board Readiness"
+<ExecutiveMetricCard
+label="RFQ Maturity"
+value={rfqMaturityLabel}
+tone="neutral"
+/>
+<ExecutiveMetricCard
+label="Procurement Health"
 value={`${procurementHealthScore}%`}
+tone="blue"
 />
-<DarkMetric
-title="Supplier Concentration"
+<ExecutiveMetricCard
+label="Supplier Concentration"
 value={supplierConcentration}
+tone="gold"
 />
-<DarkMetric title="CEO Actions" value={String(alerts.length)} />
+<ExecutiveMetricCard
+label="Executive Signals"
+value={String(alerts.length)}
+tone="gold"
+/>
 </>
 )}
 </div>
@@ -1005,49 +1038,78 @@ className="rounded-[24px] border border-white/10 bg-white/[0.045] p-5"
 </div>
 </section>
 
-<section className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-7">
-<InsightCard
-title="Total Spend"
+<ExecutivePanel
+variant="operational"
+padding="md"
+tone="blue"
+className="mt-6"
+>
+<div>
+<p className="text-[10px] font-black uppercase tracking-[0.28em] text-[#C8A646]">
+Executive Command Metrics
+</p>
+
+<h2 className="mt-3 text-2xl font-black text-white">
+Procurement Performance Position
+</h2>
+
+<p className="mt-3 max-w-4xl text-sm font-semibold leading-7 text-slate-400">
+Verified portfolio metrics summarizing awarded spend, budget variance,
+conversion, operating movement, budget utilization, supplier concentration,
+and current RFQ activity.
+</p>
+</div>
+
+<div className="mt-6 grid gap-4 lg:grid-cols-2">
+<ExecutiveMetricCard
+label="Awarded Spend"
 value={formatMoney(totalAwardedSpend)}
-detail="Awarded procurement spend"
+insight="Awarded procurement spend recorded across current RFQs."
+tone="gold"
 />
 
-<InsightCard
-title="Savings"
+<ExecutiveMetricCard
+label="Potential Budget Variance"
 value={hasProcurementData ? formatMoney(estimatedSavings) : "Pending"}
-detail="Budget vs award signal"
+insight="Current budget-to-award difference; not a validated savings measure."
+tone="gold"
 />
+</div>
 
-<InsightCard
+<div className="mt-4 grid gap-4 md:grid-cols-3">
+<ExecutiveCommandMetric
 title="Award Rate"
 value={`${awardRate}%`}
-detail="RFQ award conversion"
+detail="Awarded RFQs relative to total RFQ activity."
+accentClassName="text-emerald-300"
 />
 
-<InsightCard
-title="Velocity"
+<ExecutiveCommandMetric
+title="Procurement Velocity"
 value={`${procurementVelocity}%`}
-detail="Procurement movement"
+detail="Current award progression across the RFQ portfolio."
+accentClassName="text-[#9BE8F8]"
 />
 
-<InsightCard
-title="Budget Use"
+<ExecutiveCommandMetric
+title="Budget Utilization"
 value={`${budgetUtilization}%`}
-detail="Awarded vs planned budget"
+detail="Awarded spend relative to the current planned budget."
+accentClassName="text-[#F5D77B]"
 />
+</div>
 
-<InsightCard
-title="Supplier Health"
-value={supplierConcentration}
-detail="Concentration exposure"
+<div className="mt-4 grid sm:grid-cols-2">
+<ExecutiveCommandStripCard
+ title="Supplier Concentration"
+ value={supplierConcentration}
 />
-
-<InsightCard
-title="RFQ Pipeline"
-value={String(openRfqs)}
-detail="Open procurement activity"
+<ExecutiveCommandStripCard
+ title="Open RFQs"
+ value={String(openRfqs)}
 />
-</section>
+</div>
+</ExecutivePanel>
 
 <section className="mt-6 grid gap-6 xl:grid-cols-[1fr_0.85fr]">
 <div className="rounded-[32px] border border-white/10 bg-white/[0.045] p-6 shadow-inner-executive sm:p-7">
@@ -1341,24 +1403,6 @@ className="rounded-[26px] border border-white/10 bg-white/[0.045] p-6 transition
 <div className="mt-5 text-sm font-black text-[#9BE8F8]">Open →</div>
 </Link>
 );
-}
-
-function InsightCard({
-title,
-value,
-detail,
-}: {
-title: string;
-value: string;
-detail: string;
-}) {
-return (
-<ExecutiveInsightCard title={title} insight={detail} impact={value} tone="blue" />
-);
-}
-
-function DarkMetric({ title, value }: { title: string; value: string }) {
-return <ExecutiveMetricCard label={title} value={value} tone="gold" />;
 }
 
 function SignalTile({ label, value }: { label: string; value: string }) {
