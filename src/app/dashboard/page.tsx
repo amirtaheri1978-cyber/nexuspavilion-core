@@ -798,118 +798,6 @@ className="mt-6"
 </div>
 </ExecutivePanel>
 
-<section className="mt-6 rounded-[34px] border border-[#2CC4E8]/15 bg-gradient-to-br from-[#0B3D91]/35 via-[#07111F]/92 to-[#061426] p-6 shadow-[0_0_70px_rgba(44,196,232,0.10)] sm:p-8">
-<div className="grid gap-8 xl:grid-cols-[1.15fr_0.85fr]">
-<div>
-<p className="text-[11px] font-black uppercase tracking-[0.34em] text-[#C8A646]">
-Executive Brief
-</p>
-
-<h2 className="mt-4 text-3xl font-black leading-tight text-white sm:text-4xl">
-{dashboardCopy.briefTitle}
-</h2>
-
-<p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-300 sm:text-base sm:leading-8">
-{executiveBriefSummary}
-</p>
-
-<div className="mt-6 rounded-[26px] border border-white/10 bg-white/[0.045] p-5">
-<p className="text-[10px] font-black uppercase tracking-[0.24em] text-[#C8A646]">
-Recommended Executive Action
-</p>
-
-<p className="mt-3 text-sm font-semibold leading-7 text-slate-300">
-{dashboardCopy.recommendation}
-</p>
-</div>
-</div>
-
-<div className="grid gap-4 sm:grid-cols-2">
-{experience === "vendor" ? (
-<>
-<DarkMetric title="Open Opportunities" value={String(openRfqs)} />
-<DarkMetric
-title="Submitted Quotes"
-value={String(submittedQuotes)}
-/>
-<DarkMetric title="Win Rate" value={`${vendorWinRate}%`} />
-<DarkMetric
-title="Pipeline Value"
-value={formatMoney(pipelineValue)}
-/>
-</>
-) : experience === "consultant" ? (
-<>
-<DarkMetric title="Service RFQs" value={String(serviceRfqs)} />
-<DarkMetric title="Project Activity" value={String(openRfqs)} />
-<DarkMetric title="Service Visibility" value={executiveStatus} />
-<DarkMetric
-title="Forecast Trust"
-value={forecastAccuracyLabel}
-/>
-</>
-) : (
-<>
-<DarkMetric title="RFQ Maturity" value={rfqMaturityLabel} />
-<DarkMetric
-title="Board Readiness"
-value={`${procurementHealthScore}%`}
-/>
-<DarkMetric
-title="Supplier Concentration"
-value={supplierConcentration}
-/>
-<DarkMetric title="CEO Actions" value={String(alerts.length)} />
-</>
-)}
-</div>
-</div>
-</section>
-
-<section className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-7">
-<InsightCard
-title="Total Spend"
-value={formatMoney(totalAwardedSpend)}
-detail="Awarded procurement spend"
-/>
-
-<InsightCard
-title="Savings"
-value={hasProcurementData ? formatMoney(estimatedSavings) : "Pending"}
-detail="Budget vs award signal"
-/>
-
-<InsightCard
-title="Award Rate"
-value={`${awardRate}%`}
-detail="RFQ award conversion"
-/>
-
-<InsightCard
-title="Velocity"
-value={`${procurementVelocity}%`}
-detail="Procurement movement"
-/>
-
-<InsightCard
-title="Budget Use"
-value={`${budgetUtilization}%`}
-detail="Awarded vs planned budget"
-/>
-
-<InsightCard
-title="Supplier Health"
-value={supplierConcentration}
-detail="Concentration exposure"
-/>
-
-<InsightCard
-title="RFQ Pipeline"
-value={String(openRfqs)}
-detail="Open procurement activity"
-/>
-</section>
-
 <section className="mt-6 grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
 <div className="rounded-[32px] border border-white/10 bg-white/[0.045] p-6 shadow-inner-executive sm:p-7">
 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -987,6 +875,74 @@ index={index}
 </div>
 </section>
 
+<section className="mt-6 rounded-[34px] border border-[#2CC4E8]/15 bg-gradient-to-br from-[#0B3D91]/35 via-[#07111F]/92 to-[#061426] p-6 shadow-[0_0_70px_rgba(44,196,232,0.10)] sm:p-8">
+<div className="grid gap-8 xl:grid-cols-[1.15fr_0.85fr]">
+<div>
+<p className="text-[11px] font-black uppercase tracking-[0.34em] text-[#C8A646]">
+Executive Brief
+</p>
+
+<h2 className="mt-4 text-3xl font-black leading-tight text-white sm:text-4xl">
+{dashboardCopy.briefTitle}
+</h2>
+
+<p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-300 sm:text-base sm:leading-8">
+{executiveBriefSummary}
+</p>
+
+<div className="mt-6 rounded-[26px] border border-white/10 bg-white/[0.045] p-5">
+<p className="text-[10px] font-black uppercase tracking-[0.24em] text-[#C8A646]">
+Recommended Executive Action
+</p>
+
+<p className="mt-3 text-sm font-semibold leading-7 text-slate-300">
+{dashboardCopy.recommendation}
+</p>
+</div>
+</div>
+
+<div className="grid gap-4 sm:grid-cols-2">
+{experience === "vendor" ? (
+<>
+<DarkMetric title="Open Opportunities" value={String(openRfqs)} />
+<DarkMetric
+title="Submitted Quotes"
+value={String(submittedQuotes)}
+/>
+<DarkMetric title="Win Rate" value={`${vendorWinRate}%`} />
+<DarkMetric
+title="Pipeline Value"
+value={formatMoney(pipelineValue)}
+/>
+</>
+) : experience === "consultant" ? (
+<>
+<DarkMetric title="Service RFQs" value={String(serviceRfqs)} />
+<DarkMetric title="Project Activity" value={String(openRfqs)} />
+<DarkMetric title="Service Visibility" value={executiveStatus} />
+<DarkMetric
+title="Forecast Trust"
+value={forecastAccuracyLabel}
+/>
+</>
+) : (
+<>
+<DarkMetric title="RFQ Maturity" value={rfqMaturityLabel} />
+<DarkMetric
+title="Board Readiness"
+value={`${procurementHealthScore}%`}
+/>
+<DarkMetric
+title="Supplier Concentration"
+value={supplierConcentration}
+/>
+<DarkMetric title="CEO Actions" value={String(alerts.length)} />
+</>
+)}
+</div>
+</div>
+</section>
+
 <section className="mt-6 grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
 <div className="rounded-[32px] border border-white/10 bg-white/[0.045] p-6 shadow-inner-executive sm:p-7">
 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -1047,6 +1003,50 @@ className="rounded-[24px] border border-white/10 bg-white/[0.045] p-5"
 ))}
 </div>
 </div>
+</section>
+
+<section className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-7">
+<InsightCard
+title="Total Spend"
+value={formatMoney(totalAwardedSpend)}
+detail="Awarded procurement spend"
+/>
+
+<InsightCard
+title="Savings"
+value={hasProcurementData ? formatMoney(estimatedSavings) : "Pending"}
+detail="Budget vs award signal"
+/>
+
+<InsightCard
+title="Award Rate"
+value={`${awardRate}%`}
+detail="RFQ award conversion"
+/>
+
+<InsightCard
+title="Velocity"
+value={`${procurementVelocity}%`}
+detail="Procurement movement"
+/>
+
+<InsightCard
+title="Budget Use"
+value={`${budgetUtilization}%`}
+detail="Awarded vs planned budget"
+/>
+
+<InsightCard
+title="Supplier Health"
+value={supplierConcentration}
+detail="Concentration exposure"
+/>
+
+<InsightCard
+title="RFQ Pipeline"
+value={String(openRfqs)}
+detail="Open procurement activity"
+/>
 </section>
 
 <section className="mt-6 grid gap-6 xl:grid-cols-[1fr_0.85fr]">
