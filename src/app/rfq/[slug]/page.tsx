@@ -15,7 +15,6 @@ import { ExecutiveIntelligenceProvider } from "@/components/rfq-workspace/shared
 import { buildExecutiveIntelligence } from "@/lib/executive/executive-engine";
 import { ExecutiveMetricCard } from "@/components/executive/executive-metric-card";
 import { ExecutivePanel } from "@/components/executive/executive-panel";
-import { ExecutiveBadge } from "@/components/executive/executive-badge";
 import { RFQCommandCenter } from "@/components/rfq-workspace/rfq-command-center";
 import { RFQProcurementHealth } from "@/components/rfq-workspace/rfq-procurement-health";
 import { RFQExecutiveRiskMatrix } from "@/components/rfq-workspace/rfq-executive-risk-matrix";
@@ -24,7 +23,7 @@ import { RFQExecutiveActions } from "@/components/rfq-workspace/rfq-executive-ac
 import { RFQProcurementContext } from "@/components/rfq-workspace/rfq-procurement-context";
 import { RFQDocumentWorkspace } from "@/components/rfq-workspace/rfq-document-workspace";
 import { RFQQuoteWorkspace } from "@/components/rfq-workspace/rfq-quote-workspace";
-
+import { RFQRecommendedAwardPath } from "@/components/rfq-workspace/rfq-recommended-award-path";
 type PageProps = {
 params: Promise<{ slug: string }>;
 };
@@ -1376,69 +1375,10 @@ budget={budget}
 </ExecutiveIntelligenceProvider>
 
 {isOwner && recommendedQuote && commercialEvaluationUnlocked ? (
-<ExecutivePanel className="mt-8" padding="lg" tone="gold">
-<p className="text-xs font-black uppercase tracking-[0.3em] text-nexus-gold">
-Decision Intelligence Layer
-</p>
-
-<div className="mt-5 grid gap-8 lg:grid-cols-[1fr_0.9fr]">
-<div>
-<h2 className="text-3xl font-black text-nexus-white sm:text-4xl">
-Recommended Award Path: Rank #{recommendedQuote.rank}
-</h2>
-
-<p className="mt-4 max-w-3xl text-sm font-semibold leading-7 text-nexus-muted">
-Nexus Pavilion recommends this supplier based on weighted analysis of
-price competitiveness, delivery timeline, proposal strength,
-procurement risk, proposal validity, and RFQ classification.
-</p>
-
-<div className="mt-6 flex flex-wrap gap-3">
-<ExecutiveBadge tone="gold">
-Overall {recommendedQuote.totalScore}/100
-</ExecutiveBadge>
-
-<ExecutiveBadge tone="risk">
-Risk {recommendedQuote.riskLevel}
-</ExecutiveBadge>
-
-<ExecutiveBadge tone="blue">
-Confidence {recommendedQuote.awardConfidence}%
-</ExecutiveBadge>
-
-<ExecutiveBadge tone="neutral">
-{getScopeLabel(rfq.procurement_scope)}
-</ExecutiveBadge>
-</div>
-</div>
-
-<div className="grid gap-4 sm:grid-cols-2">
-<ExecutiveMetricCard
-label="Price Score"
-value={`${recommendedQuote.priceScore}/100`}
-tone="blue"
-/>
-
-<ExecutiveMetricCard
-label="Timeline Score"
-value={`${recommendedQuote.timelineScore}/100`}
-tone="gold"
-/>
-
-<ExecutiveMetricCard
-label="Performance"
-value={`${recommendedQuote.performanceScore}/100`}
-tone="success"
-/>
-
-<ExecutiveMetricCard
-label="Risk Score"
-value={`${recommendedQuote.riskScore}/100`}
-tone="risk"
-/>
-</div>
-</div>
-</ExecutivePanel>
+  <RFQRecommendedAwardPath
+    recommendation={recommendedQuote}
+    scopeLabel={getScopeLabel(rfq.procurement_scope)}
+  />
 ) : null}
 
 {isOwner && isOpen ? (
@@ -1490,9 +1430,7 @@ governance workflow.
   averageBid={averageBid}
 />
 
-<section className="mt-8">
-<GovernanceNotice />
-</section>
+
 </div>
 </main>
 );
