@@ -13,6 +13,10 @@ import { ExecutiveNegotiationIntelligence } from "@/components/rfq-workspace/exe
 import { AwardScenarioSimulator } from "@/components/rfq-workspace/award-scenario-simulator";
 import { ExecutiveIntelligenceProvider } from "@/components/rfq-workspace/shared/executive-intelligence-context";
 import { buildExecutiveIntelligence } from "@/lib/executive/executive-engine";
+import {
+  buildRfqCapabilities,
+  resolveRfqParticipantRole,
+} from "@/lib/procurement/rfq-access-contract";
 import { ExecutiveMetricCard } from "@/components/executive/executive-metric-card";
 import { ExecutivePanel } from "@/components/executive/executive-panel";
 import { RFQCommandCenter } from "@/components/rfq-workspace/rfq-command-center";
@@ -782,9 +786,12 @@ Back to RFQ Marketplace
 );
 }
 
-const isOwner = Boolean(
-profile?.company_id && rfq.company_id === profile.company_id
-);
+const participantRole = resolveRfqParticipantRole({
+currentCompanyId: profile?.company_id ?? null,
+rfqCompanyId: rfq.company_id,
+});
+
+const isOwner = participantRole === "issuer";
 
 const rfqStatus = String(rfq.status || "open");
 const deadlinePassed = hasDeadlinePassed(rfq.deadline);
@@ -794,23 +801,6 @@ const commercialEvaluationUnlocked =
 !blindBiddingEnabled || deadlinePassed;
 const isOpen =
 (!rfq.status || rfqStatus === "open") && !deadlinePassed;
-
-const participantRole = isOwner
-? "issuer"
-: "respondent";
-
-const canManageRfq = participantRole === "issuer";
-
-const canViewBlindBiddingControl =
-canManageRfq &&
-blindBiddingEnabled &&
-!commercialEvaluationUnlocked;
-
-const canViewCommercialEvaluation =
-canManageRfq && commercialEvaluationUnlocked;
-
-const canInviteSuppliers =
-canManageRfq && isOpen;
 
 const { data: quotes } = isOwner
 ? await supabase
@@ -967,24 +957,20 @@ const awardedQuote = commercialEvaluationUnlocked
 const potentialSavings =
 recommendedQuote && averageBid ? averageBid - recommendedQuote.amountNumber : 0;
 
-const canViewOwnSubmission =
-participantRole === "respondent";
-
 const hasMyQuote =
-canViewOwnSubmission &&
+participantRole === "respondent" &&
 quoteList.length > 0;
 
-const canSubmitQuote =
-canViewOwnSubmission &&
-isOpen &&
-!hasMyQuote;
+const capabilities = buildRfqCapabilities({
+participantRole,
+isOpen,
+blindBiddingEnabled,
+commercialEvaluationUnlocked,
+hasMyQuote,
+hasRecommendedQuote: Boolean(recommendedQuote),
+});
 
-const canViewExecutiveIntelligence =
-canManageRfq;
-
-const canViewRecommendedAwardPath =
-canViewCommercialEvaluation &&
-Boolean(recommendedQuote);
+const canSubmitQuote = capabilities.canSubmitQuote;
 
 const healthScore = getHealthScore({
 isOpen,
@@ -1303,7 +1289,7 @@ return (
   />
 </section>
 
-{canViewBlindBiddingControl ? (
+{capabilities.canViewBlindBiddingControl ? (
 <section className="mt-8">
 <BlindBiddingNotice rfq={rfq} quoteCount={quoteList.length} />
 </section>
@@ -1313,7 +1299,7 @@ return (
 <GovernanceNotice />
 </section>
 
-{canViewExecutiveIntelligence ? (
+{capabilities.canViewExecutiveIntelligence ? (
 <RFQAIAdvisor rfqId={rfq.id} initialReview={latestAiReview} />
 ) : null}
 <ExecutiveIntelligenceProvider executive={executive}>
@@ -1409,14 +1395,14 @@ budget={budget}
 />
 </ExecutiveIntelligenceProvider>
 
-{canViewRecommendedAwardPath && recommendedQuote ? (
+{capabilities.canViewRecommendedAwardPath && recommendedQuote ? (
   <RFQRecommendedAwardPath
     recommendation={recommendedQuote}
     scopeLabel={getScopeLabel(rfq.procurement_scope)}
   />
 ) : null}
 
-{canInviteSuppliers ? (
+{capabilities.canInviteSuppliers ? (
 <ExecutivePanel
 id="supplier-invitations"
 className="mt-8"
