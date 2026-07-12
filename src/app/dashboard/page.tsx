@@ -798,116 +798,48 @@ className="mt-6"
 </div>
 </ExecutivePanel>
 
-<section className="mt-6 grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
-<div className="rounded-[32px] border border-white/10 bg-white/[0.045] p-6 shadow-inner-executive sm:p-7">
-<div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-<div>
-<p className="text-[10px] font-black uppercase tracking-[0.28em] text-[#C8A646]">
-Procurement Health
-</p>
-
-<h2 className="mt-3 text-2xl font-black text-white">
-Executive Operating Score
-</h2>
-</div>
-
-<ExecutiveBadge
-  tone={hasProcurementData ? "success" : "warning"}
-  size="sm"
+<ExecutivePanel
+variant="executive"
+padding="lg"
+tone="gold"
+className="mt-6 bg-gradient-to-br from-[#0B3D91]/25 via-[#07111F]/95 to-[#061426]"
 >
-  {executiveStatus}
-</ExecutiveBadge>
-</div>
-
-<div className="mt-6 rounded-[28px] border border-[#C8A646]/20 bg-[#C8A646]/10 p-6">
-<p className="text-[11px] font-black uppercase tracking-[0.28em] text-[#F5D77B]">
-Overall Health
-</p>
-
-<p className="mt-3 text-6xl font-black text-white">
-{hasProcurementData ? procurementHealthScore : 0}
-<span className="text-2xl text-slate-500">/100</span>
-</p>
-
-<p className="mt-4 text-sm font-semibold leading-7 text-slate-300">
-This score combines award rate, supplier activity, awarded
-outcomes, savings signal, and RFQ classification maturity.
-</p>
-</div>
-
-<div className="mt-5 grid gap-3 sm:grid-cols-2">
-<ExecutiveMiniTile title="Risk Index" value={riskIndexLabel} />
-<ExecutiveMiniTile
-title="Decision Data Confidence"
-value={forecastAccuracyLabel}
-/>
-<ExecutiveMiniTile title="Award Rate" value={`${awardRate}%`} />
-<ExecutiveMiniTile title="RFQ Maturity" value={rfqMaturityLabel} />
-</div>
-</div>
-
-<div className="rounded-[32px] border border-white/10 bg-[#061426]/80 p-6 shadow-inner-executive sm:p-7">
-<div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-<div>
-<p className="text-[10px] font-black uppercase tracking-[0.28em] text-[#C8A646]">
-CEO Action Center
-</p>
-
-<h2 className="mt-3 text-2xl font-black text-white">
-Executive Decision Signals
-</h2>
-</div>
-
-<span className="rounded-full border border-white/10 bg-white/[0.055] px-4 py-2 text-xs font-black uppercase tracking-[0.2em] text-slate-300">
-{alerts.length} Signals
-</span>
-</div>
-
-<div className="mt-6 grid gap-4 lg:grid-cols-2">
-{alerts.length > 0 ? (
-alerts.slice(0, 4).map((alert, index) => (
-<CeoActionCard
-key={`${alert.title}-${index}`}
-alert={alert}
-index={index}
-/>
-))
-) : (
-<div className="lg:col-span-2">
-<EmptyState message="No active executive decision signals yet." />
-</div>
-)}
-</div>
-</div>
-</section>
-
-<section className="mt-6 rounded-[34px] border border-[#2CC4E8]/15 bg-gradient-to-br from-[#0B3D91]/35 via-[#07111F]/92 to-[#061426] p-6 shadow-[0_0_70px_rgba(44,196,232,0.10)] sm:p-8">
-<div className="grid gap-8 xl:grid-cols-[1.15fr_0.85fr]">
+<div className="flex flex-col gap-4 border-b border-white/10 pb-6 sm:flex-row sm:items-start sm:justify-between">
 <div>
 <p className="text-[11px] font-black uppercase tracking-[0.34em] text-[#C8A646]">
-Executive Brief
+Executive Decision Center
 </p>
 
 <h2 className="mt-4 text-3xl font-black leading-tight text-white sm:text-4xl">
 {dashboardCopy.briefTitle}
 </h2>
 
-<p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-300 sm:text-base sm:leading-8">
+<p className="mt-4 max-w-5xl text-sm font-semibold leading-7 text-slate-300 sm:text-base sm:leading-8">
 {executiveBriefSummary}
 </p>
+</div>
 
-<div className="mt-6 rounded-[26px] border border-white/10 bg-white/[0.045] p-5">
-<p className="text-[10px] font-black uppercase tracking-[0.24em] text-[#C8A646]">
+<ExecutiveBadge
+  tone={hasProcurementData ? "success" : "warning"}
+  size="md"
+>
+  {hasProcurementData ? executiveStatus : "Insufficient Data"}
+</ExecutiveBadge>
+</div>
+
+<div className="mt-6 grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
+<div className="min-w-0">
+<div className="rounded-[26px] border border-[#C8A646]/20 bg-[#C8A646]/[0.08] p-5 sm:p-6">
+<p className="text-[10px] font-black uppercase tracking-[0.24em] text-[#F5D77B]">
 Recommended Executive Action
 </p>
 
-<p className="mt-3 text-sm font-semibold leading-7 text-slate-300">
+<p className="mt-3 text-sm font-semibold leading-7 text-slate-200">
 {dashboardCopy.recommendation}
 </p>
 </div>
-</div>
 
-<div className="grid gap-4 sm:grid-cols-2">
+<div className="mt-5 grid gap-4 sm:grid-cols-2">
 {experience === "vendor" ? (
 <>
 <ExecutiveMetricCard
@@ -979,8 +911,90 @@ tone="gold"
 </>
 )}
 </div>
+
+<div className="mt-6">
+<div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+<div>
+<p className="text-[10px] font-black uppercase tracking-[0.28em] text-[#C8A646]">
+CEO Action Center
+</p>
+
+<h3 className="mt-3 text-2xl font-black text-white">
+Executive Decision Signals
+</h3>
 </div>
-</section>
+
+<ExecutiveBadge tone="neutral" size="md">
+{alerts.length} Signals
+</ExecutiveBadge>
+</div>
+
+<div className="mt-5 grid gap-4 lg:grid-cols-2">
+{alerts.length > 0 ? (
+alerts.slice(0, 4).map((alert, index) => (
+<CeoActionCard
+key={`${alert.title}-${index}`}
+alert={alert}
+index={index}
+/>
+))
+) : (
+<div className="lg:col-span-2">
+<EmptyState message="No active executive decision signals yet." />
+</div>
+)}
+</div>
+</div>
+</div>
+
+<aside className="rounded-[30px] border border-white/10 bg-black/20 p-5 sm:p-6">
+<div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between xl:flex-col">
+<div>
+<p className="text-[10px] font-black uppercase tracking-[0.28em] text-[#C8A646]">
+Procurement Health
+</p>
+
+<h3 className="mt-3 text-2xl font-black text-white">
+Executive Operating Score
+</h3>
+</div>
+
+<ExecutiveBadge
+  tone={hasProcurementData ? "success" : "warning"}
+  size="sm"
+>
+  {executiveStatus}
+</ExecutiveBadge>
+</div>
+
+<div className="mt-6 rounded-[28px] border border-[#C8A646]/20 bg-[#C8A646]/10 p-6">
+<p className="text-[11px] font-black uppercase tracking-[0.28em] text-[#F5D77B]">
+Overall Health
+</p>
+
+<p className="mt-3 text-5xl font-black tabular-nums text-white sm:text-6xl">
+{hasProcurementData ? procurementHealthScore : 0}
+<span className="text-2xl text-slate-500">/100</span>
+</p>
+
+<p className="mt-4 text-sm font-semibold leading-7 text-slate-300">
+This score combines award rate, supplier activity, awarded
+outcomes, savings signal, and RFQ classification maturity.
+</p>
+</div>
+
+<div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
+<ExecutiveMiniTile title="Risk Index" value={riskIndexLabel} />
+<ExecutiveMiniTile
+  title="Decision Data Confidence"
+  value={forecastAccuracyLabel}
+/>
+<ExecutiveMiniTile title="Award Rate" value={`${awardRate}%`} />
+<ExecutiveMiniTile title="RFQ Maturity" value={rfqMaturityLabel} />
+</div>
+</aside>
+</div>
+</ExecutivePanel>
 
 <section className="mt-6 grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
 <div className="rounded-[32px] border border-white/10 bg-white/[0.045] p-6 shadow-inner-executive sm:p-7">
