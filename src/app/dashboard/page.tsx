@@ -1,7 +1,6 @@
-import Image from "next/image";
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ExecutiveHero } from "@/components/dashboard/executive-hero";
+import { GovernanceReferenceWorkspace } from "@/components/dashboard/governance-reference-workspace";
 import { ProcurementOperationsWorkspace } from "@/components/dashboard/procurement-operations-workspace";
 import { ExecutiveMiniTile } from "@/components/rfq-workspace/shared/executive-mini-tile";
 import { ExecutiveBadge } from "@/components/executive/executive-badge";
@@ -438,7 +437,6 @@ totalRfqs,
 submittedQuotes,
 });
 const readinessScore = calculateReadinessScore(readinessItems);
-const completedTasks = readinessItems.filter((item) => item.completed).length;
 
 const materialRfqs = rfqList.filter(
 (rfq) => getProcurementScope(rfq.procurement_scope) === "material"
@@ -815,6 +813,76 @@ const highestValueRfqs = topRfqsByBudget.map((rfq) => ({
   budget: formatMoney(rfq.budget),
 }));
 
+const governanceCompany = {
+  label: dashboardCopy.companyLabel,
+  name: currentCompany?.name || "Company Workspace",
+  logoUrl: currentCompany?.logo_url || null,
+  category: currentCompany?.category || "Category N/A",
+  location: currentCompany?.location || "Location N/A",
+  networkRole: currentCompany?.network_role || "Enterprise Workspace",
+  href: currentCompany?.slug
+    ? `/company/${currentCompany.slug}`
+    : "/company/settings",
+};
+
+const incompleteGovernanceTasks = readinessItems
+  .filter((item) => !item.completed)
+  .map((item, index) => ({
+    id: `${item.href}-${index}`,
+    title: item.title,
+    description: item.description,
+    href: item.href,
+  }));
+
+const governanceReadiness = {
+  score: readinessScore,
+  status:
+    incompleteGovernanceTasks.length === 0
+      ? "Workspace Setup Complete"
+      : `${incompleteGovernanceTasks.length} Setup Requirement${
+          incompleteGovernanceTasks.length === 1 ? "" : "s"
+        }`,
+  incompleteTasksCount: incompleteGovernanceTasks.length,
+  tasks: incompleteGovernanceTasks,
+};
+
+const governanceActivity = {
+  label: dashboardCopy.activityLabel,
+  title: dashboardCopy.activityTitle,
+  items: activityFeed.map((event) => ({
+    id: event.id,
+    title: event.title,
+    description: event.description,
+    type: event.type,
+    severity: event.severity,
+    relativeTime: formatRelativeTime(event.createdAt),
+    href: event.href,
+  })),
+};
+
+const governanceNavigation = [
+  {
+    title: "RFQ Workspace",
+    description: "Create, manage, and review procurement opportunities.",
+    href: "/rfq",
+  },
+  {
+    title: "Executive Analytics",
+    description: "Review board reporting, risk, and procurement intelligence.",
+    href: "/analytics",
+  },
+  {
+    title: "Company Workspace",
+    description: "Manage company governance, access, and visibility.",
+    href: "/company/settings",
+  },
+  {
+    title: "Activity Center",
+    description: "Review alerts, workflow signals, and procurement events.",
+    href: "/notifications",
+  },
+];
+
 return (
 <main className="min-h-screen bg-[#030712] text-white">
 
@@ -826,8 +894,6 @@ briefLabel={dashboardCopy.briefLabel}
 companyName={currentCompany?.name || "Company Workspace"}
 readinessScore={readinessScore}
 readinessTone={readinessTone}
-readinessItems={readinessItems}
-incompleteTasksCount={readinessItems.length - completedTasks}
 continueHref="/company/settings"
 continueLabel="Continue Setup"
 />
@@ -1224,151 +1290,16 @@ accentClassName="text-[#F5D77B]"
   highestValueRfqs={highestValueRfqs}
 />
 
-<section className="mt-6">
-<div className="rounded-[32px] border border-white/10 bg-[#061426]/80 p-6 shadow-inner-executive sm:p-7">
-<p className="text-[10px] font-black uppercase tracking-[0.28em] text-[#C8A646]">
-{dashboardCopy.companyLabel}
-</p>
-
-<h2 className="mt-3 text-2xl font-black text-white">
-Workspace Governance
-</h2>
-
-{currentCompany ? (
-<div className="mt-6">
-<div className="flex items-center gap-4">
-{currentCompany.logo_url ? (
-<Image
-src={currentCompany.logo_url}
-alt={currentCompany.name || "Company"}
-width={64}
-height={64}
-className="h-16 w-16 rounded-2xl border border-white/10 bg-white p-2 object-contain"
+<GovernanceReferenceWorkspace
+  company={governanceCompany}
+  readiness={governanceReadiness}
+  activity={governanceActivity}
+  navigation={governanceNavigation}
 />
-) : (
-<div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.055] text-2xl">
-◈
-</div>
-)}
-
-<div className="min-w-0">
-<h3 className="truncate text-xl font-black text-white">
-{currentCompany.name}
-</h3>
-
-<p className="mt-1 text-sm font-semibold text-slate-400">
-{currentCompany.category || "Category N/A"} ·{" "}
-{currentCompany.location || "Location N/A"}
-</p>
-
-<p className="mt-1 text-xs font-bold uppercase tracking-wide text-slate-500">
-{currentCompany.network_role || "Workspace"}
-</p>
-</div>
-</div>
-
-<Link
-href={
-currentCompany.slug
-? `/company/${currentCompany.slug}`
-: "/company/settings"
-}
-className="mt-6 inline-flex rounded-full border border-[#2CC4E8]/25 bg-[#2CC4E8]/10 px-5 py-3 text-sm font-black text-[#9BE8F8] transition hover:bg-[#2CC4E8]/15"
->
-Open Company →
-</Link>
-</div>
-) : (
-<div className="mt-6">
-<EmptyState message="No company connected." />
-</div>
-)}
-</div>
-</section>
-
-<section className="mt-6 rounded-[32px] border border-white/10 bg-[#061426]/80 p-6 shadow-inner-executive sm:p-7">
-<div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-<div>
-<p className="text-[10px] font-black uppercase tracking-[0.28em] text-[#C8A646]">
-{dashboardCopy.activityLabel}
-</p>
-
-<h2 className="mt-3 text-2xl font-black text-white">
-{dashboardCopy.activityTitle}
-</h2>
-</div>
-
-<span className="rounded-full border border-white/10 bg-white/[0.055] px-4 py-2 text-xs font-black uppercase tracking-[0.2em] text-slate-300">
-{activityFeed.length} Signals
-</span>
-</div>
-
-<div className="mt-6 space-y-4">
-{activityFeed.length > 0 ? (
-activityFeed.map((event) => (
-<ActivityFeedItem key={event.id} event={event} />
-))
-) : (
-<EmptyState message="No workspace activity has been recorded yet." />
-)}
-</div>
-</section>
-
-<section className="mt-6 grid gap-4 md:grid-cols-4">
-<WorkspaceCard
-title="RFQ Marketplace"
-description="Create, manage, and review procurement opportunities."
-href="/rfq"
-/>
-
-<WorkspaceCard
-title="Executive Analytics"
-description="Board reporting, risk signals, and procurement intelligence."
-href="/analytics"
-/>
-
-<WorkspaceCard
-title="Company Command"
-description="Manage company governance, access, and visibility."
-href="/company/settings"
-/>
-
-<WorkspaceCard
-title="Activity Center"
-description="Review alerts, workflow signals, and procurement events."
-href="/notifications"
-/>
-</section>
 </div>
 </main>
 );
 }
-
-function WorkspaceCard({
-title,
-description,
-href,
-}: {
-title: string;
-description: string;
-href: string;
-}) {
-return (
-<Link
-href={href}
-className="rounded-[26px] border border-white/10 bg-white/[0.045] p-6 transition hover:-translate-y-1 hover:border-[#2CC4E8]/25 hover:bg-white/[0.06]"
->
-<h3 className="text-xl font-black text-white">{title}</h3>
-
-<p className="mt-3 text-sm font-semibold leading-6 text-slate-400">
-{description}
-</p>
-
-<div className="mt-5 text-sm font-black text-[#9BE8F8]">Open →</div>
-</Link>
-);
-}
-
 
 function CeoActionCard({
 alert,
@@ -1438,63 +1369,6 @@ Recommended Next Step
 </p>
 </div>
 </div>
-);
-}
-
-function ActivityFeedItem({ event }: { event: ActivityEvent }) {
-const severityClass =
-event.severity === "success"
-? "border-emerald-300/20 bg-emerald-400/10 text-emerald-300"
-: event.severity === "warning"
-? "border-yellow-300/20 bg-yellow-400/10 text-yellow-300"
-: event.severity === "critical"
-? "border-red-300/20 bg-red-400/10 text-red-300"
-: "border-[#2CC4E8]/20 bg-[#2CC4E8]/10 text-[#9BE8F8]";
-
-const dotClass =
-event.severity === "success"
-? "bg-emerald-400"
-: event.severity === "warning"
-? "bg-yellow-400"
-: event.severity === "critical"
-? "bg-red-400"
-: "bg-[#2CC4E8]";
-
-return (
-<Link
-href={event.href}
-className="group block rounded-[24px] border border-white/10 bg-white/[0.045] p-5 transition hover:-translate-y-1 hover:border-[#2CC4E8]/25 hover:bg-white/[0.06]"
->
-<div className="flex items-start gap-4">
-<div className={`mt-2 h-3 w-3 rounded-full ${dotClass}`} />
-
-<div className="min-w-0 flex-1">
-<div className="flex flex-wrap items-center justify-between gap-3">
-<p className="text-lg font-black text-white">{event.title}</p>
-
-<div className="flex items-center gap-2">
-<span
-className={`rounded-full border px-3 py-1 text-xs font-black uppercase ${severityClass}`}
->
-{event.type}
-</span>
-
-<span className="text-xs font-bold text-slate-500">
-{formatRelativeTime(event.createdAt)}
-</span>
-</div>
-</div>
-
-<p className="mt-2 text-sm font-semibold leading-6 text-slate-400">
-{event.description}
-</p>
-
-<p className="mt-3 text-xs font-black uppercase tracking-[0.2em] text-slate-500 transition group-hover:text-[#9BE8F8]">
-Open event →
-</p>
-</div>
-</div>
-</Link>
 );
 }
 
