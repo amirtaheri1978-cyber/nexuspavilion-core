@@ -2,316 +2,548 @@
 
 import { useEffect, useMemo, useState } from "react";
 
+import { ExecutivePanel } from "@/components/executive/executive-panel";
 import { createClient } from "@/lib/supabase/client";
 
 type InviteVendorFormProps = {
-rfqId: string;
+  rfqId: string;
 };
 
 type InviteResponse = {
-inviteUrl?: string;
-message?: string;
-error?: string;
+  inviteUrl?: string;
+  message?: string;
+  error?: string;
 };
 
 type ApprovedVendor = {
-vendor_company_id: string;
-status: string | null;
-rating: number | null;
+  vendor_company_id: string;
+  status: string | null;
+  rating: number | null;
 };
 
 type Company = {
-id: string;
-name: string | null;
-category: string | null;
-location: string | null;
-network_role: string | null;
+  id: string;
+  name: string | null;
+  category: string | null;
+  location: string | null;
+  network_role: string | null;
 };
 
 type VendorOption = Company & {
-avlStatus: string;
-avlRating: number;
+  avlStatus: string;
+  avlRating: number;
 };
 
-function getStatusClass(status: string) {
-if (status === "approved") return "bg-green-100 text-green-800";
-if (status === "conditional") return "bg-yellow-100 text-yellow-800";
-if (status === "suspended") return "bg-red-100 text-red-800";
-return "bg-slate-100 text-slate-700";
-}
-
-export default function InviteVendorForm({ rfqId }: InviteVendorFormProps) {
-const supabase = useMemo(() => createClient(), []);
-
-const [email, setEmail] = useState("");
-const [selectedVendorId, setSelectedVendorId] = useState("");
-const [vendors, setVendors] = useState<VendorOption[]>([]);
-
-const [inviteUrl, setInviteUrl] = useState("");
-const [successMessage, setSuccessMessage] = useState("");
-const [copyMessage, setCopyMessage] = useState("");
-const [loading, setLoading] = useState(false);
-const [vendorsLoading, setVendorsLoading] = useState(true);
-const [error, setError] = useState("");
-
-useEffect(() => {
-async function loadApprovedVendors() {
-setVendorsLoading(true);
-
-const { data: avlData } = await supabase
-.from("approved_vendors")
-.select("vendor_company_id, status, rating")
-.in("status", ["approved", "conditional"]);
-
-const approvedVendorRows = (avlData || []) as ApprovedVendor[];
-const vendorIds = approvedVendorRows.map((vendor) => vendor.vendor_company_id);
-
-if (vendorIds.length === 0) {
-setVendors([]);
-setVendorsLoading(false);
-return;
-}
-
-const { data: companyData } = await supabase
-.from("companies")
-.select("id, name, category, location, network_role")
-.in("id", vendorIds);
-
-const companies = (companyData || []) as Company[];
-
-const options = companies
-.map((company) => {
-const avl = approvedVendorRows.find(
-(vendor) => vendor.vendor_company_id === company.id
-);
-
-return {
-...company,
-avlStatus: avl?.status || "approved",
-avlRating: avl?.rating || 85,
+type VendorStatusTone = {
+  label: string;
+  className: string;
 };
-})
-.sort((a, b) => b.avlRating - a.avlRating);
 
-setVendors(options);
-setVendorsLoading(false);
+function getStatusTone(status: string): VendorStatusTone {
+  const normalizedStatus = status.trim().toLowerCase();
+
+  if (normalizedStatus === "approved") {
+    return {
+      label: "Approved",
+      className:
+        "border-emerald-300/20 bg-emerald-400/10 text-emerald-300",
+    };
+  }
+
+  if (normalizedStatus === "conditional") {
+    return {
+      label: "Conditional",
+      className:
+        "border-amber-300/20 bg-amber-400/10 text-amber-200",
+    };
+  }
+
+  if (normalizedStatus === "suspended") {
+    return {
+      label: "Suspended",
+      className:
+        "border-red-300/20 bg-red-400/10 text-red-300",
+    };
+  }
+
+  return {
+    label: status || "Unclassified",
+    className:
+      "border-white/10 bg-white/[0.055] text-nexus-muted",
+  };
 }
 
-loadApprovedVendors();
-}, [supabase]);
+export default function InviteVendorForm({
+  rfqId,
+}: InviteVendorFormProps) {
+  const supabase = useMemo(() => createClient(), []);
 
-async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-event.preventDefault();
+  const [email, setEmail] = useState("");
+  const [selectedVendorId, setSelectedVendorId] = useState("");
+  const [vendors, setVendors] = useState<VendorOption[]>([]);
 
-setLoading(true);
-setError("");
-setInviteUrl("");
-setSuccessMessage("");
-setCopyMessage("");
+  const [inviteUrl, setInviteUrl] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+  const [copyMessage, setCopyMessage] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [vendorsLoading, setVendorsLoading] = useState(true);
+  const [error, setError] = useState("");
 
-const response = await fetch("/api/invites", {
-method: "POST",
-headers: {
-"Content-Type": "application/json",
-},
-body: JSON.stringify({
-rfqId,
-email,
-vendorCompanyId: selectedVendorId || null,
-}),
-});
+  const selectedVendor =
+    vendors.find((vendor) => vendor.id === selectedVendorId) ?? null;
 
-const data = (await response.json()) as InviteResponse;
+  useEffect(() => {
+    let active = true;
 
-setLoading(false);
+    async function loadApprovedVendors() {
+      setVendorsLoading(true);
 
-if (!response.ok) {
-setError(data.error || "Could not create supplier invite.");
-return;
-}
+      const { data: avlData, error: avlError } = await supabase
+        .from("approved_vendors")
+        .select("vendor_company_id, status, rating")
+        .in("status", ["approved", "conditional"]);
 
-setInviteUrl(data.inviteUrl || "");
-setSuccessMessage(data.message || "Supplier invite created successfully.");
-setEmail("");
-setSelectedVendorId("");
-}
+      if (!active) return;
 
-async function copyInviteLink() {
-if (!inviteUrl) return;
+      if (avlError) {
+        setVendors([]);
+        setError(
+          "Approved Vendor List data could not be loaded. Direct email invitations remain available.",
+        );
+        setVendorsLoading(false);
+        return;
+      }
 
-const absoluteUrl = `${window.location.origin}${inviteUrl}`;
+      const approvedVendorRows = (avlData || []) as ApprovedVendor[];
 
-await navigator.clipboard.writeText(absoluteUrl);
-setCopyMessage("Invite link copied.");
-}
+      const vendorIds = approvedVendorRows.map(
+        (vendor) => vendor.vendor_company_id,
+      );
 
-return (
-<section className="rounded-[32px] border border-black/5 bg-white p-8 shadow-sm">
-<div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
-<div>
-<p className="text-xs font-black uppercase tracking-[0.3em] text-orange-500">
-Supplier Invitations
-</p>
+      if (vendorIds.length === 0) {
+        setVendors([]);
+        setVendorsLoading(false);
+        return;
+      }
 
-<h2 className="mt-3 text-3xl font-black text-slate-950">
-Invite approved suppliers to quote
-</h2>
+      const { data: companyData, error: companyError } = await supabase
+        .from("companies")
+        .select("id, name, category, location, network_role")
+        .in("id", vendorIds);
 
-<p className="mt-3 max-w-2xl text-sm font-semibold leading-6 text-slate-600">
-Route secure RFQ invitations through your Approved Vendor List. Open
-RFQs may still use direct email invitations, while selective and
-framework workflows should prioritize AVL suppliers.
-</p>
-</div>
+      if (!active) return;
 
-<div className="rounded-2xl bg-slate-50 px-4 py-3">
-<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
-Access Control
-</p>
+      if (companyError) {
+        setVendors([]);
+        setError(
+          "Approved supplier profiles could not be loaded. Direct email invitations remain available.",
+        );
+        setVendorsLoading(false);
+        return;
+      }
 
-<p className="mt-2 text-sm font-black text-slate-950">
-AVL Governance
-</p>
-</div>
-</div>
+      const companies = (companyData || []) as Company[];
 
-{vendors.length > 0 ? (
-<div className="mt-7 rounded-3xl border border-slate-200 bg-slate-50 p-5">
-<p className="text-xs font-black uppercase tracking-[0.25em] text-slate-400">
-Approved Vendor List
-</p>
+      const options = companies
+        .map((company) => {
+          const avl = approvedVendorRows.find(
+            (vendor) => vendor.vendor_company_id === company.id,
+          );
 
-<div className="mt-4 grid gap-3">
-{vendors.map((vendor) => (
-<button
-key={vendor.id}
-type="button"
-onClick={() => setSelectedVendorId(vendor.id)}
-className={`rounded-2xl border p-4 text-left transition ${
-selectedVendorId === vendor.id
-? "border-slate-950 bg-white"
-: "border-slate-200 bg-white hover:border-slate-400"
-}`}
->
-<div className="flex flex-wrap items-start justify-between gap-3">
-<div>
-<p className="text-sm font-black text-slate-950">
-{vendor.name || "Approved Vendor"}
-</p>
+          return {
+            ...company,
+            avlStatus: avl?.status || "approved",
+            avlRating: avl?.rating || 85,
+          };
+        })
+        .sort((a, b) => b.avlRating - a.avlRating);
 
-<p className="mt-1 text-xs font-semibold text-slate-500">
-{vendor.category || "Supplier"} ·{" "}
-{vendor.location || "Location N/A"}
-</p>
-</div>
+      setVendors(options);
+      setVendorsLoading(false);
+    }
 
-<div className="flex flex-wrap gap-2">
-<span
-className={`rounded-full px-3 py-1 text-xs font-black ${getStatusClass(
-vendor.avlStatus
-)}`}
->
-{vendor.avlStatus}
-</span>
+    loadApprovedVendors();
 
-<span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-black text-slate-700">
-{vendor.avlRating}/100
-</span>
-</div>
-</div>
-</button>
-))}
-</div>
-</div>
-) : (
-<div className="mt-7 rounded-3xl border border-dashed border-slate-300 bg-slate-50 p-5">
-<p className="text-sm font-bold text-slate-500">
-{vendorsLoading
-? "Loading approved vendors..."
-: "No approved vendors found yet. Add suppliers to your AVL from the Directory."}
-</p>
-</div>
-)}
+    return () => {
+      active = false;
+    };
+  }, [supabase]);
 
-<form
-onSubmit={handleSubmit}
-className="mt-7 grid gap-4 md:grid-cols-[1fr_auto]"
->
-<input
-type="email"
-value={email}
-onChange={(event) => setEmail(event.target.value)}
-placeholder={
-selectedVendorId
-? "supplier contact email for selected AVL vendor"
-: "supplier@company.com"
-}
-required
-className="rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 text-sm font-bold text-slate-950 outline-none transition focus:border-slate-950 focus:bg-white"
-/>
+  async function handleSubmit(
+    event: React.FormEvent<HTMLFormElement>,
+  ) {
+    event.preventDefault();
 
-<button
-type="submit"
-disabled={loading}
-className="rounded-full bg-slate-950 px-7 py-4 text-sm font-black text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
->
-{loading ? "Creating Invite..." : "Create Supplier Invite"}
-</button>
-</form>
+    setLoading(true);
+    setError("");
+    setInviteUrl("");
+    setSuccessMessage("");
+    setCopyMessage("");
 
-{selectedVendorId ? (
-<p className="mt-3 text-xs font-bold text-slate-500">
-Selected AVL vendor will be attached to this invitation for governance
-tracking.
-</p>
-) : null}
+    try {
+      const response = await fetch("/api/invites", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          rfqId,
+          email,
+          vendorCompanyId: selectedVendorId || null,
+        }),
+      });
 
-{error ? (
-<div className="mt-5 rounded-2xl bg-red-50 px-5 py-4 text-sm font-bold text-red-600">
-{error}
-</div>
-) : null}
+      const data = (await response.json()) as InviteResponse;
 
-{successMessage ? (
-<div className="mt-5 rounded-2xl bg-green-50 px-5 py-4 text-sm font-bold text-green-700">
-{successMessage}
-</div>
-) : null}
+      if (!response.ok) {
+        setError(data.error || "Could not create supplier invite.");
+        return;
+      }
 
-{inviteUrl ? (
-<div className="mt-5 rounded-3xl border border-slate-200 bg-slate-50 p-5">
-<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
-Secure Invite Link
-</p>
+      setInviteUrl(data.inviteUrl || "");
+      setSuccessMessage(
+        data.message || "Supplier invite created successfully.",
+      );
+      setEmail("");
+      setSelectedVendorId("");
+    } catch {
+      setError(
+        "The supplier invitation could not be created. Verify your connection and try again.",
+      );
+    } finally {
+      setLoading(false);
+    }
+  }
 
-<p className="mt-3 break-all rounded-2xl bg-white px-4 py-3 text-sm font-bold text-slate-700">
-{inviteUrl}
-</p>
+  async function copyInviteLink() {
+    if (!inviteUrl) return;
 
-<div className="mt-4 flex flex-wrap gap-3">
-<button
-type="button"
-onClick={copyInviteLink}
-className="rounded-full bg-slate-950 px-5 py-3 text-xs font-black text-white transition hover:bg-slate-800"
->
-Copy Invite Link
-</button>
+    const absoluteUrl = `${window.location.origin}${inviteUrl}`;
 
-<a
-href={inviteUrl}
-className="rounded-full bg-white px-5 py-3 text-xs font-black text-slate-950 shadow-sm transition hover:shadow-md"
->
-Open Invite
-</a>
-</div>
+    try {
+      await navigator.clipboard.writeText(absoluteUrl);
+      setCopyMessage("Secure invite link copied.");
+    } catch {
+      setCopyMessage(
+        "The link could not be copied automatically. Select and copy it manually.",
+      );
+    }
+  }
 
-{copyMessage ? (
-<p className="mt-3 text-xs font-black text-green-700">
-{copyMessage}
-</p>
-) : null}
-</div>
-) : null}
-</section>
-);
+  return (
+    <ExecutivePanel
+      variant="operational"
+      padding="md"
+      tone="blue"
+    >
+      <section aria-labelledby="supplier-invitation-form-title">
+        <div className="flex flex-col gap-6 xl:flex-row xl:items-start xl:justify-between">
+          <div className="min-w-0">
+            <p className="text-xs font-black uppercase tracking-[0.3em] text-nexus-gold">
+              Supplier Invitations
+            </p>
+
+            <h3
+              id="supplier-invitation-form-title"
+              className="mt-3 text-2xl font-black tracking-tight text-nexus-white sm:text-3xl"
+            >
+              Invite Approved Suppliers to Quote
+            </h3>
+
+            <p className="mt-3 max-w-3xl text-sm font-semibold leading-7 text-nexus-muted">
+              Route secure RFQ invitations through the Approved Vendor
+              List. Open RFQs may use direct email invitations, while
+              selective, sealed-bid, and framework workflows should
+              prioritize governed supplier records.
+            </p>
+          </div>
+
+          <div className="min-w-[210px] rounded-3xl border border-nexus-gold/20 bg-nexus-gold/[0.07] px-5 py-4">
+            <p className="text-xs font-black uppercase tracking-[0.22em] text-nexus-muted">
+              Access Control
+            </p>
+
+            <p className="mt-2 text-sm font-black text-nexus-gold">
+              AVL Governance
+            </p>
+
+            <p className="mt-2 text-xs font-semibold leading-5 text-nexus-muted">
+              Supplier selection and direct invitations remain recorded
+              against this RFQ.
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-7 rounded-[30px] border border-white/10 bg-black/20 p-5 sm:p-6">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.25em] text-nexus-gold">
+                Approved Vendor List
+              </p>
+
+              <p className="mt-2 text-sm font-semibold leading-6 text-nexus-muted">
+                Select an approved supplier organization or continue
+                with a controlled direct email invitation.
+              </p>
+            </div>
+
+            <div className="rounded-full border border-white/10 bg-white/[0.055] px-4 py-2 text-xs font-black text-nexus-muted">
+              {vendorsLoading
+                ? "Loading"
+                : `${vendors.length} eligible supplier${
+                    vendors.length === 1 ? "" : "s"
+                  }`}
+            </div>
+          </div>
+
+          {vendors.length > 0 ? (
+            <div
+              className="mt-5 grid gap-3"
+              role="listbox"
+              aria-label="Approved suppliers"
+            >
+              {vendors.map((vendor) => {
+                const selected = selectedVendorId === vendor.id;
+                const statusTone = getStatusTone(vendor.avlStatus);
+
+                return (
+                  <button
+                    key={vendor.id}
+                    type="button"
+                    role="option"
+                    aria-selected={selected}
+                    onClick={() =>
+                      setSelectedVendorId((current) =>
+                        current === vendor.id ? "" : vendor.id,
+                      )
+                    }
+                    className={`min-w-0 rounded-3xl border p-5 text-left transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-nexus-gold/70 ${
+                      selected
+                        ? "border-nexus-gold/40 bg-nexus-gold/[0.08] shadow-[0_18px_45px_rgba(0,0,0,0.18)]"
+                        : "border-white/10 bg-white/[0.045] hover:border-white/20 hover:bg-white/[0.065]"
+                    }`}
+                  >
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="break-words text-sm font-black text-nexus-white">
+                            {vendor.name || "Approved Supplier"}
+                          </p>
+
+                          {selected ? (
+                            <span className="rounded-full border border-nexus-gold/25 bg-nexus-gold/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-nexus-gold">
+                              Selected
+                            </span>
+                          ) : null}
+                        </div>
+
+                        <p className="mt-2 break-words text-xs font-semibold leading-5 text-nexus-muted">
+                          {vendor.category || "Supplier Organization"}
+                          {" · "}
+                          {vendor.location || "Location not specified"}
+                        </p>
+
+                        {vendor.network_role ? (
+                          <p className="mt-1 text-xs font-semibold leading-5 text-nexus-muted">
+                            Network classification: {vendor.network_role}
+                          </p>
+                        ) : null}
+                      </div>
+
+                      <div className="flex shrink-0 flex-wrap gap-2">
+                        <span
+                          className={`rounded-full border px-3 py-1 text-xs font-black ${statusTone.className}`}
+                        >
+                          {statusTone.label}
+                        </span>
+
+                        <span className="rounded-full border border-white/10 bg-white/[0.055] px-3 py-1 text-xs font-black text-nexus-white">
+                          AVL {vendor.avlRating}/100
+                        </span>
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          ) : (
+            <div
+              className="mt-5 rounded-3xl border border-dashed border-white/15 bg-white/[0.035] p-5"
+              role="status"
+            >
+              <p className="text-sm font-black text-nexus-white">
+                {vendorsLoading
+                  ? "Loading Approved Vendor List"
+                  : "No Eligible AVL Suppliers Available"}
+              </p>
+
+              <p className="mt-2 text-sm font-semibold leading-6 text-nexus-muted">
+                {vendorsLoading
+                  ? "Nexus Pavilion is retrieving the approved supplier records available to this company."
+                  : "Your Approved Vendor List currently has no approved or conditional suppliers available for selection. Add qualified suppliers through the Directory or continue with a controlled direct email invitation."}
+              </p>
+            </div>
+          )}
+        </div>
+
+        <form
+          onSubmit={handleSubmit}
+          className="mt-6 rounded-[30px] border border-white/10 bg-white/[0.045] p-5 sm:p-6"
+        >
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.25em] text-nexus-gold">
+              Invitation Delivery
+            </p>
+
+            <h4 className="mt-2 text-xl font-black text-nexus-white">
+              Create Secure Supplier Invitation
+            </h4>
+
+            <p className="mt-2 max-w-3xl text-sm font-semibold leading-6 text-nexus-muted">
+              Enter the authorized supplier contact email. The invitation
+              will remain associated with this RFQ and the selected AVL
+              supplier when applicable.
+            </p>
+          </div>
+
+          {selectedVendor ? (
+            <div className="mt-5 flex flex-col gap-3 rounded-2xl border border-emerald-300/15 bg-emerald-400/[0.07] p-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="min-w-0">
+                <p className="text-xs font-black uppercase tracking-[0.2em] text-emerald-300">
+                  Selected AVL Supplier
+                </p>
+
+                <p className="mt-2 break-words text-sm font-black text-nexus-white">
+                  {selectedVendor.name || "Approved Supplier"}
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setSelectedVendorId("")}
+                className="self-start rounded-full border border-white/10 bg-white/[0.055] px-4 py-2 text-xs font-black text-nexus-muted transition hover:bg-white/[0.08] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-nexus-gold/70 sm:self-auto"
+              >
+                Clear Selection
+              </button>
+            </div>
+          ) : null}
+
+          <div className="mt-5 grid gap-4 md:grid-cols-[1fr_auto]">
+            <label className="min-w-0">
+              <span className="sr-only">Supplier contact email</span>
+
+              <input
+                type="email"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                placeholder={
+                  selectedVendorId
+                    ? "Authorized contact email for selected supplier"
+                    : "supplier@company.com"
+                }
+                required
+                autoComplete="email"
+                className="min-h-14 w-full rounded-2xl border border-white/10 bg-black/25 px-5 py-4 text-sm font-bold text-nexus-white outline-none transition placeholder:text-nexus-muted/70 hover:border-white/20 focus:border-nexus-gold/40 focus:ring-2 focus:ring-nexus-gold/20"
+              />
+            </label>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="min-h-14 rounded-full border border-nexus-gold/30 bg-nexus-gold px-7 py-4 text-sm font-black text-nexus-navy transition duration-200 hover:bg-[#F5D77B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-nexus-gold/70 focus-visible:ring-offset-2 focus-visible:ring-offset-nexus-navy disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {loading
+                ? "Creating Secure Invite..."
+                : "Create Supplier Invite"}
+            </button>
+          </div>
+
+          {selectedVendorId ? (
+            <p className="mt-3 text-xs font-bold leading-5 text-nexus-muted">
+              The selected AVL supplier will be attached to this
+              invitation for procurement governance and audit tracking.
+            </p>
+          ) : (
+            <p className="mt-3 text-xs font-bold leading-5 text-nexus-muted">
+              Direct email invitations remain available where permitted
+              by the RFQ sourcing method and governance policy.
+            </p>
+          )}
+        </form>
+
+        {error ? (
+          <div
+            className="mt-5 rounded-2xl border border-red-300/15 bg-red-400/[0.08] px-5 py-4"
+            role="alert"
+          >
+            <p className="text-xs font-black uppercase tracking-[0.2em] text-red-300">
+              Invitation Not Created
+            </p>
+
+            <p className="mt-2 text-sm font-bold leading-6 text-red-200">
+              {error}
+            </p>
+          </div>
+        ) : null}
+
+        {successMessage ? (
+          <div
+            className="mt-5 rounded-2xl border border-emerald-300/15 bg-emerald-400/[0.08] px-5 py-4"
+            role="status"
+          >
+            <p className="text-xs font-black uppercase tracking-[0.2em] text-emerald-300">
+              Invitation Created
+            </p>
+
+            <p className="mt-2 text-sm font-bold leading-6 text-emerald-100">
+              {successMessage}
+            </p>
+          </div>
+        ) : null}
+
+        {inviteUrl ? (
+          <div className="mt-5 rounded-[30px] border border-nexus-gold/20 bg-nexus-gold/[0.06] p-5 sm:p-6">
+            <p className="text-xs font-black uppercase tracking-[0.25em] text-nexus-gold">
+              Secure Invite Link
+            </p>
+
+            <p className="mt-2 text-sm font-semibold leading-6 text-nexus-muted">
+              Share this controlled invitation link with the authorized
+              supplier contact.
+            </p>
+
+            <p className="mt-4 break-all rounded-2xl border border-white/10 bg-black/25 px-4 py-3 text-sm font-bold leading-6 text-nexus-white">
+              {inviteUrl}
+            </p>
+
+            <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+              <button
+                type="button"
+                onClick={copyInviteLink}
+                className="rounded-full border border-nexus-gold/30 bg-nexus-gold px-5 py-3 text-xs font-black text-nexus-navy transition hover:bg-[#F5D77B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-nexus-gold/70"
+              >
+                Copy Invite Link
+              </button>
+
+              <a
+                href={inviteUrl}
+                className="rounded-full border border-white/10 bg-white/[0.055] px-5 py-3 text-center text-xs font-black text-nexus-white transition hover:bg-white/[0.08] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-nexus-gold/70"
+              >
+                Open Invite
+              </a>
+            </div>
+
+            {copyMessage ? (
+              <p
+                className="mt-3 text-xs font-black leading-5 text-emerald-300"
+                role="status"
+              >
+                {copyMessage}
+              </p>
+            ) : null}
+          </div>
+        ) : null}
+      </section>
+    </ExecutivePanel>
+  );
 }
