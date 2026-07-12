@@ -6,6 +6,7 @@ import {
   useEffect,
   useRef,
   useState,
+  useSyncExternalStore,
 } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
@@ -57,24 +58,30 @@ type MenuPosition = {
   right: number;
 };
 
+const subscribeToClient = () => () => {};
+
+function useHasMounted() {
+  return useSyncExternalStore(
+    subscribeToClient,
+    () => true,
+    () => false,
+  );
+}
+
 export default function SignOutButton() {
   const router = useRouter();
   const supabase = createClient();
+  const mounted = useHasMounted();
 
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
 
   const [open, setOpen] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
-  const [mounted, setMounted] = useState(false);
   const [menuPosition, setMenuPosition] = useState<MenuPosition>({
     top: 0,
     right: 16,
   });
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -158,7 +165,7 @@ export default function SignOutButton() {
               top: menuPosition.top,
               right: menuPosition.right,
             }}
-            className="fixed z-[9999] w-[360px] max-w-[calc(100vw-2rem)] overflow-y-auto rounded-[28px] border border-white/10 bg-[#061426] p-3 shadow-[0_28px_90px_rgba(0,0,0,0.65)] backdrop-blur-xl"
+            className="fixed z-[9999] max-h-[calc(100vh-2rem)] w-[360px] max-w-[calc(100vw-2rem)] overflow-y-auto rounded-[28px] border border-white/10 bg-[#061426] p-3 shadow-[0_28px_90px_rgba(0,0,0,0.65)] backdrop-blur-xl"
           >
             <div className="rounded-[22px] border border-white/10 bg-white/[0.045] p-4">
               <p className="text-[10px] font-black uppercase tracking-[0.24em] text-[#C8A646]">

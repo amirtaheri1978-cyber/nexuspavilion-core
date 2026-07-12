@@ -45,6 +45,10 @@ email: string | null;
 status: string | null;
 };
 
+type SupplierQuoteAccess = {
+rfq_id: string;
+};
+
 const PROCUREMENT_SCOPE_LABELS: Record<ProcurementScope, string> = {
 material: "Material / Product",
 subcontractor: "Subcontractor / Trade",
@@ -179,7 +183,10 @@ return total + (Number.isFinite(amount) ? amount : 0);
 }, 0);
 }
 
-function isSupplierVisibleRfq(rfq: RFQ, invitedRfqIds: Set<string>) {
+function isSupplierVisibleRfq(
+rfq: RFQ,
+accessibleRfqIds: Set<string>
+) {
 const sourcingMethod = getSourcingMethod(rfq.sourcing_method);
 const contractFramework = getContractFramework(rfq.contract_framework);
 
@@ -187,16 +194,12 @@ if (!isOpenRFQ(rfq.status)) return false;
 
 if (sourcingMethod === "open") return true;
 
-if (sourcingMethod === "invited") {
-return invitedRfqIds.has(rfq.id);
-}
-
-if (sourcingMethod === "sealed_bid") {
-return invitedRfqIds.has(rfq.id);
-}
-
-if (contractFramework === "framework") {
-return invitedRfqIds.has(rfq.id);
+if (
+sourcingMethod === "invited" ||
+sourcingMethod === "sealed_bid" ||
+contractFramework === "framework"
+) {
+return accessibleRfqIds.has(rfq.id);
 }
 
 return false;
@@ -205,7 +208,8 @@ return false;
 function getVisibilityBadge(
 rfq: RFQ,
 supplierMode: boolean,
-invitedRfqIds: Set<string>
+invitedRfqIds: Set<string>,
+supplierQuotedRfqIds: Set<string>
 ) {
 const sourcingMethod = getSourcingMethod(rfq.sourcing_method);
 const contractFramework = getContractFramework(rfq.contract_framework);
@@ -218,6 +222,7 @@ return "Invite-Controlled";
 }
 
 if (invitedRfqIds.has(rfq.id)) return "Invited Access";
+if (supplierQuotedRfqIds.has(rfq.id)) return "Supplier Account Access";
 if (sourcingMethod === "open") return "Open Marketplace";
 
 return "Restricted";
@@ -273,18 +278,49 @@ const company = companyData as Company | null;
 const supplierMode =
 profile?.role === "vendor" || isSupplierCompany(company?.network_role);
 
-const { data: invitedRows } =
+const {
+data: invitedRows,
+error: invitedRowsError,
+} =
 supplierMode && userEmail
 ? await supabase
 .from("rfq_invites")
 .select("rfq_id, email, status")
-.eq("email", userEmail)
-: { data: [] };
+.ilike("email", userEmail)
+: { data: [], error: null };
+
+const {
+data: supplierQuoteRows,
+error: supplierQuoteRowsError,
+} =
+supplierMode && profile?.company_id
+? await supabase
+.from("quotes")
+.select("rfq_id")
+.eq("company_id", profile.company_id)
+: { data: [], error: null };
 
 const inviteList = (invitedRows ?? []) as RfqInvite[];
-const invitedRfqIds = new Set(inviteList.map((invite) => invite.rfq_id));
+const supplierQuoteAccessList =
+(supplierQuoteRows ?? []) as SupplierQuoteAccess[];
 
-const { data: rfqs } = supplierMode
+const invitedRfqIds = new Set(
+inviteList.map((invite) => invite.rfq_id)
+);
+
+const supplierQuotedRfqIds = new Set(
+supplierQuoteAccessList.map((quote) => quote.rfq_id)
+);
+
+const accessibleRfqIds = new Set([
+...invitedRfqIds,
+...supplierQuotedRfqIds,
+]);
+
+const {
+data: rfqs,
+error: rfqsError,
+} = supplierMode
 ? await supabase
 .from("rfqs")
 .select("*")
@@ -296,12 +332,24 @@ const { data: rfqs } = supplierMode
 .select("*")
 .eq("company_id", profile.company_id)
 .order("created_at", { ascending: false })
-: { data: [] };
+: { data: [], error: null };
+
+if (invitedRowsError || supplierQuoteRowsError || rfqsError) {
+console.error("[RFQ Marketplace] Data access error", {
+inviteError: invitedRowsError?.message ?? null,
+supplierQuoteError: supplierQuoteRowsError?.message ?? null,
+rfqError: rfqsError?.message ?? null,
+authenticatedEmail: userEmail || null,
+supplierCompanyId: profile?.company_id ?? null,
+});
+}
 
 const rawRfqList = (rfqs ?? []) as RFQ[];
 
 const rfqList = supplierMode
-? rawRfqList.filter((rfq) => isSupplierVisibleRfq(rfq, invitedRfqIds))
+? rawRfqList.filter((rfq) =>
+isSupplierVisibleRfq(rfq, accessibleRfqIds)
+)
 : rawRfqList;
 
 const openCount = rfqList.filter((rfq) => isOpenRFQ(rfq.status)).length;
@@ -502,7 +550,12 @@ className="group rounded-[30px] border border-white/10 bg-[#061426]/72 p-6 shado
 
 <div className="mt-6 flex items-center justify-between gap-4">
 <span className="rounded-full border border-white/10 bg-white/[0.055] px-3 py-1 text-xs font-black text-slate-300">
-{getVisibilityBadge(rfq, supplierMode, invitedRfqIds)}
+{getVisibilityBadge(
+rfq,
+supplierMode,
+invitedRfqIds,
+supplierQuotedRfqIds
+)}
 </span>
 
 <span className="text-sm font-black text-[#9BE8F8] transition group-hover:translate-x-1">
