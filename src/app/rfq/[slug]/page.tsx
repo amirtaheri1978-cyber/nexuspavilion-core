@@ -790,8 +790,27 @@ const rfqStatus = String(rfq.status || "open");
 const deadlinePassed = hasDeadlinePassed(rfq.deadline);
 const daysUntilDeadline = getDaysUntilDeadline(rfq.deadline);
 const blindBiddingEnabled = shouldEnforceBlindBidding(rfq);
-const commercialEvaluationUnlocked = !blindBiddingEnabled || deadlinePassed;
-const isOpen = (!rfq.status || rfqStatus === "open") && !deadlinePassed;
+const commercialEvaluationUnlocked =
+!blindBiddingEnabled || deadlinePassed;
+const isOpen =
+(!rfq.status || rfqStatus === "open") && !deadlinePassed;
+
+const participantRole = isOwner
+? "issuer"
+: "respondent";
+
+const canManageRfq = participantRole === "issuer";
+
+const canViewBlindBiddingControl =
+canManageRfq &&
+blindBiddingEnabled &&
+!commercialEvaluationUnlocked;
+
+const canViewCommercialEvaluation =
+canManageRfq && commercialEvaluationUnlocked;
+
+const canInviteSuppliers =
+canManageRfq && isOpen;
 
 const { data: quotes } = isOwner
 ? await supabase
@@ -948,8 +967,24 @@ const awardedQuote = commercialEvaluationUnlocked
 const potentialSavings =
 recommendedQuote && averageBid ? averageBid - recommendedQuote.amountNumber : 0;
 
-const hasMyQuote = !isOwner && quoteList.length > 0;
-const canSubmitQuote = !isOwner && isOpen && !hasMyQuote;
+const canViewOwnSubmission =
+participantRole === "respondent";
+
+const hasMyQuote =
+canViewOwnSubmission &&
+quoteList.length > 0;
+
+const canSubmitQuote =
+canViewOwnSubmission &&
+isOpen &&
+!hasMyQuote;
+
+const canViewExecutiveIntelligence =
+canManageRfq;
+
+const canViewRecommendedAwardPath =
+canViewCommercialEvaluation &&
+Boolean(recommendedQuote);
 
 const healthScore = getHealthScore({
 isOpen,
@@ -1268,7 +1303,7 @@ return (
   />
 </section>
 
-{isOwner && blindBiddingEnabled && !commercialEvaluationUnlocked ? (
+{canViewBlindBiddingControl ? (
 <section className="mt-8">
 <BlindBiddingNotice rfq={rfq} quoteCount={quoteList.length} />
 </section>
@@ -1278,7 +1313,7 @@ return (
 <GovernanceNotice />
 </section>
 
-{isOwner ? (
+{canViewExecutiveIntelligence ? (
 <RFQAIAdvisor rfqId={rfq.id} initialReview={latestAiReview} />
 ) : null}
 <ExecutiveIntelligenceProvider executive={executive}>
@@ -1374,14 +1409,14 @@ budget={budget}
 />
 </ExecutiveIntelligenceProvider>
 
-{isOwner && recommendedQuote && commercialEvaluationUnlocked ? (
+{canViewRecommendedAwardPath && recommendedQuote ? (
   <RFQRecommendedAwardPath
     recommendation={recommendedQuote}
     scopeLabel={getScopeLabel(rfq.procurement_scope)}
   />
 ) : null}
 
-{isOwner && isOpen ? (
+{canInviteSuppliers ? (
 <ExecutivePanel
 id="supplier-invitations"
 className="mt-8"
@@ -1503,5 +1538,3 @@ submission data.
 </ExecutivePanel>
 );
 }
-
-
