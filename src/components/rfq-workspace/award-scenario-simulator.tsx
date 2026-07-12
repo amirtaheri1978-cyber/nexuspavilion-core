@@ -2,7 +2,10 @@ import { ExecutivePanel } from "@/components/executive/executive-panel";
 import { ExecutiveSignal } from "@/components/rfq-workspace/shared/executive-signal";
 import { ExecutiveStatusBadge } from "@/components/rfq-workspace/shared/executive-status-badge";
 import { buildExecutiveIntelligence } from "@/lib/executive/executive-engine";
-import type { ExecutiveScenario } from "@/lib/executive/executive-types";
+import type {
+  ExecutiveScenario,
+  ExecutiveTone,
+} from "@/lib/executive/executive-types";
 import type { ExecutiveQuote } from "@/types/executive";
 
 type AwardScenarioSimulatorProps = {
@@ -14,6 +17,15 @@ type AwardScenarioSimulatorProps = {
   healthScore: number;
   budget: number;
 };
+
+function getScenarioStatusLabel(tone: ExecutiveTone) {
+  if (tone === "success") return "Preferred";
+  if (tone === "info") return "Viable";
+  if (tone === "warning") return "Review";
+  if (tone === "risk") return "High Exposure";
+
+  return "Available";
+}
 
 export function AwardScenarioSimulator({
   isOwner,
@@ -35,7 +47,7 @@ export function AwardScenarioSimulator({
               Award Scenario Simulator
             </p>
 
-            <h2 className="mt-3 text-3xl font-black text-nexus-white">
+            <h2 className="mt-3 text-2xl font-black tracking-tight text-nexus-white sm:text-3xl">
               Scenario Modeling Awaiting Activation
             </h2>
 
@@ -46,9 +58,11 @@ export function AwardScenarioSimulator({
             </p>
           </div>
 
-          <ExecutiveStatusBadge tone="warning">
-            Not Operational
-          </ExecutiveStatusBadge>
+          <div className="shrink-0">
+            <ExecutiveStatusBadge tone="warning">
+              Not Operational
+            </ExecutiveStatusBadge>
+          </div>
         </div>
 
         <div className="mt-6 grid gap-3 md:grid-cols-3">
@@ -56,10 +70,12 @@ export function AwardScenarioSimulator({
             label="Commercial evaluation opened"
             ready={commercialEvaluationUnlocked}
           />
+
           <LockedRequirement
             label="Comparative quote intelligence available"
             ready={quoteCount > 0}
           />
+
           <LockedRequirement
             label="Recommended supplier path established"
             ready={Boolean(recommendedQuote)}
@@ -91,57 +107,126 @@ export function AwardScenarioSimulator({
   const primaryScenario = scenarios[0];
 
   return (
-    <section className="mt-8 overflow-hidden rounded-[40px] border border-white/10 bg-[#061426] text-white shadow-[0_24px_80px_rgba(0,0,0,0.26)]">
-      <div className="border-b border-white/10 p-6 sm:p-8">
-        <div className="flex flex-col gap-6 xl:flex-row xl:items-start xl:justify-between">
-          <div>
-            <p className="text-xs font-black uppercase tracking-[0.3em] text-[#C8A646]">
-              Award Scenario Simulator
-            </p>
+    <ExecutivePanel
+      className="mt-8 overflow-hidden p-0"
+      tone="gold"
+    >
+      <section aria-labelledby="award-scenario-simulator-title">
+        <div className="border-b border-white/10 p-6 sm:p-8">
+          <div className="flex flex-col gap-6 xl:flex-row xl:items-start xl:justify-between">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-3">
+                <p className="text-xs font-black uppercase tracking-[0.3em] text-nexus-gold">
+                  Award Scenario Simulator
+                </p>
 
-            <h2 className="mt-3 text-3xl font-black text-white">
-              Compare executive award paths before committing
-            </h2>
+                <ExecutiveStatusBadge tone="success">
+                  Operational
+                </ExecutiveStatusBadge>
+              </div>
 
-            <p className="mt-3 max-w-4xl text-sm font-semibold leading-7 text-slate-400">
-              Nexus Pavilion compares award now, negotiate first, extend RFQ,
-              and rebid scenarios using cost, time, risk, and board-readiness
-              signals.
-            </p>
-          </div>
+              <h2
+                id="award-scenario-simulator-title"
+                className="mt-3 text-2xl font-black tracking-tight text-nexus-white sm:text-3xl"
+              >
+                Executive Award Path Comparison
+              </h2>
 
-          <div className="rounded-3xl border border-white/10 bg-white/[0.055] px-6 py-5">
-            <p className="text-xs font-black uppercase tracking-[0.24em] text-slate-500">
-              Primary Path
-            </p>
+              <p className="mt-3 max-w-4xl text-sm font-semibold leading-7 text-nexus-muted">
+                Compare immediate award, pre-award negotiation, RFQ extension,
+                and rebid pathways using commercial impact, schedule exposure,
+                procurement risk, and board-readiness signals.
+              </p>
+            </div>
 
-            <p className="mt-2 text-2xl font-black text-white">
-              {primaryScenario.title}
-            </p>
+            {primaryScenario ? (
+              <div className="min-w-0 rounded-3xl border border-nexus-gold/20 bg-black/25 px-5 py-5 sm:px-6 xl:max-w-sm">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <p className="text-xs font-black uppercase tracking-[0.24em] text-nexus-muted">
+                    Primary Path
+                  </p>
 
-            <p className="mt-2 max-w-xs text-xs font-bold leading-5 text-slate-400">
-              {executive.recommendation.recommendation}
-            </p>
+                  <ExecutiveStatusBadge tone={primaryScenario.tone}>
+                    {getScenarioStatusLabel(primaryScenario.tone)}
+                  </ExecutiveStatusBadge>
+                </div>
+
+                <p className="mt-3 break-words text-xl font-black leading-tight text-nexus-white sm:text-2xl">
+                  {primaryScenario.title}
+                </p>
+
+                <p className="mt-3 break-words text-xs font-bold leading-5 text-nexus-muted">
+                  {executive.recommendation.recommendation}
+                </p>
+              </div>
+            ) : null}
           </div>
         </div>
-      </div>
 
-      <div className="grid gap-5 p-6 sm:p-8 xl:grid-cols-4">
-        {scenarios.map((scenario) => (
-          <ScenarioCard key={scenario.title} scenario={scenario} />
-        ))}
-      </div>
+        {scenarios.length > 0 ? (
+          <ol
+            className="grid gap-5 p-6 sm:p-8 xl:grid-cols-2 2xl:grid-cols-4"
+            aria-label="Available executive award scenarios"
+          >
+            {scenarios.map((scenario, index) => (
+              <ScenarioCard
+                key={scenario.title}
+                scenario={scenario}
+                index={index}
+                primary={index === 0}
+              />
+            ))}
+          </ol>
+        ) : (
+          <div className="p-6 sm:p-8">
+            <ExecutivePanel
+              variant="operational"
+              padding="md"
+              tone="neutral"
+            >
+              <p className="text-sm font-black text-nexus-white">
+                No Award Scenarios Available
+              </p>
 
-      <div className="border-t border-white/10 bg-white/[0.035] p-6 sm:p-8">
-        <p className="text-xs font-black uppercase tracking-[0.3em] text-cyan-300">
-          Executive Recommendation
-        </p>
+              <p className="mt-2 text-sm font-semibold leading-6 text-nexus-muted">
+                Scenario intelligence is operational, but the current RFQ does
+                not yet contain sufficient decision signals to generate a
+                comparative award path.
+              </p>
+            </ExecutivePanel>
+          </div>
+        )}
 
-        <p className="mt-4 max-w-4xl text-sm font-bold leading-7 text-slate-300">
-          {executive.recommendation.recommendation}
-        </p>
-      </div>
-    </section>
+        <div className="border-t border-white/10 bg-black/20 p-6 sm:p-8">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+            <div className="min-w-0">
+              <p className="text-xs font-black uppercase tracking-[0.3em] text-nexus-gold">
+                Executive Decision Guidance
+              </p>
+
+              <p className="mt-4 max-w-4xl break-words text-sm font-bold leading-7 text-nexus-white">
+                {executive.recommendation.recommendation}
+              </p>
+
+              <p className="mt-4 max-w-4xl text-xs font-semibold leading-5 text-nexus-muted">
+                Scenario outputs support executive and procurement review.
+                Final award authority remains subject to approved governance,
+                commercial authorization, supplier due diligence, and
+                documented decision accountability.
+              </p>
+            </div>
+
+            {primaryScenario ? (
+              <div className="shrink-0">
+                <ExecutiveStatusBadge tone={primaryScenario.tone}>
+                  Primary: {primaryScenario.title}
+                </ExecutiveStatusBadge>
+              </div>
+            ) : null}
+          </div>
+        </div>
+      </section>
+    </ExecutivePanel>
   );
 }
 
@@ -159,9 +244,11 @@ function LockedRequirement({
       tone={ready ? "success" : "neutral"}
     >
       <div className="flex items-start gap-3">
-        <ExecutiveSignal positive={ready} />
+        <div className="shrink-0 pt-0.5">
+          <ExecutiveSignal positive={ready} />
+        </div>
 
-        <p className="text-sm font-bold leading-6 text-nexus-muted">
+        <p className="break-words text-sm font-bold leading-6 text-nexus-muted">
           {label}
         </p>
       </div>
@@ -169,41 +256,93 @@ function LockedRequirement({
   );
 }
 
-function ScenarioCard({ scenario }: { scenario: ExecutiveScenario }) {
-  return (
-    <div className="rounded-[32px] border border-white/10 bg-white/[0.045] p-6">
-      <div className="flex items-start justify-between gap-4">
-        <h3 className="text-2xl font-black text-white">{scenario.title}</h3>
+function ScenarioCard({
+  scenario,
+  index,
+  primary,
+}: {
+  scenario: ExecutiveScenario;
+  index: number;
+  primary: boolean;
+}) {
+  const statusLabel = getScenarioStatusLabel(scenario.tone);
+  const scenarioId = `award-scenario-${index + 1}`;
 
-        <ExecutiveStatusBadge tone={scenario.tone}>
-          {scenario.tone}
-        </ExecutiveStatusBadge>
+  return (
+    <li
+      className={`flex min-w-0 flex-col rounded-[32px] border p-5 transition duration-300 hover:-translate-y-0.5 hover:bg-white/[0.06] hover:shadow-executive sm:p-6 ${
+        primary
+          ? "border-nexus-gold/30 bg-nexus-gold/[0.07]"
+          : "border-white/10 bg-white/[0.045]"
+      }`}
+      aria-labelledby={`${scenarioId}-title`}
+    >
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
+          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-nexus-muted">
+            Scenario {index + 1}
+          </p>
+
+          <h3
+            id={`${scenarioId}-title`}
+            className="mt-2 break-words text-xl font-black leading-tight text-nexus-white sm:text-2xl"
+          >
+            {scenario.title}
+          </h3>
+        </div>
+
+        <div className="shrink-0 self-start">
+          <ExecutiveStatusBadge tone={scenario.tone}>
+            {primary ? "Primary" : statusLabel}
+          </ExecutiveStatusBadge>
+        </div>
       </div>
 
-      <p className="mt-4 text-sm font-bold leading-7 text-slate-300">
+      <p className="mt-4 break-words text-sm font-bold leading-7 text-nexus-muted">
         {scenario.recommendation}
       </p>
 
-      <div className="mt-6 space-y-3">
-        <SignalBlock title="Cost Impact" value={scenario.costImpact} />
-        <SignalBlock title="Time Impact" value={scenario.timeImpact} />
-        <SignalBlock title="Risk Impact" value={scenario.riskImpact} />
-        <SignalBlock title="Board View" value={scenario.boardView} />
-      </div>
-    </div>
+      <dl className="mt-6 grid gap-3">
+        <SignalBlock
+          title="Commercial Impact"
+          value={scenario.costImpact}
+        />
+
+        <SignalBlock
+          title="Schedule Impact"
+          value={scenario.timeImpact}
+        />
+
+        <SignalBlock
+          title="Risk Exposure"
+          value={scenario.riskImpact}
+        />
+
+        <SignalBlock
+          title="Board Assessment"
+          value={scenario.boardView}
+        />
+      </dl>
+    </li>
   );
 }
 
-function SignalBlock({ title, value }: { title: string; value: string }) {
+function SignalBlock({
+  title,
+  value,
+}: {
+  title: string;
+  value: string;
+}) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-slate-950/50 p-4">
-      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
+    <div className="min-w-0 rounded-2xl border border-white/10 bg-black/20 p-4">
+      <dt className="text-[10px] font-black uppercase tracking-[0.2em] text-nexus-muted">
         {title}
-      </p>
+      </dt>
 
-      <p className="mt-2 text-xs font-bold leading-5 text-slate-300">
+      <dd className="mt-2 break-words text-xs font-bold leading-5 text-nexus-white">
         {value}
-      </p>
+      </dd>
     </div>
   );
 }
