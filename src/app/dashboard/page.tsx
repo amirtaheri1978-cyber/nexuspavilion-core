@@ -1,11 +1,9 @@
 import { redirect } from "next/navigation";
 import { ExecutiveHero } from "@/components/dashboard/executive-hero";
+import { ExecutiveDecisionWorkspace } from "@/components/dashboard/executive-decision-workspace";
 import { GovernanceReferenceWorkspace } from "@/components/dashboard/governance-reference-workspace";
 import { ProcurementOperationsWorkspace } from "@/components/dashboard/procurement-operations-workspace";
 import { StrategicIntelligenceWorkspace } from "@/components/dashboard/strategic-intelligence-workspace";
-import { ExecutiveMiniTile } from "@/components/rfq-workspace/shared/executive-mini-tile";
-import { ExecutiveBadge } from "@/components/executive/executive-badge";
-import { ExecutiveMetricCard } from "@/components/executive/executive-metric-card";
 import { ExecutivePanel } from "@/components/executive/executive-panel";
 import { ExecutiveCommandStripCard } from "@/components/executive/workspace/executive-command-strip-card";
 import { createClient } from "@/lib/supabase/server";
@@ -747,6 +745,110 @@ estimatedSavings
 )} in estimated savings are shaping procurement performance.`
 : "Procurement intelligence is available, but more RFQ, quote, and award data is required before board-ready recommendations can be trusted.";
 
+const executiveDecisionStatus = {
+  label: hasProcurementData ? executiveStatus : "Insufficient Data",
+  tone: hasProcurementData ? ("success" as const) : ("warning" as const),
+};
+
+const executiveDecisionMetrics =
+  experience === "vendor"
+    ? [
+        {
+          label: "Open Opportunities",
+          value: String(openRfqs),
+          tone: "blue" as const,
+        },
+        {
+          label: "Submitted Quotes",
+          value: String(submittedQuotes),
+          tone: "neutral" as const,
+        },
+        {
+          label: "Win Rate",
+          value: `${vendorWinRate}%`,
+          tone: "success" as const,
+        },
+        {
+          label: "Pipeline Value",
+          value: formatMoney(pipelineValue),
+          tone: "gold" as const,
+        },
+      ]
+    : experience === "consultant"
+      ? [
+          {
+            label: "Service RFQs",
+            value: String(serviceRfqs),
+            tone: "neutral" as const,
+          },
+          {
+            label: "Project Activity",
+            value: String(openRfqs),
+            tone: "blue" as const,
+          },
+          {
+            label: "Service Visibility",
+            value: executiveStatus,
+            tone: "gold" as const,
+          },
+          {
+            label: "Decision Data Confidence",
+            value: forecastAccuracyLabel,
+            tone: "blue" as const,
+          },
+        ]
+      : [
+          {
+            label: "RFQ Maturity",
+            value: rfqMaturityLabel,
+            tone: "neutral" as const,
+          },
+          {
+            label: "Procurement Health",
+            value: `${procurementHealthScore}%`,
+            tone: "blue" as const,
+          },
+          {
+            label: "Supplier Concentration",
+            value: supplierConcentration,
+            tone: "gold" as const,
+          },
+          {
+            label: "Executive Signals",
+            value: String(alerts.length),
+            tone: "gold" as const,
+          },
+        ];
+
+const executiveDecisionSignals = alerts.slice(0, 4).map((alert, index) => ({
+  id: `${alert.title}-${index}`,
+  rank: index + 1,
+  kind: alert.level,
+  title: alert.title,
+  description: alert.message,
+  priorityLabel:
+    alert.level === "warning"
+      ? "Executive Review Required"
+      : alert.level === "opportunity"
+        ? "Opportunity Review"
+        : "Monitoring",
+  recommendedResponse:
+    alert.level === "warning"
+      ? "Review this signal before approving the next procurement decision."
+      : alert.level === "opportunity"
+        ? "Evaluate the commercial value and decide whether this opportunity should enter the next action cycle."
+        : "Maintain current operating discipline and continue monitoring this signal.",
+}));
+
+const executiveDecisionHealth = {
+  score: hasProcurementData ? procurementHealthScore : 0,
+  status: executiveStatus,
+  riskIndex: riskIndexLabel,
+  decisionDataConfidence: forecastAccuracyLabel,
+  awardRate: `${awardRate}%`,
+  rfqMaturity: rfqMaturityLabel,
+};
+
 const boardNarrative = hasProcurementData
 ? `Current procurement activity shows ${totalRfqs} RFQs, ${submittedQuotes} supplier quotes, ${awardedRfqs} awarded RFQs, ${formatMoney(
 totalAwardedSpend
@@ -980,203 +1082,15 @@ className="mt-6"
 </div>
 </ExecutivePanel>
 
-<ExecutivePanel
-variant="executive"
-padding="lg"
-tone="gold"
-className="mt-6 bg-gradient-to-br from-[#0B3D91]/25 via-[#07111F]/95 to-[#061426]"
->
-<div className="flex flex-col gap-4 border-b border-white/10 pb-6 sm:flex-row sm:items-start sm:justify-between">
-<div>
-<p className="text-[11px] font-black uppercase tracking-[0.34em] text-[#C8A646]">
-Executive Decision Center
-</p>
-
-<h2 className="mt-4 text-3xl font-black leading-tight text-white sm:text-4xl">
-{dashboardCopy.briefTitle}
-</h2>
-
-<p className="mt-4 max-w-5xl text-sm font-semibold leading-7 text-slate-300 sm:text-base sm:leading-8">
-{executiveBriefSummary}
-</p>
-</div>
-
-<ExecutiveBadge
-  tone={hasProcurementData ? "success" : "warning"}
-  size="md"
->
-  {hasProcurementData ? executiveStatus : "Insufficient Data"}
-</ExecutiveBadge>
-</div>
-
-<div className="mt-6 grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
-<div className="min-w-0">
-<div className="rounded-[26px] border border-[#C8A646]/20 bg-[#C8A646]/[0.08] p-5 sm:p-6">
-<p className="text-[10px] font-black uppercase tracking-[0.24em] text-[#F5D77B]">
-Recommended Executive Action
-</p>
-
-<p className="mt-3 text-sm font-semibold leading-7 text-slate-200">
-{dashboardCopy.recommendation}
-</p>
-</div>
-
-<div className="mt-5 grid gap-4 sm:grid-cols-2">
-{experience === "vendor" ? (
-<>
-<ExecutiveMetricCard
-label="Open Opportunities"
-value={String(openRfqs)}
-tone="blue"
+<ExecutiveDecisionWorkspace
+  title={dashboardCopy.briefTitle}
+  summary={executiveBriefSummary}
+  recommendedAction={dashboardCopy.recommendation}
+  status={executiveDecisionStatus}
+  metrics={executiveDecisionMetrics}
+  signals={executiveDecisionSignals}
+  health={executiveDecisionHealth}
 />
-<ExecutiveMetricCard
-label="Submitted Quotes"
-value={String(submittedQuotes)}
-tone="neutral"
-/>
-<ExecutiveMetricCard
-label="Win Rate"
-value={`${vendorWinRate}%`}
-tone="success"
-/>
-<ExecutiveMetricCard
-label="Pipeline Value"
-value={formatMoney(pipelineValue)}
-tone="gold"
-/>
-</>
-) : experience === "consultant" ? (
-<>
-<ExecutiveMetricCard
-label="Service RFQs"
-value={String(serviceRfqs)}
-tone="neutral"
-/>
-<ExecutiveMetricCard
-label="Project Activity"
-value={String(openRfqs)}
-tone="blue"
-/>
-<ExecutiveMetricCard
-label="Service Visibility"
-value={executiveStatus}
-tone="gold"
-/>
-<ExecutiveMetricCard
-label="Decision Data Confidence"
-value={forecastAccuracyLabel}
-tone="blue"
-/>
-</>
-) : (
-<>
-<ExecutiveMetricCard
-label="RFQ Maturity"
-value={rfqMaturityLabel}
-tone="neutral"
-/>
-<ExecutiveMetricCard
-label="Procurement Health"
-value={`${procurementHealthScore}%`}
-tone="blue"
-/>
-<ExecutiveMetricCard
-label="Supplier Concentration"
-value={supplierConcentration}
-tone="gold"
-/>
-<ExecutiveMetricCard
-label="Executive Signals"
-value={String(alerts.length)}
-tone="gold"
-/>
-</>
-)}
-</div>
-
-<div className="mt-6">
-<div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-<div>
-<p className="text-[10px] font-black uppercase tracking-[0.28em] text-[#C8A646]">
-CEO Action Center
-</p>
-
-<h3 className="mt-3 text-2xl font-black text-white">
-Executive Decision Signals
-</h3>
-</div>
-
-<ExecutiveBadge tone="neutral" size="md">
-{alerts.length} Signals
-</ExecutiveBadge>
-</div>
-
-<div className="mt-5 grid gap-4 lg:grid-cols-2">
-{alerts.length > 0 ? (
-alerts.slice(0, 4).map((alert, index) => (
-<CeoActionCard
-key={`${alert.title}-${index}`}
-alert={alert}
-index={index}
-/>
-))
-) : (
-<div className="lg:col-span-2">
-<EmptyState message="No active executive decision signals yet." />
-</div>
-)}
-</div>
-</div>
-</div>
-
-<aside className="rounded-[30px] border border-white/10 bg-black/20 p-5 sm:p-6">
-<div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between xl:flex-col">
-<div>
-<p className="text-[10px] font-black uppercase tracking-[0.28em] text-[#C8A646]">
-Procurement Health
-</p>
-
-<h3 className="mt-3 text-2xl font-black text-white">
-Executive Operating Score
-</h3>
-</div>
-
-<ExecutiveBadge
-  tone={hasProcurementData ? "success" : "warning"}
-  size="sm"
->
-  {executiveStatus}
-</ExecutiveBadge>
-</div>
-
-<div className="mt-6 rounded-[28px] border border-[#C8A646]/20 bg-[#C8A646]/10 p-6">
-<p className="text-[11px] font-black uppercase tracking-[0.28em] text-[#F5D77B]">
-Overall Health
-</p>
-
-<p className="mt-3 text-5xl font-black tabular-nums text-white sm:text-6xl">
-{hasProcurementData ? procurementHealthScore : 0}
-<span className="text-2xl text-slate-500">/100</span>
-</p>
-
-<p className="mt-4 text-sm font-semibold leading-7 text-slate-300">
-This score combines award rate, supplier activity, awarded
-outcomes, savings signal, and RFQ classification maturity.
-</p>
-</div>
-
-<div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
-<ExecutiveMiniTile title="Risk Index" value={riskIndexLabel} />
-<ExecutiveMiniTile
-  title="Decision Data Confidence"
-  value={forecastAccuracyLabel}
-/>
-<ExecutiveMiniTile title="Award Rate" value={`${awardRate}%`} />
-<ExecutiveMiniTile title="RFQ Maturity" value={rfqMaturityLabel} />
-</div>
-</aside>
-</div>
-</ExecutivePanel>
 
 <StrategicIntelligenceWorkspace
   narrative={boardNarrative}
@@ -1205,81 +1119,3 @@ outcomes, savings signal, and RFQ classification maturity.
 );
 }
 
-function CeoActionCard({
-alert,
-index,
-}: {
-alert: WorkspaceAlert;
-index: number;
-}) {
-const priority =
-alert.level === "warning"
-? "High Priority"
-: alert.level === "opportunity"
-? "Opportunity"
-: "Healthy";
-
-const dotClass =
-alert.level === "healthy"
-? "bg-emerald-400"
-: alert.level === "opportunity"
-? "bg-yellow-400"
-: "bg-red-400";
-
-return (
-<div className="rounded-[24px] border border-white/10 bg-white/[0.045] p-5">
-<div className="flex items-start justify-between gap-4">
-<div className="flex items-center gap-3">
-<span className={`h-3 w-3 rounded-full ${dotClass}`} />
-
-<ExecutiveBadge
-  tone={
-    alert.level === "healthy"
-      ? "success"
-      : alert.level === "opportunity"
-        ? "warning"
-        : "warning"
-  }
-  size="sm"
->
-  {priority}
-</ExecutiveBadge>
-</div>
-
-<span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
-#{index + 1}
-</span>
-</div>
-
-<h3 className="mt-5 text-lg font-black leading-tight text-white">
-{alert.title}
-</h3>
-
-<p className="mt-3 text-sm font-semibold leading-7 text-slate-400">
-{alert.message}
-</p>
-
-<div className="mt-5 rounded-2xl border border-white/10 bg-black/20 p-4">
-<p className="text-[10px] font-black uppercase tracking-[0.22em] text-[#C8A646]">
-Recommended Next Step
-</p>
-
-<p className="mt-2 text-sm font-bold leading-6 text-slate-300">
-{alert.level === "warning"
-? "Review this signal before approving the next procurement decision."
-: alert.level === "opportunity"
-? "Evaluate this opportunity and decide whether it should move into the next action cycle."
-: "Maintain current operating discipline and continue monitoring this signal."}
-</p>
-</div>
-</div>
-);
-}
-
-function EmptyState({ message }: { message: string }) {
-return (
-<div className="rounded-[24px] border border-dashed border-white/15 bg-white/[0.035] p-8 text-center">
-<p className="text-sm font-bold text-slate-500">{message}</p>
-</div>
-);
-}
