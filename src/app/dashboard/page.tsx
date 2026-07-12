@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ExecutiveHero } from "@/components/dashboard/executive-hero";
+import { ProcurementOperationsWorkspace } from "@/components/dashboard/procurement-operations-workspace";
 import { ExecutiveMiniTile } from "@/components/rfq-workspace/shared/executive-mini-tile";
 import { ExecutiveBadge } from "@/components/executive/executive-badge";
 import { ExecutiveMetricCard } from "@/components/executive/executive-metric-card";
@@ -763,6 +764,57 @@ const topRfqsByBudget = [...rfqList]
 
 const recentAwards = awardedQuotes.slice(0, 5);
 
+const procurementOperationsClassification = {
+  status: procurementMixStatus,
+  description: `${procurementMixStatus}. Dominant procurement scope is ${
+    hasProcurementData ? dominantScope : "Pending"
+  }. Dominant sourcing method is ${
+    hasProcurementData ? dominantSourcing : "Pending"
+  }. Classification maturity score is ${constructionClassificationScore}/100.`,
+  scopeMetrics: [
+    { title: "Material RFQs", value: String(materialRfqs) },
+    { title: "Trade RFQs", value: String(tradeRfqs) },
+    { title: "Equipment RFQs", value: String(equipmentRfqs) },
+    { title: "Service RFQs", value: String(serviceRfqs) },
+  ],
+  sourcingMetrics: [
+    { title: "Open Market", value: String(openMarketRfqs) },
+    { title: "Invited", value: String(invitedRfqs) },
+    { title: "Sealed Bids", value: String(sealedBidRfqs) },
+    { title: "Project Specific", value: String(projectSpecificRfqs) },
+    { title: "Framework", value: String(frameworkRfqs) },
+  ],
+};
+
+const recentAwardDecisions = recentAwards.map((quote) => {
+  const relatedRfq = rfqList.find((rfq) => rfq.id === quote.rfq_id);
+
+  return {
+    id: quote.id,
+    title: relatedRfq?.title || "Awarded RFQ",
+    location: relatedRfq?.location || "Location N/A",
+    amount: formatMoney(quote.amount),
+    status: "Awarded",
+  };
+});
+
+const highestValueRfqs = topRfqsByBudget.map((rfq) => ({
+  id: rfq.id,
+  title: rfq.title || "Untitled RFQ",
+  href: rfq.slug ? `/rfq/${rfq.slug}` : "/rfq",
+  location: rfq.location || "Location N/A",
+  scope:
+    PROCUREMENT_SCOPE_LABELS[getProcurementScope(rfq.procurement_scope)],
+  sourcingMethod:
+    SOURCING_METHOD_LABELS[getSourcingMethod(rfq.sourcing_method)],
+  contractFramework:
+    CONTRACT_FRAMEWORK_LABELS[
+      getContractFramework(rfq.contract_framework)
+    ],
+  status: rfq.status || "open",
+  budget: formatMoney(rfq.budget),
+}));
+
 return (
 <main className="min-h-screen bg-[#030712] text-white">
 
@@ -1166,67 +1218,13 @@ accentClassName="text-[#F5D77B]"
 </div>
 </ExecutivePanel>
 
-<section className="mt-6 grid gap-6 xl:grid-cols-[1fr_0.85fr]">
-<div className="rounded-[32px] border border-white/10 bg-white/[0.045] p-6 shadow-inner-executive sm:p-7">
-<p className="text-[10px] font-black uppercase tracking-[0.28em] text-[#C8A646]">
-Procurement Command Center
-</p>
+<ProcurementOperationsWorkspace
+  classification={procurementOperationsClassification}
+  recentAwards={recentAwardDecisions}
+  highestValueRfqs={highestValueRfqs}
+/>
 
-<h2 className="mt-3 text-2xl font-black text-white">
-RFQ Classification Intelligence
-</h2>
-
-<p className="mt-3 max-w-4xl text-sm font-semibold leading-7 text-slate-400">
-{procurementMixStatus}. Dominant procurement scope is{" "}
-{hasProcurementData ? dominantScope : "Pending"}. Dominant
-sourcing method is {hasProcurementData ? dominantSourcing : "Pending"}.
-Classification maturity score is {constructionClassificationScore}/100.
-</p>
-
-<div className="mt-6 overflow-hidden rounded-[24px] border border-white/10 bg-white/[0.035]">
-<div className="grid md:grid-cols-2 xl:grid-cols-4">
-<ExecutiveCommandStripCard
-title="Material RFQs"
-value={String(materialRfqs)}
-/>
-<ExecutiveCommandStripCard
-title="Trade RFQs"
-value={String(tradeRfqs)}
-/>
-<ExecutiveCommandStripCard
-title="Equipment RFQs"
-value={String(equipmentRfqs)}
-/>
-<ExecutiveCommandStripCard
-title="Service RFQs"
-value={String(serviceRfqs)}
-/>
-</div>
-</div>
-
-<div className="mt-4 overflow-hidden rounded-[24px] border border-white/10 bg-white/[0.035]">
-<div className="grid md:grid-cols-2 xl:grid-cols-5">
-<ExecutiveCommandStripCard
-title="Open Market"
-value={String(openMarketRfqs)}
-/>
-<ExecutiveCommandStripCard title="Invited" value={String(invitedRfqs)} />
-<ExecutiveCommandStripCard
-title="Sealed Bids"
-value={String(sealedBidRfqs)}
-/>
-<ExecutiveCommandStripCard
-title="Project Specific"
-value={String(projectSpecificRfqs)}
-/>
-<ExecutiveCommandStripCard
-title="Framework"
-value={String(frameworkRfqs)}
-/>
-</div>
-</div>
-</div>
-
+<section className="mt-6">
 <div className="rounded-[32px] border border-white/10 bg-[#061426]/80 p-6 shadow-inner-executive sm:p-7">
 <p className="text-[10px] font-black uppercase tracking-[0.28em] text-[#C8A646]">
 {dashboardCopy.companyLabel}
@@ -1285,124 +1283,6 @@ Open Company →
 <EmptyState message="No company connected." />
 </div>
 )}
-</div>
-</section>
-
-<section className="mt-6 grid gap-6 xl:grid-cols-2">
-<div className="rounded-[32px] border border-white/10 bg-white/[0.045] p-6 shadow-inner-executive sm:p-7">
-<p className="text-[10px] font-black uppercase tracking-[0.28em] text-[#C8A646]">
-Award Activity
-</p>
-
-<h2 className="mt-3 text-2xl font-black text-white">
-Recent Award Decisions
-</h2>
-
-<div className="mt-6 space-y-4">
-{recentAwards.length > 0 ? (
-recentAwards.map((quote) => {
-const relatedRfq = rfqList.find(
-(rfq) => rfq.id === quote.rfq_id
-);
-
-return (
-<div
-key={quote.id}
-className="rounded-[24px] border border-white/10 bg-[#061426]/70 p-5"
->
-<div className="flex items-start justify-between gap-4">
-<div>
-<p className="text-lg font-black text-white">
-{relatedRfq?.title || "Awarded RFQ"}
-</p>
-
-<p className="mt-1 text-sm font-semibold text-slate-500">
-{relatedRfq?.location || "Location N/A"}
-</p>
-</div>
-
-<ExecutiveBadge tone="success" size="sm">
-  Awarded
-</ExecutiveBadge>
-</div>
-
-<p className="mt-4 text-2xl font-black text-[#C8A646]">
-{formatMoney(quote.amount)}
-</p>
-</div>
-);
-})
-) : (
-<EmptyState message="No awards have been recorded yet." />
-)}
-</div>
-</div>
-
-<div className="rounded-[32px] border border-white/10 bg-white/[0.045] p-6 shadow-inner-executive sm:p-7">
-<p className="text-[10px] font-black uppercase tracking-[0.28em] text-[#C8A646]">
-Opportunity Ranking
-</p>
-
-<h2 className="mt-3 text-2xl font-black text-white">
-Top RFQs by Budget
-</h2>
-
-<div className="mt-6 space-y-4">
-{topRfqsByBudget.length > 0 ? (
-topRfqsByBudget.map((rfq) => (
-<Link
-key={rfq.id}
-href={rfq.slug ? `/rfq/${rfq.slug}` : "/rfq"}
-className="block rounded-[24px] border border-white/10 bg-[#061426]/70 p-5 transition hover:-translate-y-1 hover:border-[#2CC4E8]/25 hover:bg-[#07111F]"
->
-<div className="flex items-start justify-between gap-4">
-<div>
-<p className="text-lg font-black text-white">
-{rfq.title || "Untitled RFQ"}
-</p>
-
-<p className="mt-1 text-sm font-semibold text-slate-500">
-{
-PROCUREMENT_SCOPE_LABELS[
-getProcurementScope(rfq.procurement_scope)
-]
-}{" "}
-· {rfq.location || "Location N/A"}
-</p>
-</div>
-
-<ExecutiveBadge tone="neutral" size="sm">
-  {rfq.status || "open"}
-</ExecutiveBadge>
-</div>
-
-<div className="mt-4 flex flex-wrap gap-2">
-<ExecutiveBadge tone="neutral" size="sm">
-  {
-    SOURCING_METHOD_LABELS[
-      getSourcingMethod(rfq.sourcing_method)
-    ]
-  }
-</ExecutiveBadge>
-
-<ExecutiveBadge tone="neutral" size="sm">
-  {
-    CONTRACT_FRAMEWORK_LABELS[
-      getContractFramework(rfq.contract_framework)
-    ]
-  }
-</ExecutiveBadge>
-</div>
-
-<p className="mt-4 text-2xl font-black text-[#C8A646]">
-{formatMoney(rfq.budget)}
-</p>
-</Link>
-))
-) : (
-<EmptyState message="No RFQs have been created yet." />
-)}
-</div>
 </div>
 </section>
 
