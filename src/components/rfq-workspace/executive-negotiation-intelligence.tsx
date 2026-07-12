@@ -15,9 +15,44 @@ type ExecutiveNegotiationIntelligenceProps = {
   budget: number;
 };
 
+type LeverageSignal = {
+  label: string;
+  value: string;
+  positive: boolean;
+};
+
 function formatMoney(value: number) {
   if (!Number.isFinite(value)) return "$0";
+
   return `$${Math.max(0, Math.round(value)).toLocaleString()}`;
+}
+
+function normalizePercentage(value: number) {
+  if (!Number.isFinite(value)) return 0;
+
+  return Math.max(0, Math.min(100, Math.round(value)));
+}
+
+function getNegotiationTone(
+  potential: number,
+): "success" | "info" | "warning" | "neutral" {
+  if (potential >= 8) return "success";
+  if (potential >= 4) return "info";
+  if (potential > 0) return "warning";
+
+  return "neutral";
+}
+
+function getSignalStatus(signal: LeverageSignal) {
+  return signal.positive
+    ? {
+        label: "Favorable",
+        tone: "success" as const,
+      }
+    : {
+        label: "Review",
+        tone: "warning" as const,
+      };
 }
 
 export function ExecutiveNegotiationIntelligence({
@@ -40,7 +75,7 @@ export function ExecutiveNegotiationIntelligence({
               Executive Negotiation Intelligence
             </p>
 
-            <h2 className="mt-3 text-3xl font-black text-nexus-white">
+            <h2 className="mt-3 text-2xl font-black tracking-tight text-nexus-white sm:text-3xl">
               Negotiation Strategy Awaiting Activation
             </h2>
 
@@ -51,9 +86,11 @@ export function ExecutiveNegotiationIntelligence({
             </p>
           </div>
 
-          <ExecutiveStatusBadge tone="warning">
-            Not Operational
-          </ExecutiveStatusBadge>
+          <div className="shrink-0">
+            <ExecutiveStatusBadge tone="warning">
+              Not Operational
+            </ExecutiveStatusBadge>
+          </div>
         </div>
 
         <div className="mt-6 grid gap-3 md:grid-cols-3">
@@ -61,10 +98,12 @@ export function ExecutiveNegotiationIntelligence({
             label="Commercial evaluation opened"
             ready={commercialEvaluationUnlocked}
           />
+
           <LockedRequirement
             label="Competitive quote data available"
             ready={quoteCount > 0}
           />
+
           <LockedRequirement
             label="Recommended supplier path established"
             ready={Boolean(recommendedQuote)}
@@ -96,14 +135,19 @@ export function ExecutiveNegotiationIntelligence({
 
   if (!negotiation) return null;
 
-  const budgetDelta = budget > 0 ? budget - recommendedQuote.amountNumber : 0;
+  const budgetDelta =
+    budget > 0 ? budget - recommendedQuote.amountNumber : 0;
+
   const isLowest =
-    lowestAmount !== null && recommendedQuote.amountNumber === lowestAmount;
+    lowestAmount !== null &&
+    recommendedQuote.amountNumber === lowestAmount;
 
   const potential =
     recommendedQuote.amountNumber > 0
-      ? Math.round(
-          (negotiation.targetImprovement / recommendedQuote.amountNumber) * 100,
+      ? normalizePercentage(
+          (negotiation.targetImprovement /
+            recommendedQuote.amountNumber) *
+            100,
         )
       : 0;
 
@@ -116,12 +160,12 @@ export function ExecutiveNegotiationIntelligence({
     {
       label: "Target Improvement",
       value: formatMoney(negotiation.targetImprovement),
-      detail: "Estimated achievable reduction",
+      detail: "Estimated achievable commercial reduction",
     },
     {
       label: "Target Price",
       value: formatMoney(negotiation.targetPrice),
-      detail: "Suggested negotiation target",
+      detail: "Recommended commercial negotiation target",
     },
     {
       label: "Savings vs Average",
@@ -129,29 +173,34 @@ export function ExecutiveNegotiationIntelligence({
         negotiation.expectedSavings > 0
           ? formatMoney(negotiation.expectedSavings)
           : "Limited",
-      detail: "Compared to average bid",
+      detail: "Relative to the current average bid position",
     },
   ];
 
-  const leverageSignals = [
+  const leverageSignals: LeverageSignal[] = [
     {
-      label: "Competition",
-      value: quoteCount >= 3 ? "Strong" : quoteCount >= 2 ? "Moderate" : "Light",
+      label: "Competitive Tension",
+      value:
+        quoteCount >= 3
+          ? "Strong"
+          : quoteCount >= 2
+            ? "Moderate"
+            : "Limited",
       positive: quoteCount >= 3,
     },
     {
       label: "Lowest Bid Position",
-      value: isLowest ? "Yes" : "No",
+      value: isLowest ? "Recommended bid is lowest" : "Not the lowest bid",
       positive: isLowest,
     },
     {
       label: "Budget Position",
       value:
         budget <= 0
-          ? "Unknown"
+          ? "Budget baseline unavailable"
           : budgetDelta >= 0
-            ? `${formatMoney(budgetDelta)} under budget`
-            : `${formatMoney(Math.abs(budgetDelta))} over budget`,
+            ? `${formatMoney(budgetDelta)} below budget`
+            : `${formatMoney(Math.abs(budgetDelta))} above budget`,
       positive: budget > 0 && budgetDelta >= 0,
     },
     {
@@ -161,87 +210,176 @@ export function ExecutiveNegotiationIntelligence({
     },
   ];
 
+  const favorableSignalCount = leverageSignals.filter(
+    (signal) => signal.positive,
+  ).length;
+
   return (
-    <section className="mt-8 overflow-hidden rounded-[40px] border border-white/10 bg-slate-950 text-white shadow-[0_30px_100px_rgba(2,6,23,0.26)]">
-      <div className="grid gap-0 lg:grid-cols-[0.9fr_1.1fr]">
-        <div className="border-b border-white/10 p-6 sm:p-8 lg:border-b-0 lg:border-r">
-          <p className="text-xs font-black uppercase tracking-[0.3em] text-[#C8A646]">
-            Executive Negotiation Intelligence
-          </p>
+    <ExecutivePanel
+      className="mt-8 overflow-hidden p-0"
+      tone="gold"
+    >
+      <section aria-labelledby="executive-negotiation-intelligence-title">
+        <div className="grid gap-0 xl:grid-cols-[0.9fr_1.1fr]">
+          <div className="border-b border-white/10 p-6 sm:p-8 xl:border-b-0 xl:border-r">
+            <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
+              <div className="min-w-0">
+                <p className="text-xs font-black uppercase tracking-[0.3em] text-nexus-gold">
+                  Executive Negotiation Intelligence
+                </p>
 
-          <h2 className="mt-3 text-3xl font-black text-white">
-            Commercial strategy before award
-          </h2>
+                <h2
+                  id="executive-negotiation-intelligence-title"
+                  className="mt-3 text-2xl font-black tracking-tight text-nexus-white sm:text-3xl"
+                >
+                  Pre-Award Commercial Strategy
+                </h2>
+              </div>
 
-          <p className="mt-4 text-sm font-semibold leading-7 text-slate-400">
-            Nexus Pavilion estimates negotiation room, leverage, target pricing,
-            and commercial strategy before executive award validation.
-          </p>
+              <div className="shrink-0">
+                <ExecutiveStatusBadge tone="success">
+                  Operational
+                </ExecutiveStatusBadge>
+              </div>
+            </div>
 
-          <div className="mt-8 rounded-[34px] border border-white/10 bg-white/[0.055] p-6">
-            <p className="text-xs font-black uppercase tracking-[0.24em] text-slate-500">
-              Recommended Strategy
+            <p className="mt-4 max-w-3xl text-sm font-semibold leading-7 text-nexus-muted">
+              This decision-support view evaluates negotiation headroom,
+              commercial leverage, target pricing, and expected savings before
+              final award authorization.
             </p>
 
-            <p className="mt-4 text-sm font-bold leading-7 text-slate-300">
-              {negotiation.recommendation}
-            </p>
-          </div>
-
-          <div className="mt-6 grid gap-4 sm:grid-cols-2">
-            {commercialSignals.map((signal) => (
-              <ExecutiveMiniTile
-                key={signal.label}
-                title={signal.label}
-                value={signal.value}
-                detail={signal.detail}
-              />
-            ))}
-          </div>
-        </div>
-
-        <div className="p-6 sm:p-8">
-          <p className="text-xs font-black uppercase tracking-[0.3em] text-cyan-300">
-            Commercial Leverage Signals
-          </p>
-
-          <h3 className="mt-3 text-3xl font-black text-white">
-            What strengthens negotiation position
-          </h3>
-
-          <div className="mt-6 grid gap-4">
-            {leverageSignals.map((signal) => (
-              <div
-                key={signal.label}
-                className="flex items-start gap-4 rounded-3xl border border-white/10 bg-white/[0.045] p-5"
-              >
-                <ExecutiveSignal positive={signal.positive} />
-
-                <div>
-                  <p className="text-sm font-black text-white">
-                    {signal.label}
+            <div className="mt-8 rounded-[34px] border border-nexus-gold/20 bg-black/25 p-5 sm:p-6">
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div className="min-w-0">
+                  <p className="text-xs font-black uppercase tracking-[0.24em] text-nexus-muted">
+                    Recommended Negotiation Strategy
                   </p>
 
-                  <p className="mt-1 text-sm font-bold leading-6 text-slate-400">
-                    {signal.value}
+                  <p className="mt-4 break-words text-sm font-bold leading-7 text-nexus-white">
+                    {negotiation.recommendation}
                   </p>
                 </div>
+
+                <ExecutiveStatusBadge
+                  tone={getNegotiationTone(potential)}
+                >
+                  {potential}% Potential
+                </ExecutiveStatusBadge>
               </div>
-            ))}
+
+              <p className="mt-5 border-t border-white/10 pt-4 text-xs font-semibold leading-5 text-nexus-muted">
+                Negotiation guidance supports authorized procurement review and
+                does not replace supplier engagement protocols, commercial
+                approval limits, or final award accountability.
+              </p>
+            </div>
+
+            <div className="mt-6 grid gap-4 sm:grid-cols-2">
+              {commercialSignals.map((signal) => (
+                <ExecutiveMiniTile
+                  key={signal.label}
+                  title={signal.label}
+                  value={signal.value}
+                  detail={signal.detail}
+                />
+              ))}
+            </div>
           </div>
 
-          <div className="mt-6 rounded-[32px] border border-cyan-300/15 bg-cyan-400/[0.07] p-6">
-            <p className="text-xs font-black uppercase tracking-[0.24em] text-cyan-300">
-              Executive Negotiation Brief
+          <div className="min-w-0 p-6 sm:p-8">
+            <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
+              <div className="min-w-0">
+                <p className="text-xs font-black uppercase tracking-[0.3em] text-nexus-gold">
+                  Commercial Leverage Signals
+                </p>
+
+                <h3 className="mt-3 text-2xl font-black tracking-tight text-nexus-white sm:text-3xl">
+                  Negotiation Position Assessment
+                </h3>
+              </div>
+
+              <div className="shrink-0">
+                <ExecutiveStatusBadge
+                  tone={
+                    favorableSignalCount >= 3
+                      ? "success"
+                      : favorableSignalCount >= 2
+                        ? "info"
+                        : "warning"
+                  }
+                >
+                  {favorableSignalCount} of {leverageSignals.length} Favorable
+                </ExecutiveStatusBadge>
+              </div>
+            </div>
+
+            <p className="mt-3 max-w-3xl text-sm font-semibold leading-7 text-nexus-muted">
+              These signals indicate where competitive tension, bid position,
+              budget alignment, and supplier risk strengthen or constrain the
+              current negotiation strategy.
             </p>
 
-            <p className="mt-4 text-sm font-bold leading-7 text-slate-300">
-              {negotiation.recommendation}
-            </p>
+            <div className="mt-6 grid gap-4">
+              {leverageSignals.map((signal) => {
+                const signalStatus = getSignalStatus(signal);
+
+                return (
+                  <article
+                    key={signal.label}
+                    className="flex min-w-0 items-start gap-4 rounded-3xl border border-white/10 bg-white/[0.045] p-5 transition duration-300 hover:border-white/15 hover:bg-white/[0.06]"
+                  >
+                    <div className="shrink-0 pt-0.5">
+                      <ExecutiveSignal positive={signal.positive} />
+                    </div>
+
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                        <div className="min-w-0">
+                          <h4 className="break-words text-sm font-black text-nexus-white">
+                            {signal.label}
+                          </h4>
+
+                          <p className="mt-2 break-words text-sm font-bold leading-6 text-nexus-muted">
+                            {signal.value}
+                          </p>
+                        </div>
+
+                        <div className="shrink-0 self-start">
+                          <ExecutiveStatusBadge tone={signalStatus.tone}>
+                            {signalStatus.label}
+                          </ExecutiveStatusBadge>
+                        </div>
+                      </div>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+
+            <div className="mt-6 rounded-[32px] border border-nexus-gold/20 bg-black/20 p-5 sm:p-6">
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div className="min-w-0">
+                  <p className="text-xs font-black uppercase tracking-[0.24em] text-nexus-muted">
+                    Executive Negotiation Brief
+                  </p>
+
+                  <p className="mt-4 break-words text-sm font-bold leading-7 text-nexus-white">
+                    {negotiation.recommendation}
+                  </p>
+                </div>
+
+                <ExecutiveStatusBadge
+                  tone={getNegotiationTone(potential)}
+                >
+                  {negotiation.status}
+                </ExecutiveStatusBadge>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-    </section>
+      </section>
+    </ExecutivePanel>
   );
 }
 
@@ -259,9 +397,11 @@ function LockedRequirement({
       tone={ready ? "success" : "neutral"}
     >
       <div className="flex items-start gap-3">
-        <ExecutiveSignal positive={ready} />
+        <div className="shrink-0 pt-0.5">
+          <ExecutiveSignal positive={ready} />
+        </div>
 
-        <p className="text-sm font-bold leading-6 text-nexus-muted">
+        <p className="break-words text-sm font-bold leading-6 text-nexus-muted">
           {label}
         </p>
       </div>
