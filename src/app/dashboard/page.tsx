@@ -996,95 +996,122 @@ outcomes, savings signal, and RFQ classification maturity.
 </div>
 </ExecutivePanel>
 
-<section className="mt-6 grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-<div className="rounded-[32px] border border-white/10 bg-white/[0.045] p-6 shadow-inner-executive sm:p-7">
-<div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+<ExecutivePanel
+variant="boardroom"
+padding="lg"
+tone="gold"
+className="mt-8"
+>
+<div className="flex flex-col gap-4 border-b border-white/10 pb-6 sm:flex-row sm:items-start sm:justify-between">
 <div>
 <p className="text-[10px] font-black uppercase tracking-[0.28em] text-[#C8A646]">
-Boardroom Intelligence
+Strategic Intelligence
 </p>
 
-<h2 className="mt-3 text-2xl font-black text-white">
-Board Summary Narrative
+<h2 className="mt-3 text-3xl font-black leading-tight text-white sm:text-4xl">
+Boardroom Procurement Position
 </h2>
+
+<p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-400">
+Leadership interpretation of procurement performance, commercial exposure,
+data confidence, and recommended executive response.
+</p>
 </div>
 
 <ExecutiveBadge
-  tone={hasProcurementData ? "success" : "warning"}
-  size="sm"
+  tone={hasProcurementData ? "board" : "warning"}
+  size="md"
 >
-  {hasProcurementData ? "Available" : "Insufficient Data"}
+  {hasProcurementData ? "Board Intelligence Available" : "Insufficient Decision Data"}
 </ExecutiveBadge>
 </div>
 
-<p className="mt-5 text-sm font-semibold leading-7 text-slate-300">
+<div className="mt-6 grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
+<div className="min-w-0">
+<div className="rounded-[30px] border border-[#C8A646]/20 bg-[#C8A646]/[0.07] p-6 sm:p-7">
+<p className="text-[10px] font-black uppercase tracking-[0.28em] text-[#F5D77B]">
+Board Summary Narrative
+</p>
+
+<p className="mt-4 text-base font-semibold leading-8 text-slate-200">
 {boardNarrative}
 </p>
+</div>
 
-<div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-<ExecutiveMiniTile title="RFQs" value={String(totalRfqs)} />
-<ExecutiveMiniTile
-title="Supplier Quotes"
-value={String(submittedQuotes)}
+<div className="mt-5 overflow-hidden rounded-[24px] border border-white/10 bg-white/[0.035]">
+<div className="grid sm:grid-cols-2 xl:grid-cols-4">
+<ExecutiveCommandStripCard title="RFQs" value={String(totalRfqs)} />
+<ExecutiveCommandStripCard
+  title="Supplier Quotes"
+  value={String(submittedQuotes)}
 />
-<ExecutiveMiniTile title="Awarded RFQs" value={String(awardedRfqs)} />
-<ExecutiveMiniTile title="Open RFQs" value={String(openRfqs)} />
+<ExecutiveCommandStripCard
+  title="Awarded RFQs"
+  value={String(awardedRfqs)}
+/>
+<ExecutiveCommandStripCard title="Open RFQs" value={String(openRfqs)} />
+</div>
 </div>
 </div>
 
-<div className="rounded-[32px] border border-[#2CC4E8]/15 bg-[#061426]/80 p-6 shadow-inner-executive sm:p-7">
-<p className="text-[10px] font-black uppercase tracking-[0.28em] text-[#C8A646]">
-AI Executive Recommendations
+<aside className="rounded-[30px] border border-[#2CC4E8]/15 bg-[#2CC4E8]/[0.045] p-5 sm:p-6">
+<p className="text-[10px] font-black uppercase tracking-[0.28em] text-[#9BE8F8]">
+Executive Recommendation Signals
 </p>
 
-<h2 className="mt-3 text-2xl font-black text-white">
-Procurement Action Suggestions
-</h2>
+<h3 className="mt-3 text-2xl font-black text-white">
+Procurement Response Priorities
+</h3>
 
-<div className="mt-6 space-y-4">
-{aiRecommendations.map((item) => (
+<p className="mt-3 text-sm font-semibold leading-7 text-slate-400">
+Analytical recommendations supporting leadership review. These signals require
+executive validation before procurement action is approved.
+</p>
+
+<div className="mt-5 space-y-3">
+{aiRecommendations.map((item, index) => (
 <div
 key={item.title}
-className="rounded-[24px] border border-white/10 bg-white/[0.045] p-5"
+className="rounded-[22px] border border-white/10 bg-black/20 p-4"
 >
-<div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-<h3 className="text-lg font-black text-white">
+<div className="flex items-start justify-between gap-3">
+<div className="min-w-0">
+<p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
+Priority {index + 1}
+</p>
+
+<h4 className="mt-2 text-base font-black leading-tight text-white">
 {item.title}
-</h3>
+</h4>
+</div>
 
 <ExecutiveBadge tone="blue" size="sm">
   {item.value}
 </ExecutiveBadge>
 </div>
 
-<p className="mt-3 text-sm font-semibold leading-7 text-slate-400">
+<p className="mt-3 text-sm font-semibold leading-6 text-slate-400">
 {item.detail}
 </p>
 </div>
 ))}
 </div>
+</aside>
 </div>
-</section>
 
-<ExecutivePanel
-variant="operational"
-padding="md"
-tone="blue"
-className="mt-6"
->
+<div className="mt-8 border-t border-white/10 pt-7">
 <div>
-<p className="text-[10px] font-black uppercase tracking-[0.28em] text-[#C8A646]">
-Executive Command Metrics
+<p className="text-[10px] font-black uppercase tracking-[0.28em] text-[#9BE8F8]">
+Supporting Executive Metrics
 </p>
 
-<h2 className="mt-3 text-2xl font-black text-white">
-Procurement Performance Position
-</h2>
+<h3 className="mt-3 text-2xl font-black text-white">
+Procurement Performance Evidence
+</h3>
 
 <p className="mt-3 max-w-4xl text-sm font-semibold leading-7 text-slate-400">
-Verified portfolio metrics summarizing awarded spend, budget variance,
-conversion, operating movement, budget utilization, supplier concentration,
-and current RFQ activity.
+Verified portfolio measures supporting the board narrative and executive
+recommendation signals above.
 </p>
 </div>
 
@@ -1127,15 +1154,15 @@ accentClassName="text-[#F5D77B]"
 />
 </div>
 
-<div className="mt-4 grid sm:grid-cols-2">
+<div className="mt-4 overflow-hidden rounded-[24px] border border-white/10 bg-white/[0.035]">
+<div className="grid sm:grid-cols-2">
 <ExecutiveCommandStripCard
- title="Supplier Concentration"
- value={supplierConcentration}
+  title="Supplier Concentration"
+  value={supplierConcentration}
 />
-<ExecutiveCommandStripCard
- title="Open RFQs"
- value={String(openRfqs)}
-/>
+<ExecutiveCommandStripCard title="Open RFQs" value={String(openRfqs)} />
+</div>
+</div>
 </div>
 </ExecutivePanel>
 
