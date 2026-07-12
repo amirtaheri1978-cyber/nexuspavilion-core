@@ -2,6 +2,7 @@ import type {
   AccessibleRfq,
   ProcurementRfq,
   RfqAccessReason,
+  RfqParticipantRole,
 } from "@/lib/procurement/rfq-access-contract";
 import type { ProcurementContext } from "@/lib/procurement/procurement-context-repository";
 
@@ -9,6 +10,7 @@ export type MarketplaceMode = "buyer" | "supplier";
 
 export type MarketplaceRecord = {
   rfq: ProcurementRfq;
+  participantRole: RfqParticipantRole;
   accessReason: RfqAccessReason;
   canManage: boolean;
   canSubmitQuote: boolean;
@@ -140,6 +142,7 @@ function getHealthLabel({
 function toSupplierRecord(item: AccessibleRfq): MarketplaceRecord {
   return {
     rfq: item.rfq,
+    participantRole: item.participantRole,
     accessReason: item.accessReason,
     canManage: item.canManage,
     canSubmitQuote: item.canSubmitQuote,
@@ -150,6 +153,7 @@ function toSupplierRecord(item: AccessibleRfq): MarketplaceRecord {
 function toBuyerRecord(rfq: ProcurementRfq): MarketplaceRecord {
   return {
     rfq,
+    participantRole: "issuer",
     accessReason: "owned",
     canManage: true,
     canSubmitQuote: false,
@@ -278,6 +282,7 @@ export function buildProcurementMarketplaceViewModel(
       : context.supplier.unsuccessfulQuotes.length;
 
   const totalBudget = getTotalBudget(records);
+
   const health = getHealthLabel({
     total: records.length,
     open: openCount,
@@ -349,13 +354,19 @@ export function buildProcurementMarketplaceViewModel(
     records,
     hero: {
       primaryLabel:
-        mode === "supplier" ? "Open Opportunities" : "Owned RFQs",
+        mode === "supplier"
+          ? "Open Opportunities"
+          : "Owned RFQs",
       primaryValue: String(
-        mode === "supplier" ? openCount : records.length,
+        mode === "supplier"
+          ? openCount
+          : records.length,
       ),
       health,
       openLabel:
-        mode === "supplier" ? "Active Opportunity Pipeline" : "Open RFQs",
+        mode === "supplier"
+          ? "Active Opportunity Pipeline"
+          : "Open RFQs",
       openValue: String(openCount),
       budgetLabel:
         mode === "supplier"

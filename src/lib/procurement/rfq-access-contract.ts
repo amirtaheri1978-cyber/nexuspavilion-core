@@ -25,6 +25,10 @@ export type RfqAccessReason =
   | "company_invitation"
   | "existing_participation";
 
+export type RfqParticipantRole =
+  | "issuer"
+  | "respondent";
+
 export type ProcurementRfq = {
   id: string;
   slug: string | null;
@@ -60,6 +64,7 @@ export type ProcurementRfqInvite = {
 
 export type AccessibleRfq = {
   rfq: ProcurementRfq;
+  participantRole: RfqParticipantRole;
   accessReason: RfqAccessReason;
   canView: boolean;
   canSubmitQuote: boolean;
@@ -118,6 +123,7 @@ export function resolveSupplierRfqAccess({
   if (currentCompanyId && rfq.company_id === currentCompanyId) {
     return {
       rfq,
+      participantRole: "issuer",
       accessReason: "owned",
       canView: true,
       canSubmitQuote: false,
@@ -129,6 +135,7 @@ export function resolveSupplierRfqAccess({
   if (isPublicSourcingMethod(rfq.sourcing_method)) {
     return {
       rfq,
+      participantRole: "respondent",
       accessReason: "public",
       canView: true,
       canSubmitQuote: true,
@@ -143,6 +150,7 @@ export function resolveSupplierRfqAccess({
   ) {
     return {
       rfq,
+      participantRole: "respondent",
       accessReason: "direct_invitation",
       canView: true,
       canSubmitQuote: true,
@@ -158,6 +166,7 @@ export function resolveSupplierRfqAccess({
   ) {
     return {
       rfq,
+      participantRole: "respondent",
       accessReason: "company_invitation",
       canView: true,
       canSubmitQuote: true,
@@ -173,6 +182,7 @@ export function resolveSupplierRfqAccess({
   ) {
     return {
       rfq,
+      participantRole: "respondent",
       accessReason: "existing_participation",
       canView: true,
       canSubmitQuote: true,
