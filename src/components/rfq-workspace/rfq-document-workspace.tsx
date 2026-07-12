@@ -32,6 +32,10 @@ export function RFQDocumentWorkspace({
   addenda,
   acknowledgements,
 }: RFQDocumentWorkspaceProps) {
+  const participantRoleLabel = isOwner
+    ? "Issuing Organization"
+    : "Responding Organization";
+
   return (
     <ExecutivePanel
       id="document-center"
@@ -77,8 +81,8 @@ export function RFQDocumentWorkspace({
             />
 
             <ExecutiveMetricCard
-              label="Workspace Role"
-              value={isOwner ? "Buyer" : "Supplier"}
+              label="RFQ Role"
+              value={participantRoleLabel}
               tone={isOwner ? "success" : "blue"}
             />
           </div>
@@ -93,7 +97,7 @@ export function RFQDocumentWorkspace({
           >
             <section aria-labelledby="rfq-document-upload-title">
               <div className="mb-6 min-w-0">
-                <p className="text-xs font-black uppercase tracking-[0.25em] text-nexus-blue">
+                <p className="text-xs font-black uppercase tracking-[0.25em] text-nexus-gold">
                   Upload Center
                 </p>
 
