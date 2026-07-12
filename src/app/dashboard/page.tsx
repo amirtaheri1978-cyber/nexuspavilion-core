@@ -2,11 +2,11 @@ import { redirect } from "next/navigation";
 import { ExecutiveHero } from "@/components/dashboard/executive-hero";
 import { GovernanceReferenceWorkspace } from "@/components/dashboard/governance-reference-workspace";
 import { ProcurementOperationsWorkspace } from "@/components/dashboard/procurement-operations-workspace";
+import { StrategicIntelligenceWorkspace } from "@/components/dashboard/strategic-intelligence-workspace";
 import { ExecutiveMiniTile } from "@/components/rfq-workspace/shared/executive-mini-tile";
 import { ExecutiveBadge } from "@/components/executive/executive-badge";
 import { ExecutiveMetricCard } from "@/components/executive/executive-metric-card";
 import { ExecutivePanel } from "@/components/executive/executive-panel";
-import { ExecutiveCommandMetric } from "@/components/executive/workspace/executive-command-metric";
 import { ExecutiveCommandStripCard } from "@/components/executive/workspace/executive-command-strip-card";
 import { createClient } from "@/lib/supabase/server";
 
@@ -753,6 +753,70 @@ totalAwardedSpend
 )} in awarded spend, and ${forecastAccuracy}% forecast confidence. Supplier concentration is ${supplierConcentration.toLowerCase()}, and the current executive status is ${executiveStatus.toLowerCase()}.`
 : "Status: Insufficient Data. Create RFQs, receive supplier quotes, and record award outcomes before presenting procurement recommendations to executives or the board.";
 
+const strategicAvailability = {
+  label: hasProcurementData
+    ? "Board Intelligence Available"
+    : "Insufficient Decision Data",
+  tone: hasProcurementData ? ("board" as const) : ("warning" as const),
+};
+
+const strategicPortfolioSignals = [
+  { title: "RFQs", value: String(totalRfqs) },
+  { title: "Supplier Quotes", value: String(submittedQuotes) },
+  { title: "Awarded RFQs", value: String(awardedRfqs) },
+  { title: "Open RFQs", value: String(openRfqs) },
+];
+
+const strategicRecommendations = aiRecommendations.map((item, index) => ({
+  id: `${item.title}-${index}`,
+  rank: index + 1,
+  title: item.title,
+  value: item.value,
+  detail: item.detail,
+}));
+
+const strategicPrimaryMetrics = [
+  {
+    label: "Awarded Spend",
+    value: formatMoney(totalAwardedSpend),
+    insight: "Awarded procurement spend recorded across current RFQs.",
+    tone: "gold" as const,
+  },
+  {
+    label: "Potential Budget Variance",
+    value: hasProcurementData ? formatMoney(estimatedSavings) : "Pending",
+    insight:
+      "Current budget-to-award difference; not a validated savings measure.",
+    tone: "gold" as const,
+  },
+];
+
+const strategicOperatingMetrics = [
+  {
+    title: "Award Rate",
+    value: `${awardRate}%`,
+    detail: "Awarded RFQs relative to total RFQ activity.",
+    accentClassName: "text-emerald-300",
+  },
+  {
+    title: "Procurement Velocity",
+    value: `${procurementVelocity}%`,
+    detail: "Current award progression across the RFQ portfolio.",
+    accentClassName: "text-[#9BE8F8]",
+  },
+  {
+    title: "Budget Utilization",
+    value: `${budgetUtilization}%`,
+    detail: "Awarded spend relative to the current planned budget.",
+    accentClassName: "text-[#F5D77B]",
+  },
+];
+
+const strategicSupportingSignals = [
+  { title: "Supplier Concentration", value: supplierConcentration },
+  { title: "Open RFQs", value: String(openRfqs) },
+];
+
 const readinessTone =
 readinessScore >= 85 ? "success" : readinessScore >= 55 ? "warning" : "blue";
 
@@ -1114,175 +1178,15 @@ outcomes, savings signal, and RFQ classification maturity.
 </div>
 </ExecutivePanel>
 
-<ExecutivePanel
-variant="boardroom"
-padding="lg"
-tone="gold"
-className="mt-8"
->
-<div className="flex flex-col gap-4 border-b border-white/10 pb-6 sm:flex-row sm:items-start sm:justify-between">
-<div>
-<p className="text-[10px] font-black uppercase tracking-[0.28em] text-[#C8A646]">
-Strategic Intelligence
-</p>
-
-<h2 className="mt-3 text-3xl font-black leading-tight text-white sm:text-4xl">
-Boardroom Procurement Position
-</h2>
-
-<p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-400">
-Leadership interpretation of procurement performance, commercial exposure,
-data confidence, and recommended executive response.
-</p>
-</div>
-
-<ExecutiveBadge
-  tone={hasProcurementData ? "board" : "warning"}
-  size="md"
->
-  {hasProcurementData ? "Board Intelligence Available" : "Insufficient Decision Data"}
-</ExecutiveBadge>
-</div>
-
-<div className="mt-6 grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
-<div className="min-w-0">
-<div className="rounded-[30px] border border-[#C8A646]/20 bg-[#C8A646]/[0.07] p-6 sm:p-7">
-<p className="text-[10px] font-black uppercase tracking-[0.28em] text-[#F5D77B]">
-Board Summary Narrative
-</p>
-
-<p className="mt-4 text-base font-semibold leading-8 text-slate-200">
-{boardNarrative}
-</p>
-</div>
-
-<div className="mt-5 overflow-hidden rounded-[24px] border border-white/10 bg-white/[0.035]">
-<div className="grid sm:grid-cols-2 xl:grid-cols-4">
-<ExecutiveCommandStripCard title="RFQs" value={String(totalRfqs)} />
-<ExecutiveCommandStripCard
-  title="Supplier Quotes"
-  value={String(submittedQuotes)}
+<StrategicIntelligenceWorkspace
+  narrative={boardNarrative}
+  availability={strategicAvailability}
+  portfolioSignals={strategicPortfolioSignals}
+  recommendations={strategicRecommendations}
+  primaryMetrics={strategicPrimaryMetrics}
+  operatingMetrics={strategicOperatingMetrics}
+  supportingSignals={strategicSupportingSignals}
 />
-<ExecutiveCommandStripCard
-  title="Awarded RFQs"
-  value={String(awardedRfqs)}
-/>
-<ExecutiveCommandStripCard title="Open RFQs" value={String(openRfqs)} />
-</div>
-</div>
-</div>
-
-<aside className="rounded-[30px] border border-[#2CC4E8]/15 bg-[#2CC4E8]/[0.045] p-5 sm:p-6">
-<p className="text-[10px] font-black uppercase tracking-[0.28em] text-[#9BE8F8]">
-Executive Recommendation Signals
-</p>
-
-<h3 className="mt-3 text-2xl font-black text-white">
-Procurement Response Priorities
-</h3>
-
-<p className="mt-3 text-sm font-semibold leading-7 text-slate-400">
-Analytical recommendations supporting leadership review. These signals require
-executive validation before procurement action is approved.
-</p>
-
-<div className="mt-5 space-y-3">
-{aiRecommendations.map((item, index) => (
-<div
-key={item.title}
-className="rounded-[22px] border border-white/10 bg-black/20 p-4"
->
-<div className="flex items-start justify-between gap-3">
-<div className="min-w-0">
-<p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
-Priority {index + 1}
-</p>
-
-<h4 className="mt-2 text-base font-black leading-tight text-white">
-{item.title}
-</h4>
-</div>
-
-<ExecutiveBadge tone="blue" size="sm">
-  {item.value}
-</ExecutiveBadge>
-</div>
-
-<p className="mt-3 text-sm font-semibold leading-6 text-slate-400">
-{item.detail}
-</p>
-</div>
-))}
-</div>
-</aside>
-</div>
-
-<div className="mt-8 border-t border-white/10 pt-7">
-<div>
-<p className="text-[10px] font-black uppercase tracking-[0.28em] text-[#9BE8F8]">
-Supporting Executive Metrics
-</p>
-
-<h3 className="mt-3 text-2xl font-black text-white">
-Procurement Performance Evidence
-</h3>
-
-<p className="mt-3 max-w-4xl text-sm font-semibold leading-7 text-slate-400">
-Verified portfolio measures supporting the board narrative and executive
-recommendation signals above.
-</p>
-</div>
-
-<div className="mt-6 grid gap-4 lg:grid-cols-2">
-<ExecutiveMetricCard
-label="Awarded Spend"
-value={formatMoney(totalAwardedSpend)}
-insight="Awarded procurement spend recorded across current RFQs."
-tone="gold"
-/>
-
-<ExecutiveMetricCard
-label="Potential Budget Variance"
-value={hasProcurementData ? formatMoney(estimatedSavings) : "Pending"}
-insight="Current budget-to-award difference; not a validated savings measure."
-tone="gold"
-/>
-</div>
-
-<div className="mt-4 grid gap-4 md:grid-cols-3">
-<ExecutiveCommandMetric
-title="Award Rate"
-value={`${awardRate}%`}
-detail="Awarded RFQs relative to total RFQ activity."
-accentClassName="text-emerald-300"
-/>
-
-<ExecutiveCommandMetric
-title="Procurement Velocity"
-value={`${procurementVelocity}%`}
-detail="Current award progression across the RFQ portfolio."
-accentClassName="text-[#9BE8F8]"
-/>
-
-<ExecutiveCommandMetric
-title="Budget Utilization"
-value={`${budgetUtilization}%`}
-detail="Awarded spend relative to the current planned budget."
-accentClassName="text-[#F5D77B]"
-/>
-</div>
-
-<div className="mt-4 overflow-hidden rounded-[24px] border border-white/10 bg-white/[0.035]">
-<div className="grid sm:grid-cols-2">
-<ExecutiveCommandStripCard
-  title="Supplier Concentration"
-  value={supplierConcentration}
-/>
-<ExecutiveCommandStripCard title="Open RFQs" value={String(openRfqs)} />
-</div>
-</div>
-</div>
-</ExecutivePanel>
 
 <ProcurementOperationsWorkspace
   classification={procurementOperationsClassification}
