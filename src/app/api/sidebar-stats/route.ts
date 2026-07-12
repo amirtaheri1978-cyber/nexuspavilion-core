@@ -1,73 +1,99 @@
 import { NextResponse } from "next/server";
 
+import {
+  getProcurementContext,
+  ProcurementContextError,
+} from "@/lib/procurement/procurement-context-repository";
 import { createClient } from "@/lib/supabase/server";
 
+type SidebarStats = {
+  activeRfqs: number;
+  unreadNotifications: number;
+  awardedContracts: number;
+  supplierQuotes: number;
+  experience: "buyer" | "supplier" | "consultant" | "hybrid";
+};
+
+const EMPTY_STATS: SidebarStats = {
+  activeRfqs: 0,
+  unreadNotifications: 0,
+  awardedContracts: 0,
+  supplierQuotes: 0,
+  experience: "buyer",
+};
+
+function getRoleSpecificStats(
+  context: Awaited<ReturnType<typeof getProcurementContext>>,
+) {
+  const { experience, buyer, supplier } = context;
+
+  if (
+    experience.mode === "supplier" ||
+    experience.mode === "consultant"
+  ) {
+    return {
+      activeRfqs: supplier.openOpportunities.length,
+      awardedContracts: supplier.awardedQuotes.length,
+      supplierQuotes: supplier.submittedQuotes.length,
+    };
+  }
+
+  if (experience.mode === "hybrid") {
+    return {
+      activeRfqs: supplier.openOpportunities.length,
+      awardedContracts: supplier.awardedQuotes.length,
+      supplierQuotes: supplier.submittedQuotes.length,
+    };
+  }
+
+  return {
+    activeRfqs: buyer.openOwnedRfqs.length,
+    awardedContracts: buyer.issuedAwards.length,
+    supplierQuotes: buyer.receivedQuotes.length,
+  };
+}
+
 export async function GET() {
-const supabase = await createClient();
+  try {
+    const context = await getProcurementContext();
+    const supabase = await createClient();
 
-const {
-data: { user },
-} = await supabase.auth.getUser();
+    const { data: notifications, error: notificationsError } =
+      context.identity.companyId
+        ? await supabase
+            .from("notifications")
+            .select("id, is_read")
+            .eq("company_id", context.identity.companyId)
+        : { data: [], error: null };
 
-if (!user) {
-return NextResponse.json({
-activeRfqs: 0,
-unreadNotifications: 0,
-awardedContracts: 0,
-supplierQuotes: 0,
-});
-}
+    if (notificationsError) {
+      console.error(
+        "[Sidebar Stats] Unable to load notifications",
+        notificationsError,
+      );
+    }
 
-const { data: profile } = await supabase
-.from("profiles")
-.select("id, company_id, role")
-.eq("id", user.id)
-.maybeSingle();
+    const roleSpecificStats = getRoleSpecificStats(context);
 
-if (!profile?.company_id) {
-return NextResponse.json({
-activeRfqs: 0,
-unreadNotifications: 0,
-awardedContracts: 0,
-supplierQuotes: 0,
-});
-}
+    const unreadNotifications =
+      notifications?.filter((notification) => !notification.is_read)
+        .length ?? 0;
 
-const { data: rfqs } = await supabase
-.from("rfqs")
-.select("id, status")
-.eq("company_id", profile.company_id);
+    return NextResponse.json({
+      ...roleSpecificStats,
+      unreadNotifications,
+      experience: context.experience.mode,
+    } satisfies SidebarStats);
+  } catch (error) {
+    if (error instanceof ProcurementContextError) {
+      console.error("[Sidebar Stats] Procurement context failure", {
+        message: error.message,
+        cause: error.causeDetails,
+      });
+    } else {
+      console.error("[Sidebar Stats] Unexpected failure", error);
+    }
 
-const rfqIds = (rfqs ?? []).map((rfq) => rfq.id);
-
-const { data: quotes } =
-rfqIds.length > 0
-? await supabase
-.from("quotes")
-.select("id, decision")
-.in("rfq_id", rfqIds)
-: { data: [] };
-
-const { data: notifications } = await supabase
-.from("notifications")
-.select("id, is_read")
-.eq("company_id", profile.company_id);
-
-const activeRfqs =
-rfqs?.filter((rfq) => !rfq.status || rfq.status === "open").length ?? 0;
-
-const awardedContracts =
-quotes?.filter((quote) => quote.decision === "awarded").length ?? 0;
-
-const supplierQuotes = quotes?.length ?? 0;
-
-const unreadNotifications =
-notifications?.filter((notification) => !notification.is_read).length ?? 0;
-
-return NextResponse.json({
-activeRfqs,
-unreadNotifications,
-awardedContracts,
-supplierQuotes,
-});
+    return NextResponse.json(EMPTY_STATS, { status: 500 });
+  }
 }
