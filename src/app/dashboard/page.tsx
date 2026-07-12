@@ -1118,4 +1118,3 @@ className="mt-6"
 </main>
 );
 }
-
