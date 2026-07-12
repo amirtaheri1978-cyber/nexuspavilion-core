@@ -1132,7 +1132,7 @@ amountNumber: awardedQuote.amountNumber,
 
 return (
 <main className="min-h-screen bg-[#061426] px-4 py-8 text-white sm:px-6 lg:px-8 lg:py-10">
-<div className="mx-auto max-w-7xl">
+<div className="mx-auto w-full max-w-[1680px]">
 <RFQCommandCenter
   statusLabel={
     deadlinePassed
@@ -1246,7 +1246,7 @@ return (
 </div>
 </section>
 
-<section className="mt-8 grid gap-6 lg:grid-cols-[1fr_0.85fr]">
+<section className="mt-8 space-y-8">
   <RFQProcurementContext
     description={getProcurementFitMessage(rfq)}
     sourcingLabel={getSourcingLabel(rfq.sourcing_method)}
@@ -1503,6 +1503,5 @@ submission data.
 </ExecutivePanel>
 );
 }
-
 
 

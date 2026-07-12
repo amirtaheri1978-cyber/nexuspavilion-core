@@ -1,6 +1,11 @@
-import Link from "next/link";
 
+import { ExecutiveMetricCard } from "@/components/executive/executive-metric-card";
+import { ExecutivePanel } from "@/components/executive/executive-panel";
+import { ExecutiveActionAnchor } from "@/components/executive/actions/executive-action-anchor";
+import { ExecutiveActionLink } from "@/components/executive/actions/executive-action-link";
+import { ExecutiveMiniTile } from "@/components/rfq-workspace/shared/executive-mini-tile";
 import { ExecutiveSignal } from "@/components/rfq-workspace/shared/executive-signal";
+import { ExecutiveStatusBadge } from "@/components/rfq-workspace/shared/executive-status-badge";
 import { buildExecutiveIntelligence } from "@/lib/executive/executive-engine";
 
 type ExecutiveDecisionCenterProps = {
@@ -28,8 +33,15 @@ type ExecutiveDecisionCenterProps = {
     | null;
 };
 
+type ChecklistItem = {
+  label: string;
+  complete: boolean;
+};
+
 function formatMoney(value: number) {
-  if (!Number.isFinite(value)) return "$0";
+  if (!Number.isFinite(value)) {
+    return "$0";
+  }
 
   return `$${Math.max(value, 0).toLocaleString()}`;
 }
@@ -48,7 +60,7 @@ function getChecklist({
   documentCount: number;
   addendaCount: number;
   healthScore: number;
-}) {
+}): ChecklistItem[] {
   return [
     {
       label: "Comparative evaluation available",
@@ -121,109 +133,138 @@ export function ExecutiveDecisionCenter({
   });
 
   return (
-    <section className="mt-8 overflow-hidden rounded-[40px] border border-white/10 bg-slate-950 text-white shadow-[0_30px_100px_rgba(2,6,23,0.26)]">
-      <div className="grid gap-0 lg:grid-cols-[1.05fr_0.95fr]">
-        <div className="relative min-w-0 overflow-hidden p-6 sm:p-8">
-          <div className="absolute right-0 top-0 h-72 w-72 rounded-full bg-cyan-400/10 blur-3xl" />
-          <div className="absolute bottom-0 left-0 h-72 w-72 rounded-full bg-orange-400/10 blur-3xl" />
+    <ExecutivePanel
+      className="mt-8"
+      padding="lg"
+      tone="gold"
+    >
+      <div className="flex flex-col gap-6 xl:flex-row xl:items-start xl:justify-between">
+        <div className="min-w-0">
+          <p className="text-xs font-black uppercase tracking-[0.32em] text-nexus-gold">
+            Executive Decision Center
+          </p>
 
-          <div className="relative">
-            <p className="text-xs font-black uppercase tracking-[0.32em] text-[#C8A646]">
-              Executive Decision Center
-            </p>
+          <h2 className="mt-4 max-w-4xl text-3xl font-black leading-tight text-nexus-white sm:text-4xl">
+            Executive Award Path and Decision Readiness
+          </h2>
 
-            <div className="mt-4 flex flex-wrap items-center gap-3">
-              <span className="rounded-full border border-white/10 bg-white/10 px-4 py-2 text-xs font-black uppercase tracking-[0.16em] text-white">
-                {executive.recommendation.status}
-              </span>
-
-              <span className="rounded-full border border-cyan-300/20 bg-cyan-400/10 px-4 py-2 text-xs font-black uppercase tracking-[0.16em] text-cyan-300">
-                Readiness {executive.readiness.score}%
-              </span>
-            </div>
-
-            <h2 className="mt-6 text-3xl font-black leading-tight sm:text-4xl">
-              Executive Award Path and Decision Readiness
-            </h2>
-
-            <p className="mt-4 max-w-3xl text-sm font-semibold leading-7 text-slate-300">
-              {executive.recommendation.recommendation}
-            </p>
-
-            <div className="mt-8 grid gap-4 sm:grid-cols-2">
-              <DecisionMetric
-                title="Award Readiness"
-                value={`${executive.readiness.score}%`}
-                detail={`${executive.readiness.completedControls}/${executive.readiness.totalControls} controls complete`}
-              />
-
-              <DecisionMetric
-                title="Potential Savings"
-                value={formatMoney(potentialSavings)}
-                detail="Compared with the current average quotation"
-              />
-
-              <DecisionMetric
-                title="Supplier Coverage"
-                value={String(quoteCount)}
-                detail={
-                  quoteCount >= 3
-                    ? "Competitive coverage established"
-                    : "Additional coverage recommended"
-                }
-              />
-
-              <DecisionMetric
-                title="Procurement Health"
-                value={`${healthScore}/100`}
-                detail={
-                  healthScore >= 72
-                    ? "Executive threshold achieved"
-                    : "Readiness improvement required"
-                }
-              />
-            </div>
-
-            <div className="mt-8 flex flex-wrap gap-3">
-              {isOwner && commercialEvaluationUnlocked ? (
-                <Link
-                  href={`/rfq/${rfqSlug}/compare`}
-                  className="rounded-full bg-white px-6 py-3 text-sm font-black text-slate-950 transition hover:bg-slate-100"
-                >
-                  Launch Comparative Evaluation
-                </Link>
-              ) : null}
-
-              {!isOwner && isOpen ? (
-                <Link
-                  href={`/rfq/${rfqSlug}/submit`}
-                  className="rounded-full bg-white px-6 py-3 text-sm font-black text-slate-950 transition hover:bg-slate-100"
-                >
-                  Submit Quote
-                </Link>
-              ) : null}
-
-              <a
-                href="#document-center"
-                className="rounded-full border border-white/10 bg-white/10 px-6 py-3 text-sm font-black text-white transition hover:bg-white/15"
-              >
-                Review Procurement Package
-              </a>
-            </div>
-          </div>
+          <p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-nexus-muted">
+            {executive.recommendation.recommendation}
+          </p>
         </div>
 
-        <div className="min-w-0 border-t border-white/10 bg-white/[0.04] p-6 sm:p-8 lg:border-l lg:border-t-0">
-          <p className="text-xs font-black uppercase tracking-[0.32em] text-cyan-300">
+        <div className="flex shrink-0 flex-wrap gap-3 xl:max-w-sm xl:justify-end">
+          <ExecutiveStatusBadge
+            tone={
+              executive.readiness.score >= 72
+                ? "success"
+                : executive.readiness.score >= 56
+                  ? "warning"
+                  : "risk"
+            }
+          >
+            {executive.recommendation.status}
+          </ExecutiveStatusBadge>
+
+          <ExecutiveStatusBadge tone="info">
+            Readiness {executive.readiness.score}%
+          </ExecutiveStatusBadge>
+        </div>
+      </div>
+
+      <div className="mt-8 grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+        <ExecutiveMetricCard
+          label="Award Readiness"
+          value={`${executive.readiness.score}%`}
+          insight={`${executive.readiness.completedControls}/${executive.readiness.totalControls} controls complete`}
+          tone={
+            executive.readiness.score >= 72
+              ? "success"
+              : executive.readiness.score >= 56
+                ? "gold"
+                : "risk"
+          }
+        />
+
+        <ExecutiveMetricCard
+          label="Potential Savings"
+          value={formatMoney(potentialSavings)}
+          insight="Compared with the current average quotation"
+          tone={potentialSavings > 0 ? "success" : "neutral"}
+        />
+
+        <ExecutiveMetricCard
+          label="Supplier Coverage"
+          value={String(quoteCount)}
+          insight={
+            quoteCount >= 3
+              ? "Competitive coverage established"
+              : "Additional supplier coverage recommended"
+          }
+          tone={quoteCount >= 3 ? "success" : "gold"}
+        />
+
+        <ExecutiveMetricCard
+          label="Procurement Health"
+          value={`${healthScore}/100`}
+          insight={
+            healthScore >= 72
+              ? "Executive threshold achieved"
+              : "Readiness improvement required"
+          }
+          tone={
+            healthScore >= 72
+              ? "success"
+              : healthScore >= 56
+                ? "gold"
+                : "risk"
+          }
+        />
+      </div>
+
+      <div className="mt-8 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+        {isOwner && commercialEvaluationUnlocked ? (
+          <ExecutiveActionLink
+            href={`/rfq/${rfqSlug}/compare`}
+            label="Launch Comparative Evaluation"
+          />
+        ) : null}
+
+        {!isOwner && isOpen ? (
+          <ExecutiveActionLink
+            href={`/rfq/${rfqSlug}/submit`}
+            label="Submit Quote"
+          />
+        ) : null}
+
+        <ExecutiveActionAnchor
+          href="#document-center"
+          label="Review Procurement Package"
+        />
+      </div>
+
+      <div className="mt-8 grid items-start gap-6 xl:grid-cols-[1.05fr_0.95fr]">
+        <ExecutivePanel
+          variant="operational"
+          padding="md"
+          tone="blue"
+        >
+          <p className="text-xs font-black uppercase tracking-[0.28em] text-cyan-300">
             Decision Rationale
           </p>
 
-          <h3 className="mt-4 text-2xl font-black text-white">
+          <h3 className="mt-3 text-2xl font-black text-nexus-white">
             Decision Basis and Readiness Factors
           </h3>
 
+          <p className="mt-3 max-w-3xl text-sm font-semibold leading-7 text-nexus-muted">
+            Review the principal commercial, governance, competition, and
+            documentation signals supporting the current executive
+            recommendation.
+          </p>
+
           <div className="mt-6 grid gap-3">
-            <ExplainabilityItem
+            <DecisionRationaleItem
               complete={Boolean(recommendedQuote)}
               label={
                 recommendedQuote
@@ -232,7 +273,7 @@ export function ExecutiveDecisionCenter({
               }
             />
 
-            <ExplainabilityItem
+            <DecisionRationaleItem
               complete={commercialEvaluationUnlocked}
               label={
                 commercialEvaluationUnlocked
@@ -241,7 +282,7 @@ export function ExecutiveDecisionCenter({
               }
             />
 
-            <ExplainabilityItem
+            <DecisionRationaleItem
               complete={quoteCount >= 3}
               label={
                 quoteCount >= 3
@@ -250,7 +291,7 @@ export function ExecutiveDecisionCenter({
               }
             />
 
-            <ExplainabilityItem
+            <DecisionRationaleItem
               complete={documentCount > 0}
               label={
                 documentCount > 0
@@ -259,100 +300,136 @@ export function ExecutiveDecisionCenter({
               }
             />
           </div>
+        </ExecutivePanel>
 
+        <ExecutivePanel
+          variant="operational"
+          padding="md"
+          tone={recommendedQuote ? "success" : "gold"}
+        >
           {recommendedQuote ? (
-            <div className="mt-6 rounded-[28px] border border-white/10 bg-slate-950/60 p-5">
-              <p className="text-xs font-black uppercase tracking-[0.24em] text-[#C8A646]">
+            <>
+              <p className="text-xs font-black uppercase tracking-[0.28em] text-nexus-gold">
                 Recommended Supplier Evaluation
               </p>
 
-              <div className="mt-5 grid gap-3 sm:grid-cols-2">
-                <MiniScore
+              <h3 className="mt-3 text-2xl font-black text-nexus-white">
+                Decision-Grade Supplier Signals
+              </h3>
+
+              <p className="mt-3 text-sm font-semibold leading-7 text-nexus-muted">
+                The current recommendation is supported by normalized
+                commercial, timeline, performance, and risk indicators.
+              </p>
+
+              <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                <ExecutiveMiniTile
                   title="Overall"
                   value={`${recommendedQuote.totalScore}/100`}
                 />
 
-                <MiniScore title="Risk" value={recommendedQuote.riskLevel} />
+                <ExecutiveMiniTile
+                  title="Risk"
+                  value={recommendedQuote.riskLevel}
+                />
 
-                <MiniScore
+                <ExecutiveMiniTile
                   title="Price"
                   value={`${recommendedQuote.priceScore}/100`}
                 />
 
-                <MiniScore
+                <ExecutiveMiniTile
                   title="Timeline"
                   value={`${recommendedQuote.timelineScore}/100`}
                 />
 
-                <MiniScore
+                <ExecutiveMiniTile
                   title="Performance"
                   value={`${recommendedQuote.performanceScore}/100`}
                 />
 
-                <MiniScore
+                <ExecutiveMiniTile
                   title="Risk Score"
                   value={`${recommendedQuote.riskScore}/100`}
                 />
               </div>
-            </div>
+            </>
           ) : (
-            <div className="mt-6 rounded-[28px] border border-orange-300/20 bg-orange-400/10 p-5">
-              <p className="text-sm font-bold leading-6 text-orange-200">
-                Award recommendation intelligence becomes available once
+            <>
+              <p className="text-xs font-black uppercase tracking-[0.28em] text-nexus-gold">
+                Recommendation Availability
+              </p>
+
+              <h3 className="mt-3 text-2xl font-black text-nexus-white">
+                Commercial Evaluation Required
+              </h3>
+
+              <p className="mt-3 text-sm font-semibold leading-7 text-nexus-muted">
+                Award recommendation intelligence becomes available after
                 supplier quotations and comparative evaluation data are
                 available.
               </p>
-            </div>
-          )}
 
-          <div className="mt-6 rounded-[28px] border border-white/10 bg-white/[0.04] p-5">
-            <p className="text-xs font-black uppercase tracking-[0.24em] text-slate-400">
+              <div className="mt-6">
+                <ExecutiveStatusBadge tone="warning">
+                  Awaiting Decision Inputs
+                </ExecutiveStatusBadge>
+              </div>
+            </>
+          )}
+        </ExecutivePanel>
+      </div>
+
+      <ExecutivePanel
+        className="mt-6"
+        variant="operational"
+        padding="md"
+      >
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.28em] text-nexus-gold">
               Award Readiness Checklist
             </p>
 
-            <div className="mt-4 grid gap-3">
-              {checklist.map((item) => (
-                <ExplainabilityItem
-                  key={item.label}
-                  complete={item.complete}
-                  label={item.label}
-                />
-              ))}
-            </div>
+            <h3 className="mt-3 text-2xl font-black text-nexus-white">
+              Executive Control Completion
+            </h3>
+
+            <p className="mt-3 max-w-3xl text-sm font-semibold leading-7 text-nexus-muted">
+              Confirm that the commercial, supplier, documentation, and
+              governance controls required for a defensible award decision
+              are active.
+            </p>
           </div>
+
+          <ExecutiveStatusBadge
+            tone={
+              executive.readiness.completedControls ===
+              executive.readiness.totalControls
+                ? "success"
+                : "warning"
+            }
+          >
+            {executive.readiness.completedControls}/
+            {executive.readiness.totalControls} Complete
+          </ExecutiveStatusBadge>
         </div>
-      </div>
-    </section>
+
+        <div className="mt-6 grid gap-3 md:grid-cols-2">
+          {checklist.map((item) => (
+            <DecisionRationaleItem
+              key={item.label}
+              complete={item.complete}
+              label={item.label}
+            />
+          ))}
+        </div>
+      </ExecutivePanel>
+    </ExecutivePanel>
   );
 }
 
-function DecisionMetric({
-  title,
-  value,
-  detail,
-}: {
-  title: string;
-  value: string;
-  detail: string;
-}) {
-  return (
-    <div className="h-full min-w-0 rounded-[28px] border border-white/10 bg-white/10 p-5">
-      <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
-        {title}
-      </p>
-
-      <p className="mt-3 break-words text-3xl font-black text-white">
-        {value}
-      </p>
-
-      <p className="mt-2 text-xs font-bold leading-5 text-slate-300">
-        {detail}
-      </p>
-    </div>
-  );
-}
-
-function ExplainabilityItem({
+function DecisionRationaleItem({
   complete,
   label,
 }: {
@@ -360,26 +437,18 @@ function ExplainabilityItem({
   label: string;
 }) {
   return (
-    <div className="flex min-w-0 items-start gap-3 rounded-2xl border border-white/10 bg-white/[0.045] p-4">
-      <ExecutiveSignal positive={complete} />
+    <ExecutivePanel
+      variant="operational"
+      padding="sm"
+      tone={complete ? "success" : "neutral"}
+    >
+      <div className="flex min-w-0 items-start gap-3">
+        <ExecutiveSignal positive={complete} />
 
-      <p className="min-w-0 break-words text-sm font-bold leading-6 text-slate-300">
-        {label}
-      </p>
-    </div>
-  );
-}
-
-function MiniScore({ title, value }: { title: string; value: string }) {
-  return (
-    <div className="min-w-0 rounded-2xl border border-white/10 bg-white/[0.045] p-4">
-      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
-        {title}
-      </p>
-
-      <p className="mt-2 break-words text-lg font-black text-white">
-        {value}
-      </p>
-    </div>
+        <p className="min-w-0 break-words text-sm font-bold leading-6 text-nexus-muted">
+          {label}
+        </p>
+      </div>
+    </ExecutivePanel>
   );
 }
