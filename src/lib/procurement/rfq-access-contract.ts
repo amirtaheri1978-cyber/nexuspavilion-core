@@ -63,7 +63,7 @@ export type AccessibleRfq = {
   accessReason: RfqAccessReason;
   canView: boolean;
   canSubmitQuote: boolean;
-  canViewCommercials: boolean;
+  canViewBudget: boolean;
   canManage: boolean;
 };
 
@@ -121,7 +121,7 @@ export function resolveSupplierRfqAccess({
       accessReason: "owned",
       canView: true,
       canSubmitQuote: false,
-      canViewCommercials: true,
+      canViewBudget: true,
       canManage: true,
     };
   }
@@ -132,7 +132,7 @@ export function resolveSupplierRfqAccess({
       accessReason: "public",
       canView: true,
       canSubmitQuote: true,
-      canViewCommercials: true,
+      canViewBudget: true,
       canManage: false,
     };
   }
@@ -146,7 +146,7 @@ export function resolveSupplierRfqAccess({
       accessReason: "direct_invitation",
       canView: true,
       canSubmitQuote: true,
-      canViewCommercials:
+      canViewBudget:
         normalizeProcurementValue(rfq.sourcing_method) !== "sealed_bid",
       canManage: false,
     };
@@ -161,7 +161,7 @@ export function resolveSupplierRfqAccess({
       accessReason: "company_invitation",
       canView: true,
       canSubmitQuote: true,
-      canViewCommercials:
+      canViewBudget:
         normalizeProcurementValue(rfq.sourcing_method) !== "sealed_bid",
       canManage: false,
     };
@@ -176,7 +176,7 @@ export function resolveSupplierRfqAccess({
       accessReason: "existing_participation",
       canView: true,
       canSubmitQuote: true,
-      canViewCommercials:
+      canViewBudget:
         normalizeProcurementValue(rfq.sourcing_method) !== "sealed_bid",
       canManage: false,
     };

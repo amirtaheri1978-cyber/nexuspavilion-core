@@ -12,7 +12,7 @@ export type MarketplaceRecord = {
   accessReason: RfqAccessReason;
   canManage: boolean;
   canSubmitQuote: boolean;
-  canViewCommercials: boolean;
+  canViewBudget: boolean;
 };
 
 export type MarketplaceMetric = {
@@ -143,7 +143,7 @@ function toSupplierRecord(item: AccessibleRfq): MarketplaceRecord {
     accessReason: item.accessReason,
     canManage: item.canManage,
     canSubmitQuote: item.canSubmitQuote,
-    canViewCommercials: item.canViewCommercials,
+    canViewBudget: item.canViewBudget,
   };
 }
 
@@ -153,7 +153,7 @@ function toBuyerRecord(rfq: ProcurementRfq): MarketplaceRecord {
     accessReason: "owned",
     canManage: true,
     canSubmitQuote: false,
-    canViewCommercials: true,
+    canViewBudget: true,
   };
 }
 

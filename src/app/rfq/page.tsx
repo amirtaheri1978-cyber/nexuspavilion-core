@@ -344,14 +344,14 @@ function MarketplaceCard({
           label="Location"
           value={rfq.location || "N/A"}
         />
-        <SignalBlock
-          label="Budget"
-          value={
-            record.canViewCommercials
-              ? getBudgetLabel(rfq.budget)
-              : "Commercially Sealed"
-          }
-        />
+      <SignalBlock
+  label="Budget"
+  value={
+    record.canViewBudget
+      ? getBudgetLabel(rfq.budget)
+      : "Commercially Sealed"
+  }
+/>
       </div>
 
       <div className="mt-6 flex items-center justify-between gap-4">
