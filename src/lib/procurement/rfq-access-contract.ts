@@ -29,6 +29,18 @@ export type RfqParticipantRole =
   | "issuer"
   | "respondent";
 
+export type RfqCapabilities = {
+  participantRole: RfqParticipantRole;
+  canManageRfq: boolean;
+  canViewBlindBiddingControl: boolean;
+  canViewCommercialEvaluation: boolean;
+  canInviteSuppliers: boolean;
+  canSubmitQuote: boolean;
+  canViewOwnSubmission: boolean;
+  canViewExecutiveIntelligence: boolean;
+  canViewRecommendedAwardPath: boolean;
+};
+
 export type ProcurementRfq = {
   id: string;
   slug: string | null;
@@ -80,6 +92,20 @@ export type SupplierRfqAccessInput = {
   participatedRfqIds: ReadonlySet<string>;
 };
 
+export type ResolveRfqParticipantRoleInput = {
+  currentCompanyId: string | null;
+  rfqCompanyId: string | null;
+};
+
+export type BuildRfqCapabilitiesInput = {
+  participantRole: RfqParticipantRole;
+  isOpen: boolean;
+  blindBiddingEnabled: boolean;
+  commercialEvaluationUnlocked: boolean;
+  hasMyQuote: boolean;
+  hasRecommendedQuote: boolean;
+};
+
 export function normalizeProcurementValue(
   value: string | null | undefined,
 ) {
@@ -109,6 +135,50 @@ export function isRestrictedSourcingMethod(
   );
 }
 
+export function resolveRfqParticipantRole({
+  currentCompanyId,
+  rfqCompanyId,
+}: ResolveRfqParticipantRoleInput): RfqParticipantRole {
+  return currentCompanyId && currentCompanyId === rfqCompanyId
+    ? "issuer"
+    : "respondent";
+}
+
+export function buildRfqCapabilities({
+  participantRole,
+  isOpen,
+  blindBiddingEnabled,
+  commercialEvaluationUnlocked,
+  hasMyQuote,
+  hasRecommendedQuote,
+}: BuildRfqCapabilitiesInput): RfqCapabilities {
+  const canManageRfq = participantRole === "issuer";
+
+  const canViewCommercialEvaluation =
+    canManageRfq && commercialEvaluationUnlocked;
+
+  return {
+    participantRole,
+    canManageRfq,
+    canViewBlindBiddingControl:
+      canManageRfq &&
+      blindBiddingEnabled &&
+      !commercialEvaluationUnlocked,
+    canViewCommercialEvaluation,
+    canInviteSuppliers: canManageRfq && isOpen,
+    canSubmitQuote:
+      participantRole === "respondent" &&
+      isOpen &&
+      !hasMyQuote,
+    canViewOwnSubmission:
+      participantRole === "respondent",
+    canViewExecutiveIntelligence: canManageRfq,
+    canViewRecommendedAwardPath:
+      canViewCommercialEvaluation &&
+      hasRecommendedQuote,
+  };
+}
+
 export function resolveSupplierRfqAccess({
   rfq,
   currentCompanyId,
@@ -120,10 +190,15 @@ export function resolveSupplierRfqAccess({
     return null;
   }
 
-  if (currentCompanyId && rfq.company_id === currentCompanyId) {
+  const participantRole = resolveRfqParticipantRole({
+    currentCompanyId,
+    rfqCompanyId: rfq.company_id,
+  });
+
+  if (participantRole === "issuer") {
     return {
       rfq,
-      participantRole: "issuer",
+      participantRole,
       accessReason: "owned",
       canView: true,
       canSubmitQuote: false,
@@ -135,7 +210,7 @@ export function resolveSupplierRfqAccess({
   if (isPublicSourcingMethod(rfq.sourcing_method)) {
     return {
       rfq,
-      participantRole: "respondent",
+      participantRole,
       accessReason: "public",
       canView: true,
       canSubmitQuote: true,
@@ -150,12 +225,13 @@ export function resolveSupplierRfqAccess({
   ) {
     return {
       rfq,
-      participantRole: "respondent",
+      participantRole,
       accessReason: "direct_invitation",
       canView: true,
       canSubmitQuote: true,
       canViewBudget:
-        normalizeProcurementValue(rfq.sourcing_method) !== "sealed_bid",
+        normalizeProcurementValue(rfq.sourcing_method) !==
+        "sealed_bid",
       canManage: false,
     };
   }
@@ -166,12 +242,13 @@ export function resolveSupplierRfqAccess({
   ) {
     return {
       rfq,
-      participantRole: "respondent",
+      participantRole,
       accessReason: "company_invitation",
       canView: true,
       canSubmitQuote: true,
       canViewBudget:
-        normalizeProcurementValue(rfq.sourcing_method) !== "sealed_bid",
+        normalizeProcurementValue(rfq.sourcing_method) !==
+        "sealed_bid",
       canManage: false,
     };
   }
@@ -182,12 +259,13 @@ export function resolveSupplierRfqAccess({
   ) {
     return {
       rfq,
-      participantRole: "respondent",
+      participantRole,
       accessReason: "existing_participation",
       canView: true,
       canSubmitQuote: true,
       canViewBudget:
-        normalizeProcurementValue(rfq.sourcing_method) !== "sealed_bid",
+        normalizeProcurementValue(rfq.sourcing_method) !==
+        "sealed_bid",
       canManage: false,
     };
   }
