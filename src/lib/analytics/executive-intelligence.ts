@@ -1,403 +1,815 @@
-export type ExecutiveTone = "excellent" | "healthy" | "developing" | "attention";
-export type ExecutivePriority = "proceed" | "review" | "watch" | "hold";
+export type ExecutiveTone =
+  | "excellent"
+  | "healthy"
+  | "developing"
+  | "attention";
+
+export type ExecutivePriority =
+  | "proceed"
+  | "review"
+  | "watch"
+  | "hold";
 
 export type ExecutiveScore = {
-score: number;
-status: string;
+  score: number;
+  status: string;
 };
 
 export type ExecutiveIntelligenceResult = {
-score: number;
-status: string;
-tone: ExecutiveTone;
-priority: ExecutivePriority;
-recommendation: string;
+  score: number;
+  status: string;
+  tone: ExecutiveTone;
+  priority: ExecutivePriority;
+  recommendation: string;
 };
 
 export type AwardConfidenceInput = {
-priceScore: number;
-timelineScore: number;
-performanceScore: number;
-riskScore: number;
-validityScore?: number;
+  priceScore: number;
+  timelineScore: number;
+  performanceScore: number;
+  riskScore: number;
+  validityScore?: number;
 };
 
 export type DecisionReadinessInput = {
-healthScore: number;
-quoteCount: number;
-documentCount: number;
-addendaCount: number;
-commercialEvaluationUnlocked: boolean;
-hasRecommendedQuote: boolean;
+  healthScore: number;
+  quoteCount: number;
+  documentCount: number;
+  addendaCount: number;
+  commercialEvaluationUnlocked: boolean;
+  hasRecommendedQuote: boolean;
 };
 
 export type CommercialHealthInput = {
-recommendedAmount: number;
-averageBid: number;
-budget: number;
-quoteCount: number;
+  recommendedAmount: number;
+  averageBid: number;
+  budget: number;
+  quoteCount: number;
 };
 
 export type NegotiationStrengthInput = {
-recommendedAmount: number;
-averageBid: number;
-quoteCount: number;
-riskLevel: string;
+  recommendedAmount: number;
+  averageBid: number;
+  quoteCount: number;
+  riskLevel: string;
 };
 
 export type SupplierReliabilityInput = {
-timelineScore: number;
-performanceScore: number;
-riskScore: number;
-awardConfidence: number;
+  timelineScore: number;
+  performanceScore: number;
+  riskScore: number;
+  awardConfidence: number;
 };
 
 export type ScenarioRecommendationInput = {
-awardConfidence: number;
-healthScore: number;
-quoteCount: number;
-riskLevel: string;
-commercialEvaluationUnlocked: boolean;
+  awardConfidence: number;
+  healthScore: number;
+  quoteCount: number;
+  riskLevel: string;
+  commercialEvaluationUnlocked: boolean;
 };
 
-function clampScore(score: number) {
-if (!Number.isFinite(score)) return 0;
-return Math.max(0, Math.min(100, Math.round(score)));
+type WeightedScoreInput = {
+  value: number;
+  weight: number;
+};
+
+const SCORE_THRESHOLDS = {
+  excellent: 85,
+  healthy: 70,
+  developing: 55,
+} as const;
+
+const AWARD_CONFIDENCE_WEIGHTS = {
+  price: 0.34,
+  timeline: 0.22,
+  performance: 0.18,
+  risk: 0.18,
+  validity: 0.08,
+} as const;
+
+const EXECUTIVE_SCORE_WEIGHTS = {
+  procurementHealth: 0.2,
+  predictionAccuracy: 0.2,
+  dataQuality: 0.2,
+  controlledRisk: 0.2,
+  classification: 0.2,
+} as const;
+
+const EXECUTIVE_READINESS_WEIGHTS = {
+  enterpriseScore: 0.4,
+  predictionAccuracy: 0.3,
+  dataQuality: 0.3,
+} as const;
+
+const DIGITAL_MATURITY_WEIGHTS = {
+  procurementMaturity: 0.45,
+  dataQuality: 0.25,
+  supplierEngagement: 0.2,
+  classification: 0.1,
+} as const;
+
+const BOARD_HEALTH_WEIGHTS = {
+  procurementEfficiency: 0.25,
+  executiveReadiness: 0.25,
+  digitalMaturity: 0.25,
+  procurementHealth: 0.25,
+} as const;
+
+function clampScore(score: number): number {
+  if (!Number.isFinite(score)) {
+    return 0;
+  }
+
+  return Math.max(0, Math.min(100, Math.round(score)));
+}
+
+function normalizeCount(value: number): number {
+  if (!Number.isFinite(value)) {
+    return 0;
+  }
+
+  return Math.max(0, Math.floor(value));
+}
+
+function normalizeAmount(value: number): number {
+  if (!Number.isFinite(value)) {
+    return 0;
+  }
+
+  return Math.max(0, value);
+}
+
+function normalizeRiskLevel(value: string): string {
+  return String(value || "").trim().toLowerCase();
+}
+
+function isLowRisk(value: string): boolean {
+  return normalizeRiskLevel(value) === "low";
+}
+
+function calculateWeightedScore(
+  inputs: WeightedScoreInput[],
+): number {
+  const totalWeight = inputs.reduce(
+    (total, input) => total + Math.max(0, input.weight),
+    0,
+  );
+
+  if (totalWeight <= 0) {
+    return 0;
+  }
+
+  const weightedValue = inputs.reduce((total, input) => {
+    const normalizedValue = clampScore(input.value);
+    const normalizedWeight = Math.max(0, input.weight);
+
+    return total + normalizedValue * normalizedWeight;
+  }, 0);
+
+  return clampScore(weightedValue / totalWeight);
+}
+
+function calculatePercentageDifference(
+  baseline: number,
+  comparison: number,
+): number {
+  const normalizedBaseline = normalizeAmount(baseline);
+  const normalizedComparison = normalizeAmount(comparison);
+
+  if (normalizedBaseline <= 0 || normalizedComparison <= 0) {
+    return 0;
+  }
+
+  return Math.max(
+    0,
+    ((normalizedBaseline - normalizedComparison) /
+      normalizedBaseline) *
+      100,
+  );
 }
 
 function getTone(score: number): ExecutiveTone {
-if (score >= 85) return "excellent";
-if (score >= 70) return "healthy";
-if (score >= 55) return "developing";
-return "attention";
+  const normalizedScore = clampScore(score);
+
+  if (normalizedScore >= SCORE_THRESHOLDS.excellent) {
+    return "excellent";
+  }
+
+  if (normalizedScore >= SCORE_THRESHOLDS.healthy) {
+    return "healthy";
+  }
+
+  if (normalizedScore >= SCORE_THRESHOLDS.developing) {
+    return "developing";
+  }
+
+  return "attention";
 }
 
 function getPriority(score: number): ExecutivePriority {
-if (score >= 85) return "proceed";
-if (score >= 70) return "review";
-if (score >= 55) return "watch";
-return "hold";
+  const normalizedScore = clampScore(score);
+
+  if (normalizedScore >= SCORE_THRESHOLDS.excellent) {
+    return "proceed";
+  }
+
+  if (normalizedScore >= SCORE_THRESHOLDS.healthy) {
+    return "review";
+  }
+
+  if (normalizedScore >= SCORE_THRESHOLDS.developing) {
+    return "watch";
+  }
+
+  return "hold";
 }
 
 function result(
-score: number,
-status: string,
-recommendation: string,
+  score: number,
+  status: string,
+  recommendation: string,
 ): ExecutiveIntelligenceResult {
-const normalizedScore = clampScore(score);
+  const normalizedScore = clampScore(score);
 
-return {
-score: normalizedScore,
-status,
-tone: getTone(normalizedScore),
-priority: getPriority(normalizedScore),
-recommendation,
-};
+  return {
+    score: normalizedScore,
+    status,
+    tone: getTone(normalizedScore),
+    priority: getPriority(normalizedScore),
+    recommendation,
+  };
 }
 
 // -------------------------------------------------
-// Existing Executive KPI Engine
+// Executive Portfolio KPI Engine
 // -------------------------------------------------
 
+/**
+ * Produces a derived internal executive score from existing operating
+ * indicators. This is not an external industry benchmark or predictive
+ * accuracy measure.
+ */
 export function calculateExecutiveScore(
-procurementHealthScore: number,
-predictionAccuracy: number,
-dataQualityScore: number,
-procurementRiskIndex: number,
-constructionClassificationScore: number,
+  procurementHealthScore: number,
+  predictionAccuracy: number,
+  dataQualityScore: number,
+  procurementRiskIndex: number,
+  constructionClassificationScore: number,
 ): ExecutiveScore {
-const score = Math.round(
-(
-procurementHealthScore +
-predictionAccuracy +
-dataQualityScore +
-(100 - procurementRiskIndex) +
-constructionClassificationScore
-) / 5,
-);
+  const controlledRiskScore = 100 - clampScore(procurementRiskIndex);
 
-return {
-score,
-status: executiveStatus(score),
-};
+  const score = calculateWeightedScore([
+    {
+      value: procurementHealthScore,
+      weight: EXECUTIVE_SCORE_WEIGHTS.procurementHealth,
+    },
+    {
+      value: predictionAccuracy,
+      weight: EXECUTIVE_SCORE_WEIGHTS.predictionAccuracy,
+    },
+    {
+      value: dataQualityScore,
+      weight: EXECUTIVE_SCORE_WEIGHTS.dataQuality,
+    },
+    {
+      value: controlledRiskScore,
+      weight: EXECUTIVE_SCORE_WEIGHTS.controlledRisk,
+    },
+    {
+      value: constructionClassificationScore,
+      weight: EXECUTIVE_SCORE_WEIGHTS.classification,
+    },
+  ]);
+
+  return {
+    score,
+    status: executiveStatus(score),
+  };
 }
 
 export function calculateExecutiveReadiness(
-enterpriseScore: number,
-predictionAccuracy: number,
-dataQualityScore: number,
-) {
-return Math.min(
-100,
-Math.round(
-enterpriseScore * 0.4 +
-predictionAccuracy * 0.3 +
-dataQualityScore * 0.3,
-),
-);
+  enterpriseScore: number,
+  predictionAccuracy: number,
+  dataQualityScore: number,
+): number {
+  return calculateWeightedScore([
+    {
+      value: enterpriseScore,
+      weight: EXECUTIVE_READINESS_WEIGHTS.enterpriseScore,
+    },
+    {
+      value: predictionAccuracy,
+      weight: EXECUTIVE_READINESS_WEIGHTS.predictionAccuracy,
+    },
+    {
+      value: dataQualityScore,
+      weight: EXECUTIVE_READINESS_WEIGHTS.dataQuality,
+    },
+  ]);
 }
 
 export function calculateDigitalMaturity(
-procurementMaturityScore: number,
-dataQualityScore: number,
-supplierEngagementScore: number,
-constructionClassificationScore: number,
-) {
-return Math.min(
-100,
-Math.round(
-procurementMaturityScore * 0.45 +
-dataQualityScore * 0.25 +
-supplierEngagementScore * 0.2 +
-constructionClassificationScore * 0.1,
-),
-);
+  procurementMaturityScore: number,
+  dataQualityScore: number,
+  supplierEngagementScore: number,
+  constructionClassificationScore: number,
+): number {
+  return calculateWeightedScore([
+    {
+      value: procurementMaturityScore,
+      weight: DIGITAL_MATURITY_WEIGHTS.procurementMaturity,
+    },
+    {
+      value: dataQualityScore,
+      weight: DIGITAL_MATURITY_WEIGHTS.dataQuality,
+    },
+    {
+      value: supplierEngagementScore,
+      weight: DIGITAL_MATURITY_WEIGHTS.supplierEngagement,
+    },
+    {
+      value: constructionClassificationScore,
+      weight: DIGITAL_MATURITY_WEIGHTS.classification,
+    },
+  ]);
 }
 
 export function calculateBoardHealth(
-procurementEfficiencyScore: number,
-executiveReadinessScore: number,
-digitalMaturityScore: number,
-procurementHealthScore: number,
-) {
-return Math.min(
-100,
-Math.round(
-procurementEfficiencyScore * 0.25 +
-executiveReadinessScore * 0.25 +
-digitalMaturityScore * 0.25 +
-procurementHealthScore * 0.25,
-),
-);
+  procurementEfficiencyScore: number,
+  executiveReadinessScore: number,
+  digitalMaturityScore: number,
+  procurementHealthScore: number,
+): number {
+  return calculateWeightedScore([
+    {
+      value: procurementEfficiencyScore,
+      weight: BOARD_HEALTH_WEIGHTS.procurementEfficiency,
+    },
+    {
+      value: executiveReadinessScore,
+      weight: BOARD_HEALTH_WEIGHTS.executiveReadiness,
+    },
+    {
+      value: digitalMaturityScore,
+      weight: BOARD_HEALTH_WEIGHTS.digitalMaturity,
+    },
+    {
+      value: procurementHealthScore,
+      weight: BOARD_HEALTH_WEIGHTS.procurementHealth,
+    },
+  ]);
 }
 
 // -------------------------------------------------
 // RFQ Decision Intelligence Engine
 // -------------------------------------------------
 
+/**
+ * Calculates a derived award-support score from normalized commercial
+ * and execution inputs. The result supports review and does not represent
+ * an automated approval or verified probability of award success.
+ */
 export function calculateAwardConfidence({
-priceScore,
-timelineScore,
-performanceScore,
-riskScore,
-validityScore = 80,
+  priceScore,
+  timelineScore,
+  performanceScore,
+  riskScore,
+  validityScore = 80,
 }: AwardConfidenceInput): ExecutiveIntelligenceResult {
-const score =
-priceScore * 0.34 +
-timelineScore * 0.22 +
-performanceScore * 0.18 +
-riskScore * 0.18 +
-validityScore * 0.08;
+  const score = calculateWeightedScore([
+    {
+      value: priceScore,
+      weight: AWARD_CONFIDENCE_WEIGHTS.price,
+    },
+    {
+      value: timelineScore,
+      weight: AWARD_CONFIDENCE_WEIGHTS.timeline,
+    },
+    {
+      value: performanceScore,
+      weight: AWARD_CONFIDENCE_WEIGHTS.performance,
+    },
+    {
+      value: riskScore,
+      weight: AWARD_CONFIDENCE_WEIGHTS.risk,
+    },
+    {
+      value: validityScore,
+      weight: AWARD_CONFIDENCE_WEIGHTS.validity,
+    },
+  ]);
 
-return result(
-score,
-score >= 85 ? "Award Ready" : score >= 70 ? "Executive Review" : "Needs Validation",
-score >= 85
-? "Proceed to executive validation if scope, compliance, and governance are aligned."
-: score >= 70
-? "Review supplier risk, scope assumptions, and commercial fit before award."
-: "Do not proceed to award until confidence drivers improve.",
-);
+  return result(
+    score,
+    score >= SCORE_THRESHOLDS.excellent
+      ? "Ready for Award Validation"
+      : score >= SCORE_THRESHOLDS.healthy
+        ? "Executive Review Required"
+        : "Additional Validation Required",
+    score >= SCORE_THRESHOLDS.excellent
+      ? "Proceed to authorized award validation after confirming scope, compliance, commercial terms, and governance controls."
+      : score >= SCORE_THRESHOLDS.healthy
+        ? "Review supplier risk, scope assumptions, commercial fit, and approval requirements before award."
+        : "Do not proceed to award until the supporting commercial and execution evidence is strengthened.",
+  );
 }
 
 export function calculateDecisionReadiness({
-healthScore,
-quoteCount,
-documentCount,
-addendaCount,
-commercialEvaluationUnlocked,
-hasRecommendedQuote,
+  healthScore,
+  quoteCount,
+  documentCount,
+  addendaCount,
+  commercialEvaluationUnlocked,
+  hasRecommendedQuote,
 }: DecisionReadinessInput): ExecutiveIntelligenceResult {
-const score = clampScore(
-healthScore * 0.34 +
-Math.min(100, quoteCount * 28) * 0.22 +
-Math.min(100, documentCount * 24) * 0.18 +
-Math.min(100, 55 + addendaCount * 12) * 0.1 +
-(commercialEvaluationUnlocked ? 100 : 45) * 0.08 +
-(hasRecommendedQuote ? 100 : 35) * 0.08,
-);
+  const normalizedQuoteCount = normalizeCount(quoteCount);
+  const normalizedDocumentCount = normalizeCount(documentCount);
+  const normalizedAddendaCount = normalizeCount(addendaCount);
 
-return result(
-score,
-score >= 85 ? "Decision Ready" : score >= 70 ? "Review Ready" : "Not Ready",
-score >= 85
-? "RFQ is ready for executive award validation."
-: score >= 70
-? "RFQ can move to executive review with targeted validation."
-: "Strengthen documents, supplier coverage, and commercial intelligence before decision.",
-);
+  const quoteCoverageScore = Math.min(
+    100,
+    normalizedQuoteCount * 28,
+  );
+
+  const documentCoverageScore = Math.min(
+    100,
+    normalizedDocumentCount * 24,
+  );
+
+  /*
+   * Addenda are not mandatory for every RFQ. A controlled RFQ therefore
+   * receives a neutral governance baseline rather than being penalized
+   * solely because no addendum was required.
+   */
+  const governanceTrailScore = Math.min(
+    100,
+    55 + normalizedAddendaCount * 12,
+  );
+
+  const commercialAccessScore = commercialEvaluationUnlocked
+    ? 100
+    : 45;
+
+  const recommendationAvailabilityScore = hasRecommendedQuote
+    ? 100
+    : 35;
+
+  const score = calculateWeightedScore([
+    {
+      value: healthScore,
+      weight: 0.34,
+    },
+    {
+      value: quoteCoverageScore,
+      weight: 0.22,
+    },
+    {
+      value: documentCoverageScore,
+      weight: 0.18,
+    },
+    {
+      value: governanceTrailScore,
+      weight: 0.1,
+    },
+    {
+      value: commercialAccessScore,
+      weight: 0.08,
+    },
+    {
+      value: recommendationAvailabilityScore,
+      weight: 0.08,
+    },
+  ]);
+
+  return result(
+    score,
+    score >= SCORE_THRESHOLDS.excellent
+      ? "Ready for Decision Validation"
+      : score >= SCORE_THRESHOLDS.healthy
+        ? "Ready for Structured Review"
+        : "Decision Inputs Incomplete",
+    score >= SCORE_THRESHOLDS.excellent
+      ? "The RFQ has sufficient operating evidence to proceed to authorized executive award validation."
+      : score >= SCORE_THRESHOLDS.healthy
+        ? "Proceed with structured executive review while validating the remaining evidence gaps."
+        : "Strengthen procurement documents, supplier participation, and commercial evidence before requesting an executive decision.",
+  );
 }
 
 export function calculateCommercialHealth({
-recommendedAmount,
-averageBid,
-budget,
-quoteCount,
+  recommendedAmount,
+  averageBid,
+  budget,
+  quoteCount,
 }: CommercialHealthInput): ExecutiveIntelligenceResult {
-const savingsScore =
-averageBid > 0 && recommendedAmount > 0
-? Math.min(100, Math.max(35, ((averageBid - recommendedAmount) / averageBid) * 250 + 65))
-: 45;
+  const normalizedRecommendedAmount =
+    normalizeAmount(recommendedAmount);
 
-const budgetScore =
-budget > 0 && recommendedAmount > 0
-? recommendedAmount <= budget
-? 90
-: 55
-: 60;
+  const normalizedAverageBid = normalizeAmount(averageBid);
+  const normalizedBudget = normalizeAmount(budget);
+  const normalizedQuoteCount = normalizeCount(quoteCount);
 
-const competitionScore = Math.min(100, quoteCount * 30 + (quoteCount >= 3 ? 10 : 0));
-const score = savingsScore * 0.42 + budgetScore * 0.28 + competitionScore * 0.3;
+  const savingsPercentage = calculatePercentageDifference(
+    normalizedAverageBid,
+    normalizedRecommendedAmount,
+  );
 
-return result(
-score,
-score >= 85 ? "Commercially Strong" : score >= 70 ? "Commercially Healthy" : "Commercial Watch",
-score >= 85
-? "Commercial position supports confident award review."
-: score >= 70
-? "Commercial position is acceptable but should be validated."
-: "Commercial position requires review before award.",
-);
+  const savingsScore =
+    normalizedAverageBid > 0 &&
+    normalizedRecommendedAmount > 0
+      ? Math.min(
+          100,
+          Math.max(35, savingsPercentage * 2.5 + 65),
+        )
+      : 45;
+
+  const budgetScore =
+    normalizedBudget > 0 &&
+    normalizedRecommendedAmount > 0
+      ? normalizedRecommendedAmount <= normalizedBudget
+        ? 90
+        : 55
+      : 60;
+
+  const competitionScore = Math.min(
+    100,
+    normalizedQuoteCount * 30 +
+      (normalizedQuoteCount >= 3 ? 10 : 0),
+  );
+
+  const score = calculateWeightedScore([
+    {
+      value: savingsScore,
+      weight: 0.42,
+    },
+    {
+      value: budgetScore,
+      weight: 0.28,
+    },
+    {
+      value: competitionScore,
+      weight: 0.3,
+    },
+  ]);
+
+  return result(
+    score,
+    score >= SCORE_THRESHOLDS.excellent
+      ? "Strong Commercial Position"
+      : score >= SCORE_THRESHOLDS.healthy
+        ? "Commercial Position Established"
+        : "Commercial Review Required",
+    score >= SCORE_THRESHOLDS.excellent
+      ? "The current commercial position supports award review, subject to scope, compliance, and approval validation."
+      : score >= SCORE_THRESHOLDS.healthy
+        ? "The commercial position is credible but should be validated against scope, budget, and supplier assumptions."
+        : "Review pricing evidence, competition coverage, budget alignment, and scope assumptions before award.",
+  );
 }
 
 export function calculateNegotiationStrength({
-recommendedAmount,
-averageBid,
-quoteCount,
-riskLevel,
+  recommendedAmount,
+  averageBid,
+  quoteCount,
+  riskLevel,
 }: NegotiationStrengthInput): ExecutiveIntelligenceResult {
-const spread =
-averageBid > 0 && recommendedAmount > 0
-? Math.max(0, ((averageBid - recommendedAmount) / averageBid) * 100)
-: 0;
+  const normalizedRecommendedAmount =
+    normalizeAmount(recommendedAmount);
 
-const competitionBoost = quoteCount >= 3 ? 22 : quoteCount >= 2 ? 12 : 4;
-const riskBoost = riskLevel.toLowerCase() === "low" ? 14 : 4;
-const score = Math.min(100, spread * 4 + competitionBoost + riskBoost + 38);
+  const normalizedAverageBid = normalizeAmount(averageBid);
+  const normalizedQuoteCount = normalizeCount(quoteCount);
 
-return result(
-score,
-score >= 85 ? "High Leverage" : score >= 70 ? "Moderate Leverage" : "Limited Leverage",
-score >= 85
-? "Use competitive tension to request best-and-final pricing."
-: score >= 70
-? "Negotiate targeted improvement without weakening scope or schedule."
-: "Use light negotiation focused on terms and execution readiness.",
-);
+  const spread = calculatePercentageDifference(
+    normalizedAverageBid,
+    normalizedRecommendedAmount,
+  );
+
+  const competitionBoost =
+    normalizedQuoteCount >= 3
+      ? 22
+      : normalizedQuoteCount >= 2
+        ? 12
+        : 4;
+
+  const riskBoost = isLowRisk(riskLevel) ? 14 : 4;
+
+  const score = clampScore(
+    spread * 4 + competitionBoost + riskBoost + 38,
+  );
+
+  return result(
+    score,
+    score >= SCORE_THRESHOLDS.excellent
+      ? "Strong Negotiation Position"
+      : score >= SCORE_THRESHOLDS.healthy
+        ? "Targeted Negotiation Available"
+        : "Limited Negotiation Leverage",
+    score >= SCORE_THRESHOLDS.excellent
+      ? "Use verified competitive tension to request best-and-final pricing without weakening scope, quality, or schedule requirements."
+      : score >= SCORE_THRESHOLDS.healthy
+        ? "Pursue targeted commercial improvement while preserving execution requirements and supplier accountability."
+        : "Use a controlled negotiation focused on commercial terms, clarifications, and execution readiness.",
+  );
 }
 
 export function calculateSupplierReliability({
-timelineScore,
-performanceScore,
-riskScore,
-awardConfidence,
+  timelineScore,
+  performanceScore,
+  riskScore,
+  awardConfidence,
 }: SupplierReliabilityInput): ExecutiveIntelligenceResult {
-const score =
-timelineScore * 0.28 +
-performanceScore * 0.28 +
-riskScore * 0.24 +
-awardConfidence * 0.2;
+  const score = calculateWeightedScore([
+    {
+      value: timelineScore,
+      weight: 0.28,
+    },
+    {
+      value: performanceScore,
+      weight: 0.28,
+    },
+    {
+      value: riskScore,
+      weight: 0.24,
+    },
+    {
+      value: awardConfidence,
+      weight: 0.2,
+    },
+  ]);
 
-return result(
-score,
-score >= 85 ? "Highly Reliable" : score >= 70 ? "Reliable" : "Reliability Watch",
-score >= 85
-? "Supplier profile supports executive award validation."
-: score >= 70
-? "Supplier appears reliable but should be validated before award."
-: "Supplier reliability requires deeper review before award.",
-);
+  /*
+   * This result represents the strength of the currently available
+   * supplier profile. It must not be interpreted as verified historical
+   * delivery reliability unless operational performance data exists.
+   */
+  return result(
+    score,
+    score >= SCORE_THRESHOLDS.excellent
+      ? "Strong Supplier Profile"
+      : score >= SCORE_THRESHOLDS.healthy
+        ? "Supplier Profile Established"
+        : "Supplier Profile Requires Review",
+    score >= SCORE_THRESHOLDS.excellent
+      ? "Available commercial and execution signals support supplier validation, subject to compliance and due-diligence review."
+      : score >= SCORE_THRESHOLDS.healthy
+        ? "The supplier profile is credible but requires confirmation of supporting evidence before award."
+        : "Review supplier evidence, execution assumptions, risk controls, and compliance inputs before award.",
+  );
 }
 
 export function calculateScenarioRecommendation({
-awardConfidence,
-healthScore,
-quoteCount,
-riskLevel,
-commercialEvaluationUnlocked,
+  awardConfidence,
+  healthScore,
+  quoteCount,
+  riskLevel,
+  commercialEvaluationUnlocked,
 }: ScenarioRecommendationInput): ExecutiveIntelligenceResult {
-const lowRisk = riskLevel.toLowerCase() === "low";
+  if (!commercialEvaluationUnlocked) {
+    return result(
+      45,
+      "Commercial Evaluation Locked",
+      "Maintain commercial confidentiality and blind-bidding controls until authorized commercial opening.",
+    );
+  }
 
-if (!commercialEvaluationUnlocked) {
-return result(
-45,
-"Commercial Locked",
-"Maintain blind bidding controls until commercial opening.",
-);
-}
+  const normalizedQuoteCount = normalizeCount(quoteCount);
+  const quoteCoverageScore = Math.min(
+    100,
+    normalizedQuoteCount * 30,
+  );
 
-const score = clampScore(
-awardConfidence * 0.42 +
-healthScore * 0.28 +
-Math.min(100, quoteCount * 30) * 0.18 +
-(lowRisk ? 100 : 58) * 0.12,
-);
+  const riskPositionScore = isLowRisk(riskLevel) ? 100 : 58;
 
-return result(
-score,
-score >= 85 ? "Award Now" : score >= 70 ? "Negotiate First" : "Extend or Rebid",
-score >= 85
-? "Preferred path is executive validation and award preparation."
-: score >= 70
-? "Preferred path is targeted negotiation before final award."
-: "Preferred path is to improve competition, documentation, or risk position before award.",
-);
+  const score = calculateWeightedScore([
+    {
+      value: awardConfidence,
+      weight: 0.42,
+    },
+    {
+      value: healthScore,
+      weight: 0.28,
+    },
+    {
+      value: quoteCoverageScore,
+      weight: 0.18,
+    },
+    {
+      value: riskPositionScore,
+      weight: 0.12,
+    },
+  ]);
+
+  return result(
+    score,
+    score >= SCORE_THRESHOLDS.excellent
+      ? "Proceed to Award Validation"
+      : score >= SCORE_THRESHOLDS.healthy
+        ? "Negotiate and Validate"
+        : "Improve or Reopen Competition",
+    score >= SCORE_THRESHOLDS.excellent
+      ? "Preferred path is authorized executive validation followed by award preparation."
+      : score >= SCORE_THRESHOLDS.healthy
+        ? "Preferred path is targeted negotiation and evidence validation before final award."
+        : "Improve competition, documentation, commercial evidence, or supplier risk position before award.",
+  );
 }
 
 export function calculateExecutiveSummary({
-decisionReadiness,
-awardConfidence,
-commercialHealth,
-supplierReliability,
+  decisionReadiness,
+  awardConfidence,
+  commercialHealth,
+  supplierReliability,
 }: {
-decisionReadiness: ExecutiveIntelligenceResult;
-awardConfidence: ExecutiveIntelligenceResult;
-commercialHealth: ExecutiveIntelligenceResult;
-supplierReliability: ExecutiveIntelligenceResult;
-}) {
-const averageScore = clampScore(
-(
-decisionReadiness.score +
-awardConfidence.score +
-commercialHealth.score +
-supplierReliability.score
-) / 4,
-);
+  decisionReadiness: ExecutiveIntelligenceResult;
+  awardConfidence: ExecutiveIntelligenceResult;
+  commercialHealth: ExecutiveIntelligenceResult;
+  supplierReliability: ExecutiveIntelligenceResult;
+}): ExecutiveIntelligenceResult {
+  const averageScore = calculateWeightedScore([
+    {
+      value: decisionReadiness.score,
+      weight: 0.25,
+    },
+    {
+      value: awardConfidence.score,
+      weight: 0.25,
+    },
+    {
+      value: commercialHealth.score,
+      weight: 0.25,
+    },
+    {
+      value: supplierReliability.score,
+      weight: 0.25,
+    },
+  ]);
 
-return result(
-averageScore,
-averageScore >= 85 ? "Executive Ready" : averageScore >= 70 ? "Review Ready" : "Needs Work",
-averageScore >= 85
-? "RFQ is ready for executive award validation."
-: averageScore >= 70
-? "RFQ is ready for structured review with targeted validation."
-: "RFQ requires stronger evidence before executive decision.",
-);
+  return result(
+    averageScore,
+    averageScore >= SCORE_THRESHOLDS.excellent
+      ? "Ready for Executive Validation"
+      : averageScore >= SCORE_THRESHOLDS.healthy
+        ? "Structured Review Required"
+        : "Additional Evidence Required",
+    averageScore >= SCORE_THRESHOLDS.excellent
+      ? "The RFQ has sufficient decision-support evidence to proceed to authorized executive award validation."
+      : averageScore >= SCORE_THRESHOLDS.healthy
+        ? "The RFQ is ready for structured review with targeted commercial, supplier, or governance validation."
+        : "Strengthen the underlying procurement evidence before requesting an executive award decision.",
+  );
 }
 
 // -------------------------------------------------
 // Status Helpers
 // -------------------------------------------------
 
-export function executiveStatus(score: number) {
-if (score >= 85) return "Excellent";
-if (score >= 70) return "Healthy";
-if (score >= 55) return "Developing";
+export function executiveStatus(score: number): string {
+  const normalizedScore = clampScore(score);
 
-return "Needs Attention";
+  if (normalizedScore >= SCORE_THRESHOLDS.excellent) {
+    return "Strong";
+  }
+
+  if (normalizedScore >= SCORE_THRESHOLDS.healthy) {
+    return "Established";
+  }
+
+  if (normalizedScore >= SCORE_THRESHOLDS.developing) {
+    return "Developing";
+  }
+
+  return "Needs Attention";
 }
 
-export function commandStatus(score: number) {
-if (score >= 85) return "World Class";
-if (score >= 70) return "High Performance";
-if (score >= 55) return "Developing";
+export function commandStatus(score: number): string {
+  const normalizedScore = clampScore(score);
 
-return "Needs Improvement";
+  if (normalizedScore >= SCORE_THRESHOLDS.excellent) {
+    return "Executive Ready";
+  }
+
+  if (normalizedScore >= SCORE_THRESHOLDS.healthy) {
+    return "Operationally Established";
+  }
+
+  if (normalizedScore >= SCORE_THRESHOLDS.developing) {
+    return "Capability Developing";
+  }
+
+  return "Immediate Review Required";
 }
 
-export function boardStatus(score: number) {
-if (score >= 85) return "Board Ready";
-if (score >= 70) return "Executive Review";
+export function boardStatus(score: number): string {
+  const normalizedScore = clampScore(score);
 
-return "Needs Attention";
+  if (normalizedScore >= SCORE_THRESHOLDS.excellent) {
+    return "Ready for Board Review";
+  }
+
+  if (normalizedScore >= SCORE_THRESHOLDS.healthy) {
+    return "Executive Validation Required";
+  }
+
+  return "Additional Evidence Required";
 }
