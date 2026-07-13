@@ -1,6 +1,6 @@
 import { ExecutiveProgress } from "@/components/executive/executive-progress";
 import { ExecutiveStatusBadge } from "@/components/rfq-workspace/shared/executive-status-badge";
-import { buildExecutiveIntelligence } from "@/lib/executive/executive-engine";
+import type { ExecutiveIntelligence } from "@/lib/executive/executive-types";
 
 type TimelineStatus = "complete" | "active" | "locked" | "pending" | "watch";
 
@@ -36,6 +36,8 @@ type ExecutiveDecisionTimelineProps = {
         amountNumber: number;
       }
     | null;
+
+  executive: ExecutiveIntelligence;
 };
 
 function getStatusLabel(status: TimelineStatus) {
@@ -84,40 +86,11 @@ export function ExecutiveDecisionTimeline({
   commercialEvaluationUnlocked,
   quoteCount,
   documentCount,
-  addendaCount,
-  recommendedQuote,
+    recommendedQuote,
   awardedQuote,
+  executive,
 }: ExecutiveDecisionTimelineProps) {
-  const executiveRecommendedQuote = recommendedQuote
-    ? {
-        rank: 1,
-        amountNumber: awardedQuote?.amountNumber ?? 0,
-        awardConfidence: recommendedQuote.awardConfidence,
-        riskLevel: recommendedQuote.riskLevel,
-        totalScore: recommendedQuote.awardConfidence,
-        priceScore: recommendedQuote.awardConfidence,
-        timelineScore: recommendedQuote.awardConfidence,
-        riskScore: recommendedQuote.awardConfidence,
-        performanceScore: recommendedQuote.awardConfidence,
-        budgetVariance: 0,
-        lowestBidVariance: 0,
-      }
-    : null;
-
-  const executive = buildExecutiveIntelligence({
-    rfqSlug: "",
-    isOwner,
-    isOpen,
-    commercialEvaluationUnlocked,
-    healthScore: recommendedQuote?.awardConfidence ?? 50,
-    quoteCount,
-    documentCount,
-    addendaCount,
-    potentialSavings: 0,
-    recommendedQuote: executiveRecommendedQuote,
-    awardedQuote,
-  });
-
+  
   const steps: TimelineStep[] = [
     {
       title: "RFQ Workspace Published",

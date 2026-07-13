@@ -1323,20 +1323,21 @@ return (
 />
 
 <ExecutiveDecisionTimeline
-isOwner={isOwner}
-isOpen={isOpen}
-commercialEvaluationUnlocked={commercialEvaluationUnlocked}
-quoteCount={quoteList.length}
-documentCount={rfqAttachments.length}
-addendaCount={rfqAddenda.length}
-recommendedQuote={recommendedQuote}
-awardedQuote={
-awardedQuote
-? {
-amountNumber: awardedQuote.amountNumber,
-}
-: null
-}
+  isOwner={isOwner}
+  isOpen={isOpen}
+  commercialEvaluationUnlocked={commercialEvaluationUnlocked}
+  quoteCount={quoteList.length}
+  documentCount={rfqAttachments.length}
+  addendaCount={rfqAddenda.length}
+  recommendedQuote={recommendedQuote}
+  awardedQuote={
+    awardedQuote
+      ? {
+          amountNumber: awardedQuote.amountNumber,
+        }
+      : null
+  }
+  executive={executive}
 />
 
 <ExecutiveReadinessMeter
