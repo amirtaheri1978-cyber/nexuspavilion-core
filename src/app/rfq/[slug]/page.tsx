@@ -1318,15 +1318,7 @@ recommendedQuote={recommendedQuote}
 />
 
 <ExecutiveActionQueue
-rfqSlug={rfq.slug}
-isOwner={isOwner}
-isOpen={isOpen}
-commercialEvaluationUnlocked={commercialEvaluationUnlocked}
-quoteCount={quoteList.length}
-documentCount={rfqAttachments.length}
-addendaCount={rfqAddenda.length}
-healthScore={healthScore}
-recommendedQuote={recommendedQuote}
+  executive={executive}
 />
 
 <ExecutiveDecisionTimeline
@@ -1385,13 +1377,11 @@ budget={budget}
 />
 
 <AwardScenarioSimulator
-isOwner={isOwner}
-commercialEvaluationUnlocked={commercialEvaluationUnlocked}
-recommendedQuote={recommendedQuote}
-averageBid={averageBid}
-quoteCount={quoteList.length}
-healthScore={healthScore}
-budget={budget}
+  isOwner={isOwner}
+  commercialEvaluationUnlocked={commercialEvaluationUnlocked}
+  recommendedQuote={recommendedQuote}
+  quoteCount={quoteList.length}
+  executive={executive}
 />
 </ExecutiveIntelligenceProvider>
 

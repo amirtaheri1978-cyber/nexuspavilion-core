@@ -2,27 +2,20 @@ import Link from "next/link";
 
 import { ExecutivePanel } from "@/components/executive/executive-panel";
 import { ExecutiveStatusBadge } from "@/components/rfq-workspace/shared/executive-status-badge";
-import { buildExecutiveIntelligence } from "@/lib/executive/executive-engine";
-import type { ExecutiveAction } from "@/lib/executive/executive-types";
+import type {
+  ExecutiveAction,
+  ExecutiveIntelligence,
+} from "@/lib/executive/executive-types";
 
 type ExecutiveActionQueueProps = {
-  rfqSlug: string;
-  isOwner: boolean;
-  isOpen: boolean;
-  commercialEvaluationUnlocked: boolean;
-  quoteCount: number;
-  documentCount: number;
-  addendaCount: number;
-  healthScore: number;
-  recommendedQuote:
-    | {
-        awardConfidence: number;
-        riskLevel: string;
-      }
-    | null;
+  executive: ExecutiveIntelligence;
 };
 
-type ExecutivePriorityTone = "success" | "info" | "warning" | "risk";
+type ExecutivePriorityTone =
+  | "success"
+  | "info"
+  | "warning"
+  | "risk";
 
 function mapPriorityTone(
   priority: ExecutiveAction["priority"],
@@ -35,46 +28,8 @@ function mapPriorityTone(
 }
 
 export function ExecutiveActionQueue({
-  rfqSlug,
-  isOwner,
-  isOpen,
-  commercialEvaluationUnlocked,
-  quoteCount,
-  documentCount,
-  addendaCount,
-  healthScore,
-  recommendedQuote,
+  executive,
 }: ExecutiveActionQueueProps) {
-  const executiveRecommendedQuote = recommendedQuote
-    ? {
-        rank: 1,
-        amountNumber: 0,
-        awardConfidence: recommendedQuote.awardConfidence,
-        riskLevel: recommendedQuote.riskLevel,
-        totalScore: recommendedQuote.awardConfidence,
-        priceScore: recommendedQuote.awardConfidence,
-        timelineScore: recommendedQuote.awardConfidence,
-        riskScore: recommendedQuote.awardConfidence,
-        performanceScore: recommendedQuote.awardConfidence,
-        budgetVariance: 0,
-        lowestBidVariance: 0,
-      }
-    : null;
-
-  const executive = buildExecutiveIntelligence({
-    rfqSlug,
-    isOwner,
-    isOpen,
-    commercialEvaluationUnlocked,
-    healthScore,
-    quoteCount,
-    documentCount,
-    addendaCount,
-    potentialSavings: 0,
-    recommendedQuote: executiveRecommendedQuote,
-    awardedQuote: null,
-  });
-
   const actions = executive.actions;
   const primaryAction = actions[0];
 
@@ -110,15 +65,34 @@ export function ExecutiveActionQueue({
         ) : null}
       </div>
 
-      <div className="mt-8 grid gap-5 lg:grid-cols-2">
-        {actions.map((action, index) => (
-          <ActionQueueCard
-            key={`${action.title}-${index}`}
-            action={action}
-            index={index}
-          />
-        ))}
-      </div>
+      {actions.length > 0 ? (
+        <div className="mt-8 grid gap-5 lg:grid-cols-2">
+          {actions.map((action, index) => (
+            <ActionQueueCard
+              key={`${action.title}-${index}`}
+              action={action}
+              index={index}
+            />
+          ))}
+        </div>
+      ) : (
+        <ExecutivePanel
+          className="mt-8"
+          variant="operational"
+          padding="md"
+          tone="neutral"
+        >
+          <p className="text-sm font-black text-nexus-white">
+            No Executive Actions Available
+          </p>
+
+          <p className="mt-2 max-w-3xl text-sm font-semibold leading-6 text-nexus-muted">
+            The current RFQ does not yet contain sufficient operational,
+            commercial, or governance signals to generate a prioritized
+            executive action queue.
+          </p>
+        </ExecutivePanel>
+      )}
     </ExecutivePanel>
   );
 }
