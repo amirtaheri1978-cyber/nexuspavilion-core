@@ -1352,11 +1352,8 @@ recommendedQuote={recommendedQuote}
     isOwner={isOwner}
     commercialEvaluationUnlocked={commercialEvaluationUnlocked}
     recommendedQuote={recommendedQuote}
-    averageBid={averageBid}
-    quoteCount={quoteList.length}
-    healthScore={healthScore}
-    documentCount={rfqAttachments.length}
-    executive={executive}
+       quoteCount={quoteList.length}
+          executive={executive}
 />
 
 <ExecutiveSupplierDNA
@@ -1369,13 +1366,14 @@ quoteCount={quoteList.length}
 />
 
 <ExecutiveNegotiationIntelligence
-isOwner={isOwner}
-commercialEvaluationUnlocked={commercialEvaluationUnlocked}
-recommendedQuote={recommendedQuote}
-averageBid={averageBid}
-lowestAmount={lowestAmount}
-quoteCount={quoteList.length}
-budget={budget}
+  isOwner={isOwner}
+  commercialEvaluationUnlocked={commercialEvaluationUnlocked}
+  recommendedQuote={recommendedQuote}
+  averageBid={averageBid}
+  lowestAmount={lowestAmount}
+  quoteCount={quoteList.length}
+  budget={budget}
+  executive={executive}
 />
 
 <AwardScenarioSimulator

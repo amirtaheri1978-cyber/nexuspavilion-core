@@ -9,11 +9,8 @@ type ExecutiveAIExplainabilityProps = {
   isOwner: boolean;
   commercialEvaluationUnlocked: boolean;
   recommendedQuote: ExecutiveQuote | null;
-  averageBid: number;
-  quoteCount: number;
-  healthScore: number;
-  documentCount: number;
-  executive: ExecutiveIntelligence;
+   quoteCount: number;
+   executive: ExecutiveIntelligence;
 };
 
 type DriverState = {
@@ -65,11 +62,8 @@ export function ExecutiveAIExplainability({
   isOwner,
   commercialEvaluationUnlocked,
   recommendedQuote,
-  averageBid,
-  quoteCount,
-  healthScore,
-  documentCount,
-  executive,
+    quoteCount,
+     executive,
 }: ExecutiveAIExplainabilityProps) {
   if (!isOwner) return null;
 

@@ -2,7 +2,7 @@ import { ExecutivePanel } from "@/components/executive/executive-panel";
 import { ExecutiveMiniTile } from "@/components/rfq-workspace/shared/executive-mini-tile";
 import { ExecutiveSignal } from "@/components/rfq-workspace/shared/executive-signal";
 import { ExecutiveStatusBadge } from "@/components/rfq-workspace/shared/executive-status-badge";
-import { buildExecutiveIntelligence } from "@/lib/executive/executive-engine";
+import type { ExecutiveIntelligence } from "@/lib/executive/executive-types";
 import type { ExecutiveQuote } from "@/types/executive";
 
 type ExecutiveNegotiationIntelligenceProps = {
@@ -13,6 +13,7 @@ type ExecutiveNegotiationIntelligenceProps = {
   lowestAmount: number | null;
   quoteCount: number;
   budget: number;
+  executive: ExecutiveIntelligence;
 };
 
 type LeverageSignal = {
@@ -59,10 +60,11 @@ export function ExecutiveNegotiationIntelligence({
   isOwner,
   commercialEvaluationUnlocked,
   recommendedQuote,
-  averageBid,
+  
   lowestAmount,
   quoteCount,
   budget,
+  executive,
 }: ExecutiveNegotiationIntelligenceProps) {
   if (!isOwner) return null;
 
@@ -113,23 +115,6 @@ export function ExecutiveNegotiationIntelligence({
     );
   }
 
-  const executive = buildExecutiveIntelligence({
-    rfqSlug: "",
-    isOwner,
-    isOpen: true,
-    commercialEvaluationUnlocked,
-    healthScore: recommendedQuote.totalScore,
-    quoteCount,
-    documentCount: 1,
-    addendaCount: 0,
-    averageBid,
-    lowestAmount,
-    budget,
-    potentialSavings:
-      averageBid > 0 ? averageBid - recommendedQuote.amountNumber : 0,
-    recommendedQuote,
-    awardedQuote: null,
-  });
 
   const negotiation = executive.negotiation;
 
