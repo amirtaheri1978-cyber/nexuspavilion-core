@@ -3,7 +3,7 @@ import { ExecutiveProgress } from "@/components/executive/executive-progress";
 import { ExecutiveMiniTile } from "@/components/rfq-workspace/shared/executive-mini-tile";
 import { ExecutiveSignal } from "@/components/rfq-workspace/shared/executive-signal";
 import { ExecutiveStatusBadge } from "@/components/rfq-workspace/shared/executive-status-badge";
-import { buildExecutiveIntelligence } from "@/lib/executive/executive-engine";
+import type { ExecutiveIntelligence } from "@/lib/executive/executive-types";
 import type { ExecutiveQuote } from "@/types/executive";
 
 type ExecutiveSupplierDNAProps = {
@@ -13,6 +13,7 @@ type ExecutiveSupplierDNAProps = {
   averageBid: number;
   lowestAmount: number | null;
   quoteCount: number;
+  executive: ExecutiveIntelligence;
 };
 
 type ScoreState = {
@@ -65,8 +66,9 @@ export function ExecutiveSupplierDNA({
   commercialEvaluationUnlocked,
   recommendedQuote,
   averageBid,
-  lowestAmount,
+  
   quoteCount,
+  executive,
 }: ExecutiveSupplierDNAProps) {
   if (!isOwner) return null;
 
@@ -117,28 +119,11 @@ export function ExecutiveSupplierDNA({
     );
   }
 
-  const budget =
-    recommendedQuote.amountNumber + recommendedQuote.budgetVariance;
+ 
 
   const savingsVsAverage =
     averageBid > 0 ? averageBid - recommendedQuote.amountNumber : 0;
 
-  const executive = buildExecutiveIntelligence({
-    rfqSlug: "",
-    isOwner,
-    isOpen: true,
-    commercialEvaluationUnlocked,
-    healthScore: recommendedQuote.totalScore,
-    quoteCount,
-    documentCount: 1,
-    addendaCount: 0,
-    averageBid,
-    lowestAmount,
-    budget,
-    potentialSavings: savingsVsAverage,
-    recommendedQuote,
-    awardedQuote: null,
-  });
 
   const dnaScores = [
     {

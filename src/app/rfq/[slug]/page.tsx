@@ -1358,12 +1358,13 @@ recommendedQuote={recommendedQuote}
 />
 
 <ExecutiveSupplierDNA
-isOwner={isOwner}
-commercialEvaluationUnlocked={commercialEvaluationUnlocked}
-recommendedQuote={recommendedQuote}
-averageBid={averageBid}
-lowestAmount={lowestAmount}
-quoteCount={quoteList.length}
+  isOwner={isOwner}
+  commercialEvaluationUnlocked={commercialEvaluationUnlocked}
+  recommendedQuote={recommendedQuote}
+  averageBid={averageBid}
+  lowestAmount={lowestAmount}
+  quoteCount={quoteList.length}
+  executive={executive}
 />
 
 <ExecutiveNegotiationIntelligence
