@@ -2,6 +2,11 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
+import {
+  getAwardedQuotes,
+  getAwardedRevenue,
+  getWinRate,
+} from "@/lib/procurement/supplier-intelligence";
 
 type Compliance = {
 id: string;
@@ -178,9 +183,6 @@ if (!vendorCompanyId) return [];
 return quotes.filter((quote) => quote.company_id === vendorCompanyId);
 }
 
-function getAwardedQuotes(quotes: QuotePerformance[]) {
-return quotes.filter((quote) => quote.decision === "awarded");
-}
 
 function getSupplierIntelligenceScore({
 compliance,
@@ -214,18 +216,7 @@ if (score >= 60) return "Qualified Supplier";
 if (score >= 35) return "Developing Supplier";
 return "Unqualified / Review Required";
 }
-function getAwardedRevenue(quotes: QuotePerformance[]) {
-return getAwardedQuotes(quotes).reduce((total, quote) => {
-const amount = Number(quote.amount);
-return total + (Number.isFinite(amount) ? amount : 0);
-}, 0);
-}
 
-function getWinRate(quotes: QuotePerformance[]) {
-if (quotes.length === 0) return 0;
-
-return Math.round((getAwardedQuotes(quotes).length / quotes.length) * 100);
-}
 
 function getPerformanceScore(quotes: QuotePerformance[]) {
 const quoteCount = quotes.length;
