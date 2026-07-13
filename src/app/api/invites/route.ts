@@ -4,131 +4,162 @@ import { sendEmail } from "@/lib/email/send-email";
 import { createClient } from "@/lib/supabase/server";
 
 const SITE_URL =
-process.env.NEXT_PUBLIC_SITE_URL ||
-"https://scaling-invention-5g7q4p5rwrwj3vwq7-3000.app.github.dev";
+  process.env.NEXT_PUBLIC_SITE_URL ||
+  "https://scaling-invention-5g7q4p5rwrwj3vwq7-3000.app.github.dev";
 
 type ProcurementScope =
-| "material"
-| "subcontractor"
-| "equipment"
-| "professional_service";
+  "material" | "subcontractor" | "equipment" | "professional_service";
 
 type SourcingMethod = "open" | "invited" | "sealed_bid";
 
 type ContractFramework = "project_specific" | "framework";
 
+type InviteEmailDeliveryResult = {
+  success: boolean;
+  skipped: boolean;
+  id: string | null;
+  error: string | null;
+};
+
 function generateToken() {
-return crypto.randomUUID().replaceAll("-", "");
+  return crypto.randomUUID().replaceAll("-", "");
 }
 
 function normalizeEmail(value: string) {
-return value.trim().toLowerCase();
+  return value.trim().toLowerCase();
 }
 
 function isValidEmail(email: string) {
-return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
 function isAllowedProcurementRole(role: string | null | undefined) {
-return ["owner", "admin", "buyer"].includes(String(role || "").toLowerCase());
+  return ["owner", "admin", "buyer"].includes(String(role || "").toLowerCase());
+}
+
+function isRfqOpenForInvitations(
+  status: string | null | undefined,
+  deadline: string | null | undefined,
+) {
+  const normalizedStatus = String(status || "open")
+    .trim()
+    .toLowerCase();
+
+  if (normalizedStatus !== "open") {
+    return false;
+  }
+
+  if (!deadline) {
+    return true;
+  }
+
+  const deadlineDate = new Date(deadline);
+
+  if (Number.isNaN(deadlineDate.getTime())) {
+    return true;
+  }
+
+  return deadlineDate.getTime() >= Date.now();
 }
 
 function escapeHtml(value: string | number | null | undefined) {
-return String(value || "")
-.replaceAll("&", "&amp;")
-.replaceAll("<", "&lt;")
-.replaceAll(">", "&gt;")
-.replaceAll('"', "&quot;")
-.replaceAll("'", "&#039;");
+  return String(value || "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
 }
 
 function formatMoney(value: number | string | null | undefined) {
-const amount = Number(value);
+  const amount = Number(value);
 
-if (!Number.isFinite(amount) || amount <= 0) {
-return "Not specified";
-}
+  if (!Number.isFinite(amount) || amount <= 0) {
+    return "Not specified";
+  }
 
-return `$${amount.toLocaleString()}`;
+  return `$${amount.toLocaleString()}`;
 }
 
 function formatDate(value: string | null | undefined) {
-if (!value) return "Not specified";
+  if (!value) return "Not specified";
 
-const date = new Date(value);
+  const date = new Date(value);
 
-if (Number.isNaN(date.getTime())) {
-return value;
-}
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
 
-return date.toLocaleDateString("en-US", {
-year: "numeric",
-month: "long",
-day: "numeric",
-});
+  return date.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
 }
 
 function getProcurementScopeLabel(value: ProcurementScope | null | undefined) {
-if (value === "material") return "Material / Product RFQ";
-if (value === "equipment") return "Equipment Rental RFQ";
-if (value === "professional_service") return "Professional Service RFQ";
-return "Subcontractor / Trade RFQ";
+  if (value === "material") return "Material / Product RFQ";
+  if (value === "equipment") return "Equipment Rental RFQ";
+  if (value === "professional_service") return "Professional Service RFQ";
+  return "Subcontractor / Trade RFQ";
 }
 
 function getSourcingMethodLabel(value: SourcingMethod | null | undefined) {
-if (value === "open") return "Open Tendering / Public Broadcast";
-if (value === "sealed_bid") return "Sealed Bid RFQ";
-return "Selective Routing / Invited RFQ";
+  if (value === "open") return "Open Tendering / Public Broadcast";
+  if (value === "sealed_bid") return "Sealed Bid RFQ";
+  return "Selective Routing / Invited RFQ";
 }
 
-function getContractFrameworkLabel(value: ContractFramework | null | undefined) {
-if (value === "framework") return "Framework Call-Off / Blanket RFQ";
-return "Project-Specific RFQ";
+function getContractFrameworkLabel(
+  value: ContractFramework | null | undefined,
+) {
+  if (value === "framework") return "Framework Call-Off / Blanket RFQ";
+  return "Project-Specific RFQ";
 }
 
 function getSourcingDescription(value: SourcingMethod | null | undefined) {
-if (value === "open") {
-return "This RFQ may be visible through the open marketplace to qualified vendors that meet the buyer’s requirements.";
-}
+  if (value === "open") {
+    return "This RFQ may be visible through the open marketplace to qualified vendors that meet the buyer’s requirements.";
+  }
 
-if (value === "sealed_bid") {
-return "This RFQ uses a controlled sealed-bid workflow. Commercial responses remain confidential and are reviewed according to the buyer’s deadline and evaluation process.";
-}
+  if (value === "sealed_bid") {
+    return "This RFQ uses a controlled sealed-bid workflow. Commercial responses remain confidential and are reviewed according to the buyer’s deadline and evaluation process.";
+  }
 
-return "This RFQ is being routed to a selected supplier shortlist. Access is controlled through this secure invitation link.";
+  return "This RFQ is being routed to a selected supplier shortlist. Access is controlled through this secure invitation link.";
 }
 
 function buildRfqInviteEmail({
-rfqTitle,
-category,
-budget,
-deadline,
-procurementScope,
-sourcingMethod,
-contractFramework,
-inviteUrl,
+  rfqTitle,
+  category,
+  budget,
+  deadline,
+  procurementScope,
+  sourcingMethod,
+  contractFramework,
+  inviteUrl,
 }: {
-rfqTitle: string;
-category: string;
-budget: string;
-deadline: string;
-procurementScope: string;
-sourcingMethod: string;
-contractFramework: string;
-inviteUrl: string;
+  rfqTitle: string;
+  category: string;
+  budget: string;
+  deadline: string;
+  procurementScope: string;
+  sourcingMethod: string;
+  contractFramework: string;
+  inviteUrl: string;
 }) {
-const safeRfqTitle = escapeHtml(rfqTitle || "Procurement RFQ");
-const safeCategory = escapeHtml(category || "Procurement");
-const safeBudget = escapeHtml(budget || "Not specified");
-const safeDeadline = escapeHtml(deadline || "Not specified");
-const safeProcurementScope = escapeHtml(procurementScope);
-const safeSourcingMethod = escapeHtml(sourcingMethod);
-const safeContractFramework = escapeHtml(contractFramework);
-const safeInviteUrl = escapeHtml(inviteUrl);
+  const safeRfqTitle = escapeHtml(rfqTitle || "Procurement RFQ");
+  const safeCategory = escapeHtml(category || "Procurement");
+  const safeBudget = escapeHtml(budget || "Not specified");
+  const safeDeadline = escapeHtml(deadline || "Not specified");
+  const safeProcurementScope = escapeHtml(procurementScope);
+  const safeSourcingMethod = escapeHtml(sourcingMethod);
+  const safeContractFramework = escapeHtml(contractFramework);
+  const safeInviteUrl = escapeHtml(inviteUrl);
 
-const subject = `RFQ Invitation: ${rfqTitle}`;
+  const subject = `RFQ Invitation: ${rfqTitle}`;
 
-const text = `You have been invited to quote on ${rfqTitle}.
+  const text = `You have been invited to quote on ${rfqTitle}.
 
 Category: ${category}
 Procurement Scope: ${procurementScope}
@@ -148,7 +179,7 @@ The buyer reserves the right to accept or reject any or all submissions, or canc
 
 Nexus Pavilion`;
 
-const html = `
+  const html = `
 <div style="margin:0;background:#f6f6f3;padding:32px;font-family:Arial,Helvetica,sans-serif;">
 <div style="max-width:700px;margin:0 auto;overflow:hidden;border-radius:28px;border:1px solid #e5e7eb;background:#ffffff;">
 <div style="background:#020617;padding:34px 32px;color:#ffffff;">
@@ -242,11 +273,11 @@ This message was sent by Nexus Pavilion procurement automation. Access to this R
 </div>
 `;
 
-return { subject, html, text };
+  return { subject, html, text };
 }
 
 function emailInfoBlock(label: string, value: string) {
-return `
+  return `
 <div style="margin-top:14px;border-radius:16px;background:#ffffff;padding:16px;border:1px solid #e5e7eb;">
 <p style="margin:0;font-size:11px;font-weight:900;letter-spacing:0.18em;color:#94a3b8;text-transform:uppercase;">
 ${label}
@@ -259,201 +290,315 @@ ${value}
 }
 
 export async function POST(request: Request) {
-try {
-const body = await request.json();
+  try {
+    let body: Record<string, unknown>;
 
-const rfqId = String(body.rfqId || "").trim();
-const email = normalizeEmail(String(body.email || ""));
+    try {
+      body = (await request.json()) as Record<string, unknown>;
+    } catch {
+      return NextResponse.json(
+        { error: "Request body must contain valid JSON." },
+        { status: 400 },
+      );
+    }
 
-if (!rfqId || !email) {
-return NextResponse.json(
-{ error: "RFQ ID and supplier email are required." },
-{ status: 400 }
-);
-}
+    const rfqId = String(body.rfqId || "").trim();
+    const email = normalizeEmail(String(body.email || ""));
+    const vendorCompanyId = String(body.vendorCompanyId || "").trim() || null;
 
-if (!isValidEmail(email)) {
-return NextResponse.json(
-{ error: "Please enter a valid supplier email address." },
-{ status: 400 }
-);
-}
+    if (!rfqId || !email) {
+      return NextResponse.json(
+        { error: "RFQ ID and supplier email are required." },
+        { status: 400 },
+      );
+    }
 
-const supabase = await createClient();
+    if (!isValidEmail(email)) {
+      return NextResponse.json(
+        { error: "Please enter a valid supplier email address." },
+        { status: 400 },
+      );
+    }
 
-const {
-data: { user },
-error: userError,
-} = await supabase.auth.getUser();
+    const supabase = await createClient();
 
-if (userError || !user) {
-return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
-}
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
 
-const { data: profile, error: profileError } = await supabase
-.from("profiles")
-.select("id, email, role, company_id")
-.eq("id", user.id)
-.single();
+    if (userError || !user) {
+      return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+    }
 
-if (profileError || !profile?.company_id) {
-return NextResponse.json(
-{ error: "Company profile is required to invite suppliers." },
-{ status: 403 }
-);
-}
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("id, email, role, company_id")
+      .eq("id", user.id)
+      .single();
 
-if (!isAllowedProcurementRole(profile.role)) {
-return NextResponse.json(
-{ error: "Only authorized procurement users can invite suppliers." },
-{ status: 403 }
-);
-}
+    if (profileError || !profile?.company_id) {
+      return NextResponse.json(
+        { error: "Company profile is required to invite suppliers." },
+        { status: 403 },
+      );
+    }
 
-const { data: rfq, error: rfqError } = await supabase
-.from("rfqs")
-.select(
-"id, title, slug, company_id, status, category, budget, deadline, procurement_scope, sourcing_method, contract_framework"
-)
-.eq("id", rfqId)
-.single();
+    if (!isAllowedProcurementRole(profile.role)) {
+      return NextResponse.json(
+        { error: "Only authorized procurement users can invite suppliers." },
+        { status: 403 },
+      );
+    }
 
-if (rfqError || !rfq) {
-return NextResponse.json({ error: "RFQ not found." }, { status: 404 });
-}
+    const { data: rfq, error: rfqError } = await supabase
+      .from("rfqs")
+      .select(
+        "id, title, slug, company_id, status, category, budget, deadline, procurement_scope, sourcing_method, contract_framework",
+      )
+      .eq("id", rfqId)
+      .single();
 
-if (rfq.company_id !== profile.company_id) {
-return NextResponse.json(
-{ error: "You can only invite suppliers to RFQs owned by your company." },
-{ status: 403 }
-);
-}
+    if (rfqError || !rfq) {
+      return NextResponse.json({ error: "RFQ not found." }, { status: 404 });
+    }
 
-const { data: existingInvite } = await supabase
-.from("rfq_invites")
-.select("id, rfq_id, email, token, status, created_at")
-.eq("rfq_id", rfq.id)
-.eq("email", email)
-.maybeSingle();
+    if (rfq.company_id !== profile.company_id) {
+      return NextResponse.json(
+        {
+          error: "You can only invite suppliers to RFQs owned by your company.",
+        },
+        { status: 403 },
+      );
+    }
 
-if (existingInvite) {
-const existingInviteUrl = `${SITE_URL}/rfq/invite/${existingInvite.token}`;
+    if (!isRfqOpenForInvitations(rfq.status, rfq.deadline)) {
+      return NextResponse.json(
+        {
+          error:
+            "Supplier invitations are only available while the RFQ is open.",
+        },
+        { status: 409 },
+      );
+    }
 
-return NextResponse.json({
-success: true,
-invite: existingInvite,
-inviteUrl: `/rfq/invite/${existingInvite.token}`,
-absoluteInviteUrl: existingInviteUrl,
-message: "Supplier has already been invited to this RFQ.",
-email: {
-sent: false,
-skipped: true,
-error: "Existing invite reused. Email was not resent.",
-},
-});
-}
+    if (vendorCompanyId) {
+      const { data: approvedVendor, error: approvedVendorError } =
+        await supabase
+          .from("approved_vendors")
+          .select("vendor_company_id, status")
+          .eq("vendor_company_id", vendorCompanyId)
+          .in("status", ["approved", "conditional"])
+          .limit(1)
+          .maybeSingle();
 
-const token = generateToken();
-const absoluteInviteUrl = `${SITE_URL}/rfq/invite/${token}`;
+      if (approvedVendorError) {
+        console.error(
+          "Could not validate selected AVL supplier.",
+          approvedVendorError,
+        );
 
-const { data: invite, error: inviteError } = await supabase
-.from("rfq_invites")
-.insert({
-rfq_id: rfq.id,
-email,
-token,
-status: "sent",
-})
-.select()
-.single();
+        return NextResponse.json(
+          { error: "The selected AVL supplier could not be validated." },
+          { status: 500 },
+        );
+      }
 
-if (inviteError || !invite) {
-console.error(inviteError);
+      if (!approvedVendor) {
+        return NextResponse.json(
+          {
+            error:
+              "The selected supplier is not currently approved or conditionally approved in the AVL.",
+          },
+          { status: 400 },
+        );
+      }
+    }
 
-return NextResponse.json(
-{ error: inviteError?.message || "Could not create supplier invite." },
-{ status: 500 }
-);
-}
+    const { data: existingInvite, error: existingInviteError } = await supabase
+      .from("rfq_invites")
+      .select("id, rfq_id, email, token, status, created_at")
+      .eq("rfq_id", rfq.id)
+      .eq("email", email)
+      .limit(1)
+      .maybeSingle();
 
-const procurementScope = getProcurementScopeLabel(
-rfq.procurement_scope as ProcurementScope | null
-);
-const sourcingMethod = getSourcingMethodLabel(
-rfq.sourcing_method as SourcingMethod | null
-);
-const contractFramework = getContractFrameworkLabel(
-rfq.contract_framework as ContractFramework | null
-);
+    if (existingInviteError) {
+      console.error(
+        "Could not verify existing supplier invitations.",
+        existingInviteError,
+      );
 
-const invitationEmail = buildRfqInviteEmail({
-rfqTitle: rfq.title || "Procurement RFQ",
-category: rfq.category || "Procurement",
-budget: formatMoney(rfq.budget),
-deadline: formatDate(rfq.deadline),
-procurementScope,
-sourcingMethod,
-contractFramework,
-inviteUrl: absoluteInviteUrl,
-});
+      return NextResponse.json(
+        { error: "Existing supplier invitations could not be verified." },
+        { status: 500 },
+      );
+    }
 
-const emailResult = await sendEmail({
-to: email,
-subject: invitationEmail.subject,
-html: invitationEmail.html,
-text: invitationEmail.text,
-});
+    if (existingInvite) {
+      const existingInviteUrl = `${SITE_URL}/rfq/invite/${existingInvite.token}`;
 
-await supabase.from("audit_logs").insert({
-action: "RFQ_SUPPLIER_INVITED",
-entity_type: "rfq_invite",
-entity_id: invite.id,
-user_id: user.id,
-company_id: profile.company_id,
-metadata: {
-rfq_id: rfq.id,
-rfq_title: rfq.title,
-supplier_email: email,
-invite_token: token,
-invite_url: absoluteInviteUrl,
-procurement_scope: rfq.procurement_scope,
-procurement_scope_label: procurementScope,
-sourcing_method: rfq.sourcing_method,
-sourcing_method_label: sourcingMethod,
-contract_framework: rfq.contract_framework,
-contract_framework_label: contractFramework,
-deadline: rfq.deadline,
-email_sent: emailResult.success,
-email_skipped: emailResult.skipped,
-email_id: emailResult.id,
-email_error: emailResult.error,
-created_at: new Date().toISOString(),
-},
-});
+      return NextResponse.json({
+        success: true,
+        invite: existingInvite,
+        inviteUrl: `/rfq/invite/${existingInvite.token}`,
+        absoluteInviteUrl: existingInviteUrl,
+        message: "Supplier has already been invited to this RFQ.",
+        email: {
+          sent: false,
+          skipped: true,
+          error: "Existing invite reused. Email was not resent.",
+        },
+      });
+    }
 
-await supabase.from("notifications").insert({
-title: "Supplier Invited",
-message: `${email} was invited to quote on ${rfq.title}.`,
-type: "invitation",
-is_read: false,
-company_id: profile.company_id,
-});
+    const token = generateToken();
+    const absoluteInviteUrl = `${SITE_URL}/rfq/invite/${token}`;
 
-return NextResponse.json({
-success: true,
-invite,
-inviteUrl: `/rfq/invite/${token}`,
-absoluteInviteUrl,
-email: {
-sent: emailResult.success,
-skipped: emailResult.skipped,
-id: emailResult.id,
-error: emailResult.error,
-},
-});
-} catch (error) {
-console.error(error);
+    const { data: invite, error: inviteError } = await supabase
+      .from("rfq_invites")
+      .insert({
+        rfq_id: rfq.id,
+        email,
+        token,
+        status: "sent",
+      })
+      .select()
+      .single();
 
-return NextResponse.json({ error: "Server error." }, { status: 500 });
-}
+    if (inviteError || !invite) {
+      console.error(inviteError);
+
+      return NextResponse.json(
+        { error: inviteError?.message || "Could not create supplier invite." },
+        { status: 500 },
+      );
+    }
+
+    const procurementScope = getProcurementScopeLabel(
+      rfq.procurement_scope as ProcurementScope | null,
+    );
+    const sourcingMethod = getSourcingMethodLabel(
+      rfq.sourcing_method as SourcingMethod | null,
+    );
+    const contractFramework = getContractFrameworkLabel(
+      rfq.contract_framework as ContractFramework | null,
+    );
+
+    const invitationEmail = buildRfqInviteEmail({
+      rfqTitle: rfq.title || "Procurement RFQ",
+      category: rfq.category || "Procurement",
+      budget: formatMoney(rfq.budget),
+      deadline: formatDate(rfq.deadline),
+      procurementScope,
+      sourcingMethod,
+      contractFramework,
+      inviteUrl: absoluteInviteUrl,
+    });
+
+    let emailResult: InviteEmailDeliveryResult;
+
+    try {
+      const result = await sendEmail({
+        to: email,
+        subject: invitationEmail.subject,
+        html: invitationEmail.html,
+        text: invitationEmail.text,
+      });
+
+      emailResult = {
+        success: Boolean(result.success),
+        skipped: Boolean(result.skipped),
+        id: result.id ?? null,
+        error: result.error ?? null,
+      };
+    } catch (emailError) {
+      console.error("Supplier invitation email delivery failed.", emailError);
+
+      emailResult = {
+        success: false,
+        skipped: false,
+        id: null,
+        error: "Invitation created, but email delivery failed.",
+      };
+    }
+
+    try {
+      const { error: auditError } = await supabase.from("audit_logs").insert({
+        action: "RFQ_SUPPLIER_INVITED",
+        entity_type: "rfq_invite",
+        entity_id: invite.id,
+        user_id: user.id,
+        company_id: profile.company_id,
+        metadata: {
+          rfq_id: rfq.id,
+          rfq_title: rfq.title,
+          supplier_email: email,
+          vendor_company_id: vendorCompanyId,
+          invite_token: token,
+          invite_url: absoluteInviteUrl,
+          procurement_scope: rfq.procurement_scope,
+          procurement_scope_label: procurementScope,
+          sourcing_method: rfq.sourcing_method,
+          sourcing_method_label: sourcingMethod,
+          contract_framework: rfq.contract_framework,
+          contract_framework_label: contractFramework,
+          deadline: rfq.deadline,
+          email_sent: emailResult.success,
+          email_skipped: emailResult.skipped,
+          email_id: emailResult.id,
+          email_error: emailResult.error,
+          created_at: new Date().toISOString(),
+        },
+      });
+
+      if (auditError) {
+        console.error("Supplier invitation audit log failed.", auditError);
+      }
+    } catch (auditFailure) {
+      console.error("Supplier invitation audit log failed.", auditFailure);
+    }
+
+    try {
+      const { error: notificationError } = await supabase
+        .from("notifications")
+        .insert({
+          title: "Supplier Invited",
+          message: `${email} was invited to quote on ${rfq.title}.`,
+          type: "invitation",
+          is_read: false,
+          company_id: profile.company_id,
+        });
+
+      if (notificationError) {
+        console.error(
+          "Supplier invitation notification failed.",
+          notificationError,
+        );
+      }
+    } catch (notificationFailure) {
+      console.error(
+        "Supplier invitation notification failed.",
+        notificationFailure,
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      invite,
+      inviteUrl: `/rfq/invite/${token}`,
+      absoluteInviteUrl,
+      vendorCompanyId,
+      email: {
+        sent: emailResult.success,
+        skipped: emailResult.skipped,
+        id: emailResult.id,
+        error: emailResult.error,
+      },
+    });
+  } catch (error) {
+    console.error(error);
+
+    return NextResponse.json({ error: "Server error." }, { status: 500 });
+  }
 }
