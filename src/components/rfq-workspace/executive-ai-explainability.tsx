@@ -2,7 +2,7 @@ import { ExecutivePanel } from "@/components/executive/executive-panel";
 import { ExecutiveProgress } from "@/components/executive/executive-progress";
 import { ExecutiveSignal } from "@/components/rfq-workspace/shared/executive-signal";
 import { ExecutiveStatusBadge } from "@/components/rfq-workspace/shared/executive-status-badge";
-import { buildExecutiveIntelligence } from "@/lib/executive/executive-engine";
+import type { ExecutiveIntelligence } from "@/lib/executive/executive-types";
 import type { ExecutiveQuote } from "@/types/executive";
 
 type ExecutiveAIExplainabilityProps = {
@@ -13,6 +13,7 @@ type ExecutiveAIExplainabilityProps = {
   quoteCount: number;
   healthScore: number;
   documentCount: number;
+  executive: ExecutiveIntelligence;
 };
 
 type DriverState = {
@@ -68,6 +69,7 @@ export function ExecutiveAIExplainability({
   quoteCount,
   healthScore,
   documentCount,
+  executive,
 }: ExecutiveAIExplainabilityProps) {
   if (!isOwner) return null;
 
@@ -118,24 +120,7 @@ export function ExecutiveAIExplainability({
     );
   }
 
-  const executive = buildExecutiveIntelligence({
-    rfqSlug: "",
-    isOwner,
-    isOpen: true,
-    commercialEvaluationUnlocked,
-    healthScore,
-    quoteCount,
-    documentCount,
-    addendaCount: 0,
-    averageBid,
-    lowestAmount: null,
-    budget: recommendedQuote.amountNumber + recommendedQuote.budgetVariance,
-    potentialSavings:
-      averageBid > 0 ? averageBid - recommendedQuote.amountNumber : 0,
-    recommendedQuote,
-    awardedQuote: null,
-  });
-
+  
   const drivers = [
     {
       label: "Price",
