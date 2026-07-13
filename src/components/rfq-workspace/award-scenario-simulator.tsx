@@ -1,8 +1,8 @@
 import { ExecutivePanel } from "@/components/executive/executive-panel";
 import { ExecutiveSignal } from "@/components/rfq-workspace/shared/executive-signal";
 import { ExecutiveStatusBadge } from "@/components/rfq-workspace/shared/executive-status-badge";
-import { buildExecutiveIntelligence } from "@/lib/executive/executive-engine";
 import type {
+  ExecutiveIntelligence,
   ExecutiveScenario,
   ExecutiveTone,
 } from "@/lib/executive/executive-types";
@@ -12,10 +12,8 @@ type AwardScenarioSimulatorProps = {
   isOwner: boolean;
   commercialEvaluationUnlocked: boolean;
   recommendedQuote: ExecutiveQuote | null;
-  averageBid: number;
   quoteCount: number;
-  healthScore: number;
-  budget: number;
+  executive: ExecutiveIntelligence;
 };
 
 function getScenarioStatusLabel(tone: ExecutiveTone) {
@@ -31,10 +29,8 @@ export function AwardScenarioSimulator({
   isOwner,
   commercialEvaluationUnlocked,
   recommendedQuote,
-  averageBid,
   quoteCount,
-  healthScore,
-  budget,
+  executive,
 }: AwardScenarioSimulatorProps) {
   if (!isOwner) return null;
 
@@ -85,32 +81,11 @@ export function AwardScenarioSimulator({
     );
   }
 
-  const executive = buildExecutiveIntelligence({
-    rfqSlug: "",
-    isOwner,
-    isOpen: true,
-    commercialEvaluationUnlocked,
-    healthScore,
-    quoteCount,
-    documentCount: 1,
-    addendaCount: 0,
-    averageBid,
-    lowestAmount: null,
-    budget,
-    potentialSavings:
-      averageBid > 0 ? averageBid - recommendedQuote.amountNumber : 0,
-    recommendedQuote,
-    awardedQuote: null,
-  });
-
   const scenarios = executive.scenarios;
   const primaryScenario = scenarios[0];
 
   return (
-    <ExecutivePanel
-      className="mt-8 overflow-hidden p-0"
-      tone="gold"
-    >
+    <ExecutivePanel className="mt-8 overflow-hidden p-0" tone="gold">
       <section aria-labelledby="award-scenario-simulator-title">
         <div className="border-b border-white/10 p-6 sm:p-8">
           <div className="flex flex-col gap-6 xl:flex-row xl:items-start xl:justify-between">

@@ -5,6 +5,10 @@ import { createClient } from "@/lib/supabase/server";
 import {
   getAwardedQuotes,
   getAwardedRevenue,
+  getPerformanceRank,
+  getPerformanceScore,
+  getSupplierIntelligenceRank,
+  getSupplierIntelligenceScore,
   getWinRate,
 } from "@/lib/procurement/supplier-intelligence";
 
@@ -101,7 +105,6 @@ if (!Number.isFinite(amount)) return "$0";
 return `$${amount.toLocaleString()}`;
 }
 
-
 function daysUntil(value: string | null | undefined) {
 if (!value) return null;
 
@@ -182,67 +185,6 @@ if (!vendorCompanyId) return [];
 
 return quotes.filter((quote) => quote.company_id === vendorCompanyId);
 }
-
-
-function getSupplierIntelligenceScore({
-compliance,
-quotes,
-}: {
-compliance: Compliance | null;
-quotes: QuotePerformance[];
-}) {
-const complianceScore = Number(compliance?.compliance_score || 0);
-const quoteCount = quotes.length;
-const awardCount = getAwardedQuotes(quotes).length;
-
-const participationScore = Math.min(100, quoteCount * 12);
-const winRateScore =
-quoteCount > 0 ? Math.round((awardCount / quoteCount) * 100) : 0;
-
-return Math.min(
-100,
-Math.round(
-complianceScore * 0.45 +
-participationScore * 0.25 +
-winRateScore * 0.3
-)
-);
-}
-
-function getSupplierIntelligenceRank(score: number) {
-if (score >= 90) return "Strategic Supplier";
-if (score >= 75) return "Preferred Supplier";
-if (score >= 60) return "Qualified Supplier";
-if (score >= 35) return "Developing Supplier";
-return "Unqualified / Review Required";
-}
-
-
-function getPerformanceScore(quotes: QuotePerformance[]) {
-const quoteCount = quotes.length;
-const awards = getAwardedQuotes(quotes).length;
-const winRate = getWinRate(quotes);
-const revenue = getAwardedRevenue(quotes);
-
-return Math.min(
-100,
-Math.round(
-Math.min(quoteCount * 8, 30) +
-Math.min(awards * 15, 35) +
-winRate * 0.2 +
-Math.min(revenue / 50000, 15)
-)
-);
-}
-
-function getPerformanceRank(score: number) {
-if (score >= 85) return "Excellent";
-if (score >= 70) return "Strong";
-if (score >= 50) return "Reliable";
-if (score >= 30) return "Developing";
-return "Limited Data";
-}
-
 
 export default async function VendorIntelligencePage() {
 const supabase = await createClient();
@@ -568,7 +510,6 @@ const awardedRevenue = getAwardedRevenue(vendorQuotes);
 const performanceScore = getPerformanceScore(vendorQuotes);
 const performanceRank = getPerformanceRank(performanceScore);
 
-
 const complianceScore = Number(
 compliance?.compliance_score || 0
 );
@@ -696,7 +637,6 @@ Performance Scorecard
 Based on awards won, quote activity, win rate, and awarded revenue.
 </p>
 </div>
-
 
 <div className="mt-4 grid grid-cols-2 gap-3">
 <SmallSignal title="Quotes" value={String(vendorQuotes.length)} />
