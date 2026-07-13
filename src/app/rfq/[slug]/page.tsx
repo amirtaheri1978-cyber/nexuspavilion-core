@@ -1349,13 +1349,14 @@ recommendedQuote={recommendedQuote}
 />
 
 <ExecutiveAIExplainability
-isOwner={isOwner}
-commercialEvaluationUnlocked={commercialEvaluationUnlocked}
-recommendedQuote={recommendedQuote}
-averageBid={averageBid}
-quoteCount={quoteList.length}
-healthScore={healthScore}
-documentCount={rfqAttachments.length}
+    isOwner={isOwner}
+    commercialEvaluationUnlocked={commercialEvaluationUnlocked}
+    recommendedQuote={recommendedQuote}
+    averageBid={averageBid}
+    quoteCount={quoteList.length}
+    healthScore={healthScore}
+    documentCount={rfqAttachments.length}
+    executive={executive}
 />
 
 <ExecutiveSupplierDNA
