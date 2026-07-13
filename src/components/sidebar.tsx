@@ -204,12 +204,7 @@ key: "opportunities",
 description: "RFQs and opportunity signals",
 badge: String(stats.activeRfqs),
 },
-{
-label: "Supplier Intelligence",
-href: "/directory",
-key: "directory",
-description: "AVL, suppliers, partners",
-},
+
 {
 label: "Supplier Intelligence",
 href: "/directory",
