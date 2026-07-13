@@ -1,19 +1,24 @@
 import { ExecutivePanel } from "@/components/executive/executive-panel";
 
-type MetricTone = "neutral" | "blue" | "gold" | "risk" | "success";
+export type ExecutiveMetricCardTone =
+  | "neutral"
+  | "blue"
+  | "gold"
+  | "risk"
+  | "success";
 
-type ExecutiveMetricCardProps = {
+export type ExecutiveMetricCardProps = {
   label: string;
   value: string;
   trend?: string;
   insight?: string;
   impact?: string;
-  tone?: MetricTone;
+  tone?: ExecutiveMetricCardTone;
   className?: string;
   valueClassName?: string;
 };
 
-const toneClasses: Record<MetricTone, string> = {
+const toneClasses: Record<ExecutiveMetricCardTone, string> = {
   neutral: "text-nexus-white",
   blue: "text-blue-300",
   gold: "text-yellow-300",
@@ -31,42 +36,47 @@ export function ExecutiveMetricCard({
   className = "",
   valueClassName = "",
 }: ExecutiveMetricCardProps) {
+  const panelClassName = ["min-w-0", className]
+    .filter(Boolean)
+    .join(" ");
+
+  const resolvedValueClassName = [
+    "mt-4 min-w-0 break-words text-2xl font-black leading-tight tracking-tight [overflow-wrap:anywhere] sm:text-3xl",
+    toneClasses[tone],
+    valueClassName,
+  ]
+    .filter(Boolean)
+    .join(" ");
+
   return (
     <ExecutivePanel
-      className={`min-w-0 ${className}`}
+      aria-label={`${label}: ${value}`}
+      className={panelClassName}
       padding="sm"
       tone={tone}
     >
-      <p className="text-[10px] font-black uppercase tracking-[0.22em] text-nexus-muted">
+      <p className="break-words text-[10px] font-black uppercase tracking-[0.22em] text-nexus-muted [overflow-wrap:anywhere]">
         {label}
       </p>
 
-      <p
-        className={[
-          "mt-4 break-words text-3xl font-black tracking-tight",
-          toneClasses[tone],
-          valueClassName,
-        ]
-          .filter(Boolean)
-          .join(" ")}
-      >
+      <p className={resolvedValueClassName}>
         {value}
       </p>
 
       {trend ? (
-        <p className="mt-2 text-xs font-bold text-emerald-300">
+        <p className="mt-2 break-words text-xs font-bold leading-5 text-emerald-300 [overflow-wrap:anywhere]">
           {trend}
         </p>
       ) : null}
 
       {insight ? (
-        <p className="mt-4 text-sm font-semibold leading-6 text-nexus-muted">
+        <p className="mt-4 break-words text-sm font-semibold leading-6 text-nexus-muted [overflow-wrap:anywhere]">
           {insight}
         </p>
       ) : null}
 
       {impact ? (
-        <p className="mt-4 rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-bold text-nexus-white">
+        <p className="mt-4 break-words rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-bold leading-5 text-nexus-white [overflow-wrap:anywhere]">
           {impact}
         </p>
       ) : null}
