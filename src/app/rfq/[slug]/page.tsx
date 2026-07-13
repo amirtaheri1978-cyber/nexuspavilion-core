@@ -1305,16 +1305,17 @@ return (
 <ExecutiveIntelligenceProvider executive={executive}>
 
 <ExecutiveDecisionCenter
-rfqSlug={rfq.slug}
-isOwner={isOwner}
-isOpen={isOpen}
-commercialEvaluationUnlocked={commercialEvaluationUnlocked}
-healthScore={healthScore}
-quoteCount={quoteList.length}
-documentCount={rfqAttachments.length}
-addendaCount={rfqAddenda.length}
-potentialSavings={potentialSavings}
-recommendedQuote={recommendedQuote}
+  rfqSlug={rfq.slug}
+  isOwner={isOwner}
+  isOpen={isOpen}
+  commercialEvaluationUnlocked={commercialEvaluationUnlocked}
+  healthScore={healthScore}
+  quoteCount={quoteList.length}
+  documentCount={rfqAttachments.length}
+  addendaCount={rfqAddenda.length}
+  potentialSavings={potentialSavings}
+  recommendedQuote={recommendedQuote}
+  executive={executive}
 />
 
 <ExecutiveActionQueue

@@ -1,4 +1,3 @@
-
 import { ExecutiveMetricCard } from "@/components/executive/executive-metric-card";
 import { ExecutivePanel } from "@/components/executive/executive-panel";
 import { ExecutiveActionAnchor } from "@/components/executive/actions/executive-action-anchor";
@@ -6,7 +5,7 @@ import { ExecutiveActionLink } from "@/components/executive/actions/executive-ac
 import { ExecutiveMiniTile } from "@/components/rfq-workspace/shared/executive-mini-tile";
 import { ExecutiveSignal } from "@/components/rfq-workspace/shared/executive-signal";
 import { ExecutiveStatusBadge } from "@/components/rfq-workspace/shared/executive-status-badge";
-import { buildExecutiveIntelligence } from "@/lib/executive/executive-engine";
+import type { ExecutiveIntelligence } from "@/lib/executive/executive-types";
 
 type ExecutiveDecisionCenterProps = {
   rfqSlug: string;
@@ -31,6 +30,7 @@ type ExecutiveDecisionCenterProps = {
         performanceScore: number;
       }
     | null;
+  executive: ExecutiveIntelligence;
 };
 
 type ChecklistItem = {
@@ -100,29 +100,8 @@ export function ExecutiveDecisionCenter({
   addendaCount,
   potentialSavings,
   recommendedQuote,
+  executive,
 }: ExecutiveDecisionCenterProps) {
-  const executiveRecommendedQuote = recommendedQuote
-    ? {
-        ...recommendedQuote,
-        budgetVariance: 0,
-        lowestBidVariance: 0,
-      }
-    : null;
-
-  const executive = buildExecutiveIntelligence({
-    rfqSlug,
-    isOwner,
-    isOpen,
-    commercialEvaluationUnlocked,
-    healthScore,
-    quoteCount,
-    documentCount,
-    addendaCount,
-    potentialSavings,
-    recommendedQuote: executiveRecommendedQuote,
-    awardedQuote: null,
-  });
-
   const checklist = getChecklist({
     commercialEvaluationUnlocked,
     recommendedQuote,
@@ -133,11 +112,7 @@ export function ExecutiveDecisionCenter({
   });
 
   return (
-    <ExecutivePanel
-      className="mt-8"
-      padding="lg"
-      tone="gold"
-    >
+    <ExecutivePanel className="mt-8" padding="lg" tone="gold">
       <div className="flex flex-col gap-6 xl:flex-row xl:items-start xl:justify-between">
         <div className="min-w-0">
           <p className="text-xs font-black uppercase tracking-[0.32em] text-nexus-gold">
@@ -244,11 +219,7 @@ export function ExecutiveDecisionCenter({
       </div>
 
       <div className="mt-8 grid items-start gap-6 xl:grid-cols-[1.05fr_0.95fr]">
-        <ExecutivePanel
-          variant="operational"
-          padding="md"
-          tone="blue"
-        >
+        <ExecutivePanel variant="operational" padding="md" tone="blue">
           <p className="text-xs font-black uppercase tracking-[0.28em] text-cyan-300">
             Decision Rationale
           </p>
