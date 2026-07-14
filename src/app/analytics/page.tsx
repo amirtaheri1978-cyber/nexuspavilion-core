@@ -15,6 +15,7 @@ import { BoardDashboard } from "@/components/analytics/sections/board-dashboard"
 import { ProcurementDashboard } from "@/components/analytics/sections/procurement-dashboard";
 import { buildAnalyticsNarrative } from "@/lib/analytics/narrative/analytics-narrative";
 import { buildPortfolioIntelligence } from "@/lib/analytics/portfolio/portfolio-intelligence";
+import { buildExecutiveBrief } from "@/lib/analytics/executive/executive-brief";
 import { IntelligenceDashboard } from "@/components/analytics/sections/intelligence-dashboard";
 import {
 CONTRACT_FRAMEWORK_LABELS,
@@ -116,6 +117,8 @@ Math.round(
 (sealedBidRfqs > 0 ? 9 : 0),
 ),
 );
+
+
 
 const procurementMixStatus =
 constructionClassificationScore >= 80
@@ -501,6 +504,8 @@ remains ${ceoRiskLevel.toLowerCase()}.
 `;
 
 const bestProcurementCategory = topCategory;
+
+
 
 const savingsOpportunityLevel =
 potentialSavings > 50000
@@ -1775,6 +1780,22 @@ constructionClassificationScore < 60
 : "Structured RFQ intelligence active",
 ];
 
+const executiveBrief = buildExecutiveBrief({
+  opportunity: {
+    topCategory,
+    potentialSavings,
+    avgQuotesPerRfq,
+    supplierCount: supplierRanking.length,
+  },
+  executiveRecommendation: executiveCommandRecommendation,
+  decisionConfidenceScore,
+  topRisk,
+  procurementRiskIndex,
+  supplierCount: supplierRanking.length,
+  avgQuotesPerRfq,
+  classificationScore: constructionClassificationScore,
+});
+
 return (
 <main className="min-h-screen bg-[#030712] px-8 py-10">
 <div className="mx-auto max-w-7xl">
@@ -1787,10 +1808,7 @@ className="text-sm font-semibold text-slate-400 transition hover:text-white"
 
 <div className="mt-8">
 <BoardroomSnapshot
-  executiveRecommendation={executiveCommandRecommendation}
-  topOpportunity={topOpportunity}
-  topRisk={topRisk}
-  decisionConfidence={decisionConfidenceLevel}
+  executiveBrief={executiveBrief}
   quotedPortfolioValue={procurementVolume}
   estimatedSavingsOpportunity={forecastSavings}
   enterpriseProcurementScore={enterpriseProcurementScore}

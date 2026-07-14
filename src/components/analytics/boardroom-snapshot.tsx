@@ -1,29 +1,41 @@
+import type { ExecutiveBrief } from "@/lib/analytics/executive/executive-brief";
+
 import { ExecutiveInsightCard } from "@/components/executive/executive-insight-card";
 import { ExecutiveMetricCard } from "@/components/executive/executive-metric-card";
 import { ExecutivePanel } from "@/components/executive/executive-panel";
 import { ExecutiveStatusBadge } from "@/components/rfq-workspace/shared/executive-status-badge";
 
 export type BoardroomSnapshotProps = {
-  executiveRecommendation: string;
-  topOpportunity: string;
-  topRisk: string;
-  decisionConfidence: string;
+  executiveBrief: ExecutiveBrief;
   quotedPortfolioValue: number;
   estimatedSavingsOpportunity: number;
   enterpriseProcurementScore: number;
   constructionClassificationScore: number;
 };
 
+function formatConfidenceLevel(
+  level: ExecutiveBrief["confidence"]["level"],
+): string {
+  if (level === "high") {
+    return "High";
+  }
+
+  if (level === "moderate") {
+    return "Moderate";
+  }
+
+  return "Limited";
+}
+
 export function BoardroomSnapshot({
-  executiveRecommendation,
-  topOpportunity,
-  topRisk,
-  decisionConfidence,
+  executiveBrief,
   quotedPortfolioValue,
   estimatedSavingsOpportunity,
   enterpriseProcurementScore,
   constructionClassificationScore,
 }: BoardroomSnapshotProps) {
+  const { action, opportunity, risk, confidence } = executiveBrief;
+
   return (
     <ExecutivePanel
       aria-labelledby="analytics-command-center-title"
@@ -45,62 +57,56 @@ export function BoardroomSnapshot({
           </h1>
 
           <p className="mt-4 max-w-3xl text-sm font-semibold leading-7 text-nexus-muted">
-            A concise view of the priority decision, commercial
-            opportunity, portfolio exposure, and supporting data
-            maturity.
+            A decision-focused briefing covering immediate action,
+            commercial opportunity, portfolio risk, and supporting
+            evidence.
           </p>
         </div>
 
         <div className="shrink-0">
-          <ExecutiveStatusBadge tone="info">
-            Decision confidence: {decisionConfidence}
+          <ExecutiveStatusBadge
+            tone={
+              confidence.level === "high"
+                ? "success"
+                : confidence.level === "moderate"
+                  ? "info"
+                  : "warning"
+            }
+          >
+            Decision confidence: {confidence.score}/100 ·{" "}
+            {formatConfidenceLevel(confidence.level)}
           </ExecutiveStatusBadge>
         </div>
       </div>
 
       <div className="mt-8 grid gap-5 lg:grid-cols-3">
-        <div className="lg:col-span-1">
-          <ExecutiveInsightCard
-            title="Immediate Leadership Action"
-            insight={executiveRecommendation}
-            recommendation="Review the supporting commercial, supplier, and governance evidence before authorizing major procurement action."
-            impact="Decision-support guidance based on current portfolio signals."
-            tone="gold"
-          />
-        </div>
+        <ExecutiveInsightCard
+          title={action.title}
+          insight={action.summary}
+          recommendation={action.recommendation}
+          impact={action.reason}
+          tone="gold"
+        />
 
-        <div className="grid min-w-0 gap-5 sm:grid-cols-2 lg:col-span-2">
-          <div className="min-w-0 rounded-3xl border border-emerald-300/20 bg-emerald-400/[0.06] p-6">
-            <p className="text-[10px] font-black uppercase tracking-[0.22em] text-emerald-300">
-              Top Opportunity
-            </p>
+        <InsightSignal
+          eyebrow={opportunity.title}
+          summary={opportunity.summary}
+          reason={opportunity.reason}
+          recommendation={opportunity.recommendation}
+          confidence={opportunity.confidence}
+          evidence={opportunity.evidence}
+          tone="opportunity"
+        />
 
-            <p className="mt-4 break-words text-base font-bold leading-7 text-white [overflow-wrap:anywhere]">
-              {topOpportunity}
-            </p>
-
-            <p className="mt-4 text-xs font-semibold leading-5 text-nexus-muted">
-              Validate scope alignment and supporting commercial
-              evidence before treating estimated value as realized
-              savings.
-            </p>
-          </div>
-
-          <div className="min-w-0 rounded-3xl border border-red-300/20 bg-red-400/[0.06] p-6">
-            <p className="text-[10px] font-black uppercase tracking-[0.22em] text-red-300">
-              Top Risk
-            </p>
-
-            <p className="mt-4 break-words text-base font-bold leading-7 text-white [overflow-wrap:anywhere]">
-              {topRisk}
-            </p>
-
-            <p className="mt-4 text-xs font-semibold leading-5 text-nexus-muted">
-              Review the underlying supplier, competition, and
-              classification signals before escalation.
-            </p>
-          </div>
-        </div>
+        <InsightSignal
+          eyebrow={risk.title}
+          summary={risk.summary}
+          reason={risk.reason}
+          recommendation={risk.recommendation}
+          confidence={risk.confidence}
+          evidence={risk.evidence}
+          tone="risk"
+        />
       </div>
 
       <div className="mt-6 grid min-w-0 gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -137,5 +143,102 @@ export function BoardroomSnapshot({
         />
       </div>
     </ExecutivePanel>
+  );
+}
+
+function InsightSignal({
+  eyebrow,
+  summary,
+  reason,
+  recommendation,
+  confidence,
+  evidence,
+  tone,
+}: {
+  eyebrow: string;
+  summary: string;
+  reason: string;
+  recommendation: string;
+  confidence: number;
+  evidence: string[];
+  tone: "opportunity" | "risk";
+}) {
+  const toneClasses =
+    tone === "opportunity"
+      ? {
+          panel:
+            "border-emerald-300/20 bg-emerald-400/[0.06]",
+          eyebrow: "text-emerald-300",
+        }
+      : {
+          panel: "border-red-300/20 bg-red-400/[0.06]",
+          eyebrow: "text-red-300",
+        };
+
+  return (
+    <article
+      className={[
+        "flex min-w-0 flex-col rounded-3xl border p-6",
+        toneClasses.panel,
+      ].join(" ")}
+    >
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <p
+          className={[
+            "text-[10px] font-black uppercase tracking-[0.22em]",
+            toneClasses.eyebrow,
+          ].join(" ")}
+        >
+          {eyebrow}
+        </p>
+
+        <ExecutiveStatusBadge tone="neutral">
+          {confidence}/100 confidence
+        </ExecutiveStatusBadge>
+      </div>
+
+      <p className="mt-4 break-words text-base font-bold leading-7 text-white [overflow-wrap:anywhere]">
+        {summary}
+      </p>
+
+      <div className="mt-5 space-y-4 border-t border-white/10 pt-5">
+        <div>
+          <p className="text-[10px] font-black uppercase tracking-[0.18em] text-nexus-muted">
+            Why it matters
+          </p>
+
+          <p className="mt-2 text-xs font-semibold leading-5 text-nexus-muted">
+            {reason}
+          </p>
+        </div>
+
+        <div>
+          <p className="text-[10px] font-black uppercase tracking-[0.18em] text-nexus-muted">
+            Recommended response
+          </p>
+
+          <p className="mt-2 text-xs font-bold leading-5 text-white">
+            {recommendation}
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-auto pt-5">
+        <p className="text-[10px] font-black uppercase tracking-[0.18em] text-nexus-muted">
+          Supporting evidence
+        </p>
+
+        <ul className="mt-3 space-y-2">
+          {evidence.slice(0, 3).map((item) => (
+            <li
+              key={item}
+              className="text-xs font-semibold leading-5 text-nexus-muted"
+            >
+              • {item}
+            </li>
+          ))}
+        </ul>
+      </div>
+    </article>
   );
 }
