@@ -1792,13 +1792,11 @@ className="text-sm font-semibold text-slate-400 transition hover:text-white"
 
 <div className="mt-8">
 <BoardroomSnapshot
-boardReadinessRecommendation={boardReadinessRecommendation}
-procurementVolume={procurementVolume}
-forecastSavings={forecastSavings}
-enterpriseProcurementScore={enterpriseProcurementScore}
-constructionClassificationScore={
-constructionClassificationScore
-}
+  executiveRecommendation={boardReadinessRecommendation}
+  quotedPortfolioValue={procurementVolume}
+  estimatedSavingsOpportunity={forecastSavings}
+  enterpriseProcurementScore={enterpriseProcurementScore}
+  constructionClassificationScore={constructionClassificationScore}
 />
 </div>
 <section className="mt-8 rounded-3xl border border-white/10 bg-[#061426]/88 p-8 text-white shadow-executive">
