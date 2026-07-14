@@ -14,6 +14,7 @@ import { ExecutiveDashboard } from "@/components/analytics/sections/executive-da
 import { BoardDashboard } from "@/components/analytics/sections/board-dashboard";
 import { ProcurementDashboard } from "@/components/analytics/sections/procurement-dashboard";
 import { buildAnalyticsNarrative } from "@/lib/analytics/narrative/analytics-narrative";
+import { buildPortfolioIntelligence } from "@/lib/analytics/portfolio/portfolio-intelligence";
 import { IntelligenceDashboard } from "@/components/analytics/sections/intelligence-dashboard";
 import {
 CONTRACT_FRAMEWORK_LABELS,
@@ -67,17 +68,29 @@ quoteList,
 companyList,
 });
 
-const totalRfqs = rfqList.length;
+const {
+  totalRfqs,
+  activeRfqs,
+  awardedContracts,
+  supplierQuotes,
+  procurementVolume,
+  awardedVolume,
+  averageQuote,
+  
+  potentialSavings,
+  awardRate,
+  avgQuotesPerRfq,
+  budgetTotal,
+  budgetUtilization,
+  categoryCounts,
+  topCategory,
+} = buildPortfolioIntelligence({
+  rfqList,
+  quoteList,
+});
 
-const activeRfqs = rfqList.filter(
-(rfq) => !rfq.status || rfq.status === "open",
-).length;
 
-const awardedContracts = quoteList.filter(
-(quote) => quote.decision === "awarded",
-).length;
 
-const supplierQuotes = quoteList.length;
 const materialRfqs = countByScope(rfqList, "material");
 const tradeRfqs = countByScope(rfqList, "subcontractor");
 const equipmentRfqs = countByScope(rfqList, "equipment");
@@ -113,36 +126,6 @@ constructionClassificationScore >= 80
 ? "Early RFQ Mix"
 : "No RFQ Mix Yet";
 
-const quoteAmounts = quoteList
-.map((quote) => Number(quote.amount))
-.filter((amount) => Number.isFinite(amount));
-
-const procurementVolume = quoteAmounts.reduce(
-(total, amount) => total + amount,
-0,
-);
-
-const awardedVolume = quoteList
-.filter((quote) => quote.decision === "awarded")
-.reduce((total, quote) => total + Number(quote.amount || 0), 0);
-
-const averageQuote =
-quoteAmounts.length > 0
-? Math.round(procurementVolume / quoteAmounts.length)
-: 0;
-
-const lowestQuote = quoteAmounts.length > 0 ? Math.min(...quoteAmounts) : 0;
-
-const potentialSavings =
-averageQuote > lowestQuote ? averageQuote - lowestQuote : 0;
-
-const awardRate =
-supplierQuotes > 0
-? Math.round((awardedContracts / supplierQuotes) * 100)
-: 0;
-
-const avgQuotesPerRfq =
-totalRfqs > 0 ? Number((supplierQuotes / totalRfqs).toFixed(1)) : 0;
 
 const supplierActivityScore = Math.min(100, supplierQuotes * 12);
 const competitionScore = Math.min(100, avgQuotesPerRfq * 25);
@@ -159,24 +142,6 @@ savingsScore * 0.25,
 const procurementHealth = getHealthLabel(procurementHealthScore);
 const competitionIndex = getCompetitionLabel(avgQuotesPerRfq);
 
-const categoryCounts = rfqList.reduce((acc: Record<string, number>, rfq) => {
-const category = rfq.category || "Uncategorized";
-acc[category] = (acc[category] || 0) + 1;
-
-return acc;
-}, {});
-
-const topCategory =
-Object.entries(categoryCounts).sort((a, b) => b[1] - a[1])[0]?.[0] ||
-"N/A";
-
-const budgetTotal = rfqList.reduce(
-(total, rfq) => total + Number(rfq.budget || 0),
-0,
-);
-
-const budgetUtilization =
-budgetTotal > 0 ? Math.round((awardedVolume / budgetTotal) * 100) : 0;
 
 const executiveProcurementHealth = Math.min(
 100,
