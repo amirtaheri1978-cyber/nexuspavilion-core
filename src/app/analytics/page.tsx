@@ -13,6 +13,7 @@ import { ExecutiveOpportunityRanking } from "@/components/executive/executive-op
 import { ExecutiveDashboard } from "@/components/analytics/sections/executive-dashboard";
 import { BoardDashboard } from "@/components/analytics/sections/board-dashboard";
 import { ProcurementDashboard } from "@/components/analytics/sections/procurement-dashboard";
+import { buildAnalyticsNarrative } from "@/lib/analytics/narrative/analytics-narrative";
 import { IntelligenceDashboard } from "@/components/analytics/sections/intelligence-dashboard";
 import {
 CONTRACT_FRAMEWORK_LABELS,
@@ -197,66 +198,24 @@ const dominantSourcing =
 { label: "Sealed Bid", value: sealedBidRfqs },
 ].sort((a, b) => b.value - a.value)[0]?.label || "N/A";
 
-const executiveSummary =
-totalRfqs === 0
-? "No RFQ activity has been created yet. Start by publishing construction procurement opportunities to activate executive intelligence."
-: `${procurementHealth} procurement health. ${competitionIndex}. Dominant RFQ scope is ${dominantScope}, sourcing is ${dominantSourcing}, award conversion is ${awardRate}%, with ${supplierQuotes} supplier quotes and ${potentialSavings.toLocaleString()} dollars in estimated savings opportunity.`;
-
-const strategicRecommendations: string[] = [];
-
-if (constructionClassificationScore < 60) {
-strategicRecommendations.push(
-"Increase RFQ classification depth by separating material, trade, equipment, and service procurement.",
-);
-}
-
-if (avgQuotesPerRfq < 2) {
-strategicRecommendations.push(
-"Increase supplier invitations to improve RFQ competition.",
-);
-}
-
-if (sealedBidRfqs === 0 && totalRfqs > 3) {
-strategicRecommendations.push(
-"Consider sealed-bid workflows for high-value or governance-sensitive procurement packages.",
-);
-}
-
-if (frameworkRfqs === 0 && totalRfqs > 3) {
-strategicRecommendations.push(
-"Use framework RFQs for recurring material or supplier agreements across multiple projects.",
-);
-}
-
-if (budgetUtilization > 85) {
-strategicRecommendations.push(
-"Budget utilization is high. Increase competitive bidding activity.",
-);
-}
-
-if (potentialSavings > 10000) {
-strategicRecommendations.push(
-"Large savings opportunity detected. Review lowest-bid suppliers.",
-);
-}
-
-if (awardRate < 30) {
-strategicRecommendations.push(
-"Award conversion is low. Review RFQ quality and supplier targeting.",
-);
-}
-
-if (topCategory !== "N/A") {
-strategicRecommendations.push(
-`Expand supplier coverage in ${topCategory} procurement category.`,
-);
-}
-
-if (strategicRecommendations.length === 0) {
-strategicRecommendations.push(
-"Procurement performance is healthy. Continue scaling supplier participation.",
-);
-}
+const {
+  executiveSummary,
+  } = buildAnalyticsNarrative({
+  totalRfqs,
+  procurementHealth,
+  competitionIndex,
+  dominantScope,
+  dominantSourcing,
+  awardRate,
+  supplierQuotes,
+  potentialSavings,
+  constructionClassificationScore,
+  avgQuotesPerRfq,
+  sealedBidRfqs,
+  frameworkRfqs,
+  budgetUtilization,
+  topCategory,
+});
 
 const awardProbabilityForecast = rfqList
 .map((rfq) => {
