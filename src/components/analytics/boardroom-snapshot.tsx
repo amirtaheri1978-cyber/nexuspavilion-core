@@ -1,10 +1,9 @@
 import type { ExecutiveBrief } from "@/lib/analytics/executive/executive-brief";
-
+import type { ExecutiveEvidence } from "@/lib/analytics/executive/executive-insight";
 
 import { ExecutiveMetricCard } from "@/components/executive/executive-metric-card";
 import { ExecutivePanel } from "@/components/executive/executive-panel";
 import { ExecutiveStatusBadge } from "@/components/rfq-workspace/shared/executive-status-badge";
-
 export type BoardroomSnapshotProps = {
   executiveBrief: ExecutiveBrief;
   quotedPortfolioValue: number;
@@ -162,7 +161,7 @@ function InsightSignal({
   reason: string;
   recommendation: string;
   confidence: number;
-  evidence: string[];
+evidence: ExecutiveEvidence[];
  tone: "action" | "opportunity" | "risk";
 }) {
 const toneClasses =
@@ -231,21 +230,39 @@ const toneClasses =
       </div>
 
       <div className="mt-auto pt-5">
-        <p className="text-[10px] font-black uppercase tracking-[0.18em] text-nexus-muted">
-          Supporting evidence
-        </p>
+  <p className="text-[10px] font-black uppercase tracking-[0.18em] text-nexus-muted">
+    Supporting evidence
+  </p>
 
-        <ul className="mt-3 space-y-2">
-          {evidence.slice(0, 3).map((item) => (
-            <li
-              key={item}
-              className="text-xs font-semibold leading-5 text-nexus-muted"
-            >
-              • {item}
-            </li>
-          ))}
-        </ul>
-      </div>
+  <div className="mt-3 grid gap-3">
+{evidence.slice(0, 3).map((item) => (
+  <div
+    key={`${item.label}-${item.value}`}
+    className="rounded-2xl border border-white/10 bg-white/[0.035] px-4 py-3"
+  >
+    <div className="flex flex-wrap items-start justify-between gap-2">
+      <p className="text-[10px] font-black uppercase tracking-[0.16em] text-nexus-muted">
+        {item.label}
+      </p>
+
+      <span className="rounded-full border border-white/10 bg-white/5 px-2 py-1 text-[9px] font-black uppercase tracking-[0.12em] text-white">
+        {item.status}
+      </span>
+    </div>
+
+    <p className="mt-1 break-words text-sm font-black leading-5 text-white [overflow-wrap:anywhere]">
+      {item.value}
+    </p>
+
+    {item.description ? (
+      <p className="mt-2 text-xs font-semibold leading-5 text-nexus-muted">
+        {item.description}
+      </p>
+    ) : null}
+  </div>
+))}
+  </div>
+</div>
     </article>
   );
 }

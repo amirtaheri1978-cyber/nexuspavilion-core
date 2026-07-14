@@ -1,4 +1,7 @@
-import type { ExecutiveInsight } from "@/lib/analytics/executive/executive-insight";
+import type {
+  ExecutiveEvidence,
+  ExecutiveInsight,
+} from "@/lib/analytics/executive/executive-insight";
 
 export type OpportunityIntelligenceInput = {
   topCategory: string;
@@ -94,11 +97,50 @@ export function buildTopOpportunityInsight({
       ? "medium"
       : "low";
 
-  const evidence = [
-    `Estimated savings opportunity: $${normalizedSavings.toLocaleString()}`,
-    `Average quotes per RFQ: ${normalizedAverageQuotes}`,
-    `Supplier coverage: ${normalizedSupplierCount}`,
-  ];
+const evidence: ExecutiveEvidence[] = [
+  {
+    label: "Estimated savings opportunity",
+    value: `$${normalizedSavings.toLocaleString()}`,
+    status:
+      normalizedSavings >= 50_000
+        ? "strong"
+        : normalizedSavings >= 10_000
+          ? "healthy"
+          : normalizedSavings > 0
+            ? "moderate"
+            : "limited",
+    description:
+      "Estimated difference between the current average and lowest recorded quotation.",
+  },
+  {
+    label: "Average quotes per RFQ",
+    value: String(normalizedAverageQuotes),
+    status:
+      normalizedAverageQuotes >= 4
+        ? "strong"
+        : normalizedAverageQuotes >= 2
+          ? "healthy"
+          : normalizedAverageQuotes >= 1
+            ? "moderate"
+            : "limited",
+    description:
+      "Average competitive quotation coverage across the current RFQ portfolio.",
+  },
+  {
+    label: "Supplier coverage",
+    value: String(normalizedSupplierCount),
+    status:
+      normalizedSupplierCount >= 8
+        ? "strong"
+        : normalizedSupplierCount >= 5
+          ? "healthy"
+          : normalizedSupplierCount >= 3
+            ? "moderate"
+            : "limited",
+    description:
+      "Number of suppliers represented in the current opportunity analysis.",
+  },
+];
 
   return {
     category: "opportunity",

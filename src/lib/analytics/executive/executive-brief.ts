@@ -109,10 +109,45 @@ function buildActionInsight({
           ? "medium"
           : "low",
     evidence: [
-      `Decision-support confidence: ${confidence}/100`,
-      `Procurement risk index: ${riskIndex}/100`,
-      `Average quotes per RFQ: ${averageQuotes}`,
-    ],
+  {
+    label: "Decision-support confidence",
+    value: `${confidence}/100`,
+    status:
+      confidence >= 80
+        ? "strong"
+        : confidence >= 60
+          ? "moderate"
+          : "limited",
+    description:
+      "Confidence derived from the current portfolio and decision-support inputs.",
+  },
+  {
+    label: "Procurement risk index",
+    value: `${riskIndex}/100`,
+    status:
+      riskIndex >= 70
+        ? "critical"
+        : riskIndex >= 40
+          ? "moderate"
+          : "healthy",
+    description:
+      "Lower values indicate a more controlled portfolio risk position.",
+  },
+  {
+    label: "Average quotes per RFQ",
+    value: String(averageQuotes),
+    status:
+      averageQuotes >= 4
+        ? "strong"
+        : averageQuotes >= 2
+          ? "healthy"
+          : averageQuotes >= 1
+            ? "moderate"
+            : "limited",
+    description:
+      "Average supplier quotation coverage across the current RFQ portfolio.",
+  },
+],
   };
 }
 
@@ -180,12 +215,62 @@ function buildRiskInsight({
       ),
     ),
     severity,
-    evidence: [
-      `Procurement risk index: ${riskIndex}/100`,
-      `Supplier coverage: ${normalizedSupplierCount}`,
-      `Average quotes per RFQ: ${averageQuotes}`,
-      `RFQ classification maturity: ${normalizedClassificationScore}/100`,
-    ],
+  evidence: [
+  {
+    label: "Procurement risk index",
+    value: `${riskIndex}/100`,
+    status:
+      riskIndex >= 70
+        ? "critical"
+        : riskIndex >= 40
+          ? "moderate"
+          : "healthy",
+    description:
+      "Lower values indicate a more controlled procurement risk position.",
+  },
+  {
+    label: "Supplier coverage",
+    value: String(normalizedSupplierCount),
+    status:
+      normalizedSupplierCount >= 8
+        ? "strong"
+        : normalizedSupplierCount >= 5
+          ? "healthy"
+          : normalizedSupplierCount >= 3
+            ? "moderate"
+            : "limited",
+    description:
+      "Number of suppliers represented in the current procurement intelligence dataset.",
+  },
+  {
+    label: "Average quotes per RFQ",
+    value: String(averageQuotes),
+    status:
+      averageQuotes >= 4
+        ? "strong"
+        : averageQuotes >= 2
+          ? "healthy"
+          : averageQuotes >= 1
+            ? "moderate"
+            : "limited",
+    description:
+      "Average competitive quotation coverage across the RFQ portfolio.",
+  },
+  {
+    label: "RFQ classification maturity",
+    value: `${normalizedClassificationScore}/100`,
+    status:
+      normalizedClassificationScore >= 85
+        ? "strong"
+        : normalizedClassificationScore >= 70
+          ? "healthy"
+          : normalizedClassificationScore >= 55
+            ? "moderate"
+            : "limited",
+    description:
+      "Coverage of procurement scope, sourcing method, and contract framework classifications.",
+  },
+],
   };
 }
 
