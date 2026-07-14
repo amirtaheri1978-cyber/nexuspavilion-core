@@ -8,7 +8,7 @@ import BoardReportGenerator from "@/components/board-report-generator";
 import AIBoardNarrativeGenerator from "@/components/ai-board-narrative-generator";
 import ExecutiveRiskIntelligence from "@/components/executive-risk-intelligence";
 import ProcurementCopilotIntelligence from "@/components/procurement-copilot-intelligence";
-import { createClient } from "@/lib/supabase/server";
+import { loadAnalyticsSourceData } from "@/lib/analytics/source-data/load-analytics-source-data";
 import { ExecutiveOpportunityRanking } from "@/components/executive/executive-opportunity-ranking";
 import { ExecutiveDashboard } from "@/components/analytics/sections/executive-dashboard";
 import { BoardDashboard } from "@/components/analytics/sections/board-dashboard";
@@ -26,7 +26,6 @@ getContractFramework,
 getHealthLabel,
 getProcurementScope,
 getSourcingMethod,
-type AnalyticsRFQ,
 } from "@/lib/analytics/procurement-utils";
 import { buildSupplierIntelligence } from "@/lib/analytics/supplier-intelligence";
 
@@ -38,18 +37,7 @@ calculateBoardHealth,
 commandStatus,
 } from "@/lib/analytics/executive-intelligence";
 
-type Quote = {
-id: string;
-rfq_id: string;
-company_id: string | null;
-amount: number | string | null;
-decision: string | null;
-};
 
-type Company = {
-id: string;
-name: string | null;
-};
 
 type ExecutiveAlert = {
 level: "opportunity" | "healthy" | "warning";
@@ -58,44 +46,11 @@ message: string;
 };
 
 export default async function AnalyticsPage() {
-const supabase = await createClient();
-
 const {
-data: { user },
-} = await supabase.auth.getUser();
-
-const { data: profile } = await supabase
-.from("profiles")
-.select("company_id")
-.eq("id", user?.id)
-.single();
-
-const companyId = profile?.company_id;
-
-const { data: rfqs } = companyId
-? await supabase
-.from("rfqs")
-.select("*")
-.eq("company_id", companyId)
-.order("created_at", { ascending: false })
-: { data: [] };
-
-const rfqList = (rfqs ?? []) as AnalyticsRFQ[];
-const rfqIds = rfqList.map((rfq) => rfq.id);
-
-const { data: quotes } =
-rfqIds.length > 0
-? await supabase
-.from("quotes")
-.select("*")
-.in("rfq_id", rfqIds)
-.order("created_at", { ascending: false })
-: { data: [] };
-
-const { data: companies } = await supabase.from("companies").select("id,name");
-
-const quoteList = (quotes ?? []) as Quote[];
-const companyList = (companies ?? []) as Company[];
+  rfqList,
+  quoteList,
+  companyList,
+} = await loadAnalyticsSourceData();
 
 const {
 vendorLeaderboard,

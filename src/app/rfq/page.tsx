@@ -98,7 +98,10 @@ function getSourcingMethod(
 ): "open" | "invited" | "sealed_bid" {
   const normalizedValue = normalize(value);
 
-  if (normalizedValue === "open" || normalizedValue === "sealed_bid") {
+  if (
+    normalizedValue === "open" ||
+    normalizedValue === "sealed_bid"
+  ) {
     return normalizedValue;
   }
 
@@ -113,7 +116,9 @@ function getContractFramework(
     : "project_specific";
 }
 
-function getScopeLabel(value: ProcurementRfq["procurement_scope"]) {
+function getScopeLabel(
+  value: ProcurementRfq["procurement_scope"],
+) {
   return PROCUREMENT_SCOPE_LABELS[getProcurementScope(value)];
 }
 
@@ -121,11 +126,17 @@ function getSourcingLabel(value: ProcurementSourcingMethod) {
   return SOURCING_METHOD_LABELS[getSourcingMethod(value)];
 }
 
-function getFrameworkLabel(value: ProcurementContractFramework) {
-  return CONTRACT_FRAMEWORK_LABELS[getContractFramework(value)];
+function getFrameworkLabel(
+  value: ProcurementContractFramework,
+) {
+  return CONTRACT_FRAMEWORK_LABELS[
+    getContractFramework(value)
+  ];
 }
 
-function getBudgetLabel(value: number | string | null | undefined) {
+function getBudgetLabel(
+  value: number | string | null | undefined,
+) {
   const amount = Number(value ?? 0);
 
   if (!Number.isFinite(amount) || amount <= 0) {
@@ -152,8 +163,25 @@ function getAccessLabel(
   return labels[accessReason];
 }
 
+function getParticipantRoleLabel(
+  participantRole: MarketplaceRecord["participantRole"],
+) {
+  return participantRole === "issuer"
+    ? "Issuing Organization"
+    : "Responding Organization";
+}
+
+function getParticipantRoleTone(
+  participantRole: MarketplaceRecord["participantRole"],
+): "success" | "blue" {
+  return participantRole === "issuer"
+    ? "success"
+    : "blue";
+}
+
 export default async function RFQMarketplacePage() {
   const context = await getProcurementContext();
+
   const marketplace =
     buildProcurementMarketplaceViewModel(context);
 
@@ -165,7 +193,7 @@ export default async function RFQMarketplacePage() {
       <div className="mx-auto w-full max-w-[1680px]">
         <section className="rounded-[38px] border border-white/10 bg-white/[0.045] p-6 shadow-[0_32px_110px_rgba(0,0,0,0.42)] backdrop-blur-2xl sm:p-8 lg:p-10">
           <div className="flex flex-col gap-8 xl:flex-row xl:items-start xl:justify-between">
-            <div>
+            <div className="min-w-0">
               <p className="text-xs font-black uppercase tracking-[0.34em] text-[#C8A646]">
                 Executive Procurement Workspace
               </p>
@@ -206,14 +234,17 @@ export default async function RFQMarketplacePage() {
                 title={marketplace.hero.primaryLabel}
                 value={marketplace.hero.primaryValue}
               />
+
               <HeroMetric
                 title="Procurement Health"
                 value={marketplace.hero.health}
               />
+
               <HeroMetric
                 title={marketplace.hero.openLabel}
                 value={marketplace.hero.openValue}
               />
+
               <HeroMetric
                 title={marketplace.hero.budgetLabel}
                 value={marketplace.hero.budgetValue}
@@ -248,12 +279,20 @@ export default async function RFQMarketplacePage() {
         </section>
 
         <MetricGrid metrics={marketplace.statusMetrics} />
-        <MetricGrid metrics={marketplace.scopeMetrics} compact />
-        <MetricGrid metrics={marketplace.sourcingMetrics} compact />
+
+        <MetricGrid
+          metrics={marketplace.scopeMetrics}
+          compact
+        />
+
+        <MetricGrid
+          metrics={marketplace.sourcingMetrics}
+          compact
+        />
 
         <section className="mt-10 rounded-[36px] border border-white/10 bg-white/[0.045] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.28)] backdrop-blur-xl sm:p-8">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-            <div>
+            <div className="min-w-0">
               <p className="text-xs font-black uppercase tracking-[0.3em] text-[#C8A646]">
                 Procurement Pipeline
               </p>
@@ -289,7 +328,9 @@ export default async function RFQMarketplacePage() {
               <div className="col-span-full">
                 <EmptyState
                   title={marketplace.emptyState.title}
-                  description={marketplace.emptyState.description}
+                  description={
+                    marketplace.emptyState.description
+                  }
                   canCreate={marketplace.canCreateRfq}
                 />
               </div>
@@ -313,26 +354,34 @@ function MarketplaceCard({
   return (
     <Link
       href={`/rfq/${rfq.slug}`}
-      className="group rounded-[30px] border border-white/10 bg-[#061426]/72 p-6 shadow-[0_22px_70px_rgba(0,0,0,0.22)] transition hover:-translate-y-1 hover:border-[#2CC4E8]/25 hover:bg-[#07111F]"
+      className="group min-w-0 rounded-[30px] border border-white/10 bg-[#061426]/72 p-6 shadow-[0_22px_70px_rgba(0,0,0,0.22)] transition hover:-translate-y-1 hover:border-[#2CC4E8]/25 hover:bg-[#07111F]"
     >
       <div className="flex items-start justify-between gap-4">
-        <p className="text-xs font-black uppercase tracking-[0.25em] text-[#C8A646]">
+        <p className="min-w-0 break-words text-xs font-black uppercase tracking-[0.25em] text-[#C8A646]">
           {rfq.category || "Procurement"}
         </p>
 
-        <ExecutiveBadge tone={getStatusTone(rfq.status)}>
-          {getStatusLabel(rfq.status)}
-        </ExecutiveBadge>
+        <div className="shrink-0">
+          <ExecutiveBadge tone={getStatusTone(rfq.status)}>
+            {getStatusLabel(rfq.status)}
+          </ExecutiveBadge>
+        </div>
       </div>
 
-      <h2 className="mt-4 text-2xl font-black leading-tight text-white">
+      <h2 className="mt-4 break-words text-2xl font-black leading-tight text-white">
         {rfq.title || "Untitled RFQ"}
       </h2>
 
       <div className="mt-4 flex flex-wrap gap-2">
         <Badge>{getScopeLabel(rfq.procurement_scope)}</Badge>
-        <Badge>{getSourcingLabel(rfq.sourcing_method)}</Badge>
-        <Badge>{getFrameworkLabel(rfq.contract_framework)}</Badge>
+
+        <Badge>
+          {getSourcingLabel(rfq.sourcing_method)}
+        </Badge>
+
+        <Badge>
+          {getFrameworkLabel(rfq.contract_framework)}
+        </Badge>
       </div>
 
       <p className="mt-4 line-clamp-3 text-sm font-semibold leading-7 text-slate-400">
@@ -344,21 +393,32 @@ function MarketplaceCard({
           label="Location"
           value={rfq.location || "N/A"}
         />
-      <SignalBlock
-  label="Budget"
-  value={
-    record.canViewBudget
-      ? getBudgetLabel(rfq.budget)
-      : "Commercially Sealed"
-  }
-/>
+
+        <SignalBlock
+          label="Budget"
+          value={
+            record.canViewBudget
+              ? getBudgetLabel(rfq.budget)
+              : "Commercially Sealed"
+          }
+        />
       </div>
 
-      <div className="mt-6 flex items-center justify-between gap-4">
+      <div className="mt-6 flex flex-wrap items-center gap-2">
+        <ExecutiveBadge
+          tone={getParticipantRoleTone(
+            record.participantRole,
+          )}
+        >
+          {getParticipantRoleLabel(record.participantRole)}
+        </ExecutiveBadge>
+
         <span className="rounded-full border border-white/10 bg-white/[0.055] px-3 py-1 text-xs font-black text-slate-300">
           {getAccessLabel(record.accessReason, mode)}
         </span>
+      </div>
 
+      <div className="mt-6 flex items-center justify-end">
         <span className="text-sm font-black text-[#9BE8F8] transition group-hover:translate-x-1">
           {getActionLabel(rfq.status)}
         </span>
@@ -371,7 +431,10 @@ function MetricGrid({
   metrics,
   compact = false,
 }: {
-  metrics: { label: string; value: number }[];
+  metrics: {
+    label: string;
+    value: number;
+  }[];
   compact?: boolean;
 }) {
   return (
@@ -391,7 +454,13 @@ function MetricGrid({
   );
 }
 
-function HeroMetric({ title, value }: { title: string; value: string }) {
+function HeroMetric({
+  title,
+  value,
+}: {
+  title: string;
+  value: string;
+}) {
   return (
     <div className="rounded-[26px] border border-white/10 bg-[#061426]/75 p-5">
       <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">
@@ -405,14 +474,22 @@ function HeroMetric({ title, value }: { title: string; value: string }) {
   );
 }
 
-function StatusCard({ title, value }: { title: string; value: number }) {
+function StatusCard({
+  title,
+  value,
+}: {
+  title: string;
+  value: number;
+}) {
   return (
     <div className="rounded-[28px] border border-white/10 bg-white/[0.045] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.26)] backdrop-blur-xl">
       <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">
         {title}
       </p>
 
-      <p className="mt-3 text-4xl font-black text-white">{value}</p>
+      <p className="mt-3 text-4xl font-black text-white">
+        {value}
+      </p>
     </div>
   );
 }
@@ -425,14 +502,22 @@ function Badge({ children }: { children: ReactNode }) {
   );
 }
 
-function SignalBlock({ label, value }: { label: string; value: string }) {
+function SignalBlock({
+  label,
+  value,
+}: {
+  label: string;
+  value: string;
+}) {
   return (
-    <div className="rounded-[22px] border border-white/10 bg-white/[0.035] p-4">
+    <div className="min-w-0 rounded-[22px] border border-white/10 bg-white/[0.035] p-4">
       <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-500">
         {label}
       </p>
 
-      <p className="mt-2 text-sm font-black text-white">{value}</p>
+      <p className="mt-2 break-words text-sm font-black text-white">
+        {value}
+      </p>
     </div>
   );
 }
@@ -452,7 +537,9 @@ function EmptyState({
         Procurement Pipeline
       </p>
 
-      <h2 className="mt-4 text-3xl font-black text-white">{title}</h2>
+      <h2 className="mt-4 text-3xl font-black text-white">
+        {title}
+      </h2>
 
       <p className="mx-auto mt-3 max-w-2xl text-sm font-semibold leading-7 text-slate-400">
         {description}
