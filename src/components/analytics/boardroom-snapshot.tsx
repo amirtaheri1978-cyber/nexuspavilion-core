@@ -1,6 +1,6 @@
 import type { ExecutiveBrief } from "@/lib/analytics/executive/executive-brief";
 
-import { ExecutiveInsightCard } from "@/components/executive/executive-insight-card";
+
 import { ExecutiveMetricCard } from "@/components/executive/executive-metric-card";
 import { ExecutivePanel } from "@/components/executive/executive-panel";
 import { ExecutiveStatusBadge } from "@/components/rfq-workspace/shared/executive-status-badge";
@@ -80,13 +80,15 @@ export function BoardroomSnapshot({
       </div>
 
       <div className="mt-8 grid gap-5 lg:grid-cols-3">
-        <ExecutiveInsightCard
-          title={action.title}
-          insight={action.summary}
-          recommendation={action.recommendation}
-          impact={action.reason}
-          tone="gold"
-        />
+       <InsightSignal
+  eyebrow={action.title}
+  summary={action.summary}
+  reason={action.reason}
+  recommendation={action.recommendation}
+  confidence={action.confidence}
+  evidence={action.evidence}
+  tone="action"
+/>
 
         <InsightSignal
           eyebrow={opportunity.title}
@@ -161,10 +163,15 @@ function InsightSignal({
   recommendation: string;
   confidence: number;
   evidence: string[];
-  tone: "opportunity" | "risk";
+ tone: "action" | "opportunity" | "risk";
 }) {
-  const toneClasses =
-    tone === "opportunity"
+const toneClasses =
+  tone === "action"
+    ? {
+        panel: "border-yellow-300/20 bg-yellow-400/[0.055]",
+        eyebrow: "text-yellow-300",
+      }
+    : tone === "opportunity"
       ? {
           panel:
             "border-emerald-300/20 bg-emerald-400/[0.06]",
