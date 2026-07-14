@@ -436,12 +436,7 @@ dataQualityScore * 0.1,
 ),
 );
 
-const boardReadinessRecommendation =
-boardReadinessScore >= 85
-? "Proceed to Board Presentation"
-: boardReadinessScore >= 70
-? "Executive Validation Recommended"
-: "Additional Procurement Evidence Required";
+
 
 const ceoReadinessScore = Math.min(
 100,
@@ -1792,7 +1787,10 @@ className="text-sm font-semibold text-slate-400 transition hover:text-white"
 
 <div className="mt-8">
 <BoardroomSnapshot
-  executiveRecommendation={boardReadinessRecommendation}
+  executiveRecommendation={executiveCommandRecommendation}
+  topOpportunity={topOpportunity}
+  topRisk={topRisk}
+  decisionConfidence={decisionConfidenceLevel}
   quotedPortfolioValue={procurementVolume}
   estimatedSavingsOpportunity={forecastSavings}
   enterpriseProcurementScore={enterpriseProcurementScore}
