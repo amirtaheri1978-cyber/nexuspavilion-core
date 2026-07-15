@@ -2,6 +2,11 @@ import type {
   ExecutiveEvidence,
   ExecutiveInsight,
 } from "@/lib/analytics/executive/executive-insight";
+import { buildExecutiveReasoning } from "@/lib/analytics/executive/executive-reasoning";
+import {
+  createExecutiveSignal,
+  prioritizeExecutiveSignals,
+} from "@/lib/analytics/executive/executive-signal";
 
 export type OpportunityIntelligenceInput = {
   topCategory: string;
@@ -97,8 +102,10 @@ export function buildTopOpportunityInsight({
       ? "medium"
       : "low";
 
-const evidence: ExecutiveEvidence[] = [
-  {
+const signals = [
+  createExecutiveSignal({
+    id: "estimated-savings-opportunity",
+    category: "commercial",
     label: "Estimated savings opportunity",
     value: `$${normalizedSavings.toLocaleString()}`,
     status:
@@ -109,10 +116,14 @@ const evidence: ExecutiveEvidence[] = [
           : normalizedSavings > 0
             ? "moderate"
             : "limited",
+    importance: 100,
     description:
       "Estimated difference between the current average and lowest recorded quotation.",
-  },
-  {
+  }),
+
+  createExecutiveSignal({
+    id: "average-quotes-per-rfq",
+    category: "competition",
     label: "Average quotes per RFQ",
     value: String(normalizedAverageQuotes),
     status:
@@ -123,10 +134,14 @@ const evidence: ExecutiveEvidence[] = [
           : normalizedAverageQuotes >= 1
             ? "moderate"
             : "limited",
+    importance: 85,
     description:
       "Average competitive quotation coverage across the current RFQ portfolio.",
-  },
-  {
+  }),
+
+  createExecutiveSignal({
+    id: "supplier-coverage",
+    category: "supplier",
     label: "Supplier coverage",
     value: String(normalizedSupplierCount),
     status:
@@ -137,23 +152,39 @@ const evidence: ExecutiveEvidence[] = [
           : normalizedSupplierCount >= 3
             ? "moderate"
             : "limited",
+    importance: 75,
     description:
       "Number of suppliers represented in the current opportunity analysis.",
-  },
+  }),
 ];
 
+const evidence: ExecutiveEvidence[] =
+  prioritizeExecutiveSignals(signals).map((signal) => ({
+    label: signal.label,
+    value: signal.value,
+    status: signal.status,
+    description: signal.description,
+  }));
+
+const reasoning = buildExecutiveReasoning({
+  subject: "Top commercial opportunity",
+  severity,
+  evidence,
+  fallbackReason: reason,
+  fallbackRecommendation: recommendation,
+});
   return {
     category: "opportunity",
     title: "Top Commercial Opportunity",
     summary,
-    reason,
-    recommendation,
+   reason: reasoning.reason,
+   recommendation: reasoning.recommendation,
     confidence: getConfidence({
       potentialSavings: normalizedSavings,
       avgQuotesPerRfq: normalizedAverageQuotes,
       supplierCount: normalizedSupplierCount,
     }),
     severity,
-    evidence,
+    evidence: reasoning.drivers,
   };
 }
