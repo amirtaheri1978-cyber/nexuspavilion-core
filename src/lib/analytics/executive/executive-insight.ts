@@ -1,3 +1,4 @@
+import type { ExecutiveTrend } from "@/lib/analytics/executive/executive-trend";
 export type ExecutiveInsightSeverity =
   | "low"
   | "medium"
@@ -32,4 +33,5 @@ export type ExecutiveInsight = {
   confidence: number;
   severity: ExecutiveInsightSeverity;
   evidence: ExecutiveEvidence[];
+  trend?: ExecutiveTrend;
 };
