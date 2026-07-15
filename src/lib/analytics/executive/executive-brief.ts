@@ -1,9 +1,7 @@
 import type {
-  ExecutiveEvidence,
-  ExecutiveInsight,
+    ExecutiveInsight,
 } from "@/lib/analytics/executive/executive-insight";
 
-import { buildExecutiveReasoning } from "@/lib/analytics/executive/executive-reasoning";
 
 import {
   createAverageQuotesSignal,
@@ -13,10 +11,6 @@ import {
   createSupplierCoverageSignal,
 } from "@/lib/analytics/executive/executive-signal-factory";
 
-import {
-  prioritizeExecutiveSignals,
-  type ExecutiveSignal,
-} from "@/lib/analytics/executive/executive-signal";
 
 import {
   buildTopOpportunityInsight,
@@ -85,16 +79,6 @@ function getConfidenceLevel(
   return "limited";
 }
 
-function buildEvidence(
-  signals: ExecutiveSignal[],
-): ExecutiveEvidence[] {
-  return prioritizeExecutiveSignals(signals).map((signal) => ({
-    label: signal.label,
-    value: signal.value,
-    status: signal.status,
-    description: signal.description,
-  }));
-}
 
 function buildActionInsight({
   executiveRecommendation,
@@ -233,20 +217,14 @@ function buildRiskInsight({
     ),
   ];
 
-  const evidence = buildEvidence(signals);
+
 
   const fallbackReason =
     riskIndex >= 60
       ? "Current procurement signals indicate elevated exposure requiring management attention."
       : "Current exposure remains manageable, but supplier, competition, and classification signals should continue to be monitored.";
 
-  const reasoning = buildExecutiveReasoning({
-    subject: "Top portfolio risk",
-    severity,
-    evidence,
-    fallbackReason,
-    fallbackRecommendation,
-  });
+  
 
   const confidence = Math.min(
     100,
@@ -258,18 +236,19 @@ function buildRiskInsight({
     ),
   );
 
-  return {
-    category: "risk",
-    title: "Top Portfolio Risk",
-    summary:
-      topRisk ||
-      "No material procurement risk has been identified from current portfolio signals.",
-    reason: reasoning.reason,
-    recommendation: reasoning.recommendation,
-    confidence,
-    severity,
-    evidence: reasoning.drivers,
-  };
+ return buildExecutiveInsight({
+  category: "risk",
+  title: "Top Portfolio Risk",
+  summary:
+    topRisk ||
+    "No material procurement risk has been identified from current portfolio signals.",
+  subject: "Top portfolio risk",
+  severity,
+  confidence,
+  signals,
+  fallbackReason,
+  fallbackRecommendation,
+});
 }
 
 export function buildExecutiveBrief({
