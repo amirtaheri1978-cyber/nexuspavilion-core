@@ -1,15 +1,13 @@
 import type { ExecutiveInsight } from "@/lib/analytics/executive/executive-insight";
-import {
-  buildTopOpportunityInsight,
-  type OpportunityIntelligenceInput,
-} from "@/lib/analytics/executive/opportunity-intelligence";
-
+import { buildExecutiveReasoning } from "@/lib/analytics/executive/executive-reasoning";
 import {
   createExecutiveSignal,
   prioritizeExecutiveSignals,
 } from "@/lib/analytics/executive/executive-signal";
-
-import { buildExecutiveReasoning } from "@/lib/analytics/executive/executive-reasoning";
+import {
+  buildTopOpportunityInsight,
+  type OpportunityIntelligenceInput,
+} from "@/lib/analytics/executive/opportunity-intelligence";
 
 export type ExecutiveBriefConfidence =
   | "high"
@@ -85,10 +83,99 @@ function buildActionInsight({
 >): ExecutiveInsight {
   const confidence = normalizeScore(decisionConfidenceScore);
   const riskIndex = normalizeScore(procurementRiskIndex);
-
   const averageQuotes = normalizeNonNegative(
     avgQuotesPerRfq,
   );
+
+  const severity: ExecutiveInsight["severity"] =
+    riskIndex >= 60
+      ? "high"
+      : averageQuotes < 2
+        ? "medium"
+        : "low";
+
+  const signals = [
+    createExecutiveSignal({
+      id: "decision-support-confidence",
+      category: "confidence",
+      label: "Decision-support confidence",
+      value: `${confidence}/100`,
+      status:
+        confidence >= 80
+          ? "strong"
+          : confidence >= 60
+            ? "moderate"
+            : "limited",
+      importance: 100,
+      description:
+        "Confidence derived from current portfolio, competition, risk, and decision-support inputs.",
+    }),
+
+    createExecutiveSignal({
+      id: "procurement-risk-index",
+      category: "risk",
+      label: "Procurement risk index",
+      value: `${riskIndex}/100`,
+      status:
+        riskIndex >= 70
+          ? "critical"
+          : riskIndex >= 40
+            ? "moderate"
+            : "healthy",
+      importance: 95,
+      description:
+        "Lower values indicate a more controlled procurement risk position.",
+    }),
+
+    createExecutiveSignal({
+      id: "average-quotes-per-rfq",
+      category: "competition",
+      label: "Average quotes per RFQ",
+      value: String(averageQuotes),
+      status:
+        averageQuotes >= 4
+          ? "strong"
+          : averageQuotes >= 2
+            ? "healthy"
+            : averageQuotes >= 1
+              ? "moderate"
+              : "limited",
+      importance: 85,
+      description:
+        "Average competitive quotation coverage across the current RFQ portfolio.",
+    }),
+  ];
+
+  const evidence = prioritizeExecutiveSignals(signals).map(
+    (signal) => ({
+      label: signal.label,
+      value: signal.value,
+      status: signal.status,
+      description: signal.description,
+    }),
+  );
+
+  const fallbackReason =
+    riskIndex >= 60
+      ? "Current portfolio signals indicate elevated procurement exposure requiring leadership review."
+      : averageQuotes < 2
+        ? "Competitive coverage remains limited across the current RFQ portfolio."
+        : "Current portfolio signals support structured executive review.";
+
+  const fallbackRecommendation =
+    riskIndex >= 60
+      ? "Review supplier concentration, competition coverage, and commercial exposure before scaling procurement commitments."
+      : averageQuotes < 2
+        ? "Increase qualified supplier participation before progressing major award decisions."
+        : "Validate the supporting commercial and governance evidence, then proceed through the authorized decision workflow.";
+
+  const reasoning = buildExecutiveReasoning({
+    subject: "Immediate leadership action",
+    severity,
+    evidence,
+    fallbackReason,
+    fallbackRecommendation,
+  });
 
   return {
     category: "action",
@@ -96,65 +183,11 @@ function buildActionInsight({
     summary:
       executiveRecommendation ||
       "Review the current procurement portfolio before authorizing further commercial action.",
-    reason:
-      riskIndex >= 60
-        ? "Current portfolio signals indicate elevated procurement exposure requiring leadership review."
-        : averageQuotes < 2
-          ? "Competitive coverage remains limited across the current RFQ portfolio."
-          : "Current portfolio signals support structured executive review.",
-    recommendation:
-      riskIndex >= 60
-        ? "Review supplier concentration, competition coverage, and commercial exposure before scaling procurement commitments."
-        : averageQuotes < 2
-          ? "Increase qualified supplier participation before progressing major award decisions."
-          : "Validate the supporting commercial and governance evidence, then proceed through the authorized decision workflow.",
+    reason: reasoning.reason,
+    recommendation: reasoning.recommendation,
     confidence,
-    severity:
-      riskIndex >= 60
-        ? "high"
-        : averageQuotes < 2
-          ? "medium"
-          : "low",
-    evidence: [
-  {
-    label: "Decision-support confidence",
-    value: `${confidence}/100`,
-    status:
-      confidence >= 80
-        ? "strong"
-        : confidence >= 60
-          ? "moderate"
-          : "limited",
-    description:
-      "Confidence derived from the current portfolio and decision-support inputs.",
-  },
-  {
-    label: "Procurement risk index",
-    value: `${riskIndex}/100`,
-    status:
-      riskIndex >= 70
-        ? "critical"
-        : riskIndex >= 40
-          ? "moderate"
-          : "healthy",
-    description:
-      "Lower values indicate a more controlled portfolio risk position.",
-  },
-  {
-    label: "Average quotes per RFQ",
-    value: String(averageQuotes),
-    status:
-      averageQuotes >= 4
-        ? "strong"
-        : averageQuotes >= 2
-          ? "healthy"
-          : averageQuotes >= 1
-            ? "moderate"
-            : "limited",
-    description:
-      "Average supplier quotation coverage across the current RFQ portfolio.",
-  },
-],
+    severity,
+    evidence: reasoning.drivers,
   };
 }
 
@@ -185,14 +218,14 @@ function buildRiskInsight({
   const normalizedClassificationScore =
     normalizeScore(classificationScore);
 
-  const severity =
+  const severity: ExecutiveInsight["severity"] =
     riskIndex >= 70
       ? "high"
       : riskIndex >= 40
         ? "medium"
         : "low";
 
-  const recommendation =
+  const fallbackRecommendation =
     normalizedSupplierCount <= 3
       ? "Expand qualified supplier coverage to reduce dependency and improve competitive resilience."
       : averageQuotes < 2
@@ -201,105 +234,101 @@ function buildRiskInsight({
           ? "Complete missing RFQ classifications before relying on category-level executive interpretation."
           : "Maintain monitoring and validate the underlying evidence before escalation.";
 
-const signals = [
-  createExecutiveSignal({
-    id: "procurement-risk-index",
-    category: "risk",
-    label: "Procurement risk index",
-    value: `${riskIndex}/100`,
-    status:
-      riskIndex >= 70
-        ? "critical"
-        : riskIndex >= 40
-          ? "moderate"
-          : "healthy",
-    importance: 100,
-    description:
-      "Lower values indicate a more controlled procurement risk position.",
-  }),
-  
-
-  createExecutiveSignal({
-    id: "supplier-coverage",
-    category: "supplier",
-    label: "Supplier coverage",
-    value: String(normalizedSupplierCount),
-    status:
-      normalizedSupplierCount >= 8
-        ? "strong"
-        : normalizedSupplierCount >= 5
-          ? "healthy"
-          : normalizedSupplierCount >= 3
+  const signals = [
+    createExecutiveSignal({
+      id: "procurement-risk-index",
+      category: "risk",
+      label: "Procurement risk index",
+      value: `${riskIndex}/100`,
+      status:
+        riskIndex >= 70
+          ? "critical"
+          : riskIndex >= 40
             ? "moderate"
-            : "limited",
-    importance: 90,
-    description:
-      "Number of suppliers represented in the current procurement intelligence dataset.",
-  }),
+            : "healthy",
+      importance: 100,
+      description:
+        "Lower values indicate a more controlled procurement risk position.",
+    }),
 
-  createExecutiveSignal({
-    id: "average-quotes-per-rfq",
-    category: "competition",
-    label: "Average quotes per RFQ",
-    value: String(averageQuotes),
-    status:
-      averageQuotes >= 4
-        ? "strong"
-        : averageQuotes >= 2
-          ? "healthy"
-          : averageQuotes >= 1
-            ? "moderate"
-            : "limited",
-    importance: 80,
-    description:
-      "Average competitive quotation coverage across the RFQ portfolio.",
-  }),
+    createExecutiveSignal({
+      id: "supplier-coverage",
+      category: "supplier",
+      label: "Supplier coverage",
+      value: String(normalizedSupplierCount),
+      status:
+        normalizedSupplierCount >= 8
+          ? "strong"
+          : normalizedSupplierCount >= 5
+            ? "healthy"
+            : normalizedSupplierCount >= 3
+              ? "moderate"
+              : "limited",
+      importance: 90,
+      description:
+        "Number of suppliers represented in the current procurement intelligence dataset.",
+    }),
 
-  createExecutiveSignal({
-    id: "rfq-classification-maturity",
-    category: "classification",
-    label: "RFQ classification maturity",
-    value: `${normalizedClassificationScore}/100`,
-    status:
-      normalizedClassificationScore >= 85
-        ? "strong"
-        : normalizedClassificationScore >= 70
-          ? "healthy"
-          : normalizedClassificationScore >= 55
-            ? "moderate"
-            : "limited",
-    importance: 85,
-    description:
-      "Coverage of procurement scope, sourcing method, and contract framework classifications.",
-  }),
-];
+    createExecutiveSignal({
+      id: "average-quotes-per-rfq",
+      category: "competition",
+      label: "Average quotes per RFQ",
+      value: String(averageQuotes),
+      status:
+        averageQuotes >= 4
+          ? "strong"
+          : averageQuotes >= 2
+            ? "healthy"
+            : averageQuotes >= 1
+              ? "moderate"
+              : "limited",
+      importance: 80,
+      description:
+        "Average competitive quotation coverage across the RFQ portfolio.",
+    }),
 
-const evidence = prioritizeExecutiveSignals(signals).map((signal) => ({
-  label: signal.label,
-  value: signal.value,
-  status: signal.status,
-  description: signal.description,
-}));
-const reasoning = buildExecutiveReasoning({
-  subject: "Top portfolio risk",
-  severity,
-  evidence,
-  fallbackReason:
+    createExecutiveSignal({
+      id: "rfq-classification-maturity",
+      category: "classification",
+      label: "RFQ classification maturity",
+      value: `${normalizedClassificationScore}/100`,
+      status:
+        normalizedClassificationScore >= 85
+          ? "strong"
+          : normalizedClassificationScore >= 70
+            ? "healthy"
+            : normalizedClassificationScore >= 55
+              ? "moderate"
+              : "limited",
+      importance: 85,
+      description:
+        "Coverage of procurement scope, sourcing method, and contract framework classifications.",
+    }),
+  ];
+
+  const evidence = prioritizeExecutiveSignals(signals).map(
+    (signal) => ({
+      label: signal.label,
+      value: signal.value,
+      status: signal.status,
+      description: signal.description,
+    }),
+  );
+
+  const fallbackReason =
     riskIndex >= 60
       ? "Current procurement signals indicate elevated exposure requiring management attention."
-      : "Current exposure remains manageable, but supplier, competition, and classification signals should continue to be monitored.",
-  fallbackRecommendation: recommendation,
-});
+      : "Current exposure remains manageable, but supplier, competition, and classification signals should continue to be monitored.";
 
-return {
-  category: "risk",
-  title: "Top Portfolio Risk",
-  summary:
-    topRisk ||
-    "No material procurement risk has been identified from current portfolio signals.",
-  reason: reasoning.reason,
-  recommendation: reasoning.recommendation,
-  confidence: Math.min(
+  const reasoning = buildExecutiveReasoning({
+    subject: "Top portfolio risk",
+    severity,
+    evidence,
+    fallbackReason,
+    fallbackRecommendation,
+  });
+
+  const confidence = Math.min(
     100,
     Math.round(
       40 +
@@ -307,11 +336,22 @@ return {
         Math.min(averageQuotes * 10, 20) +
         normalizedClassificationScore * 0.2,
     ),
-  ),
-  severity,
-  evidence: reasoning.drivers,
-};
+  );
+
+  return {
+    category: "risk",
+    title: "Top Portfolio Risk",
+    summary:
+      topRisk ||
+      "No material procurement risk has been identified from current portfolio signals.",
+    reason: reasoning.reason,
+    recommendation: reasoning.recommendation,
+    confidence,
+    severity,
+    evidence: reasoning.drivers,
+  };
 }
+
 export function buildExecutiveBrief({
   opportunity,
   executiveRecommendation,
