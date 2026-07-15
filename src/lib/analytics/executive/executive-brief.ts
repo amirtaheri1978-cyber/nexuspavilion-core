@@ -1,9 +1,23 @@
-import type { ExecutiveInsight } from "@/lib/analytics/executive/executive-insight";
+import type {
+  ExecutiveEvidence,
+  ExecutiveInsight,
+} from "@/lib/analytics/executive/executive-insight";
+
 import { buildExecutiveReasoning } from "@/lib/analytics/executive/executive-reasoning";
+
 import {
-  createExecutiveSignal,
+  createAverageQuotesSignal,
+  createClassificationMaturitySignal,
+  createDecisionConfidenceSignal,
+  createProcurementRiskSignal,
+  createSupplierCoverageSignal,
+} from "@/lib/analytics/executive/executive-signal-factory";
+
+import {
   prioritizeExecutiveSignals,
+  type ExecutiveSignal,
 } from "@/lib/analytics/executive/executive-signal";
+
 import {
   buildTopOpportunityInsight,
   type OpportunityIntelligenceInput,
@@ -69,6 +83,17 @@ function getConfidenceLevel(
   return "limited";
 }
 
+function buildEvidence(
+  signals: ExecutiveSignal[],
+): ExecutiveEvidence[] {
+  return prioritizeExecutiveSignals(signals).map((signal) => ({
+    label: signal.label,
+    value: signal.value,
+    status: signal.status,
+    description: signal.description,
+  }));
+}
+
 function buildActionInsight({
   executiveRecommendation,
   decisionConfidenceScore,
@@ -83,6 +108,7 @@ function buildActionInsight({
 >): ExecutiveInsight {
   const confidence = normalizeScore(decisionConfidenceScore);
   const riskIndex = normalizeScore(procurementRiskIndex);
+
   const averageQuotes = normalizeNonNegative(
     avgQuotesPerRfq,
   );
@@ -95,65 +121,20 @@ function buildActionInsight({
         : "low";
 
   const signals = [
-    createExecutiveSignal({
-      id: "decision-support-confidence",
-      category: "confidence",
-      label: "Decision-support confidence",
-      value: `${confidence}/100`,
-      status:
-        confidence >= 80
-          ? "strong"
-          : confidence >= 60
-            ? "moderate"
-            : "limited",
-      importance: 100,
-      description:
-        "Confidence derived from current portfolio, competition, risk, and decision-support inputs.",
-    }),
+    createDecisionConfidenceSignal(confidence),
 
-    createExecutiveSignal({
-      id: "procurement-risk-index",
-      category: "risk",
-      label: "Procurement risk index",
-      value: `${riskIndex}/100`,
-      status:
-        riskIndex >= 70
-          ? "critical"
-          : riskIndex >= 40
-            ? "moderate"
-            : "healthy",
-      importance: 95,
-      description:
-        "Lower values indicate a more controlled procurement risk position.",
-    }),
+    createProcurementRiskSignal(
+      riskIndex,
+      95,
+    ),
 
-    createExecutiveSignal({
-      id: "average-quotes-per-rfq",
-      category: "competition",
-      label: "Average quotes per RFQ",
-      value: String(averageQuotes),
-      status:
-        averageQuotes >= 4
-          ? "strong"
-          : averageQuotes >= 2
-            ? "healthy"
-            : averageQuotes >= 1
-              ? "moderate"
-              : "limited",
-      importance: 85,
-      description:
-        "Average competitive quotation coverage across the current RFQ portfolio.",
-    }),
+    createAverageQuotesSignal(
+      averageQuotes,
+      85,
+    ),
   ];
 
-  const evidence = prioritizeExecutiveSignals(signals).map(
-    (signal) => ({
-      label: signal.label,
-      value: signal.value,
-      status: signal.status,
-      description: signal.description,
-    }),
-  );
+  const evidence = buildEvidence(signals);
 
   const fallbackReason =
     riskIndex >= 60
@@ -235,85 +216,28 @@ function buildRiskInsight({
           : "Maintain monitoring and validate the underlying evidence before escalation.";
 
   const signals = [
-    createExecutiveSignal({
-      id: "procurement-risk-index",
-      category: "risk",
-      label: "Procurement risk index",
-      value: `${riskIndex}/100`,
-      status:
-        riskIndex >= 70
-          ? "critical"
-          : riskIndex >= 40
-            ? "moderate"
-            : "healthy",
-      importance: 100,
-      description:
-        "Lower values indicate a more controlled procurement risk position.",
-    }),
+    createProcurementRiskSignal(
+      riskIndex,
+      100,
+    ),
 
-    createExecutiveSignal({
-      id: "supplier-coverage",
-      category: "supplier",
-      label: "Supplier coverage",
-      value: String(normalizedSupplierCount),
-      status:
-        normalizedSupplierCount >= 8
-          ? "strong"
-          : normalizedSupplierCount >= 5
-            ? "healthy"
-            : normalizedSupplierCount >= 3
-              ? "moderate"
-              : "limited",
-      importance: 90,
-      description:
-        "Number of suppliers represented in the current procurement intelligence dataset.",
-    }),
+    createSupplierCoverageSignal(
+      normalizedSupplierCount,
+      90,
+    ),
 
-    createExecutiveSignal({
-      id: "average-quotes-per-rfq",
-      category: "competition",
-      label: "Average quotes per RFQ",
-      value: String(averageQuotes),
-      status:
-        averageQuotes >= 4
-          ? "strong"
-          : averageQuotes >= 2
-            ? "healthy"
-            : averageQuotes >= 1
-              ? "moderate"
-              : "limited",
-      importance: 80,
-      description:
-        "Average competitive quotation coverage across the RFQ portfolio.",
-    }),
+    createAverageQuotesSignal(
+      averageQuotes,
+      80,
+    ),
 
-    createExecutiveSignal({
-      id: "rfq-classification-maturity",
-      category: "classification",
-      label: "RFQ classification maturity",
-      value: `${normalizedClassificationScore}/100`,
-      status:
-        normalizedClassificationScore >= 85
-          ? "strong"
-          : normalizedClassificationScore >= 70
-            ? "healthy"
-            : normalizedClassificationScore >= 55
-              ? "moderate"
-              : "limited",
-      importance: 85,
-      description:
-        "Coverage of procurement scope, sourcing method, and contract framework classifications.",
-    }),
+    createClassificationMaturitySignal(
+      normalizedClassificationScore,
+      85,
+    ),
   ];
 
-  const evidence = prioritizeExecutiveSignals(signals).map(
-    (signal) => ({
-      label: signal.label,
-      value: signal.value,
-      status: signal.status,
-      description: signal.description,
-    }),
-  );
+  const evidence = buildEvidence(signals);
 
   const fallbackReason =
     riskIndex >= 60
