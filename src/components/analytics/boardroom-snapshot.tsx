@@ -1,11 +1,14 @@
 import type { ExecutiveBrief } from "@/lib/analytics/executive/executive-brief";
 import type { ExecutiveEvidence } from "@/lib/analytics/executive/executive-insight";
+import type { ExecutiveNarrative } from "@/lib/analytics/executive/executive-narrative";
 
 import { ExecutiveMetricCard } from "@/components/executive/executive-metric-card";
 import { ExecutivePanel } from "@/components/executive/executive-panel";
 import { ExecutiveStatusBadge } from "@/components/rfq-workspace/shared/executive-status-badge";
+
 export type BoardroomSnapshotProps = {
   executiveBrief: ExecutiveBrief;
+  executiveNarrative: ExecutiveNarrative;
   quotedPortfolioValue: number;
   estimatedSavingsOpportunity: number;
   enterpriseProcurementScore: number;
@@ -28,6 +31,7 @@ function formatConfidenceLevel(
 
 export function BoardroomSnapshot({
   executiveBrief,
+  executiveNarrative,
   quotedPortfolioValue,
   estimatedSavingsOpportunity,
   enterpriseProcurementScore,
@@ -78,16 +82,46 @@ export function BoardroomSnapshot({
         </div>
       </div>
 
-      <div className="mt-8 grid gap-5 lg:grid-cols-3">
-       <InsightSignal
-  eyebrow={action.title}
-  summary={action.summary}
-  reason={action.reason}
-  recommendation={action.recommendation}
-  confidence={action.confidence}
-  evidence={action.evidence}
-  tone="action"
-/>
+      <section
+        aria-labelledby="executive-narrative-title"
+       className="mt-8 rounded-3xl border border-white/10 bg-white/[0.035] p-6"
+      >
+        <p className="text-[10px] font-black uppercase tracking-[0.22em] text-yellow-300">
+          Executive Summary
+        </p>
+
+        <h2
+          id="executive-narrative-title"
+          className="mt-3 max-w-4xl text-xl font-black leading-8 text-white sm:text-2xl"
+        >
+          {executiveNarrative.headline}
+        </h2>
+
+        <p className="mt-4 max-w-5xl text-sm font-semibold leading-7 text-nexus-muted">
+          {executiveNarrative.summary}
+        </p>
+
+        <div className="mt-5 rounded-2xl border border-white/10 bg-white/[0.035] px-4 py-3">
+          <p className="text-[10px] font-black uppercase tracking-[0.18em] text-nexus-muted">
+            Leadership priority
+          </p>
+
+          <p className="mt-2 text-sm font-bold leading-6 text-white">
+            {executiveNarrative.priority}
+          </p>
+        </div>
+      </section>
+
+      <div className="mt-6 grid gap-5 lg:grid-cols-3">
+        <InsightSignal
+          eyebrow={action.title}
+          summary={action.summary}
+          reason={action.reason}
+          recommendation={action.recommendation}
+          confidence={action.confidence}
+          evidence={action.evidence}
+          tone="action"
+        />
 
         <InsightSignal
           eyebrow={opportunity.title}
@@ -161,25 +195,25 @@ function InsightSignal({
   reason: string;
   recommendation: string;
   confidence: number;
-evidence: ExecutiveEvidence[];
- tone: "action" | "opportunity" | "risk";
+  evidence: ExecutiveEvidence[];
+  tone: "action" | "opportunity" | "risk";
 }) {
-const toneClasses =
-  tone === "action"
-    ? {
-        panel: "border-yellow-300/20 bg-yellow-400/[0.055]",
-        eyebrow: "text-yellow-300",
-      }
-    : tone === "opportunity"
+  const toneClasses =
+    tone === "action"
       ? {
-          panel:
-            "border-emerald-300/20 bg-emerald-400/[0.06]",
-          eyebrow: "text-emerald-300",
+          panel: "border-yellow-300/20 bg-yellow-400/[0.055]",
+          eyebrow: "text-yellow-300",
         }
-      : {
-          panel: "border-red-300/20 bg-red-400/[0.06]",
-          eyebrow: "text-red-300",
-        };
+      : tone === "opportunity"
+        ? {
+            panel:
+              "border-emerald-300/20 bg-emerald-400/[0.06]",
+            eyebrow: "text-emerald-300",
+          }
+        : {
+            panel: "border-red-300/20 bg-red-400/[0.06]",
+            eyebrow: "text-red-300",
+          };
 
   return (
     <article
@@ -230,39 +264,39 @@ const toneClasses =
       </div>
 
       <div className="mt-auto pt-5">
-  <p className="text-[10px] font-black uppercase tracking-[0.18em] text-nexus-muted">
-    Supporting evidence
-  </p>
+        <p className="text-[10px] font-black uppercase tracking-[0.18em] text-nexus-muted">
+          Supporting evidence
+        </p>
 
-  <div className="mt-3 grid gap-3">
-{evidence.slice(0, 3).map((item) => (
-  <div
-    key={`${item.label}-${item.value}`}
-    className="rounded-2xl border border-white/10 bg-white/[0.035] px-4 py-3"
-  >
-    <div className="flex flex-wrap items-start justify-between gap-2">
-      <p className="text-[10px] font-black uppercase tracking-[0.16em] text-nexus-muted">
-        {item.label}
-      </p>
+        <div className="mt-3 grid gap-3">
+          {evidence.slice(0, 3).map((item) => (
+            <div
+              key={`${item.label}-${item.value}`}
+              className="rounded-2xl border border-white/10 bg-white/[0.035] px-4 py-3"
+            >
+              <div className="flex flex-wrap items-start justify-between gap-2">
+                <p className="text-[10px] font-black uppercase tracking-[0.16em] text-nexus-muted">
+                  {item.label}
+                </p>
 
-      <span className="rounded-full border border-white/10 bg-white/5 px-2 py-1 text-[9px] font-black uppercase tracking-[0.12em] text-white">
-        {item.status}
-      </span>
-    </div>
+                <span className="rounded-full border border-white/10 bg-white/5 px-2 py-1 text-[9px] font-black uppercase tracking-[0.12em] text-white">
+                  {item.status}
+                </span>
+              </div>
 
-    <p className="mt-1 break-words text-sm font-black leading-5 text-white [overflow-wrap:anywhere]">
-      {item.value}
-    </p>
+              <p className="mt-1 break-words text-sm font-black leading-5 text-white [overflow-wrap:anywhere]">
+                {item.value}
+              </p>
 
-    {item.description ? (
-      <p className="mt-2 text-xs font-semibold leading-5 text-nexus-muted">
-        {item.description}
-      </p>
-    ) : null}
-  </div>
-))}
-  </div>
-</div>
+              {item.description ? (
+                <p className="mt-2 text-xs font-semibold leading-5 text-nexus-muted">
+                  {item.description}
+                </p>
+              ) : null}
+            </div>
+          ))}
+        </div>
+      </div>
     </article>
   );
 }

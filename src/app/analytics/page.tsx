@@ -40,7 +40,7 @@ calculateBoardHealth,
 commandStatus,
 } from "@/lib/analytics/executive-intelligence";
 
-
+import { buildExecutiveNarrative } from "@/lib/analytics/executive/executive-narrative";
 
 type ExecutiveAlert = {
 level: "opportunity" | "healthy" | "warning";
@@ -1795,6 +1795,8 @@ const executiveBrief = buildExecutiveBrief({
   avgQuotesPerRfq,
   classificationScore: constructionClassificationScore,
 });
+const executiveNarrative =
+  buildExecutiveNarrative(executiveBrief);
 
 return (
 <main className="min-h-screen bg-[#030712] px-8 py-10">
@@ -1813,6 +1815,7 @@ className="text-sm font-semibold text-slate-400 transition hover:text-white"
   estimatedSavingsOpportunity={forecastSavings}
   enterpriseProcurementScore={enterpriseProcurementScore}
   constructionClassificationScore={constructionClassificationScore}
+  executiveNarrative={executiveNarrative}
 />
 </div>
 <section className="mt-8 rounded-3xl border border-white/10 bg-[#061426]/88 p-8 text-white shadow-executive">
