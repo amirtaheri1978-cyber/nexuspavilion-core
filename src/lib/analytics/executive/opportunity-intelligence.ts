@@ -4,9 +4,12 @@ import type {
 } from "@/lib/analytics/executive/executive-insight";
 import { buildExecutiveReasoning } from "@/lib/analytics/executive/executive-reasoning";
 import {
-  createExecutiveSignal,
-  prioritizeExecutiveSignals,
-} from "@/lib/analytics/executive/executive-signal";
+  createAverageQuotesSignal,
+  createSavingsOpportunitySignal,
+  createSupplierCoverageSignal,
+} from "@/lib/analytics/executive/executive-signal-factory";
+
+import { prioritizeExecutiveSignals } from "@/lib/analytics/executive/executive-signal";
 
 export type OpportunityIntelligenceInput = {
   topCategory: string;
@@ -102,60 +105,25 @@ export function buildTopOpportunityInsight({
       ? "medium"
       : "low";
 
-const signals = [
-  createExecutiveSignal({
-    id: "estimated-savings-opportunity",
-    category: "commercial",
-    label: "Estimated savings opportunity",
-    value: `$${normalizedSavings.toLocaleString()}`,
-    status:
-      normalizedSavings >= 50_000
-        ? "strong"
-        : normalizedSavings >= 10_000
-          ? "healthy"
-          : normalizedSavings > 0
-            ? "moderate"
-            : "limited",
-    importance: 100,
-    description:
-      "Estimated difference between the current average and lowest recorded quotation.",
-  }),
 
-  createExecutiveSignal({
-    id: "average-quotes-per-rfq",
-    category: "competition",
-    label: "Average quotes per RFQ",
-    value: String(normalizedAverageQuotes),
-    status:
-      normalizedAverageQuotes >= 4
-        ? "strong"
-        : normalizedAverageQuotes >= 2
-          ? "healthy"
-          : normalizedAverageQuotes >= 1
-            ? "moderate"
-            : "limited",
-    importance: 85,
-    description:
-      "Average competitive quotation coverage across the current RFQ portfolio.",
-  }),
 
-  createExecutiveSignal({
-    id: "supplier-coverage",
-    category: "supplier",
-    label: "Supplier coverage",
-    value: String(normalizedSupplierCount),
-    status:
-      normalizedSupplierCount >= 8
-        ? "strong"
-        : normalizedSupplierCount >= 5
-          ? "healthy"
-          : normalizedSupplierCount >= 3
-            ? "moderate"
-            : "limited",
-    importance: 75,
-    description:
-      "Number of suppliers represented in the current opportunity analysis.",
-  }),
+ 
+
+ const signals = [
+  createSavingsOpportunitySignal(
+    normalizedSavings,
+    100,
+  ),
+
+  createAverageQuotesSignal(
+    normalizedAverageQuotes,
+    85,
+  ),
+
+  createSupplierCoverageSignal(
+    normalizedSupplierCount,
+    75,
+  ),
 ];
 
 const evidence: ExecutiveEvidence[] =
