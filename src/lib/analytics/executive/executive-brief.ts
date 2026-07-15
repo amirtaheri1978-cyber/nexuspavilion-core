@@ -23,6 +23,8 @@ import {
   type OpportunityIntelligenceInput,
 } from "@/lib/analytics/executive/opportunity-intelligence";
 
+import { buildExecutiveInsight } from "@/lib/analytics/executive/executive-insight-engine";
+
 export type ExecutiveBriefConfidence =
   | "high"
   | "moderate"
@@ -134,7 +136,7 @@ function buildActionInsight({
     ),
   ];
 
-  const evidence = buildEvidence(signals);
+
 
   const fallbackReason =
     riskIndex >= 60
@@ -150,26 +152,20 @@ function buildActionInsight({
         ? "Increase qualified supplier participation before progressing major award decisions."
         : "Validate the supporting commercial and governance evidence, then proceed through the authorized decision workflow.";
 
-  const reasoning = buildExecutiveReasoning({
-    subject: "Immediate leadership action",
-    severity,
-    evidence,
-    fallbackReason,
-    fallbackRecommendation,
-  });
-
-  return {
-    category: "action",
-    title: "Immediate Leadership Action",
-    summary:
-      executiveRecommendation ||
-      "Review the current procurement portfolio before authorizing further commercial action.",
-    reason: reasoning.reason,
-    recommendation: reasoning.recommendation,
-    confidence,
-    severity,
-    evidence: reasoning.drivers,
-  };
+ 
+return buildExecutiveInsight({
+  category: "action",
+  title: "Immediate Leadership Action",
+  summary:
+    executiveRecommendation ||
+    "Review the current procurement portfolio before authorizing further commercial action.",
+  subject: "Immediate leadership action",
+  severity,
+  confidence,
+  signals,
+  fallbackReason,
+  fallbackRecommendation,
+});
 }
 
 function buildRiskInsight({
