@@ -1690,83 +1690,7 @@ const boardApprovalStatus =
 boardDistributionReadiness === "Ready For Distribution"
 ? "Board Approved"
 : "Awaiting Approval";
-const procurementCopilotPrompts = [
-{
-question: "Where is our biggest savings opportunity?",
-answer:
-potentialSavings > 0
-? `${bestProcurementCategory} shows the strongest savings signal with $${potentialSavings.toLocaleString()} in estimated opportunity.`
-: "Savings opportunity is currently limited. Increase supplier participation to improve pricing discovery.",
-},
-{
-question: "Which RFQ mix needs attention?",
-answer:
-constructionClassificationScore < 60
-? "RFQ classification maturity is under target. Increase structured material, trade, equipment, service, sourcing, and framework tagging."
-: `RFQ mix is developing. Current dominant scope is ${dominantScope}, and dominant sourcing method is ${dominantSourcing}.`,
-},
-{
-question: "Which area needs executive attention?",
-answer:
-procurementRiskIndex >= 50
-? "Procurement risk is elevated. Review supplier dependency, award concentration, and low-competition categories."
-: "Executive attention should focus on scaling supplier engagement and maintaining forecast confidence.",
-},
-{
-question: "What should the CEO prioritize?",
-answer: ceoPriority,
-},
-{
-question: "What should the CFO monitor?",
-answer: cfoPriority,
-},
-{
-question: "What should Procurement improve?",
-answer: procurementPriority,
-},
-];
 
-const boardPriorityScore = Math.min(
-100,
-Math.round(
-enterpriseProcurementScore * 0.35 +
-procurementOpportunityScore * 0.25 +
-(100 - procurementRiskIndex) * 0.25 +
-boardHealthIndex * 0.15,
-),
-);
-
-const copilotSummary =
-boardPriorityScore >= 80
-? "Nexus Copilot recommends scaling category growth, supplier coverage, RFQ classification maturity, and savings capture."
-: procurementRiskIndex >= 60
-? "Nexus Copilot recommends reducing risk exposure before expanding procurement volume."
-: "Procurement performance is stable. Copilot recommends improving supplier participation, sourcing structure, and procurement data maturity.";
-
-const copilotModes = [
-{
-mode: "CEO Mode",
-focus: "Growth, market position, supplier network expansion",
-insight: ceoPriority,
-},
-{
-mode: "CFO Mode",
-focus: "Savings, spend control, forecast confidence",
-insight: cfoPriority,
-},
-{
-mode: "Procurement Director Mode",
-focus: "Supplier competition, award quality, category execution",
-insight: procurementPriority,
-},
-];
-
-const copilotFeaturedInsight =
-boardPriorityScore >= 80
-? "Executive momentum is strong. Copilot recommends scaling procurement intelligence adoption."
-: procurementRiskIndex >= 60
-? "Risk exposure is elevated. Copilot recommends prioritizing supplier diversification."
-: "Procurement performance is stable. Copilot recommends increasing supplier coverage and RFQ data maturity.";
 
 const topQuarterRisks = [
 procurementRiskIndex >= 50
@@ -2367,82 +2291,7 @@ portfolioRecommendations={portfolioRecommendations}
 />
 
 <ExecutiveExportPanel />
-<section className="mt-8 rounded-3xl border border-white/10 bg-slate-950 p-8 text-white shadow-executive">
-<p className="text-xs font-black uppercase tracking-[0.25em] text-[#C8A646]">
-Enterprise Procurement Copilot
-</p>
 
-<h2 className="mt-3 text-4xl font-black">
-Ask Nexus Copilot
-</h2>
-
-<p className="mt-3 max-w-4xl text-sm leading-7 text-slate-300">
-{copilotSummary}
-</p>
-
-<div className="mt-8 grid gap-4 md:grid-cols-2">
-{procurementCopilotPrompts.map((prompt) => (
-<div
-key={prompt.question}
-className="rounded-2xl border border-white/10 bg-white/5 p-5"
->
-<p className="text-xs font-black uppercase tracking-[0.2em] text-[#C8A646]">
-{prompt.question}
-</p>
-
-<p className="mt-3 text-sm font-semibold leading-7 text-slate-300">
-{prompt.answer}
-</p>
-</div>
-))}
-</div>
-
-<div className="mt-8 rounded-3xl border border-white/10 bg-white/5 p-6">
-<p className="text-xs font-black uppercase tracking-[0.25em] text-[#C8A646]">
-Featured Insight
-</p>
-
-<p className="mt-3 text-sm font-semibold leading-7 text-slate-300">
-{copilotFeaturedInsight}
-</p>
-</div>
-
-<div className="mt-8 grid gap-4 md:grid-cols-3">
-{copilotModes.map((mode) => (
-<div
-key={mode.mode}
-className="rounded-2xl border border-white/10 bg-white/5 p-5"
->
-<p className="text-xs font-black uppercase tracking-[0.2em] text-[#C8A646]">
-{mode.mode}
-</p>
-
-<p className="mt-3 text-xs font-semibold uppercase tracking-[0.15em] text-slate-500">
-{mode.focus}
-</p>
-
-<p className="mt-4 text-sm leading-7 text-slate-300">
-{mode.insight}
-</p>
-</div>
-))}
-</div>
-
-<div className="mt-8 grid gap-6 md:grid-cols-3">
-<DarkList
-title="Executive Decision Queue"
-items={executiveDecisionQueue}
-/>
-<DarkList
-title="Top Risks This Quarter"
-items={topQuarterRisks}
-/>
-<DarkList
-title="Top Opportunities"
-items={topQuarterOpportunities}
-/>
-</div>
-</section>
 
 <section className="mt-8 rounded-3xl border border-white/10 bg-[#061426]/88 p-8 text-white shadow-executive">
 <p className="text-xs font-black uppercase tracking-[0.25em] text-[#C8A646]">
@@ -2724,11 +2573,8 @@ Executive Recommendation
 </section>
 
 <ProcurementCopilotIntelligence
-procurementRiskIndex={procurementRiskIndex}
-supplierDependencyRisk={supplierDependencyRisk}
-awardPredictionConfidence={awardPredictionConfidence}
-predictionAccuracy={predictionAccuracy}
-executiveStatus={executiveStatus}
+  executiveBrief={executiveBrief}
+  executiveNarrative={executiveNarrative}
 />
 
 <BoardReportGenerator
@@ -2775,26 +2621,6 @@ function DarkMetric({ title, value }: { title: string; value: string }) {
 return <ExecutiveMetricCard label={title} value={value} tone="gold" />;
 }
 
-function DarkList({ title, items }: { title: string; items: string[] }) {
-return (
-<div className="rounded-2xl border border-white/10 bg-white/5 p-5">
-<p className="text-xs font-black uppercase tracking-[0.2em] text-[#C8A646]">
-{title}
-</p>
-
-<div className="mt-4 space-y-3">
-{items.map((item) => (
-<div
-key={item}
-className="rounded-xl border border-white/10 bg-white/5 p-3 text-sm text-slate-300"
->
-{item}
-</div>
-))}
-</div>
-</div>
-);
-}
 
 function SignalRow({ label, value }: { label: string; value: string }) {
 return (
