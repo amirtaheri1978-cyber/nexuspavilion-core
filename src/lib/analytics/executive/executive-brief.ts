@@ -4,6 +4,13 @@ import {
   type OpportunityIntelligenceInput,
 } from "@/lib/analytics/executive/opportunity-intelligence";
 
+import {
+  createExecutiveSignal,
+  prioritizeExecutiveSignals,
+} from "@/lib/analytics/executive/executive-signal";
+
+import { buildExecutiveReasoning } from "@/lib/analytics/executive/executive-reasoning";
+
 export type ExecutiveBriefConfidence =
   | "high"
   | "moderate"
@@ -194,29 +201,10 @@ function buildRiskInsight({
           ? "Complete missing RFQ classifications before relying on category-level executive interpretation."
           : "Maintain monitoring and validate the underlying evidence before escalation.";
 
-  return {
+const signals = [
+  createExecutiveSignal({
+    id: "procurement-risk-index",
     category: "risk",
-    title: "Top Portfolio Risk",
-    summary:
-      topRisk ||
-      "No material procurement risk has been identified from current portfolio signals.",
-    reason:
-      riskIndex >= 60
-        ? "Current procurement signals indicate elevated exposure requiring management attention."
-        : "Current exposure remains manageable, but supplier, competition, and classification signals should continue to be monitored.",
-    recommendation,
-    confidence: Math.min(
-      100,
-      Math.round(
-        40 +
-          Math.min(normalizedSupplierCount * 5, 20) +
-          Math.min(averageQuotes * 10, 20) +
-          normalizedClassificationScore * 0.2,
-      ),
-    ),
-    severity,
-  evidence: [
-  {
     label: "Procurement risk index",
     value: `${riskIndex}/100`,
     status:
@@ -225,10 +213,15 @@ function buildRiskInsight({
         : riskIndex >= 40
           ? "moderate"
           : "healthy",
+    importance: 100,
     description:
       "Lower values indicate a more controlled procurement risk position.",
-  },
-  {
+  }),
+  
+
+  createExecutiveSignal({
+    id: "supplier-coverage",
+    category: "supplier",
     label: "Supplier coverage",
     value: String(normalizedSupplierCount),
     status:
@@ -239,10 +232,14 @@ function buildRiskInsight({
           : normalizedSupplierCount >= 3
             ? "moderate"
             : "limited",
+    importance: 90,
     description:
       "Number of suppliers represented in the current procurement intelligence dataset.",
-  },
-  {
+  }),
+
+  createExecutiveSignal({
+    id: "average-quotes-per-rfq",
+    category: "competition",
     label: "Average quotes per RFQ",
     value: String(averageQuotes),
     status:
@@ -253,10 +250,14 @@ function buildRiskInsight({
           : averageQuotes >= 1
             ? "moderate"
             : "limited",
+    importance: 80,
     description:
       "Average competitive quotation coverage across the RFQ portfolio.",
-  },
-  {
+  }),
+
+  createExecutiveSignal({
+    id: "rfq-classification-maturity",
+    category: "classification",
     label: "RFQ classification maturity",
     value: `${normalizedClassificationScore}/100`,
     status:
@@ -267,13 +268,50 @@ function buildRiskInsight({
           : normalizedClassificationScore >= 55
             ? "moderate"
             : "limited",
+    importance: 85,
     description:
       "Coverage of procurement scope, sourcing method, and contract framework classifications.",
-  },
-],
-  };
-}
+  }),
+];
 
+const evidence = prioritizeExecutiveSignals(signals).map((signal) => ({
+  label: signal.label,
+  value: signal.value,
+  status: signal.status,
+  description: signal.description,
+}));
+const reasoning = buildExecutiveReasoning({
+  subject: "Top portfolio risk",
+  severity,
+  evidence,
+  fallbackReason:
+    riskIndex >= 60
+      ? "Current procurement signals indicate elevated exposure requiring management attention."
+      : "Current exposure remains manageable, but supplier, competition, and classification signals should continue to be monitored.",
+  fallbackRecommendation: recommendation,
+});
+
+return {
+  category: "risk",
+  title: "Top Portfolio Risk",
+  summary:
+    topRisk ||
+    "No material procurement risk has been identified from current portfolio signals.",
+  reason: reasoning.reason,
+  recommendation: reasoning.recommendation,
+  confidence: Math.min(
+    100,
+    Math.round(
+      40 +
+        Math.min(normalizedSupplierCount * 5, 20) +
+        Math.min(averageQuotes * 10, 20) +
+        normalizedClassificationScore * 0.2,
+    ),
+  ),
+  severity,
+  evidence: reasoning.drivers,
+};
+}
 export function buildExecutiveBrief({
   opportunity,
   executiveRecommendation,
