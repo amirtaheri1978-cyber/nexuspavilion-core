@@ -1,15 +1,13 @@
-import type {
-  ExecutiveEvidence,
-  ExecutiveInsight,
-} from "@/lib/analytics/executive/executive-insight";
-import { buildExecutiveReasoning } from "@/lib/analytics/executive/executive-reasoning";
+import type { ExecutiveInsight } from "@/lib/analytics/executive/executive-insight";
+
 import {
   createAverageQuotesSignal,
   createSavingsOpportunitySignal,
   createSupplierCoverageSignal,
 } from "@/lib/analytics/executive/executive-signal-factory";
 
-import { prioritizeExecutiveSignals } from "@/lib/analytics/executive/executive-signal";
+
+import { buildExecutiveInsight } from "@/lib/analytics/executive/executive-insight-engine";
 
 export type OpportunityIntelligenceInput = {
   topCategory: string;
@@ -126,33 +124,20 @@ export function buildTopOpportunityInsight({
   ),
 ];
 
-const evidence: ExecutiveEvidence[] =
-  prioritizeExecutiveSignals(signals).map((signal) => ({
-    label: signal.label,
-    value: signal.value,
-    status: signal.status,
-    description: signal.description,
-  }));
 
-const reasoning = buildExecutiveReasoning({
+return buildExecutiveInsight({
+  category: "opportunity",
+  title: "Top Commercial Opportunity",
+  summary,
   subject: "Top commercial opportunity",
   severity,
-  evidence,
+  confidence: getConfidence({
+    potentialSavings: normalizedSavings,
+    avgQuotesPerRfq: normalizedAverageQuotes,
+    supplierCount: normalizedSupplierCount,
+  }),
+  signals,
   fallbackReason: reason,
   fallbackRecommendation: recommendation,
 });
-  return {
-    category: "opportunity",
-    title: "Top Commercial Opportunity",
-    summary,
-   reason: reasoning.reason,
-   recommendation: reasoning.recommendation,
-    confidence: getConfidence({
-      potentialSavings: normalizedSavings,
-      avgQuotesPerRfq: normalizedAverageQuotes,
-      supplierCount: normalizedSupplierCount,
-    }),
-    severity,
-    evidence: reasoning.drivers,
-  };
 }
