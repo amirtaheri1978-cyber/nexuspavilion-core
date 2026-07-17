@@ -33,12 +33,7 @@ export type AwardConfidenceInput = {
 
 
 
-export type CommercialHealthInput = {
-  recommendedAmount: number;
-  averageBid: number;
-  budget: number;
-  quoteCount: number;
-};
+
 
 export type NegotiationStrengthInput = {
   recommendedAmount: number;
