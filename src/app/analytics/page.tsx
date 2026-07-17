@@ -1232,14 +1232,6 @@ const decisionSupportReadiness =
     benchmarkReadinessScore,
   });
 
-const decisionConfidenceScore =
-  decisionSupportReadiness.score;
-
-const decisionConfidenceLevel =
-  decisionSupportReadiness.label;
-
-const decisionGuidance =
-  decisionSupportReadiness.guidance;
 const decisionConfidenceDrivers = [
 `Data Quality: ${dataQualityScore}/100`,
 `Prediction Accuracy: ${predictionAccuracy}`,
@@ -1311,11 +1303,11 @@ enterpriseProcurementScore >= 80 && executiveReadinessScore >= 80
 : "Capability Development Mode";
 
 const ceoDecisionPosture =
-decisionConfidenceLevel === "High Confidence"
-? "Proceed"
-: decisionConfidenceLevel === "Decision-Ready"
-? "Proceed With Review"
-: "Require Validation";
+  decisionSupportReadiness.status === "board-ready"
+    ? "Proceed"
+    : decisionSupportReadiness.status === "management-ready"
+      ? "Proceed With Review"
+      : "Require Validation";
 
 const procurementCommandCenter = [
 {
@@ -1336,19 +1328,19 @@ value: ceoActionCenter[0]?.title || "No Active Priority",
 status: ceoDecisionPosture,
 },
 {
-title: "Decision Confidence",
-value: decisionConfidenceLevel,
-status: executiveBenchmarkStatus,
+  title: "Decision Support Readiness",
+  value: decisionSupportReadiness.label,
+  status: executiveBenchmarkStatus,
 },
 ];
 
 const commandCenterStatus =
-enterpriseProcurementScore >= 80 &&
-decisionConfidenceLevel === "High Confidence"
-? "Command Ready"
-: enterpriseProcurementScore >= 65
-? "Operational Command"
-: "Developing Command";
+  enterpriseProcurementScore >= 80 &&
+  decisionSupportReadiness.status === "board-ready"
+    ? "Command Ready"
+    : enterpriseProcurementScore >= 65
+      ? "Operational Command"
+      : "Developing Command";
 
 const portfolioHealthIndex = Math.min(
 100,
@@ -1707,7 +1699,7 @@ const executiveBrief = buildExecutiveBrief({
   },
   executiveRecommendation: executiveCommandRecommendation,
 decisionSupportReadinessScore:
-  decisionConfidenceScore,
+  decisionSupportReadiness.score,
   topRisk,
   procurementRiskIndex,
   supplierCount: supplierRanking.length,
@@ -1857,10 +1849,9 @@ value={avgQuotesPerRfq.toString()}
 Decision Confidence Layer
 </p>
 
-<h2 className="mt-3 text-3xl font-black text-white">
-Executive Decision Confidence Center
+<h2 className="text-3xl font-black text-white">
+  Executive Decision Support Readiness
 </h2>
-
 <p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-400">
 Nexus Pavilion evaluates whether procurement intelligence is
 reliable enough to support executive interpretation, board
@@ -1868,13 +1859,16 @@ reporting, and strategic decision guidance.
 </p>
 
 <div className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-<MetricCard
-title="Confidence Score"
-value={`${decisionConfidenceScore}/100`}
-/>
-<MetricCard title="Confidence Level" value={decisionConfidenceLevel} />
-<MetricCard title="AI Confidence" value={aiConfidenceScore} />
-<MetricCard title="Benchmark Confidence" value={benchmarkConfidence} />
+  <MetricCard
+    title="Readiness Score"
+    value={`${decisionSupportReadiness.score}/100`}
+  />
+  <MetricCard
+    title="Readiness Level"
+    value={decisionSupportReadiness.label}
+  />
+  <MetricCard title="AI Confidence" value={aiConfidenceScore} />
+  <MetricCard title="Benchmark Confidence" value={benchmarkConfidence} />
 </div>
 
 <div className="mt-8 grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
@@ -1903,11 +1897,11 @@ Executive Guidance
 </p>
 
 <h3 className="mt-4 text-2xl font-black">
-{decisionConfidenceLevel}
+  {decisionSupportReadiness.label}
 </h3>
 
 <p className="mt-4 text-sm font-semibold leading-7 text-slate-300">
-{decisionGuidance}
+  {decisionSupportReadiness.guidance}
 </p>
 </div>
 </div>
