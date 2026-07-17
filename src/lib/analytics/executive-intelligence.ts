@@ -31,14 +31,7 @@ export type AwardConfidenceInput = {
   validityScore?: number;
 };
 
-export type DecisionReadinessInput = {
-  healthScore: number;
-  quoteCount: number;
-  documentCount: number;
-  addendaCount: number;
-  commercialEvaluationUnlocked: boolean;
-  hasRecommendedQuote: boolean;
-};
+
 
 export type CommercialHealthInput = {
   recommendedAmount: number;
