@@ -42,11 +42,17 @@ commandStatus,
 
 import { buildExecutiveNarrative } from "@/lib/analytics/executive/executive-narrative";
 
+import {
+  buildDecisionSupportReadiness,
+} from "@/lib/analytics/executive/decision-support-readiness";
+
 type ExecutiveAlert = {
 level: "opportunity" | "healthy" | "warning";
 title: string;
 message: string;
 };
+
+
 
 export default async function AnalyticsPage() {
 const {
@@ -1218,34 +1224,22 @@ industryBenchmarkScore >= 85
 ? "Strengthen RFQ activity, supplier participation, and procurement data quality before positioning the platform as board-ready."
 : "Focus on foundational procurement data capture before using benchmark output for executive decisions.";
 
-const decisionConfidenceScore = Math.min(
-100,
-Math.round(
-dataQualityScore * 0.3 +
-predictionAccuracy * 0.25 +
-supplierEngagementScore * 0.25 +
-benchmarkReadinessScore * 0.2,
-),
-);
+const decisionSupportReadiness =
+  buildDecisionSupportReadiness({
+    dataQualityScore,
+    predictionAccuracy,
+    supplierEngagementScore,
+    benchmarkReadinessScore,
+  });
+
+const decisionConfidenceScore =
+  decisionSupportReadiness.score;
 
 const decisionConfidenceLevel =
-decisionConfidenceScore >= 85
-? "High Confidence"
-: decisionConfidenceScore >= 70
-? "Decision-Ready"
-: decisionConfidenceScore >= 55
-? "Requires Review"
-: "Limited Confidence";
+  decisionSupportReadiness.label;
 
 const decisionGuidance =
-decisionConfidenceScore >= 85
-? "Proceed with executive decision support. Current procurement intelligence is strong enough for board-level interpretation."
-: decisionConfidenceScore >= 70
-? "Proceed with management review. Decision intelligence is credible, but executive validation should remain active."
-: decisionConfidenceScore >= 55
-? "Require additional validation before board-level decisions. Improve RFQ depth, supplier coverage, and data quality."
-: "Do not use for executive decisions yet. More validated procurement activity is required.";
-
+  decisionSupportReadiness.guidance;
 const decisionConfidenceDrivers = [
 `Data Quality: ${dataQualityScore}/100`,
 `Prediction Accuracy: ${predictionAccuracy}`,
