@@ -7,6 +7,16 @@ import type {
 } from "@/lib/analytics/executive/executive-insight-bundle";
 
 import {
+  buildExecutiveAssessment,
+  type ExecutiveAssessment,
+} from "@/lib/analytics/executive/executive-assessment";
+
+import {
+  buildExecutiveConfidence,
+  type ExecutiveConfidence,
+} from "@/lib/analytics/executive/executive-confidence";
+
+import {
   createAverageQuotesSignal,
   createClassificationMaturitySignal,
   createDecisionConfidenceSignal,
@@ -19,15 +29,9 @@ import {
   type OpportunityIntelligenceInput,
 } from "@/lib/analytics/executive/opportunity-intelligence";
 
-
 import {
   buildExecutiveInsight,
 } from "@/lib/analytics/executive/executive-insight-engine";
-
-import {
-  buildExecutiveAssessment,
-  type ExecutiveAssessment,
-} from "@/lib/analytics/executive/executive-assessment";
 
 export type ExecutiveBriefConfidence =
   | "high"
@@ -38,7 +42,10 @@ export type ExecutiveBrief = {
   action: ExecutiveInsight;
   opportunity: ExecutiveInsight;
   risk: ExecutiveInsight;
+
   assessment: ExecutiveAssessment;
+  executiveConfidence: ExecutiveConfidence;
+
   confidence: {
     score: number;
     level: ExecutiveBriefConfidence;
@@ -312,10 +319,13 @@ export function buildExecutiveBrief({
   });
 
   const assessment = buildExecutiveAssessment([
-  ...actionBundle.signals,
-  ...opportunityBundle.signals,
-  ...riskBundle.signals,
-]);
+    ...actionBundle.signals,
+    ...opportunityBundle.signals,
+    ...riskBundle.signals,
+  ]);
+
+  const executiveConfidence =
+    buildExecutiveConfidence(assessment);
 
   const opportunityInsight =
     opportunityBundle.insight;
@@ -331,6 +341,7 @@ export function buildExecutiveBrief({
     opportunity: opportunityInsight,
     risk: riskInsight,
     assessment,
+    executiveConfidence,
     confidence: {
       score: normalizedConfidenceScore,
       level: getConfidenceLevel(
