@@ -1,7 +1,10 @@
 import type {
-    ExecutiveInsight,
+  ExecutiveInsight,
 } from "@/lib/analytics/executive/executive-insight";
 
+import type {
+  ExecutiveInsightBundle,
+} from "@/lib/analytics/executive/executive-insight-bundle";
 
 import {
   createAverageQuotesSignal,
@@ -11,13 +14,20 @@ import {
   createSupplierCoverageSignal,
 } from "@/lib/analytics/executive/executive-signal-factory";
 
-
 import {
   buildTopOpportunityInsight,
   type OpportunityIntelligenceInput,
 } from "@/lib/analytics/executive/opportunity-intelligence";
 
-import { buildExecutiveInsight } from "@/lib/analytics/executive/executive-insight-engine";
+
+import {
+  buildExecutiveInsight,
+} from "@/lib/analytics/executive/executive-insight-engine";
+
+import {
+  buildExecutiveAssessment,
+  type ExecutiveAssessment,
+} from "@/lib/analytics/executive/executive-assessment";
 
 export type ExecutiveBriefConfidence =
   | "high"
@@ -28,6 +38,7 @@ export type ExecutiveBrief = {
   action: ExecutiveInsight;
   opportunity: ExecutiveInsight;
   risk: ExecutiveInsight;
+  assessment: ExecutiveAssessment;
   confidence: {
     score: number;
     level: ExecutiveBriefConfidence;
@@ -54,10 +65,15 @@ function normalizeScore(value: number): number {
     return 0;
   }
 
-  return Math.max(0, Math.min(100, Math.round(value)));
+  return Math.max(
+    0,
+    Math.min(100, Math.round(value)),
+  );
 }
 
-function normalizeNonNegative(value: number): number {
+function normalizeNonNegative(
+  value: number,
+): number {
   if (!Number.isFinite(value)) {
     return 0;
   }
@@ -79,7 +95,6 @@ function getConfidenceLevel(
   return "limited";
 }
 
-
 function buildActionInsight({
   executiveRecommendation,
   decisionConfidenceScore,
@@ -91,9 +106,14 @@ function buildActionInsight({
   | "decisionConfidenceScore"
   | "procurementRiskIndex"
   | "avgQuotesPerRfq"
->): ExecutiveInsight {
-  const confidence = normalizeScore(decisionConfidenceScore);
-  const riskIndex = normalizeScore(procurementRiskIndex);
+>): ExecutiveInsightBundle {
+  const confidence = normalizeScore(
+    decisionConfidenceScore,
+  );
+
+  const riskIndex = normalizeScore(
+    procurementRiskIndex,
+  );
 
   const averageQuotes = normalizeNonNegative(
     avgQuotesPerRfq,
@@ -107,20 +127,18 @@ function buildActionInsight({
         : "low";
 
   const signals = [
-    createDecisionConfidenceSignal(confidence),
-
+    createDecisionConfidenceSignal(
+      confidence,
+    ),
     createProcurementRiskSignal(
       riskIndex,
       95,
     ),
-
     createAverageQuotesSignal(
       averageQuotes,
       85,
     ),
   ];
-
-
 
   const fallbackReason =
     riskIndex >= 60
@@ -136,20 +154,24 @@ function buildActionInsight({
         ? "Increase qualified supplier participation before progressing major award decisions."
         : "Validate the supporting commercial and governance evidence, then proceed through the authorized decision workflow.";
 
- 
-return buildExecutiveInsight({
-  category: "action",
-  title: "Immediate Leadership Action",
-  summary:
-    executiveRecommendation ||
-    "Review the current procurement portfolio before authorizing further commercial action.",
-  subject: "Immediate leadership action",
-  severity,
-  confidence,
-  signals,
-  fallbackReason,
-  fallbackRecommendation,
-});
+  const insight = buildExecutiveInsight({
+    category: "action",
+    title: "Immediate Leadership Action",
+    summary:
+      executiveRecommendation ||
+      "Review the current procurement portfolio before authorizing further commercial action.",
+    subject: "Immediate leadership action",
+    severity,
+    confidence,
+    signals,
+    fallbackReason,
+    fallbackRecommendation,
+  });
+
+  return {
+    insight,
+    signals,
+  };
 }
 
 function buildRiskInsight({
@@ -165,8 +187,10 @@ function buildRiskInsight({
   | "supplierCount"
   | "avgQuotesPerRfq"
   | "classificationScore"
->): ExecutiveInsight {
-  const riskIndex = normalizeScore(procurementRiskIndex);
+>): ExecutiveInsightBundle {
+  const riskIndex = normalizeScore(
+    procurementRiskIndex,
+  );
 
   const normalizedSupplierCount = Math.floor(
     normalizeNonNegative(supplierCount),
@@ -200,55 +224,59 @@ function buildRiskInsight({
       riskIndex,
       100,
     ),
-
     createSupplierCoverageSignal(
       normalizedSupplierCount,
       90,
     ),
-
     createAverageQuotesSignal(
       averageQuotes,
       80,
     ),
-
     createClassificationMaturitySignal(
       normalizedClassificationScore,
       85,
     ),
   ];
 
-
-
   const fallbackReason =
     riskIndex >= 60
       ? "Current procurement signals indicate elevated exposure requiring management attention."
       : "Current exposure remains manageable, but supplier, competition, and classification signals should continue to be monitored.";
 
-  
-
   const confidence = Math.min(
     100,
     Math.round(
       40 +
-        Math.min(normalizedSupplierCount * 5, 20) +
-        Math.min(averageQuotes * 10, 20) +
+        Math.min(
+          normalizedSupplierCount * 5,
+          20,
+        ) +
+        Math.min(
+          averageQuotes * 10,
+          20,
+        ) +
         normalizedClassificationScore * 0.2,
     ),
   );
 
- return buildExecutiveInsight({
-  category: "risk",
-  title: "Top Portfolio Risk",
-  summary:
-    topRisk ||
-    "No material procurement risk has been identified from current portfolio signals.",
-  subject: "Top portfolio risk",
-  severity,
-  confidence,
-  signals,
-  fallbackReason,
-  fallbackRecommendation,
-});
+  const insight = buildExecutiveInsight({
+    category: "risk",
+    title: "Top Portfolio Risk",
+    summary:
+      topRisk ||
+      "No material procurement risk has been identified from current portfolio signals.",
+    subject: "Top portfolio risk",
+    severity,
+    confidence,
+    signals,
+    fallbackReason,
+    fallbackRecommendation,
+  });
+
+  return {
+    insight,
+    signals,
+  };
 }
 
 export function buildExecutiveBrief({
@@ -261,21 +289,21 @@ export function buildExecutiveBrief({
   avgQuotesPerRfq,
   classificationScore,
 }: ExecutiveBriefInput): ExecutiveBrief {
-  const normalizedConfidenceScore = normalizeScore(
-    decisionConfidenceScore,
-  );
+  const normalizedConfidenceScore =
+    normalizeScore(decisionConfidenceScore);
 
-  const opportunityInsight =
+  const opportunityBundle =
     buildTopOpportunityInsight(opportunity);
 
-  const actionInsight = buildActionInsight({
+  const actionBundle = buildActionInsight({
     executiveRecommendation,
-    decisionConfidenceScore: normalizedConfidenceScore,
+    decisionConfidenceScore:
+      normalizedConfidenceScore,
     procurementRiskIndex,
     avgQuotesPerRfq,
   });
 
-  const riskInsight = buildRiskInsight({
+  const riskBundle = buildRiskInsight({
     topRisk,
     procurementRiskIndex,
     supplierCount,
@@ -283,10 +311,26 @@ export function buildExecutiveBrief({
     classificationScore,
   });
 
+  const assessment = buildExecutiveAssessment([
+  ...actionBundle.signals,
+  ...opportunityBundle.signals,
+  ...riskBundle.signals,
+]);
+
+  const opportunityInsight =
+    opportunityBundle.insight;
+
+  const actionInsight =
+    actionBundle.insight;
+
+  const riskInsight =
+    riskBundle.insight;
+
   return {
     action: actionInsight,
     opportunity: opportunityInsight,
     risk: riskInsight,
+    assessment,
     confidence: {
       score: normalizedConfidenceScore,
       level: getConfidenceLevel(

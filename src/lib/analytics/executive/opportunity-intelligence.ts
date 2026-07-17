@@ -1,11 +1,10 @@
-import type { ExecutiveInsight } from "@/lib/analytics/executive/executive-insight";
+import type { ExecutiveInsightBundle } from "@/lib/analytics/executive/executive-insight-bundle";
 
 import {
   createAverageQuotesSignal,
   createSavingsOpportunitySignal,
   createSupplierCoverageSignal,
 } from "@/lib/analytics/executive/executive-signal-factory";
-
 
 import { buildExecutiveInsight } from "@/lib/analytics/executive/executive-insight-engine";
 
@@ -67,15 +66,17 @@ export function buildTopOpportunityInsight({
   potentialSavings,
   avgQuotesPerRfq,
   supplierCount,
-}: OpportunityIntelligenceInput): ExecutiveInsight {
+}: OpportunityIntelligenceInput): ExecutiveInsightBundle {
   const normalizedSavings = normalizeAmount(potentialSavings);
-  const normalizedAverageQuotes = normalizeNonNegative(avgQuotesPerRfq);
+  const normalizedAverageQuotes =
+    normalizeNonNegative(avgQuotesPerRfq);
   const normalizedSupplierCount = Math.floor(
     normalizeNonNegative(supplierCount),
   );
 
   const hasSavingsOpportunity = normalizedSavings > 0;
   const hasHealthyCompetition = normalizedAverageQuotes >= 2;
+
   const category =
     topCategory && topCategory !== "N/A"
       ? topCategory
@@ -103,41 +104,39 @@ export function buildTopOpportunityInsight({
       ? "medium"
       : "low";
 
+  const signals = [
+    createSavingsOpportunitySignal(
+      normalizedSavings,
+      100,
+    ),
+    createAverageQuotesSignal(
+      normalizedAverageQuotes,
+      85,
+    ),
+    createSupplierCoverageSignal(
+      normalizedSupplierCount,
+      75,
+    ),
+  ];
 
+  const insight = buildExecutiveInsight({
+    category: "opportunity",
+    title: "Top Commercial Opportunity",
+    summary,
+    subject: "Top commercial opportunity",
+    severity,
+    confidence: getConfidence({
+      potentialSavings: normalizedSavings,
+      avgQuotesPerRfq: normalizedAverageQuotes,
+      supplierCount: normalizedSupplierCount,
+    }),
+    signals,
+    fallbackReason: reason,
+    fallbackRecommendation: recommendation,
+  });
 
- 
-
- const signals = [
-  createSavingsOpportunitySignal(
-    normalizedSavings,
-    100,
-  ),
-
-  createAverageQuotesSignal(
-    normalizedAverageQuotes,
-    85,
-  ),
-
-  createSupplierCoverageSignal(
-    normalizedSupplierCount,
-    75,
-  ),
-];
-
-
-return buildExecutiveInsight({
-  category: "opportunity",
-  title: "Top Commercial Opportunity",
-  summary,
-  subject: "Top commercial opportunity",
-  severity,
-  confidence: getConfidence({
-    potentialSavings: normalizedSavings,
-    avgQuotesPerRfq: normalizedAverageQuotes,
-    supplierCount: normalizedSupplierCount,
-  }),
-  signals,
-  fallbackReason: reason,
-  fallbackRecommendation: recommendation,
-});
+  return {
+    insight,
+    signals,
+  };
 }
