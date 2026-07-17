@@ -33,11 +33,6 @@ import {
   buildExecutiveInsight,
 } from "@/lib/analytics/executive/executive-insight-engine";
 
-export type ExecutiveBriefConfidence =
-  | "high"
-  | "moderate"
-  | "limited";
-
 export type ExecutiveBrief = {
   action: ExecutiveInsight;
   opportunity: ExecutiveInsight;
@@ -45,12 +40,6 @@ export type ExecutiveBrief = {
 
   assessment: ExecutiveAssessment;
   executiveConfidence: ExecutiveConfidence;
-
-  confidence: {
-    score: number;
-    level: ExecutiveBriefConfidence;
-    evidence: string[];
-  };
 };
 
 export type ExecutiveBriefInput = {
@@ -86,20 +75,6 @@ function normalizeNonNegative(
   }
 
   return Math.max(0, value);
-}
-
-function getConfidenceLevel(
-  score: number,
-): ExecutiveBriefConfidence {
-  if (score >= 80) {
-    return "high";
-  }
-
-  if (score >= 60) {
-    return "moderate";
-  }
-
-  return "limited";
 }
 
 function buildActionInsight({
@@ -327,31 +302,11 @@ export function buildExecutiveBrief({
   const executiveConfidence =
     buildExecutiveConfidence(assessment);
 
-  const opportunityInsight =
-    opportunityBundle.insight;
-
-  const actionInsight =
-    actionBundle.insight;
-
-  const riskInsight =
-    riskBundle.insight;
-
   return {
-    action: actionInsight,
-    opportunity: opportunityInsight,
-    risk: riskInsight,
+    action: actionBundle.insight,
+    opportunity: opportunityBundle.insight,
+    risk: riskBundle.insight,
     assessment,
     executiveConfidence,
-    confidence: {
-      score: normalizedConfidenceScore,
-      level: getConfidenceLevel(
-        normalizedConfidenceScore,
-      ),
-      evidence: [
-        `Opportunity confidence: ${opportunityInsight.confidence}/100`,
-        `Risk confidence: ${riskInsight.confidence}/100`,
-        `Action confidence: ${actionInsight.confidence}/100`,
-      ],
-    },
   };
 }

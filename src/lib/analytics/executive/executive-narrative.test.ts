@@ -11,7 +11,8 @@ function createBrief(
     title: "Test Insight",
     summary: "Test summary.",
     reason: "Test reason.",
-    recommendation: "Review the current procurement evidence.",
+    recommendation:
+      "Review the current procurement evidence.",
     confidence: 80,
     severity: "low" as const,
     evidence: [],
@@ -35,10 +36,20 @@ function createBrief(
       title: "Top Portfolio Risk",
       severity: "low",
     },
-    confidence: {
+    assessment: {
       score: 84,
-      level: "high",
-      evidence: [],
+      status: "stable",
+      summary:
+        "Executive conditions are sufficiently supported, with selective validation recommended.",
+      factors: [],
+    },
+    executiveConfidence: {
+      score: 84,
+      level: "moderate",
+      summary:
+        "Decision confidence is sufficient, with selective validation recommended.",
+      drivers: [],
+      limitingDrivers: [],
     },
     ...overrides,
   };
@@ -76,33 +87,77 @@ describe("buildExecutiveNarrative", () => {
 
   it("describes high confidence consistently", () => {
     const brief = createBrief({
-      confidence: {
-        score: 84,
+      executiveConfidence: {
+        score: 88,
         level: "high",
-        evidence: [],
+        summary:
+          "Decision confidence is high and executive action is well supported.",
+        drivers: [],
+        limitingDrivers: [],
       },
     });
 
     const result = buildExecutiveNarrative(brief);
 
     expect(result.summary).toContain(
-      "Decision confidence is high (84/100).",
+      "Decision confidence is high (88/100).",
     );
   });
 
   it("describes moderate confidence consistently", () => {
     const brief = createBrief({
-      confidence: {
-        score: 67,
+      executiveConfidence: {
+        score: 74,
         level: "moderate",
-        evidence: [],
+        summary:
+          "Decision confidence is sufficient, with selective validation recommended.",
+        drivers: [],
+        limitingDrivers: [],
       },
     });
 
     const result = buildExecutiveNarrative(brief);
 
     expect(result.summary).toContain(
-      "Decision confidence is moderate (67/100).",
+      "Decision confidence is moderate (74/100).",
+    );
+  });
+
+  it("describes low confidence consistently", () => {
+    const brief = createBrief({
+      executiveConfidence: {
+        score: 58,
+        level: "low",
+        summary:
+          "Decision confidence is limited and additional validation is recommended.",
+        drivers: [],
+        limitingDrivers: [],
+      },
+    });
+
+    const result = buildExecutiveNarrative(brief);
+
+    expect(result.summary).toContain(
+      "Decision confidence is low (58/100).",
+    );
+  });
+
+  it("describes insufficient confidence consistently", () => {
+    const brief = createBrief({
+      executiveConfidence: {
+        score: 42,
+        level: "insufficient",
+        summary:
+          "Decision confidence is insufficient for material executive action.",
+        drivers: [],
+        limitingDrivers: [],
+      },
+    });
+
+    const result = buildExecutiveNarrative(brief);
+
+    expect(result.summary).toContain(
+      "Decision confidence is insufficient (42/100).",
     );
   });
 

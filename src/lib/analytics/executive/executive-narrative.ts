@@ -1,4 +1,10 @@
-import type { ExecutiveBrief } from "@/lib/analytics/executive/executive-brief";
+import type {
+  ExecutiveBrief,
+} from "@/lib/analytics/executive/executive-brief";
+
+import type {
+  ExecutiveConfidenceLevel,
+} from "@/lib/analytics/executive/executive-confidence";
 
 export type ExecutiveNarrative = {
   headline: string;
@@ -7,7 +13,7 @@ export type ExecutiveNarrative = {
 };
 
 function getConfidenceDescription(
-  level: ExecutiveBrief["confidence"]["level"],
+  level: ExecutiveConfidenceLevel,
 ): string {
   switch (level) {
     case "high":
@@ -16,8 +22,11 @@ function getConfidenceDescription(
     case "moderate":
       return "Decision confidence is moderate";
 
-    default:
-      return "Decision confidence remains limited";
+    case "low":
+      return "Decision confidence is low";
+
+    case "insufficient":
+      return "Decision confidence is insufficient";
   }
 }
 
@@ -113,8 +122,8 @@ export function buildExecutiveNarrative(
     getOpportunityPosition(brief),
     getRiskPosition(brief),
     `${getConfidenceDescription(
-  brief.confidence.level,
-)} (${brief.confidence.score}/100).`
+      brief.executiveConfidence.level,
+    )} (${brief.executiveConfidence.score}/100).`,
   ].join(" ");
 
   const priority =

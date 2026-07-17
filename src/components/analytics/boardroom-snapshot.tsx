@@ -16,17 +16,21 @@ export type BoardroomSnapshotProps = {
 };
 
 function formatConfidenceLevel(
-  level: ExecutiveBrief["confidence"]["level"],
+  level: ExecutiveBrief["executiveConfidence"]["level"],
 ): string {
-  if (level === "high") {
-    return "High";
-  }
+  switch (level) {
+    case "high":
+      return "High";
 
-  if (level === "moderate") {
-    return "Moderate";
-  }
+    case "moderate":
+      return "Moderate";
 
-  return "Limited";
+    case "low":
+      return "Low";
+
+    case "insufficient":
+      return "Insufficient";
+  }
 }
 
 export function BoardroomSnapshot({
@@ -37,7 +41,12 @@ export function BoardroomSnapshot({
   enterpriseProcurementScore,
   constructionClassificationScore,
 }: BoardroomSnapshotProps) {
-  const { action, opportunity, risk, confidence } = executiveBrief;
+  const {
+    action,
+    opportunity,
+    risk,
+    executiveConfidence,
+  } = executiveBrief;
 
   return (
     <ExecutivePanel
@@ -69,22 +78,24 @@ export function BoardroomSnapshot({
         <div className="shrink-0">
           <ExecutiveStatusBadge
             tone={
-              confidence.level === "high"
+              executiveConfidence.level === "high"
                 ? "success"
-                : confidence.level === "moderate"
+                : executiveConfidence.level === "moderate"
                   ? "info"
                   : "warning"
             }
           >
-            Decision confidence: {confidence.score}/100 ·{" "}
-            {formatConfidenceLevel(confidence.level)}
+            Decision confidence: {executiveConfidence.score}/100 ·{" "}
+            {formatConfidenceLevel(
+              executiveConfidence.level,
+            )}
           </ExecutiveStatusBadge>
         </div>
       </div>
 
       <section
         aria-labelledby="executive-narrative-title"
-       className="mt-8 rounded-3xl border border-white/10 bg-white/[0.035] p-6"
+        className="mt-8 rounded-3xl border border-white/10 bg-white/[0.035] p-6"
       >
         <p className="text-[10px] font-black uppercase tracking-[0.22em] text-yellow-300">
           Executive Summary

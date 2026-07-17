@@ -16,8 +16,12 @@ export default function ProcurementCopilotIntelligence({
   executiveBrief,
   executiveNarrative,
 }: ProcurementCopilotIntelligenceProps) {
-  const { action, opportunity, risk, confidence } =
-    executiveBrief;
+  const {
+    action,
+    opportunity,
+    risk,
+    executiveConfidence,
+  } = executiveBrief;
 
   return (
     <section
@@ -50,8 +54,10 @@ export default function ProcurementCopilotIntelligence({
           </p>
 
           <p className="mt-1 text-sm font-black text-white">
-            {confidence.score}/100 ·{" "}
-            {formatConfidenceLevel(confidence.level)}
+            {executiveConfidence.score}/100 ·{" "}
+            {formatConfidenceLevel(
+              executiveConfidence.level,
+            )}
           </p>
         </div>
       </div>
@@ -227,15 +233,19 @@ function CopilotInsightCard({
 }
 
 function formatConfidenceLevel(
-  level: ExecutiveBrief["confidence"]["level"],
+  level: ExecutiveBrief["executiveConfidence"]["level"],
 ): string {
-  if (level === "high") {
-    return "High";
-  }
+  switch (level) {
+    case "high":
+      return "High";
 
-  if (level === "moderate") {
-    return "Moderate";
-  }
+    case "moderate":
+      return "Moderate";
 
-  return "Limited";
+    case "low":
+      return "Low";
+
+    case "insufficient":
+      return "Insufficient";
+  }
 }
