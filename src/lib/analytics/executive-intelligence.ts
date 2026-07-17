@@ -120,13 +120,7 @@ function normalizeCount(value: number): number {
   return Math.max(0, Math.floor(value));
 }
 
-function normalizeAmount(value: number): number {
-  if (!Number.isFinite(value)) {
-    return 0;
-  }
 
-  return Math.max(0, value);
-}
 
 function normalizeRiskLevel(value: string): string {
   return String(value || "").trim().toLowerCase();
@@ -158,24 +152,6 @@ function calculateWeightedScore(
   return clampScore(weightedValue / totalWeight);
 }
 
-function calculatePercentageDifference(
-  baseline: number,
-  comparison: number,
-): number {
-  const normalizedBaseline = normalizeAmount(baseline);
-  const normalizedComparison = normalizeAmount(comparison);
-
-  if (normalizedBaseline <= 0 || normalizedComparison <= 0) {
-    return 0;
-  }
-
-  return Math.max(
-    0,
-    ((normalizedBaseline - normalizedComparison) /
-      normalizedBaseline) *
-      100,
-  );
-}
 
 function getTone(score: number): ExecutiveTone {
   const normalizedScore = clampScore(score);
@@ -400,55 +376,6 @@ export function calculateAwardConfidence({
       : score >= SCORE_THRESHOLDS.healthy
         ? "Review supplier risk, scope assumptions, commercial fit, and approval requirements before award."
         : "Do not proceed to award until the supporting commercial and execution evidence is strengthened.",
-  );
-}
-
-
-
-
-
-export function calculateNegotiationStrength({
-  recommendedAmount,
-  averageBid,
-  quoteCount,
-  riskLevel,
-}: NegotiationStrengthInput): ExecutiveIntelligenceResult {
-  const normalizedRecommendedAmount =
-    normalizeAmount(recommendedAmount);
-
-  const normalizedAverageBid = normalizeAmount(averageBid);
-  const normalizedQuoteCount = normalizeCount(quoteCount);
-
-  const spread = calculatePercentageDifference(
-    normalizedAverageBid,
-    normalizedRecommendedAmount,
-  );
-
-  const competitionBoost =
-    normalizedQuoteCount >= 3
-      ? 22
-      : normalizedQuoteCount >= 2
-        ? 12
-        : 4;
-
-  const riskBoost = isLowRisk(riskLevel) ? 14 : 4;
-
-  const score = clampScore(
-    spread * 4 + competitionBoost + riskBoost + 38,
-  );
-
-  return result(
-    score,
-    score >= SCORE_THRESHOLDS.excellent
-      ? "Strong Negotiation Position"
-      : score >= SCORE_THRESHOLDS.healthy
-        ? "Targeted Negotiation Available"
-        : "Limited Negotiation Leverage",
-    score >= SCORE_THRESHOLDS.excellent
-      ? "Use verified competitive tension to request best-and-final pricing without weakening scope, quality, or schedule requirements."
-      : score >= SCORE_THRESHOLDS.healthy
-        ? "Pursue targeted commercial improvement while preserving execution requirements and supplier accountability."
-        : "Use a controlled negotiation focused on commercial terms, clarifications, and execution readiness.",
   );
 }
 
