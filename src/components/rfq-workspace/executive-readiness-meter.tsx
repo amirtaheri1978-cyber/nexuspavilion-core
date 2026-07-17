@@ -1,7 +1,8 @@
 import { ExecutivePanel } from "@/components/executive/executive-panel";
 import { ExecutiveProgress } from "@/components/executive/executive-progress";
 import { ExecutiveStatusBadge } from "@/components/rfq-workspace/shared/executive-status-badge";
-import { calculateDecisionReadiness } from "@/lib/analytics/executive-intelligence";
+import { calculateDecisionReadiness }
+  from "@/lib/executive/decision-readiness";
 
 type ReadinessFactor = {
   label: string;
