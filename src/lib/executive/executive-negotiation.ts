@@ -1,4 +1,4 @@
-import { calculateNegotiationStrength } from "@/lib/analytics/executive-intelligence";
+import { calculateNegotiationStrength } from "@/lib/executive/negotiation-strength";
 
 import type {
 ExecutiveIntelligenceInput,
