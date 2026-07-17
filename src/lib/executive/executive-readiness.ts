@@ -1,4 +1,6 @@
-import { calculateDecisionReadiness } from "@/lib/analytics/executive-intelligence";
+import {
+  calculateDecisionReadiness,
+} from "@/lib/executive/decision-readiness";
 
 import type {
 ExecutiveIntelligenceInput,
