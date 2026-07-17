@@ -19,7 +19,7 @@ import {
 import {
   createAverageQuotesSignal,
   createClassificationMaturitySignal,
-  createDecisionConfidenceSignal,
+  createDecisionSupportReadinessSignal,
   createProcurementRiskSignal,
   createSupplierCoverageSignal,
 } from "@/lib/analytics/executive/executive-signal-factory";
@@ -46,7 +46,7 @@ export type ExecutiveBriefInput = {
   opportunity: OpportunityIntelligenceInput;
 
   executiveRecommendation: string;
-  decisionConfidenceScore: number;
+  decisionSupportReadinessScore: number;
 
   topRisk: string;
   procurementRiskIndex: number;
@@ -79,18 +79,18 @@ function normalizeNonNegative(
 
 function buildActionInsight({
   executiveRecommendation,
-  decisionConfidenceScore,
+  decisionSupportReadinessScore,
   procurementRiskIndex,
   avgQuotesPerRfq,
 }: Pick<
   ExecutiveBriefInput,
   | "executiveRecommendation"
-  | "decisionConfidenceScore"
+  | "decisionSupportReadinessScore"
   | "procurementRiskIndex"
   | "avgQuotesPerRfq"
 >): ExecutiveInsightBundle {
   const confidence = normalizeScore(
-    decisionConfidenceScore,
+    decisionSupportReadinessScore,
   );
 
   const riskIndex = normalizeScore(
@@ -109,7 +109,7 @@ function buildActionInsight({
         : "low";
 
   const signals = [
-    createDecisionConfidenceSignal(
+    createDecisionSupportReadinessSignal(
       confidence,
     ),
     createProcurementRiskSignal(
@@ -264,23 +264,23 @@ function buildRiskInsight({
 export function buildExecutiveBrief({
   opportunity,
   executiveRecommendation,
-  decisionConfidenceScore,
+  decisionSupportReadinessScore,
   topRisk,
   procurementRiskIndex,
   supplierCount,
   avgQuotesPerRfq,
   classificationScore,
 }: ExecutiveBriefInput): ExecutiveBrief {
-  const normalizedConfidenceScore =
-    normalizeScore(decisionConfidenceScore);
+  const normalizedDecisionSupportReadinessScore =
+    normalizeScore(decisionSupportReadinessScore);
 
   const opportunityBundle =
     buildTopOpportunityInsight(opportunity);
 
   const actionBundle = buildActionInsight({
     executiveRecommendation,
-    decisionConfidenceScore:
-      normalizedConfidenceScore,
+    decisionSupportReadinessScore:
+      normalizedDecisionSupportReadinessScore,
     procurementRiskIndex,
     avgQuotesPerRfq,
   });

@@ -1,22 +1,22 @@
 import { createExecutiveSignal } from "@/lib/analytics/executive/executive-signal";
 
-export function createDecisionConfidenceSignal(
-  confidence: number,
+export function createDecisionSupportReadinessSignal(
+  readinessScore: number,
 ) {
   return createExecutiveSignal({
-    id: "decision-support-confidence",
+    id: "decision-support-readiness",
     category: "confidence",
-    label: "Decision-support confidence",
-    value: `${confidence}/100`,
+    label: "Decision-support readiness",
+    value: `${readinessScore}/100`,
     status:
-      confidence >= 80
+      readinessScore >= 80
         ? "strong"
-        : confidence >= 60
+        : readinessScore >= 60
           ? "moderate"
           : "limited",
     importance: 100,
     description:
-      "Confidence derived from current portfolio, competition, risk, and decision-support inputs.",
+      "Readiness derived from current portfolio, competition, risk, and decision-support inputs.",
   });
 }
 

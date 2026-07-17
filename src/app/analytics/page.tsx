@@ -1712,6 +1712,7 @@ const executiveBrief = buildExecutiveBrief({
     supplierCount: supplierRanking.length,
   },
   executiveRecommendation: executiveCommandRecommendation,
+decisionSupportReadinessScore:
   decisionConfidenceScore,
   topRisk,
   procurementRiskIndex,
