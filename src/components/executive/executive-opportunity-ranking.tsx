@@ -1,210 +1,427 @@
 type ExecutiveOpportunity = {
-title: string;
-priority: string;
-impact: string;
-value: string;
-summary: string;
+  title: string;
+  priority: string;
+  impact: string;
+  value: string;
+  summary: string;
 };
 
 type ExecutiveOpportunityIntelligence = ExecutiveOpportunity & {
-rank: number;
-businessImpact: string;
-executionHorizon: string;
-boardPriority: string;
-ceoRecommendation: string;
+  rank: number;
+  businessImpact: string;
+  executionHorizon: string;
+  boardPriority: string;
+  ceoRecommendation: string;
 };
 
 type ExecutiveOpportunityRankingProps = {
-opportunities: ExecutiveOpportunity[];
-intelligence: ExecutiveOpportunityIntelligence[];
+  opportunities: ExecutiveOpportunity[];
+  intelligence: ExecutiveOpportunityIntelligence[];
 };
 
 export function ExecutiveOpportunityRanking({
-opportunities,
-intelligence,
+  opportunities,
+  intelligence,
 }: ExecutiveOpportunityRankingProps) {
-const hasData = opportunities.length > 0 || intelligence.length > 0;
-const topOpportunity = opportunities[0];
+  const hasData = opportunities.length > 0 || intelligence.length > 0;
+  const topOpportunity = opportunities[0];
 
-return (
-<section className="mt-8 rounded-[34px] border border-white/10 bg-[#061426]/88 p-6 text-white shadow-executive sm:p-8">
-<div className="flex flex-col gap-6 xl:flex-row xl:items-start xl:justify-between">
-<div>
-<p className="text-[11px] font-black uppercase tracking-[0.34em] text-[#C8A646]">
-Executive Opportunity Ranking
-</p>
+  return (
+    <section
+      aria-labelledby="executive-opportunity-ranking-heading"
+      className="mt-8 overflow-hidden rounded-[34px] border border-white/10 bg-[#061426]/88 text-white shadow-executive"
+    >
+      <header className="grid min-w-0 gap-6 border-b border-white/10 p-6 sm:p-8 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-end">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-3">
+            <p className="text-[10px] font-black uppercase tracking-[0.28em] text-[#C8A646] sm:text-[11px]">
+              Executive Opportunity Ranking
+            </p>
 
-<h2 className="mt-4 text-3xl font-black leading-tight text-white sm:text-4xl">
-Board Opportunity Queue
-</h2>
+            <span
+              aria-hidden="true"
+              className="hidden h-1 w-1 rounded-full bg-white/20 sm:block"
+            />
 
-<p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-400">
-Nexus Pavilion ranks procurement opportunities by savings potential,
-supplier growth, sourcing expansion, execution horizon, board
-priority, and CEO-level recommendation.
-</p>
-</div>
+            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">
+              Procurement value prioritization
+            </p>
+          </div>
 
-<StatusBadge tone={hasData ? "success" : "warning"}>
-{hasData ? "Available" : "Insufficient Data"}
-</StatusBadge>
-</div>
+          <h2
+            id="executive-opportunity-ranking-heading"
+            className="mt-4 max-w-5xl text-3xl font-black leading-[1.08] tracking-tight text-white sm:text-4xl lg:text-5xl"
+          >
+            Executive Opportunity Portfolio
+          </h2>
 
-<div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-<SummaryTile title="Top Opportunity" value={topOpportunity?.title || "No Data"} />
-<SummaryTile title="Priority" value={topOpportunity?.priority || "Pending"} />
-<SummaryTile title="Impact" value={topOpportunity?.impact || "Pending"} />
-<SummaryTile title="Value Signal" value={topOpportunity?.value || "Pending"} />
-</div>
+          <p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-400 sm:text-base">
+            Ranked procurement opportunities evaluated across value potential,
+            business impact, execution horizon, board priority, and CEO-level
+            action requirements.
+          </p>
+        </div>
 
-<div className="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-{opportunities.map((opportunity) => (
-<OpportunityCard key={opportunity.title} opportunity={opportunity} />
-))}
+        <div className="flex flex-wrap items-center gap-3 xl:flex-col xl:items-end">
+          <StatusBadge tone={hasData ? "success" : "warning"}>
+            {hasData ? "Available" : "Insufficient Data"}
+          </StatusBadge>
 
-{opportunities.length === 0 ? (
-<EmptyState message="No executive opportunity ranking data available." />
-) : null}
-</div>
+          <p className="text-[10px] font-black uppercase tracking-[0.16em] text-slate-500">
+            {opportunities.length} ranked opportunities
+          </p>
+        </div>
+      </header>
 
-<div className="mt-8 rounded-[30px] border border-[#2CC4E8]/15 bg-[#2CC4E8]/[0.045] p-6">
-<p className="text-[10px] font-black uppercase tracking-[0.28em] text-[#9BE8F8]">
-Opportunity Impact Intelligence
-</p>
+      <div className="p-6 sm:p-8">
+        <section
+          aria-labelledby="top-opportunity-position-heading"
+          className="min-w-0 overflow-hidden rounded-[30px] border border-[#C8A646]/20 bg-[#C8A646]/[0.045]"
+        >
+          <div className="grid min-w-0 xl:grid-cols-[minmax(280px,0.78fr)_minmax(0,1.22fr)]">
+            <div className="border-b border-white/10 p-5 sm:p-6 xl:border-b-0 xl:border-r">
+              <p className="text-[10px] font-black uppercase tracking-[0.24em] text-[#C8A646]">
+                Highest-ranked position
+              </p>
 
-<h3 className="mt-3 text-2xl font-black text-white">
-Executive Opportunity Interpretation
-</h3>
+              <h3
+                id="top-opportunity-position-heading"
+                className="mt-3 text-xl font-black tracking-tight text-white sm:text-2xl"
+              >
+                Priority Opportunity Signal
+              </h3>
 
-<div className="mt-6 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-{intelligence.map((opportunity) => (
-<IntelligenceCard key={opportunity.title} opportunity={opportunity} />
-))}
+              <p className="mt-3 text-xs font-semibold leading-6 text-slate-400">
+                Immediate executive view of the first opportunity in the active
+                ranking sequence.
+              </p>
 
-{intelligence.length === 0 ? (
-<EmptyState message="No opportunity intelligence available." />
-) : null}
-</div>
-</div>
-</section>
-);
+              <div className="mt-6 flex items-center gap-4">
+                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-[#C8A646]/25 bg-[#C8A646]/10 text-sm font-black tabular-nums text-[#E5C663]">
+                  01
+                </span>
+
+                <div className="min-w-0">
+                  <p className="text-[10px] font-black uppercase tracking-[0.17em] text-slate-500">
+                    Executive priority
+                  </p>
+
+                  <p className="mt-1 break-words text-sm font-black leading-6 text-white [overflow-wrap:anywhere]">
+                    {topOpportunity?.priority || "Pending"}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="min-w-0 p-5 sm:p-6">
+              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">
+                Top opportunity
+              </p>
+
+              <p className="mt-3 break-words text-2xl font-black leading-8 text-white [overflow-wrap:anywhere] sm:text-3xl">
+                {topOpportunity?.title || "No Data"}
+              </p>
+
+              <div className="mt-6 grid min-w-0 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                <TopOpportunitySignal
+                  label="Priority"
+                  value={topOpportunity?.priority || "Pending"}
+                />
+
+                <TopOpportunitySignal
+                  label="Business Impact"
+                  value={topOpportunity?.impact || "Pending"}
+                />
+
+                <TopOpportunitySignal
+                  label="Value Signal"
+                  value={topOpportunity?.value || "Pending"}
+                />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section
+          aria-labelledby="opportunity-queue-heading"
+          className="mt-7 min-w-0"
+        >
+          <div className="flex flex-col gap-3 border-b border-white/10 pb-5 sm:flex-row sm:items-end sm:justify-between">
+            <div className="min-w-0">
+              <p className="text-[10px] font-black uppercase tracking-[0.22em] text-emerald-300">
+                Opportunity prioritization
+              </p>
+
+              <h3
+                id="opportunity-queue-heading"
+                className="mt-2 text-lg font-black tracking-tight text-white sm:text-xl"
+              >
+                Executive Opportunity Queue
+              </h3>
+            </div>
+
+            <p className="max-w-xl text-xs font-semibold leading-5 text-slate-500 sm:text-right">
+              Opportunities remain displayed in the exact priority sequence
+              supplied by the active procurement intelligence model.
+            </p>
+          </div>
+
+          <div className="mt-5 grid min-w-0 gap-4 md:grid-cols-2 xl:grid-cols-4">
+            {opportunities.map((opportunity, index) => (
+              <OpportunityCard
+                key={opportunity.title}
+                opportunity={opportunity}
+                position={index + 1}
+              />
+            ))}
+
+            {opportunities.length === 0 ? (
+              <EmptyState message="No executive opportunity ranking data available." />
+            ) : null}
+          </div>
+        </section>
+
+        <section
+          aria-labelledby="opportunity-intelligence-heading"
+          className="mt-7 min-w-0 rounded-[30px] border border-[#2CC4E8]/15 bg-[#2CC4E8]/[0.035] p-5 sm:p-6"
+        >
+          <div className="flex flex-col gap-3 border-b border-white/10 pb-5 sm:flex-row sm:items-end sm:justify-between">
+            <div className="min-w-0">
+              <p className="text-[10px] font-black uppercase tracking-[0.24em] text-[#9BE8F8]">
+                Opportunity decision intelligence
+              </p>
+
+              <h3
+                id="opportunity-intelligence-heading"
+                className="mt-2 text-lg font-black tracking-tight text-white sm:text-xl"
+              >
+                Business Impact and Leadership Response
+              </h3>
+            </div>
+
+            <span className="w-fit rounded-full border border-[#2CC4E8]/20 bg-[#2CC4E8]/[0.07] px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.16em] text-[#9BE8F8]">
+              {intelligence.length} intelligence profiles
+            </span>
+          </div>
+
+          <div className="mt-5 grid min-w-0 gap-5 md:grid-cols-2 xl:grid-cols-4">
+            {intelligence.map((opportunity) => (
+              <IntelligenceCard
+                key={opportunity.title}
+                opportunity={opportunity}
+              />
+            ))}
+
+            {intelligence.length === 0 ? (
+              <EmptyState message="No opportunity intelligence available." />
+            ) : null}
+          </div>
+        </section>
+      </div>
+    </section>
+  );
 }
 
-function OpportunityCard({ opportunity }: { opportunity: ExecutiveOpportunity }) {
-return (
-<div className="rounded-[28px] border border-white/10 bg-white/[0.045] p-6">
-<div className="flex items-start justify-between gap-3">
-<p className="text-[10px] font-black uppercase tracking-[0.22em] text-emerald-300">
-{opportunity.priority}
-</p>
+function OpportunityCard({
+  opportunity,
+  position,
+}: {
+  opportunity: ExecutiveOpportunity;
+  position: number;
+}) {
+  return (
+    <article className="group flex min-w-0 flex-col rounded-[28px] border border-white/10 bg-white/[0.035] p-5 transition-colors hover:border-emerald-300/20 hover:bg-emerald-300/[0.025] sm:p-6">
+      <div className="flex min-w-0 items-start justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-3">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-emerald-300/20 bg-emerald-300/[0.07] text-[10px] font-black tabular-nums text-emerald-300">
+            {String(position).padStart(2, "0")}
+          </span>
 
-<span className="rounded-full border border-white/10 bg-white/[0.055] px-3 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-slate-300">
-{opportunity.impact}
-</span>
-</div>
+          <div className="min-w-0">
+            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">
+              Ranked opportunity
+            </p>
 
-<h3 className="mt-4 text-xl font-black text-white">
-{opportunity.title}
-</h3>
+            <p className="mt-1 break-words text-[10px] font-black uppercase tracking-[0.14em] text-emerald-300 [overflow-wrap:anywhere]">
+              {opportunity.priority}
+            </p>
+          </div>
+        </div>
 
-<p className="mt-4 text-sm font-semibold leading-7 text-slate-400">
-{opportunity.summary}
-</p>
+        <span className="max-w-[45%] shrink-0 break-words rounded-full border border-white/10 bg-white/[0.05] px-3 py-1 text-right text-[10px] font-black uppercase leading-4 tracking-[0.12em] text-slate-300 [overflow-wrap:anywhere]">
+          {opportunity.impact}
+        </span>
+      </div>
 
-<div className="mt-5 rounded-2xl border border-white/10 bg-[#061426]/80 p-4">
-<p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#C8A646]">
-Opportunity Value
-</p>
+      <h4 className="mt-5 break-words text-xl font-black leading-7 text-white [overflow-wrap:anywhere]">
+        {opportunity.title}
+      </h4>
 
-<p className="mt-2 text-lg font-black text-white">
-{opportunity.value}
-</p>
-</div>
-</div>
-);
+      <p className="mt-3 flex-1 break-words text-sm font-semibold leading-7 text-slate-400 [overflow-wrap:anywhere]">
+        {opportunity.summary}
+      </p>
+
+      <div className="mt-5 rounded-2xl border border-[#C8A646]/15 bg-[#061426]/75 p-4">
+        <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#C8A646]">
+          Opportunity value
+        </p>
+
+        <p className="mt-2 break-words text-lg font-black leading-6 text-white [overflow-wrap:anywhere]">
+          {opportunity.value}
+        </p>
+      </div>
+
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-white/10 pt-4">
+        <p className="text-[10px] font-black uppercase tracking-[0.13em] text-slate-500">
+          Executive review
+        </p>
+
+        <p className="text-[10px] font-black uppercase tracking-[0.13em] text-emerald-300">
+          Priority assessment
+        </p>
+      </div>
+    </article>
+  );
 }
 
 function IntelligenceCard({
-opportunity,
+  opportunity,
 }: {
-opportunity: ExecutiveOpportunityIntelligence;
+  opportunity: ExecutiveOpportunityIntelligence;
 }) {
-return (
-<div className="rounded-[28px] border border-white/10 bg-[#061426]/80 p-6">
-<p className="text-[10px] font-black uppercase tracking-[0.22em] text-[#9BE8F8]">
-Opportunity #{opportunity.rank}
-</p>
+  return (
+    <article className="flex min-w-0 flex-col rounded-[28px] border border-white/10 bg-[#061426]/75 p-5 sm:p-6">
+      <div className="flex min-w-0 items-start gap-3">
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#2CC4E8]/20 bg-[#2CC4E8]/[0.07] text-[10px] font-black tabular-nums text-[#9BE8F8]">
+          {String(opportunity.rank).padStart(2, "0")}
+        </span>
 
-<h3 className="mt-4 text-xl font-black text-white">
-{opportunity.title}
-</h3>
+        <div className="min-w-0">
+          <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#9BE8F8]">
+            Intelligence position
+          </p>
 
-<p className="mt-4 text-sm font-semibold leading-7 text-slate-400">
-{opportunity.businessImpact}
-</p>
+          <h4 className="mt-2 break-words text-lg font-black leading-7 text-white [overflow-wrap:anywhere]">
+            {opportunity.title}
+          </h4>
+        </div>
+      </div>
 
-<div className="mt-5 space-y-3">
-<InfoBlock title="Execution Horizon" value={opportunity.executionHorizon} />
-<InfoBlock title="Board Priority" value={opportunity.boardPriority} />
-<InfoBlock title="CEO Recommendation" value={opportunity.ceoRecommendation} />
-</div>
-</div>
-);
+      <div className="mt-5 border-t border-white/10 pt-5">
+        <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">
+          Business impact
+        </p>
+
+        <p className="mt-3 break-words text-sm font-semibold leading-7 text-slate-300 [overflow-wrap:anywhere]">
+          {opportunity.businessImpact}
+        </p>
+      </div>
+
+      <div className="mt-5 grid flex-1 gap-3">
+        <InfoBlock
+          title="Execution Horizon"
+          value={opportunity.executionHorizon}
+        />
+
+        <InfoBlock title="Board Priority" value={opportunity.boardPriority} />
+
+        <InfoBlock
+          title="CEO Recommendation"
+          value={opportunity.ceoRecommendation}
+          emphasis
+        />
+      </div>
+    </article>
+  );
 }
 
-function SummaryTile({ title, value }: { title: string; value: string }) {
-return (
-<div className="rounded-[22px] border border-white/10 bg-white/[0.055] p-5">
-<p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
-{title}
-</p>
+function TopOpportunitySignal({
+  label,
+  value,
+}: {
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="min-w-0 rounded-2xl border border-white/10 bg-black/10 p-4">
+      <p className="text-[10px] font-black uppercase tracking-[0.17em] text-slate-500">
+        {label}
+      </p>
 
-<p className="mt-3 text-xl font-black text-white">{value}</p>
-</div>
-);
+      <p className="mt-2 break-words text-sm font-black leading-6 text-white [overflow-wrap:anywhere]">
+        {value}
+      </p>
+    </div>
+  );
 }
 
-function InfoBlock({ title, value }: { title: string; value: string }) {
-return (
-<div className="rounded-2xl border border-white/10 bg-white/[0.045] p-4">
-<p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">
-{title}
-</p>
+function InfoBlock({
+  title,
+  value,
+  emphasis = false,
+}: {
+  title: string;
+  value: string;
+  emphasis?: boolean;
+}) {
+  return (
+    <div
+      className={
+        emphasis
+          ? "min-w-0 rounded-2xl border border-[#C8A646]/20 bg-[#C8A646]/[0.045] p-4"
+          : "min-w-0 rounded-2xl border border-white/10 bg-white/[0.035] p-4"
+      }
+    >
+      <p
+        className={
+          emphasis
+            ? "text-[10px] font-black uppercase tracking-[0.17em] text-[#C8A646]"
+            : "text-[10px] font-black uppercase tracking-[0.17em] text-slate-500"
+        }
+      >
+        {title}
+      </p>
 
-<p className="mt-2 text-sm font-semibold leading-6 text-slate-300">
-{value}
-</p>
-</div>
-);
+      <p className="mt-2 break-words text-sm font-semibold leading-6 text-slate-300 [overflow-wrap:anywhere]">
+        {value}
+      </p>
+    </div>
+  );
 }
 
 function EmptyState({ message }: { message: string }) {
-return (
-<div className="rounded-[24px] border border-dashed border-white/15 bg-white/[0.035] p-8 text-center md:col-span-2 xl:col-span-4">
-<p className="text-sm font-bold text-slate-500">{message}</p>
-</div>
-);
+  return (
+    <div className="rounded-[24px] border border-dashed border-white/15 bg-white/[0.025] p-8 text-center md:col-span-2 xl:col-span-4">
+      <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-600">
+        Insufficient data
+      </p>
+
+      <p className="mt-3 text-sm font-bold leading-6 text-slate-500">
+        {message}
+      </p>
+    </div>
+  );
 }
 
 function StatusBadge({
-children,
-tone = "neutral",
+  children,
+  tone = "neutral",
 }: {
-children: React.ReactNode;
-tone?: "success" | "warning" | "neutral";
+  children: string;
+  tone?: "success" | "warning" | "neutral";
 }) {
-const toneClass =
-tone === "success"
-? "border-emerald-300/20 bg-emerald-400/10 text-emerald-300"
-: tone === "warning"
-? "border-orange-300/20 bg-orange-400/10 text-orange-300"
-: "border-white/10 bg-white/[0.055] text-slate-300";
+  const toneClass =
+    tone === "success"
+      ? "border-emerald-300/20 bg-emerald-400/10 text-emerald-300"
+      : tone === "warning"
+        ? "border-orange-300/20 bg-orange-400/10 text-orange-300"
+        : "border-white/10 bg-white/[0.055] text-slate-300";
 
-return (
-<span
-className={`inline-flex rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] ${toneClass}`}
->
-{children}
-</span>
-);
+  return (
+    <span
+      className={`inline-flex w-fit rounded-full border px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.18em] ${toneClass}`}
+    >
+      {children}
+    </span>
+  );
 }
