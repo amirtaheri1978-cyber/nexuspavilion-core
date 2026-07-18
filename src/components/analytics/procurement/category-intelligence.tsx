@@ -1,104 +1,123 @@
 type CategoryIntelligenceItem = {
-category: string;
-rfqs: number;
-quotes: number;
-awards: number;
-winRate: number;
-spend: number;
-opportunityScore: number;
+  category: string;
+  rfqs: number;
+  quotes: number;
+  awards: number;
+  winRate: number;
+  spend: number;
+  opportunityScore: number;
 };
 
 type CategoryIntelligenceProps = {
-categoryIntelligence: CategoryIntelligenceItem[];
+  categoryIntelligence: CategoryIntelligenceItem[];
 };
 
 export default function CategoryIntelligence({
-categoryIntelligence,
+  categoryIntelligence,
 }: CategoryIntelligenceProps) {
-return (
-<section className="mt-8 rounded-3xl border border-slate-200 bg-white p-8">
-<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500">
-Category Intelligence
-</p>
+  return (
+    <section className="mt-8 rounded-[34px] border border-white/10 bg-[#061426]/88 p-6 text-white shadow-executive sm:p-8">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+          <p className="text-[11px] font-black uppercase tracking-[0.34em] text-[#C8A646]">
+            Category Intelligence
+          </p>
 
-<h2 className="mt-3 text-3xl font-black text-slate-950">
-Top Procurement Categories
-</h2>
+          <h2 className="mt-4 text-3xl font-black tracking-tight text-white sm:text-4xl">
+            Top Procurement Categories
+          </h2>
 
-<div className="mt-8 overflow-x-auto">
-<table className="w-full">
-<thead>
-<tr className="border-b border-slate-200 text-left">
-<th className="pb-4 text-xs font-black uppercase tracking-[0.2em] text-slate-400">
-Category
-</th>
+          <p className="mt-4 max-w-3xl text-sm font-semibold leading-7 text-slate-400">
+            Compare procurement categories by sourcing activity, award
+            performance, commercial value, and opportunity potential.
+          </p>
+        </div>
 
-<th className="pb-4 text-xs font-black uppercase tracking-[0.2em] text-slate-400">
-RFQs
-</th>
+        <div className="rounded-2xl border border-white/10 bg-white/[0.04] px-5 py-4">
+          <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">
+            Categories
+          </p>
 
-<th className="pb-4 text-xs font-black uppercase tracking-[0.2em] text-slate-400">
-Quotes
-</th>
+          <p className="mt-2 text-3xl font-black text-white">
+            {categoryIntelligence.length}
+          </p>
+        </div>
+      </div>
 
-<th className="pb-4 text-xs font-black uppercase tracking-[0.2em] text-slate-400">
-Awards
-</th>
+      <div className="mt-8 overflow-x-auto rounded-3xl border border-white/10 bg-black/15">
+        <table className="min-w-full">
+          <thead>
+            <tr className="border-b border-white/10">
+              <th className="px-6 py-5 text-left text-[11px] font-black uppercase tracking-[0.2em] text-slate-500">
+                Category
+              </th>
 
-<th className="pb-4 text-xs font-black uppercase tracking-[0.2em] text-slate-400">
-Win Rate
-</th>
+              <th className="px-6 py-5 text-left text-[11px] font-black uppercase tracking-[0.2em] text-slate-500">
+                RFQs
+              </th>
 
-<th className="pb-4 text-xs font-black uppercase tracking-[0.2em] text-slate-400">
-Spend
-</th>
+              <th className="px-6 py-5 text-left text-[11px] font-black uppercase tracking-[0.2em] text-slate-500">
+                Quotes
+              </th>
 
-<th className="pb-4 text-xs font-black uppercase tracking-[0.2em] text-slate-400">
-Opportunity
-</th>
-</tr>
-</thead>
+              <th className="px-6 py-5 text-left text-[11px] font-black uppercase tracking-[0.2em] text-slate-500">
+                Awards
+              </th>
 
-<tbody>
-{categoryIntelligence.map((item) => (
-<tr
-key={item.category}
-className="border-b border-slate-100"
->
-<td className="py-4 font-black text-slate-950">
-{item.category}
-</td>
+              <th className="px-6 py-5 text-left text-[11px] font-black uppercase tracking-[0.2em] text-slate-500">
+                Win Rate
+              </th>
 
-<td className="py-4 text-slate-700">
-{item.rfqs}
-</td>
+              <th className="px-6 py-5 text-left text-[11px] font-black uppercase tracking-[0.2em] text-slate-500">
+                Spend
+              </th>
 
-<td className="py-4 text-slate-700">
-{item.quotes}
-</td>
+              <th className="px-6 py-5 text-left text-[11px] font-black uppercase tracking-[0.2em] text-slate-500">
+                Opportunity
+              </th>
+            </tr>
+          </thead>
 
-<td className="py-4 text-slate-700">
-{item.awards}
-</td>
+          <tbody>
+            {categoryIntelligence.map((item) => (
+              <tr
+                key={item.category}
+                className="border-b border-white/5 transition-colors hover:bg-white/[0.035]"
+              >
+                <td className="px-6 py-5 font-bold text-white">
+                  {item.category}
+                </td>
 
-<td className="py-4 font-bold text-slate-950">
-{item.winRate}%
-</td>
+                <td className="px-6 py-5 font-medium text-slate-300">
+                  {item.rfqs}
+                </td>
 
-<td className="py-4 font-bold text-slate-950">
-${item.spend.toLocaleString()}
-</td>
+                <td className="px-6 py-5 font-medium text-slate-300">
+                  {item.quotes}
+                </td>
 
-<td className="py-4">
-<span className="rounded-full bg-orange-100 px-3 py-1 text-xs font-black text-orange-700">
-{item.opportunityScore}/100
-</span>
-</td>
-</tr>
-))}
-</tbody>
-</table>
-</div>
-</section>
-);
+                <td className="px-6 py-5 font-medium text-slate-300">
+                  {item.awards}
+                </td>
+
+                <td className="px-6 py-5 font-bold text-white">
+                  {item.winRate}%
+                </td>
+
+                <td className="px-6 py-5 font-bold text-white">
+                  ${item.spend.toLocaleString()}
+                </td>
+
+                <td className="px-6 py-5">
+                  <span className="inline-flex items-center rounded-full border border-[#C8A646]/25 bg-[#C8A646]/12 px-3 py-1 text-xs font-black text-[#F5D76E]">
+                    {item.opportunityScore}/100
+                  </span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  );
 }
