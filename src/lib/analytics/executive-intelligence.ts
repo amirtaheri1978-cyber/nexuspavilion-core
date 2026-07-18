@@ -74,12 +74,6 @@ const EXECUTIVE_SCORE_WEIGHTS = {
   classification: 0.2,
 } as const;
 
-const DIGITAL_MATURITY_WEIGHTS = {
-  procurementMaturity: 0.45,
-  dataQuality: 0.25,
-  supplierEngagement: 0.2,
-  classification: 0.1,
-} as const;
 
 const BOARD_HEALTH_WEIGHTS = {
   procurementEfficiency: 0.25,
@@ -234,32 +228,6 @@ export function calculateExecutiveScore(
     score,
     status: executiveStatus(score),
   };
-}
-
-export function calculateDigitalMaturity(
-  procurementMaturityScore: number,
-  dataQualityScore: number,
-  supplierEngagementScore: number,
-  constructionClassificationScore: number,
-): number {
-  return calculateWeightedScore([
-    {
-      value: procurementMaturityScore,
-      weight: DIGITAL_MATURITY_WEIGHTS.procurementMaturity,
-    },
-    {
-      value: dataQualityScore,
-      weight: DIGITAL_MATURITY_WEIGHTS.dataQuality,
-    },
-    {
-      value: supplierEngagementScore,
-      weight: DIGITAL_MATURITY_WEIGHTS.supplierEngagement,
-    },
-    {
-      value: constructionClassificationScore,
-      weight: DIGITAL_MATURITY_WEIGHTS.classification,
-    },
-  ]);
 }
 
 export function calculateBoardHealth(
