@@ -74,12 +74,6 @@ const EXECUTIVE_SCORE_WEIGHTS = {
   classification: 0.2,
 } as const;
 
-const EXECUTIVE_READINESS_WEIGHTS = {
-  enterpriseScore: 0.4,
-  predictionAccuracy: 0.3,
-  dataQuality: 0.3,
-} as const;
-
 const DIGITAL_MATURITY_WEIGHTS = {
   procurementMaturity: 0.45,
   dataQuality: 0.25,
@@ -240,27 +234,6 @@ export function calculateExecutiveScore(
     score,
     status: executiveStatus(score),
   };
-}
-
-export function calculateExecutiveReadiness(
-  enterpriseScore: number,
-  predictionAccuracy: number,
-  dataQualityScore: number,
-): number {
-  return calculateWeightedScore([
-    {
-      value: enterpriseScore,
-      weight: EXECUTIVE_READINESS_WEIGHTS.enterpriseScore,
-    },
-    {
-      value: predictionAccuracy,
-      weight: EXECUTIVE_READINESS_WEIGHTS.predictionAccuracy,
-    },
-    {
-      value: dataQualityScore,
-      weight: EXECUTIVE_READINESS_WEIGHTS.dataQuality,
-    },
-  ]);
 }
 
 export function calculateDigitalMaturity(
