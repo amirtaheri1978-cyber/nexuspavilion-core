@@ -133,16 +133,27 @@ export function BoardroomSnapshot({
         aria-label="Executive decision signals"
         className="mt-6 grid min-w-0 items-start gap-5 xl:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.65fr)]"
       >
-        <InsightSignal
-          eyebrow={action.title}
-          summary={action.summary}
-          reason={action.reason}
-          recommendation={action.recommendation}
-          confidence={action.confidence}
-          evidence={action.evidence}
-          tone="action"
-          emphasis="primary"
-        />
+        <div className="grid min-w-0 content-start gap-5">
+          <InsightSignal
+            eyebrow={action.title}
+            summary={action.summary}
+            reason={action.reason}
+            recommendation={action.recommendation}
+            confidence={action.confidence}
+            evidence={action.evidence}
+            tone="action"
+            emphasis="primary"
+          />
+
+          <PortfolioEvidenceSummary
+            quotedPortfolioValue={quotedPortfolioValue}
+            estimatedSavingsOpportunity={estimatedSavingsOpportunity}
+            enterpriseProcurementScore={enterpriseProcurementScore}
+            constructionClassificationScore={
+              constructionClassificationScore
+            }
+          />
+        </div>
 
         <div className="grid min-w-0 content-start gap-5">
           <InsightSignal
@@ -168,66 +179,80 @@ export function BoardroomSnapshot({
           />
         </div>
       </section>
-
-      <section
-        aria-labelledby="executive-evidence-summary-title"
-        className="mt-6 border-t border-white/10 pt-6"
-      >
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.22em] text-yellow-300">
-              Supporting portfolio evidence
-            </p>
-
-            <h2
-              id="executive-evidence-summary-title"
-              className="mt-2 text-lg font-black text-white"
-            >
-              Decision context at a glance
-            </h2>
-          </div>
-
-          <p className="max-w-xl text-xs font-semibold leading-5 text-nexus-muted sm:text-right">
-            Observed, estimated, and internally derived measures supporting the
-            executive briefing.
-          </p>
-        </div>
-
-        <div className="mt-5 grid min-w-0 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <ExecutiveMetricCard
-            label="Quoted Portfolio Value"
-            value={`$${quotedPortfolioValue.toLocaleString()}`}
-            insight="Total value represented by recorded supplier quotations."
-            impact="Observed quotation data"
-            tone="gold"
-          />
-
-          <ExecutiveMetricCard
-            label="Estimated Savings Opportunity"
-            value={`$${estimatedSavingsOpportunity.toLocaleString()}`}
-            insight="Estimated difference between current average and lowest recorded quotation."
-            impact="Estimated — not realized"
-            tone="success"
-          />
-
-          <ExecutiveMetricCard
-            label="Portfolio Intelligence Score"
-            value={`${enterpriseProcurementScore}/100`}
-            insight="Derived internal decision-support score based on current procurement signals."
-            impact="Internal score — not a peer benchmark"
-            tone="blue"
-          />
-
-          <ExecutiveMetricCard
-            label="RFQ Classification Maturity"
-            value={`${constructionClassificationScore}/100`}
-            insight="Current depth of procurement scope, sourcing, and framework classification."
-            impact="Classification quality signal"
-            tone="neutral"
-          />
-        </div>
-      </section>
     </ExecutivePanel>
+  );
+}
+
+function PortfolioEvidenceSummary({
+  quotedPortfolioValue,
+  estimatedSavingsOpportunity,
+  enterpriseProcurementScore,
+  constructionClassificationScore,
+}: {
+  quotedPortfolioValue: number;
+  estimatedSavingsOpportunity: number;
+  enterpriseProcurementScore: number;
+  constructionClassificationScore: number;
+}) {
+  return (
+    <section
+      aria-labelledby="executive-evidence-summary-title"
+      className="min-w-0 rounded-3xl border border-white/10 bg-white/[0.025] p-5 sm:p-6"
+    >
+      <div className="flex flex-col gap-3 border-b border-white/10 pb-5 sm:flex-row sm:items-end sm:justify-between">
+        <div className="min-w-0">
+          <p className="text-[10px] font-black uppercase tracking-[0.22em] text-yellow-300">
+            Supporting portfolio evidence
+          </p>
+
+          <h2
+            id="executive-evidence-summary-title"
+            className="mt-2 text-lg font-black tracking-tight text-white"
+          >
+            Decision context at a glance
+          </h2>
+        </div>
+
+        <p className="max-w-md text-xs font-semibold leading-5 text-nexus-muted sm:text-right">
+          Observed, estimated, and internally derived measures supporting the
+          immediate leadership decision.
+        </p>
+      </div>
+
+      <div className="mt-5 grid min-w-0 gap-4 sm:grid-cols-2">
+        <ExecutiveMetricCard
+          label="Quoted Portfolio Value"
+          value={`$${quotedPortfolioValue.toLocaleString()}`}
+          insight="Total value represented by recorded supplier quotations."
+          impact="Observed quotation data"
+          tone="gold"
+        />
+
+        <ExecutiveMetricCard
+          label="Estimated Savings Opportunity"
+          value={`$${estimatedSavingsOpportunity.toLocaleString()}`}
+          insight="Estimated difference between current average and lowest recorded quotation."
+          impact="Estimated — not realized"
+          tone="success"
+        />
+
+        <ExecutiveMetricCard
+          label="Portfolio Intelligence Score"
+          value={`${enterpriseProcurementScore}/100`}
+          insight="Derived internal decision-support score based on current procurement signals."
+          impact="Internal score — not a peer benchmark"
+          tone="blue"
+        />
+
+        <ExecutiveMetricCard
+          label="RFQ Classification Maturity"
+          value={`${constructionClassificationScore}/100`}
+          insight="Current depth of procurement scope, sourcing, and framework classification."
+          impact="Classification quality signal"
+          tone="neutral"
+        />
+      </div>
+    </section>
   );
 }
 
@@ -375,7 +400,7 @@ function InsightSignal({
           ].join(" ")}
         >
           <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-            <div>
+            <div className="min-w-0">
               <p
                 className={[
                   "text-[10px] font-black uppercase tracking-[0.18em]",
@@ -391,7 +416,7 @@ function InsightSignal({
               </p>
             </div>
 
-            <p className="text-[10px] font-black uppercase tracking-[0.14em] text-nexus-muted">
+            <p className="shrink-0 text-[10px] font-black uppercase tracking-[0.14em] text-nexus-muted">
               Four-stage decision control
             </p>
           </div>
