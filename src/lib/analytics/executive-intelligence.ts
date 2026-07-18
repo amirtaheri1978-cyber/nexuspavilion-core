@@ -32,16 +32,6 @@ export type AwardConfidenceInput = {
 };
 
 
-
-
-
-export type NegotiationStrengthInput = {
-  recommendedAmount: number;
-  averageBid: number;
-  quoteCount: number;
-  riskLevel: string;
-};
-
 export type SupplierReliabilityInput = {
   timelineScore: number;
   performanceScore: number;
