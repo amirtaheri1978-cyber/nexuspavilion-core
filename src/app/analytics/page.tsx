@@ -1,3 +1,4 @@
+
 import Link from "next/link";
 import AnalyticsChart from "@/components/analytics-chart";
 import ExecutiveExportPanel from "@/components/executive-export-panel";
@@ -1721,16 +1722,63 @@ const executiveNarrative =
   buildExecutiveNarrative(executiveBrief);
 
 return (
-<main className="min-h-screen bg-[#030712] px-8 py-10">
-<div className="mx-auto max-w-7xl">
+<main className="min-h-screen bg-[#030712] px-4 py-6 text-white sm:px-6 lg:px-8 lg:py-8">
+<div className="mx-auto w-full max-w-[1600px]">
 <Link
 href="/dashboard"
-className="text-sm font-semibold text-slate-400 transition hover:text-white"
+className="inline-flex min-h-11 items-center rounded-xl border border-white/10 bg-white/[0.035] px-4 text-sm font-semibold text-slate-300 transition hover:border-white/20 hover:bg-white/[0.06] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C8A646]"
 >
 ← Back to Dashboard
 </Link>
 
-<div className="mt-8">
+<header className="mt-6 overflow-hidden rounded-[2rem] border border-white/10 bg-[#061426]/92 shadow-executive">
+  <div className="border-b border-white/10 px-5 py-6 sm:px-7 lg:px-9 lg:py-8">
+    <div className="flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
+      <div className="max-w-4xl">
+        <p className="text-xs font-black uppercase tracking-[0.28em] text-[#C8A646]">
+          Nexus Pavilion Executive Intelligence
+        </p>
+        <h1 className="mt-4 max-w-4xl text-3xl font-black tracking-tight text-white sm:text-4xl lg:text-5xl">
+          Executive Procurement Operating System
+        </h1>
+        <p className="mt-4 max-w-3xl text-sm font-semibold leading-7 text-slate-300 sm:text-base">
+          A decision-first command environment for procurement performance, risk exposure, supplier resilience, opportunity capture, and board-level readiness.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 xl:min-w-[620px]">
+        <DarkMetric title="Enterprise" value={`${enterpriseProcurementScore}/100`} />
+        <DarkMetric title="Decision Readiness" value={`${decisionSupportReadiness.score}/100`} />
+        <DarkMetric title="Risk Exposure" value={`${procurementRiskIndex}/100`} />
+        <DarkMetric title="Board Readiness" value={`${boardReadinessScore}/100`} />
+      </div>
+    </div>
+  </div>
+
+  <nav aria-label="Analytics sections" className="overflow-x-auto px-3 py-3 sm:px-5">
+    <div className="flex min-w-max gap-2">
+      {[
+        ["#executive-brief", "Executive Brief"],
+        ["#decision-command", "Decision Command"],
+        ["#board-intelligence", "Board Intelligence"],
+        ["#procurement-intelligence", "Procurement"],
+        ["#risk-intelligence", "Risk"],
+        ["#opportunity-intelligence", "Opportunity"],
+        ["#reports", "Reports"],
+      ].map(([href, label]) => (
+        <a
+          key={href}
+          href={href}
+          className="inline-flex min-h-10 items-center rounded-xl border border-white/10 bg-white/[0.035] px-4 text-xs font-black uppercase tracking-[0.12em] text-slate-300 transition hover:border-[#C8A646]/40 hover:bg-[#C8A646]/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C8A646]"
+        >
+          {label}
+        </a>
+      ))}
+    </div>
+  </nav>
+</header>
+
+<section id="executive-brief" className="scroll-mt-6 pt-8">
 <BoardroomSnapshot
   executiveBrief={executiveBrief}
   quotedPortfolioValue={procurementVolume}
@@ -1739,15 +1787,15 @@ className="text-sm font-semibold text-slate-400 transition hover:text-white"
   constructionClassificationScore={constructionClassificationScore}
   executiveNarrative={executiveNarrative}
 />
-</div>
-<section className="mt-8 rounded-3xl border border-white/10 bg-[#061426]/88 p-8 text-white shadow-executive">
+</section>
+<section id="decision-command" className="scroll-mt-6 mt-8 rounded-3xl border border-white/10 bg-[#061426]/88 p-5 text-white shadow-executive sm:p-7 lg:p-8">
 <p className="text-xs font-black uppercase tracking-[0.3em] text-[#C8A646]">
 Construction Procurement Intelligence
 </p>
 
 <div className="mt-5 grid gap-8 lg:grid-cols-[1fr_0.8fr]">
 <div>
-<h1 className="text-5xl font-black">Procurement Analytics</h1>
+<h1 className="text-3xl font-black sm:text-4xl lg:text-5xl">Procurement Analytics</h1>
 
 <p className="mt-4 max-w-3xl text-sm leading-7 text-slate-300">
 {executiveCommandRecommendation}
@@ -1793,7 +1841,7 @@ value={projectSpecificRfqs.toString()}
 <MetricCard title="Framework RFQs" value={frameworkRfqs.toString()} />
 </section>
 
-<section className="mt-8 rounded-3xl border border-white/10 bg-[#061426]/88 p-8 text-white shadow-executive">
+<section className="mt-8 rounded-3xl border border-white/10 bg-[#061426]/88 p-5 text-white shadow-executive sm:p-7 lg:p-8">
 <p className="text-xs font-black uppercase tracking-[0.25em] text-[#C8A646]">
 RFQ Classification Intelligence
 </p>
@@ -1855,7 +1903,7 @@ title="Avg Quotes / RFQ"
 value={avgQuotesPerRfq.toString()}
 />
 </section>
-<section className="mt-8 rounded-3xl border border-white/10 bg-[#061426]/88 p-8 text-white shadow-executive">
+<section className="mt-8 rounded-3xl border border-white/10 bg-[#061426]/88 p-5 text-white shadow-executive sm:p-7 lg:p-8">
 <p className="text-xs font-black uppercase tracking-[0.25em] text-[#C8A646]">
 Decision Confidence Layer
 </p>
@@ -1937,12 +1985,14 @@ className="rounded-2xl border border-white/10 bg-[#061426]/70 p-4"
 </div>
 </section>
 
+<div id="opportunity-intelligence" className="scroll-mt-6">
 <ExecutiveOpportunityRanking
 opportunities={executiveOpportunityRanking}
 intelligence={executiveOpportunityIntelligence}
 />
+</div>
 
-<section className="mt-8 rounded-3xl border border-white/10 bg-[#061426]/88 p-8 text-white shadow-executive">
+<section className="mt-8 rounded-3xl border border-white/10 bg-[#061426]/88 p-5 text-white shadow-executive sm:p-7 lg:p-8">
 <p className="text-xs font-black uppercase tracking-[0.25em] text-[#C8A646]">
 Executive Scenario Intelligence
 </p>
@@ -1992,7 +2042,7 @@ Confidence
 ))}
 </div>
 </section>
-<section className="mt-8 rounded-3xl border border-white/10 bg-[#061426]/88 p-8 text-white shadow-executive">
+<section className="mt-8 rounded-3xl border border-white/10 bg-[#061426]/88 p-5 text-white shadow-executive sm:p-7 lg:p-8">
 <p className="text-xs font-black uppercase tracking-[0.25em] text-[#C8A646]">
 Executive Decision Simulator
 </p>
@@ -2046,7 +2096,7 @@ Confidence
 </div>
 </section>
 
-<section className="mt-8 rounded-3xl border border-white/10 bg-[#061426]/88 p-8 text-white shadow-executive">
+<section className="mt-8 rounded-3xl border border-white/10 bg-[#061426]/88 p-5 text-white shadow-executive sm:p-7 lg:p-8">
 <p className="text-xs font-black uppercase tracking-[0.25em] text-[#C8A646]">
 Executive Forecast Center
 </p>
@@ -2079,7 +2129,7 @@ className="rounded-3xl border border-[#2CC4E8]/15 bg-[#2CC4E8]/[0.055] p-6"
 </div>
 </section>
 
-<div className="mt-8">
+<div id="decision-command-center" className="scroll-mt-6 mt-8">
 <CEOActionCenter
 ceoOperatingStatus={ceoOperatingStatus}
 ceoDecisionPosture={ceoDecisionPosture}
@@ -2089,6 +2139,7 @@ ceoActionCenter={ceoActionCenter}
 />
 </div>
 
+<section id="executive-intelligence" className="scroll-mt-6">
 <ExecutiveDashboard
 ceoMorningBrief={ceoMorningBrief}
 ceoReadinessScore={ceoReadinessScore}
@@ -2135,7 +2186,8 @@ supplierReliabilityScore={supplierReliabilityScore}
 predictionAccuracy={predictionAccuracy}
 awardPredictionConfidence={awardPredictionConfidence}
 />
-<section className="mt-8 rounded-3xl border border-white/10 bg-slate-950 p-8 text-white shadow-executive">
+</section>
+<section className="mt-8 rounded-3xl border border-white/10 bg-slate-950 p-5 text-white shadow-executive sm:p-7 lg:p-8">
 <p className="text-xs font-black uppercase tracking-[0.25em] text-[#C8A646]">
 Board Forecast Briefing
 </p>
@@ -2177,6 +2229,7 @@ Board Narrative
 </div>
 </section>
 
+<section id="board-intelligence" className="scroll-mt-6">
 <BoardDashboard
 boardReadinessScore={boardReadinessScore}
 governanceReadiness={governanceReadiness}
@@ -2197,8 +2250,9 @@ boardDistributionReadiness={boardDistributionReadiness}
 boardApprovalStages={boardApprovalStages}
 boardApprovalStatus={boardApprovalStatus}
 />
+</section>
 
-<section className="mt-8 rounded-3xl border border-white/10 bg-[#061426]/88 p-8 text-white shadow-executive">
+<section className="mt-8 rounded-3xl border border-white/10 bg-[#061426]/88 p-5 text-white shadow-executive sm:p-7 lg:p-8">
 <p className="text-xs font-black uppercase tracking-[0.25em] text-[#C8A646]">
 Executive Procurement Intelligence
 </p>
@@ -2267,6 +2321,7 @@ value={`$${averageQuote.toLocaleString()}`}
 <MetricCard title="Award Rate" value={`${awardRate}%`} />
 </section>
 
+<section id="procurement-intelligence" className="scroll-mt-6">
 <ProcurementDashboard
 procurementCommandRoom={procurementCommandRoom}
 procurementCommandRoomStatus={procurementCommandRoomStatus}
@@ -2289,11 +2344,14 @@ supplierDiversificationScore={supplierDiversificationScore}
 portfolioStatus={portfolioStatus}
 portfolioRecommendations={portfolioRecommendations}
 />
+</section>
 
+<section id="reports" className="scroll-mt-6">
 <ExecutiveExportPanel />
+</section>
 
 
-<section className="mt-8 rounded-3xl border border-white/10 bg-[#061426]/88 p-8 text-white shadow-executive">
+<section className="mt-8 rounded-3xl border border-white/10 bg-[#061426]/88 p-5 text-white shadow-executive sm:p-7 lg:p-8">
 <p className="text-xs font-black uppercase tracking-[0.25em] text-[#C8A646]">
 Executive Benchmark Center
 </p>
@@ -2350,7 +2408,7 @@ Executive Benchmark Interpretation
 </div>
 </section>
 
-<section className="mt-8 rounded-3xl border border-white/10 bg-[#061426]/88 p-8 text-white shadow-executive">
+<section className="mt-8 rounded-3xl border border-white/10 bg-[#061426]/88 p-5 text-white shadow-executive sm:p-7 lg:p-8">
 <p className="text-xs font-black uppercase tracking-[0.25em] text-[#C8A646]">
 Executive Procurement Intelligence
 </p>
@@ -2443,7 +2501,7 @@ Strategic Position
 </div>
 </section>
 
-<section className="mt-8 rounded-3xl border border-white/10 bg-slate-950 p-8 text-white shadow-executive">
+<section className="mt-8 rounded-3xl border border-white/10 bg-slate-950 p-5 text-white shadow-executive sm:p-7 lg:p-8">
 <p className="text-xs font-black uppercase tracking-[0.25em] text-[#C8A646]">
 Executive Scorecard
 </p>
@@ -2491,7 +2549,7 @@ value={executiveBenchmarkStatus}
 </div>
 </section>
 
-<section className="mt-8 rounded-3xl border border-white/10 bg-[#061426]/88 p-8 text-white shadow-executive">
+<section className="mt-8 rounded-3xl border border-white/10 bg-[#061426]/88 p-5 text-white shadow-executive sm:p-7 lg:p-8">
 <p className="text-xs font-black uppercase tracking-[0.25em] text-[#C8A646]">
 Board Presentation Layer
 </p>
@@ -2533,12 +2591,14 @@ Board Summary
 </div>
 </section>
 
+<section id="risk-intelligence" className="scroll-mt-6">
 <ExecutiveRiskIntelligence
 supplierRiskRadar={supplierRiskRadar}
 supplierRanking={supplierRanking}
 />
+</section>
 
-<section className="mt-8 rounded-3xl border border-white/10 bg-slate-950 p-8 text-white shadow-executive">
+<section className="mt-8 rounded-3xl border border-white/10 bg-slate-950 p-5 text-white shadow-executive sm:p-7 lg:p-8">
 <p className="text-xs font-black uppercase tracking-[0.25em] text-[#C8A646]">
 Executive Operating System
 </p>
@@ -2577,6 +2637,7 @@ Executive Recommendation
   executiveNarrative={executiveNarrative}
 />
 
+<section id="board-reporting" className="scroll-mt-6">
 <BoardReportGenerator
 procurementRiskIndex={procurementRiskIndex}
 procurementMaturityScore={procurementMaturityScore}
@@ -2594,6 +2655,8 @@ supplierEngagementScore={supplierEngagementScore}
 digitalMaturityScore={digitalMaturityScore}
 />
 
+</section>
+<section id="board-narrative" className="scroll-mt-6">
 <AIBoardNarrativeGenerator
 executiveBenchmarkStatus={executiveBenchmarkStatus}
 industryBenchmarkScore={industryBenchmarkScore}
@@ -2608,6 +2671,7 @@ boardRecommendation={boardRecommendation}
 procurementMaturityScore={procurementMaturityScore}
 awardPredictionConfidence={awardPredictionConfidence}
 />
+</section>
 </div>
 </main>
 );
