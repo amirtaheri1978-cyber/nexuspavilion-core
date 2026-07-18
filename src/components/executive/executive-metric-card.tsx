@@ -40,8 +40,16 @@ export function ExecutiveMetricCard({
     .filter(Boolean)
     .join(" ");
 
+  const normalizedValue = value.trim();
+
+  const isCompactValue =
+    normalizedValue.length <= 16 && !/\s/.test(normalizedValue);
+
   const resolvedValueClassName = [
-    "mt-4 min-w-0 break-words text-2xl font-black leading-tight tracking-tight [overflow-wrap:anywhere] sm:text-3xl",
+    "mt-4 min-w-0 font-black leading-none tracking-tight tabular-nums",
+    isCompactValue
+      ? "whitespace-nowrap text-[clamp(1.35rem,1.6vw,1.875rem)]"
+      : "break-words text-2xl leading-tight [overflow-wrap:anywhere] sm:text-3xl",
     toneClasses[tone],
     valueClassName,
   ]
@@ -59,9 +67,7 @@ export function ExecutiveMetricCard({
         {label}
       </p>
 
-      <p className={resolvedValueClassName}>
-        {value}
-      </p>
+      <p className={resolvedValueClassName}>{value}</p>
 
       {trend ? (
         <p className="mt-2 break-words text-xs font-bold leading-5 text-emerald-300 [overflow-wrap:anywhere]">
