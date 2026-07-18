@@ -36,7 +36,7 @@ export function ExecutiveMetricCard({
   className = "",
   valueClassName = "",
 }: ExecutiveMetricCardProps) {
-  const panelClassName = ["min-w-0", className]
+  const panelClassName = ["h-full min-w-0", className]
     .filter(Boolean)
     .join(" ");
 
@@ -46,7 +46,7 @@ export function ExecutiveMetricCard({
     normalizedValue.length <= 16 && !/\s/.test(normalizedValue);
 
   const resolvedValueClassName = [
-    "mt-4 min-w-0 font-black leading-none tracking-tight tabular-nums",
+    "mt-3 min-w-0 font-black leading-none tracking-tight tabular-nums",
     isCompactValue
       ? "whitespace-nowrap text-[clamp(1.35rem,1.6vw,1.875rem)]"
       : "break-words text-2xl leading-tight [overflow-wrap:anywhere] sm:text-3xl",
@@ -63,7 +63,7 @@ export function ExecutiveMetricCard({
       padding="sm"
       tone={tone}
     >
-      <p className="break-words text-[10px] font-black uppercase tracking-[0.22em] text-nexus-muted [overflow-wrap:anywhere]">
+      <p className="flex min-h-8 items-end break-words text-[10px] font-black uppercase leading-4 tracking-[0.22em] text-nexus-muted [overflow-wrap:anywhere]">
         {label}
       </p>
 
