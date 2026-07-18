@@ -33,9 +33,12 @@ getSourcingMethod,
 import { buildSupplierIntelligence } from "@/lib/analytics/supplier-intelligence";
 
 import {
-  calculateExecutiveScore,
   commandStatus,
 } from "@/lib/analytics/executive-intelligence";
+
+import {
+  calculateExecutiveScore,
+} from "@/lib/executive/executive-score";
 
 import {
   calculateBoardHealth,
