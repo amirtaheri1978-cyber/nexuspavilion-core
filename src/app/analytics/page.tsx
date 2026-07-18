@@ -34,7 +34,7 @@ import { buildSupplierIntelligence } from "@/lib/analytics/supplier-intelligence
 
 import {
   commandStatus,
-} from "@/lib/analytics/executive-intelligence";
+} from "@/lib/executive/command-status";
 
 import {
   calculateExecutiveScore,
