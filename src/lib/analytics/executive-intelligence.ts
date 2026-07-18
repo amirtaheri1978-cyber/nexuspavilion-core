@@ -66,15 +66,6 @@ const AWARD_CONFIDENCE_WEIGHTS = {
   validity: 0.08,
 } as const;
 
-const EXECUTIVE_SCORE_WEIGHTS = {
-  procurementHealth: 0.2,
-  predictionAccuracy: 0.2,
-  dataQuality: 0.2,
-  controlledRisk: 0.2,
-  classification: 0.2,
-} as const;
-
-
 function clampScore(score: number): number {
   if (!Number.isFinite(score)) {
     return 0;
@@ -179,49 +170,6 @@ function result(
 // -------------------------------------------------
 // Executive Portfolio KPI Engine
 // -------------------------------------------------
-
-/**
- * Produces a derived internal executive score from existing operating
- * indicators. This is not an external industry benchmark or predictive
- * accuracy measure.
- */
-export function calculateExecutiveScore(
-  procurementHealthScore: number,
-  predictionAccuracy: number,
-  dataQualityScore: number,
-  procurementRiskIndex: number,
-  constructionClassificationScore: number,
-): ExecutiveScore {
-  const controlledRiskScore = 100 - clampScore(procurementRiskIndex);
-
-  const score = calculateWeightedScore([
-    {
-      value: procurementHealthScore,
-      weight: EXECUTIVE_SCORE_WEIGHTS.procurementHealth,
-    },
-    {
-      value: predictionAccuracy,
-      weight: EXECUTIVE_SCORE_WEIGHTS.predictionAccuracy,
-    },
-    {
-      value: dataQualityScore,
-      weight: EXECUTIVE_SCORE_WEIGHTS.dataQuality,
-    },
-    {
-      value: controlledRiskScore,
-      weight: EXECUTIVE_SCORE_WEIGHTS.controlledRisk,
-    },
-    {
-      value: constructionClassificationScore,
-      weight: EXECUTIVE_SCORE_WEIGHTS.classification,
-    },
-  ]);
-
-  return {
-    score,
-    status: executiveStatus(score),
-  };
-}
 
 
 // -------------------------------------------------
