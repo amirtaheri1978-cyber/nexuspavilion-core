@@ -1,4 +1,3 @@
-
 import Link from "next/link";
 import AnalyticsChart from "@/components/analytics-chart";
 import ExecutiveExportPanel from "@/components/executive-export-panel";
@@ -1694,31 +1693,73 @@ remains ${ceoRiskLevel.toLowerCase()}.
   return (
     <main className="min-h-screen bg-[#030712] px-4 py-6 text-white sm:px-6 lg:px-8 lg:py-8">
       <div className="mx-auto w-full max-w-[1600px]">
-        <Link
-          href="/dashboard"
-          className="inline-flex min-h-11 items-center rounded-xl border border-white/10 bg-white/[0.035] px-4 text-sm font-semibold text-slate-300 transition hover:border-white/20 hover:bg-white/[0.06] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C8A646]"
-        >
-          ← Back to Dashboard
-        </Link>
+        <div className="flex min-h-11 items-center justify-between gap-4">
+          <Link
+            href="/dashboard"
+            className="group inline-flex min-h-11 items-center gap-2 text-sm font-bold text-slate-400 transition hover:text-white focus-visible:rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C8A646] focus-visible:ring-offset-4 focus-visible:ring-offset-[#030712]"
+          >
+            <span
+              aria-hidden="true"
+              className="transition-transform group-hover:-translate-x-1"
+            >
+              ←
+            </span>
+            Back to Dashboard
+          </Link>
 
-        <header className="mt-6 overflow-hidden rounded-[2rem] border border-white/10 bg-[#061426]/92 shadow-executive">
-          <div className="border-b border-white/10 px-5 py-6 sm:px-7 lg:px-9 lg:py-8">
-            <div className="flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
-              <div className="max-w-4xl">
-                <p className="text-xs font-black uppercase tracking-[0.28em] text-[#C8A646]">
-                  Nexus Pavilion Executive Intelligence
-                </p>
-                <h1 className="mt-4 max-w-4xl text-3xl font-black tracking-tight text-white sm:text-4xl lg:text-5xl">
+          <p className="hidden text-[10px] font-black uppercase tracking-[0.2em] text-slate-600 sm:block">
+            Executive intelligence workspace
+          </p>
+        </div>
+
+        <header className="relative mt-4 overflow-hidden rounded-[2rem] border border-white/10 bg-[#061426]/92 shadow-executive">
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#C8A646]/70 to-transparent"
+          />
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute -right-24 -top-32 h-80 w-80 rounded-full bg-[#2CC4E8]/[0.055] blur-3xl"
+          />
+
+          <div className="relative px-5 pb-5 pt-6 sm:px-7 lg:px-9 lg:pb-6 lg:pt-7">
+            <div className="grid gap-7 xl:grid-cols-[minmax(0,1fr)_minmax(560px,0.78fr)] xl:items-end">
+              <div className="min-w-0 max-w-4xl">
+                <div className="flex flex-wrap items-center gap-3">
+                  <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[#C8A646] sm:text-xs">
+                    Nexus Pavilion Executive Intelligence
+                  </p>
+                  <span className="hidden h-1 w-1 rounded-full bg-white/20 sm:block" />
+                  <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">
+                    Current operating posture
+                  </p>
+                </div>
+
+                <h1 className="mt-3 max-w-4xl text-3xl font-black leading-[1.08] tracking-tight text-white sm:text-4xl lg:text-[2.75rem]">
                   Executive Procurement Operating System
                 </h1>
-                <p className="mt-4 max-w-3xl text-sm font-semibold leading-7 text-slate-300 sm:text-base">
+
+                <p className="mt-3 max-w-3xl text-sm font-semibold leading-6 text-slate-300 sm:text-base sm:leading-7">
                   A decision-first command environment for procurement
                   performance, risk exposure, supplier resilience, opportunity
                   capture, and board-level readiness.
                 </p>
               </div>
 
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 xl:min-w-[620px]">
+              <section
+                aria-label="Executive operating posture"
+                className="min-w-0"
+              >
+                <div className="mb-3 flex items-center justify-between gap-4">
+                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
+                    Operating posture
+                  </p>
+                  <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#9BE8F8]">
+                    Validated intelligence
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                 <DarkMetric
                   title="Enterprise"
                   value={`${enterpriseProcurementScore}/100`}
@@ -1736,14 +1777,15 @@ remains ${ceoRiskLevel.toLowerCase()}.
                   value={`${boardReadinessScore}/100`}
                 />
               </div>
+              </section>
             </div>
           </div>
 
           <nav
             aria-label="Analytics sections"
-            className="overflow-x-auto px-3 py-3 sm:px-5"
+            className="relative overflow-x-auto border-t border-white/10 bg-black/10 px-3 py-2.5 sm:px-5"
           >
-            <div className="flex min-w-max gap-2">
+            <div className="flex min-w-max items-center gap-1.5">
               {[
                 ["#executive-brief", "Executive Brief"],
                 ["#decision-command", "Decision Command"],
@@ -1756,7 +1798,7 @@ remains ${ceoRiskLevel.toLowerCase()}.
                 <a
                   key={href}
                   href={href}
-                  className="inline-flex min-h-10 items-center rounded-xl border border-white/10 bg-white/[0.035] px-4 text-xs font-black uppercase tracking-[0.12em] text-slate-300 transition hover:border-[#C8A646]/40 hover:bg-[#C8A646]/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C8A646]"
+                  className="inline-flex min-h-9 items-center rounded-lg border border-transparent px-3 text-[10px] font-black uppercase tracking-[0.14em] text-slate-400 transition hover:border-white/10 hover:bg-white/[0.045] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C8A646] sm:px-4"
                 >
                   {label}
                 </a>
@@ -1765,7 +1807,14 @@ remains ${ceoRiskLevel.toLowerCase()}.
           </nav>
         </header>
 
-        <section id="executive-brief" className="scroll-mt-6 pt-8">
+        <section
+          id="executive-brief"
+          className="relative scroll-mt-6 pt-4 sm:pt-5"
+        >
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute left-1/2 top-0 h-5 w-px -translate-x-1/2 bg-gradient-to-b from-[#C8A646]/45 to-transparent"
+          />
           <BoardroomSnapshot
             executiveBrief={executiveBrief}
             quotedPortfolioValue={procurementVolume}
