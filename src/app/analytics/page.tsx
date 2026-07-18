@@ -33,12 +33,15 @@ getSourcingMethod,
 import { buildSupplierIntelligence } from "@/lib/analytics/supplier-intelligence";
 
 import {
-calculateExecutiveScore,
-calculateExecutiveReadiness,
-calculateDigitalMaturity,
-calculateBoardHealth,
-commandStatus,
+  calculateExecutiveScore,
+  calculateDigitalMaturity,
+  calculateBoardHealth,
+  commandStatus,
 } from "@/lib/analytics/executive-intelligence";
+
+import {
+  calculateExecutiveReadiness,
+} from "@/lib/executive/executive-readiness-score";
 
 import { buildExecutiveNarrative } from "@/lib/analytics/executive/executive-narrative";
 
@@ -51,7 +54,6 @@ level: "opportunity" | "healthy" | "warning";
 title: string;
 message: string;
 };
-
 
 
 export default async function AnalyticsPage() {
