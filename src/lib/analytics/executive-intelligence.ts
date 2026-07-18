@@ -390,24 +390,6 @@ export function executiveStatus(score: number): string {
   return "Needs Attention";
 }
 
-export function commandStatus(score: number): string {
-  const normalizedScore = clampScore(score);
-
-  if (normalizedScore >= SCORE_THRESHOLDS.excellent) {
-    return "Executive Ready";
-  }
-
-  if (normalizedScore >= SCORE_THRESHOLDS.healthy) {
-    return "Operationally Established";
-  }
-
-  if (normalizedScore >= SCORE_THRESHOLDS.developing) {
-    return "Capability Developing";
-  }
-
-  return "Immediate Review Required";
-}
-
 export function boardStatus(score: number): string {
   const normalizedScore = clampScore(score);
 
