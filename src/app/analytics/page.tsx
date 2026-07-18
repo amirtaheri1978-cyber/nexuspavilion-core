@@ -34,9 +34,12 @@ import { buildSupplierIntelligence } from "@/lib/analytics/supplier-intelligence
 
 import {
   calculateExecutiveScore,
-  calculateBoardHealth,
   commandStatus,
 } from "@/lib/analytics/executive-intelligence";
+
+import {
+  calculateBoardHealth,
+} from "@/lib/executive/board-health";
 
 import {
   calculateDigitalMaturity,
