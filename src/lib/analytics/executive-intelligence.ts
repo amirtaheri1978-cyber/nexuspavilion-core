@@ -10,11 +10,6 @@ export type ExecutivePriority =
   | "watch"
   | "hold";
 
-export type ExecutiveScore = {
-  score: number;
-  status: string;
-};
-
 export type ExecutiveIntelligenceResult = {
   score: number;
   status: string;
