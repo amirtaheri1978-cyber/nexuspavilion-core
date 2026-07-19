@@ -16,6 +16,7 @@ export function ExecutivePresentationCenter({
   exportReadinessStatus,
 }: ExecutivePresentationCenterProps) {
   const hasExports = executivePresentationExports.length > 0;
+  const packageCount = executivePresentationExports.length;
 
   return (
     <ExecutivePanel
@@ -26,7 +27,7 @@ export function ExecutivePresentationCenter({
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-3">
             <p className="text-[10px] font-black uppercase tracking-[0.28em] text-nexus-gold sm:text-xs">
-              Executive Presentation Export Layer
+              Executive Presentation Center
             </p>
 
             <span
@@ -35,7 +36,7 @@ export function ExecutivePresentationCenter({
             />
 
             <p className="text-[10px] font-black uppercase tracking-[0.18em] text-nexus-muted">
-              Leadership communication governance
+              Board delivery governance
             </p>
           </div>
 
@@ -43,61 +44,71 @@ export function ExecutivePresentationCenter({
             id="executive-presentation-center-heading"
             className="mt-4 max-w-5xl text-3xl font-black leading-[1.08] tracking-tight text-nexus-white sm:text-4xl lg:text-5xl"
           >
-            Executive Presentation Center
+            Executive Communication Portfolio
           </h2>
 
           <p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-nexus-muted sm:text-base">
-            Executive-ready presentation packages structured for board
+            Audience-specific presentation packages prepared for board
             members, enterprise leadership, procurement leadership, and
             strategic planning review.
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3 xl:flex-col xl:items-end">
+        <div className="flex min-w-[220px] flex-wrap items-center gap-3 xl:flex-col xl:items-end">
           <AvailabilityBadge active={hasExports} />
 
-          <p className="text-[10px] font-black uppercase tracking-[0.16em] text-nexus-muted">
-            {executivePresentationExports.length} presentation packages
+          <p className="text-[10px] font-black uppercase tracking-[0.16em] text-nexus-muted xl:text-right">
+            {packageCount} presentation packages
           </p>
         </div>
       </header>
 
       <section
-        aria-labelledby="export-readiness-heading"
+        aria-labelledby="board-delivery-readiness-heading"
         className="mt-7 overflow-hidden rounded-3xl border border-nexus-gold/20 bg-nexus-gold/[0.045]"
       >
         <div className="grid min-w-0 xl:grid-cols-[320px_minmax(0,1fr)]">
           <div className="border-b border-white/10 p-5 sm:p-6 xl:border-b-0 xl:border-r">
             <p className="text-[10px] font-black uppercase tracking-[0.22em] text-nexus-gold">
-              Export readiness
+              Board delivery readiness
             </p>
 
             <h3
-              id="export-readiness-heading"
+              id="board-delivery-readiness-heading"
               className="mt-3 break-words text-2xl font-black leading-8 text-nexus-white [overflow-wrap:anywhere]"
             >
               {exportReadinessStatus}
             </h3>
 
             <p className="mt-3 text-xs font-semibold leading-6 text-nexus-muted">
-              Current readiness position for executive presentation package
-              preparation and leadership review.
+              Current readiness position governing executive circulation,
+              leadership review, and board-level presentation delivery.
             </p>
+
+            <div className="mt-6 rounded-2xl border border-white/10 bg-black/10 p-4">
+              <p className="text-[10px] font-black uppercase tracking-[0.16em] text-nexus-muted">
+                Available packages
+              </p>
+
+              <p className="mt-2 text-2xl font-black leading-8 text-nexus-white">
+                {packageCount}
+              </p>
+            </div>
           </div>
 
           <div className="min-w-0 p-5 sm:p-6">
             <p className="text-[10px] font-black uppercase tracking-[0.18em] text-nexus-muted">
-              Executive communication assurance
+              Executive delivery position
             </p>
 
             <h3 className="mt-3 text-xl font-black tracking-tight text-nexus-white sm:text-2xl">
-              Validated Presentation Intelligence
+              Board-Ready Communication Governance
             </h3>
 
             <p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-nexus-muted">
-              Executive presentation packages are generated only from
-              validated procurement intelligence, readiness signals,
-              benchmark analysis, and board-level decision data.
+              Presentation packages remain governed by validated procurement
+              intelligence, readiness signals, benchmark analysis, and
+              decision-grade executive data before leadership circulation.
             </p>
 
             <div className="mt-6 grid gap-3 sm:grid-cols-2">
@@ -105,14 +116,18 @@ export function ExecutivePresentationCenter({
                 label="Package Availability"
                 value={
                   hasExports
-                    ? `${executivePresentationExports.length} available`
+                    ? `${packageCount} available`
                     : "Insufficient Data"
                 }
               />
 
               <ReadinessSignal
-                label="Leadership Review"
-                value={exportReadinessStatus}
+                label="Audience Coverage"
+                value={
+                  hasExports
+                    ? `${packageCount} executive audiences supported`
+                    : "Insufficient Data"
+                }
               />
             </div>
           </div>
@@ -161,7 +176,6 @@ export function ExecutivePresentationCenter({
     </ExecutivePanel>
   );
 }
-
 function PresentationExportCard({
   item,
   position,
