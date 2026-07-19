@@ -1,101 +1,157 @@
 @import "tailwindcss";
 
 :root {
---background: #07111f;
---foreground: #f8fafc;
+  color-scheme: dark;
 
---nexus-navy: #07111f;
---nexus-deep: #0b1220;
---nexus-slate: #0f172a;
---nexus-border: #1e293b;
+  --background: #07111f;
+  --foreground: #f8fafc;
 
---nexus-cobalt: #1e40ff;
---nexus-blue: #2563eb;
---nexus-violet: #7c3aed;
---nexus-gold: #f5c542;
+  --nexus-navy: #07111f;
+  --nexus-deep: #0b1220;
+  --nexus-slate: #0f172a;
+  --nexus-border: #1e293b;
 
---nexus-success: #22c55e;
---nexus-warning: #f59e0b;
---nexus-danger: #ef4444;
---nexus-info: #38bdf8;
+  --nexus-cobalt: #1e40ff;
+  --nexus-blue: #2563eb;
+  --nexus-violet: #7c3aed;
+  --nexus-gold: #f5c542;
 
---nexus-white: #ffffff;
---nexus-muted: #94a3b8;
+  --nexus-success: #22c55e;
+  --nexus-warning: #f59e0b;
+  --nexus-danger: #ef4444;
+  --nexus-info: #38bdf8;
 
---radius-executive: 24px;
---shadow-executive: 0 30px 90px rgba(0, 0, 0, 0.35);
---shadow-inner-executive: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  --nexus-white: #ffffff;
+  --nexus-muted: #94a3b8;
+
+  --nexus-surface-base: var(--nexus-navy);
+  --nexus-surface-elevated: var(--nexus-deep);
+  --nexus-surface-muted: var(--nexus-slate);
+
+  --nexus-border-subtle: rgba(255, 255, 255, 0.1);
+  --nexus-border-strong: var(--nexus-border);
+
+  --nexus-text-primary: var(--foreground);
+  --nexus-text-secondary: #cbd5e1;
+  --nexus-text-muted: var(--nexus-muted);
+
+  --radius-executive: 24px;
+
+  --shadow-executive: 0 30px 90px rgba(0, 0, 0, 0.35);
+  --shadow-inner-executive: inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 @theme inline {
---color-background: var(--background);
---color-foreground: var(--foreground);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
 
---color-nexus-navy: var(--nexus-navy);
---color-nexus-dark: var(--nexus-navy);
---color-nexus-deep: var(--nexus-deep);
---color-nexus-slate: var(--nexus-slate);
---color-nexus-border: var(--nexus-border);
+  --color-nexus-navy: var(--nexus-navy);
+  --color-nexus-dark: var(--nexus-navy);
+  --color-nexus-deep: var(--nexus-deep);
+  --color-nexus-slate: var(--nexus-slate);
+  --color-nexus-border: var(--nexus-border);
 
---color-nexus-cobalt: var(--nexus-cobalt);
---color-nexus-blue: var(--nexus-blue);
---color-nexus-violet: var(--nexus-violet);
---color-nexus-gold: var(--nexus-gold);
+  --color-nexus-cobalt: var(--nexus-cobalt);
+  --color-nexus-blue: var(--nexus-blue);
+  --color-nexus-violet: var(--nexus-violet);
+  --color-nexus-gold: var(--nexus-gold);
 
---color-nexus-success: var(--nexus-success);
---color-nexus-warning: var(--nexus-warning);
---color-nexus-danger: var(--nexus-danger);
---color-nexus-info: var(--nexus-info);
+  --color-nexus-success: var(--nexus-success);
+  --color-nexus-warning: var(--nexus-warning);
+  --color-nexus-danger: var(--nexus-danger);
+  --color-nexus-info: var(--nexus-info);
 
---color-nexus-white: var(--nexus-white);
---color-nexus-muted: var(--nexus-muted);
+  --color-nexus-white: var(--nexus-white);
+  --color-nexus-muted: var(--nexus-muted);
 
---font-sans: var(--font-geist-sans);
---font-mono: var(--font-geist-mono);
+  --color-nexus-surface-base: var(--nexus-surface-base);
+  --color-nexus-surface-elevated: var(--nexus-surface-elevated);
+  --color-nexus-surface-muted: var(--nexus-surface-muted);
 
---radius-executive: var(--radius-executive);
---shadow-executive: var(--shadow-executive);
---shadow-inner-executive: var(--shadow-inner-executive);
+  --color-nexus-border-subtle: var(--nexus-border-subtle);
+  --color-nexus-border-strong: var(--nexus-border-strong);
+
+  --color-nexus-text-primary: var(--nexus-text-primary);
+  --color-nexus-text-secondary: var(--nexus-text-secondary);
+  --color-nexus-text-muted: var(--nexus-text-muted);
+
+  --radius-executive: var(--radius-executive);
+
+  --shadow-executive: var(--shadow-executive);
+  --shadow-inner-executive: var(--shadow-inner-executive);
 }
 
 html {
-background: #07111f;
+  background: var(--background);
 }
 
 body {
-min-height: 100vh;
-background: #07111f;
-color: var(--foreground);
-font-family: Arial, Helvetica, sans-serif;
+  min-height: 100vh;
+  margin: 0;
+  background: var(--background);
+  color: var(--foreground);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 .bg-nexus-radial {
-background:
-radial-gradient(circle at top left, rgba(37, 99, 235, 0.22), transparent 34%),
-radial-gradient(circle at top right, rgba(245, 197, 66, 0.14), transparent 30%),
-linear-gradient(135deg, #07111f 0%, #0b1220 45%, #07111f 100%);
+  background:
+    radial-gradient(
+      circle at top left,
+      rgba(37, 99, 235, 0.22),
+      transparent 34%
+    ),
+    radial-gradient(
+      circle at top right,
+      rgba(245, 197, 66, 0.14),
+      transparent 30%
+    ),
+    linear-gradient(
+      135deg,
+      var(--nexus-navy) 0%,
+      var(--nexus-deep) 45%,
+      var(--nexus-navy) 100%
+    );
 }
 
 .bg-nexus-gradient {
-background-image: linear-gradient(135deg, #1e40ff, #7c3aed 48%, #f5c542);
+  background-image: linear-gradient(
+    135deg,
+    var(--nexus-cobalt),
+    var(--nexus-violet) 48%,
+    var(--nexus-gold)
+  );
 }
 
 .rounded-executive {
-border-radius: var(--radius-executive);
+  border-radius: var(--radius-executive);
 }
 
 .shadow-executive {
-box-shadow: var(--shadow-executive);
+  box-shadow: var(--shadow-executive);
 }
 
 .shadow-inner-executive {
-box-shadow: var(--shadow-inner-executive);
+  box-shadow: var(--shadow-inner-executive);
 }
 
 .shadow-nexus {
-box-shadow: 0 24px 70px rgba(37, 99, 235, 0.22);
+  box-shadow: 0 24px 70px rgba(37, 99, 235, 0.22);
 }
 
 .shadow-gold {
-box-shadow: 0 24px 70px rgba(245, 197, 66, 0.18);
+  box-shadow: 0 24px 70px rgba(245, 197, 66, 0.18);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
