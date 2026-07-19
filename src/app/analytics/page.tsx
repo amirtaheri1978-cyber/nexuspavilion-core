@@ -1691,12 +1691,12 @@ remains ${ceoRiskLevel.toLowerCase()}.
   const executiveNarrative = buildExecutiveNarrative(executiveBrief);
 
   return (
-    <main className="min-h-screen bg-[#030712] px-4 py-6 text-white sm:px-6 lg:px-8 lg:py-8">
+    <main className="min-h-screen bg-transparent px-4 py-5 text-white sm:px-6 lg:px-8 lg:py-6">
       <div className="mx-auto w-full max-w-[1600px]">
-        <div className="flex min-h-11 items-center justify-between gap-4">
+        <div className="flex min-h-10 items-center justify-between gap-4">
           <Link
             href="/dashboard"
-            className="group inline-flex min-h-11 items-center gap-2 text-sm font-bold text-slate-400 transition hover:text-white focus-visible:rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C8A646] focus-visible:ring-offset-4 focus-visible:ring-offset-[#030712]"
+            className="group inline-flex min-h-10 items-center gap-2 rounded-lg text-sm font-semibold text-slate-400 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C8A646]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#07111F]"
           >
             <span
               aria-hidden="true"
@@ -1707,12 +1707,12 @@ remains ${ceoRiskLevel.toLowerCase()}.
             Back to Dashboard
           </Link>
 
-          <p className="hidden text-[10px] font-black uppercase tracking-[0.2em] text-slate-600 sm:block">
-            Executive intelligence workspace
+          <p className="hidden text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500 sm:block">
+            Boardroom intelligence workspace
           </p>
         </div>
 
-        <header className="relative mt-4 overflow-hidden rounded-[2rem] border border-white/10 bg-[#061426]/92 shadow-executive">
+        <header className="relative mt-3 overflow-hidden rounded-3xl border border-white/10 bg-[#061426]/88 shadow-executive">
           <div
             aria-hidden="true"
             className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#C8A646]/70 to-transparent"
@@ -1722,24 +1722,24 @@ remains ${ceoRiskLevel.toLowerCase()}.
             className="pointer-events-none absolute -right-24 -top-32 h-80 w-80 rounded-full bg-[#2CC4E8]/[0.055] blur-3xl"
           />
 
-          <div className="relative px-5 pb-5 pt-6 sm:px-7 lg:px-9 lg:pb-6 lg:pt-7">
-            <div className="grid gap-7 xl:grid-cols-[minmax(0,1fr)_minmax(560px,0.78fr)] xl:items-end">
+          <div className="relative px-5 py-5 sm:px-6 lg:px-7">
+            <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(520px,0.82fr)] xl:items-center">
               <div className="min-w-0 max-w-4xl">
                 <div className="flex flex-wrap items-center gap-3">
-                  <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[#C8A646] sm:text-xs">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-[#E4C768]">
                     Nexus Pavilion Executive Intelligence
                   </p>
                   <span className="hidden h-1 w-1 rounded-full bg-white/20 sm:block" />
-                  <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
                     Current operating posture
                   </p>
                 </div>
 
-                <h1 className="mt-3 max-w-4xl text-3xl font-black leading-[1.08] tracking-tight text-white sm:text-4xl lg:text-[2.75rem]">
+                <h1 className="mt-2.5 max-w-4xl text-2xl font-semibold leading-tight tracking-tight text-white sm:text-3xl lg:text-[2.25rem]">
                   Executive Procurement Operating System
                 </h1>
 
-                <p className="mt-3 max-w-3xl text-sm font-semibold leading-6 text-slate-300 sm:text-base sm:leading-7">
+                <p className="mt-2.5 max-w-3xl text-sm font-medium leading-6 text-slate-400 sm:text-[15px]">
                   A decision-first command environment for procurement
                   performance, risk exposure, supplier resilience, opportunity
                   capture, and board-level readiness.
@@ -1750,55 +1750,62 @@ remains ${ceoRiskLevel.toLowerCase()}.
                 aria-label="Executive operating posture"
                 className="min-w-0"
               >
-                <div className="mb-3 flex items-center justify-between gap-4">
-                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
+                <div className="mb-2.5 flex items-center justify-between gap-4">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">
                     Operating posture
                   </p>
-                  <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#9BE8F8]">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#9BE8F8]">
                     Validated intelligence
                   </p>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                <DarkMetric
-                  title="Enterprise"
-                  value={`${enterpriseProcurementScore}/100`}
-                />
-                <DarkMetric
-                  title="Decision Readiness"
-                  value={`${decisionSupportReadiness.score}/100`}
-                />
-                <DarkMetric
-                  title="Risk Exposure"
-                  value={`${procurementRiskIndex}/100`}
-                />
-                <DarkMetric
-                  title="Board Readiness"
-                  value={`${boardReadinessScore}/100`}
-                />
-              </div>
+                <div className="grid grid-cols-2 overflow-hidden rounded-2xl border border-white/10 bg-black/10 sm:grid-cols-4">
+                  {[
+                    ["Enterprise", `${enterpriseProcurementScore}/100`],
+                    [
+                      "Decision readiness",
+                      `${decisionSupportReadiness.score}/100`,
+                    ],
+                    ["Risk exposure", `${procurementRiskIndex}/100`],
+                    ["Board readiness", `${boardReadinessScore}/100`],
+                  ].map(([label, value], index) => (
+                    <div
+                      key={label}
+                      className={`min-w-0 px-3 py-3.5 sm:px-4 ${
+                        index % 2 === 1 ? "border-l border-white/10" : ""
+                      } ${index >= 2 ? "border-t border-white/10 sm:border-t-0" : ""} ${
+                        index > 0 ? "sm:border-l sm:border-white/10" : ""
+                      }`}
+                    >
+                      <p className="truncate text-[9px] font-semibold uppercase tracking-[0.12em] text-slate-500">
+                        {label}
+                      </p>
+                      <p className="mt-1.5 text-lg font-semibold tabular-nums tracking-tight text-white">
+                        {value}
+                      </p>
+                    </div>
+                  ))}
+                </div>
               </section>
             </div>
           </div>
 
           <nav
             aria-label="Analytics sections"
-            className="relative overflow-x-auto border-t border-white/10 bg-black/10 px-3 py-2.5 sm:px-5"
+            className="relative overflow-x-auto border-t border-white/10 bg-black/10 px-3 py-2 sm:px-4"
           >
             <div className="flex min-w-max items-center gap-1.5">
               {[
-                ["#executive-brief", "Executive Brief"],
-                ["#decision-command", "Decision Command"],
-                ["#board-intelligence", "Board Intelligence"],
-                ["#procurement-intelligence", "Procurement"],
-                ["#risk-intelligence", "Risk"],
-                ["#opportunity-intelligence", "Opportunity"],
-                ["#reports", "Reports"],
+                ["#executive-brief", "Executive Overview"],
+                ["#decision-command-center", "Decision Intelligence"],
+                ["#procurement-intelligence", "Portfolio Intelligence"],
+                ["#board-intelligence", "Board & Governance"],
+                ["#reports", "Reports & Distribution"],
               ].map(([href, label]) => (
                 <a
                   key={href}
                   href={href}
-                  className="inline-flex min-h-9 items-center rounded-lg border border-transparent px-3 text-[10px] font-black uppercase tracking-[0.14em] text-slate-400 transition hover:border-white/10 hover:bg-white/[0.045] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C8A646] sm:px-4"
+                  className="inline-flex min-h-8 items-center rounded-lg border border-transparent px-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400 transition-colors hover:border-white/10 hover:bg-white/[0.045] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C8A646]/70"
                 >
                   {label}
                 </a>
@@ -1807,13 +1814,10 @@ remains ${ceoRiskLevel.toLowerCase()}.
           </nav>
         </header>
 
-        <section
-          id="executive-brief"
-          className="relative scroll-mt-6 pt-4 sm:pt-5"
-        >
+        <section id="executive-brief" className="relative scroll-mt-24 pt-3">
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute left-1/2 top-0 h-5 w-px -translate-x-1/2 bg-gradient-to-b from-[#C8A646]/45 to-transparent"
+            className="pointer-events-none absolute left-1/2 top-0 h-3 w-px -translate-x-1/2 bg-gradient-to-b from-[#C8A646]/35 to-transparent"
           />
           <BoardroomSnapshot
             executiveBrief={executiveBrief}
@@ -1826,80 +1830,76 @@ remains ${ceoRiskLevel.toLowerCase()}.
         </section>
         <section
           id="decision-command"
-          className="scroll-mt-6 mt-8 overflow-hidden rounded-3xl border border-white/10 bg-[#061426]/88 text-white shadow-executive"
+          className="scroll-mt-24 mt-6 overflow-hidden rounded-3xl border border-white/10 bg-[#061426]/82 text-white"
         >
-          <div className="border-b border-white/10 p-5 sm:p-7 lg:p-8">
-            <div className="grid gap-8 xl:grid-cols-[minmax(0,1.15fr)_minmax(480px,0.85fr)] xl:items-end">
+          <div className="border-b border-white/10 px-5 py-5 sm:px-6 lg:px-7">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
               <div>
-                <p className="text-xs font-black uppercase tracking-[0.3em] text-[#C8A646]">
-                  Construction Procurement Intelligence
+                <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#E4C768]">
+                  Portfolio Intelligence
                 </p>
 
-                <h2 className="mt-4 text-3xl font-black tracking-tight text-white sm:text-4xl lg:text-5xl">
-                  Procurement Classification Command
+                <h2 className="mt-2 text-2xl font-semibold tracking-tight text-white sm:text-[1.75rem]">
+                  Procurement Structure & Classification
                 </h2>
 
-                <p className="mt-4 max-w-3xl text-sm font-semibold leading-7 text-slate-300">
+                <p className="mt-2.5 max-w-3xl text-sm font-medium leading-6 text-slate-400">
                   {executiveCommandRecommendation}
                 </p>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <DarkMetric
-                  title="Enterprise Score"
-                  value={`${enterpriseProcurementScore}/100`}
-                />
-                <DarkMetric
-                  title="Opportunity"
-                  value={`${procurementOpportunityScore}/100`}
-                />
-                <DarkMetric
-                  title="Risk Exposure"
-                  value={`${procurementRiskIndex}/100`}
-                />
-                <DarkMetric
-                  title="Forecast Accuracy"
-                  value={`${predictionAccuracy}%`}
-                />
+              <div className="flex w-fit items-center gap-4 rounded-2xl border border-white/10 bg-white/[0.035] px-4 py-3">
+                <div>
+                  <p className="text-[9px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+                    Classification maturity
+                  </p>
+                  <p className="mt-1 text-xl font-semibold tabular-nums text-white">
+                    {constructionClassificationScore}/100
+                  </p>
+                </div>
+                <span className="h-9 w-px bg-white/10" />
+                <p className="max-w-40 text-xs font-medium leading-5 text-slate-300">
+                  {procurementMixStatus}
+                </p>
               </div>
             </div>
           </div>
 
-          <div className="p-5 sm:p-7 lg:p-8">
+          <div className="p-5 sm:p-6 lg:p-7">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
               <div className="max-w-4xl">
-                <p className="text-xs font-black uppercase tracking-[0.25em] text-[#C8A646]">
-                  RFQ Classification Intelligence
+                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                  RFQ classification profile
                 </p>
 
-                <h3 className="mt-3 text-2xl font-black text-white sm:text-3xl">
+                <h3 className="mt-2 text-xl font-semibold text-white sm:text-2xl">
                   Construction Procurement Mix
                 </h3>
 
-                <p className="mt-3 text-sm font-semibold leading-7 text-slate-400">
+                <p className="mt-2.5 text-sm font-medium leading-6 text-slate-400">
                   A consolidated view of procurement scope, sourcing method, and
                   contract structure used to strengthen supplier matching, quote
                   comparison, risk scoring, and executive interpretation.
                 </p>
               </div>
 
-              <div className="inline-flex w-fit items-center gap-3 rounded-2xl border border-[#C8A646]/20 bg-[#C8A646]/10 px-4 py-3">
+              <div className="inline-flex w-fit items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.035] px-4 py-3">
                 <div>
-                  <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#E4C768]">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
                     Classification Maturity
                   </p>
-                  <p className="mt-1 text-xl font-black text-white">
+                  <p className="mt-1 text-xl font-semibold text-white">
                     {constructionClassificationScore}/100
                   </p>
                 </div>
                 <span className="h-9 w-px bg-white/10" />
-                <p className="max-w-36 text-xs font-bold leading-5 text-slate-300">
+                <p className="max-w-36 text-xs font-medium leading-5 text-slate-300">
                   {procurementMixStatus}
                 </p>
               </div>
             </div>
 
-            <div className="mt-7 grid gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(420px,0.8fr)]">
+            <div className="mt-5 grid gap-5 xl:grid-cols-[minmax(0,1.25fr)_minmax(380px,0.75fr)]">
               <div className="rounded-3xl border border-white/10 bg-black/15 p-4 sm:p-5">
                 <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                   <div>
@@ -1999,11 +1999,11 @@ remains ${ceoRiskLevel.toLowerCase()}.
                   </div>
                 </div>
 
-                <div className="rounded-3xl border border-amber-300/15 bg-amber-400/[0.055] p-5 sm:p-6">
-                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-300">
+                <div className="rounded-2xl border border-amber-300/15 bg-amber-400/[0.04] p-4 sm:p-5">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-amber-300">
                     Executive Interpretation
                   </p>
-                  <p className="mt-3 text-sm font-semibold leading-7 text-slate-300">
+                  <p className="mt-2.5 text-sm font-medium leading-6 text-slate-300">
                     The portfolio is currently led by{" "}
                     {dominantScope.toLowerCase()} procurement and{" "}
                     {dominantSourcing.toLowerCase()} sourcing. Classification
@@ -2030,7 +2030,7 @@ remains ${ceoRiskLevel.toLowerCase()}.
           awardPredictionConfidence={awardPredictionConfidence}
         />
 
-        <section className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+        <section className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <MetricCard
             title="Health Score"
             value={`${procurementHealthScore}/100`}
@@ -2042,21 +2042,21 @@ remains ${ceoRiskLevel.toLowerCase()}.
             value={avgQuotesPerRfq.toString()}
           />
         </section>
-        <section className="mt-8 rounded-3xl border border-white/10 bg-[#061426]/88 p-5 text-white shadow-executive sm:p-7 lg:p-8">
-          <p className="text-xs font-black uppercase tracking-[0.25em] text-[#C8A646]">
-            Decision Confidence Layer
+        <section className="mt-6 rounded-3xl border border-white/10 bg-[#061426]/82 p-5 text-white sm:p-6 lg:p-7">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#E4C768]">
+            Decision Intelligence
           </p>
 
-          <h2 className="text-3xl font-black text-white">
+          <h2 className="mt-2 text-2xl font-semibold tracking-tight text-white">
             Executive Decision Support Readiness
           </h2>
-          <p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-400">
+          <p className="mt-2.5 max-w-4xl text-sm font-medium leading-6 text-slate-400">
             Nexus Pavilion evaluates whether procurement intelligence is
             reliable enough to support executive interpretation, board
             reporting, and strategic decision guidance.
           </p>
 
-          <div className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+          <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             <MetricCard
               title="Readiness Score"
               value={`${decisionSupportReadiness.score}/100`}
@@ -2072,8 +2072,8 @@ remains ${ceoRiskLevel.toLowerCase()}.
             />
           </div>
 
-          <div className="mt-8 grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
-            <div className="rounded-3xl border border-white/10 bg-white/[0.045] p-6">
+          <div className="mt-5 grid gap-5 lg:grid-cols-[0.9fr_1.1fr]">
+            <div className="rounded-2xl border border-white/10 bg-white/[0.035] p-5">
               <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">
                 Confidence Drivers
               </p>
@@ -2092,7 +2092,7 @@ remains ${ceoRiskLevel.toLowerCase()}.
               </div>
             </div>
 
-            <div className="rounded-3xl border border-white/10 bg-slate-950 p-6 text-white">
+            <div className="rounded-2xl border border-[#2CC4E8]/15 bg-[#2CC4E8]/[0.045] p-5 text-white">
               <p className="text-xs font-black uppercase tracking-[0.25em] text-[#C8A646]">
                 Executive Guidance
               </p>
@@ -2107,7 +2107,7 @@ remains ${ceoRiskLevel.toLowerCase()}.
             </div>
           </div>
 
-          <div className="mt-8 rounded-3xl border border-amber-300/20 bg-amber-400/10 p-6">
+          <div className="mt-5 rounded-2xl border border-amber-300/15 bg-amber-400/[0.04] p-5">
             <p className="text-xs font-black uppercase tracking-[0.2em] text-amber-300">
               Confidence Risks
             </p>
@@ -2132,12 +2132,12 @@ remains ${ceoRiskLevel.toLowerCase()}.
           />
         </div>
 
-        <section className="mt-8 rounded-3xl border border-white/10 bg-[#061426]/88 p-5 text-white shadow-executive sm:p-7 lg:p-8">
-          <p className="text-xs font-black uppercase tracking-[0.25em] text-[#C8A646]">
-            Executive Scenario Intelligence
+        <section className="mt-6 rounded-3xl border border-white/10 bg-[#061426]/82 p-5 text-white sm:p-6 lg:p-7">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">
+            Scenario Intelligence
           </p>
 
-          <h2 className="mt-3 text-3xl font-black text-white">
+          <h2 className="mt-2 text-2xl font-semibold tracking-tight text-white">
             Strategic Scenario Modeling
           </h2>
 
@@ -2147,11 +2147,11 @@ remains ${ceoRiskLevel.toLowerCase()}.
             before action is taken.
           </p>
 
-          <div className="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+          <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             {executiveScenarios.map((scenario) => (
               <div
                 key={scenario.scenario}
-                className="rounded-3xl border border-[#2CC4E8]/15 bg-[#2CC4E8]/[0.055] p-6"
+                className="rounded-2xl border border-[#2CC4E8]/15 bg-[#2CC4E8]/[0.04] p-5"
               >
                 <p className="text-xs font-black uppercase tracking-[0.2em] text-[#9BE8F8]">
                   {scenario.scenario}
@@ -2184,12 +2184,12 @@ remains ${ceoRiskLevel.toLowerCase()}.
             ))}
           </div>
         </section>
-        <section className="mt-8 rounded-3xl border border-white/10 bg-[#061426]/88 p-5 text-white shadow-executive sm:p-7 lg:p-8">
-          <p className="text-xs font-black uppercase tracking-[0.25em] text-[#C8A646]">
-            Executive Decision Simulator
+        <section className="mt-6 rounded-3xl border border-white/10 bg-[#061426]/82 p-5 text-white sm:p-6 lg:p-7">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">
+            Decision Simulation
           </p>
 
-          <h2 className="mt-3 text-3xl font-black text-white">
+          <h2 className="mt-2 text-2xl font-semibold tracking-tight text-white">
             Decision Outcome Modeling
           </h2>
 
@@ -2198,11 +2198,11 @@ remains ${ceoRiskLevel.toLowerCase()}.
             operational impact, confidence level, and implementation risk.
           </p>
 
-          <div className="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+          <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             {executiveDecisionSimulator.map((item) => (
               <div
                 key={item.decision}
-                className="rounded-3xl border border-purple-300/15 bg-purple-400/[0.055] p-6"
+                className="rounded-2xl border border-purple-300/15 bg-purple-400/[0.04] p-5"
               >
                 <p className="text-xs font-black uppercase tracking-[0.2em] text-purple-300">
                   Decision
@@ -2831,9 +2831,11 @@ function DarkMetric({ title, value }: { title: string; value: string }) {
 
 function SignalRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-[#061426]/70 px-4 py-3">
-      <p className="text-sm font-black text-slate-400">{label}</p>
-      <p className="text-sm font-black text-white">{value}</p>
+    <div className="flex min-w-0 items-center justify-between gap-4 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3">
+      <p className="min-w-0 text-sm font-medium text-slate-400">{label}</p>
+      <p className="shrink-0 text-sm font-semibold tabular-nums text-white">
+        {value}
+      </p>
     </div>
   );
 }
