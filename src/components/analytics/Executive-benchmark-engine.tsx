@@ -1,4 +1,3 @@
-import { ExecutiveMetricCard } from "@/components/executive/executive-metric-card";
 import { ExecutivePanel } from "@/components/executive/executive-panel";
 
 type BenchmarkMatrixItem = {
@@ -150,12 +149,11 @@ export function ExecutiveBenchmarkEngine({
 
         {hasBenchmarkData ? (
           <div className="mt-5 grid min-w-0 gap-5 md:grid-cols-2 xl:grid-cols-4">
-            {benchmarkMatrix.map((item) => (
-              <ExecutiveMetricCard
+            {benchmarkMatrix.map((item, index) => (
+              <BenchmarkDimensionCard
                 key={item.title}
-                label={`${item.title} Benchmark`}
-                value={`${item.score}/100`}
-                tone="blue"
+                item={item}
+                position={index + 1}
               />
             ))}
           </div>
@@ -228,6 +226,74 @@ export function ExecutiveBenchmarkEngine({
         </div>
       </section>
     </ExecutivePanel>
+  );
+}
+function BenchmarkDimensionCard({
+  item,
+  position,
+}: {
+  item: BenchmarkMatrixItem;
+  position: number;
+}) {
+  return (
+    <article className="flex min-w-0 flex-col rounded-3xl border border-blue-500/20 bg-blue-500/[0.04] p-5 sm:p-6">
+      <div className="flex min-w-0 items-start justify-between gap-4">
+        <div className="flex min-w-0 items-center gap-3">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-blue-400/20 bg-blue-400/[0.08] text-[10px] font-black text-blue-300">
+            {String(position).padStart(2, "0")}
+          </span>
+
+          <div className="min-w-0">
+            <p className="text-[10px] font-black uppercase tracking-[0.16em] text-nexus-muted">
+              Benchmark dimension
+            </p>
+
+            <p className="mt-1 break-words text-[10px] font-black uppercase tracking-[0.17em] text-blue-300 [overflow-wrap:anywhere]">
+              Enterprise comparison
+            </p>
+          </div>
+        </div>
+
+        <span className="shrink-0 rounded-full border border-white/10 bg-white/[0.05] px-3 py-1 text-[9px] font-black uppercase tracking-[0.14em] text-nexus-muted">
+          100-point scale
+        </span>
+      </div>
+
+      <h4 className="mt-5 break-words text-xl font-black leading-7 text-nexus-white [overflow-wrap:anywhere]">
+        {item.title}
+      </h4>
+
+      <div className="mt-5 rounded-2xl border border-white/10 bg-black/10 p-4">
+        <p className="text-[10px] font-black uppercase tracking-[0.16em] text-nexus-muted">
+          Benchmark score
+        </p>
+
+        <div className="mt-2 flex min-w-0 items-end gap-2">
+          <p className="break-words text-3xl font-black leading-none text-nexus-white [overflow-wrap:anywhere]">
+            {item.score}
+          </p>
+
+          <p className="pb-0.5 text-xs font-black uppercase tracking-[0.15em] text-nexus-muted">
+            / 100
+          </p>
+        </div>
+      </div>
+
+      <p className="mt-4 text-xs font-semibold leading-6 text-nexus-muted">
+        Comparative performance against the defined enterprise procurement peer
+        baseline.
+      </p>
+
+      <div className="mt-5 flex items-center justify-between gap-3 border-t border-white/10 pt-4">
+        <p className="text-[10px] font-black uppercase tracking-[0.14em] text-nexus-muted">
+          Comparative intelligence
+        </p>
+
+        <p className="text-[10px] font-black uppercase tracking-[0.14em] text-blue-300">
+          Executive review
+        </p>
+      </div>
+    </article>
   );
 }
 
