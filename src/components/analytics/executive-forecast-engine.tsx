@@ -1,4 +1,3 @@
-import { ExecutiveMetricCard } from "@/components/executive/executive-metric-card";
 import { ExecutivePanel } from "@/components/executive/executive-panel";
 
 type ExecutiveForecastEngineProps = {
@@ -11,6 +10,8 @@ type ExecutiveForecastEngineProps = {
   forecast90Days: string;
   boardForecastNarrative: string;
 };
+
+type OutlookSignalTone = "risk" | "opportunity" | "status";
 
 export function ExecutiveForecastEngine({
   procurementOutlook,
@@ -178,53 +179,61 @@ export function ExecutiveForecastEngine({
       </section>
 
       <section
-        aria-labelledby="forecast-trajectory-heading"
-        className="mt-7 min-w-0"
+        aria-labelledby="executive-outlook-summary-heading"
+        className="mt-7 overflow-hidden rounded-3xl border border-white/10 bg-white/[0.025]"
       >
-        <div className="flex flex-col gap-3 border-b border-white/10 pb-5 sm:flex-row sm:items-end sm:justify-between">
-          <div className="min-w-0">
+        <div className="grid min-w-0 xl:grid-cols-[minmax(0,1.2fr)_minmax(300px,0.8fr)]">
+          <div className="min-w-0 border-b border-white/10 p-5 sm:p-6 xl:border-b-0 xl:border-r">
             <p className="text-[10px] font-black uppercase tracking-[0.22em] text-nexus-gold">
-              Forecast trajectories
+              Executive outlook summary
             </p>
 
             <h3
-              id="forecast-trajectory-heading"
-              className="mt-2 text-lg font-black tracking-tight text-nexus-white sm:text-xl"
+              id="executive-outlook-summary-heading"
+              className="mt-3 text-xl font-black tracking-tight text-nexus-white sm:text-2xl"
             >
-              Risk and Opportunity Direction
+              Forward Operating Position
             </h3>
+
+            <p className="mt-4 break-words text-base font-semibold leading-7 text-nexus-white [overflow-wrap:anywhere] sm:text-lg sm:leading-8">
+              {procurementOutlook}
+            </p>
+
+            <p className="mt-4 max-w-3xl text-xs font-semibold leading-6 text-nexus-muted">
+              The current procurement outlook should be interpreted alongside
+              directional risk, opportunity momentum, and the overall forecast
+              status before executive action is finalized.
+            </p>
           </div>
 
-          <p className="max-w-xl text-xs font-semibold leading-5 text-nexus-muted sm:text-right">
-            Directional indicators should be reviewed alongside the primary
-            outlook and time-based forecast windows.
-          </p>
-        </div>
+          <div className="min-w-0 p-5 sm:p-6">
+            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-nexus-muted">
+              Directional intelligence
+            </p>
 
-        <div className="mt-5 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-          <ExecutiveMetricCard
-            label="Procurement Outlook"
-            value={procurementOutlook}
-            tone="blue"
-          />
+            <div className="mt-4 space-y-3">
+              <OutlookSignal
+                label="Risk Direction"
+                value={riskTrajectory}
+                description="Expected movement in enterprise procurement exposure."
+                tone="risk"
+              />
 
-          <ExecutiveMetricCard
-            label="Risk Trajectory"
-            value={riskTrajectory}
-            tone="gold"
-          />
+              <OutlookSignal
+                label="Opportunity Direction"
+                value={opportunityTrajectory}
+                description="Expected movement in commercial and strategic opportunity."
+                tone="opportunity"
+              />
 
-          <ExecutiveMetricCard
-            label="Opportunity Trajectory"
-            value={opportunityTrajectory}
-            tone="blue"
-          />
-
-          <ExecutiveMetricCard
-            label="Forecast Status"
-            value={executiveForecastStatus}
-            tone="gold"
-          />
+              <OutlookSignal
+                label="Forecast Status"
+                value={executiveForecastStatus}
+                description="Consolidated status governing the current planning posture."
+                tone="status"
+              />
+            </div>
+          </div>
         </div>
       </section>
 
@@ -281,7 +290,6 @@ export function ExecutiveForecastEngine({
     </ExecutivePanel>
   );
 }
-
 function ForecastWindow({
   position,
   title,
@@ -353,5 +361,75 @@ function ForecastSignal({
         {value}
       </p>
     </div>
+  );
+}
+
+function OutlookSignal({
+  label,
+  value,
+  description,
+  tone,
+}: {
+  label: string;
+  value: string;
+  description: string;
+  tone: OutlookSignalTone;
+}) {
+  const toneClasses: Record<
+    OutlookSignalTone,
+    {
+      border: string;
+      background: string;
+      label: string;
+      indicator: string;
+    }
+  > = {
+    risk: {
+      border: "border-rose-300/15",
+      background: "bg-rose-400/[0.035]",
+      label: "text-rose-200",
+      indicator: "bg-rose-300",
+    },
+    opportunity: {
+      border: "border-emerald-300/15",
+      background: "bg-emerald-400/[0.035]",
+      label: "text-emerald-200",
+      indicator: "bg-emerald-300",
+    },
+    status: {
+      border: "border-nexus-gold/20",
+      background: "bg-nexus-gold/[0.04]",
+      label: "text-nexus-gold",
+      indicator: "bg-nexus-gold",
+    },
+  };
+
+  const classes = toneClasses[tone];
+
+  return (
+    <article
+      className={`relative min-w-0 overflow-hidden rounded-2xl border ${classes.border} ${classes.background} px-4 py-4`}
+    >
+      <span
+        aria-hidden="true"
+        className={`absolute inset-y-0 left-0 w-0.5 ${classes.indicator}`}
+      />
+
+      <div className="pl-1">
+        <p
+          className={`text-[10px] font-black uppercase tracking-[0.16em] ${classes.label}`}
+        >
+          {label}
+        </p>
+
+        <p className="mt-2 break-words text-sm font-black leading-6 text-nexus-white [overflow-wrap:anywhere]">
+          {value}
+        </p>
+
+        <p className="mt-2 text-xs font-semibold leading-5 text-nexus-muted">
+          {description}
+        </p>
+      </div>
+    </article>
   );
 }
