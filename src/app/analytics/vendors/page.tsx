@@ -68,18 +68,18 @@ return value
 
 function getStatusClass(value: string | null | undefined) {
 if (value === "valid" || value === "approved") {
-return "bg-green-100 text-green-700";
+return "border border-emerald-400/20 bg-emerald-400/10 text-emerald-300";
 }
 
 if (value === "expiring_soon" || value === "pending") {
-return "bg-orange-100 text-orange-700";
+return "border border-orange-400/20 bg-orange-400/10 text-orange-300";
 }
 
 if (value === "expired" || value === "suspended") {
-return "bg-red-100 text-red-700";
+return "border border-red-400/20 bg-red-400/10 text-red-300";
 }
 
-return "bg-slate-100 text-slate-600";
+return "border border-white/10 bg-white/[0.05] text-slate-300";
 }
 
 function formatDate(value: string | null | undefined) {
@@ -132,12 +132,12 @@ return "Current";
 function getExpiryClass(value: string | null | undefined) {
 const days = daysUntil(value);
 
-if (days === null) return "text-slate-400";
-if (days < 0) return "text-red-600";
-if (days <= 30) return "text-red-600";
-if (days <= 90) return "text-orange-600";
+if (days === null) return "text-slate-500";
+if (days < 0) return "text-red-300";
+if (days <= 30) return "text-red-300";
+if (days <= 90) return "text-orange-300";
 
-return "text-green-700";
+return "text-emerald-300";
 }
 
 function getComplianceForVendor(
@@ -372,11 +372,16 @@ Vendor Intelligence
 </span>
 </div>
 
-<section className="mt-6 overflow-hidden rounded-[32px] border border-white/10 bg-white shadow-2xl shadow-black/20">
+<section className="mt-6 overflow-hidden rounded-[32px] border border-white/10 bg-gradient-to-br from-white/[0.09] via-white/[0.055] to-white/[0.025] shadow-2xl shadow-black/25">
 <div className="grid lg:grid-cols-[1.35fr_0.65fr]">
-<div className="p-6 sm:p-8 lg:p-10">
+<div className="relative overflow-hidden p-6 sm:p-8 lg:p-10">
+<div
+className="pointer-events-none absolute -left-24 -top-24 h-72 w-72 rounded-full bg-cyan-400/[0.06] blur-3xl"
+aria-hidden="true"
+/>
+<div className="relative">
 <div className="flex flex-wrap items-center gap-3">
-<span className="rounded-full bg-orange-50 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.2em] text-orange-700">
+<span className="rounded-full border border-orange-400/20 bg-orange-400/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.2em] text-orange-300">
 Supplier Compliance Center
 </span>
 <span className="text-xs font-bold text-slate-400">
@@ -384,11 +389,11 @@ Approved vendor governance and RFQ readiness
 </span>
 </div>
 
-<h1 className="mt-6 max-w-4xl text-4xl font-black leading-[1.02] tracking-[-0.04em] text-slate-950 sm:text-5xl lg:text-6xl">
+<h1 className="mt-6 max-w-4xl text-4xl font-black leading-[1.02] tracking-[-0.04em] text-white sm:text-5xl lg:text-6xl">
 Vendor compliance decisions, prioritized for procurement action.
 </h1>
 
-<p className="mt-5 max-w-3xl text-sm font-semibold leading-7 text-slate-600 sm:text-base">
+<p className="mt-5 max-w-3xl text-sm font-semibold leading-7 text-slate-300 sm:text-base">
 Review supplier eligibility, document exposure, and compliance readiness before vendors enter sensitive sourcing and award workflows.
 </p>
 
@@ -415,8 +420,9 @@ detail="Compliance setup incomplete"
 />
 </div>
 </div>
+</div>
 
-<div className="border-t border-slate-200 bg-slate-950 p-6 text-white sm:p-8 lg:border-l lg:border-t-0 lg:p-10">
+<div className="border-t border-white/10 bg-black/20 p-6 text-white backdrop-blur-sm sm:p-8 lg:border-l lg:border-t-0 lg:p-10">
 <p className="text-[10px] font-black uppercase tracking-[0.25em] text-orange-400">
 Executive Decision Brief
 </p>
@@ -622,18 +628,18 @@ Review Vendor Portfolio
 
 <section
 id="approved-vendor-list"
-className="mt-8 overflow-hidden rounded-[36px] border border-black/5 bg-white shadow-sm"
+className="mt-8 overflow-hidden rounded-[32px] border border-white/10 bg-white/[0.035] shadow-2xl shadow-black/20 backdrop-blur-sm"
 >
-<div className="border-b border-slate-100 p-8">
+<div className="border-b border-white/10 bg-white/[0.02] p-6 sm:p-8">
 <p className="text-xs font-black uppercase tracking-[0.3em] text-orange-500">
 Vendor Compliance Matrix
 </p>
 
-<h2 className="mt-3 text-3xl font-black text-slate-950">
+<h2 className="mt-3 text-3xl font-black tracking-[-0.03em] text-white">
 Approved Vendor List
 </h2>
 
-<p className="mt-3 max-w-3xl text-sm font-semibold leading-6 text-slate-600">
+<p className="mt-3 max-w-3xl text-sm font-semibold leading-6 text-slate-400">
 Compliance records are scoped to your company workspace. Vendors
 can be approved in one buyer workspace and still require separate
 compliance review in another.
@@ -641,7 +647,7 @@ compliance review in another.
 </div>
 
 {approvedVendors.length > 0 ? (
-<div className="divide-y divide-slate-100">
+<div className="divide-y divide-white/10">
 {approvedVendors.map((approvedVendor) => {
 const vendor = approvedVendor.vendor;
 const compliance = getComplianceForVendor(
@@ -676,7 +682,7 @@ compliance?.compliance_score || 0
 return (
 <div
 key={approvedVendor.id}
-className="grid gap-6 p-8 lg:grid-cols-[1fr_1.2fr_0.7fr]"
+className="grid gap-6 p-6 transition-colors hover:bg-white/[0.02] sm:p-8 lg:grid-cols-[1fr_1.2fr_0.7fr]"
 >
 <div>
 <div className="flex flex-wrap items-center gap-2">
@@ -697,23 +703,23 @@ compliance?.overall_status
 </span>
 </div>
 
-<h3 className="mt-4 text-2xl font-black text-slate-950">
+<h3 className="mt-4 text-2xl font-black tracking-[-0.02em] text-white">
 {vendor?.name || "Unnamed Vendor"}
 </h3>
 
-<p className="mt-2 text-sm font-semibold leading-6 text-slate-500">
+<p className="mt-2 text-sm font-semibold leading-6 text-slate-400">
 {vendor?.category || "Supplier"} ·{" "}
 {vendor?.location || "Location N/A"}
 </p>
 
-<p className="mt-2 text-sm font-semibold text-slate-400">
+<p className="mt-2 text-sm font-semibold text-slate-500">
 {vendor?.network_role || "Network role pending"}
 </p>
 
 {vendor?.slug ? (
 <Link
 href={`/company/${vendor.slug}`}
-className="mt-5 inline-flex rounded-full bg-slate-950 px-5 py-3 text-xs font-black text-white transition hover:bg-slate-800"
+className="mt-5 inline-flex rounded-full border border-white/15 bg-white px-5 py-3 text-xs font-black text-slate-950 transition hover:bg-slate-200"
 >
 Open Vendor Profile
 </Link>
@@ -746,53 +752,53 @@ expiry={null}
 />
 </div>
 
-<div className="rounded-[28px] bg-slate-50 p-6">
+<div className="rounded-[28px] border border-white/10 bg-black/20 p-6">
 <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
 Compliance Score
 </p>
 
-<p className="mt-3 text-4xl font-black text-slate-950">
+<p className="mt-3 text-4xl font-black text-white">
 {complianceScore > 0 ? `${complianceScore}/100` : "Setup"}
 </p>
 
-<p className="mt-3 text-sm font-semibold leading-6 text-slate-500">
+<p className="mt-3 text-sm font-semibold leading-6 text-slate-400">
 {compliance
 ? "Calculated from insurance, certificate, license, and tax status."
 : "No compliance record has been created for this vendor yet."}
 </p>
 
-<div className="mt-5 rounded-2xl bg-white p-4">
+<div className="mt-5 rounded-2xl border border-white/10 bg-white/[0.045] p-4">
 <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
 Supplier Intelligence
 </p>
 
-<p className="mt-2 text-2xl font-black text-slate-950">
+<p className="mt-2 text-2xl font-black text-white">
 {supplierIntelligenceScore}/100
 </p>
 
-<p className="mt-1 text-xs font-black text-slate-500">
+<p className="mt-1 text-xs font-black text-slate-400">
 {supplierIntelligenceRank}
 </p>
 
-<p className="mt-3 text-xs font-bold leading-5 text-slate-400">
+<p className="mt-3 text-xs font-bold leading-5 text-slate-500">
 Based on compliance score, quote participation, and award performance.
 </p>
 </div>
 
-<div className="mt-4 rounded-2xl bg-white p-4">
+<div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.045] p-4">
 <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
 Performance Scorecard
 </p>
 
-<p className="mt-2 text-2xl font-black text-slate-950">
+<p className="mt-2 text-2xl font-black text-white">
 {performanceScore}/100
 </p>
 
-<p className="mt-1 text-xs font-black text-slate-500">
+<p className="mt-1 text-xs font-black text-slate-400">
 {performanceRank}
 </p>
 
-<p className="mt-3 text-xs font-bold leading-5 text-slate-400">
+<p className="mt-3 text-xs font-bold leading-5 text-slate-500">
 Based on awards won, quote activity, win rate, and awarded revenue.
 </p>
 </div>
@@ -804,12 +810,12 @@ Based on awards won, quote activity, win rate, and awarded revenue.
 <SmallSignal title="Awarded" value={formatMoney(awardedRevenue)} />
 </div>
 
-<div className="mt-5 rounded-2xl bg-white p-4">
+<div className="mt-5 rounded-2xl border border-white/10 bg-white/[0.045] p-4">
 <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
 RFQ Eligibility
 </p>
 
-<p className="mt-2 text-sm font-black text-slate-950">
+<p className="mt-2 text-sm font-black text-white">
 {compliance?.overall_status === "valid"
 ? "Eligible"
 : "Review Required"}
@@ -821,22 +827,28 @@ RFQ Eligibility
 })}
 </div>
 ) : (
-<div className="p-12 text-center">
-<p className="text-2xl font-black text-slate-950">
+<div className="relative overflow-hidden p-10 text-center sm:p-14">
+<div
+className="pointer-events-none absolute left-1/2 top-0 h-56 w-56 -translate-x-1/2 rounded-full bg-cyan-400/[0.05] blur-3xl"
+aria-hidden="true"
+/>
+<div className="relative">
+<p className="text-2xl font-black tracking-[-0.02em] text-white">
 No approved vendors yet
 </p>
 
-<p className="mx-auto mt-3 max-w-xl text-sm font-semibold leading-6 text-slate-500">
+<p className="mx-auto mt-3 max-w-xl text-sm font-semibold leading-6 text-slate-400">
 Approved vendors will appear here after they are added to your
 company’s approved vendor list.
 </p>
 
 <Link
 href="/directory"
-className="mt-6 inline-flex rounded-full bg-slate-950 px-6 py-3 text-sm font-black text-white transition hover:bg-slate-800"
+className="mt-6 inline-flex rounded-full bg-white px-6 py-3 text-sm font-black text-slate-950 transition hover:bg-slate-200"
 >
 Open Supplier Directory
 </Link>
+</div>
 </div>
 )}
 </section>
@@ -856,14 +868,14 @@ value: string;
 detail: string;
 }) {
 return (
-<div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+<div className="rounded-2xl border border-white/10 bg-white/[0.045] p-5 shadow-inner shadow-white/[0.02]">
 <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
 {label}
 </p>
-<p className="mt-3 text-3xl font-black tracking-[-0.03em] text-slate-950">
+<p className="mt-3 text-3xl font-black tracking-[-0.03em] text-white">
 {value}
 </p>
-<p className="mt-2 text-xs font-bold leading-5 text-slate-500">
+<p className="mt-2 text-xs font-bold leading-5 text-slate-400">
 {detail}
 </p>
 </div>
@@ -906,12 +918,12 @@ attention
 
 function SmallSignal({ title, value }: { title: string; value: string }) {
 return (
-<div className="rounded-2xl bg-white p-4">
+<div className="rounded-2xl border border-white/10 bg-white/[0.045] p-4">
 <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
 {title}
 </p>
 
-<p className="mt-2 text-lg font-black text-slate-950">{value}</p>
+<p className="mt-2 text-lg font-black text-white">{value}</p>
 </div>
 );
 }
@@ -926,14 +938,14 @@ status: string | null | undefined;
 expiry: string | null | undefined;
 }) {
 return (
-<div className="rounded-3xl border border-slate-200 bg-white p-5">
+<div className="rounded-3xl border border-white/10 bg-white/[0.035] p-5">
 <div className="flex items-start justify-between gap-3">
 <div>
 <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
 {title}
 </p>
 
-<p className="mt-2 text-lg font-black text-slate-950">
+<p className="mt-2 text-lg font-black text-white">
 {formatStatus(status)}
 </p>
 </div>
@@ -948,12 +960,12 @@ status
 </div>
 
 {expiry ? (
-<div className="mt-4 rounded-2xl bg-slate-50 p-4">
+<div className="mt-4 rounded-2xl border border-white/10 bg-black/20 p-4">
 <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
 Expiry
 </p>
 
-<p className="mt-2 text-sm font-black text-slate-950">
+<p className="mt-2 text-sm font-black text-white">
 {formatDate(expiry)}
 </p>
 
