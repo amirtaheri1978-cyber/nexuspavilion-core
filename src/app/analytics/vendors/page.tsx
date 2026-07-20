@@ -679,15 +679,23 @@ const complianceScore = Number(
 compliance?.compliance_score || 0
 );
 
+const riskLevel = getVendorRiskLevel(compliance);
+const eligibilityStatus =
+compliance?.overall_status === "valid" ? "Eligible" : "Review Required";
+
+const recommendedAction = getVendorRecommendedAction(compliance);
+
 return (
-<div
+<article
 key={approvedVendor.id}
-className="grid gap-6 p-6 transition-colors hover:bg-white/[0.02] sm:p-8 lg:grid-cols-[1fr_1.2fr_0.7fr]"
+className="p-5 transition-colors hover:bg-white/[0.02] sm:p-6 lg:p-8"
 >
+<div className="overflow-hidden rounded-[28px] border border-white/10 bg-black/15">
+<div className="grid gap-6 border-b border-white/10 p-5 sm:p-6 lg:grid-cols-[1fr_auto] lg:items-start">
 <div>
 <div className="flex flex-wrap items-center gap-2">
 <span
-className={`rounded-full px-3 py-1 text-xs font-black ${getStatusClass(
+className={`rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-[0.14em] ${getStatusClass(
 approvedVendor.status
 )}`}
 >
@@ -695,134 +703,150 @@ approvedVendor.status
 </span>
 
 <span
-className={`rounded-full px-3 py-1 text-xs font-black ${getStatusClass(
+className={`rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-[0.14em] ${getStatusClass(
 compliance?.overall_status
 )}`}
 >
 {formatStatus(compliance?.overall_status)}
 </span>
+
+<span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-slate-400">
+{riskLevel} Risk
+</span>
 </div>
 
-<h3 className="mt-4 text-2xl font-black tracking-[-0.02em] text-white">
+<h3 className="mt-4 text-2xl font-black tracking-[-0.03em] text-white">
 {vendor?.name || "Unnamed Vendor"}
 </h3>
 
 <p className="mt-2 text-sm font-semibold leading-6 text-slate-400">
 {vendor?.category || "Supplier"} ·{" "}
-{vendor?.location || "Location N/A"}
-</p>
-
-<p className="mt-2 text-sm font-semibold text-slate-500">
+{vendor?.location || "Location N/A"} ·{" "}
 {vendor?.network_role || "Network role pending"}
 </p>
+</div>
+
+<div className="flex flex-col items-start gap-3 lg:items-end">
+<div className="rounded-2xl border border-white/10 bg-white/[0.045] px-4 py-3 lg:text-right">
+<p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">
+RFQ Eligibility
+</p>
+<p
+className={`mt-1 text-sm font-black ${
+eligibilityStatus === "Eligible"
+? "text-emerald-300"
+: "text-orange-300"
+}`}
+>
+{eligibilityStatus}
+</p>
+</div>
 
 {vendor?.slug ? (
 <Link
 href={`/company/${vendor.slug}`}
-className="mt-5 inline-flex rounded-full border border-white/15 bg-white px-5 py-3 text-xs font-black text-slate-950 transition hover:bg-slate-200"
+className="inline-flex rounded-full border border-white/15 bg-white px-5 py-3 text-xs font-black text-slate-950 transition hover:bg-slate-200"
 >
 Open Vendor Profile
 </Link>
 ) : null}
 </div>
+</div>
 
-<div className="grid gap-4 sm:grid-cols-2">
-<ComplianceBox
+<div className="grid gap-0 lg:grid-cols-[1.15fr_0.85fr]">
+<div className="border-b border-white/10 p-5 sm:p-6 lg:border-b-0 lg:border-r">
+<p className="text-[10px] font-black uppercase tracking-[0.22em] text-orange-400">
+Compliance Evidence
+</p>
+
+<div className="mt-4 overflow-hidden rounded-2xl border border-white/10">
+<ComplianceRow
 title="Insurance"
 status={compliance?.insurance_status}
 expiry={compliance?.insurance_expiry}
 />
-
-<ComplianceBox
+<ComplianceRow
 title="Certificate"
 status={compliance?.certificate_status}
 expiry={compliance?.certificate_expiry}
 />
-
-<ComplianceBox
+<ComplianceRow
 title="License"
 status={compliance?.license_status}
 expiry={compliance?.license_expiry}
 />
-
-<ComplianceBox
+<ComplianceRow
 title="Tax"
 status={compliance?.tax_status}
 expiry={null}
 />
 </div>
+</div>
 
-<div className="rounded-[28px] border border-white/10 bg-black/20 p-6">
-<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
-Compliance Score
+<div className="p-5 sm:p-6">
+<p className="text-[10px] font-black uppercase tracking-[0.22em] text-orange-400">
+Decision Intelligence
 </p>
 
-<p className="mt-3 text-4xl font-black text-white">
-{complianceScore > 0 ? `${complianceScore}/100` : "Setup"}
-</p>
+<div className="mt-4 grid grid-cols-3 gap-3">
+<DecisionMetric
+label="Compliance"
+value={complianceScore > 0 ? `${complianceScore}` : "—"}
+detail={complianceScore > 0 ? "of 100" : "Setup"}
+/>
+<DecisionMetric
+label="Intelligence"
+value={String(supplierIntelligenceScore)}
+detail={supplierIntelligenceRank}
+/>
+<DecisionMetric
+label="Performance"
+value={String(performanceScore)}
+detail={performanceRank}
+/>
+</div>
 
-<p className="mt-3 text-sm font-semibold leading-6 text-slate-400">
-{compliance
-? "Calculated from insurance, certificate, license, and tax status."
-: "No compliance record has been created for this vendor yet."}
-</p>
+<div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-2xl border border-white/10 bg-white/[0.035] px-4 py-3 text-xs font-black text-slate-300">
+<span>{vendorQuotes.length} Quotes</span>
+<span className="text-slate-600" aria-hidden="true">•</span>
+<span>{awardedVendorQuotes.length} Awards</span>
+<span className="text-slate-600" aria-hidden="true">•</span>
+<span>{vendorWinRate}% Win Rate</span>
+<span className="text-slate-600" aria-hidden="true">•</span>
+<span>{formatMoney(awardedRevenue)} Awarded</span>
+</div>
 
-<div className="mt-5 rounded-2xl border border-white/10 bg-white/[0.045] p-4">
-<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
-Supplier Intelligence
+<div className="mt-4 rounded-2xl border border-white/10 bg-black/20 p-4">
+<div className="flex flex-wrap items-start justify-between gap-4">
+<div>
+<p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">
+Recommended Action
 </p>
-
-<p className="mt-2 text-2xl font-black text-white">
-{supplierIntelligenceScore}/100
+<p className="mt-2 text-sm font-black leading-6 text-white">
+{recommendedAction.title}
 </p>
-
-<p className="mt-1 text-xs font-black text-slate-400">
-{supplierIntelligenceRank}
-</p>
-
-<p className="mt-3 text-xs font-bold leading-5 text-slate-500">
-Based on compliance score, quote participation, and award performance.
+<p className="mt-1 text-xs font-semibold leading-5 text-slate-400">
+{recommendedAction.detail}
 </p>
 </div>
 
-<div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.045] p-4">
-<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
-Performance Scorecard
-</p>
-
-<p className="mt-2 text-2xl font-black text-white">
-{performanceScore}/100
-</p>
-
-<p className="mt-1 text-xs font-black text-slate-400">
-{performanceRank}
-</p>
-
-<p className="mt-3 text-xs font-bold leading-5 text-slate-500">
-Based on awards won, quote activity, win rate, and awarded revenue.
-</p>
-</div>
-
-<div className="mt-4 grid grid-cols-2 gap-3">
-<SmallSignal title="Quotes" value={String(vendorQuotes.length)} />
-<SmallSignal title="Awards" value={String(awardedVendorQuotes.length)} />
-<SmallSignal title="Win Rate" value={`${vendorWinRate}%`} />
-<SmallSignal title="Awarded" value={formatMoney(awardedRevenue)} />
-</div>
-
-<div className="mt-5 rounded-2xl border border-white/10 bg-white/[0.045] p-4">
-<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
-RFQ Eligibility
-</p>
-
-<p className="mt-2 text-sm font-black text-white">
-{compliance?.overall_status === "valid"
-? "Eligible"
-: "Review Required"}
-</p>
+<span
+className={`rounded-full border px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.14em] ${
+recommendedAction.tone === "critical"
+? "border-red-400/20 bg-red-400/10 text-red-300"
+: recommendedAction.tone === "attention"
+? "border-orange-400/20 bg-orange-400/10 text-orange-300"
+: "border-emerald-400/20 bg-emerald-400/10 text-emerald-300"
+}`}
+>
+{recommendedAction.label}
+</span>
 </div>
 </div>
 </div>
+</div>
+</div>
+</article>
 );
 })}
 </div>
@@ -916,19 +940,31 @@ attention
 );
 }
 
-function SmallSignal({ title, value }: { title: string; value: string }) {
+function DecisionMetric({
+label,
+value,
+detail,
+}: {
+label: string;
+value: string;
+detail: string;
+}) {
 return (
 <div className="rounded-2xl border border-white/10 bg-white/[0.045] p-4">
-<p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
-{title}
+<p className="text-[9px] font-black uppercase tracking-[0.18em] text-slate-500">
+{label}
 </p>
-
-<p className="mt-2 text-lg font-black text-white">{value}</p>
+<p className="mt-2 text-2xl font-black tracking-[-0.03em] text-white">
+{value}
+</p>
+<p className="mt-1 text-[10px] font-black text-slate-400">
+{detail}
+</p>
 </div>
 );
 }
 
-function ComplianceBox({
+function ComplianceRow({
 title,
 status,
 expiry,
@@ -938,46 +974,95 @@ status: string | null | undefined;
 expiry: string | null | undefined;
 }) {
 return (
-<div className="rounded-3xl border border-white/10 bg-white/[0.035] p-5">
-<div className="flex items-start justify-between gap-3">
+<div className="grid gap-3 border-b border-white/10 bg-white/[0.02] px-4 py-3 last:border-b-0 sm:grid-cols-[1fr_auto_auto] sm:items-center">
 <div>
-<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
-{title}
-</p>
-
-<p className="mt-2 text-lg font-black text-white">
-{formatStatus(status)}
+<p className="text-xs font-black text-white">{title}</p>
+<p className="mt-1 text-[10px] font-bold text-slate-500">
+{expiry ? formatDate(expiry) : "No expiry date recorded"}
 </p>
 </div>
 
 <span
-className={`rounded-full px-3 py-1 text-xs font-black ${getStatusClass(
+className={`w-fit rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-[0.12em] ${getStatusClass(
 status
 )}`}
 >
 {formatStatus(status)}
 </span>
-</div>
 
-{expiry ? (
-<div className="mt-4 rounded-2xl border border-white/10 bg-black/20 p-4">
-<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
-Expiry
+<p
+className={`text-xs font-black sm:min-w-20 sm:text-right ${
+expiry ? getExpiryClass(expiry) : "text-slate-500"
+}`}
+>
+{expiry ? getExpirySignal(expiry) : "No Expiry"}
 </p>
-
-<p className="mt-2 text-sm font-black text-white">
-{formatDate(expiry)}
-</p>
-
-<p className={`mt-1 text-xs font-black ${getExpiryClass(expiry)}`}>
-{getExpirySignal(expiry)}
-</p>
-</div>
-) : (
-<p className="mt-4 text-xs font-bold text-slate-400">
-No expiry date recorded.
-</p>
-)}
 </div>
 );
+}
+
+function getVendorRecommendedAction(compliance: Compliance | null) {
+if (!compliance) {
+return {
+title: "Complete supplier compliance setup",
+detail:
+"Create the required compliance record before treating this supplier as RFQ-ready.",
+label: "Setup Required",
+tone: "critical" as const,
+};
+}
+
+const expiries = [
+{ title: "Insurance", value: compliance.insurance_expiry },
+{ title: "Certificate", value: compliance.certificate_expiry },
+{ title: "License", value: compliance.license_expiry },
+];
+
+const expiredDocument = expiries.find(({ value }) => {
+const days = daysUntil(value);
+return days !== null && days < 0;
+});
+
+if (expiredDocument) {
+return {
+title: `Renew expired ${expiredDocument.title.toLowerCase()} evidence`,
+detail:
+"Restore current eligibility documentation before further sourcing or award activity.",
+label: "Immediate Action",
+tone: "critical" as const,
+};
+}
+
+const criticalDocument = expiries.find(({ value }) => {
+const days = daysUntil(value);
+return days !== null && days <= 30;
+});
+
+if (criticalDocument) {
+return {
+title: `Coordinate ${criticalDocument.title.toLowerCase()} renewal`,
+detail:
+"Complete renewal within the current 30-day exposure window to protect RFQ eligibility.",
+label: "Renewal Due",
+tone: "attention" as const,
+};
+}
+
+if (compliance.overall_status !== "valid") {
+return {
+title: "Review supplier eligibility evidence",
+detail:
+"Resolve incomplete or non-current compliance conditions before unrestricted RFQ participation.",
+label: "Review Required",
+tone: "attention" as const,
+};
+}
+
+return {
+title: "Continue standard supplier monitoring",
+detail:
+"No immediate compliance intervention is required for current procurement participation.",
+label: "Controls Current",
+tone: "current" as const,
+};
 }
