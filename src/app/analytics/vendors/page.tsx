@@ -422,13 +422,21 @@ Executive Decision Brief
 </p>
 
 <h2 className="mt-4 text-2xl font-black leading-tight tracking-[-0.03em]">
-{highRiskVendors > 0 || missingCompliance > 0 || criticalExpiryVendors > 0
+{totalVendors === 0
+? "The approved supplier portfolio is not yet established."
+: highRiskVendors > 0 ||
+  missingCompliance > 0 ||
+  criticalExpiryVendors > 0
 ? "Supplier intervention is required."
 : "The approved vendor portfolio is operationally ready."}
 </h2>
 
 <p className="mt-4 text-sm font-semibold leading-6 text-slate-300">
-{highRiskVendors > 0 || missingCompliance > 0 || criticalExpiryVendors > 0
+{totalVendors === 0
+? "No suppliers are currently governed through this workspace. Approve qualified vendors to activate compliance monitoring, eligibility control, and performance intelligence."
+: highRiskVendors > 0 ||
+  missingCompliance > 0 ||
+  criticalExpiryVendors > 0
 ? `${highRiskVendors} high-risk vendors, ${criticalExpiryVendors} critical expiry cases, and ${missingCompliance} incomplete compliance records require review before unrestricted RFQ participation.`
 : "No immediate high-risk, critical-expiry, or missing-record conditions are currently identified across approved vendors."}
 </p>
@@ -455,7 +463,9 @@ value={String(criticalExpiryVendors)}
 Decision Priority
 </p>
 <p className="mt-2 text-sm font-black text-white">
-{expiredVendors > 0
+{totalVendors === 0
+? "Approve qualified suppliers to establish portfolio governance."
+: expiredVendors > 0
 ? "Resolve expired documents before supplier engagement."
 : criticalExpiryVendors > 0
 ? "Prioritize renewals due within 30 days."
@@ -467,41 +477,153 @@ Decision Priority
 </div>
 </div>
 </section>
-<section className="mt-8 rounded-[36px] bg-slate-950 p-8 text-white">
-<p className="text-xs font-black uppercase tracking-[0.3em] text-orange-400">
-Supplier Risk Intelligence
+<section
+id="vendor-portfolio-actions"
+className="mt-8 overflow-hidden rounded-[28px] border border-white/10 bg-white/[0.04]"
+>
+<div className="grid lg:grid-cols-[1fr_auto] lg:items-center">
+<div className="p-6 sm:p-8">
+<div className="flex flex-wrap items-center gap-3">
+<span
+className={`inline-flex h-2.5 w-2.5 rounded-full ${
+totalVendors === 0
+? "bg-slate-500"
+: expiredVendors > 0 ||
+  criticalExpiryVendors > 0 ||
+  highRiskVendors > 0
+? "bg-red-400"
+: missingCompliance > 0 || expiryAlerts > 0
+? "bg-orange-400"
+: "bg-emerald-400"
+}`}
+aria-hidden="true"
+/>
+
+<p className="text-[10px] font-black uppercase tracking-[0.24em] text-orange-400">
+Portfolio Action Layer
 </p>
 
-<div className="mt-5 grid gap-8 lg:grid-cols-[1fr_0.9fr]">
-<div>
-<h2 className="text-4xl font-black leading-tight">
-Compliance risk engine is active.
+<span className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-slate-300">
+{totalVendors === 0
+? "Portfolio Not Established"
+: expiredVendors > 0 ||
+  criticalExpiryVendors > 0 ||
+  highRiskVendors > 0 ||
+  missingCompliance > 0
+? "Action Required"
+: "Controls Current"}
+</span>
+</div>
+
+<h2 className="mt-4 max-w-3xl text-2xl font-black leading-tight tracking-[-0.03em] text-white sm:text-3xl">
+{totalVendors === 0
+? "Establish the approved supplier portfolio before governance can begin."
+: expiredVendors > 0
+? `${expiredVendors} supplier ${
+expiredVendors === 1 ? "record requires" : "records require"
+} immediate expiry resolution.`
+: criticalExpiryVendors > 0
+? `${criticalExpiryVendors} supplier ${
+criticalExpiryVendors === 1 ? "requires" : "suppliers require"
+} renewal action within 30 days.`
+: highRiskVendors > 0
+? `${highRiskVendors} high-risk ${
+highRiskVendors === 1 ? "supplier requires" : "suppliers require"
+} procurement review.`
+: missingCompliance > 0
+? `${missingCompliance} supplier ${
+missingCompliance === 1 ? "record is" : "records are"
+} incomplete.`
+: "No immediate supplier compliance intervention is required."}
 </h2>
 
-<p className="mt-4 max-w-3xl text-sm font-semibold leading-7 text-slate-300">
-Nexus Pavilion evaluates approved vendors using compliance score,
-document status, expiry exposure, and procurement eligibility signals.
+<p className="mt-3 max-w-3xl text-sm font-semibold leading-6 text-slate-300">
+{totalVendors === 0
+? "Approve qualified suppliers to activate document monitoring, RFQ eligibility controls, and supplier performance intelligence."
+: expiredVendors > 0
+? "Resolve expired eligibility evidence before the affected suppliers participate in sourcing or award decisions."
+: criticalExpiryVendors > 0
+? "Prioritize time-sensitive insurance, certificate, or license renewals before eligibility is disrupted."
+: highRiskVendors > 0
+? "Review compliance evidence and procurement eligibility before unrestricted RFQ participation."
+: missingCompliance > 0
+? "Complete missing supplier records before treating the portfolio as fully governed."
+: "Portfolio monitoring is current. Continue the standard renewal and eligibility review cadence."}
 </p>
 
-<div className="mt-6 flex flex-wrap gap-3">
-<DarkBadge>{highRiskVendors} High Risk</DarkBadge>
-<DarkBadge>{expiryAlerts} Expiry Alerts</DarkBadge>
-<DarkBadge>{missingCompliance} Missing Records</DarkBadge>
-<DarkBadge>{criticalExpiryVendors} Critical Expiry</DarkBadge>
-<DarkBadge>{expiredVendors} Expired</DarkBadge>
+{totalVendors > 0 ? (
+<div className="mt-5 flex flex-wrap gap-2">
+<ActionSignal
+label="High Risk"
+value={highRiskVendors}
+attention={highRiskVendors > 0}
+/>
+<ActionSignal
+label="Expiry Alerts"
+value={expiryAlerts}
+attention={expiryAlerts > 0}
+/>
+<ActionSignal
+label="Missing Records"
+value={missingCompliance}
+attention={missingCompliance > 0}
+/>
+<ActionSignal
+label="Critical Expiry"
+value={criticalExpiryVendors}
+attention={criticalExpiryVendors > 0}
+/>
+<ActionSignal
+label="Expired"
+value={expiredVendors}
+attention={expiredVendors > 0}
+/>
 </div>
+) : null}
 </div>
 
-<div className="grid gap-4 sm:grid-cols-2">
-<DarkMetric title="Avg Compliance" value={averageComplianceScore > 0 ? `${averageComplianceScore}/100` : "Setup"} />
-<DarkMetric title="High Risk" value={String(highRiskVendors)} />
-<DarkMetric title="Critical Expiry" value={String(criticalExpiryVendors)} />
-<DarkMetric title="Expired" value={String(expiredVendors)} />
+<div className="border-t border-white/10 p-6 sm:p-8 lg:min-w-64 lg:border-l lg:border-t-0">
+<p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
+Recommended Next Step
+</p>
+
+<p className="mt-3 max-w-xs text-sm font-black leading-6 text-white">
+{totalVendors === 0
+? "Approve qualified suppliers from the Supplier Directory."
+: expiredVendors > 0
+? "Resolve expired compliance evidence."
+: criticalExpiryVendors > 0
+? "Coordinate priority renewals."
+: highRiskVendors > 0
+? "Open the affected vendor records."
+: missingCompliance > 0
+? "Complete supplier compliance setup."
+: "Continue scheduled portfolio monitoring."}
+</p>
+
+{totalVendors === 0 ? (
+<Link
+href="/directory"
+className="mt-5 inline-flex rounded-full bg-white px-5 py-3 text-xs font-black text-slate-950 transition hover:bg-slate-200"
+>
+Open Supplier Directory
+</Link>
+) : (
+<a
+href="#approved-vendor-list"
+className="mt-5 inline-flex rounded-full border border-white/15 bg-white/[0.06] px-5 py-3 text-xs font-black text-white transition hover:bg-white/[0.12]"
+>
+Review Vendor Portfolio
+</a>
+)}
 </div>
 </div>
 </section>
 
-<section className="mt-8 overflow-hidden rounded-[36px] border border-black/5 bg-white shadow-sm">
+<section
+id="approved-vendor-list"
+className="mt-8 overflow-hidden rounded-[36px] border border-black/5 bg-white shadow-sm"
+>
 <div className="border-b border-slate-100 p-8">
 <p className="text-xs font-black uppercase tracking-[0.3em] text-orange-500">
 Vendor Compliance Matrix
@@ -760,10 +882,24 @@ return (
 );
 }
 
-function DarkBadge({ children }: { children: React.ReactNode }) {
+function ActionSignal({
+label,
+value,
+attention,
+}: {
+label: string;
+value: number;
+attention: boolean;
+}) {
 return (
-<span className="rounded-full bg-white/10 px-4 py-2 text-xs font-black uppercase tracking-[0.15em] text-white">
-{children}
+<span
+className={`rounded-full border px-3 py-2 text-[10px] font-black uppercase tracking-[0.14em] ${
+attention
+? "border-orange-400/30 bg-orange-400/10 text-orange-200"
+: "border-white/10 bg-white/[0.05] text-slate-400"
+}`}
+>
+{value} {label}
 </span>
 );
 }
