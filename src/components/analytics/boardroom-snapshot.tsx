@@ -57,36 +57,39 @@ export function BoardroomSnapshot({
       padding="lg"
       tone="gold"
     >
-      <header className="grid min-w-0 gap-6 border-b border-white/10 pb-7 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-end">
+      <header className="grid min-w-0 gap-5 border-b border-white/10 pb-6 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-end">
         <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-3">
-            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-yellow-300 sm:text-xs">
-              Executive Procurement Command Center
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+            <p className="text-[10px] font-black uppercase tracking-[0.26em] text-yellow-300 sm:text-xs">
+              Executive Decision Brief
             </p>
 
-            <span className="hidden h-1 w-1 rounded-full bg-white/20 sm:block" />
+            <span
+              aria-hidden="true"
+              className="hidden h-1 w-1 rounded-full bg-white/20 sm:block"
+            />
 
-            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-nexus-muted">
-              Leadership decision briefing
+            <p className="text-[10px] font-black uppercase tracking-[0.16em] text-nexus-muted">
+              Procurement leadership intelligence
             </p>
           </div>
 
           <h1
             id="analytics-command-center-title"
-            className="mt-4 max-w-4xl text-3xl font-black leading-[1.08] tracking-tight text-white sm:text-4xl lg:text-5xl"
+            className="mt-3 max-w-4xl text-3xl font-black leading-[1.08] tracking-tight text-white sm:text-4xl lg:text-[2.75rem]"
           >
             What requires leadership attention today?
           </h1>
 
-          <p className="mt-4 max-w-3xl text-sm font-semibold leading-7 text-nexus-muted">
-            A decision-first view of the immediate leadership action,
-            commercial opportunity, material portfolio risk, and the evidence
-            supporting each recommendation.
+          <p className="mt-3 max-w-3xl text-sm font-semibold leading-6 text-nexus-muted">
+            A decision-first briefing of the immediate executive action,
+            material commercial opportunity, portfolio risk, and supporting
+            procurement evidence.
           </p>
         </div>
 
         <div className="flex min-w-0 flex-col gap-2 xl:items-end">
-          <p className="text-[10px] font-black uppercase tracking-[0.18em] text-nexus-muted">
+          <p className="text-[10px] font-black uppercase tracking-[0.16em] text-nexus-muted">
             Decision assurance
           </p>
 
@@ -99,27 +102,27 @@ export function BoardroomSnapshot({
 
       <section
         aria-labelledby="executive-narrative-title"
-        className="mt-6 grid min-w-0 gap-5 rounded-3xl border border-white/10 bg-white/[0.035] p-5 sm:p-6 lg:grid-cols-[minmax(0,1.35fr)_minmax(280px,0.65fr)] lg:items-start"
+        className="mt-5 grid min-w-0 gap-4 rounded-3xl border border-white/10 bg-white/[0.035] p-5 sm:p-6 lg:grid-cols-[minmax(0,1.45fr)_minmax(260px,0.55fr)] lg:items-stretch"
       >
         <div className="min-w-0">
-          <p className="text-[10px] font-black uppercase tracking-[0.22em] text-yellow-300">
-            Executive situation brief
+          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-yellow-300">
+            Current executive situation
           </p>
 
           <h2
             id="executive-narrative-title"
-            className="mt-3 max-w-4xl text-xl font-black leading-8 text-white sm:text-2xl"
+            className="mt-2.5 max-w-4xl text-xl font-black leading-8 text-white sm:text-2xl"
           >
             {executiveNarrative.headline}
           </h2>
 
-          <p className="mt-3 max-w-4xl text-sm font-semibold leading-7 text-nexus-muted">
+          <p className="mt-2.5 max-w-4xl text-sm font-semibold leading-6 text-nexus-muted">
             {executiveNarrative.summary}
           </p>
         </div>
 
-        <div className="min-w-0 rounded-2xl border border-yellow-300/15 bg-yellow-400/[0.045] p-4 sm:p-5">
-          <p className="text-[10px] font-black uppercase tracking-[0.18em] text-yellow-300">
+        <div className="flex min-w-0 flex-col justify-between rounded-2xl border border-yellow-300/15 bg-yellow-400/[0.045] p-4 sm:p-5">
+          <p className="text-[10px] font-black uppercase tracking-[0.16em] text-yellow-300">
             Leadership priority
           </p>
 
@@ -131,7 +134,7 @@ export function BoardroomSnapshot({
 
       <section
         aria-label="Executive decision signals"
-        className="mt-6 grid min-w-0 items-start gap-5 xl:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.65fr)]"
+        className="mt-5 grid min-w-0 items-start gap-5 xl:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.65fr)]"
       >
         <div className="grid min-w-0 content-start gap-5">
           <InsightSignal
@@ -199,27 +202,27 @@ function PortfolioEvidenceSummary({
       aria-labelledby="executive-evidence-summary-title"
       className="min-w-0 rounded-3xl border border-white/10 bg-white/[0.025] p-5 sm:p-6"
     >
-      <div className="flex flex-col gap-3 border-b border-white/10 pb-5 sm:flex-row sm:items-end sm:justify-between">
+      <div className="grid min-w-0 gap-3 border-b border-white/10 pb-4 sm:grid-cols-[minmax(0,1fr)_minmax(240px,0.8fr)] sm:items-end">
         <div className="min-w-0">
-          <p className="text-[10px] font-black uppercase tracking-[0.22em] text-yellow-300">
-            Supporting portfolio evidence
+          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-yellow-300">
+            Executive decision context
           </p>
 
           <h2
             id="executive-evidence-summary-title"
             className="mt-2 text-lg font-black tracking-tight text-white"
           >
-            Decision context at a glance
+            Portfolio evidence supporting the decision
           </h2>
         </div>
 
-        <p className="max-w-md text-xs font-semibold leading-5 text-nexus-muted sm:text-right">
-          Observed, estimated, and internally derived measures supporting the
-          immediate leadership decision.
+        <p className="text-xs font-semibold leading-5 text-nexus-muted sm:text-right">
+          Observed, estimated, and internally derived procurement measures
+          supporting the current executive assessment.
         </p>
       </div>
 
-      <div className="mt-5 grid min-w-0 gap-4 sm:grid-cols-2">
+      <div className="mt-4 grid min-w-0 gap-4 sm:grid-cols-2">
         <ExecutiveMetricCard
           label="Quoted Portfolio Value"
           value={`$${quotedPortfolioValue.toLocaleString()}`}
@@ -231,7 +234,7 @@ function PortfolioEvidenceSummary({
         <ExecutiveMetricCard
           label="Estimated Savings Opportunity"
           value={`$${estimatedSavingsOpportunity.toLocaleString()}`}
-          insight="Estimated difference between current average and lowest recorded quotation."
+          insight="Estimated difference between the current average and lowest recorded quotation."
           impact="Estimated — not realized"
           tone="success"
         />
@@ -283,9 +286,10 @@ function InsightSignal({
           accent: "bg-yellow-300",
           guidance: "border-yellow-300/15 bg-yellow-400/[0.04]",
           stepBorder: "border-yellow-300/15",
-          stepBackground: "bg-yellow-400/[0.035]",
+          stepBackground: "bg-yellow-400/[0.03]",
           stepNumber:
             "border-yellow-300/20 bg-yellow-400/[0.08] text-yellow-300",
+          statusBorder: "border-yellow-300/15",
         }
       : tone === "opportunity"
         ? {
@@ -294,9 +298,10 @@ function InsightSignal({
             accent: "bg-emerald-300",
             guidance: "border-emerald-300/15 bg-emerald-400/[0.04]",
             stepBorder: "border-emerald-300/15",
-            stepBackground: "bg-emerald-400/[0.035]",
+            stepBackground: "bg-emerald-400/[0.03]",
             stepNumber:
               "border-emerald-300/20 bg-emerald-400/[0.08] text-emerald-300",
+            statusBorder: "border-emerald-300/15",
           }
         : {
             panel: "border-red-300/20 bg-red-400/[0.055]",
@@ -304,8 +309,9 @@ function InsightSignal({
             accent: "bg-red-300",
             guidance: "border-red-300/15 bg-red-400/[0.04]",
             stepBorder: "border-red-300/15",
-            stepBackground: "bg-red-400/[0.035]",
+            stepBackground: "bg-red-400/[0.03]",
             stepNumber: "border-red-300/20 bg-red-400/[0.08] text-red-300",
+            statusBorder: "border-red-300/15",
           };
 
   const isPrimary = emphasis === "primary";
@@ -315,7 +321,7 @@ function InsightSignal({
     <article
       className={[
         "relative min-w-0 overflow-hidden rounded-3xl border",
-        isPrimary ? "p-6 sm:p-7" : "p-5 sm:p-6",
+        isPrimary ? "p-5 sm:p-6" : "p-5",
         toneClasses.panel,
       ].join(" ")}
     >
@@ -327,11 +333,11 @@ function InsightSignal({
         ].join(" ")}
       />
 
-      <div className="flex flex-wrap items-start justify-between gap-3">
+      <div className="flex min-w-0 flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <p
             className={[
-              "text-[10px] font-black uppercase tracking-[0.22em]",
+              "text-[10px] font-black uppercase tracking-[0.2em]",
               toneClasses.eyebrow,
             ].join(" ")}
           >
@@ -339,8 +345,8 @@ function InsightSignal({
           </p>
 
           {isPrimary ? (
-            <p className="mt-2 text-[10px] font-black uppercase tracking-[0.16em] text-nexus-muted">
-              Immediate leadership action
+            <p className="mt-1.5 text-[10px] font-black uppercase tracking-[0.14em] text-nexus-muted">
+              Immediate leadership decision
             </p>
           ) : null}
         </div>
@@ -354,8 +360,8 @@ function InsightSignal({
         className={[
           "break-words font-bold text-white [overflow-wrap:anywhere]",
           isPrimary
-            ? "mt-5 max-w-4xl text-xl leading-8 sm:text-2xl sm:leading-9"
-            : "mt-4 text-base leading-7",
+            ? "mt-4 max-w-4xl text-xl leading-8 sm:text-2xl sm:leading-9"
+            : "mt-3.5 text-base leading-7",
         ].join(" ")}
       >
         {summary}
@@ -363,11 +369,14 @@ function InsightSignal({
 
       <div
         className={[
-          "mt-5 grid min-w-0 gap-4",
+          "mt-4 grid min-w-0 gap-3",
           isPrimary ? "md:grid-cols-2" : "",
         ].join(" ")}
       >
-        <SignalContext label="Why it matters" value={reason} />
+        <SignalContext
+          label={isPrimary ? "Business rationale" : "Why it matters"}
+          value={reason}
+        />
 
         <div
           className={[
@@ -377,7 +386,7 @@ function InsightSignal({
         >
           <p
             className={[
-              "text-[10px] font-black uppercase tracking-[0.18em]",
+              "text-[10px] font-black uppercase tracking-[0.16em]",
               toneClasses.eyebrow,
             ].join(" ")}
           >
@@ -394,65 +403,72 @@ function InsightSignal({
         <section
           aria-label="Leadership execution path"
           className={[
-            "mt-5 min-w-0 rounded-2xl border p-4 sm:p-5",
+            "mt-4 min-w-0 rounded-2xl border p-4",
             toneClasses.stepBorder,
             toneClasses.stepBackground,
           ].join(" ")}
         >
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
             <div className="min-w-0">
               <p
                 className={[
-                  "text-[10px] font-black uppercase tracking-[0.18em]",
+                  "text-[10px] font-black uppercase tracking-[0.16em]",
                   toneClasses.eyebrow,
                 ].join(" ")}
               >
-                Leadership execution path
+                Governance execution path
               </p>
 
-              <p className="mt-2 text-sm font-bold leading-6 text-white">
-                Convert the recommendation into an authorized and accountable
-                executive action.
+              <p className="mt-1.5 text-xs font-semibold leading-5 text-nexus-muted">
+                Validate the evidence, establish accountability, authorize the
+                response, and monitor the resulting commercial outcome.
               </p>
             </div>
 
-            <p className="shrink-0 text-[10px] font-black uppercase tracking-[0.14em] text-nexus-muted">
-              Four-stage decision control
+            <p className="shrink-0 text-[10px] font-black uppercase tracking-[0.12em] text-nexus-muted">
+              Four decision controls
             </p>
           </div>
 
-          <ol className="mt-4 grid min-w-0 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <ol className="mt-4 grid min-w-0 gap-2.5 sm:grid-cols-2 xl:grid-cols-4">
             {[
               {
                 step: "01",
-                title: "Validate Evidence",
+                title: "Validate",
                 description:
-                  "Confirm the commercial, supplier, and portfolio signals supporting the recommendation.",
+                  "Confirm the supplier, commercial, and portfolio evidence.",
               },
               {
                 step: "02",
-                title: "Assign Ownership",
+                title: "Assign",
                 description:
-                  "Confirm the executive and procurement owners accountable for the response.",
+                  "Establish executive and procurement ownership.",
               },
               {
                 step: "03",
-                title: "Authorize Action",
+                title: "Authorize",
                 description:
-                  "Approve the decision path through the required governance controls.",
+                  "Approve the required decision and governance path.",
               },
               {
                 step: "04",
-                title: "Monitor Outcome",
+                title: "Monitor",
                 description:
-                  "Track execution progress, risk movement, and realized commercial impact.",
+                  "Track execution, risk movement, and realized impact.",
               },
-            ].map((item) => (
+            ].map((item, index, items) => (
               <li
                 key={item.step}
-                className="min-w-0 rounded-2xl border border-white/10 bg-black/10 p-4"
+                className="relative min-w-0 rounded-2xl border border-white/10 bg-black/10 p-3.5"
               >
-                <div className="flex items-center gap-3">
+                {index < items.length - 1 ? (
+                  <span
+                    aria-hidden="true"
+                    className="absolute left-full top-1/2 hidden h-px w-2.5 -translate-y-1/2 bg-white/10 xl:block"
+                  />
+                ) : null}
+
+                <div className="flex min-w-0 items-center gap-2.5">
                   <span
                     className={[
                       "flex h-7 w-7 shrink-0 items-center justify-center rounded-full border text-[9px] font-black tabular-nums",
@@ -462,12 +478,12 @@ function InsightSignal({
                     {item.step}
                   </span>
 
-                  <p className="min-w-0 break-words text-xs font-black uppercase tracking-[0.12em] text-white [overflow-wrap:anywhere]">
+                  <p className="min-w-0 break-words text-[11px] font-black uppercase tracking-[0.1em] text-white [overflow-wrap:anywhere]">
                     {item.title}
                   </p>
                 </div>
 
-                <p className="mt-3 break-words text-xs font-semibold leading-5 text-nexus-muted [overflow-wrap:anywhere]">
+                <p className="mt-2.5 break-words text-xs font-semibold leading-5 text-nexus-muted [overflow-wrap:anywhere]">
                   {item.description}
                 </p>
               </li>
@@ -476,13 +492,13 @@ function InsightSignal({
         </section>
       ) : null}
 
-      <div className="mt-5 border-t border-white/10 pt-5">
-        <div className="flex flex-wrap items-end justify-between gap-2">
-          <p className="text-[10px] font-black uppercase tracking-[0.18em] text-nexus-muted">
+      <div className="mt-4 border-t border-white/10 pt-4">
+        <div className="flex min-w-0 flex-wrap items-end justify-between gap-2">
+          <p className="text-[10px] font-black uppercase tracking-[0.16em] text-nexus-muted">
             Supporting evidence
           </p>
 
-          <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-nexus-muted">
+          <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-nexus-muted">
             {visibleEvidence.length} signal
             {visibleEvidence.length === 1 ? "" : "s"}
           </p>
@@ -500,6 +516,7 @@ function InsightSignal({
             <EvidenceSignal
               key={`${item.label}-${item.value}`}
               evidence={item}
+              statusBorderClassName={toneClasses.statusBorder}
             />
           ))}
         </div>
@@ -517,7 +534,7 @@ function SignalContext({
 }) {
   return (
     <div className="min-w-0 rounded-2xl border border-white/10 bg-white/[0.025] p-4">
-      <p className="text-[10px] font-black uppercase tracking-[0.18em] text-nexus-muted">
+      <p className="text-[10px] font-black uppercase tracking-[0.16em] text-nexus-muted">
         {label}
       </p>
 
@@ -530,17 +547,24 @@ function SignalContext({
 
 function EvidenceSignal({
   evidence,
+  statusBorderClassName,
 }: {
   evidence: ExecutiveEvidence;
+  statusBorderClassName: string;
 }) {
   return (
-    <div className="min-w-0 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3">
+    <div className="min-w-0 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3.5">
       <div className="flex min-w-0 flex-wrap items-start justify-between gap-2">
-        <p className="min-w-0 break-words text-[10px] font-black uppercase tracking-[0.16em] text-nexus-muted [overflow-wrap:anywhere]">
+        <p className="min-w-0 break-words text-[10px] font-black uppercase tracking-[0.14em] text-nexus-muted [overflow-wrap:anywhere]">
           {evidence.label}
         </p>
 
-        <span className="shrink-0 rounded-full border border-white/10 bg-white/5 px-2 py-1 text-[9px] font-black uppercase tracking-[0.12em] text-white">
+        <span
+          className={[
+            "shrink-0 rounded-full border bg-white/5 px-2 py-1 text-[9px] font-black uppercase tracking-[0.1em] text-white",
+            statusBorderClassName,
+          ].join(" ")}
+        >
           {evidence.status}
         </span>
       </div>
@@ -550,7 +574,7 @@ function EvidenceSignal({
       </p>
 
       {evidence.description ? (
-        <p className="mt-2 break-words text-xs font-semibold leading-5 text-nexus-muted [overflow-wrap:anywhere]">
+        <p className="mt-1.5 break-words text-xs font-semibold leading-5 text-nexus-muted [overflow-wrap:anywhere]">
           {evidence.description}
         </p>
       ) : null}
