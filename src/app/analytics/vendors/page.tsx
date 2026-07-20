@@ -356,79 +356,116 @@ total + Number(compliance.compliance_score || 0),
 : 0;
 
 return (
-<main className="min-h-screen bg-[#f6f6f3] px-8 py-10">
+<main className="min-h-screen bg-slate-950 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
 <div className="mx-auto max-w-7xl">
+<div className="flex items-center justify-between gap-4">
 <Link
 href="/analytics"
-className="text-sm font-bold text-slate-500 hover:text-slate-950"
+className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.18em] text-slate-400 transition hover:text-white"
 >
-← Back to Analytics
+<span aria-hidden="true">←</span>
+Back to Analytics
 </Link>
 
-<section className="mt-8 rounded-[40px] border border-black/5 bg-white p-10 shadow-sm">
-<p className="text-xs font-black uppercase tracking-[0.35em] text-orange-500">
-Supplier Compliance Center
-</p>
-
-<div className="mt-4 grid gap-8 lg:grid-cols-[1fr_0.8fr] lg:items-end">
-<div>
-<h1 className="max-w-4xl text-5xl font-black leading-tight text-slate-950">
-Approved Vendor Compliance Intelligence
-</h1>
-
-<p className="mt-4 max-w-3xl text-sm font-semibold leading-7 text-slate-600">
-Monitor approved vendors, insurance status, certificate expiry,
-license validity, tax compliance, and procurement eligibility
-before suppliers participate in sensitive RFQs.
-</p>
+<span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">
+Vendor Intelligence
+</span>
 </div>
 
-<div className="rounded-[32px] bg-slate-950 p-6 text-white">
-<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-400">
-Compliance Readiness
+<section className="mt-6 overflow-hidden rounded-[32px] border border-white/10 bg-white shadow-2xl shadow-black/20">
+<div className="grid lg:grid-cols-[1.35fr_0.65fr]">
+<div className="p-6 sm:p-8 lg:p-10">
+<div className="flex flex-wrap items-center gap-3">
+<span className="rounded-full bg-orange-50 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.2em] text-orange-700">
+Supplier Compliance Center
+</span>
+<span className="text-xs font-bold text-slate-400">
+Approved vendor governance and RFQ readiness
+</span>
+</div>
+
+<h1 className="mt-6 max-w-4xl text-4xl font-black leading-[1.02] tracking-[-0.04em] text-slate-950 sm:text-5xl lg:text-6xl">
+Vendor compliance decisions, prioritized for procurement action.
+</h1>
+
+<p className="mt-5 max-w-3xl text-sm font-semibold leading-7 text-slate-600 sm:text-base">
+Review supplier eligibility, document exposure, and compliance readiness before vendors enter sensitive sourcing and award workflows.
 </p>
 
-<div className="mt-5 grid grid-cols-2 gap-4">
-<DarkMetric title="Vendors" value={String(totalVendors)} />
+<div className="mt-8 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+<ExecutiveMetric
+label="Approved Vendors"
+value={String(totalVendors)}
+detail="In the active procurement portfolio"
+/>
+<ExecutiveMetric
+label="Compliant"
+value={String(compliantVendors)}
+detail="Cleared for current participation"
+/>
+<ExecutiveMetric
+label="Expiring Soon"
+value={String(expiringSoon)}
+detail="Renewal action required"
+/>
+<ExecutiveMetric
+label="Missing Records"
+value={String(missingCompliance)}
+detail="Compliance setup incomplete"
+/>
+</div>
+</div>
+
+<div className="border-t border-slate-200 bg-slate-950 p-6 text-white sm:p-8 lg:border-l lg:border-t-0 lg:p-10">
+<p className="text-[10px] font-black uppercase tracking-[0.25em] text-orange-400">
+Executive Decision Brief
+</p>
+
+<h2 className="mt-4 text-2xl font-black leading-tight tracking-[-0.03em]">
+{highRiskVendors > 0 || missingCompliance > 0 || criticalExpiryVendors > 0
+? "Supplier intervention is required."
+: "The approved vendor portfolio is operationally ready."}
+</h2>
+
+<p className="mt-4 text-sm font-semibold leading-6 text-slate-300">
+{highRiskVendors > 0 || missingCompliance > 0 || criticalExpiryVendors > 0
+? `${highRiskVendors} high-risk vendors, ${criticalExpiryVendors} critical expiry cases, and ${missingCompliance} incomplete compliance records require review before unrestricted RFQ participation.`
+: "No immediate high-risk, critical-expiry, or missing-record conditions are currently identified across approved vendors."}
+</p>
+
+<div className="mt-8 grid grid-cols-2 gap-3">
 <DarkMetric
-title="Avg Score"
+title="Avg Compliance"
 value={
 averageComplianceScore > 0
 ? `${averageComplianceScore}/100`
 : "Setup"
 }
 />
-<DarkMetric title="Valid" value={String(compliantVendors)} />
-<DarkMetric title="Missing" value={String(missingCompliance)} />
+<DarkMetric title="High Risk" value={String(highRiskVendors)} />
+<DarkMetric
+title="Critical Expiry"
+value={String(criticalExpiryVendors)}
+/>
+<DarkMetric title="Expired" value={String(expiredVendors)} />
+</div>
+
+<div className="mt-6 rounded-2xl border border-white/10 bg-white/[0.05] p-4">
+<p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
+Decision Priority
+</p>
+<p className="mt-2 text-sm font-black text-white">
+{expiredVendors > 0
+? "Resolve expired documents before supplier engagement."
+: criticalExpiryVendors > 0
+? "Prioritize renewals due within 30 days."
+: missingCompliance > 0
+? "Complete missing supplier compliance records."
+: "Maintain current monitoring cadence."}
+</p>
 </div>
 </div>
 </div>
-</section>
-
-<section className="mt-8 grid gap-6 md:grid-cols-4">
-<MetricCard
-title="Approved Vendors"
-value={String(totalVendors)}
-detail="Supplier companies approved for procurement workflows"
-/>
-
-<MetricCard
-title="Compliant"
-value={String(compliantVendors)}
-detail="Vendors with valid compliance status"
-/>
-
-<MetricCard
-title="Expiring Soon"
-value={String(expiringSoon)}
-detail="Vendors requiring renewal review"
-/>
-
-<MetricCard
-title="Missing Compliance"
-value={String(missingCompliance)}
-detail="Vendors missing required compliance records"
-/>
 </section>
 <section className="mt-8 rounded-[36px] bg-slate-950 p-8 text-white">
 <p className="text-xs font-black uppercase tracking-[0.3em] text-orange-400">
@@ -686,24 +723,25 @@ Open Supplier Directory
 );
 }
 
-function MetricCard({
-title,
+
+function ExecutiveMetric({
+label,
 value,
 detail,
 }: {
-title: string;
+label: string;
 value: string;
 detail: string;
 }) {
 return (
-<div className="rounded-3xl border border-black/5 bg-white p-6 shadow-sm">
-<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
-{title}
+<div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+<p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
+{label}
 </p>
-
-<p className="mt-3 text-3xl font-black text-slate-950">{value}</p>
-
-<p className="mt-2 text-sm font-semibold leading-6 text-slate-500">
+<p className="mt-3 text-3xl font-black tracking-[-0.03em] text-slate-950">
+{value}
+</p>
+<p className="mt-2 text-xs font-bold leading-5 text-slate-500">
 {detail}
 </p>
 </div>
