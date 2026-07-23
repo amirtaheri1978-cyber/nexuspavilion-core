@@ -1,3 +1,7 @@
+import {
+  resolveAnalyticsHealthBand,
+} from "@/lib/analytics/analytics-score-bands";
+
 export type ProcurementScope =
   | "material"
   | "subcontractor"
@@ -200,17 +204,17 @@ export function getContractFramework(
 }
 
 export function getHealthLabel(score: number): string {
-  const normalizedScore = normalizeScore(score);
+  const band = resolveAnalyticsHealthBand(score);
 
-  if (normalizedScore >= 85) {
+  if (band === "strong") {
     return "Strong";
   }
 
-  if (normalizedScore >= 70) {
+  if (band === "healthy") {
     return "Healthy";
   }
 
-  if (normalizedScore >= 55) {
+  if (band === "developing") {
     return "Developing";
   }
 

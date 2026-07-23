@@ -1,3 +1,6 @@
+import {
+  resolveAnalyticsHealthBand,
+} from "@/lib/analytics/analytics-score-bands";
 import { createExecutiveSignal } from "@/lib/analytics/executive/executive-signal";
 
 export function createDecisionSupportReadinessSignal(
@@ -91,17 +94,21 @@ export function createClassificationMaturitySignal(
   classificationScore: number,
   importance = 85,
 ) {
+  const band = resolveAnalyticsHealthBand(
+    classificationScore,
+  );
+
   return createExecutiveSignal({
     id: "rfq-classification-maturity",
     category: "classification",
     label: "RFQ classification maturity",
     value: `${classificationScore}/100`,
     status:
-      classificationScore >= 85
+      band === "strong"
         ? "strong"
-        : classificationScore >= 70
+        : band === "healthy"
           ? "healthy"
-          : classificationScore >= 55
+          : band === "developing"
             ? "moderate"
             : "limited",
     importance,
