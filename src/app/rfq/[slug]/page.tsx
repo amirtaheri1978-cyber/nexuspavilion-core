@@ -35,8 +35,21 @@ import {
 import {
   buildCommercialIntelligence,
   type Quote,
-  } from "@/lib/procurement/rfq-commercial-intelligence";
+} from "@/lib/procurement/rfq-commercial-intelligence";
 import { buildRfqExecutiveOpportunityIntelligence } from "@/lib/procurement/rfq-executive-opportunity-intelligence";
+import {
+  getBlindBiddingMessage,
+  getFrameworkLabel,
+  getProcurementFitMessage,
+  getRFQStatusClass,
+  getRFQStatusLabel,
+  getScopeLabel,
+  getSourcingLabel,
+  shouldEnforceBlindBidding,
+  type ContractFramework,
+  type ProcurementScope,
+  type SourcingMethod,
+} from "@/lib/procurement/rfq-metadata";
 
 import { ExecutivePanel } from "@/components/executive/executive-panel";
 import { RFQCommandCenter } from "@/components/rfq-workspace/rfq-command-center";
@@ -56,13 +69,6 @@ import {
 type PageProps = {
 params: Promise<{ slug: string }>;
 };
-type ProcurementScope =
-| "material"
-| "subcontractor"
-| "equipment"
-| "professional_service";
-type SourcingMethod = "open" | "invited" | "sealed_bid";
-type ContractFramework = "project_specific" | "framework";
 type Profile = {
 id: string;
 email: string | null;
@@ -86,21 +92,6 @@ company_id: string | null;
 procurement_scope: ProcurementScope | null;
 sourcing_method: SourcingMethod | null;
 contract_framework: ContractFramework | null;
-};
-const PROCUREMENT_SCOPE_LABELS: Record<ProcurementScope, string> = {
-material: "Material / Product RFQ",
-subcontractor: "Subcontractor / Trade RFQ",
-equipment: "Equipment Rental RFQ",
-professional_service: "Professional Service RFQ",
-};
-const SOURCING_METHOD_LABELS: Record<SourcingMethod, string> = {
-open: "Open RFQ",
-invited: "Invited / Selective RFQ",
-sealed_bid: "Sealed Bid RFQ",
-};
-const CONTRACT_FRAMEWORK_LABELS: Record<ContractFramework, string> = {
-project_specific: "Project-Specific RFQ",
-framework: "Master / Framework RFQ",
 };
 const RIGHT_TO_REJECT_NOTICE =
 "The Buyer reserves the right to accept or reject any or all submissions, request clarifications, negotiate commercial terms, or cancel the RFQ process at any time without liability or obligation to justify the decision.";
@@ -169,101 +160,6 @@ return null;
 return Math.ceil(
 (deadlineDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)
 );
-}
-
-function getProcurementScope(value: ProcurementScope | null | undefined) {
-if (value && PROCUREMENT_SCOPE_LABELS[value]) return value;
-return "subcontractor";
-}
-
-function getSourcingMethod(value: SourcingMethod | null | undefined) {
-if (value && SOURCING_METHOD_LABELS[value]) return value;
-return "invited";
-}
-
-function getContractFramework(value: ContractFramework | null | undefined) {
-if (value && CONTRACT_FRAMEWORK_LABELS[value]) return value;
-return "project_specific";
-}
-
-function getScopeLabel(value: ProcurementScope | null | undefined) {
-return PROCUREMENT_SCOPE_LABELS[getProcurementScope(value)];
-}
-
-function getSourcingLabel(value: SourcingMethod | null | undefined) {
-return SOURCING_METHOD_LABELS[getSourcingMethod(value)];
-}
-
-function getFrameworkLabel(value: ContractFramework | null | undefined) {
-return CONTRACT_FRAMEWORK_LABELS[getContractFramework(value)];
-}
-
-function shouldEnforceBlindBidding(rfq: RFQ) {
-const sourcingMethod = getSourcingMethod(rfq.sourcing_method);
-const contractFramework = getContractFramework(rfq.contract_framework);
-
-return (
-sourcingMethod === "invited" ||
-sourcingMethod === "sealed_bid" ||
-contractFramework === "framework"
-);
-}
-
-function getBlindBiddingMessage(rfq: RFQ) {
-const sourcingMethod = getSourcingMethod(rfq.sourcing_method);
-const contractFramework = getContractFramework(rfq.contract_framework);
-
-if (sourcingMethod === "sealed_bid") {
-return "This sealed bid RFQ is under blind bidding control. Commercial submissions remain locked until the official closing deadline.";
-}
-
-if (contractFramework === "framework") {
-return "This framework RFQ uses controlled commercial access. Supplier pricing remains hidden until the RFQ deadline has passed.";
-}
-
-return "This invited RFQ uses blind bidding controls. Buyer-side users can see participation counts, but commercial pricing is locked until closing.";
-}
-
-
-function getRFQStatusClass(status: string | null) {
-if (status === "awarded") return "bg-green-100 text-green-700";
-if (status === "closed") return "bg-slate-200 text-slate-600";
-return "bg-orange-100 text-orange-700";
-}
-
-function getRFQStatusLabel(status: string | null) {
-if (status === "awarded") return "Awarded";
-if (status === "closed") return "Closed";
-return "Open";
-}
-
-
-function getProcurementFitMessage(rfq: RFQ) {
-const scope = getProcurementScope(rfq.procurement_scope);
-const sourcing = getSourcingMethod(rfq.sourcing_method);
-const framework = getContractFramework(rfq.contract_framework);
-
-if (scope === "material" && framework === "framework") {
-return "This RFQ is structured for recurring material pricing, supplier capacity review, and long-term procurement control.";
-}
-
-if (scope === "subcontractor") {
-return "This RFQ is structured for trade package pricing, scope review, delivery capability, and subcontractor risk comparison.";
-}
-
-if (scope === "equipment") {
-return "This RFQ is structured for rental duration, equipment availability, logistics, maintenance terms, and site-readiness evaluation.";
-}
-
-if (scope === "professional_service") {
-return "This RFQ is structured for professional expertise, service capability, advisory fit, schedule alignment, and project requirements.";
-}
-
-if (sourcing === "sealed_bid") {
-return "This RFQ is configured for controlled bid submission and deadline-based evaluation.";
-}
-
-return "This RFQ is classified for construction procurement intelligence, supplier matching, quote comparison, and executive reporting.";
 }
 
 export default async function RFQDetailPage({ params }: PageProps) {
