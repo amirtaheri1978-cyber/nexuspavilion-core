@@ -25,7 +25,6 @@ import {
   getProcurementHealthBreakdown,
 } from "@/lib/procurement/rfq-procurement-health";
 
-import { ExecutiveMetricCard } from "@/components/executive/executive-metric-card";
 import { ExecutivePanel } from "@/components/executive/executive-panel";
 import { RFQCommandCenter } from "@/components/rfq-workspace/rfq-command-center";
 import { RFQProcurementHealth } from "@/components/rfq-workspace/rfq-procurement-health";
@@ -36,6 +35,11 @@ import { RFQProcurementContext } from "@/components/rfq-workspace/rfq-procuremen
 import { RFQDocumentWorkspace } from "@/components/rfq-workspace/rfq-document-workspace";
 import { RFQQuoteWorkspace } from "@/components/rfq-workspace/rfq-quote-workspace";
 import { RFQRecommendedAwardPath } from "@/components/rfq-workspace/rfq-recommended-award-path";
+import {
+  RFQBlindBiddingNotice,
+  RFQGovernanceNotice,
+} from "@/components/rfq-workspace/rfq-governance-controls";
+
 type PageProps = {
 params: Promise<{ slug: string }>;
 };
@@ -1118,13 +1122,18 @@ return (
 </section>
 
 {capabilities.canViewBlindBiddingControl ? (
-<section className="mt-8">
-<BlindBiddingNotice rfq={rfq} quoteCount={quoteList.length} />
-</section>
+  <section className="mt-8">
+    <RFQBlindBiddingNotice
+      message={getBlindBiddingMessage(rfq)}
+      quoteCount={quoteList.length}
+    />
+  </section>
 ) : null}
 
 <section className="mt-8">
-<GovernanceNotice />
+  <RFQGovernanceNotice
+    reservationNotice={RIGHT_TO_REJECT_NOTICE}
+  />
 </section>
 
 {capabilities.canViewExecutiveIntelligence ? (
@@ -1274,73 +1283,5 @@ governance workflow.
 
 </div>
 </main>
-);
-}
-
-function BlindBiddingNotice({
-rfq,
-quoteCount,
-}: {
-rfq: RFQ;
-quoteCount: number;
-}) {
-return (
-<ExecutivePanel padding="lg" tone="gold">
-<p className="text-xs font-black uppercase tracking-[0.25em] text-nexus-gold">
-Blind Bidding Enforcement
-</p>
-
-<h3 className="mt-3 text-2xl font-black text-nexus-white">
-Commercial bids are locked until closing
-</h3>
-
-<p className="mt-3 max-w-4xl text-sm font-bold leading-7 text-nexus-muted">
-{getBlindBiddingMessage(rfq)}
-</p>
-
-<div className="mt-5 grid gap-4 md:grid-cols-3">
-<MiniLockCard title="Submissions" value={`${quoteCount} received`} />
-<MiniLockCard title="Commercial Pricing" value="Locked" />
-<MiniLockCard title="Evaluation Room" value="Closed" />
-</div>
-</ExecutivePanel>
-);
-}
-
-function MiniLockCard({ title, value }: { title: string; value: string }) {
-return (
-<ExecutiveMetricCard
-label={title}
-value={value}
-tone="gold"
-/>
-);
-}
-
-function GovernanceNotice() {
-return (
-<ExecutivePanel padding="lg" tone="risk">
-<ExecutivePanel variant="operational" padding="md" tone="risk">
-<p className="text-xs font-black uppercase tracking-[0.25em] text-red-300">
-Buyer Reservation Rights
-</p>
-
-<p className="mt-3 max-w-4xl text-sm font-bold leading-7 text-nexus-muted">
-{RIGHT_TO_REJECT_NOTICE}
-</p>
-</ExecutivePanel>
-
-<ExecutivePanel className="mt-4" variant="operational" padding="md" tone="gold">
-<p className="text-xs font-black uppercase tracking-[0.25em] text-nexus-gold">
-Confidentiality & Anti-Collusion
-</p>
-
-<p className="mt-3 max-w-4xl text-sm font-bold leading-7 text-nexus-muted">
-Supplier submissions are confidential. Competing suppliers cannot view
-each other’s pricing, proposal notes, validity periods, or commercial
-submission data.
-</p>
-</ExecutivePanel>
-</ExecutivePanel>
 );
 }
