@@ -35,8 +35,8 @@ import {
 import {
   buildCommercialIntelligence,
   type Quote,
-  type ScoredQuote,
-} from "@/lib/procurement/rfq-commercial-intelligence";
+  } from "@/lib/procurement/rfq-commercial-intelligence";
+import { buildRfqExecutiveOpportunityIntelligence } from "@/lib/procurement/rfq-executive-opportunity-intelligence";
 
 import { ExecutivePanel } from "@/components/executive/executive-panel";
 import { RFQCommandCenter } from "@/components/rfq-workspace/rfq-command-center";
@@ -494,90 +494,17 @@ recommendedQuote,
 potentialSavings,
 });
 
-const executiveOpportunities = isOwner
-? [
-{
-title: "Commercial Savings Opportunity",
-priority: potentialSavings > 0 ? "High" : "Medium",
-impact: commercialEvaluationUnlocked ? "Financial" : "Pending",
-value:
-potentialSavings > 0
-? formatMoney(potentialSavings)
-: "Awaiting bid spread",
-summary:
-potentialSavings > 0
-? "Nexus Pavilion has identified a savings opportunity against the current average bid."
-: "Savings opportunity will become clearer once supplier commercial submissions are available.",
-},
-{
-title: "Supplier Competition Expansion",
-priority: quoteList.length >= 3 ? "Medium" : "High",
-impact: "Market Coverage",
-value:
-quoteList.length >= 3
-? "Healthy coverage"
-: `${Math.max(3 - quoteList.length, 1)}+ more suppliers`,
-summary:
-quoteList.length >= 3
-? "Supplier competition is currently healthy for executive review."
-: "Expanding supplier participation can improve bid quality, negotiation leverage, and award confidence.",
-},
-{
-title: "Documentation Readiness",
-priority: rfqAttachments.length > 0 ? "Medium" : "High",
-impact: "Execution Risk",
-value:
-rfqAttachments.length > 0
-? `${rfqAttachments.length} files`
-: "Missing package",
-summary:
-rfqAttachments.length > 0
-? "The RFQ document package is active and available for supplier review."
-: "Uploading drawings, specifications, BOQ, or supporting documents will improve supplier clarity.",
-},
-{
-title: "Award Readiness",
-priority:
-commercialEvaluationUnlocked && recommendedQuote ? "High" : "Medium",
-impact: "Decision Speed",
-value:
-commercialEvaluationUnlocked && recommendedQuote
-? `${recommendedQuote.awardConfidence}% confidence`
-: "Not ready",
-summary:
-commercialEvaluationUnlocked && recommendedQuote
-? "The RFQ has enough intelligence to support executive award validation."
-: "Award readiness will improve after commercial opening and supplier comparison.",
-},
-]
-: [];
-
-const executiveOpportunityIntelligence = executiveOpportunities.map(
-(opportunity, index) => ({
-...opportunity,
-rank: index + 1,
-businessImpact:
-opportunity.title === "Commercial Savings Opportunity"
-? "Improves cost control, commercial leverage, and executive visibility into procurement value."
-: opportunity.title === "Supplier Competition Expansion"
-? "Improves market coverage, bid competitiveness, and confidence in supplier selection."
-: opportunity.title === "Documentation Readiness"
-? "Reduces scope ambiguity, supplier assumptions, pricing risk, and downstream change exposure."
-: "Accelerates decision-making by aligning commercial intelligence, risk scoring, and award confidence.",
-executionHorizon:
-opportunity.priority === "High" ? "Immediate" : "Short-Term",
-boardPriority:
-opportunity.priority === "High" ? "Board-Level" : "Management-Level",
-ceoRecommendation:
-opportunity.title === "Commercial Savings Opportunity"
-? "Validate the bid spread and prepare negotiation strategy before final award."
-: opportunity.title === "Supplier Competition Expansion"
-? "Increase supplier participation before deadline if timing allows."
-: opportunity.title === "Documentation Readiness"
-? "Strengthen the RFQ package before further supplier engagement."
-: "Use compare view and AI ranking to validate the recommended award path.",
-})
-);
+const {
+  opportunities: executiveOpportunities,
+  intelligence: executiveOpportunityIntelligence,
+} = buildRfqExecutiveOpportunityIntelligence({
+  isOwner,
+  potentialSavings,
+  commercialEvaluationUnlocked,
+  quoteCount: quoteList.length,
+  documentCount: rfqAttachments.length,
+  recommendedAwardConfidence: recommendedQuote?.awardConfidence ?? null,
+});
 
 const executive = buildExecutiveIntelligence({
 rfqSlug: rfq.slug,
