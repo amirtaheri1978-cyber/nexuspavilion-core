@@ -41,6 +41,77 @@ type RFQExecutiveRiskMatrixInput = {
   commercialEvaluationUnlocked: boolean;
 };
 
+type RFQProcurementHealthBand =
+  | "launch-ready"
+  | "strong"
+  | "needs-attention"
+  | "at-risk";
+
+type RFQProcurementHealthPresentation = {
+  band: RFQProcurementHealthBand;
+  label: string;
+  tone: string;
+};
+
+const RFQ_PROCUREMENT_HEALTH_THRESHOLDS = {
+  launchReady: 86,
+  strong: 72,
+  needsAttention: 56,
+} as const;
+
+function normalizeHealthScore(score: number): number {
+  if (!Number.isFinite(score)) {
+    return 0;
+  }
+
+  return Math.max(0, Math.min(100, Math.round(score)));
+}
+
+function resolveProcurementHealthPresentation(
+  score: number,
+): RFQProcurementHealthPresentation {
+  const normalizedScore = normalizeHealthScore(score);
+
+  if (
+    normalizedScore >=
+    RFQ_PROCUREMENT_HEALTH_THRESHOLDS.launchReady
+  ) {
+    return {
+      band: "launch-ready",
+      label: "Launch-Ready",
+      tone: "text-green-300",
+    };
+  }
+
+  if (
+    normalizedScore >=
+    RFQ_PROCUREMENT_HEALTH_THRESHOLDS.strong
+  ) {
+    return {
+      band: "strong",
+      label: "Strong",
+      tone: "text-cyan-300",
+    };
+  }
+
+  if (
+    normalizedScore >=
+    RFQ_PROCUREMENT_HEALTH_THRESHOLDS.needsAttention
+  ) {
+    return {
+      band: "needs-attention",
+      label: "Needs Attention",
+      tone: "text-orange-300",
+    };
+  }
+
+  return {
+    band: "at-risk",
+    label: "At Risk",
+    tone: "text-red-300",
+  };
+}
+
 export function getHealthScore({
   isOpen,
   deadlinePassed,
@@ -70,19 +141,11 @@ export function getHealthScore({
 }
 
 export function getHealthLabel(score: number) {
-  if (score >= 86) return "Launch-Ready";
-  if (score >= 72) return "Strong";
-  if (score >= 56) return "Needs Attention";
-
-  return "At Risk";
+  return resolveProcurementHealthPresentation(score).label;
 }
 
 export function getHealthTone(score: number) {
-  if (score >= 86) return "text-green-300";
-  if (score >= 72) return "text-cyan-300";
-  if (score >= 56) return "text-orange-300";
-
-  return "text-red-300";
+  return resolveProcurementHealthPresentation(score).tone;
 }
 
 export function getProcurementHealthBreakdown({
@@ -96,24 +159,28 @@ export function getProcurementHealthBreakdown({
 }: RFQProcurementHealthBreakdownInput): RFQProcurementHealthBreakdownItem[] {
   const competition = Math.min(
     100,
-    quoteCount * 28 + (quoteCount >= 3 ? 16 : 0)
+    quoteCount * 28 + (quoteCount >= 3 ? 16 : 0),
   );
 
   const documentation = Math.min(
     100,
-    documentCount * 18 + (hasDescription ? 20 : 0) + (hasBudget ? 16 : 0)
+    documentCount * 18 +
+      (hasDescription ? 20 : 0) +
+      (hasBudget ? 16 : 0),
   );
 
   const governance = Math.min(
     100,
-    58 + (blindBiddingEnabled ? 18 : 8) + (addendaCount > 0 ? 10 : 0)
+    58 +
+      (blindBiddingEnabled ? 18 : 8) +
+      (addendaCount > 0 ? 10 : 0),
   );
 
   const decisionReadiness = Math.min(
     100,
     commercialEvaluationUnlocked && quoteCount > 0
       ? 62 + quoteCount * 8 + documentCount * 3
-      : 38 + quoteCount * 8 + documentCount * 4
+      : 38 + quoteCount * 8 + documentCount * 4,
   );
 
   return [
@@ -161,7 +228,11 @@ export function getExecutiveRiskMatrix({
   return [
     {
       label: "Schedule",
-      level: deadlinePassed ? "Closed" : isOpen ? "Controlled" : "Watch",
+      level: deadlinePassed
+        ? "Closed"
+        : isOpen
+          ? "Controlled"
+          : "Watch",
       detail: deadlinePassed
         ? "Submission window has closed"
         : "Deadline is active and trackable",
@@ -169,7 +240,11 @@ export function getExecutiveRiskMatrix({
     {
       label: "Competition",
       level:
-        quoteCount >= 3 ? "Strong" : quoteCount > 0 ? "Moderate" : "Low",
+        quoteCount >= 3
+          ? "Strong"
+          : quoteCount > 0
+            ? "Moderate"
+            : "Low",
       detail:
         quoteCount >= 3
           ? "Bid coverage is healthy"
