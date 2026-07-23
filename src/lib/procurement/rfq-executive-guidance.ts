@@ -177,13 +177,13 @@ export function getExecutiveBrief({
       return "This RFQ is closed for supplier submissions. Your company can review its own submitted quote and available procurement documents, while competitor commercial data remains confidential.";
     }
 
-    return "This supplier workspace provides controlled access to the RFQ package, addenda, acknowledgement requirements, and your company’s confidential submission status.";
+    return "This supplier workspace provides controlled access to the RFQ package, addenda, acknowledgement requirements, and your company's confidential submission status.";
   }
 
   if (blindBiddingEnabled && !commercialEvaluationUnlocked) {
     return `This RFQ is operating under blind bidding control with ${quoteCount} supplier submission${
       quoteCount === 1 ? "" : "s"
-    } received. Commercial pricing and AI ranking remain locked until the official deadline.`;
+    } received. Commercial pricing and supplier ranking remain locked until the official deadline.`;
   }
 
   if (recommendedQuote) {
