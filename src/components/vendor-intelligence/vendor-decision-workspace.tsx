@@ -1,7 +1,7 @@
 import Link from "next/link";
 
+import { ExecutiveMetricCard } from "@/components/executive/executive-metric-card";
 import { ComplianceRow } from "@/components/vendor-intelligence/compliance-row";
-import { DecisionMetric } from "@/components/vendor-intelligence/decision-metric";
 import {
   daysUntil,
   formatStatus,
@@ -197,20 +197,20 @@ export function VendorDecisionWorkspace({
             </p>
 
             <div className="mt-4 grid grid-cols-3 gap-3">
-              <DecisionMetric
+              <ExecutiveMetricCard
                 label="Compliance"
                 value={complianceScore > 0 ? `${complianceScore}` : "—"}
-                detail={complianceScore > 0 ? "of 100" : "Setup"}
+                trend={complianceScore > 0 ? "of 100" : "Setup"}
               />
-              <DecisionMetric
+              <ExecutiveMetricCard
                 label="Intelligence"
                 value={String(supplierIntelligenceScore)}
-                detail={supplierIntelligenceRank}
+                trend={supplierIntelligenceRank}
               />
-              <DecisionMetric
+              <ExecutiveMetricCard
                 label="Performance"
                 value={String(performanceScore)}
-                detail={performanceRank}
+                trend={performanceRank}
               />
             </div>
 
