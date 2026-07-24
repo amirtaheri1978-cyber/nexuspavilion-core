@@ -31,17 +31,34 @@ export function buildExecutiveIntelligence(
         )
       : buildUnavailableSupplierRecommendation();
 
-  const negotiation = buildExecutiveNegotiation(input);
-
-  const risks = buildExecutiveRisks(input);
-
-  const scenarios = buildExecutiveScenarios(input);
-
-  const actions = buildExecutiveActions(input);
+  const negotiation =
+    buildExecutiveNegotiation(input);
 
   const board = buildExecutiveBoard(
     input,
     readiness,
+  );
+
+  const risks = buildExecutiveRisks(
+    input,
+    readiness,
+    supplierRecommendation,
+  );
+
+  const actions = buildExecutiveActions(
+    input,
+    readiness,
+    recommendation,
+    supplierRecommendation,
+  );
+
+  const scenarios = buildExecutiveScenarios(
+    input,
+    readiness,
+    recommendation,
+    supplierRecommendation,
+    negotiation,
+    board,
   );
 
   const summary = buildExecutiveSummary(
