@@ -39,9 +39,16 @@ export function buildExecutiveIntelligence(
 
   const actions = buildExecutiveActions(input);
 
-  const board = buildExecutiveBoard(input);
+  const board = buildExecutiveBoard(
+    input,
+    readiness,
+  );
 
-  const summary = buildExecutiveSummary(input);
+  const summary = buildExecutiveSummary(
+    input,
+    readiness,
+    board,
+  );
 
   return {
     readiness,
