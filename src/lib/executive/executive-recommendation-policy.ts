@@ -1,12 +1,21 @@
 import type {
+  ExecutiveAwardPolicy,
   ExecutiveAwardRecommendationStatus,
   ExecutiveDataAvailability,
   ExecutivePriority,
-  ExecutiveRecommendationPolicy,
+  ExecutiveSupplierCandidatePolicy,
+  ExecutiveSupplierRecommendationResultPolicy,
   ExecutiveSupplierRecommendationResultStatus,
   ExecutiveSupplierRecommendationStatus,
   ExecutiveTone,
 } from "@/lib/executive/executive-types";
+
+type SupplierRecommendationResultState =
+  | "commercial_protected"
+  | "no_candidates"
+  | "ranking_available"
+  | "insufficient_evidence"
+  | "not_connected";
 
 export function resolveExecutiveScoreTone(
   score: number,
@@ -44,9 +53,9 @@ export function resolveExecutiveScorePriority(
   return "critical";
 }
 
-function candidateRecommendation(
+function resolveSupplierCandidateRecommendation(
   status: ExecutiveSupplierRecommendationStatus,
-) {
+): string {
   if (status === "Preferred Award Candidate") {
     return "Advance this supplier to authorized award validation, subject to final governance and commercial confirmation.";
   }
@@ -74,15 +83,17 @@ export function resolveSupplierCandidatePolicy({
   score: number | null;
   availability: ExecutiveDataAvailability;
   riskLevel: string | null;
-}): ExecutiveRecommendationPolicy {
+}): ExecutiveSupplierCandidatePolicy {
   if (availability !== "available" || score === null) {
+    const status: ExecutiveSupplierRecommendationStatus =
+      "Insufficient Decision Evidence";
+
     return {
-      status: "Insufficient Decision Evidence",
+      status,
       tone: "neutral",
       priority: "high",
-      recommendation: candidateRecommendation(
-        "Insufficient Decision Evidence",
-      ),
+      recommendation:
+        resolveSupplierCandidateRecommendation(status),
     };
   }
 
@@ -105,11 +116,12 @@ export function resolveSupplierCandidatePolicy({
     status,
     tone: resolveExecutiveScoreTone(score),
     priority: resolveExecutiveScorePriority(score),
-    recommendation: candidateRecommendation(status),
+    recommendation:
+      resolveSupplierCandidateRecommendation(status),
   };
 }
 
-function supplierResultRecommendation({
+function resolveSupplierResultRecommendation({
   status,
   supplierName,
   supplierRecommendation,
@@ -117,7 +129,7 @@ function supplierResultRecommendation({
   status: ExecutiveSupplierRecommendationResultStatus;
   supplierName?: string;
   supplierRecommendation?: string;
-}) {
+}): string {
   if (status === "Commercial Evaluation Protected") {
     return "Supplier ranking remains protected until commercial evaluation is authorized.";
   }
@@ -127,7 +139,14 @@ function supplierResultRecommendation({
   }
 
   if (status === "Executive Supplier Ranking Available") {
-    return `${supplierName} is the leading evaluated supplier. ${supplierRecommendation}`;
+    const resolvedSupplierName =
+      supplierName?.trim() || "The leading supplier";
+
+    const resolvedSupplierRecommendation =
+      supplierRecommendation?.trim() ||
+      "Proceed with executive validation before award authorization.";
+
+    return `${resolvedSupplierName} is the leading evaluated supplier. ${resolvedSupplierRecommendation}`;
   }
 
   if (status === "Insufficient Supplier Evidence") {
@@ -142,47 +161,41 @@ export function resolveSupplierRecommendationResultPolicy({
   supplierName,
   supplierRecommendation,
 }: {
-  state:
-    | "commercial_protected"
-    | "no_candidates"
-    | "ranking_available"
-    | "insufficient_evidence"
-    | "not_connected";
+  state: SupplierRecommendationResultState;
   supplierName?: string;
   supplierRecommendation?: string;
-}): ExecutiveRecommendationPolicy {
-  const statusByState: Record<
-    typeof state,
-    ExecutiveSupplierRecommendationResultStatus
-  > = {
-    commercial_protected:
-      "Commercial Evaluation Protected",
-    no_candidates: "No Supplier Candidates",
-    ranking_available:
-      "Executive Supplier Ranking Available",
-    insufficient_evidence:
-      "Insufficient Supplier Evidence",
-    not_connected:
-      "Supplier Intelligence Not Connected",
-  };
+}): ExecutiveSupplierRecommendationResultPolicy {
+  let status: ExecutiveSupplierRecommendationResultStatus;
+  let tone: ExecutiveTone;
+  let priority: ExecutivePriority;
 
-  const status = statusByState[state];
+  if (state === "commercial_protected") {
+    status = "Commercial Evaluation Protected";
+    tone = "warning";
+    priority = "high";
+  } else if (state === "no_candidates") {
+    status = "No Supplier Candidates";
+    tone = "neutral";
+    priority = "high";
+  } else if (state === "ranking_available") {
+    status = "Executive Supplier Ranking Available";
+    tone = "info";
+    priority = "medium";
+  } else if (state === "insufficient_evidence") {
+    status = "Insufficient Supplier Evidence";
+    tone = "neutral";
+    priority = "high";
+  } else {
+    status = "Supplier Intelligence Not Connected";
+    tone = "neutral";
+    priority = "low";
+  }
 
   return {
     status,
-    tone:
-      state === "ranking_available"
-        ? "info"
-        : state === "commercial_protected"
-          ? "warning"
-          : "neutral",
-    priority:
-      state === "ranking_available"
-        ? "medium"
-        : state === "not_connected"
-          ? "low"
-          : "high",
-    recommendation: supplierResultRecommendation({
+    tone,
+    priority,
+    recommendation: resolveSupplierResultRecommendation({
       status,
       supplierName,
       supplierRecommendation,
@@ -190,9 +203,9 @@ export function resolveSupplierRecommendationResultPolicy({
   };
 }
 
-function awardRecommendation(
+function resolveExecutiveAwardRecommendation(
   status: ExecutiveAwardRecommendationStatus,
-) {
+): string {
   if (status === "Commercial Locked") {
     return "Commercial evaluation is still protected. Wait until commercial opening before making an award decision.";
   }
@@ -222,26 +235,30 @@ export function resolveExecutiveAwardPolicy({
   hasRecommendedQuote: boolean;
   score: number;
   riskLevel: string | null;
-}): ExecutiveRecommendationPolicy {
+}): ExecutiveAwardPolicy {
   if (!commercialEvaluationUnlocked) {
+    const status: ExecutiveAwardRecommendationStatus =
+      "Commercial Locked";
+
     return {
-      status: "Commercial Locked",
+      status,
       tone: "warning",
       priority: "high",
-      recommendation: awardRecommendation(
-        "Commercial Locked",
-      ),
+      recommendation:
+        resolveExecutiveAwardRecommendation(status),
     };
   }
 
   if (!hasRecommendedQuote) {
+    const status: ExecutiveAwardRecommendationStatus =
+      "Awaiting Recommendation";
+
     return {
-      status: "Awaiting Recommendation",
+      status,
       tone: "warning",
       priority: "high",
-      recommendation: awardRecommendation(
-        "Awaiting Recommendation",
-      ),
+      recommendation:
+        resolveExecutiveAwardRecommendation(status),
     };
   }
 
@@ -261,6 +278,7 @@ export function resolveExecutiveAwardPolicy({
     status,
     tone: resolveExecutiveScoreTone(score),
     priority: resolveExecutiveScorePriority(score),
-    recommendation: awardRecommendation(status),
+    recommendation:
+      resolveExecutiveAwardRecommendation(status),
   };
 }

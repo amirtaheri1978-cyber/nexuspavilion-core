@@ -478,6 +478,96 @@ describe("buildExecutiveSupplierRecommendation", () => {
     );
   });
 
+  it("attaches a canonical supplier decision profile without changing ranking", () => {
+    const result =
+      buildExecutiveSupplierRecommendation({
+        rfqSlug: "test-rfq",
+        rfqCategory: "Acoustical Ceilings",
+        rfqLocation: "Toronto",
+        procurementScope: "Supply and installation",
+        sourcingMethod: "invited",
+        commercialEvaluationUnlocked: true,
+        candidates: [
+          buildCandidate({
+            supplierCompanyId: "supplier-b",
+            supplierName: "Supplier B",
+            totalScore: 78,
+            awardConfidence: 78,
+            riskLevel: "Medium",
+            signalScores: [80, 80, 80, 80],
+          }),
+          buildCandidate({
+            supplierCompanyId: "supplier-a",
+            supplierName: "Supplier A",
+            totalScore: 91,
+            awardConfidence: 91,
+            riskLevel: "Low",
+            signalScores: [75, 75, 75, 75],
+          }),
+        ],
+      });
+
+    expect(
+      result.rankedSuppliers.map(
+        (supplier) => supplier.supplierCompanyId,
+      ),
+    ).toEqual(["supplier-a", "supplier-b"]);
+
+    expect(
+      result.rankedSuppliers[0].decisionProfile
+        .identity.supplierCompanyId,
+    ).toBe("supplier-a");
+
+    expect(
+      result.rankedSuppliers[0].decisionProfile
+        .decision.rank,
+    ).toBe(1);
+
+    expect(
+      result.rankedSuppliers[1].decisionProfile
+        .decision.rank,
+    ).toBe(2);
+  });
+
+  it("keeps decision profile outputs synchronized with canonical recommendation outputs", () => {
+    const result =
+      buildExecutiveSupplierRecommendation({
+        rfqSlug: "test-rfq",
+        rfqCategory: "Acoustical Ceilings",
+        rfqLocation: "Toronto",
+        procurementScope: "Supply and installation",
+        sourcingMethod: "invited",
+        commercialEvaluationUnlocked: true,
+        candidates: [
+          buildCandidate({
+            supplierCompanyId: "supplier-a",
+            supplierName: "Supplier A",
+            totalScore: 90,
+            awardConfidence: 90,
+            riskLevel: "Low",
+            signalScores: [90, 90, 90, 90],
+          }),
+        ],
+      });
+
+    const supplier = result.rankedSuppliers[0];
+    const profile = supplier.decisionProfile;
+
+    expect(profile.commercialPosition.score).toBe(
+      supplier.score,
+    );
+    expect(profile.decision.status).toBe(
+      supplier.status,
+    );
+    expect(profile.decision.confidence).toBe(
+      supplier.confidence,
+    );
+    expect(profile.decision.recommendation).toBe(
+      supplier.recommendation,
+    );
+    expect(profile.risks).toEqual(supplier.risks);
+  });
+
 });
 
 describe("buildUnavailableSupplierRecommendation", () => {

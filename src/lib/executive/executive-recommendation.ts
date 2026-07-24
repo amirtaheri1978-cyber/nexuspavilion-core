@@ -4,6 +4,7 @@ import {
   buildUnavailableConfidenceAssessment,
 } from "@/lib/executive/executive-confidence";
 import { buildExecutiveEvidenceAssessment } from "@/lib/executive/executive-evidence";
+import { buildExecutiveSupplierDecisionProfile } from "@/lib/executive/executive-supplier-decision-profile";
 import {
   resolveExecutiveAwardPolicy,
   resolveSupplierCandidatePolicy,
@@ -234,6 +235,25 @@ function buildSupplierRecommendation(
       riskLevel,
     });
 
+  const rationale = buildCandidateRationale(candidate);
+  const risks = buildCandidateRisks(candidate);
+
+  const decisionProfile =
+    buildExecutiveSupplierDecisionProfile({
+      candidate,
+      rank: 0,
+      score,
+      status: policy.status,
+      tone: policy.tone,
+      priority: policy.priority,
+      dataAvailability,
+      evidenceAssessment,
+      confidenceAssessment,
+      recommendation: policy.recommendation,
+      rationale,
+      risks,
+    });
+
   return {
     supplierCompanyId: candidate.supplierCompanyId,
     supplierName: candidate.supplierName,
@@ -247,9 +267,10 @@ function buildSupplierRecommendation(
     dataAvailability,
     dataCoverage,
     evidenceAssessment,
+    decisionProfile,
     recommendation: policy.recommendation,
-    rationale: buildCandidateRationale(candidate),
-    risks: buildCandidateRisks(candidate),
+    rationale,
+    risks,
     signals: candidate.signals,
   };
 }
@@ -272,10 +293,26 @@ function rankSupplierRecommendations(
         firstSupplier.dataCoverage
       );
     })
-    .map((supplier, index) => ({
-      ...supplier,
-      rank: index + 1,
-    }));
+    .map((supplier, index) => {
+      const rank = index + 1;
+
+      return {
+        ...supplier,
+        rank,
+        decisionProfile: {
+          ...supplier.decisionProfile,
+          decision: {
+            ...supplier.decisionProfile.decision,
+            rank,
+          },
+          executiveNarrative:
+            supplier.decisionProfile.executiveNarrative.replace(
+              /ranked #\d+/,
+              `ranked #${rank}`,
+            ),
+        },
+      };
+    });
 }
 
 export function buildExecutiveSupplierRecommendation({

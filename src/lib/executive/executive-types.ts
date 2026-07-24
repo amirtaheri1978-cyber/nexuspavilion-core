@@ -24,7 +24,6 @@ export type ExecutiveConfidenceLevel =
   | "low"
   | "unavailable";
 
-
 export type ExecutiveConfidenceFactorKey =
   | "evidence_coverage"
   | "decision_readiness"
@@ -51,7 +50,6 @@ export type ExecutiveConfidenceAssessment = {
   summary: string;
 };
 
-
 export type ExecutiveSupplierRecommendationStatus =
   | "Preferred Award Candidate"
   | "Qualified Executive Review"
@@ -73,15 +71,29 @@ export type ExecutiveAwardRecommendationStatus =
   | "Executive Review"
   | "Needs Validation";
 
-export type ExecutiveRecommendationPolicy = {
-  status:
-    | ExecutiveSupplierRecommendationStatus
-    | ExecutiveSupplierRecommendationResultStatus
-    | ExecutiveAwardRecommendationStatus;
+export type ExecutiveRecommendationStatus =
+  | ExecutiveSupplierRecommendationStatus
+  | ExecutiveSupplierRecommendationResultStatus
+  | ExecutiveAwardRecommendationStatus;
+
+export type ExecutiveRecommendationPolicy<
+  TStatus extends ExecutiveRecommendationStatus =
+    ExecutiveRecommendationStatus,
+> = {
+  status: TStatus;
   tone: ExecutiveTone;
   priority: ExecutivePriority;
   recommendation: string;
 };
+
+export type ExecutiveSupplierCandidatePolicy =
+  ExecutiveRecommendationPolicy<ExecutiveSupplierRecommendationStatus>;
+
+export type ExecutiveSupplierRecommendationResultPolicy =
+  ExecutiveRecommendationPolicy<ExecutiveSupplierRecommendationResultStatus>;
+
+export type ExecutiveAwardPolicy =
+  ExecutiveRecommendationPolicy<ExecutiveAwardRecommendationStatus>;
 
 export type ExecutiveResult = {
   score: number;
@@ -211,6 +223,53 @@ export type ExecutiveEvidenceAssessment = {
   decisionReadiness: ExecutiveDecisionReadiness;
 };
 
+export type ExecutiveSupplierDecisionProfileIdentity = {
+  supplierCompanyId: string;
+  supplierName: string;
+  category: string | null;
+  location: string | null;
+  networkRole: string | null;
+  avlStatus: string | null;
+  avlRating: number | null;
+};
+
+export type ExecutiveSupplierCommercialPosition = {
+  score: number | null;
+  currentQuoteAvailable: boolean;
+  quotedAmount: number | null;
+  awardConfidence: number | null;
+  riskLevel: string | null;
+  submittedQuoteCount: number;
+  awardedQuoteCount: number;
+  unsuccessfulQuoteCount: number;
+  totalQuotedValue: number;
+  totalAwardedValue: number;
+};
+
+export type ExecutiveSupplierDecisionSummary = {
+  rank: number;
+  status: ExecutiveSupplierRecommendationStatus;
+  tone: ExecutiveTone;
+  priority: ExecutivePriority;
+  dataAvailability: ExecutiveDataAvailability;
+  decisionReadiness: ExecutiveDecisionReadiness;
+  confidence: ExecutiveConfidenceLevel;
+  confidenceScore: number | null;
+  evidenceCoverage: number;
+  recommendation: string;
+};
+
+export type ExecutiveSupplierDecisionProfile = {
+  identity: ExecutiveSupplierDecisionProfileIdentity;
+  commercialPosition: ExecutiveSupplierCommercialPosition;
+  decision: ExecutiveSupplierDecisionSummary;
+  strengths: string[];
+  risks: ExecutiveRisk[];
+  evidenceGaps: string[];
+  nextActions: string[];
+  executiveNarrative: string;
+};
+
 export type ExecutiveSupplierRecommendationCandidate = {
   supplierCompanyId: string;
   supplierName: string;
@@ -233,7 +292,7 @@ export type ExecutiveSupplierRecommendation = {
   supplierName: string;
   rank: number;
   score: number | null;
-  status: string;
+  status: ExecutiveSupplierRecommendationStatus;
   tone: ExecutiveTone;
   priority: ExecutivePriority;
   confidence: ExecutiveConfidenceLevel;
@@ -241,6 +300,7 @@ export type ExecutiveSupplierRecommendation = {
   dataAvailability: ExecutiveDataAvailability;
   dataCoverage: number;
   evidenceAssessment: ExecutiveEvidenceAssessment;
+  decisionProfile: ExecutiveSupplierDecisionProfile;
   recommendation: string;
   rationale: string[];
   risks: ExecutiveRisk[];
@@ -258,7 +318,7 @@ export type ExecutiveSupplierRecommendationInput = {
 };
 
 export type ExecutiveSupplierRecommendationResult = {
-  status: string;
+  status: ExecutiveSupplierRecommendationResultStatus;
   availability: ExecutiveDataAvailability;
   confidence: ExecutiveConfidenceLevel;
   confidenceAssessment: ExecutiveConfidenceAssessment;
