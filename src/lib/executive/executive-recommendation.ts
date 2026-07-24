@@ -1,7 +1,11 @@
+import {
+  buildDecisionConfidenceAssessment,
+  buildSupplierConfidenceAssessment,
+  buildUnavailableConfidenceAssessment,
+} from "@/lib/executive/executive-confidence";
 import { buildExecutiveEvidenceAssessment } from "@/lib/executive/executive-evidence";
 
 import type {
-  ExecutiveConfidenceLevel,
   ExecutiveDataAvailability,
   ExecutiveIntelligenceInput,
   ExecutivePriority,
@@ -31,25 +35,6 @@ function priority(score: number): ExecutivePriority {
   if (score >= 55) return "high";
 
   return "critical";
-}
-
-function confidenceFromScore(
-  score: number | null,
-  dataCoverage: number,
-): ExecutiveConfidenceLevel {
-  if (score === null || dataCoverage < MINIMUM_SUFFICIENT_DATA_COVERAGE) {
-    return "low";
-  }
-
-  if (score >= 85 && dataCoverage >= 75) {
-    return "high";
-  }
-
-  if (score >= 70 && dataCoverage >= 60) {
-    return "medium";
-  }
-
-  return "low";
 }
 
 function availabilityFromCoverage(
@@ -302,6 +287,17 @@ function buildSupplierRecommendation(
 
   const resolvedScore = score ?? 0;
 
+  const confidenceAssessment =
+    buildSupplierConfidenceAssessment({
+      evidenceAssessment,
+      signals: candidate.signals,
+      submittedQuoteCount:
+        candidate.submittedQuoteCount,
+      awardedQuoteCount:
+        candidate.awardedQuoteCount,
+      riskLevel,
+    });
+
   return {
     supplierCompanyId: candidate.supplierCompanyId,
     supplierName: candidate.supplierName,
@@ -316,10 +312,8 @@ function buildSupplierRecommendation(
       dataAvailability === "available"
         ? priority(resolvedScore)
         : "high",
-    confidence: confidenceFromScore(
-      score,
-      dataCoverage,
-    ),
+    confidence: confidenceAssessment.level,
+    confidenceAssessment,
     dataAvailability,
     dataCoverage,
     evidenceAssessment,
@@ -354,34 +348,6 @@ function rankSupplierRecommendations(
     }));
 }
 
-function getResultConfidence(
-  recommendedSupplier: ExecutiveSupplierRecommendation | null,
-  suppliersWithSufficientData: number,
-): ExecutiveConfidenceLevel {
-  if (
-    !recommendedSupplier ||
-    suppliersWithSufficientData === 0
-  ) {
-    return "unavailable";
-  }
-
-  if (
-    recommendedSupplier.confidence === "high" &&
-    suppliersWithSufficientData >= 3
-  ) {
-    return "high";
-  }
-
-  if (
-    recommendedSupplier.confidence !== "low" &&
-    suppliersWithSufficientData >= 2
-  ) {
-    return "medium";
-  }
-
-  return "low";
-}
-
 export function buildExecutiveSupplierRecommendation({
   commercialEvaluationUnlocked,
   candidates,
@@ -391,6 +357,10 @@ export function buildExecutiveSupplierRecommendation({
       status: "Commercial Evaluation Protected",
       availability: "not_operational",
       confidence: "unavailable",
+      confidenceAssessment:
+        buildUnavailableConfidenceAssessment(
+          "Decision confidence is unavailable while commercial evaluation remains protected.",
+        ),
       recommendation:
         "Supplier ranking remains protected until commercial evaluation is authorized.",
       recommendedSupplier: null,
@@ -405,6 +375,10 @@ export function buildExecutiveSupplierRecommendation({
       status: "No Supplier Candidates",
       availability: "insufficient_data",
       confidence: "unavailable",
+      confidenceAssessment:
+        buildUnavailableConfidenceAssessment(
+          "Decision confidence is unavailable because no eligible supplier candidates are available.",
+        ),
       recommendation:
         "No eligible supplier candidates are available for executive ranking.",
       recommendedSupplier: null,
@@ -430,10 +404,12 @@ export function buildExecutiveSupplierRecommendation({
         supplier.dataAvailability === "available",
     ) ?? null;
 
-  const confidence = getResultConfidence(
-    recommendedSupplier,
-    suppliersWithSufficientData,
-  );
+  const confidenceAssessment =
+    buildDecisionConfidenceAssessment({
+      recommendedSupplier,
+      rankedSuppliers,
+      suppliersWithSufficientData,
+    });
 
   return {
     status: recommendedSupplier
@@ -442,7 +418,8 @@ export function buildExecutiveSupplierRecommendation({
     availability: recommendedSupplier
       ? "available"
       : "insufficient_data",
-    confidence,
+    confidence: confidenceAssessment.level,
+    confidenceAssessment,
     recommendation: recommendedSupplier
       ? `${recommendedSupplier.supplierName} is the leading evaluated supplier. ${recommendedSupplier.recommendation}`
       : "Strengthen supplier, commercial, and governance evidence before requesting an executive award recommendation.",
@@ -458,6 +435,10 @@ export function buildUnavailableSupplierRecommendation(): ExecutiveSupplierRecom
     status: "Supplier Intelligence Not Connected",
     availability: "not_operational",
     confidence: "unavailable",
+    confidenceAssessment:
+      buildUnavailableConfidenceAssessment(
+        "Decision confidence is unavailable because supplier candidate intelligence is not connected.",
+      ),
     recommendation:
       "Supplier candidate intelligence has not yet been connected to this RFQ evaluation.",
     recommendedSupplier: null,

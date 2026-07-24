@@ -340,6 +340,82 @@ describe("buildExecutiveSupplierRecommendation", () => {
     ).toBe(36);
   });
 
+  it("derives supplier confidence from evidence rather than supplier score", () => {
+    const candidate = buildCandidate({
+      supplierCompanyId: "supplier-a",
+      supplierName: "Supplier A",
+      totalScore: 96,
+      awardConfidence: 96,
+      riskLevel: "Low",
+      signalScores: [95, 95, 95, 95],
+    });
+
+    const result =
+      buildExecutiveSupplierRecommendation({
+        rfqSlug: "test-rfq",
+        rfqCategory: "Acoustical Ceilings",
+        rfqLocation: "Toronto",
+        procurementScope: "Supply and installation",
+        sourcingMethod: "invited",
+        commercialEvaluationUnlocked: true,
+        candidates: [candidate],
+      });
+
+    expect(result.rankedSuppliers[0].score).toBe(96);
+
+    expect(
+      result.rankedSuppliers[0].confidence,
+    ).toBe("low");
+
+    expect(
+      result.rankedSuppliers[0]
+        .confidenceAssessment.score,
+    ).toBeLessThan(65);
+  });
+
+  it("uses decision margin for result confidence without changing ranking", () => {
+    const result =
+      buildExecutiveSupplierRecommendation({
+        rfqSlug: "test-rfq",
+        rfqCategory: "Acoustical Ceilings",
+        rfqLocation: "Toronto",
+        procurementScope: "Supply and installation",
+        sourcingMethod: "invited",
+        commercialEvaluationUnlocked: true,
+        candidates: [
+          buildCandidate({
+            supplierCompanyId: "supplier-b",
+            supplierName: "Supplier B",
+            totalScore: 72,
+            awardConfidence: 72,
+            riskLevel: "Low",
+            signalScores: [80, 80, 80, 80],
+          }),
+          buildCandidate({
+            supplierCompanyId: "supplier-a",
+            supplierName: "Supplier A",
+            totalScore: 91,
+            awardConfidence: 91,
+            riskLevel: "Low",
+            signalScores: [80, 80, 80, 80],
+          }),
+        ],
+      });
+
+    expect(
+      result.rankedSuppliers.map(
+        (supplier) => supplier.supplierCompanyId,
+      ),
+    ).toEqual(["supplier-a", "supplier-b"]);
+
+    expect(
+      result.confidenceAssessment.factors.some(
+        (factor) =>
+          factor.key === "decision_margin",
+      ),
+    ).toBe(true);
+  });
+
 });
 
 describe("buildUnavailableSupplierRecommendation", () => {

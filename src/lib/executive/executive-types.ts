@@ -24,6 +24,33 @@ export type ExecutiveConfidenceLevel =
   | "low"
   | "unavailable";
 
+
+export type ExecutiveConfidenceFactorKey =
+  | "evidence_coverage"
+  | "decision_readiness"
+  | "historical_sample"
+  | "signal_consistency"
+  | "procurement_risk"
+  | "supplier_confidence"
+  | "decision_margin"
+  | "competitive_depth";
+
+export type ExecutiveConfidenceFactor = {
+  key: ExecutiveConfidenceFactorKey;
+  label: string;
+  score: number | null;
+  weight: number;
+  availability: ExecutiveDataAvailability;
+  summary: string;
+};
+
+export type ExecutiveConfidenceAssessment = {
+  score: number | null;
+  level: ExecutiveConfidenceLevel;
+  factors: ExecutiveConfidenceFactor[];
+  summary: string;
+};
+
 export type ExecutiveResult = {
   score: number;
   status: string;
@@ -178,6 +205,7 @@ export type ExecutiveSupplierRecommendation = {
   tone: ExecutiveTone;
   priority: ExecutivePriority;
   confidence: ExecutiveConfidenceLevel;
+  confidenceAssessment: ExecutiveConfidenceAssessment;
   dataAvailability: ExecutiveDataAvailability;
   dataCoverage: number;
   evidenceAssessment: ExecutiveEvidenceAssessment;
@@ -201,6 +229,7 @@ export type ExecutiveSupplierRecommendationResult = {
   status: string;
   availability: ExecutiveDataAvailability;
   confidence: ExecutiveConfidenceLevel;
+  confidenceAssessment: ExecutiveConfidenceAssessment;
   recommendation: string;
   recommendedSupplier: ExecutiveSupplierRecommendation | null;
   rankedSuppliers: ExecutiveSupplierRecommendation[];
