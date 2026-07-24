@@ -188,11 +188,19 @@ export type ExecutiveIntelligenceInput = {
         amountNumber: number;
       }
     | null;
+
+  /**
+   * Optional during the first integration release so existing RFQ consumers
+   * remain backward compatible. Once candidate assembly is connected at the
+   * RFQ page boundary, this input can become required.
+   */
+  supplierRecommendationInput?: ExecutiveSupplierRecommendationInput;
 };
 
 export type ExecutiveIntelligence = {
   readiness: ExecutiveReadiness;
   recommendation: ExecutiveResult;
+  supplierRecommendation: ExecutiveSupplierRecommendationResult;
   risks: ExecutiveRisk[];
   actions: ExecutiveAction[];
   scenarios: ExecutiveScenario[];
