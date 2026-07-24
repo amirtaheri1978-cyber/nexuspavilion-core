@@ -114,6 +114,44 @@ export type ExecutiveSupplierSignal = {
   evidence: string[];
 };
 
+export type ExecutiveEvidenceDomainKey =
+  | "commercial"
+  | "historical"
+  | "governance"
+  | "operational_fit";
+
+export type ExecutiveEvidenceDomainReadiness =
+  | "ready"
+  | "partial"
+  | "missing";
+
+export type ExecutiveDecisionReadiness =
+  | "ready"
+  | "review_required"
+  | "insufficient_evidence";
+
+export type ExecutiveEvidenceDomain = {
+  key: ExecutiveEvidenceDomainKey;
+  label: string;
+  availableSignalCount: number;
+  totalSignalCount: number;
+  coverage: number;
+  readiness: ExecutiveEvidenceDomainReadiness;
+  availableSignalKeys: ExecutiveSupplierSignalKey[];
+  missingSignalKeys: ExecutiveSupplierSignalKey[];
+};
+
+export type ExecutiveEvidenceAssessment = {
+  coverage: number;
+  availableSignalCount: number;
+  totalSignalCount: number;
+  domains: ExecutiveEvidenceDomain[];
+  missingSignalKeys: ExecutiveSupplierSignalKey[];
+  missingFoundationalSignalKeys: ExecutiveSupplierSignalKey[];
+  missingGovernanceSignalKeys: ExecutiveSupplierSignalKey[];
+  decisionReadiness: ExecutiveDecisionReadiness;
+};
+
 export type ExecutiveSupplierRecommendationCandidate = {
   supplierCompanyId: string;
   supplierName: string;
@@ -142,6 +180,7 @@ export type ExecutiveSupplierRecommendation = {
   confidence: ExecutiveConfidenceLevel;
   dataAvailability: ExecutiveDataAvailability;
   dataCoverage: number;
+  evidenceAssessment: ExecutiveEvidenceAssessment;
   recommendation: string;
   rationale: string[];
   risks: ExecutiveRisk[];

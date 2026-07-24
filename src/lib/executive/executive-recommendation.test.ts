@@ -265,6 +265,81 @@ describe("buildExecutiveSupplierRecommendation", () => {
       "insufficient_data",
     );
   });
+  it("adds domain-aware evidence assessment without changing supplier ranking", () => {
+    const result =
+      buildExecutiveSupplierRecommendation({
+        rfqSlug: "test-rfq",
+        rfqCategory: "Acoustical Ceilings",
+        rfqLocation: "Toronto",
+        procurementScope: "Supply and installation",
+        sourcingMethod: "invited",
+        commercialEvaluationUnlocked: true,
+        candidates: [
+          buildCandidate({
+            supplierCompanyId: "supplier-b",
+            supplierName: "Supplier B",
+            totalScore: 80,
+            awardConfidence: 80,
+            riskLevel: "Low",
+            signalScores: [95, 95, 95, 95],
+          }),
+          buildCandidate({
+            supplierCompanyId: "supplier-a",
+            supplierName: "Supplier A",
+            totalScore: 91,
+            awardConfidence: 91,
+            riskLevel: "Low",
+            signalScores: [75, 75, 75, 75],
+          }),
+        ],
+      });
+
+    expect(
+      result.rankedSuppliers.map(
+        (supplier) => supplier.supplierCompanyId,
+      ),
+    ).toEqual(["supplier-a", "supplier-b"]);
+
+    expect(
+      result.rankedSuppliers[0].evidenceAssessment
+        .totalSignalCount,
+    ).toBe(11);
+
+    expect(
+      result.rankedSuppliers[0].evidenceAssessment
+        .decisionReadiness,
+    ).toBe("insufficient_evidence");
+  });
+
+  it("keeps legacy data coverage independent from canonical evidence taxonomy coverage", () => {
+    const result =
+      buildExecutiveSupplierRecommendation({
+        rfqSlug: "test-rfq",
+        rfqCategory: "Acoustical Ceilings",
+        rfqLocation: "Toronto",
+        procurementScope: "Supply and installation",
+        sourcingMethod: "invited",
+        commercialEvaluationUnlocked: true,
+        candidates: [
+          buildCandidate({
+            supplierCompanyId: "supplier-a",
+            supplierName: "Supplier A",
+            totalScore: 91,
+            awardConfidence: 91,
+            riskLevel: "Low",
+            signalScores: [90, 90, 90, 90],
+          }),
+        ],
+      });
+
+    const supplier = result.rankedSuppliers[0];
+
+    expect(supplier.dataCoverage).toBe(100);
+    expect(
+      supplier.evidenceAssessment.coverage,
+    ).toBe(36);
+  });
+
 });
 
 describe("buildUnavailableSupplierRecommendation", () => {

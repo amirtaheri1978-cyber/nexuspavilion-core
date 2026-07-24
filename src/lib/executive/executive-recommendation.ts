@@ -1,3 +1,5 @@
+import { buildExecutiveEvidenceAssessment } from "@/lib/executive/executive-evidence";
+
 import type {
   ExecutiveConfidenceLevel,
   ExecutiveDataAvailability,
@@ -276,6 +278,14 @@ function buildSupplierRecommendation(
     candidate.signals,
   );
 
+  const evidenceAssessment =
+    buildExecutiveEvidenceAssessment({
+      signals: candidate.signals,
+      hasCurrentQuote: candidate.currentQuote !== null,
+      riskLevel:
+        candidate.currentQuote?.riskLevel ?? null,
+    });
+
   const score = resolveCandidateScore(candidate);
 
   const dataAvailability =
@@ -312,6 +322,7 @@ function buildSupplierRecommendation(
     ),
     dataAvailability,
     dataCoverage,
+    evidenceAssessment,
     recommendation: getCandidateRecommendation(status),
     rationale: buildCandidateRationale(candidate),
     risks: buildCandidateRisks(candidate),
