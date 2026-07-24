@@ -1,3 +1,7 @@
+import {
+  EXECUTIVE_EVIDENCE_THRESHOLDS,
+} from "@/lib/executive/executive-config";
+
 import type {
   ExecutiveDecisionReadiness,
   ExecutiveEvidenceAssessment,
@@ -156,7 +160,8 @@ function resolveDecisionReadiness({
     !hasCurrentQuote ||
     missingFoundationalSignalKeys.length > 0 ||
     !commercialDomain ||
-    commercialDomain.coverage < 50
+    commercialDomain.coverage <
+      EXECUTIVE_EVIDENCE_THRESHOLDS.minimumCommercialDomainCoverage
   ) {
     return "insufficient_evidence";
   }

@@ -1,3 +1,7 @@
+import {
+  EXECUTIVE_SCORE_THRESHOLDS,
+} from "@/lib/executive/executive-config";
+
 import type {
   ExecutiveAwardPolicy,
   ExecutiveAwardRecommendationStatus,
@@ -20,15 +24,18 @@ type SupplierRecommendationResultState =
 export function resolveExecutiveScoreTone(
   score: number,
 ): ExecutiveTone {
-  if (score >= 85) {
+  if (score >= EXECUTIVE_SCORE_THRESHOLDS.preferred) {
     return "success";
   }
 
-  if (score >= 70) {
+  if (
+    score >=
+    EXECUTIVE_SCORE_THRESHOLDS.qualifiedReview
+  ) {
     return "info";
   }
 
-  if (score >= 55) {
+  if (score >= EXECUTIVE_SCORE_THRESHOLDS.conditional) {
     return "warning";
   }
 
@@ -38,15 +45,18 @@ export function resolveExecutiveScoreTone(
 export function resolveExecutiveScorePriority(
   score: number,
 ): ExecutivePriority {
-  if (score >= 85) {
+  if (score >= EXECUTIVE_SCORE_THRESHOLDS.preferred) {
     return "low";
   }
 
-  if (score >= 70) {
+  if (
+    score >=
+    EXECUTIVE_SCORE_THRESHOLDS.qualifiedReview
+  ) {
     return "medium";
   }
 
-  if (score >= 55) {
+  if (score >= EXECUTIVE_SCORE_THRESHOLDS.conditional) {
     return "high";
   }
 
@@ -100,13 +110,18 @@ export function resolveSupplierCandidatePolicy({
   let status: ExecutiveSupplierRecommendationStatus;
 
   if (
-    score >= 85 &&
+    score >= EXECUTIVE_SCORE_THRESHOLDS.preferred &&
     riskLevel?.trim().toLowerCase() === "low"
   ) {
     status = "Preferred Award Candidate";
-  } else if (score >= 70) {
+  } else if (
+    score >=
+    EXECUTIVE_SCORE_THRESHOLDS.qualifiedReview
+  ) {
     status = "Qualified Executive Review";
-  } else if (score >= 55) {
+  } else if (
+    score >= EXECUTIVE_SCORE_THRESHOLDS.conditional
+  ) {
     status = "Conditional Consideration";
   } else {
     status = "Not Recommended";
@@ -266,11 +281,13 @@ export function resolveExecutiveAwardPolicy({
     "Executive Review";
 
   if (
-    score >= 85 &&
+    score >= EXECUTIVE_SCORE_THRESHOLDS.preferred &&
     riskLevel?.trim().toLowerCase() === "low"
   ) {
     status = "Award Ready";
-  } else if (score < 55) {
+  } else if (
+    score < EXECUTIVE_SCORE_THRESHOLDS.conditional
+  ) {
     status = "Needs Validation";
   }
 

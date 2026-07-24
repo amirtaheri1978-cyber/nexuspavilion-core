@@ -1,4 +1,7 @@
 import {
+  EXECUTIVE_EVIDENCE_THRESHOLDS,
+} from "@/lib/executive/executive-config";
+import {
   buildDecisionConfidenceAssessment,
   buildSupplierConfidenceAssessment,
   buildUnavailableConfidenceAssessment,
@@ -23,13 +26,11 @@ import type {
   ExecutiveSupplierSignal,
 } from "@/lib/executive/executive-types";
 
-const MINIMUM_SUFFICIENT_DATA_COVERAGE = 50;
-
-
 function availabilityFromCoverage(
   dataCoverage: number,
 ): ExecutiveDataAvailability {
-  return dataCoverage >= MINIMUM_SUFFICIENT_DATA_COVERAGE
+  return dataCoverage >=
+    EXECUTIVE_EVIDENCE_THRESHOLDS.minimumSufficientCoverage
     ? "available"
     : "insufficient_data";
 }

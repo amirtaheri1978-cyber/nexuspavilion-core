@@ -1,3 +1,17 @@
+import {
+  EXECUTIVE_AWARD_SUPPORT,
+  EXECUTIVE_COMPETITIVE_DEPTH,
+  EXECUTIVE_CONFIDENCE_THRESHOLDS,
+  EXECUTIVE_CONFIDENCE_WEIGHTS,
+  EXECUTIVE_DECISION_MARGIN_SCORES,
+  EXECUTIVE_DECISION_MARGIN_THRESHOLDS,
+  EXECUTIVE_HISTORICAL_SAMPLE_SCORES,
+  EXECUTIVE_HISTORICAL_SAMPLE_THRESHOLDS,
+  EXECUTIVE_READINESS_SCORES,
+  EXECUTIVE_RISK_SCORES,
+  EXECUTIVE_SIGNAL_CONSISTENCY,
+} from "@/lib/executive/executive-config";
+
 import type {
   ExecutiveConfidenceAssessment,
   ExecutiveConfidenceFactor,
@@ -18,11 +32,11 @@ function levelFromScore(
     return "unavailable";
   }
 
-  if (score >= 80) {
+  if (score >= EXECUTIVE_CONFIDENCE_THRESHOLDS.high) {
     return "high";
   }
 
-  if (score >= 65) {
+  if (score >= EXECUTIVE_CONFIDENCE_THRESHOLDS.medium) {
     return "medium";
   }
 
@@ -67,14 +81,14 @@ function readinessScore(
   readiness: ExecutiveEvidenceAssessment["decisionReadiness"],
 ) {
   if (readiness === "ready") {
-    return 100;
+    return EXECUTIVE_READINESS_SCORES.ready;
   }
 
   if (readiness === "review_required") {
-    return 60;
+    return EXECUTIVE_READINESS_SCORES.reviewRequired;
   }
 
-  return 20;
+  return EXECUTIVE_READINESS_SCORES.insufficientEvidence;
 }
 
 function historicalSampleScore({
@@ -85,25 +99,31 @@ function historicalSampleScore({
   awardedQuoteCount: number;
 }) {
   if (submittedQuoteCount <= 0) {
-    return 0;
+    return EXECUTIVE_HISTORICAL_SAMPLE_SCORES.unavailable;
   }
 
   const submissionScore =
-    submittedQuoteCount >= 8
-      ? 100
-      : submittedQuoteCount >= 5
-        ? 85
-        : submittedQuoteCount >= 3
-          ? 70
-          : submittedQuoteCount === 2
-            ? 55
-            : 35;
+    submittedQuoteCount >=
+    EXECUTIVE_HISTORICAL_SAMPLE_THRESHOLDS.extensive
+      ? EXECUTIVE_HISTORICAL_SAMPLE_SCORES.extensive
+      : submittedQuoteCount >=
+          EXECUTIVE_HISTORICAL_SAMPLE_THRESHOLDS.strong
+        ? EXECUTIVE_HISTORICAL_SAMPLE_SCORES.strong
+        : submittedQuoteCount >=
+            EXECUTIVE_HISTORICAL_SAMPLE_THRESHOLDS.established
+          ? EXECUTIVE_HISTORICAL_SAMPLE_SCORES.established
+          : submittedQuoteCount ===
+              EXECUTIVE_HISTORICAL_SAMPLE_THRESHOLDS.limited
+            ? EXECUTIVE_HISTORICAL_SAMPLE_SCORES.limited
+            : EXECUTIVE_HISTORICAL_SAMPLE_SCORES.minimal;
 
   const awardSupport =
-    awardedQuoteCount >= 3
-      ? 10
-      : awardedQuoteCount >= 1
-        ? 5
+    awardedQuoteCount >=
+    EXECUTIVE_AWARD_SUPPORT.establishedAwardCount
+      ? EXECUTIVE_AWARD_SUPPORT.establishedAwardScore
+      : awardedQuoteCount >=
+          EXECUTIVE_AWARD_SUPPORT.initialAwardCount
+        ? EXECUTIVE_AWARD_SUPPORT.initialAwardScore
         : 0;
 
   return clampScore(submissionScore + awardSupport);
@@ -120,8 +140,11 @@ function signalConsistencyScore(
     )
     .map((signal) => signal.score as number);
 
-  if (scores.length < 2) {
-    return 25;
+  if (
+    scores.length <
+    EXECUTIVE_SIGNAL_CONSISTENCY.minimumSignalCount
+  ) {
+    return EXECUTIVE_SIGNAL_CONSISTENCY.insufficientScore;
   }
 
   const average =
@@ -140,7 +163,11 @@ function signalConsistencyScore(
 
   const standardDeviation = Math.sqrt(variance);
 
-  return clampScore(100 - standardDeviation * 3);
+  return clampScore(
+    100 -
+      standardDeviation *
+        EXECUTIVE_SIGNAL_CONSISTENCY.standardDeviationMultiplier,
+  );
 }
 
 function procurementRiskScore(
@@ -154,14 +181,14 @@ function procurementRiskScore(
     riskLevel.trim().toLowerCase();
 
   if (normalizedRiskLevel === "low") {
-    return 100;
+    return EXECUTIVE_RISK_SCORES.low;
   }
 
   if (normalizedRiskLevel.includes("high")) {
-    return 20;
+    return EXECUTIVE_RISK_SCORES.high;
   }
 
-  return 60;
+  return EXECUTIVE_RISK_SCORES.medium;
 }
 
 function buildAssessment({
@@ -210,7 +237,9 @@ export function buildSupplierConfidenceAssessment({
       key: "evidence_coverage",
       label: "Evidence Coverage",
       score: evidenceAssessment.coverage,
-      weight: 35,
+      weight:
+        EXECUTIVE_CONFIDENCE_WEIGHTS.supplier
+          .evidenceCoverage,
       availability: "available",
       summary: `${evidenceAssessment.availableSignalCount} of ${evidenceAssessment.totalSignalCount} canonical evidence signals are available.`,
     },
@@ -220,7 +249,9 @@ export function buildSupplierConfidenceAssessment({
       score: readinessScore(
         evidenceAssessment.decisionReadiness,
       ),
-      weight: 25,
+      weight:
+        EXECUTIVE_CONFIDENCE_WEIGHTS.supplier
+          .decisionReadiness,
       availability: "available",
       summary: `Evidence readiness is ${evidenceAssessment.decisionReadiness.replaceAll("_", " ")}.`,
     },
@@ -231,7 +262,9 @@ export function buildSupplierConfidenceAssessment({
         submittedQuoteCount,
         awardedQuoteCount,
       }),
-      weight: 15,
+      weight:
+        EXECUTIVE_CONFIDENCE_WEIGHTS.supplier
+          .historicalSample,
       availability:
         submittedQuoteCount > 0
           ? "available"
@@ -245,13 +278,16 @@ export function buildSupplierConfidenceAssessment({
       key: "signal_consistency",
       label: "Signal Consistency",
       score: signalConsistencyScore(signals),
-      weight: 15,
+      weight:
+        EXECUTIVE_CONFIDENCE_WEIGHTS.supplier
+          .signalConsistency,
       availability:
         signals.filter(
           (signal) =>
             signal.availability === "available" &&
             signal.score !== null,
-        ).length >= 2
+        ).length >=
+        EXECUTIVE_SIGNAL_CONSISTENCY.minimumSignalCount
           ? "available"
           : "insufficient_data",
       summary:
@@ -261,7 +297,9 @@ export function buildSupplierConfidenceAssessment({
       key: "procurement_risk",
       label: "Procurement Risk Confidence",
       score: riskScore,
-      weight: 10,
+      weight:
+        EXECUTIVE_CONFIDENCE_WEIGHTS.supplier
+          .procurementRisk,
       availability:
         riskScore === null
           ? "insufficient_data"
@@ -300,7 +338,8 @@ function decisionMarginScore(
 
   if (secondScore === null) {
     return {
-      score: 25,
+      score:
+        EXECUTIVE_DECISION_MARGIN_SCORES.singleSupplier,
       availability: "insufficient_data" as const,
       summary:
         "Only one sufficiently scored supplier is available, so decision separation cannot be validated.",
@@ -313,15 +352,19 @@ function decisionMarginScore(
   );
 
   const score =
-    margin >= 15
-      ? 100
-      : margin >= 10
-        ? 85
-        : margin >= 5
-          ? 70
-          : margin >= 2
-            ? 55
-            : 35;
+    margin >=
+    EXECUTIVE_DECISION_MARGIN_THRESHOLDS.decisive
+      ? EXECUTIVE_DECISION_MARGIN_SCORES.decisive
+      : margin >=
+          EXECUTIVE_DECISION_MARGIN_THRESHOLDS.strong
+        ? EXECUTIVE_DECISION_MARGIN_SCORES.strong
+        : margin >=
+            EXECUTIVE_DECISION_MARGIN_THRESHOLDS.meaningful
+          ? EXECUTIVE_DECISION_MARGIN_SCORES.meaningful
+          : margin >=
+              EXECUTIVE_DECISION_MARGIN_THRESHOLDS.narrow
+            ? EXECUTIVE_DECISION_MARGIN_SCORES.narrow
+            : EXECUTIVE_DECISION_MARGIN_SCORES.minimal;
 
   return {
     score,
@@ -337,19 +380,28 @@ function competitiveDepthScore(
     return null;
   }
 
-  if (suppliersWithSufficientData >= 4) {
-    return 100;
+  if (
+    suppliersWithSufficientData >=
+    EXECUTIVE_COMPETITIVE_DEPTH.strongSupplierCount
+  ) {
+    return EXECUTIVE_COMPETITIVE_DEPTH.strongScore;
   }
 
-  if (suppliersWithSufficientData === 3) {
-    return 85;
+  if (
+    suppliersWithSufficientData ===
+    EXECUTIVE_COMPETITIVE_DEPTH.establishedSupplierCount
+  ) {
+    return EXECUTIVE_COMPETITIVE_DEPTH.establishedScore;
   }
 
-  if (suppliersWithSufficientData === 2) {
-    return 65;
+  if (
+    suppliersWithSufficientData ===
+    EXECUTIVE_COMPETITIVE_DEPTH.minimumComparableSupplierCount
+  ) {
+    return EXECUTIVE_COMPETITIVE_DEPTH.comparableScore;
   }
 
-  return 35;
+  return EXECUTIVE_COMPETITIVE_DEPTH.limitedScore;
 }
 
 export function buildDecisionConfidenceAssessment({
@@ -386,7 +438,9 @@ export function buildDecisionConfidenceAssessment({
         score:
           recommendedSupplier.confidenceAssessment
             .score,
-        weight: 55,
+        weight:
+          EXECUTIVE_CONFIDENCE_WEIGHTS.decision
+            .supplierConfidence,
         availability:
           recommendedSupplier.confidenceAssessment
             .score === null
@@ -400,7 +454,9 @@ export function buildDecisionConfidenceAssessment({
         key: "decision_margin",
         label: "Decision Margin",
         score: margin.score,
-        weight: 25,
+        weight:
+          EXECUTIVE_CONFIDENCE_WEIGHTS.decision
+            .decisionMargin,
         availability: margin.availability,
         summary: margin.summary,
       },
@@ -408,11 +464,14 @@ export function buildDecisionConfidenceAssessment({
         key: "competitive_depth",
         label: "Competitive Depth",
         score: depthScore,
-        weight: 20,
+        weight:
+          EXECUTIVE_CONFIDENCE_WEIGHTS.decision
+            .competitiveDepth,
         availability:
           depthScore === null
             ? "insufficient_data"
-            : suppliersWithSufficientData >= 2
+            : suppliersWithSufficientData >=
+                EXECUTIVE_COMPETITIVE_DEPTH.minimumComparableSupplierCount
               ? "available"
               : "insufficient_data",
         summary: `${suppliersWithSufficientData} supplier${suppliersWithSufficientData === 1 ? "" : "s"} have sufficient evidence for executive comparison.`,
