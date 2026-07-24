@@ -35,6 +35,33 @@ export const EXECUTIVE_READINESS_SCORES = {
   insufficientEvidence: 20,
 } as const;
 
+export const EXECUTIVE_DECISION_READINESS_WEIGHTS = {
+  health: 0.34,
+  quoteCoverage: 0.22,
+  documentCoverage: 0.18,
+  governanceTrail: 0.1,
+  commercialAccess: 0.08,
+  recommendationAvailability: 0.08,
+} as const;
+
+export const EXECUTIVE_DECISION_READINESS_SIGNALS = {
+  quoteCoverageIncrement: 28,
+  documentCoverageIncrement: 24,
+  governanceBaseline: 55,
+  governanceIncrement: 12,
+  commercialAccessUnlockedScore: 100,
+  commercialAccessLockedScore: 45,
+  recommendationAvailableScore: 100,
+  recommendationUnavailableScore: 35,
+} as const;
+
+export const EXECUTIVE_READINESS_CONTROL_THRESHOLDS = {
+  minimumHealthScore: 72,
+  minimumQuoteCount: 1,
+  minimumDocumentCount: 1,
+  minimumAddendaCount: 1,
+} as const;
+
 export const EXECUTIVE_HISTORICAL_SAMPLE_THRESHOLDS = {
   extensive: 8,
   strong: 5,

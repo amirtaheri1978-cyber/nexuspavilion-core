@@ -1,63 +1,93 @@
 import {
+  EXECUTIVE_READINESS_CONTROL_THRESHOLDS,
+} from "@/lib/executive/executive-config";
+
+import {
   calculateDecisionReadiness,
 } from "@/lib/executive/decision-readiness";
 
+import {
+  EXECUTIVE_SCORE_THRESHOLDS,
+} from "@/lib/executive/executive-scoring";
+
 import type {
-ExecutiveIntelligenceInput,
-ExecutivePriority,
-ExecutiveReadiness,
-ExecutiveTone,
+  ExecutiveIntelligenceInput,
+  ExecutivePriority,
+  ExecutiveReadiness,
+  ExecutiveTone,
 } from "@/lib/executive/executive-types";
 
 function mapScoreToTone(score: number): ExecutiveTone {
-if (score >= 85) return "success";
-if (score >= 70) return "info";
-if (score >= 55) return "warning";
+  if (score >= EXECUTIVE_SCORE_THRESHOLDS.excellent) {
+    return "success";
+  }
 
-return "risk";
+  if (score >= EXECUTIVE_SCORE_THRESHOLDS.healthy) {
+    return "info";
+  }
+
+  if (score >= EXECUTIVE_SCORE_THRESHOLDS.developing) {
+    return "warning";
+  }
+
+  return "risk";
 }
 
-function mapScoreToPriority(score: number): ExecutivePriority {
-if (score >= 85) return "low";
-if (score >= 70) return "medium";
-if (score >= 55) return "high";
+function mapScoreToPriority(
+  score: number,
+): ExecutivePriority {
+  if (score >= EXECUTIVE_SCORE_THRESHOLDS.excellent) {
+    return "low";
+  }
 
-return "critical";
+  if (score >= EXECUTIVE_SCORE_THRESHOLDS.healthy) {
+    return "medium";
+  }
+
+  if (score >= EXECUTIVE_SCORE_THRESHOLDS.developing) {
+    return "high";
+  }
+
+  return "critical";
 }
 
 export function buildExecutiveReadiness({
-healthScore,
-quoteCount,
-documentCount,
-addendaCount,
-commercialEvaluationUnlocked,
-recommendedQuote,
+  healthScore,
+  quoteCount,
+  documentCount,
+  addendaCount,
+  commercialEvaluationUnlocked,
+  recommendedQuote,
 }: ExecutiveIntelligenceInput): ExecutiveReadiness {
-const readiness = calculateDecisionReadiness({
-healthScore,
-quoteCount,
-documentCount,
-addendaCount,
-commercialEvaluationUnlocked,
-hasRecommendedQuote: Boolean(recommendedQuote),
-});
+  const readiness = calculateDecisionReadiness({
+    healthScore,
+    quoteCount,
+    documentCount,
+    addendaCount,
+    commercialEvaluationUnlocked,
+    hasRecommendedQuote: Boolean(recommendedQuote),
+  });
 
-const controls = [
-commercialEvaluationUnlocked,
-quoteCount > 0,
-documentCount > 0,
-addendaCount > 0,
-Boolean(recommendedQuote),
-healthScore >= 72,
-];
+  const controls = [
+    commercialEvaluationUnlocked,
+    quoteCount >=
+      EXECUTIVE_READINESS_CONTROL_THRESHOLDS.minimumQuoteCount,
+    documentCount >=
+      EXECUTIVE_READINESS_CONTROL_THRESHOLDS.minimumDocumentCount,
+    addendaCount >=
+      EXECUTIVE_READINESS_CONTROL_THRESHOLDS.minimumAddendaCount,
+    Boolean(recommendedQuote),
+    healthScore >=
+      EXECUTIVE_READINESS_CONTROL_THRESHOLDS.minimumHealthScore,
+  ];
 
-return {
-score: readiness.score,
-status: readiness.status,
-tone: mapScoreToTone(readiness.score),
-priority: mapScoreToPriority(readiness.score),
-recommendation: readiness.recommendation,
-completedControls: controls.filter(Boolean).length,
-totalControls: controls.length,
-};
+  return {
+    score: readiness.score,
+    status: readiness.status,
+    tone: mapScoreToTone(readiness.score),
+    priority: mapScoreToPriority(readiness.score),
+    recommendation: readiness.recommendation,
+    completedControls: controls.filter(Boolean).length,
+    totalControls: controls.length,
+  };
 }

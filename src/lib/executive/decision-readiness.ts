@@ -1,4 +1,9 @@
 import {
+  EXECUTIVE_DECISION_READINESS_SIGNALS,
+  EXECUTIVE_DECISION_READINESS_WEIGHTS,
+} from "@/lib/executive/executive-config";
+
+import {
   calculateWeightedScore,
   createExecutiveResult,
   EXECUTIVE_SCORE_THRESHOLDS,
@@ -24,15 +29,6 @@ export type DecisionReadinessInput = {
 export type DecisionReadinessResult =
   ExecutiveIntelligenceResult;
 
-const DECISION_READINESS_WEIGHTS = {
-  health: 0.34,
-  quoteCoverage: 0.22,
-  documentCoverage: 0.18,
-  governanceTrail: 0.1,
-  commercialAccess: 0.08,
-  recommendationAvailability: 0.08,
-} as const;
-
 export function calculateDecisionReadiness({
   healthScore,
   quoteCount,
@@ -51,12 +47,14 @@ export function calculateDecisionReadiness({
 
   const quoteCoverageScore = Math.min(
     100,
-    normalizedQuoteCount * 28,
+    normalizedQuoteCount *
+      EXECUTIVE_DECISION_READINESS_SIGNALS.quoteCoverageIncrement,
   );
 
   const documentCoverageScore = Math.min(
     100,
-    normalizedDocumentCount * 24,
+    normalizedDocumentCount *
+      EXECUTIVE_DECISION_READINESS_SIGNALS.documentCoverageIncrement,
   );
 
   /*
@@ -66,40 +64,51 @@ export function calculateDecisionReadiness({
    */
   const governanceTrailScore = Math.min(
     100,
-    55 + normalizedAddendaCount * 12,
+    EXECUTIVE_DECISION_READINESS_SIGNALS.governanceBaseline +
+      normalizedAddendaCount *
+        EXECUTIVE_DECISION_READINESS_SIGNALS.governanceIncrement,
   );
 
   const commercialAccessScore =
-    commercialEvaluationUnlocked ? 100 : 45;
+    commercialEvaluationUnlocked
+      ? EXECUTIVE_DECISION_READINESS_SIGNALS.commercialAccessUnlockedScore
+      : EXECUTIVE_DECISION_READINESS_SIGNALS.commercialAccessLockedScore;
 
   const recommendationAvailabilityScore =
-    hasRecommendedQuote ? 100 : 35;
+    hasRecommendedQuote
+      ? EXECUTIVE_DECISION_READINESS_SIGNALS.recommendationAvailableScore
+      : EXECUTIVE_DECISION_READINESS_SIGNALS.recommendationUnavailableScore;
 
   const score = calculateWeightedScore([
     {
       value: healthScore,
-      weight: DECISION_READINESS_WEIGHTS.health,
+      weight:
+        EXECUTIVE_DECISION_READINESS_WEIGHTS.health,
     },
     {
       value: quoteCoverageScore,
-      weight: DECISION_READINESS_WEIGHTS.quoteCoverage,
+      weight:
+        EXECUTIVE_DECISION_READINESS_WEIGHTS.quoteCoverage,
     },
     {
       value: documentCoverageScore,
-      weight: DECISION_READINESS_WEIGHTS.documentCoverage,
+      weight:
+        EXECUTIVE_DECISION_READINESS_WEIGHTS.documentCoverage,
     },
     {
       value: governanceTrailScore,
-      weight: DECISION_READINESS_WEIGHTS.governanceTrail,
+      weight:
+        EXECUTIVE_DECISION_READINESS_WEIGHTS.governanceTrail,
     },
     {
       value: commercialAccessScore,
-      weight: DECISION_READINESS_WEIGHTS.commercialAccess,
+      weight:
+        EXECUTIVE_DECISION_READINESS_WEIGHTS.commercialAccess,
     },
     {
       value: recommendationAvailabilityScore,
       weight:
-        DECISION_READINESS_WEIGHTS.recommendationAvailability,
+        EXECUTIVE_DECISION_READINESS_WEIGHTS.recommendationAvailability,
     },
   ]);
 
