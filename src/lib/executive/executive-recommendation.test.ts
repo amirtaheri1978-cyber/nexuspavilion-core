@@ -416,6 +416,68 @@ describe("buildExecutiveSupplierRecommendation", () => {
     ).toBe(true);
   });
 
+  it("preserves candidate policy outputs after policy extraction", () => {
+    const result =
+      buildExecutiveSupplierRecommendation({
+        rfqSlug: "test-rfq",
+        rfqCategory: "Acoustical Ceilings",
+        rfqLocation: "Toronto",
+        procurementScope: "Supply and installation",
+        sourcingMethod: "invited",
+        commercialEvaluationUnlocked: true,
+        candidates: [
+          buildCandidate({
+            supplierCompanyId: "supplier-a",
+            supplierName: "Supplier A",
+            totalScore: 90,
+            awardConfidence: 90,
+            riskLevel: "Low",
+            signalScores: [90, 90, 90, 90],
+          }),
+        ],
+      });
+
+    const supplier = result.rankedSuppliers[0];
+
+    expect(supplier.status).toBe(
+      "Preferred Award Candidate",
+    );
+    expect(supplier.tone).toBe("success");
+    expect(supplier.priority).toBe("low");
+    expect(supplier.recommendation).toBe(
+      "Advance this supplier to authorized award validation, subject to final governance and commercial confirmation.",
+    );
+  });
+
+  it("preserves result policy outputs after policy extraction", () => {
+    const result =
+      buildExecutiveSupplierRecommendation({
+        rfqSlug: "test-rfq",
+        rfqCategory: "Acoustical Ceilings",
+        rfqLocation: "Toronto",
+        procurementScope: "Supply and installation",
+        sourcingMethod: "invited",
+        commercialEvaluationUnlocked: true,
+        candidates: [
+          buildCandidate({
+            supplierCompanyId: "supplier-a",
+            supplierName: "Supplier A",
+            totalScore: 90,
+            awardConfidence: 90,
+            riskLevel: "Low",
+            signalScores: [90, 90, 90, 90],
+          }),
+        ],
+      });
+
+    expect(result.status).toBe(
+      "Executive Supplier Ranking Available",
+    );
+    expect(result.recommendation).toBe(
+      "Supplier A is the leading evaluated supplier. Advance this supplier to authorized award validation, subject to final governance and commercial confirmation.",
+    );
+  });
+
 });
 
 describe("buildUnavailableSupplierRecommendation", () => {

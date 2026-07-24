@@ -4,11 +4,15 @@ import {
   buildUnavailableConfidenceAssessment,
 } from "@/lib/executive/executive-confidence";
 import { buildExecutiveEvidenceAssessment } from "@/lib/executive/executive-evidence";
+import {
+  resolveExecutiveAwardPolicy,
+  resolveSupplierCandidatePolicy,
+  resolveSupplierRecommendationResultPolicy,
+} from "@/lib/executive/executive-recommendation-policy";
 
 import type {
   ExecutiveDataAvailability,
   ExecutiveIntelligenceInput,
-  ExecutivePriority,
   ExecutiveResult,
   ExecutiveRisk,
   ExecutiveSupplierRecommendation,
@@ -16,26 +20,10 @@ import type {
   ExecutiveSupplierRecommendationInput,
   ExecutiveSupplierRecommendationResult,
   ExecutiveSupplierSignal,
-  ExecutiveTone,
 } from "@/lib/executive/executive-types";
 
 const MINIMUM_SUFFICIENT_DATA_COVERAGE = 50;
 
-function tone(score: number): ExecutiveTone {
-  if (score >= 85) return "success";
-  if (score >= 70) return "info";
-  if (score >= 55) return "warning";
-
-  return "risk";
-}
-
-function priority(score: number): ExecutivePriority {
-  if (score >= 85) return "low";
-  if (score >= 70) return "medium";
-  if (score >= 55) return "high";
-
-  return "critical";
-}
 
 function availabilityFromCoverage(
   dataCoverage: number,
@@ -97,56 +85,6 @@ function resolveCandidateScore(
   return calculateSignalScore(candidate.signals);
 }
 
-function getCandidateStatus({
-  score,
-  availability,
-  riskLevel,
-}: {
-  score: number | null;
-  availability: ExecutiveDataAvailability;
-  riskLevel: string | null;
-}) {
-  if (availability !== "available" || score === null) {
-    return "Insufficient Decision Evidence";
-  }
-
-  if (
-    score >= 85 &&
-    riskLevel?.toLowerCase() === "low"
-  ) {
-    return "Preferred Award Candidate";
-  }
-
-  if (score >= 70) {
-    return "Qualified Executive Review";
-  }
-
-  if (score >= 55) {
-    return "Conditional Consideration";
-  }
-
-  return "Not Recommended";
-}
-
-function getCandidateRecommendation(status: string) {
-  if (status === "Preferred Award Candidate") {
-    return "Advance this supplier to authorized award validation, subject to final governance and commercial confirmation.";
-  }
-
-  if (status === "Qualified Executive Review") {
-    return "Retain this supplier in the executive shortlist and validate the remaining commercial, delivery, and governance conditions.";
-  }
-
-  if (status === "Conditional Consideration") {
-    return "Proceed only after targeted clarification, risk mitigation, and documented approval of the identified exceptions.";
-  }
-
-  if (status === "Not Recommended") {
-    return "Do not advance this supplier without material improvement in commercial value, delivery confidence, or procurement risk.";
-  }
-
-  return "Collect additional supplier evidence before forming an award recommendation.";
-}
 
 function getSignalRationale(signals: ExecutiveSupplierSignal[]) {
   return [...signals]
@@ -279,13 +217,11 @@ function buildSupplierRecommendation(
   const riskLevel =
     candidate.currentQuote?.riskLevel ?? null;
 
-  const status = getCandidateStatus({
+  const policy = resolveSupplierCandidatePolicy({
     score,
     availability: dataAvailability,
     riskLevel,
   });
-
-  const resolvedScore = score ?? 0;
 
   const confidenceAssessment =
     buildSupplierConfidenceAssessment({
@@ -303,21 +239,15 @@ function buildSupplierRecommendation(
     supplierName: candidate.supplierName,
     rank: 0,
     score,
-    status,
-    tone:
-      dataAvailability === "available"
-        ? tone(resolvedScore)
-        : "neutral",
-    priority:
-      dataAvailability === "available"
-        ? priority(resolvedScore)
-        : "high",
+    status: policy.status,
+    tone: policy.tone,
+    priority: policy.priority,
     confidence: confidenceAssessment.level,
     confidenceAssessment,
     dataAvailability,
     dataCoverage,
     evidenceAssessment,
-    recommendation: getCandidateRecommendation(status),
+    recommendation: policy.recommendation,
     rationale: buildCandidateRationale(candidate),
     risks: buildCandidateRisks(candidate),
     signals: candidate.signals,
@@ -353,16 +283,20 @@ export function buildExecutiveSupplierRecommendation({
   candidates,
 }: ExecutiveSupplierRecommendationInput): ExecutiveSupplierRecommendationResult {
   if (!commercialEvaluationUnlocked) {
+    const policy =
+      resolveSupplierRecommendationResultPolicy({
+        state: "commercial_protected",
+      });
+
     return {
-      status: "Commercial Evaluation Protected",
+      status: policy.status,
       availability: "not_operational",
       confidence: "unavailable",
       confidenceAssessment:
         buildUnavailableConfidenceAssessment(
           "Decision confidence is unavailable while commercial evaluation remains protected.",
         ),
-      recommendation:
-        "Supplier ranking remains protected until commercial evaluation is authorized.",
+      recommendation: policy.recommendation,
       recommendedSupplier: null,
       rankedSuppliers: [],
       evaluatedSupplierCount: 0,
@@ -371,16 +305,20 @@ export function buildExecutiveSupplierRecommendation({
   }
 
   if (candidates.length === 0) {
+    const policy =
+      resolveSupplierRecommendationResultPolicy({
+        state: "no_candidates",
+      });
+
     return {
-      status: "No Supplier Candidates",
+      status: policy.status,
       availability: "insufficient_data",
       confidence: "unavailable",
       confidenceAssessment:
         buildUnavailableConfidenceAssessment(
           "Decision confidence is unavailable because no eligible supplier candidates are available.",
         ),
-      recommendation:
-        "No eligible supplier candidates are available for executive ranking.",
+      recommendation: policy.recommendation,
       recommendedSupplier: null,
       rankedSuppliers: [],
       evaluatedSupplierCount: 0,
@@ -411,18 +349,25 @@ export function buildExecutiveSupplierRecommendation({
       suppliersWithSufficientData,
     });
 
+  const policy =
+    resolveSupplierRecommendationResultPolicy({
+      state: recommendedSupplier
+        ? "ranking_available"
+        : "insufficient_evidence",
+      supplierName:
+        recommendedSupplier?.supplierName,
+      supplierRecommendation:
+        recommendedSupplier?.recommendation,
+    });
+
   return {
-    status: recommendedSupplier
-      ? "Executive Supplier Ranking Available"
-      : "Insufficient Supplier Evidence",
+    status: policy.status,
     availability: recommendedSupplier
       ? "available"
       : "insufficient_data",
     confidence: confidenceAssessment.level,
     confidenceAssessment,
-    recommendation: recommendedSupplier
-      ? `${recommendedSupplier.supplierName} is the leading evaluated supplier. ${recommendedSupplier.recommendation}`
-      : "Strengthen supplier, commercial, and governance evidence before requesting an executive award recommendation.",
+    recommendation: policy.recommendation,
     recommendedSupplier,
     rankedSuppliers,
     evaluatedSupplierCount: rankedSuppliers.length,
@@ -431,16 +376,20 @@ export function buildExecutiveSupplierRecommendation({
 }
 
 export function buildUnavailableSupplierRecommendation(): ExecutiveSupplierRecommendationResult {
+  const policy =
+    resolveSupplierRecommendationResultPolicy({
+      state: "not_connected",
+    });
+
   return {
-    status: "Supplier Intelligence Not Connected",
+    status: policy.status,
     availability: "not_operational",
     confidence: "unavailable",
     confidenceAssessment:
       buildUnavailableConfidenceAssessment(
         "Decision confidence is unavailable because supplier candidate intelligence is not connected.",
       ),
-    recommendation:
-      "Supplier candidate intelligence has not yet been connected to this RFQ evaluation.",
+    recommendation: policy.recommendation,
     recommendedSupplier: null,
     rankedSuppliers: [],
     evaluatedSupplierCount: 0,
@@ -456,24 +405,36 @@ export function buildExecutiveRecommendation({
   documentCount,
 }: ExecutiveIntelligenceInput): ExecutiveResult {
   if (!commercialEvaluationUnlocked) {
+    const policy = resolveExecutiveAwardPolicy({
+      commercialEvaluationUnlocked: false,
+      hasRecommendedQuote: false,
+      score: 20,
+      riskLevel: null,
+    });
+
     return {
       score: 20,
-      status: "Commercial Locked",
-      tone: "warning",
-      priority: "high",
-      recommendation:
-        "Commercial evaluation is still protected. Wait until commercial opening before making an award decision.",
+      status: policy.status,
+      tone: policy.tone,
+      priority: policy.priority,
+      recommendation: policy.recommendation,
     };
   }
 
   if (!recommendedQuote) {
+    const policy = resolveExecutiveAwardPolicy({
+      commercialEvaluationUnlocked: true,
+      hasRecommendedQuote: false,
+      score: 40,
+      riskLevel: null,
+    });
+
     return {
       score: 40,
-      status: "Awaiting Recommendation",
-      tone: "warning",
-      priority: "high",
-      recommendation:
-        "More supplier intelligence is required before Nexus Pavilion can recommend an award.",
+      status: policy.status,
+      tone: policy.tone,
+      priority: policy.priority,
+      recommendation: policy.recommendation,
     };
   }
 
@@ -486,27 +447,18 @@ export function buildExecutiveRecommendation({
     ) / 4,
   );
 
-  let status = "Executive Review";
-
-  if (
-    score >= 85 &&
-    recommendedQuote.riskLevel.toLowerCase() === "low"
-  ) {
-    status = "Award Ready";
-  } else if (score < 55) {
-    status = "Needs Validation";
-  }
+  const policy = resolveExecutiveAwardPolicy({
+    commercialEvaluationUnlocked: true,
+    hasRecommendedQuote: true,
+    score,
+    riskLevel: recommendedQuote.riskLevel,
+  });
 
   return {
     score,
-    status,
-    tone: tone(score),
-    priority: priority(score),
-    recommendation:
-      status === "Award Ready"
-        ? "Proceed with executive validation and award approval."
-        : status === "Needs Validation"
-          ? "Strengthen procurement readiness before proceeding."
-          : "Review supplier recommendation and validate governance before award.",
+    status: policy.status,
+    tone: policy.tone,
+    priority: policy.priority,
+    recommendation: policy.recommendation,
   };
 }

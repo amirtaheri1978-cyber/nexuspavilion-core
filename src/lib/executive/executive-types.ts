@@ -51,6 +51,38 @@ export type ExecutiveConfidenceAssessment = {
   summary: string;
 };
 
+
+export type ExecutiveSupplierRecommendationStatus =
+  | "Preferred Award Candidate"
+  | "Qualified Executive Review"
+  | "Conditional Consideration"
+  | "Not Recommended"
+  | "Insufficient Decision Evidence";
+
+export type ExecutiveSupplierRecommendationResultStatus =
+  | "Commercial Evaluation Protected"
+  | "No Supplier Candidates"
+  | "Executive Supplier Ranking Available"
+  | "Insufficient Supplier Evidence"
+  | "Supplier Intelligence Not Connected";
+
+export type ExecutiveAwardRecommendationStatus =
+  | "Commercial Locked"
+  | "Awaiting Recommendation"
+  | "Award Ready"
+  | "Executive Review"
+  | "Needs Validation";
+
+export type ExecutiveRecommendationPolicy = {
+  status:
+    | ExecutiveSupplierRecommendationStatus
+    | ExecutiveSupplierRecommendationResultStatus
+    | ExecutiveAwardRecommendationStatus;
+  tone: ExecutiveTone;
+  priority: ExecutivePriority;
+  recommendation: string;
+};
+
 export type ExecutiveResult = {
   score: number;
   status: string;
