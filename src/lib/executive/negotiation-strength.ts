@@ -7,6 +7,9 @@ import {
   type ExecutiveIntelligenceResult,
 } from "@/lib/executive/executive-scoring";
 
+const NEGOTIATION_MAX_IMPROVEMENT_PERCENT = 12;
+const NEGOTIATION_SCORE_IMPROVEMENT_FACTOR = 0.12;
+
 export type NegotiationStrengthInput = {
   recommendedAmount: number;
   averageBid: number;
@@ -17,12 +20,25 @@ export type NegotiationStrengthInput = {
 export type NegotiationStrengthResult =
   ExecutiveIntelligenceResult;
 
+export type NegotiationCommercialTargetInput = {
+  recommendedAmount: number;
+  averageBid: number;
+  negotiationScore: number;
+};
+
+export type NegotiationCommercialTargetResult = {
+  targetPrice: number;
+  targetImprovement: number;
+  expectedSavings: number;
+};
+
 function calculatePercentageDifference(
   baseline: number,
   comparison: number,
 ): number {
   const normalizedBaseline = normalizeAmount(baseline);
-  const normalizedComparison = normalizeAmount(comparison);
+  const normalizedComparison =
+    normalizeAmount(comparison);
 
   if (
     normalizedBaseline <= 0 ||
@@ -56,8 +72,11 @@ export function calculateNegotiationStrength({
   const normalizedRecommendedAmount =
     normalizeAmount(recommendedAmount);
 
-  const normalizedAverageBid = normalizeAmount(averageBid);
-  const normalizedQuoteCount = normalizeCount(quoteCount);
+  const normalizedAverageBid =
+    normalizeAmount(averageBid);
+
+  const normalizedQuoteCount =
+    normalizeCount(quoteCount);
 
   const spread = calculatePercentageDifference(
     normalizedAverageBid,
@@ -74,7 +93,10 @@ export function calculateNegotiationStrength({
   const riskBoost = isLowRisk(riskLevel) ? 14 : 4;
 
   const score = clampScore(
-    spread * 4 + competitionBoost + riskBoost + 38,
+    spread * 4 +
+      competitionBoost +
+      riskBoost +
+      38,
   );
 
   const status =
@@ -96,4 +118,48 @@ export function calculateNegotiationStrength({
     status,
     recommendation,
   });
+}
+
+export function calculateNegotiationCommercialTargets({
+  recommendedAmount,
+  averageBid,
+  negotiationScore,
+}: NegotiationCommercialTargetInput): NegotiationCommercialTargetResult {
+  const normalizedRecommendedAmount =
+    normalizeAmount(recommendedAmount);
+
+  const normalizedAverageBid =
+    normalizeAmount(averageBid);
+
+  const normalizedNegotiationScore =
+    clampScore(negotiationScore);
+
+  const potentialImprovementPercent = Math.min(
+    NEGOTIATION_MAX_IMPROVEMENT_PERCENT,
+    Math.round(
+      normalizedNegotiationScore *
+        NEGOTIATION_SCORE_IMPROVEMENT_FACTOR,
+    ),
+  );
+
+  const targetImprovement = Math.round(
+    normalizedRecommendedAmount *
+      (potentialImprovementPercent / 100),
+  );
+
+  const targetPrice =
+    normalizedRecommendedAmount -
+    targetImprovement;
+
+  const expectedSavings =
+    normalizedAverageBid > 0
+      ? normalizedAverageBid -
+        normalizedRecommendedAmount
+      : 0;
+
+  return {
+    targetPrice,
+    targetImprovement,
+    expectedSavings,
+  };
 }
