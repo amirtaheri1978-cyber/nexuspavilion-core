@@ -36,6 +36,11 @@ import {
   buildCommercialIntelligence,
   type Quote,
 } from "@/lib/procurement/rfq-commercial-intelligence";
+import {
+  buildRfqSupplierRecommendationInput,
+  getRfqSupplierCompanyIds,
+  type RfqSupplierCompany,
+} from "@/lib/procurement/rfq-supplier-recommendation-input";
 import { buildRfqExecutiveOpportunityIntelligence } from "@/lib/procurement/rfq-executive-opportunity-intelligence";
 import {
   getBlindBiddingMessage,
@@ -302,6 +307,32 @@ const {
   isOwner,
 });
 
+const supplierCompanyIds =
+  getRfqSupplierCompanyIds(scoredQuotes);
+
+const { data: supplierCompanyData } =
+  isOwner && supplierCompanyIds.length > 0
+    ? await supabase
+        .from("companies")
+        .select("id, name, category, location, network_role")
+        .in("id", supplierCompanyIds)
+    : { data: [] };
+
+const supplierCompanies =
+  (supplierCompanyData ?? []) as RfqSupplierCompany[];
+
+const supplierRecommendationInput =
+  buildRfqSupplierRecommendationInput({
+    rfqSlug: rfq.slug,
+    rfqCategory: rfq.category,
+    rfqLocation: rfq.location,
+    procurementScope: rfq.procurement_scope,
+    sourcingMethod: rfq.sourcing_method,
+    commercialEvaluationUnlocked,
+    scoredQuotes,
+    companies: supplierCompanies,
+  });
+
 const hasMyQuote =
 participantRole === "respondent" &&
 quoteList.length > 0;
@@ -421,6 +452,7 @@ awardedQuote: awardedQuote
 amountNumber: awardedQuote.amountNumber,
 }
 : null,
+supplierRecommendationInput,
 });
 
 return (
