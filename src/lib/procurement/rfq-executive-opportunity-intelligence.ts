@@ -26,12 +26,42 @@ type BuildRfqExecutiveOpportunityIntelligenceInput = {
   recommendedAwardConfidence: number | null;
 };
 
+const OPPORTUNITY_PRIORITY_WEIGHT: Record<
+  RfqExecutiveOpportunityPriority,
+  number
+> = {
+  High: 2,
+  Medium: 1,
+};
+
 function formatMoney(value: number) {
   if (!Number.isFinite(value)) {
     return "$0";
   }
 
   return `$${value.toLocaleString()}`;
+}
+
+function sortOpportunitiesByPriority(
+  opportunities: RfqExecutiveOpportunity[],
+): RfqExecutiveOpportunity[] {
+  return opportunities
+    .map((opportunity, originalIndex) => ({
+      opportunity,
+      originalIndex,
+    }))
+    .sort((left, right) => {
+      const priorityDifference =
+        OPPORTUNITY_PRIORITY_WEIGHT[right.opportunity.priority] -
+        OPPORTUNITY_PRIORITY_WEIGHT[left.opportunity.priority];
+
+      if (priorityDifference !== 0) {
+        return priorityDifference;
+      }
+
+      return left.originalIndex - right.originalIndex;
+    })
+    .map(({ opportunity }) => opportunity);
 }
 
 export function buildRfqExecutiveOpportunityIntelligence({
@@ -42,7 +72,7 @@ export function buildRfqExecutiveOpportunityIntelligence({
   documentCount,
   recommendedAwardConfidence,
 }: BuildRfqExecutiveOpportunityIntelligenceInput) {
-  const opportunities: RfqExecutiveOpportunity[] = isOwner
+  const unsortedOpportunities: RfqExecutiveOpportunity[] = isOwner
     ? [
         {
           title: "Commercial Savings Opportunity",
@@ -74,7 +104,10 @@ export function buildRfqExecutiveOpportunityIntelligence({
           title: "Documentation Readiness",
           priority: documentCount > 0 ? "Medium" : "High",
           impact: "Execution Risk",
-          value: documentCount > 0 ? `${documentCount} files` : "Missing package",
+          value:
+            documentCount > 0
+              ? `${documentCount} files`
+              : "Missing package",
           summary:
             documentCount > 0
               ? "The RFQ document package is active and available for supplier review."
@@ -102,6 +135,10 @@ export function buildRfqExecutiveOpportunityIntelligence({
       ]
     : [];
 
+  const opportunities = sortOpportunitiesByPriority(
+    unsortedOpportunities,
+  );
+
   const intelligence: RfqExecutiveOpportunityIntelligence[] =
     opportunities.map((opportunity, index) => ({
       ...opportunity,
@@ -117,7 +154,9 @@ export function buildRfqExecutiveOpportunityIntelligence({
       executionHorizon:
         opportunity.priority === "High" ? "Immediate" : "Short-Term",
       boardPriority:
-        opportunity.priority === "High" ? "Board-Level" : "Management-Level",
+        opportunity.priority === "High"
+          ? "Board-Level"
+          : "Management-Level",
       ceoRecommendation:
         opportunity.title === "Commercial Savings Opportunity"
           ? "Validate the bid spread and prepare negotiation strategy before final award."
@@ -125,7 +164,7 @@ export function buildRfqExecutiveOpportunityIntelligence({
             ? "Increase supplier participation before deadline if timing allows."
             : opportunity.title === "Documentation Readiness"
               ? "Strengthen the RFQ package before further supplier engagement."
-              : "Use compare view and AI ranking to validate the recommended award path.",
+              : "Use the compare view and supplier ranking to validate the recommended award path.",
     }));
 
   return {
