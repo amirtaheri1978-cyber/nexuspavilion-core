@@ -6,6 +6,7 @@ import type {
   ExecutiveTone,
 } from "@/lib/executive/executive-types";
 import type { ScoredQuote } from "@/lib/procurement/rfq-commercial-intelligence";
+import type { SupplierHistorySnapshot } from "@/lib/procurement/supplier-intelligence";
 import type { ExecutiveQuote } from "@/types/executive";
 
 export type RfqSupplierCompany = {
@@ -25,6 +26,7 @@ type BuildRfqSupplierRecommendationInputParams = {
   commercialEvaluationUnlocked: boolean;
   scoredQuotes: ScoredQuote[];
   companies: RfqSupplierCompany[];
+  supplierHistorySnapshots: SupplierHistorySnapshot[];
 };
 
 function normalizeComparableValue(value: string | null) {
@@ -218,7 +220,36 @@ function buildCommercialSignals(
   ];
 }
 
-function buildEvidenceGapSignals(): ExecutiveSupplierSignal[] {
+function buildHistoricalAwardPerformanceSignal(
+  history: SupplierHistorySnapshot | null,
+): ExecutiveSupplierSignal {
+  if (!history || history.submittedQuoteCount === 0) {
+    return buildUnavailableSignal({
+      key: "historical_award_performance",
+      label: "Historical Award Performance",
+      summary:
+        "No prior buyer-scoped supplier submissions are available for this evaluation.",
+    });
+  }
+
+  return buildAvailableSignal({
+    key: "historical_award_performance",
+    label: "Historical Award Performance",
+    score: history.performanceScore,
+    summary: `Buyer-scoped historical performance is ${history.performanceScore}/100 across ${history.submittedQuoteCount} prior submission${history.submittedQuoteCount === 1 ? "" : "s"}.`,
+    evidence: [
+      `Historical submissions: ${history.submittedQuoteCount}`,
+      `Historical awards: ${history.awardedQuoteCount}`,
+      `Historical win rate: ${history.winRate}%`,
+      `Historical quoted value: ${history.totalQuotedValue}`,
+      `Historical awarded value: ${history.totalAwardedValue}`,
+    ],
+  });
+}
+
+function buildEvidenceGapSignals(
+  history: SupplierHistorySnapshot | null,
+): ExecutiveSupplierSignal[] {
   return [
     buildUnavailableSignal({
       key: "avl_governance",
@@ -226,17 +257,12 @@ function buildEvidenceGapSignals(): ExecutiveSupplierSignal[] {
       summary:
         "Approved-vendor governance has not yet been connected with verified buyer-company scope.",
     }),
-    buildUnavailableSignal({
-      key: "historical_award_performance",
-      label: "Historical Award Performance",
-      summary:
-        "Historical award evidence has not yet been connected to this RFQ recommendation.",
-    }),
+    buildHistoricalAwardPerformanceSignal(history),
     buildUnavailableSignal({
       key: "response_reliability",
       label: "Response Reliability",
       summary:
-        "Historical supplier response reliability is not yet available for this evaluation.",
+        "Response reliability requires buyer-scoped invitation and participation history, which is not yet connected.",
     }),
     buildUnavailableSignal({
       key: "compliance_readiness",
@@ -304,6 +330,7 @@ export function buildRfqSupplierRecommendationInput({
   commercialEvaluationUnlocked,
   scoredQuotes,
   companies,
+  supplierHistorySnapshots,
 }: BuildRfqSupplierRecommendationInputParams): ExecutiveSupplierRecommendationInput {
   const companyById = new Map(
     companies.map((company) => [company.id, company]),
@@ -312,12 +339,24 @@ export function buildRfqSupplierRecommendationInput({
   const bestQuoteByCompany =
     selectBestQuoteByCompany(scoredQuotes);
 
+  const historyBySupplierCompanyId = new Map(
+    supplierHistorySnapshots.map((snapshot) => [
+      snapshot.supplierCompanyId,
+      snapshot,
+    ]),
+  );
+
   const candidates: ExecutiveSupplierRecommendationCandidate[] =
     [...bestQuoteByCompany.entries()].map(
       ([supplierCompanyId, quote]) => {
         const company = companyById.get(supplierCompanyId);
         const supplierName =
           company?.name?.trim() || "Unverified Supplier";
+
+        const history =
+          historyBySupplierCompanyId.get(
+            supplierCompanyId,
+          ) ?? null;
 
         return {
           supplierCompanyId,
@@ -327,11 +366,16 @@ export function buildRfqSupplierRecommendationInput({
           networkRole: company?.network_role ?? null,
           avlStatus: null,
           avlRating: null,
-          submittedQuoteCount: 0,
-          awardedQuoteCount: 0,
-          unsuccessfulQuoteCount: 0,
-          totalQuotedValue: 0,
-          totalAwardedValue: 0,
+          submittedQuoteCount:
+            history?.submittedQuoteCount ?? 0,
+          awardedQuoteCount:
+            history?.awardedQuoteCount ?? 0,
+          unsuccessfulQuoteCount:
+            history?.unsuccessfulQuoteCount ?? 0,
+          totalQuotedValue:
+            history?.totalQuotedValue ?? 0,
+          totalAwardedValue:
+            history?.totalAwardedValue ?? 0,
           currentQuote: toExecutiveQuote(quote),
           signals: [
             buildAlignmentSignal({
@@ -351,7 +395,7 @@ export function buildRfqSupplierRecommendationInput({
               mismatchScore: 55,
             }),
             ...buildCommercialSignals(quote),
-            ...buildEvidenceGapSignals(),
+            ...buildEvidenceGapSignals(history),
           ],
         };
       },

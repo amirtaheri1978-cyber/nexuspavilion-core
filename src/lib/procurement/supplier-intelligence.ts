@@ -12,6 +12,17 @@ export type SupplierComplianceSignal = {
   compliance_score: number | null;
 };
 
+export type SupplierHistorySnapshot = {
+  supplierCompanyId: string;
+  submittedQuoteCount: number;
+  awardedQuoteCount: number;
+  unsuccessfulQuoteCount: number;
+  totalQuotedValue: number;
+  totalAwardedValue: number;
+  winRate: number;
+  performanceScore: number;
+};
+
 function toFiniteNumber(
   value: number | string | null | undefined,
 ) {
@@ -42,6 +53,16 @@ export function getAwardedRevenue(
   quotes: SupplierQuotePerformance[],
 ) {
   return getAwardedQuotes(quotes).reduce(
+    (total, quote) =>
+      total + toFiniteNumber(quote.amount),
+    0,
+  );
+}
+
+export function getTotalQuotedValue(
+  quotes: SupplierQuotePerformance[],
+) {
+  return quotes.reduce(
     (total, quote) =>
       total + toFiniteNumber(quote.amount),
     0,
@@ -151,4 +172,48 @@ export function getPerformanceRank(score: number) {
   }
 
   return "Limited Data";
+}
+
+export function buildSupplierHistorySnapshots(
+  quotes: SupplierQuotePerformance[],
+): SupplierHistorySnapshot[] {
+  const quotesBySupplierCompanyId = new Map<
+    string,
+    SupplierQuotePerformance[]
+  >();
+
+  for (const quote of quotes) {
+    if (!quote.company_id) {
+      continue;
+    }
+
+    const supplierQuotes =
+      quotesBySupplierCompanyId.get(quote.company_id) ?? [];
+
+    supplierQuotes.push(quote);
+    quotesBySupplierCompanyId.set(
+      quote.company_id,
+      supplierQuotes,
+    );
+  }
+
+  return [...quotesBySupplierCompanyId.entries()].map(
+    ([supplierCompanyId, supplierQuotes]) => {
+      const awardedQuotes = getAwardedQuotes(supplierQuotes);
+
+      return {
+        supplierCompanyId,
+        submittedQuoteCount: supplierQuotes.length,
+        awardedQuoteCount: awardedQuotes.length,
+        unsuccessfulQuoteCount: 0,
+        totalQuotedValue:
+          getTotalQuotedValue(supplierQuotes),
+        totalAwardedValue:
+          getAwardedRevenue(supplierQuotes),
+        winRate: getWinRate(supplierQuotes),
+        performanceScore:
+          getPerformanceScore(supplierQuotes),
+      };
+    },
+  );
 }

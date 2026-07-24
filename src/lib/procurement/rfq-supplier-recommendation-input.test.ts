@@ -92,6 +92,7 @@ describe("buildRfqSupplierRecommendationInput", () => {
           }),
         ],
         companies: [buildCompany()],
+        supplierHistorySnapshots: [],
       });
 
     expect(input.candidates).toHaveLength(1);
@@ -123,6 +124,7 @@ describe("buildRfqSupplierRecommendationInput", () => {
         commercialEvaluationUnlocked: true,
         scoredQuotes: [quote],
         companies: [buildCompany()],
+        supplierHistorySnapshots: [],
       });
 
     const signals = input.candidates[0].signals;
@@ -164,6 +166,7 @@ describe("buildRfqSupplierRecommendationInput", () => {
         commercialEvaluationUnlocked: true,
         scoredQuotes: [buildScoredQuote()],
         companies: [buildCompany()],
+        supplierHistorySnapshots: [],
       });
 
     const unavailableKeys = input.candidates[0].signals
@@ -197,6 +200,7 @@ describe("buildRfqSupplierRecommendationInput", () => {
         commercialEvaluationUnlocked: true,
         scoredQuotes: [buildScoredQuote()],
         companies: [],
+        supplierHistorySnapshots: [],
       });
 
     expect(input.candidates).toHaveLength(1);
@@ -227,8 +231,79 @@ describe("buildRfqSupplierRecommendationInput", () => {
           }),
         ],
         companies: [],
+        supplierHistorySnapshots: [],
       });
 
     expect(input.candidates).toEqual([]);
   });
+  it("connects buyer-scoped historical evidence without changing current commercial scores", () => {
+    const input =
+      buildRfqSupplierRecommendationInput({
+        rfqSlug: "test-rfq",
+        rfqCategory: "Acoustical Ceilings",
+        rfqLocation: "Toronto",
+        procurementScope: null,
+        sourcingMethod: null,
+        commercialEvaluationUnlocked: true,
+        scoredQuotes: [buildScoredQuote()],
+        companies: [buildCompany()],
+        supplierHistorySnapshots: [
+          {
+            supplierCompanyId: "company-1",
+            submittedQuoteCount: 4,
+            awardedQuoteCount: 2,
+            unsuccessfulQuoteCount: 0,
+            totalQuotedValue: 500_000,
+            totalAwardedValue: 250_000,
+            winRate: 50,
+            performanceScore: 72,
+          },
+        ],
+      });
+
+    const candidate = input.candidates[0];
+    const historicalSignal = candidate.signals.find(
+      (signal) =>
+        signal.key === "historical_award_performance",
+    );
+
+    expect(candidate.submittedQuoteCount).toBe(4);
+    expect(candidate.awardedQuoteCount).toBe(2);
+    expect(candidate.totalAwardedValue).toBe(250_000);
+    expect(historicalSignal?.availability).toBe("available");
+    expect(historicalSignal?.score).toBe(72);
+
+    expect(
+      candidate.signals.find(
+        (signal) =>
+          signal.key === "commercial_competitiveness",
+      )?.score,
+    ).toBe(94);
+  });
+
+  it("keeps historical performance unavailable when no prior buyer-scoped submissions exist", () => {
+    const input =
+      buildRfqSupplierRecommendationInput({
+        rfqSlug: "test-rfq",
+        rfqCategory: "Acoustical Ceilings",
+        rfqLocation: "Toronto",
+        procurementScope: null,
+        sourcingMethod: null,
+        commercialEvaluationUnlocked: true,
+        scoredQuotes: [buildScoredQuote()],
+        companies: [buildCompany()],
+        supplierHistorySnapshots: [],
+      });
+
+    const historicalSignal = input.candidates[0].signals.find(
+      (signal) =>
+        signal.key === "historical_award_performance",
+    );
+
+    expect(historicalSignal?.availability).toBe(
+      "insufficient_data",
+    );
+    expect(historicalSignal?.score).toBeNull();
+  });
+
 });

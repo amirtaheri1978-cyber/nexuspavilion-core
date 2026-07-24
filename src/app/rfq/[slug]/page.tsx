@@ -41,6 +41,10 @@ import {
   getRfqSupplierCompanyIds,
   type RfqSupplierCompany,
 } from "@/lib/procurement/rfq-supplier-recommendation-input";
+import {
+  buildSupplierHistorySnapshots,
+  type SupplierQuotePerformance,
+} from "@/lib/procurement/supplier-intelligence";
 import { buildRfqExecutiveOpportunityIntelligence } from "@/lib/procurement/rfq-executive-opportunity-intelligence";
 import {
   getBlindBiddingMessage,
@@ -321,6 +325,42 @@ const { data: supplierCompanyData } =
 const supplierCompanies =
   (supplierCompanyData ?? []) as RfqSupplierCompany[];
 
+const { data: priorBuyerRfqData } =
+  isOwner &&
+  rfq.company_id &&
+  supplierCompanyIds.length > 0
+    ? await supabase
+        .from("rfqs")
+        .select("id")
+        .eq("company_id", rfq.company_id)
+        .neq("id", rfq.id)
+    : { data: [] };
+
+const priorBuyerRfqIds = (priorBuyerRfqData ?? [])
+  .map((priorRfq) => priorRfq.id)
+  .filter(
+    (priorRfqId): priorRfqId is string =>
+      Boolean(priorRfqId),
+  );
+
+const { data: supplierHistoryQuoteData } =
+  priorBuyerRfqIds.length > 0 &&
+  supplierCompanyIds.length > 0
+    ? await supabase
+        .from("quotes")
+        .select(
+          "id, rfq_id, company_id, amount, decision, created_at, awarded_at",
+        )
+        .in("rfq_id", priorBuyerRfqIds)
+        .in("company_id", supplierCompanyIds)
+    : { data: [] };
+
+const supplierHistorySnapshots =
+  buildSupplierHistorySnapshots(
+    (supplierHistoryQuoteData ??
+      []) as SupplierQuotePerformance[],
+  );
+
 const supplierRecommendationInput =
   buildRfqSupplierRecommendationInput({
     rfqSlug: rfq.slug,
@@ -331,6 +371,7 @@ const supplierRecommendationInput =
     commercialEvaluationUnlocked,
     scoredQuotes,
     companies: supplierCompanies,
+    supplierHistorySnapshots,
   });
 
 const hasMyQuote =
