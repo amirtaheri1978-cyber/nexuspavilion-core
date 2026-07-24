@@ -36,16 +36,26 @@ function clampScore(score: number) {
 
 export function getTimelineMonths(timeline: string | null) {
   const value = String(timeline || "").toLowerCase();
+
+  /**
+   * Quarter references must be resolved before generic numeric parsing.
+   *
+   * Without this ordering, values such as "Q1" are interpreted as one month
+   * because the numeric matcher extracts the quarter number.
+   */
+  if (value.includes("q1")) return 3;
+  if (value.includes("q2")) return 6;
+  if (value.includes("q3")) return 9;
+  if (value.includes("q4")) return 12;
+
+  if (value.includes("fast") || value.includes("quick")) {
+    return 6;
+  }
+
   const numberMatch = value.match(/\d+/);
   const amount = numberMatch ? Number(numberMatch[0]) : null;
 
   if (!amount) {
-    if (value.includes("q1")) return 3;
-    if (value.includes("q2")) return 6;
-    if (value.includes("q3")) return 9;
-    if (value.includes("q4")) return 12;
-    if (value.includes("fast") || value.includes("quick")) return 6;
-
     return 18;
   }
 
