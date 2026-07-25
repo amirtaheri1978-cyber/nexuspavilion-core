@@ -63,7 +63,7 @@ export function buildTopRiskInsight({
         ? "medium"
         : "low";
 
-  const fallbackRecommendation =
+  const recommendation =
     normalizedSupplierCount <= 3
       ? "Expand qualified supplier coverage to reduce dependency and improve competitive resilience."
       : averageQuotes < 2
@@ -123,7 +123,7 @@ export function buildTopRiskInsight({
     confidence,
     signals,
     fallbackReason,
-    fallbackRecommendation,
+    recommendation,
   });
 
   return {

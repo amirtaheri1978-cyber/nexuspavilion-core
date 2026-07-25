@@ -78,7 +78,7 @@ export function buildTopActionInsight({
         ? "Competitive coverage remains limited across the current RFQ portfolio."
         : "Current portfolio signals support structured executive review.";
 
-  const fallbackRecommendation =
+  const recommendation =
     riskIndex >= 60
       ? "Review supplier concentration, competition coverage, and commercial exposure before scaling procurement commitments."
       : averageQuotes < 2
@@ -96,7 +96,7 @@ export function buildTopActionInsight({
     confidence,
     signals,
     fallbackReason,
-    fallbackRecommendation,
+    recommendation,
   });
 
   return {

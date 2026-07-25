@@ -68,8 +68,10 @@ export function buildTopOpportunityInsight({
   supplierCount,
 }: OpportunityIntelligenceInput): ExecutiveInsightBundle {
   const normalizedSavings = normalizeAmount(potentialSavings);
+
   const normalizedAverageQuotes =
     normalizeNonNegative(avgQuotesPerRfq);
+
   const normalizedSupplierCount = Math.floor(
     normalizeNonNegative(supplierCount),
   );
@@ -132,7 +134,7 @@ export function buildTopOpportunityInsight({
     }),
     signals,
     fallbackReason: reason,
-    fallbackRecommendation: recommendation,
+    recommendation,
   });
 
   return {

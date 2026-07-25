@@ -21,7 +21,7 @@ export type BuildExecutiveInsightInput = {
   confidence: number;
   signals: ExecutiveSignal[];
   fallbackReason: string;
-  fallbackRecommendation: string;
+  recommendation: string;
 };
 
 function normalizeConfidence(value: number): number {
@@ -52,16 +52,15 @@ export function buildExecutiveInsight({
   confidence,
   signals,
   fallbackReason,
-  fallbackRecommendation,
+  recommendation,
 }: BuildExecutiveInsightInput): ExecutiveInsight {
   const evidence = buildEvidence(signals);
 
   const reasoning = buildExecutiveReasoning({
     subject,
-    severity,
     evidence,
     fallbackReason,
-    fallbackRecommendation,
+    recommendation,
   });
 
   return {

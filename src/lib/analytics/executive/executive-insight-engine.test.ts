@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { buildExecutiveInsight } from "@/lib/analytics/executive/executive-insight-engine";
+import type { ExecutiveInsightSeverity } from "@/lib/analytics/executive/executive-insight";
 import {
   createExecutiveSignal,
   type ExecutiveSignal,
@@ -32,7 +33,8 @@ describe("buildExecutiveInsight", () => {
       confidence: 75,
       signals: [createSignal()],
       fallbackReason: "Fallback reason.",
-      fallbackRecommendation: "Fallback recommendation.",
+      recommendation:
+        "Maintain monitoring and validate the underlying evidence.",
     });
 
     expect(result.category).toBe("risk");
@@ -53,7 +55,8 @@ describe("buildExecutiveInsight", () => {
       confidence: 140,
       signals: [createSignal()],
       fallbackReason: "Fallback reason.",
-      fallbackRecommendation: "Fallback recommendation.",
+      recommendation:
+        "Validate the opportunity before commercial escalation.",
     });
 
     const lowResult = buildExecutiveInsight({
@@ -65,7 +68,8 @@ describe("buildExecutiveInsight", () => {
       confidence: -25,
       signals: [createSignal()],
       fallbackReason: "Fallback reason.",
-      fallbackRecommendation: "Fallback recommendation.",
+      recommendation:
+        "Continue monitoring the current portfolio.",
     });
 
     expect(highResult.confidence).toBe(100);
@@ -82,7 +86,8 @@ describe("buildExecutiveInsight", () => {
       confidence: 84.6,
       signals: [createSignal()],
       fallbackReason: "Fallback reason.",
-      fallbackRecommendation: "Fallback recommendation.",
+      recommendation:
+        "Proceed through the authorized decision workflow.",
     });
 
     expect(result.confidence).toBe(85);
@@ -98,7 +103,8 @@ describe("buildExecutiveInsight", () => {
       confidence: Number.NaN,
       signals: [createSignal()],
       fallbackReason: "Fallback reason.",
-      fallbackRecommendation: "Fallback recommendation.",
+      recommendation:
+        "Continue monitoring the current portfolio.",
     });
 
     expect(result.confidence).toBe(0);
@@ -133,7 +139,8 @@ describe("buildExecutiveInsight", () => {
         }),
       ],
       fallbackReason: "Fallback reason.",
-      fallbackRecommendation: "Fallback recommendation.",
+      recommendation:
+        "Review the material portfolio exposure.",
     });
 
     expect(result.evidence.map((item) => item.label)).toEqual([
@@ -143,7 +150,7 @@ describe("buildExecutiveInsight", () => {
     ]);
   });
 
-  it("uses the prioritized evidence in generated reasoning", () => {
+  it("uses prioritized evidence in generated reasoning", () => {
     const result = buildExecutiveInsight({
       category: "opportunity",
       title: "Top Commercial Opportunity",
@@ -175,7 +182,8 @@ describe("buildExecutiveInsight", () => {
         }),
       ],
       fallbackReason: "Fallback reason.",
-      fallbackRecommendation: "Fallback recommendation.",
+      recommendation:
+        "Increase qualified supplier participation before relying on the current savings estimate.",
     });
 
     expect(result.reason).toContain(
@@ -187,23 +195,54 @@ describe("buildExecutiveInsight", () => {
     );
   });
 
-  it("uses the fallback recommendation for low-severity insights", () => {
+  it.each([
+    "high",
+    "medium",
+    "low",
+  ] satisfies ExecutiveInsightSeverity[])(
+    "preserves the supplied recommendation for %s-severity insights",
+    (severity) => {
+      const recommendation =
+        "Increase qualified supplier participation before progressing major award decisions.";
+
+      const result = buildExecutiveInsight({
+        category: "action",
+        title: "Immediate Leadership Action",
+        summary: "Action summary.",
+        subject: "Immediate leadership action",
+        severity,
+        confidence: 88,
+        signals: [createSignal()],
+        fallbackReason: "Fallback reason.",
+        recommendation,
+      });
+
+      expect(result.recommendation).toBe(
+        recommendation,
+      );
+    },
+  );
+
+  it("uses fallback reasoning when no signals are available", () => {
     const result = buildExecutiveInsight({
-      category: "action",
-      title: "Immediate Leadership Action",
-      summary: "Action summary.",
-      subject: "Immediate leadership action",
+      category: "risk",
+      title: "Portfolio Position",
+      summary: "Portfolio summary.",
+      subject: "Portfolio position",
       severity: "low",
-      confidence: 88,
-      signals: [createSignal()],
-      fallbackReason: "Fallback reason.",
-      fallbackRecommendation:
-        "Proceed through the authorized decision workflow.",
+      confidence: 70,
+      signals: [],
+      fallbackReason:
+        "No supporting evidence is currently available.",
+      recommendation:
+        "Continue monitoring the current portfolio.",
     });
 
-    expect(result.recommendation).toBe(
-      "Proceed through the authorized decision workflow.",
+    expect(result.reason).toBe(
+      "No supporting evidence is currently available.",
     );
+
+    expect(result.evidence).toEqual([]);
   });
 
   it("does not mutate the original signals array", () => {
@@ -220,7 +259,9 @@ describe("buildExecutiveInsight", () => {
       }),
     ];
 
-    const originalOrder = signals.map((signal) => signal.id);
+    const originalOrder = signals.map(
+      (signal) => signal.id,
+    );
 
     buildExecutiveInsight({
       category: "risk",
@@ -231,11 +272,12 @@ describe("buildExecutiveInsight", () => {
       confidence: 75,
       signals,
       fallbackReason: "Fallback reason.",
-      fallbackRecommendation: "Fallback recommendation.",
+      recommendation:
+        "Review the material portfolio exposure.",
     });
 
-    expect(signals.map((signal) => signal.id)).toEqual(
-      originalOrder,
-    );
+    expect(
+      signals.map((signal) => signal.id),
+    ).toEqual(originalOrder);
   });
 });

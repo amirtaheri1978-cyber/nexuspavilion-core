@@ -16,44 +16,45 @@ function createEvidence(
 }
 
 describe("buildExecutiveReasoning", () => {
-  it("prioritizes the most urgent evidence as the primary driver", () => {
+  it("preserves the canonical evidence order", () => {
+    const evidence = [
+      createEvidence({
+        label: "Competition",
+        value: "2.5",
+        status: "healthy",
+      }),
+      createEvidence({
+        label: "Classification maturity",
+        value: "42/100",
+        status: "limited",
+      }),
+      createEvidence({
+        label: "Risk index",
+        value: "55/100",
+        status: "moderate",
+      }),
+    ];
+
     const result = buildExecutiveReasoning({
       subject: "Top portfolio risk",
-      severity: "medium",
-      evidence: [
-        createEvidence({
-          label: "Competition",
-          value: "2.5",
-          status: "healthy",
-        }),
-        createEvidence({
-          label: "Classification maturity",
-          value: "42/100",
-          status: "limited",
-        }),
-        createEvidence({
-          label: "Risk index",
-          value: "55/100",
-          status: "moderate",
-        }),
-      ],
+      evidence,
       fallbackReason: "Fallback reason.",
-      fallbackRecommendation: "Fallback recommendation.",
+      recommendation:
+        "Review the material portfolio exposure.",
     });
 
-    expect(result.drivers[0]?.label).toBe(
+    expect(
+      result.drivers.map((driver) => driver.label),
+    ).toEqual([
+      "Competition",
       "Classification maturity",
-    );
-
-    expect(result.reason).toContain(
-      "classification maturity at 42/100",
-    );
+      "Risk index",
+    ]);
   });
 
-  it("uses the two highest-priority drivers in the generated reason", () => {
+  it("uses the first two canonical evidence entries in the generated reason", () => {
     const result = buildExecutiveReasoning({
       subject: "Commercial opportunity",
-      severity: "medium",
       evidence: [
         createEvidence({
           label: "Savings opportunity",
@@ -72,86 +73,79 @@ describe("buildExecutiveReasoning", () => {
         }),
       ],
       fallbackReason: "Fallback reason.",
-      fallbackRecommendation: "Fallback recommendation.",
+      recommendation:
+        "Increase qualified supplier participation before relying on the current savings estimate.",
     });
+
+    expect(result.reason).toContain(
+      "savings opportunity at $120,000",
+    );
 
     expect(result.reason).toContain(
       "supplier coverage at 2",
     );
 
-    expect(result.reason).toContain(
+    expect(result.reason).not.toContain(
       "competition at 1.4",
     );
   });
 
-  it("uses the high-severity recommendation for urgent insights", () => {
+  it("uses the primary evidence entry when only one driver is available", () => {
     const result = buildExecutiveReasoning({
       subject: "Top portfolio risk",
-      severity: "high",
+      evidence: [
+        createEvidence({
+          label: "Risk index",
+          value: "72/100",
+          status: "critical",
+        }),
+      ],
+      fallbackReason: "Fallback reason.",
+      recommendation:
+        "Review supplier concentration and commercial exposure.",
+    });
+
+    expect(result.reason).toBe(
+      "Top portfolio risk is primarily influenced by risk index at 72/100.",
+    );
+  });
+
+  it("preserves the supplied domain recommendation", () => {
+    const recommendation =
+      "Increase qualified supplier participation before progressing major award decisions.";
+
+    const result = buildExecutiveReasoning({
+      subject: "Immediate leadership action",
       evidence: [
         createEvidence({
           status: "critical",
         }),
       ],
       fallbackReason: "Fallback reason.",
-      fallbackRecommendation: "Fallback recommendation.",
+      recommendation,
     });
 
     expect(result.recommendation).toBe(
-      "Prioritize immediate leadership review of top portfolio risk and validate the supporting commercial, supplier, and governance evidence before proceeding.",
-    );
-  });
-
-  it("uses the medium-severity recommendation for managed escalation", () => {
-    const result = buildExecutiveReasoning({
-      subject: "Commercial opportunity",
-      severity: "medium",
-      evidence: [
-        createEvidence({
-          status: "moderate",
-        }),
-      ],
-      fallbackReason: "Fallback reason.",
-      fallbackRecommendation: "Fallback recommendation.",
-    });
-
-    expect(result.recommendation).toBe(
-      "Assign management ownership for commercial opportunity and review the supporting evidence during the current procurement cycle.",
-    );
-  });
-
-  it("uses the fallback recommendation for low-severity insights", () => {
-    const result = buildExecutiveReasoning({
-      subject: "Portfolio position",
-      severity: "low",
-      evidence: [
-        createEvidence({
-          status: "healthy",
-        }),
-      ],
-      fallbackReason: "Fallback reason.",
-      fallbackRecommendation:
-        "Continue monitoring the current portfolio.",
-    });
-
-    expect(result.recommendation).toBe(
-      "Continue monitoring the current portfolio.",
+      recommendation,
     );
   });
 
   it("uses fallback reasoning when no evidence is available", () => {
     const result = buildExecutiveReasoning({
       subject: "Portfolio position",
-      severity: "low",
       evidence: [],
       fallbackReason:
         "No supporting evidence is currently available.",
-      fallbackRecommendation:
+      recommendation:
         "Continue monitoring the current portfolio.",
     });
 
     expect(result.reason).toBe(
       "No supporting evidence is currently available.",
+    );
+
+    expect(result.recommendation).toBe(
+      "Continue monitoring the current portfolio.",
     );
 
     expect(result.drivers).toEqual([]);
@@ -169,18 +163,39 @@ describe("buildExecutiveReasoning", () => {
       }),
     ];
 
-    const originalOrder = evidence.map((item) => item.label);
+    const originalOrder = evidence.map(
+      (item) => item.label,
+    );
 
     buildExecutiveReasoning({
       subject: "Portfolio risk",
-      severity: "high",
       evidence,
       fallbackReason: "Fallback reason.",
-      fallbackRecommendation: "Fallback recommendation.",
+      recommendation:
+        "Review the material portfolio exposure.",
     });
 
-    expect(evidence.map((item) => item.label)).toEqual(
-      originalOrder,
-    );
+    expect(
+      evidence.map((item) => item.label),
+    ).toEqual(originalOrder);
+  });
+
+  it("returns a defensive copy of the evidence array", () => {
+    const evidence = [
+      createEvidence({
+        label: "Supplier coverage",
+      }),
+    ];
+
+    const result = buildExecutiveReasoning({
+      subject: "Portfolio position",
+      evidence,
+      fallbackReason: "Fallback reason.",
+      recommendation:
+        "Continue monitoring the current portfolio.",
+    });
+
+    expect(result.drivers).toEqual(evidence);
+    expect(result.drivers).not.toBe(evidence);
   });
 });
