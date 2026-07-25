@@ -1,310 +1,198 @@
-import Link from "next/link";
-
+import {
+  ExecutiveAccessGateway,
+  ExecutiveAccessPageShell,
+} from "@/components/executive/invitation/executive-access-gateway";
+import type { ExecutiveAccessState } from "@/components/executive/invitation/executive-access-journey";
+import { ExecutiveAccessStateCard } from "@/components/executive/invitation/executive-access-state";
 import { createClient } from "@/lib/supabase/server";
-import Image from "next/image";
-const SITE_URL =
-"https://scaling-invention-5g7q4p5rwrwj3vwq7-3000.app.github.dev";
 
 type PageProps = {
-params: Promise<{
-token: string;
-}>;
+  params: Promise<{
+    token: string;
+  }>;
 };
 
 type Invitation = {
-id: string;
-company_id: string;
-email: string;
-role: string;
-status: string;
-token: string;
-invited_by: string | null;
-accepted_by: string | null;
-accepted_at: string | null;
-expires_at: string | null;
-created_at: string | null;
-companies?: {
-id: string;
-name: string | null;
-slug: string | null;
-category: string | null;
-location: string | null;
-logo_url: string | null;
-} | null;
+  id: string;
+  company_id: string;
+  email: string;
+  role: string;
+  status: string;
+  token: string;
+  invited_by: string | null;
+  accepted_by: string | null;
+  accepted_at: string | null;
+  expires_at: string | null;
+  created_at: string | null;
+  companies?: {
+    id: string;
+    name: string | null;
+    slug: string | null;
+    category: string | null;
+    location: string | null;
+    logo_url: string | null;
+  } | null;
+};
+
+type InvitationStatus = {
+  label: string;
+  tone: "neutral" | "warning" | "success";
 };
 
 function formatRole(role: string | null | undefined) {
-if (role === "admin") return "Admin";
-if (role === "buyer") return "Buyer";
-return "Vendor";
+  if (role === "admin") return "Workspace Administrator";
+  if (role === "buyer") return "Procurement Buyer";
+
+  return "Supplier Representative";
+}
+
+function formatInvitationStatus(
+  status: string,
+  expired: boolean,
+): InvitationStatus {
+  if (expired) {
+    return {
+      label: "Invitation Expired",
+      tone: "warning",
+    };
+  }
+
+  if (status === "accepted") {
+    return {
+      label: "Access Activated",
+      tone: "success",
+    };
+  }
+
+  if (status === "pending") {
+    return {
+      label: "Pending Identity Verification",
+      tone: "warning",
+    };
+  }
+
+  return {
+    label: "Invitation Unavailable",
+    tone: "neutral",
+  };
 }
 
 function isExpired(expiresAt: string | null) {
-if (!expiresAt) return false;
+  if (!expiresAt) return false;
 
-return new Date(expiresAt).getTime() < Date.now();
+  return new Date(expiresAt).getTime() < Date.now();
 }
 
-function getAbsolutePath(path: string) {
-return `${SITE_URL}${path}`;
+function resolveAccessState({
+  hasUser,
+  emailMismatch,
+  expired,
+  alreadyAccepted,
+  notPending,
+}: {
+  hasUser: boolean;
+  emailMismatch: boolean;
+  expired: boolean;
+  alreadyAccepted: boolean;
+  notPending: boolean;
+}): ExecutiveAccessState {
+  if (!hasUser) return "unauthenticated";
+  if (emailMismatch) return "identity_mismatch";
+  if (expired) return "expired";
+  if (alreadyAccepted) return "accepted";
+  if (notPending) return "unavailable";
+
+  return "ready";
 }
 
 export default async function InviteAcceptPage({ params }: PageProps) {
-const { token } = await params;
-const supabase = await createClient();
+  const { token } = await params;
+  const supabase = await createClient();
 
-const {
-data: { user },
-} = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-const { data: invitationData } = await supabase
-.from("invitations")
-.select(
-`
-*,
-companies (
-id,
-name,
-slug,
-category,
-location,
-logo_url
-)
-`
-)
-.eq("token", token)
-.single();
+  const { data: invitationData } = await supabase
+    .from("invitations")
+    .select(
+      `
+        *,
+        companies (
+          id,
+          name,
+          slug,
+          category,
+          location,
+          logo_url
+        )
+      `,
+    )
+    .eq("token", token)
+    .single();
 
-const invitation = invitationData as Invitation | null;
+  const invitation = invitationData as Invitation | null;
 
-if (!invitation) {
-return (
-<main className="flex min-h-screen items-center justify-center bg-[#f6f6f3] px-6 py-10">
-<InviteStateCard
-title="Invitation not found"
-message="This invitation link is invalid or no longer exists."
-actionHref={getAbsolutePath("/login")}
-actionLabel="Back to sign in"
-/>
-</main>
-);
-}
+  if (!invitation) {
+    return (
+      <ExecutiveAccessPageShell>
+        <div className="mx-auto flex min-h-[calc(100vh-2rem)] w-full max-w-xl items-center">
+          <ExecutiveAccessStateCard
+            eyebrow="Secure Access Validation"
+            title="Invitation could not be verified"
+            message="This workspace invitation is invalid, has been withdrawn, or is no longer available. Contact the workspace administrator if you require a new access authorization."
+            actionHref="/login"
+            actionLabel="Return to Secure Sign In"
+          />
+        </div>
+      </ExecutiveAccessPageShell>
+    );
+  }
 
-const expired = isExpired(invitation.expires_at);
-const alreadyAccepted = invitation.status === "accepted";
-const notPending = invitation.status !== "pending";
-const userEmail = String(user?.email || "").toLowerCase();
-const inviteEmail = String(invitation.email || "").toLowerCase();
-const emailMismatch = Boolean(user && userEmail !== inviteEmail);
-const signupHref = getAbsolutePath(`/invite/${invitation.token}/signup`);
+  const expired = isExpired(invitation.expires_at);
+  const alreadyAccepted = invitation.status === "accepted";
+  const notPending = invitation.status !== "pending";
 
-return (
-<main className="min-h-screen bg-[#f6f6f3] px-6 py-10">
-<div className="mx-auto max-w-4xl">
-<Link
-href={getAbsolutePath("/login")}
-className="text-sm font-bold text-slate-500 hover:text-slate-950"
->
-← Back to sign in
-</Link>
+  const userEmail = String(user?.email || "").trim().toLowerCase();
+  const invitedEmail = String(invitation.email || "").trim().toLowerCase();
+  const emailMismatch = Boolean(user && userEmail !== invitedEmail);
 
-<section className="mt-8 rounded-[36px] border border-black/5 bg-white p-10">
-<div className="flex flex-col gap-8 md:flex-row md:items-start md:justify-between">
-<div>
-<p className="text-xs font-black uppercase tracking-[0.35em] text-orange-500">
-Nexus Pavilion Invitation
-</p>
+  const accessState = resolveAccessState({
+    hasUser: Boolean(user),
+    emailMismatch,
+    expired,
+    alreadyAccepted,
+    notPending,
+  });
 
-<h1 className="mt-3 text-5xl font-black text-slate-950">
-Join Company Workspace
-</h1>
+  const signupHref = `/invite/${invitation.token}/signup`;
+  const status = formatInvitationStatus(invitation.status, expired);
 
-<p className="mt-4 max-w-2xl text-sm leading-6 text-slate-600">
-You have been invited to join a secure procurement workspace.
-Accepting this invitation will attach your account to the
-company and assign your role.
-</p>
-</div>
+  const companyName =
+    invitation.companies?.name || "Authorized Company Workspace";
 
-<span className="rounded-full bg-orange-100 px-4 py-2 text-sm font-black text-orange-700">
-{formatRole(invitation.role)}
-</span>
-</div>
+  const companyCategory =
+    invitation.companies?.category || "Enterprise Procurement";
 
-<div className="mt-10 rounded-3xl bg-slate-50 p-6">
-<div className="flex items-start gap-5">
-{invitation.companies?.logo_url ? (
-<Image
-src={invitation.companies.logo_url}
-alt={invitation.companies.name || "Company"}
-width={80}
-height={80}
-className="h-20 w-20 rounded-3xl border border-slate-200 bg-white object-contain p-2"
-/>
-) : (
-<div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-white text-3xl font-black text-slate-500">
-{invitation.companies?.name?.charAt(0) || "N"}
-</div>
-)}
+  const companyLocation =
+    invitation.companies?.location || "Location not specified";
 
-<div>
-<p className="text-xs font-black uppercase tracking-[0.25em] text-slate-400">
-Company
-</p>
+  const roleLabel = formatRole(invitation.role);
 
-<h2 className="mt-2 text-3xl font-black text-slate-950">
-{invitation.companies?.name || "Company Workspace"}
-</h2>
-
-<p className="mt-2 text-sm font-semibold text-slate-600">
-{invitation.companies?.category || "Enterprise"} ·{" "}
-{invitation.companies?.location || "Location N/A"}
-</p>
-</div>
-</div>
-</div>
-
-<div className="mt-6 grid gap-4 md:grid-cols-3">
-<InfoBox title="Invited Email" value={invitation.email} />
-<InfoBox title="Role" value={formatRole(invitation.role)} />
-<InfoBox
-title="Status"
-value={expired ? "Expired" : invitation.status}
-/>
-</div>
-
-<div className="mt-8">
-{!user ? (
-<div className="rounded-3xl bg-yellow-50 p-6">
-<h3 className="text-xl font-black text-slate-950">
-Create or sign in to continue
-</h3>
-
-<p className="mt-2 text-sm leading-6 text-slate-600">
-This invitation was sent to:
-</p>
-
-<p className="mt-3 text-sm font-black text-yellow-800">
-{invitation.email}
-</p>
-
-<div className="mt-6 flex flex-wrap gap-3">
-<Link
-href={signupHref}
-className="inline-flex rounded-full bg-slate-950 px-6 py-3 text-sm font-bold text-white"
->
-Create account and join
-</Link>
-
-<Link
-href={getAbsolutePath("/login")}
-className="inline-flex rounded-full bg-white px-6 py-3 text-sm font-bold text-slate-950 shadow-sm"
->
-I already have an account
-</Link>
-</div>
-
-<p className="mt-4 text-xs font-bold leading-5 text-slate-500">
-New users can create a password and join this workspace
-directly from the invitation.
-</p>
-</div>
-) : emailMismatch ? (
-<div className="rounded-3xl bg-red-50 p-6">
-<h3 className="text-xl font-black text-red-700">
-Wrong account
-</h3>
-
-<p className="mt-2 text-sm leading-6 text-red-600">
-This invitation was sent to {invitation.email}, but you are
-signed in as {user.email}. Please sign out and use the invited
-email address.
-</p>
-
-<Link
-href={getAbsolutePath("/login")}
-className="mt-6 inline-flex rounded-full bg-red-700 px-6 py-3 text-sm font-bold text-white"
->
-Sign in with invited email
-</Link>
-</div>
-) : expired ? (
-<InviteStateCard
-title="Invitation expired"
-message="This invitation is no longer active. Please request a new invitation from your company admin."
-actionHref={getAbsolutePath("/dashboard")}
-actionLabel="Go to dashboard"
-/>
-) : alreadyAccepted ? (
-<InviteStateCard
-title="Invitation already accepted"
-message="This invitation has already been accepted."
-actionHref={getAbsolutePath("/dashboard")}
-actionLabel="Go to dashboard"
-/>
-) : notPending ? (
-<InviteStateCard
-title="Invitation unavailable"
-message="This invitation is no longer available."
-actionHref={getAbsolutePath("/dashboard")}
-actionLabel="Go to dashboard"
-/>
-) : (
-<form action="/api/company-invitations/accept" method="POST">
-<input type="hidden" name="token" value={invitation.token} />
-
-<button
-type="submit"
-className="rounded-full bg-slate-950 px-7 py-4 text-sm font-bold text-white transition hover:bg-slate-800"
->
-Accept Invitation
-</button>
-</form>
-)}
-</div>
-</section>
-</div>
-</main>
-);
-}
-
-function InfoBox({ title, value }: { title: string; value: string }) {
-return (
-<div className="rounded-3xl bg-white p-5 shadow-sm">
-<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
-{title}
-</p>
-
-<p className="mt-2 break-all text-lg font-black text-slate-950">
-{value}
-</p>
-</div>
-);
-}
-
-function InviteStateCard({
-title,
-message,
-actionHref,
-actionLabel,
-}: {
-title: string;
-message: string;
-actionHref: string;
-actionLabel: string;
-}) {
-return (
-<div className="w-full max-w-lg rounded-[32px] border border-black/5 bg-white p-8 text-center">
-<h1 className="text-3xl font-black text-slate-950">{title}</h1>
-
-<p className="mt-3 text-sm leading-6 text-slate-600">{message}</p>
-
-<Link
-href={actionHref}
-className="mt-6 inline-flex rounded-full bg-slate-950 px-6 py-3 text-sm font-bold text-white"
->
-{actionLabel}
-</Link>
-</div>
-);
+  return (
+    <ExecutiveAccessGateway
+      state={accessState}
+      companyName={companyName}
+      companyCategory={companyCategory}
+      companyLocation={companyLocation}
+      companyLogoUrl={invitation.companies?.logo_url || null}
+      invitationEmail={invitation.email}
+      authenticatedEmail={user?.email || "Unknown identity"}
+      roleLabel={roleLabel}
+      statusLabel={status.label}
+      statusTone={status.tone}
+      signupHref={signupHref}
+      invitationToken={invitation.token}
+    />
+  );
 }
