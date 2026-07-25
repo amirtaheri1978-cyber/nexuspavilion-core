@@ -53,6 +53,13 @@ const WORKSPACE_LINKS = [
   },
 ] as const;
 
+type SignOutButtonMode = "workspace-menu" | "logout-only";
+
+type SignOutButtonProps = {
+  mode?: SignOutButtonMode;
+  className?: string;
+};
+
 type MenuPosition = {
   top: number;
   right: number;
@@ -68,7 +75,10 @@ function useHasMounted() {
   );
 }
 
-export default function SignOutButton() {
+export default function SignOutButton({
+  mode = "workspace-menu",
+  className = "",
+}: SignOutButtonProps) {
   const router = useRouter();
   const supabase = createClient();
   const mounted = useHasMounted();
@@ -78,13 +88,14 @@ export default function SignOutButton() {
 
   const [open, setOpen] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
+
   const [menuPosition, setMenuPosition] = useState<MenuPosition>({
     top: 0,
     right: 16,
   });
 
   useEffect(() => {
-    if (!open) return;
+    if (mode !== "workspace-menu" || !open) return;
 
     function updateMenuPosition() {
       const trigger = triggerRef.current;
@@ -133,7 +144,7 @@ export default function SignOutButton() {
       document.removeEventListener("mousedown", handlePointerDown);
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [open]);
+  }, [mode, open]);
 
   async function handleSignOut() {
     if (signingOut) return;
@@ -151,6 +162,22 @@ export default function SignOutButton() {
     setOpen(false);
     router.push("/login");
     router.refresh();
+  }
+
+  if (mode === "logout-only") {
+    return (
+      <button
+        type="button"
+        onClick={handleSignOut}
+        disabled={signingOut}
+        aria-label="Securely sign out of Nexus Pavilion"
+        className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-red-300/20 bg-red-400/10 px-4 py-2 text-sm font-black text-red-200 transition-colors hover:border-red-300/30 hover:bg-red-400/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300/40 disabled:cursor-not-allowed disabled:opacity-60 ${className}`}
+      >
+        <span>{signingOut ? "Signing out..." : "Secure Logout"}</span>
+
+        <span aria-hidden="true">⏻</span>
+      </button>
+    );
   }
 
   const menu =
@@ -229,7 +256,7 @@ export default function SignOutButton() {
           aria-expanded={open}
           aria-haspopup="menu"
           aria-controls="executive-workspace-menu"
-          className="flex items-center gap-3 rounded-full border border-white/10 bg-[#061426]/90 px-3 py-2 text-left text-white shadow-executive backdrop-blur transition-colors hover:border-[#2CC4E8]/30 hover:bg-[#07111F] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2CC4E8]/40"
+          className={`flex items-center gap-3 rounded-full border border-white/10 bg-[#061426]/90 px-3 py-2 text-left text-white shadow-executive backdrop-blur transition-colors hover:border-[#2CC4E8]/30 hover:bg-[#07111F] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2CC4E8]/40 ${className}`}
         >
           <NexusPavilionLogo variant="icon" size={32} />
 
