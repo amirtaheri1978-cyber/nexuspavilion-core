@@ -6,14 +6,7 @@ import AppTopbar from "@/components/common/AppTopbar";
 import Footer from "@/components/footer";
 import Sidebar from "@/components/sidebar";
 
-const APP_SHELL_HIDDEN_ROUTES = [
-  "/",
-  "/about",
-  "/contact",
-  "/pricing",
-  "/privacy",
-  "/terms",
-  "/create-company",
+const AUTHENTICATION_ROUTES = [
   "/login",
   "/register",
   "/signup",
@@ -22,17 +15,57 @@ const APP_SHELL_HIDDEN_ROUTES = [
   "/invite",
 ];
 
-function shouldHideAppShell(pathname: string) {
-  return APP_SHELL_HIDDEN_ROUTES.some(
+const ONBOARDING_ROUTES = ["/create-company"];
+
+const PUBLIC_ROUTES = [
+  "/",
+  "/about",
+  "/contact",
+  "/pricing",
+  "/privacy",
+  "/terms",
+];
+
+function matchesRoute(pathname: string, routes: readonly string[]) {
+  return routes.some(
     (route) => pathname === route || pathname.startsWith(`${route}/`),
   );
 }
 
-export default function AppShell({ children }: { children: React.ReactNode }) {
+export default function AppShell({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const pathname = usePathname();
-  const hideAppShell = shouldHideAppShell(pathname);
 
-  if (hideAppShell) {
+  const isAuthenticationRoute = matchesRoute(
+    pathname,
+    AUTHENTICATION_ROUTES,
+  );
+
+  const isOnboardingRoute = matchesRoute(pathname, ONBOARDING_ROUTES);
+
+  const isPublicRoute = matchesRoute(pathname, PUBLIC_ROUTES);
+
+  /*
+   * Authentication and onboarding routes intentionally exclude the public
+   * footer so users remain focused on account access, invitation acceptance,
+   * and workspace enrollment.
+   */
+  if (isAuthenticationRoute || isOnboardingRoute) {
+    return (
+      <div className="min-h-screen bg-[#07111F] text-white">
+        {children}
+      </div>
+    );
+  }
+
+  /*
+   * Public marketing and legal routes retain the public footer but do not
+   * render authenticated workspace navigation.
+   */
+  if (isPublicRoute) {
     return (
       <div className="min-h-screen bg-[#07111F] text-white">
         {children}
@@ -41,6 +74,11 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     );
   }
 
+  /*
+   * All remaining routes use the authenticated application shell.
+   * Access control must still be enforced independently by middleware,
+   * server-side session validation, and data authorization.
+   */
   return (
     <div className="min-h-screen bg-[#07111F] text-white">
       <Sidebar />
