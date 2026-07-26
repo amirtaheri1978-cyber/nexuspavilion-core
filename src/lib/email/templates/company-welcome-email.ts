@@ -129,11 +129,11 @@ Workspace Activated
 </p>
 
 <h1 class="hero-title" style="margin:18px 0 0;color:#ffffff;font-size:44px;line-height:1.05;font-weight:900;letter-spacing:-1.5px;">
-Your procurement workspace is live.
+${companyName} has been successfully activated.
 </h1>
 
 <p class="hero-copy" style="margin:22px 0 0;color:#cbd5e1;font-size:16px;line-height:1.8;font-weight:600;">
-Your Nexus Pavilion enterprise workspace is now active and ready for RFQs, supplier collaboration, procurement intelligence, and executive reporting.
+Your enterprise procurement workspace is now configured and ready for RFQs, supplier collaboration, procurement intelligence, and executive reporting.
 </p>
 </td>
 </tr>
