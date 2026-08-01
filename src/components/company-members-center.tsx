@@ -262,6 +262,20 @@ export default function CompanyMembersCenter({
   governanceMessage,
   siteUrl,
 }: CompanyMembersCenterProps) {
+const currentWorkspaceMember =
+  workspaceMembers.find(
+    ({ profile }) =>
+      profile.id === currentProfile.id,
+  );
+
+const currentUserWorkspaceRole =
+  currentWorkspaceMember?.membership
+    ?.workspace_role ?? null;
+
+const currentUserMembershipStatus =
+  currentWorkspaceMember?.membership
+    ?.membership_status ?? null;
+
   return (
     <>
       <section
@@ -452,16 +466,22 @@ export default function CompanyMembersCenter({
                              * legacy admin/buyer/vendor contract.
                              */}
                             <MemberActions
-                              memberId={profile.id}
-                              memberEmail={profile.email}
-                              memberRole={profile.role}
-                              currentUserId={
-                                currentProfile.id
-                              }
-                              currentUserRole={
-                                currentProfile.role
-                              }
-                            />
+  memberId={profile.id}
+  memberEmail={profile.email}
+  memberWorkspaceRole={
+    membership?.workspace_role ?? null
+  }
+  memberMembershipStatus={
+    membership?.membership_status ?? null
+  }
+  currentUserId={currentProfile.id}
+  currentUserWorkspaceRole={
+    currentUserWorkspaceRole
+  }
+  currentUserMembershipStatus={
+    currentUserMembershipStatus
+  }
+/>
                           </td>
                         </tr>
                       ),

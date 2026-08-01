@@ -3,104 +3,141 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
 const SITE_URL =
-"https://scaling-invention-5g7q4p5rwrwj3vwq7-3000.app.github.dev";
+  process.env.NEXT_PUBLIC_SITE_URL ||
+  "http://localhost:3000";
 
-function formatRole(role: string | null | undefined) {
-if (role === "admin") return "Admin";
-if (role === "buyer") return "Buyer";
-return "Vendor";
-}
-
-function isExpired(expiresAt: string | null) {
-if (!expiresAt) return false;
-
-return new Date(expiresAt).getTime() < Date.now();
-}
+type AcceptInvitationResponse = {
+  success?: boolean;
+  error_code?: string;
+  error_message?: string;
+};
 
 function redirectTo(path: string) {
-return NextResponse.redirect(`${SITE_URL}${path}`);
+  return NextResponse.redirect(
+    new URL(path, SITE_URL),
+  );
+}
+
+function getFailureRedirect(
+  token: string,
+  errorCode: string | undefined,
+) {
+  switch (errorCode) {
+    case "UNAUTHENTICATED":
+      return redirectTo(
+        `/login?next=${encodeURIComponent(
+          `/invite/${token}`,
+        )}`,
+      );
+
+    case "RECIPIENT_MISMATCH":
+      return redirectTo(
+        `/invite/${token}?error=recipient-mismatch`,
+      );
+
+    case "INVITATION_EXPIRED":
+      return redirectTo(
+        `/invite/${token}?error=expired`,
+      );
+
+    case "INVITATION_NOT_PENDING":
+      return redirectTo(
+        `/invite/${token}?error=not-pending`,
+      );
+
+    case "INVITATION_NOT_FOUND":
+    case "INVALID_TOKEN":
+      return redirectTo(
+        "/dashboard?error=invalid-invitation",
+      );
+
+    default:
+      return redirectTo(
+        `/invite/${token}?error=accept-failed`,
+      );
+  }
 }
 
 export async function POST(request: Request) {
-const formData = await request.formData();
-const token = String(formData.get("token") || "");
+  try {
+    const formData = await request.formData();
 
-const supabase = await createClient();
+    const token = String(
+      formData.get("token") || "",
+    ).trim();
 
-const {
-data: { user },
-} = await supabase.auth.getUser();
+    if (!token) {
+      return redirectTo(
+        "/dashboard?error=invalid-invitation",
+      );
+    }
 
-if (!user) {
-return redirectTo("/login");
-}
+    const supabase = await createClient();
 
-if (!token) {
-return redirectTo("/dashboard");
-}
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
 
-const { data: invitation } = await supabase
-.from("invitations")
-.select("*")
-.eq("token", token)
-.single();
+    if (userError || !user) {
+      return redirectTo(
+        `/login?next=${encodeURIComponent(
+          `/invite/${token}`,
+        )}`,
+      );
+    }
 
-if (!invitation) {
-return redirectTo("/dashboard");
-}
+    const { data, error } = await supabase.rpc(
+      "accept_organization_invitation",
+      {
+        invitation_token: token,
+      },
+    );
 
-if (invitation.status !== "pending") {
-return redirectTo("/dashboard");
-}
+    if (error) {
+      console.error(
+        "Invitation acceptance RPC failed.",
+        {
+          token,
+          userId: user.id,
+          error,
+        },
+      );
 
-if (isExpired(invitation.expires_at)) {
-return redirectTo("/dashboard");
-}
+      return redirectTo(
+        `/invite/${token}?error=accept-failed`,
+      );
+    }
 
-const userEmail = String(user.email || "").toLowerCase();
-const inviteEmail = String(invitation.email || "").toLowerCase();
+    const result =
+      data as AcceptInvitationResponse | null;
 
-if (userEmail !== inviteEmail) {
-return redirectTo(`/invite/${token}`);
-}
+    if (!result?.success) {
+      console.warn(
+        "Invitation acceptance was rejected.",
+        {
+          token,
+          userId: user.id,
+          errorCode: result?.error_code,
+          errorMessage: result?.error_message,
+        },
+      );
 
-await supabase.from("profiles").upsert({
-id: user.id,
-email: user.email,
-role: invitation.role,
-company_id: invitation.company_id,
-});
+      return getFailureRedirect(
+        token,
+        result?.error_code,
+      );
+    }
 
-await supabase
-.from("invitations")
-.update({
-status: "accepted",
-accepted_by: user.id,
-accepted_at: new Date().toISOString(),
-})
-.eq("id", invitation.id);
+    return redirectTo("/dashboard");
+  } catch (error) {
+    console.error(
+      "Unexpected invitation acceptance failure.",
+      error,
+    );
 
-await supabase.from("notifications").insert({
-title: "Invitation Accepted",
-message: `${user.email} joined the company workspace as ${formatRole(
-invitation.role
-)}.`,
-type: "invitation",
-is_read: false,
-});
-
-await supabase.from("audit_logs").insert({
-action: "INVITATION_ACCEPTED",
-entity_type: "invitation",
-entity_id: invitation.id,
-user_id: user.id,
-company_id: invitation.company_id,
-metadata: {
-email: user.email,
-role: invitation.role,
-accepted_at: new Date().toISOString(),
-},
-});
-
-return redirectTo("/dashboard");
+    return redirectTo(
+      "/dashboard?error=invitation-acceptance-failed",
+    );
+  }
 }

@@ -1,169 +1,156 @@
 import { NextResponse } from "next/server";
 
-import { canChangeRoles, type UserRole } from "@/lib/permissions";
+import type { WorkspaceRole } from "@/lib/auth/membership";
+import {
+  updateWorkspaceMemberRole,
+  WorkspaceCommandError,
+} from "@/lib/workspace/commands";
 import { createClient } from "@/lib/supabase/server";
 
-type EditableRole = "admin" | "buyer" | "vendor";
+type EditableWorkspaceRole = Exclude<
+  WorkspaceRole,
+  "owner"
+>;
 
-function normalizeRole(role: unknown): EditableRole {
-const value = String(role || "").trim().toLowerCase();
+type RequestBody = {
+  memberId?: unknown;
+  workspaceRole?: unknown;
+};
 
-if (value === "admin") return "admin";
-if (value === "buyer") return "buyer";
-return "vendor";
+function normalizeWorkspaceRole(
+  value: unknown,
+): EditableWorkspaceRole | null {
+  const normalizedValue = String(value || "")
+    .trim()
+    .toLowerCase();
+
+  if (normalizedValue === "admin") {
+    return "admin";
+  }
+
+  if (normalizedValue === "member") {
+    return "member";
+  }
+
+  if (normalizedValue === "viewer") {
+    return "viewer";
+  }
+
+  return null;
+}
+
+function getCommandErrorResponse(
+  error: WorkspaceCommandError,
+) {
+  switch (error.code) {
+    case "UNAUTHENTICATED":
+      return NextResponse.json(
+        { error: error.message },
+        { status: 401 },
+      );
+
+    case "FORBIDDEN":
+    case "OWNER_PROTECTED":
+    case "LAST_OWNER_PROTECTED":
+      return NextResponse.json(
+        { error: error.message },
+        { status: 403 },
+      );
+
+    case "MEMBER_NOT_FOUND":
+      return NextResponse.json(
+        { error: error.message },
+        { status: 404 },
+      );
+
+    case "SELF_MUTATION_NOT_ALLOWED":
+    case "INVALID_ROLE":
+      return NextResponse.json(
+        { error: error.message },
+        { status: 400 },
+      );
+
+    default:
+      return NextResponse.json(
+        {
+          error:
+            "Unable to update the workspace member role.",
+        },
+        { status: 500 },
+      );
+  }
 }
 
 export async function POST(request: Request) {
-try {
-const body = await request.json();
+  try {
+    let body: RequestBody;
 
-const memberId = String(body.memberId || "").trim();
-const role = normalizeRole(body.role);
+    try {
+      body =
+        (await request.json()) as RequestBody;
+    } catch {
+      return NextResponse.json(
+        {
+          error:
+            "A valid request body is required.",
+        },
+        { status: 400 },
+      );
+    }
 
-if (!memberId) {
-return NextResponse.json(
-{ error: "Member ID is required." },
-{ status: 400 }
-);
-}
+    const memberId = String(
+      body.memberId || "",
+    ).trim();
 
-const supabase = await createClient();
+    const workspaceRole =
+      normalizeWorkspaceRole(
+        body.workspaceRole,
+      );
 
-const {
-data: { user },
-error: userError,
-} = await supabase.auth.getUser();
+    if (!memberId) {
+      return NextResponse.json(
+        { error: "Member ID is required." },
+        { status: 400 },
+      );
+    }
 
-if (userError || !user) {
-return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
-}
+    if (!workspaceRole) {
+      return NextResponse.json(
+        {
+          error:
+            "Workspace role must be admin, member, or viewer.",
+        },
+        { status: 400 },
+      );
+    }
 
-const { data: currentProfile } = await supabase
-.from("profiles")
-.select("id, email, role, company_id")
-.eq("id", user.id)
-.single();
+    const supabase = await createClient();
 
-if (!currentProfile?.company_id) {
-return NextResponse.json(
-{ error: "No company assigned." },
-{ status: 400 }
-);
-}
+    await updateWorkspaceMemberRole(
+      supabase,
+      {
+        targetUserId: memberId,
+        workspaceRole,
+      },
+    );
 
-if (!canChangeRoles(currentProfile.role as UserRole)) {
-return NextResponse.json(
-{ error: "You do not have permission to update member roles." },
-{ status: 403 }
-);
-}
+    return NextResponse.json({
+      success: true,
+      workspaceRole,
+    });
+  } catch (error) {
+    if (error instanceof WorkspaceCommandError) {
+      return getCommandErrorResponse(error);
+    }
 
-const { data: targetMember } = await supabase
-.from("profiles")
-.select("id, email, role, company_id")
-.eq("id", memberId)
-.eq("company_id", currentProfile.company_id)
-.single();
+    console.error(
+      "Unexpected workspace role update failure.",
+      error,
+    );
 
-if (!targetMember) {
-return NextResponse.json(
-{ error: "Member not found in your company workspace." },
-{ status: 404 }
-);
-}
-
-if (targetMember.id === currentProfile.id) {
-return NextResponse.json(
-{ error: "You cannot change your own role." },
-{ status: 400 }
-);
-}
-
-const { count: adminCount } = await supabase
-.from("profiles")
-.select("*", { count: "exact", head: true })
-.eq("company_id", currentProfile.company_id)
-.eq("role", "admin");
-
-if (
-targetMember.role === "admin" &&
-role !== "admin" &&
-(adminCount || 0) <= 1
-) {
-return NextResponse.json(
-{
-error:
-"Cannot remove the last workspace admin. Assign another admin first.",
-},
-{ status: 400 }
-);
-}
-
-if (targetMember.role === "admin" && role !== "admin") {
-const { count: adminCount, error: adminCountError } = await supabase
-.from("profiles")
-.select("id", { count: "exact", head: true })
-.eq("company_id", currentProfile.company_id)
-.eq("role", "admin");
-
-if (adminCountError) {
-console.error(adminCountError);
-
-return NextResponse.json(
-{ error: "Failed to validate workspace administrators." },
-{ status: 500 }
-);
-}
-
-if ((adminCount || 0) <= 1) {
-return NextResponse.json(
-{ error: "You cannot demote the last workspace admin." },
-{ status: 400 }
-);
-}
-}
-
-const { error: updateError } = await supabase
-.from("profiles")
-.update({
-role,
-})
-.eq("id", targetMember.id)
-.eq("company_id", currentProfile.company_id);
-
-if (updateError) {
-console.error(updateError);
-
-return NextResponse.json(
-{ error: "Failed to update member role." },
-{ status: 500 }
-);
-}
-
-await supabase.from("audit_logs").insert({
-action: "MEMBER_ROLE_UPDATED",
-entity_type: "profile",
-entity_id: targetMember.id,
-user_id: user.id,
-company_id: currentProfile.company_id,
-metadata: {
-member_email: targetMember.email,
-previous_role: targetMember.role,
-new_role: role,
-updated_at: new Date().toISOString(),
-},
-});
-
-return NextResponse.json({
-success: true,
-role,
-});
-} catch (error) {
-console.error(error);
-
-return NextResponse.json(
-{ error: "Internal server error." },
-{ status: 500 }
-);
-}
+    return NextResponse.json(
+      { error: "Internal server error." },
+      { status: 500 },
+    );
+  }
 }
