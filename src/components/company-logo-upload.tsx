@@ -49,23 +49,39 @@ const { data } = supabase.storage.from("Company-logos").getPublicUrl(filePath);
 
 const publicUrl = data.publicUrl;
 
-const { error: updateError } = await supabase
-.from("companies")
-.update({
-logo_url: publicUrl,
-})
-.eq("id", companyId);
+const response = await fetch(`/api/companies/${companyId}/logo`, {
+  method: "PATCH",
+  headers: {
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    logoUrl: publicUrl,
+  }),
+});
 
-if (updateError) {
-console.error(updateError);
-setMessage("Logo uploaded, but company profile was not updated.");
-setUploading(false);
-return;
+const result = (await response.json()) as {
+  error?: string;
+  company?: {
+    logo_url?: string | null;
+  };
+};
+
+if (!response.ok) {
+  console.error(result);
+  setMessage(
+    result.error ||
+      "Logo uploaded, but company profile was not updated.",
+  );
+  setUploading(false);
+  return;
 }
 
-setLogoUrl(publicUrl);
+const savedLogoUrl = result.company?.logo_url || publicUrl;
+
+setLogoUrl(savedLogoUrl);
 setMessage("Logo uploaded successfully.");
 setUploading(false);
+
 }
 
 return (
