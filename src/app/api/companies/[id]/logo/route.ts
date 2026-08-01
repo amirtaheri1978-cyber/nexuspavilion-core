@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 
 import {
-  canManageCompany,
-  type UserRole,
-} from "@/lib/permissions";
+  getCurrentWorkspaceContext,
+  WorkspaceContextError,
+} from "@/lib/auth/workspace-context";
+import { canManageCompanyWorkspace } from "@/lib/authorization/workspace-permissions";
 import { createClient } from "@/lib/supabase/server";
 
 type RouteContext = {
@@ -76,43 +77,51 @@ export async function PATCH(
 
     const supabase = await createClient();
 
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
+    let workspace;
 
-    if (userError || !user) {
-      return NextResponse.json(
-        { error: "Unauthorized." },
-        { status: 401 },
-      );
-    }
+    try {
+      workspace = await getCurrentWorkspaceContext(supabase);
+    } catch (error) {
+      if (
+        error instanceof WorkspaceContextError &&
+        error.code === "UNAUTHENTICATED"
+      ) {
+        return NextResponse.json(
+          { error: "Unauthorized." },
+          { status: 401 },
+        );
+      }
 
-    const { data: profile, error: profileError } =
-      await supabase
-        .from("profiles")
-        .select("id, email, role, company_id")
-        .eq("id", user.id)
-        .maybeSingle();
+      console.error("Company logo workspace context lookup failed.", {
+        companyId: id,
+        error,
+      });
 
-    if (profileError || !profile?.company_id) {
-      return NextResponse.json(
-        { error: "An active company profile is required." },
-        { status: 403 },
-      );
-    }
-
-    if (!canManageCompany(profile.role as UserRole)) {
       return NextResponse.json(
         {
-          error:
-            "Only organization owners and administrators can update company branding.",
+          error: "Unable to verify your workspace membership.",
         },
         { status: 403 },
       );
     }
 
-    if (profile.company_id !== id) {
+    if (
+      !workspace.membership ||
+      !canManageCompanyWorkspace({
+        workspaceRole: workspace.workspaceRole,
+        membershipStatus: workspace.membershipStatus,
+      })
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "Only active organization owners and administrators can update company branding.",
+        },
+        { status: 403 },
+      );
+    }
+
+    if (workspace.companyId !== id) {
       return NextResponse.json(
         {
           error:
@@ -132,7 +141,7 @@ export async function PATCH(
     if (companyError) {
       console.error("Company logo lookup failed.", {
         companyId: id,
-        userId: user.id,
+        userId: workspace.userId,
         error: companyError,
       });
 
@@ -162,7 +171,7 @@ export async function PATCH(
     if (updateError || !updatedCompany) {
       console.error("Company logo update failed.", {
         companyId: id,
-        userId: user.id,
+        userId: workspace.userId,
         error: updateError,
       });
 
@@ -178,12 +187,17 @@ export async function PATCH(
         action: "COMPANY_LOGO_UPDATED",
         entity_type: "company",
         entity_id: id,
-        user_id: user.id,
+        user_id: workspace.userId,
         company_id: id,
         metadata: {
           previous_logo_url: company.logo_url,
           new_logo_url: logoUrl,
-          actor_role: profile.role,
+          updated_by: {
+            id: workspace.userId,
+            email: workspace.email,
+            workspace_role: workspace.workspaceRole,
+            membership_type: workspace.membershipType,
+          },
           updated_at: new Date().toISOString(),
         },
       });
@@ -191,7 +205,7 @@ export async function PATCH(
     if (auditError) {
       console.error("Company logo audit failed.", {
         companyId: id,
-        userId: user.id,
+        userId: workspace.userId,
         error: auditError,
       });
     }
