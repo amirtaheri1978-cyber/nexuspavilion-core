@@ -51,6 +51,39 @@ type Membership = {
     | "revoked";
 };
 
+type OrganizationMemberRow = {
+  membership_id: string;
+  user_id: string;
+  company_id: string;
+
+  email: string | null;
+  legacy_role: string | null;
+  profile_created_at: string | null;
+
+  workspace_role: "owner" | "admin" | "member" | "viewer";
+  procurement_function:
+    | "buyer"
+    | "supplier"
+    | "consultant"
+    | "none";
+  membership_type:
+    | "founder"
+    | "employee"
+    | "external_consultant"
+    | "procurement_agent"
+    | "temporary_staff";
+  membership_status:
+    | "pending"
+    | "active"
+    | "suspended"
+    | "revoked";
+
+  joined_at: string | null;
+  role_changed_at: string | null;
+  membership_created_at: string;
+  membership_updated_at: string;
+};
+
 export type WorkspaceMember = {
   profile: Profile;
   membership: Membership | null;
@@ -143,14 +176,13 @@ export default async function CompanyWorkspacePage() {
 
   const companyId = workspace.companyId;
 
-  const [
-    companyResult,
-    currentProfileResult,
-    membersResult,
-    membershipsResult,
-    invitationsResult,
-    auditResult,
-  ] = await Promise.all([
+const [
+  companyResult,
+  currentProfileResult,
+  organizationMembersResult,
+  invitationsResult,
+  auditResult,
+] = await Promise.all([
     supabase
       .from("companies")
       .select(
@@ -183,26 +215,9 @@ export default async function CompanyWorkspacePage() {
      * Profiles currently provide member identity information.
      * Organization membership supplies workspace authority.
      */
-    supabase
-      .from("profiles")
-      .select("id, email, role, company_id, created_at")
-      .eq("company_id", companyId)
-      .order("created_at", { ascending: true }),
+   
 
-    supabase
-      .from("organization_memberships")
-      .select(
-        `
-          id,
-          user_id,
-          company_id,
-          workspace_role,
-          procurement_function,
-          membership_status
-        `,
-      )
-      .eq("company_id", companyId)
-      .eq("membership_status", "active"),
+ supabase.rpc("get_organization_members"),
 
     supabase
       .from("invitations")
@@ -268,21 +283,13 @@ export default async function CompanyWorkspacePage() {
     );
   }
 
-  if (membersResult.error) {
-    console.error("Company members lookup failed.", {
-      companyId,
-      userId: workspace.userId,
-      error: membersResult.error,
-    });
-  }
-
-  if (membershipsResult.error) {
-    console.error("Company memberships lookup failed.", {
-      companyId,
-      userId: workspace.userId,
-      error: membershipsResult.error,
-    });
-  }
+if (organizationMembersResult.error) {
+  console.error("Organization members RPC failed.", {
+    companyId,
+    userId: workspace.userId,
+    error: organizationMembersResult.error,
+  });
+}
 
   if (invitationsResult.error) {
     console.error("Company invitations lookup failed.", {
@@ -317,37 +324,30 @@ export default async function CompanyWorkspacePage() {
     company_id: companyId,
   };
 
-  const profiles =
-    (membersResult.data ?? []) as Profile[];
+const organizationMemberRows =
+  (organizationMembersResult.data ??
+    []) as OrganizationMemberRow[];
 
-  const memberships =
-    (membershipsResult.data ?? []) as Membership[];
+const workspaceMembers: WorkspaceMember[] =
+  organizationMemberRows.map((row) => ({
+    profile: {
+      id: row.user_id,
+      email: row.email,
+      role: row.legacy_role,
+      company_id: row.company_id,
+      created_at: row.profile_created_at,
+    },
 
-  const membershipByUserId = new Map(
-    memberships.map((membership) => [
-      membership.user_id,
-      membership,
-    ]),
-  );
-
-  const workspaceMembers: WorkspaceMember[] =
-    profiles.map((profile) => ({
-      profile,
-      membership:
-        membershipByUserId.get(profile.id) ?? null,
-    }));
-
-  for (const member of workspaceMembers) {
-    if (!member.membership) {
-      console.warn(
-        "Active workspace membership missing for company member.",
-        {
-          companyId,
-          userId: member.profile.id,
-        },
-      );
-    }
-  }
+    membership: {
+      id: row.membership_id,
+      user_id: row.user_id,
+      company_id: row.company_id,
+      workspace_role: row.workspace_role,
+      procurement_function:
+        row.procurement_function,
+      membership_status: row.membership_status,
+    },
+  }));
 
   const invitations =
     (invitationsResult.data ?? []) as Invitation[];

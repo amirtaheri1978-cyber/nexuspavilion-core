@@ -346,9 +346,9 @@ const currentUserMembershipStatus =
 
       <ExecutivePanel
         id="invite-users"
-        eyebrow="Team Activation"
-        title="Invite Workspace Members"
-        description="Bring administrators, members, viewers, and procurement stakeholders into this company workspace."
+        eyebrow="Workspace Administration"
+title="Manage Workspace Access"
+description="Manage company membership, workspace roles, and pending access invitations."
       >
         {canManage ? (
           <div className="mt-6">
@@ -503,10 +503,10 @@ const currentUserMembershipStatus =
         </ExecutivePanel>
 
         <ExecutivePanel
-          eyebrow="Invitation Pipeline"
-          title="Pending Invites"
-          description="Track open invitations and secure workspace activation links."
-        >
+  eyebrow="Workspace Access"
+  title="Workspace Invitations"
+  description="Users invited to join this company workspace. These invitations do not grant access to any specific RFQ."
+>
           <div className="mt-6 space-y-4">
             {pendingInvitations.length > 0 ? (
               pendingInvitations
@@ -554,7 +554,7 @@ const currentUserMembershipStatus =
                   </div>
                 ))
             ) : (
-              <EmptyState message="No pending invitations." />
+              <EmptyState message="No pending workspace invitations." />
             )}
           </div>
         </ExecutivePanel>
