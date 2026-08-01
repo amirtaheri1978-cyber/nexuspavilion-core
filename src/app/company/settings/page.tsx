@@ -16,6 +16,28 @@ company_id: string | null;
 created_at?: string | null;
 };
 
+type Membership = {
+  id: string;
+  user_id: string;
+  company_id: string;
+  workspace_role: "owner" | "admin" | "member" | "viewer";
+  procurement_function:
+    | "buyer"
+    | "supplier"
+    | "consultant"
+    | "none";
+  membership_status:
+    | "pending"
+    | "active"
+    | "suspended"
+    | "revoked";
+};
+
+type WorkspaceMember = {
+  profile: Profile;
+  membership: Membership | null;
+};
+
 type Company = {
 id: string;
 name: string | null;
@@ -187,6 +209,61 @@ const { data: members } = await supabase
 
 const memberList = (members ?? []) as Profile[];
 
+const {
+  data: membershipData,
+  error: membershipsError,
+} = await supabase
+  .from("organization_memberships")
+  .select(
+    `
+      id,
+      user_id,
+      company_id,
+      workspace_role,
+      procurement_function,
+      membership_status
+    `,
+  )
+  .eq("company_id", companyId)
+  .eq("membership_status", "active");
+
+if (membershipsError) {
+  console.error("Company memberships lookup failed.", {
+    companyId,
+    userId: currentProfile.id,
+    error: membershipsError,
+  });
+}
+
+const membershipList =
+  (membershipData ?? []) as Membership[];
+
+  const membershipByUserId = new Map(
+  membershipList.map((membership) => [
+    membership.user_id,
+    membership,
+  ]),
+);
+
+const workspaceMembers: WorkspaceMember[] =
+  memberList.map((profile) => ({
+    profile,
+    membership:
+      membershipByUserId.get(profile.id) ?? null,
+  }));
+
+  for (const member of workspaceMembers) {
+  if (!member.membership) {
+    console.warn(
+      "Active workspace membership missing for company member.",
+      {
+        companyId,
+        userId: member.profile.id,
+      },
+    );
+  }
+}
+
 const { data: invitations } = await supabase
 .from("invitations")
 .select("id, company_id, email, role, status, token, created_at")
@@ -351,20 +428,20 @@ networkRole={company.network_role || "Enterprise Workspace"}
 />
 
 <CompanyMembersCenter
-company={company}
-currentProfile={currentProfile}
-members={memberList}
-pendingInvitations={pendingInvitations}
-activityList={activityList}
-adminsCount={admins.length}
-buyersCount={buyers.length}
-vendorsCount={vendors.length}
-hasOwner={hasOwner}
-canManage={canManage}
-canDelete={canDelete}
-workspaceStage={workspaceStage}
-governanceMessage={governanceMessage}
-siteUrl={SITE_URL}
+  company={company}
+  currentProfile={currentProfile}
+  workspaceMembers={workspaceMembers}
+  pendingInvitations={pendingInvitations}
+  activityList={activityList}
+  adminsCount={admins.length}
+  buyersCount={buyers.length}
+  vendorsCount={vendors.length}
+  hasOwner={hasOwner}
+  canManage={canManage}
+  canDelete={canDelete}
+  workspaceStage={workspaceStage}
+  governanceMessage={governanceMessage}
+  siteUrl={SITE_URL}
 />
 </div>
 </main>

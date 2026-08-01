@@ -25,6 +25,15 @@ type Company = {
   logo_url: string | null;
   user_id: string | null;
 };
+
+type Profile = {
+  id: string;
+  email: string | null;
+  role: string | null;
+  company_id: string | null;
+  created_at?: string | null;
+};
+
 type Membership = {
   id: string;
   user_id: string;
@@ -42,12 +51,9 @@ type Membership = {
     | "revoked";
 };
 
-type Profile = {
-  id: string;
-  email: string | null;
-  role: string | null;
-  company_id: string | null;
-  created_at?: string | null;
+export type WorkspaceMember = {
+  profile: Profile;
+  membership: Membership | null;
 };
 
 type Invitation = {
@@ -67,7 +73,9 @@ type AuditLog = {
   created_at: string | null;
 };
 
-function getWorkspaceRoleLabel(role: string | null | undefined) {
+function getWorkspaceRoleLabel(
+  role: string | null | undefined,
+) {
   if (role === "owner") return "Owner";
   if (role === "admin") return "Admin";
   if (role === "member") return "Member";
@@ -101,7 +109,10 @@ export default async function CompanyWorkspacePage() {
       );
     }
 
-    console.error("Company workspace context lookup failed.", error);
+    console.error(
+      "Company workspace context lookup failed.",
+      error,
+    );
 
     return (
       <SystemState
@@ -133,13 +144,13 @@ export default async function CompanyWorkspacePage() {
   const companyId = workspace.companyId;
 
   const [
-  companyResult,
-  currentProfileResult,
-  membersResult,
-  membershipsResult,
-  invitationsResult,
-  auditResult,
-] = await Promise.all([
+    companyResult,
+    currentProfileResult,
+    membersResult,
+    membershipsResult,
+    invitationsResult,
+    auditResult,
+  ] = await Promise.all([
     supabase
       .from("companies")
       .select(
@@ -160,8 +171,7 @@ export default async function CompanyWorkspacePage() {
 
     /*
      * Temporary compatibility read.
-     * MemberActions and invitation UI still use the legacy profile role
-     * until workspace role and procurement function are fully separated.
+     * Some UI and procurement flows still depend on the legacy role.
      */
     supabase
       .from("profiles")
@@ -170,8 +180,8 @@ export default async function CompanyWorkspacePage() {
       .maybeSingle(),
 
     /*
-     * Temporary legacy member source.
-     * This will migrate to organization_memberships in a later bundle.
+     * Profiles currently provide member identity information.
+     * Organization membership supplies workspace authority.
      */
     supabase
       .from("profiles")
@@ -179,20 +189,20 @@ export default async function CompanyWorkspacePage() {
       .eq("company_id", companyId)
       .order("created_at", { ascending: true }),
 
-      supabase
-  .from("organization_memberships")
-  .select(
-    `
-      id,
-      user_id,
-      company_id,
-      workspace_role,
-      procurement_function,
-      membership_status
-    `,
-  )
-  .eq("company_id", companyId)
-  .eq("membership_status", "active"),
+    supabase
+      .from("organization_memberships")
+      .select(
+        `
+          id,
+          user_id,
+          company_id,
+          workspace_role,
+          procurement_function,
+          membership_status
+        `,
+      )
+      .eq("company_id", companyId)
+      .eq("membership_status", "active"),
 
     supabase
       .from("invitations")
@@ -233,11 +243,17 @@ export default async function CompanyWorkspacePage() {
     );
   }
 
-  if (currentProfileResult.error || !currentProfileResult.data) {
-    console.error("Legacy profile compatibility lookup failed.", {
-      userId: workspace.userId,
-      error: currentProfileResult.error,
-    });
+  if (
+    currentProfileResult.error ||
+    !currentProfileResult.data
+  ) {
+    console.error(
+      "Legacy profile compatibility lookup failed.",
+      {
+        userId: workspace.userId,
+        error: currentProfileResult.error,
+      },
+    );
 
     return (
       <SystemState
@@ -259,13 +275,15 @@ export default async function CompanyWorkspacePage() {
       error: membersResult.error,
     });
   }
-if (membershipsResult.error) {
-  console.error("Company memberships lookup failed.", {
-    companyId,
-    userId: workspace.userId,
-    error: membershipsResult.error,
-  });
-}
+
+  if (membershipsResult.error) {
+    console.error("Company memberships lookup failed.", {
+      companyId,
+      userId: workspace.userId,
+      error: membershipsResult.error,
+    });
+  }
+
   if (invitationsResult.error) {
     console.error("Company invitations lookup failed.", {
       companyId,
@@ -283,13 +301,13 @@ if (membershipsResult.error) {
   }
 
   const company = companyResult.data as Company;
+
   const legacyCurrentProfile =
     currentProfileResult.data as Profile;
 
   /*
-   * CompanyMembersCenter is a workspace-governance UI.
-   * Give it the authoritative workspace role for current-user controls,
-   * while member rows remain on legacy roles during migration.
+   * Current-user governance is authoritative from membership.
+   * The compatibility profile remains available to legacy UI.
    */
   const currentProfile: Profile = {
     ...legacyCurrentProfile,
@@ -299,28 +317,41 @@ if (membershipsResult.error) {
     company_id: companyId,
   };
 
-  const members = (membersResult.data ?? []) as Profile[];
+  const profiles =
+    (membersResult.data ?? []) as Profile[];
+
   const memberships =
-  (membershipsResult.data ?? []) as Membership[];
+    (membershipsResult.data ?? []) as Membership[];
+
   const membershipByUserId = new Map(
-  memberships.map((membership) => [
-    membership.user_id,
-    membership,
-  ]),
-);
-for (const member of members) {
-  if (!membershipByUserId.has(member.id)) {
-    console.warn(
-      "Active workspace membership missing for company member.",
-      {
-        companyId,
-        userId: member.id,
-      },
-    );
+    memberships.map((membership) => [
+      membership.user_id,
+      membership,
+    ]),
+  );
+
+  const workspaceMembers: WorkspaceMember[] =
+    profiles.map((profile) => ({
+      profile,
+      membership:
+        membershipByUserId.get(profile.id) ?? null,
+    }));
+
+  for (const member of workspaceMembers) {
+    if (!member.membership) {
+      console.warn(
+        "Active workspace membership missing for company member.",
+        {
+          companyId,
+          userId: member.profile.id,
+        },
+      );
+    }
   }
-}
+
   const invitations =
     (invitationsResult.data ?? []) as Invitation[];
+
   const activityList =
     (auditResult.data ?? []) as AuditLog[];
 
@@ -328,20 +359,27 @@ for (const member of members) {
     (invitation) => invitation.status === "pending",
   );
 
-  const adminsCount = members.filter(
-    (member) => member.role === "admin",
+  /*
+   * These summaries now use the authoritative membership model.
+   */
+  const adminsCount = workspaceMembers.filter(
+    ({ membership }) =>
+      membership?.workspace_role === "admin",
   ).length;
 
-  const buyersCount = members.filter(
-    (member) => member.role === "buyer",
+  const buyersCount = workspaceMembers.filter(
+    ({ membership }) =>
+      membership?.procurement_function === "buyer",
   ).length;
 
-  const vendorsCount = members.filter(
-    (member) => member.role === "vendor",
+  const vendorsCount = workspaceMembers.filter(
+    ({ membership }) =>
+      membership?.procurement_function === "supplier",
   ).length;
 
-  const hasOwner = members.some(
-    (member) => member.role === "owner",
+  const hasOwner = workspaceMembers.some(
+    ({ membership }) =>
+      membership?.workspace_role === "owner",
   );
 
   const permissionContext = {
@@ -452,7 +490,7 @@ for (const member of members) {
             <div className="grid min-w-[280px] grid-cols-2 gap-4">
               <MiniMetric
                 title="Team Members"
-                value={members.length}
+                value={workspaceMembers.length}
               />
 
               <MiniMetric
@@ -461,7 +499,7 @@ for (const member of members) {
               />
 
               <MiniMetric
-                title="Admins"
+                title="Owners / Admins"
                 value={
                   adminsCount + (hasOwner ? 1 : 0)
                 }
@@ -498,7 +536,7 @@ for (const member of members) {
         <CompanyMembersCenter
           company={company}
           currentProfile={currentProfile}
-          members={members}
+          workspaceMembers={workspaceMembers}
           pendingInvitations={pendingInvitations}
           activityList={activityList}
           adminsCount={adminsCount}
