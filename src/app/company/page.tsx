@@ -25,6 +25,22 @@ type Company = {
   logo_url: string | null;
   user_id: string | null;
 };
+type Membership = {
+  id: string;
+  user_id: string;
+  company_id: string;
+  workspace_role: "owner" | "admin" | "member" | "viewer";
+  procurement_function:
+    | "buyer"
+    | "supplier"
+    | "consultant"
+    | "none";
+  membership_status:
+    | "pending"
+    | "active"
+    | "suspended"
+    | "revoked";
+};
 
 type Profile = {
   id: string;
@@ -117,12 +133,13 @@ export default async function CompanyWorkspacePage() {
   const companyId = workspace.companyId;
 
   const [
-    companyResult,
-    currentProfileResult,
-    membersResult,
-    invitationsResult,
-    auditResult,
-  ] = await Promise.all([
+  companyResult,
+  currentProfileResult,
+  membersResult,
+  membershipsResult,
+  invitationsResult,
+  auditResult,
+] = await Promise.all([
     supabase
       .from("companies")
       .select(
@@ -161,6 +178,21 @@ export default async function CompanyWorkspacePage() {
       .select("id, email, role, company_id, created_at")
       .eq("company_id", companyId)
       .order("created_at", { ascending: true }),
+
+      supabase
+  .from("organization_memberships")
+  .select(
+    `
+      id,
+      user_id,
+      company_id,
+      workspace_role,
+      procurement_function,
+      membership_status
+    `,
+  )
+  .eq("company_id", companyId)
+  .eq("membership_status", "active"),
 
     supabase
       .from("invitations")
@@ -227,7 +259,13 @@ export default async function CompanyWorkspacePage() {
       error: membersResult.error,
     });
   }
-
+if (membershipsResult.error) {
+  console.error("Company memberships lookup failed.", {
+    companyId,
+    userId: workspace.userId,
+    error: membershipsResult.error,
+  });
+}
   if (invitationsResult.error) {
     console.error("Company invitations lookup failed.", {
       companyId,
@@ -262,6 +300,25 @@ export default async function CompanyWorkspacePage() {
   };
 
   const members = (membersResult.data ?? []) as Profile[];
+  const memberships =
+  (membershipsResult.data ?? []) as Membership[];
+  const membershipByUserId = new Map(
+  memberships.map((membership) => [
+    membership.user_id,
+    membership,
+  ]),
+);
+for (const member of members) {
+  if (!membershipByUserId.has(member.id)) {
+    console.warn(
+      "Active workspace membership missing for company member.",
+      {
+        companyId,
+        userId: member.id,
+      },
+    );
+  }
+}
   const invitations =
     (invitationsResult.data ?? []) as Invitation[];
   const activityList =
