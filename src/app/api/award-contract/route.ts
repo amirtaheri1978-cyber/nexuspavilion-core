@@ -4,6 +4,11 @@ import { sendEmail } from "@/lib/email/send-email";
 import { awardNotificationEmail } from "@/lib/email/templates/award-notification-email";
 import { createClient } from "@/lib/supabase/server";
 
+import {
+  canAwardContract,
+  type UserRole,
+} from "@/lib/permissions";
+
 type AwardRequestBody = {
 quoteId?: string;
 };
@@ -41,9 +46,6 @@ return "$0";
 return `$${amount.toLocaleString()}`;
 }
 
-function isAwardAuthorized(role: string | null | undefined) {
-return ["owner", "admin", "buyer"].includes(String(role || "").toLowerCase());
-}
 
 export async function POST(request: Request) {
 try {
@@ -80,10 +82,9 @@ return NextResponse.json(
 { status: 403 }
 );
 }
-
-if (!isAwardAuthorized(profile.role)) {
+if (!canAwardContract(profile.role as UserRole)) {
 return NextResponse.json(
-{ error: "Only authorized procurement leaders can award contracts." },
+{ error: "Only organization owners and administrators can award contracts." },
 { status: 403 }
 );
 }

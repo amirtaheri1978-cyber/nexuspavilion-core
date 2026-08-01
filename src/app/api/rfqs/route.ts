@@ -5,6 +5,11 @@ import { sendEmail } from "@/lib/email/send-email";
 import { rfqCreatedEmail } from "@/lib/email/templates/rfq-created-email";
 import { createClient } from "@/lib/supabase/server";
 
+import {
+  canCreateRfqDraft,
+  type UserRole,
+} from "@/lib/permissions";
+
 type ProcurementScope =
 | "material"
 | "subcontractor"
@@ -34,9 +39,6 @@ return `${title
 .replace(/^-+|-+$/g, "")}-${Date.now()}`;
 }
 
-function canCreateRfq(role: string | null | undefined) {
-return ["owner", "admin", "buyer"].includes(String(role || "").toLowerCase());
-}
 
 function normalizeText(value: unknown) {
 return String(value || "").trim();
@@ -121,7 +123,7 @@ return NextResponse.json(
 );
 }
 
-if (!canCreateRfq(profile.role)) {
+if (!canCreateRfqDraft(profile.role as UserRole)) {
 return NextResponse.json(
 { error: "Only owners, admins, and buyers can create RFQs." },
 { status: 403 }

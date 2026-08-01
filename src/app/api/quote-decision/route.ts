@@ -1,3 +1,8 @@
+import {
+  canUpdateQuoteDecision,
+  type UserRole,
+} from "@/lib/permissions";
+
 import { NextResponse } from "next/server";
 
 import { createClient } from "@/lib/supabase/server";
@@ -13,9 +18,7 @@ function isQuoteDecision(value: string): value is QuoteDecision {
   return value === "approved" || value === "rejected";
 }
 
-function canUpdateQuoteDecision(role: string | null | undefined) {
-  return role === "owner" || role === "admin";
-}
+
 
 export async function POST(request: Request) {
   try {
@@ -74,7 +77,7 @@ export async function POST(request: Request) {
       );
     }
 
-    if (!canUpdateQuoteDecision(profile.role)) {
+    if (!canUpdateQuoteDecision(profile.role as UserRole)) {
       return NextResponse.json(
         {
           error:

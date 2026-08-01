@@ -2,6 +2,11 @@ import { NextResponse } from "next/server";
 
 import { createClient } from "@/lib/supabase/server";
 
+import {
+  canDeleteCompany,
+  type UserRole,
+} from "@/lib/permissions";
+
 type RouteContext = {
 params: Promise<{
 id: string;
@@ -9,7 +14,7 @@ id: string;
 };
 
 const COMPANY_UPDATE_ROLES = ["admin", "buyer", "owner"];
-const COMPANY_DELETE_ROLES = ["admin", "owner"];
+
 
 const ALLOWED_CATEGORIES = [
 "Developer",
@@ -66,9 +71,7 @@ function canUpdateCompany(role: string | null) {
 return !!role && COMPANY_UPDATE_ROLES.includes(role);
 }
 
-function canDeleteCompany(role: string | null) {
-return !!role && COMPANY_DELETE_ROLES.includes(role);
-}
+
 
 export async function DELETE(_request: Request, context: RouteContext) {
 try {
@@ -99,7 +102,7 @@ return NextResponse.json(
 );
 }
 
-if (!canDeleteCompany(currentProfile.role)) {
+if (!canDeleteCompany(currentProfile.role as UserRole)) {
 return NextResponse.json(
 { error: "Only company owners or admins can delete a workspace." },
 { status: 403 }

@@ -4,6 +4,11 @@ import { sendEmail } from "@/lib/email/send-email";
 import { quoteSubmittedEmail } from "@/lib/email/templates/quote-submitted-email";
 import { createClient } from "@/lib/supabase/server";
 
+import {
+  canSubmitQuote,
+  type UserRole,
+} from "@/lib/permissions";
+
 const VALIDITY_DAY_OPTIONS = [30, 60, 90, 120];
 
 function calculateScore(amount: number, timeline: string) {
@@ -133,6 +138,15 @@ return NextResponse.json(
 { error: profileError?.message || "No company linked to profile" },
 { status: 400 }
 );
+}
+if (!canSubmitQuote(profile.role as UserRole)) {
+  return NextResponse.json(
+    {
+      error:
+        "Only authorized supplier accounts can submit quotations.",
+    },
+    { status: 403 },
+  );
 }
 
 const rfqQuery = supabase
