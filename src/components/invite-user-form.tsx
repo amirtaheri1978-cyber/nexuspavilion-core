@@ -103,13 +103,16 @@ return;
 
 if (!response.ok) {
 setError(
-data.error || `Failed to create invitation. Status: ${response.status}`
+data.error ||
+  `Failed to create workspace invitation. Status: ${response.status}`
 );
 return;
 }
 
 if (!data.inviteUrl) {
-setError("Invitation was created, but no invite link was returned.");
+setError(
+  "Workspace invitation was created, but no invitation link was returned.",
+);
 return;
 }
 
@@ -147,41 +150,50 @@ setError("Could not copy invite link. Please copy it manually.");
 }
 
 function getStatusLabel() {
-if (!emailResult) return "Email Delivery Ready";
-if (emailResult.sent) return "Email Sent";
-if (emailResult.skipped) return "Email Skipped";
-if (emailResult.error) return "Email Failed";
+  if (!emailResult) return "Workspace Invitation Ready";
+  if (emailResult.sent) return "Workspace Invitation Sent";
+  if (emailResult.skipped) return "Email Delivery Skipped";
+  if (emailResult.error) return "Email Delivery Failed";
 
-return "Email Delivery Ready";
+  return "Workspace Invitation Ready";
 }
 
 function getResultTitle() {
-if (!emailResult) return "Invitation Created";
-if (emailResult.sent) return "Invitation Email Sent";
-if (emailResult.skipped) return "Invitation Created, Email Skipped";
-if (emailResult.error) return "Invitation Created, Email Failed";
+  if (!emailResult) return "Workspace Invitation Created";
 
-return "Invitation Created";
+  if (emailResult.sent) {
+    return "Workspace Invitation Email Sent";
+  }
+
+  if (emailResult.skipped) {
+    return "Workspace Invitation Created, Email Skipped";
+  }
+
+  if (emailResult.error) {
+    return "Workspace Invitation Created, Email Failed";
+  }
+
+  return "Workspace Invitation Created";
 }
 
 function getResultMessage() {
-if (!emailResult) {
-return "The invitation link was created. You can copy and share it manually.";
-}
+  if (!emailResult) {
+    return "The workspace invitation link was created. You can copy and share it manually.";
+  }
 
-if (emailResult.sent) {
-return "The invitation email was sent successfully. The copy link remains available as a fallback.";
-}
+  if (emailResult.sent) {
+    return "The workspace invitation email was sent successfully. The copy link remains available as a fallback.";
+  }
 
-if (emailResult.skipped) {
-return "Email delivery was skipped because email configuration is missing. Use the copy link fallback for now.";
-}
+  if (emailResult.skipped) {
+    return "Email delivery was skipped because email configuration is missing. Use the workspace invitation link as a fallback.";
+  }
 
-if (emailResult.error) {
-return `Email delivery failed: ${emailResult.error}. Use the copy link fallback for now.`;
-}
+  if (emailResult.error) {
+    return `Email delivery failed: ${emailResult.error}. Use the workspace invitation link as a fallback.`;
+  }
 
-return "The invitation link was created. You can copy and share it manually.";
+  return "The workspace invitation link was created. You can copy and share it manually.";
 }
 
 const selectedRole = ROLE_OPTIONS.find((option) => option.value === role);
@@ -191,17 +203,18 @@ return (
 <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
 <div>
 <p className="text-xs font-black uppercase tracking-[0.3em] text-[#C8A646]">
-Team Invitations
+Workspace Access
 </p>
 
 <h2 className="mt-3 text-3xl font-black text-white">
-Invite User to Workspace
+Invite Company Members to Your Workspace
 </h2>
 
 <p className="mt-3 max-w-2xl text-sm font-semibold leading-7 text-slate-400">
-Invite vendors, buyers, or admins to join your company workspace.
-Nexus Pavilion sends the invitation email and keeps a secure copy
-link available as a fallback.
+Invite users to become members of your company workspace.
+Workspace membership is separate from RFQ invitations and supplier
+participation. Nexus Pavilion sends the workspace invitation email
+and keeps a secure copy link available as a fallback.
 </p>
 </div>
 
@@ -253,7 +266,7 @@ type="submit"
 disabled={loading}
 className="h-[56px] w-full rounded-full bg-gradient-to-r from-[#B9902F] via-[#C8A646] to-[#F5D77B] px-6 text-sm font-black text-slate-950 shadow-[0_18px_55px_rgba(200,166,70,0.22)] transition hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-50 md:w-auto"
 >
-{loading ? "Sending..." : "Send Invite"}
+{loading ? "Sending..." : "Send Workspace Invitation"}
 </button>
 </div>
 </form>
@@ -307,8 +320,8 @@ className="rounded-full border border-emerald-300/20 bg-emerald-400/15 px-5 py-3
 </div>
 
 <p className="mt-4 text-xs font-bold leading-5 text-emerald-200/80">
-The invited user must use the same email address shown in the
-invitation.
+The invited company member must use the same email address shown
+in the workspace invitation.
 </p>
 </div>
 ) : null}
