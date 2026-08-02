@@ -8,12 +8,18 @@ export type WorkspacePermissionContext = {
   membershipStatus: MembershipStatus | null | undefined;
 };
 
+function hasActiveMembership(
+  context: WorkspacePermissionContext,
+) {
+  return context.membershipStatus === "active";
+}
+
 function hasActiveWorkspaceRole(
   context: WorkspacePermissionContext,
   allowedRoles: WorkspaceRole[],
 ) {
   return (
-    context.membershipStatus === "active" &&
+    hasActiveMembership(context) &&
     Boolean(
       context.workspaceRole &&
         allowedRoles.includes(context.workspaceRole),
@@ -21,46 +27,70 @@ function hasActiveWorkspaceRole(
   );
 }
 
+/**
+ * Company workspace administration
+ */
+
 export function canManageCompanyWorkspace(
   context: WorkspacePermissionContext,
 ) {
-  return hasActiveWorkspaceRole(context, ["owner", "admin"]);
+  return hasActiveWorkspaceRole(context, [
+    "owner",
+    "admin",
+  ]);
 }
 
 export function canInviteWorkspaceMembers(
   context: WorkspacePermissionContext,
 ) {
-  return hasActiveWorkspaceRole(context, ["owner", "admin"]);
+  return hasActiveWorkspaceRole(context, [
+    "owner",
+    "admin",
+  ]);
 }
 
 export function canManageWorkspaceMembers(
   context: WorkspacePermissionContext,
 ) {
-  return hasActiveWorkspaceRole(context, ["owner", "admin"]);
+  return hasActiveWorkspaceRole(context, [
+    "owner",
+    "admin",
+  ]);
 }
 
 export function canChangeWorkspaceRoles(
   context: WorkspacePermissionContext,
 ) {
-  return hasActiveWorkspaceRole(context, ["owner", "admin"]);
+  return hasActiveWorkspaceRole(context, [
+    "owner",
+    "admin",
+  ]);
 }
 
 export function canDeleteCompanyWorkspace(
   context: WorkspacePermissionContext,
 ) {
-  return hasActiveWorkspaceRole(context, ["owner", "admin"]);
+  return hasActiveWorkspaceRole(context, [
+    "owner",
+    "admin",
+  ]);
 }
 
 export function canTransferWorkspaceOwnership(
   context: WorkspacePermissionContext,
 ) {
-  return hasActiveWorkspaceRole(context, ["owner"]);
+  return hasActiveWorkspaceRole(context, [
+    "owner",
+  ]);
 }
 
 export function canViewWorkspaceGovernance(
   context: WorkspacePermissionContext,
 ) {
-  return hasActiveWorkspaceRole(context, ["owner", "admin"]);
+  return hasActiveWorkspaceRole(context, [
+    "owner",
+    "admin",
+  ]);
 }
 
 export function canViewWorkspace(

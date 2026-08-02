@@ -6,6 +6,12 @@ export type WorkspaceRole =
   | "member"
   | "viewer";
 
+export type ProcurementFunction =
+  | "buyer"
+  | "supplier"
+  | "consultant"
+  | "none";
+
 export type MembershipType =
   | "founder"
   | "employee"
@@ -23,9 +29,12 @@ export type OrganizationMembership = {
   id: string;
   userId: string;
   companyId: string;
+
   workspaceRole: WorkspaceRole;
+  procurementFunction: ProcurementFunction;
   membershipType: MembershipType;
   membershipStatus: MembershipStatus;
+
   jobTitle: string | null;
   jobFunction: string | null;
   invitedBy: string | null;
@@ -36,9 +45,12 @@ type MembershipRow = {
   id: string;
   user_id: string;
   company_id: string;
+
   workspace_role: WorkspaceRole;
+  procurement_function: ProcurementFunction;
   membership_type: MembershipType;
   membership_status: MembershipStatus;
+
   job_title: string | null;
   job_function: string | null;
   invited_by: string | null;
@@ -62,9 +74,12 @@ function mapMembership(
     id: row.id,
     userId: row.user_id,
     companyId: row.company_id,
+
     workspaceRole: row.workspace_role,
+    procurementFunction: row.procurement_function,
     membershipType: row.membership_type,
     membershipStatus: row.membership_status,
+
     jobTitle: row.job_title,
     jobFunction: row.job_function,
     invitedBy: row.invited_by,
@@ -90,6 +105,7 @@ export async function getActiveMembershipForUser(
       user_id,
       company_id,
       workspace_role,
+      procurement_function,
       membership_type,
       membership_status,
       job_title,
@@ -109,7 +125,9 @@ export async function getActiveMembershipForUser(
     );
   }
 
-  return data ? mapMembership(data as MembershipRow) : null;
+  return data
+    ? mapMembership(data as MembershipRow)
+    : null;
 }
 
 export function isMembershipActive(

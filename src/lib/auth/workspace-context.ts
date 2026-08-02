@@ -9,6 +9,7 @@ import {
   type MembershipStatus,
   type MembershipType,
   type OrganizationMembership,
+  type ProcurementFunction,
   type WorkspaceRole,
 } from "@/lib/auth/membership";
 
@@ -29,9 +30,18 @@ export type WorkspaceContext = {
   userId: string;
   email: string | null;
 
+  /*
+   * During the migration period, companyId may fall back to the
+   * legacy profiles.company_id value when no active membership exists.
+   *
+   * This fallback supports migration compatibility and must not be
+   * treated by itself as sufficient authorization for sensitive
+   * mutations.
+   */
   companyId: string | null;
 
   workspaceRole: WorkspaceRole | null;
+  procurementFunction: ProcurementFunction | null;
   membershipType: MembershipType | null;
   membershipStatus: MembershipStatus | null;
 
@@ -63,6 +73,16 @@ export class WorkspaceContextError extends Error {
   }
 }
 
+/**
+ * Resolves the current user's workspace context.
+ *
+ * This function supports the migration period and may fall back to
+ * profiles.company_id when an active organization membership is not
+ * available.
+ *
+ * Callers performing sensitive mutations must separately enforce
+ * active-membership and domain-specific authorization requirements.
+ */
 export async function getCurrentWorkspaceContext(
   supabase: SupabaseClient,
 ): Promise<WorkspaceContext> {
@@ -79,7 +99,10 @@ export async function getCurrentWorkspaceContext(
     );
   }
 
-  const { data: profileData, error: profileError } = await supabase
+  const {
+    data: profileData,
+    error: profileError,
+  } = await supabase
     .from("profiles")
     .select("id, email, role, company_id")
     .eq("id", user.id)
@@ -119,30 +142,52 @@ export async function getCurrentWorkspaceContext(
     );
   }
 
-  const hasLegacyCompany = Boolean(profile.company_id);
-  const hasActiveMembership = membership !== null;
+  const hasLegacyCompany =
+    profile.company_id !== null;
+
+  const hasActiveMembership =
+    membership !== null;
 
   const companyMatchesLegacyProfile =
     membership === null
       ? profile.company_id === null
-      : membership.companyId === profile.company_id;
+      : membership.companyId ===
+        profile.company_id;
 
-  const source: WorkspaceContextSource = membership
-    ? "membership"
-    : profile.company_id
-      ? "legacy_profile"
-      : "none";
+  const source: WorkspaceContextSource =
+    membership
+      ? "membership"
+      : profile.company_id
+        ? "legacy_profile"
+        : "none";
 
   return {
     user,
     userId: user.id,
-    email: user.email || profile.email || null,
+    email:
+      user.email ??
+      profile.email ??
+      null,
 
-    companyId: membership?.companyId || profile.company_id,
+    companyId:
+      membership?.companyId ??
+      profile.company_id,
 
-    workspaceRole: membership?.workspaceRole || null,
-    membershipType: membership?.membershipType || null,
-    membershipStatus: membership?.membershipStatus || null,
+    workspaceRole:
+      membership?.workspaceRole ??
+      null,
+
+    procurementFunction:
+      membership?.procurementFunction ??
+      null,
+
+    membershipType:
+      membership?.membershipType ??
+      null,
+
+    membershipStatus:
+      membership?.membershipStatus ??
+      null,
 
     membership,
 
@@ -151,7 +196,8 @@ export async function getCurrentWorkspaceContext(
       hasLegacyCompany,
       hasActiveMembership,
       companyMatchesLegacyProfile,
-      isConsistent: companyMatchesLegacyProfile,
+      isConsistent:
+        companyMatchesLegacyProfile,
     },
   };
 }
