@@ -4,153 +4,374 @@
 
 Draft
 
-## Domain
+Version: 1.1
 
-DOM-003 - Company Ownership
+Domain: DOM-003 - Company Ownership
+
+---
 
 ## Related Governance
 
 - DEV-003 - Business Role Foundation
 - DEV-004 - Company Ownership Lifecycle
 
+---
+
 ## Implemented By
 
 DEV-004 - Company Ownership Lifecycle
+
+---
 
 ## Supersedes
 
 None
 
-## Purpose
+---
 
-Define the canonical enterprise model for establishing, verifying,
-transferring, recovering, and auditing company ownership in Nexus Pavilion.
+# Purpose
 
-## Business Problem
+Define the canonical enterprise ownership model for establishing,
+verifying, transferring, recovering, auditing, and governing company
+ownership throughout Nexus Pavilion.
 
-The repository currently protects owners from generic membership mutations,
-defines an owner-only transfer permission, references a dedicated transfer
-workflow, provides a separate recovery path, and temporarily retains
-`companies.user_id`.
+This RFC establishes Company Ownership as an independent business domain
+with its own lifecycle, invariants, commands, events, aggregate, and
+governance model.
 
-The voluntary ownership-transfer workflow itself is not implemented.
+---
 
-## Repository Evidence
+# Business Problem
 
-The current repository already:
+The current repository already separates ownership from generic workspace
+membership by:
 
-- protects owners from generic member-role updates;
-- protects owners from generic member removal;
-- defines `canTransferOwnership()`;
-- references a dedicated ownership-transfer workflow in UI and SQL;
-- provides a separate ownership-recovery path;
-- retains `companies.user_id` for migration compatibility.
+- protecting owners from generic membership mutations;
+- protecting owners from generic member removal;
+- introducing owner-only authorization checks;
+- referencing a dedicated ownership-transfer workflow;
+- providing a separate ownership recovery endpoint;
+- temporarily retaining `companies.user_id` for compatibility.
 
-## Architectural Decision
+However:
 
-Company Ownership is a distinct governance domain.
+- voluntary ownership transfer is not implemented;
+- ownership recovery is not governed as an enterprise workflow;
+- ownership lifecycle is not yet modeled as a canonical business domain.
 
-Ownership is not:
+---
 
-- a generic workspace-role mutation;
+# Repository Evidence
+
+Current repository behavior already demonstrates ownership separation.
+
+Implemented protections include:
+
+- owner protection during role updates;
+- owner protection during member removal;
+- dedicated ownership transfer authorization;
+- dedicated ownership recovery endpoint;
+- ownership-aware membership RPCs;
+- migration compatibility through `companies.user_id`.
+
+---
+
+# Architectural Decision
+
+Company Ownership is a dedicated enterprise domain.
+
+Ownership is **not**:
+
+- a workspace role;
 - a procurement function;
-- a company-profile field;
+- a profile attribute;
 - an authentication concern;
-- an emergency recovery shortcut.
+- a company-profile property;
+- a generic member-management operation.
 
-Generic member-management commands must never create, demote, remove,
-or replace an owner.
+Generic membership commands MUST NEVER:
 
-## Domain Charter
+- establish ownership;
+- transfer ownership;
+- recover ownership;
+- revoke ownership;
+- replace ownership.
 
-### Owns
+Ownership changes SHALL occur exclusively through Company Ownership
+contracts.
 
-- Ownership establishment
-- Canonical-owner determination
-- Representative-verification status
-- Ownership transfer
-- Ownership recovery
-- Ownership history
-- Ownership audit evidence
+---
 
-### Does Not Own
+# Domain Charter
 
-- Authentication
-- Generic workspace membership
-- Procurement function
+## Owns
+
+- ownership establishment
+- canonical owner determination
+- representative verification
+- ownership transfer
+- ownership recovery
+- ownership history
+- ownership audit evidence
+- ownership governance
+
+---
+
+## Does Not Own
+
+- authentication
+- user identity
+- workspace membership lifecycle
+- procurement functions
 - RFQ authorization
-- Quote authorization
-- Company-profile content
-- Subscription entitlement
+- quotation authorization
+- company profile
+- billing
+- subscriptions
+
+---
+
+# Canonical Ownership Authority
+
+The Company Ownership domain is the sole canonical authority for
+determining ownership.
+
+The following operational projections exist:
+
+| Projection | Purpose |
+|------------|---------|
+| Company Ownership | Canonical authority |
+| organization_memberships.workspace_role = owner | Workspace authorization projection |
+| companies.user_id | Temporary legacy compatibility projection |
+
+The ownership aggregate remains the source of truth.
+
+---
+
+# Aggregate Boundaries
 
 ## Aggregate Root
 
 `CompanyOwnership`
 
-### Aggregate Data
+The aggregate root represents the canonical ownership relationship
+between one company and its authorized representative.
+
+---
+
+## Aggregate-Owned Records
+
+The aggregate owns:
+
+- canonical ownership
+- ownership transfer requests
+- ownership recovery requests
+- representative verification
+- ownership history
+- ownership audit evidence
+
+---
+
+## External References
+
+The aggregate may reference:
+
+- companies.id
+- profiles.id
+- organization_memberships.id
+- authenticated identity
+- verification evidence
+
+The aggregate does **not** own these resources.
+
+---
+
+## Explicit Non-Ownership
+
+The aggregate never owns:
+
+- Company Profile
+- Workspace Membership
+- Procurement Function
+- RFQ Authorization
+- Quote Authorization
+- Authentication
+- Billing
+- Subscription
+
+---
+
+## Synchronization Contract
+
+Successful ownership completion SHALL atomically synchronize:
+
+1. canonical ownership
+2. active owner membership
+3. `companies.user_id`
+4. immutable ownership audit evidence
+
+Workspace Membership remains an operational projection.
+
+`companies.user_id` remains a temporary compatibility projection only.
+
+---
+
+# Aggregate Data
 
 - Ownership ID
 - Company ID
-- Current representative ID
-- Ownership status
-- Representative-verification status
-- Established timestamp
-- Verified timestamp
-- Transferred timestamp
-- Recovered timestamp
-- Revoked timestamp
+- Representative ID
+- Ownership Status
+- Verification Status
+- Created Timestamp
+- Verified Timestamp
+- Superseded Timestamp
+- Revoked Timestamp
 
-## Capabilities
+---
 
-- CAP-003 - Ownership Establishment
-- CAP-004 - Representative Verification
-- CAP-005 - Ownership Transfer
-- CAP-006 - Ownership Recovery
+# Capabilities
 
-## Ownership State Machine
+- CAP-003 Ownership Establishment
+- CAP-004 Representative Verification
+- CAP-005 Ownership Transfer
+- CAP-006 Ownership Recovery
+
+---
+
+# Company Ownership State Machine
+
+The ownership state represents the current canonical relationship between
+a company and its authorized representative.
+
+Workflow requests NEVER modify ownership until completion succeeds.
 
 ```text
 Provisional
     |
     v
-Pending Verification
-    |
-    v
 Verified
-    |
-    v
-Transfer Pending
-    |
-    v
-Transferred
 
-Verified
+Provisional or Verified
     |
     v
-Recovery Pending
-    |
-    v
-Recovered
+Superseded
 
-Any authorized terminal path
+Provisional or Verified
     |
     v
 Revoked
 ```
 
-## Transfer Request State Machine
+## State Definitions
+
+### Provisional
+
+Ownership exists but representative verification is incomplete.
+
+---
+
+### Verified
+
+Representative verification completed successfully.
+
+Current canonical owner.
+
+---
+
+### Superseded
+
+Historical ownership replaced by:
+
+- completed transfer
+- completed recovery
+
+This ownership record is immutable.
+
+---
+
+### Revoked
+
+Ownership terminated through an authorized governance action.
+
+---
+
+Transferred and Recovered are workflow outcomes, not ownership states.
+
+---
+
+# Ownership Transfer Request State Machine
+
+Transfer requests are independent from ownership.
+
+The current owner remains the canonical owner until the atomic transfer
+transaction completes successfully.
 
 ```text
 Pending Acceptance
-    |-- Accepted -> Completed
-    |-- Rejected
-    |-- Cancelled
-    `-- Expired
+    |
+    +---- Accepted
+    |         |
+    |         v
+    |     Completed
+    |
+    +---- Rejected
+    |
+    +---- Cancelled
+    |
+    +---- Expired
 ```
 
-Terminal transfer requests cannot be executed again.
+## Rules
 
-## Commands
+Only Pending Acceptance requests may transition.
+
+Completed requests are immutable.
+
+Expired requests cannot be replayed.
+
+Rejected requests cannot be replayed.
+
+Cancelled requests cannot be replayed.
+
+---
+
+# Ownership Recovery Request State Machine
+
+Recovery is a governance workflow independent from voluntary transfer.
+
+```text
+Pending Review
+    |
+    +---- Approved
+    |         |
+    |         v
+    |     Completed
+    |
+    +---- Rejected
+    |
+    +---- Cancelled
+```
+
+## Rules
+
+Approval alone never changes ownership.
+
+Ownership changes only after the recovery completion transaction succeeds.
+
+Completed recovery supersedes the previous ownership relationship.
+
+Recovery requires:
+
+- identity evidence
+- company evidence
+- reviewer
+- decision record
+- immutable audit
+
+---
+
+# Commands
 
 - EstablishOwnership
 - VerifyRepresentative
@@ -163,7 +384,9 @@ Terminal transfer requests cannot be executed again.
 - ApproveOwnershipRecovery
 - RejectOwnershipRecovery
 
-## Domain Events
+---
+
+# Domain Events
 
 - OWNERSHIP_ESTABLISHED
 - REPRESENTATIVE_VERIFIED
@@ -179,104 +402,197 @@ Terminal transfer requests cannot be executed again.
 - OWNERSHIP_RECOVERED
 - OWNERSHIP_REVOKED
 
-## Core Invariants
+Events are immutable.
 
-1. Every company must have at least one active owner.
-2. Every company must have exactly one canonical owner.
-3. Generic membership operations cannot assign or remove ownership.
-4. Only the current canonical owner may initiate a voluntary transfer.
-5. The proposed owner must be an active member of the same company.
-6. Transfer requires explicit acceptance by the proposed owner.
-7. Transfer completion must be atomic.
-8. Ownership transfer must not change procurement function.
-9. Recovery is separate from voluntary transfer.
-10. Expired, rejected, cancelled, or completed requests cannot be replayed.
-11. Every ownership transition must produce immutable audit evidence.
-12. During migration, canonical ownership, owner membership, and
-    `companies.user_id` must remain synchronized.
+---
 
-## Integration Contracts
+# Core Invariants
 
-### Workspace Membership
+## Database-Enforced
 
-Provides the active membership associated with the current canonical owner.
-It cannot independently create or remove ownership.
+### INV-001
 
-### Trust and Verification
+A company may have at most one active canonical owner.
 
-Provides company- and representative-verification evidence.
+### INV-002
 
-### Organization
+A user may have only one membership per company.
 
-Creates the company and requests initial ownership establishment.
+---
 
-### Procurement
+## Workflow-Enforced
 
-May query authorized ownership context but cannot mutate ownership.
+### INV-003
 
-## Migration Strategy
+Every company must always have one active canonical owner after every
+successful ownership transaction.
 
-### Phase A
+### INV-004
 
-Introduce the ownership domain while preserving:
+Generic membership operations cannot establish or remove ownership.
 
-- owner workspace membership;
-- `companies.user_id`;
-- current migration compatibility.
+### INV-005
 
-### Phase B
+Only the canonical owner may initiate voluntary transfer.
 
-Route all ownership transitions through DEV-004 contracts.
+### INV-006
 
-### Phase C
+The proposed owner must already be an active workspace member.
 
-Remove legacy ownership dependencies only through a separately authorized
-migration after all consumers and runtime behavior are verified.
+### INV-007
 
-## Traceability
+Ownership transfer requires explicit acceptance.
+
+### INV-008
+
+Ownership completion must be atomic.
+
+### INV-009
+
+Ownership transfer shall never modify procurement function.
+
+### INV-010
+
+Recovery remains independent from voluntary transfer.
+
+### INV-011
+
+Completed, expired, rejected and cancelled requests cannot be replayed.
+
+### INV-012
+
+Every ownership transition produces immutable audit evidence.
+
+### INV-013
+
+Canonical ownership, owner membership, and legacy compatibility
+projection (`companies.user_id`) remain synchronized throughout the
+migration period.
+
+---
+
+# Integration Contracts
+
+## Workspace Membership
+
+Provides operational authorization.
+
+Never establishes ownership.
+
+Never transfers ownership.
+
+Never recovers ownership.
+
+---
+
+## Organization
+
+Creates companies.
+
+Requests initial ownership establishment.
+
+---
+
+## Trust and Verification
+
+Provides representative verification evidence.
+
+---
+
+## Procurement
+
+Consumes ownership authorization.
+
+Never mutates ownership.
+
+---
+
+# Migration Strategy
+
+## Phase A
+
+Introduce Company Ownership while maintaining:
+
+- owner membership
+- companies.user_id
+- backward compatibility
+
+---
+
+## Phase B
+
+Route all ownership operations through DEV-004 contracts.
+
+---
+
+## Phase C
+
+Remove legacy ownership projections after all runtime dependencies have
+been migrated and verified.
+
+---
+
+# Traceability
 
 ```text
 DOM-003
-  |
-  v
+      │
+      ▼
 RFC-001
-  |
-  v
+      │
+      ▼
 DEV-004
-  |
-  v
-Database and domain implementation
-  |
-  v
-Runtime and authorization audit
-  |
-  v
-Formal closure
+      │
+      ▼
+Ownership Aggregate
+      │
+      ▼
+Database
+      │
+      ▼
+RPC
+      │
+      ▼
+API
+      │
+      ▼
+UI
+      │
+      ▼
+Runtime Audit
 ```
 
-## Acceptance Criteria
+---
 
-- Transfer-request persistence exists.
-- Only the current canonical owner can initiate transfer.
-- The target is an active member of the same company.
-- The target explicitly accepts.
-- Requests expire and cannot be replayed.
-- Transfer completes atomically.
-- The previous owner receives an explicitly selected non-owner role.
-- Procurement function remains unchanged.
-- Recovery remains a separate workflow.
-- Legacy ownership fields remain synchronized during migration.
-- Required audit events are generated.
-- Unauthorized API calls are rejected.
-- Owner, Admin, Member, Viewer, recipient, expiration, atomicity,
-  and replay-protection tests pass.
+# Acceptance Criteria
 
-## Implementation Gate
+The implementation is complete when:
 
-No product implementation begins until:
+- ownership establishment exists;
+- representative verification exists;
+- transfer requests persist;
+- recovery requests persist;
+- only canonical owners initiate transfer;
+- recipients explicitly accept transfer;
+- transfer completes atomically;
+- previous ownership becomes superseded;
+- procurement function remains unchanged;
+- recovery remains independent;
+- audit evidence is immutable;
+- replay protection exists;
+- ownership synchronization is guaranteed;
+- legacy compatibility remains synchronized until migration completion.
 
-1. this RFC is approved;
-2. DEV-004 is changed from `Proposed` to `Active`;
-3. the existing recovery implementation is audited;
-4. current ownership establishment is documented;
-5. schema and migration dependencies are confirmed.
+---
+
+# Implementation Gate
+
+Implementation SHALL NOT begin until:
+
+1. RFC-001 is approved.
+2. DEV-004 becomes Active.
+3. Recovery implementation is audited.
+4. Ownership establishment is documented.
+5. Schema dependencies are confirmed.
+6. Ownership invariants are formally accepted.
+7. Aggregate boundaries are approved.
