@@ -4,6 +4,7 @@ import DeleteCompanyButton from "@/components/connections/DeleteCompanyButton";
 import InvitationActions from "@/components/invitation-actions";
 import InviteUserForm from "@/components/invite-user-form";
 import MemberActions from "@/components/member-actions";
+import OwnershipPanel from "@/components/ownership/ownership-panel";
 import RecoverOwnershipButton from "@/components/recover-ownership-button";
 
 type Profile = {
@@ -65,6 +66,29 @@ type AuditLog = {
   created_at: string | null;
 };
 
+type OwnershipTransfer = {
+  id: string;
+  company_id: string;
+  from_user_id: string;
+  to_user_id: string;
+  status:
+    | "pending_acceptance"
+    | "rejected"
+    | "cancelled"
+    | "expired"
+    | "completed";
+  previous_owner_next_role:
+    | "admin"
+    | "member"
+    | "viewer";
+  transfer_reason: string | null;
+  requested_at: string;
+  expires_at: string;
+  accepted_at: string | null;
+  rejected_at: string | null;
+  completed_at: string | null;
+};
+
 type CompanyMembersCenterProps = {
   company: Company;
   currentProfile: Profile;
@@ -79,6 +103,9 @@ type CompanyMembersCenterProps = {
   canDelete: boolean;
   workspaceStage: string;
   governanceMessage: string;
+  pendingTransfer: OwnershipTransfer | null;
+  pendingTransferFromEmail: string | null;
+  pendingTransferToEmail: string | null;
   siteUrl: string;
 };
 
@@ -260,6 +287,9 @@ export default function CompanyMembersCenter({
   canDelete,
   workspaceStage,
   governanceMessage,
+  pendingTransfer,
+  pendingTransferFromEmail,
+  pendingTransferToEmail,
   siteUrl,
 }: CompanyMembersCenterProps) {
 const currentWorkspaceMember =
@@ -276,6 +306,27 @@ const currentUserMembershipStatus =
   currentWorkspaceMember?.membership
     ?.membership_status ?? null;
 
+const transferTargets = workspaceMembers
+  .filter(
+    ({ membership, profile }) =>
+      membership?.membership_status === "active" &&
+      membership.workspace_role !== "owner" &&
+      profile.id !== currentProfile.id,
+  )
+  .map(({ profile, membership }) => ({
+    id: profile.id,
+    email: profile.email,
+    workspace_role: membership!.workspace_role,
+    membership_status: membership!.membership_status,
+  }));
+
+const currentOwnerEmail =
+  workspaceMembers.find(
+    ({ membership }) =>
+      membership?.workspace_role === "owner" &&
+      membership.membership_status === "active",
+  )?.profile.email ?? null;
+  
   return (
     <>
       <section
@@ -611,6 +662,16 @@ description="Manage company membership, workspace roles, and pending access invi
               {governanceMessage}
             </p>
           </div>
+<OwnershipPanel
+  companyName={company.name || "Company Workspace"}
+  currentOwnerEmail={currentOwnerEmail}
+  currentUserId={currentProfile.id}
+  currentUserWorkspaceRole={currentUserWorkspaceRole}
+  pendingTransfer={pendingTransfer}
+  fromUserEmail={pendingTransferFromEmail}
+  toUserEmail={pendingTransferToEmail}
+  transferTargets={transferTargets}
+/>
 
           {!company.user_id ? (
             <div className="mt-6 rounded-[26px] border border-orange-300/20 bg-orange-400/10 p-5">

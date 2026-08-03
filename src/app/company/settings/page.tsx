@@ -99,6 +99,29 @@ entity_type: string | null;
 created_at: string | null;
 };
 
+type OwnershipTransfer = {
+  id: string;
+  company_id: string;
+  from_user_id: string;
+  to_user_id: string;
+  status:
+    | "pending_acceptance"
+    | "rejected"
+    | "cancelled"
+    | "expired"
+    | "completed";
+  previous_owner_next_role:
+    | "admin"
+    | "member"
+    | "viewer";
+  transfer_reason: string | null;
+  requested_at: string;
+  expires_at: string;
+  accepted_at: string | null;
+  rejected_at: string | null;
+  completed_at: string | null;
+};
+
 function getRoleLabel(role: string | null) {
 if (role === "owner") return "Owner";
 if (role === "admin") return "Admin";
@@ -293,6 +316,44 @@ const { data: auditLogs } = await supabase
 
 const activityList = (auditLogs ?? []) as AuditLog[];
 
+const { data: pendingTransferData } = await supabase
+  .from("ownership_transfer_requests")
+  .select(
+    `
+      id,
+      company_id,
+      from_user_id,
+      to_user_id,
+      status,
+      previous_owner_next_role,
+      transfer_reason,
+      requested_at,
+      expires_at,
+      accepted_at,
+      rejected_at,
+      completed_at
+    `,
+  )
+  .eq("company_id", companyId)
+  .eq("status", "pending_acceptance")
+  .order("requested_at", { ascending: false })
+  .limit(1)
+  .maybeSingle();
+
+const pendingTransfer =
+  pendingTransferData as OwnershipTransfer | null;
+  const pendingTransferFromEmail =
+  workspaceMembers.find(
+    ({ profile }) =>
+      profile.id === pendingTransfer?.from_user_id,
+  )?.profile.email ?? null;
+
+const pendingTransferToEmail =
+  workspaceMembers.find(
+    ({ profile }) =>
+      profile.id === pendingTransfer?.to_user_id,
+  )?.profile.email ?? null;
+
 const { count: rfqCount } = await supabase
 .from("rfqs")
 .select("id", { count: "exact", head: true })
@@ -467,6 +528,9 @@ networkRole={company.network_role || "Enterprise Workspace"}
   canDelete={canDelete}
   workspaceStage={workspaceStage}
   governanceMessage={governanceMessage}
+  pendingTransfer={pendingTransfer}
+  pendingTransferFromEmail={pendingTransferFromEmail}
+  pendingTransferToEmail={pendingTransferToEmail}
   siteUrl={SITE_URL}
 />
 </div>
