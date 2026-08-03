@@ -8,10 +8,6 @@ import { createClient } from "@/lib/supabase/client";
 
 const BRAND_LOGO_SRC = "/branding/logo-horizontal-512.png";
 
-const SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL ||
-  "https://scaling-invention-5g7q4p5rwrwj3vwq7-3000.app.github.dev";
-
 const RECOVERY_ASSURANCES = [
   {
     title: "Verified recovery",
@@ -32,19 +28,39 @@ function normalizeEmail(value: string) {
   return value.trim().toLowerCase();
 }
 
+function getRecoverySiteUrl() {
+  const configuredSiteUrl =
+    process.env.NEXT_PUBLIC_SITE_URL?.trim().replace(/\/+$/, "");
+
+  if (configuredSiteUrl) {
+    return configuredSiteUrl;
+  }
+
+  return window.location.origin.replace(/\/+$/, "");
+}
+
 function getFriendlyResetError(message: string) {
   const normalized = message.toLowerCase();
 
-  if (normalized.includes("email")) {
-    return "Please enter a valid work email address.";
-  }
-
-  if (normalized.includes("rate") || normalized.includes("too many")) {
+  if (
+    normalized.includes("rate") ||
+    normalized.includes("too many")
+  ) {
     return "Too many recovery attempts. Please wait a moment and try again.";
   }
 
-  if (normalized.includes("network") || normalized.includes("fetch")) {
+  if (
+    normalized.includes("network") ||
+    normalized.includes("fetch")
+  ) {
     return "We could not reach the secure recovery service. Please check your connection and try again.";
+  }
+
+  if (
+    normalized.includes("invalid email") ||
+    normalized.includes("email address")
+  ) {
+    return "Please enter a valid work email address.";
   }
 
   return "We could not send a recovery link securely. Please review your email and try again.";
@@ -59,32 +75,50 @@ export default function ForgotPasswordPage() {
   const [sent, setSent] = useState(false);
   const [error, setError] = useState("");
 
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(
+    event: React.FormEvent<HTMLFormElement>,
+  ) {
     event.preventDefault();
 
     if (loading) return;
 
+    const normalizedEmail = normalizeEmail(email);
+
+    if (!normalizedEmail) {
+      setError("Please enter your work email address.");
+      return;
+    }
+
     setLoading(true);
     setError("");
 
-    const normalizedEmail = normalizeEmail(email);
-
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(
-        normalizedEmail,
-        {
-          redirectTo: `${SITE_URL}/auth/callback?next=/set-password`,
-        },
-      );
+      const siteUrl = getRecoverySiteUrl();
+      const redirectTo = `${siteUrl}/auth/callback?next=/set-password`;
 
-      if (error) {
-        setError(getFriendlyResetError(error.message));
+      const { error: resetError } =
+        await supabase.auth.resetPasswordForEmail(
+          normalizedEmail,
+          {
+            redirectTo,
+          },
+        );
+
+      if (resetError) {
+        setError(
+          getFriendlyResetError(resetError.message),
+        );
         return;
       }
 
       setSubmittedEmail(normalizedEmail);
       setSent(true);
-    } catch {
+    } catch (recoveryError) {
+      console.error(
+        "Password recovery request failed:",
+        recoveryError,
+      );
+
       setError(
         "A secure recovery connection could not be completed. Please try again.",
       );
@@ -113,8 +147,9 @@ export default function ForgotPasswordPage() {
             </h1>
 
             <p className="mt-6 max-w-xl text-base font-semibold leading-8 text-slate-300 xl:text-[17px]">
-              Use your verified work email to begin a protected password
-              recovery process and regain access to your procurement workspace.
+              Use your verified work email to begin a protected
+              password recovery process and regain access to your
+              procurement workspace.
             </p>
 
             <div className="mt-9 space-y-3">
@@ -138,8 +173,9 @@ export default function ForgotPasswordPage() {
               </span>
 
               <p className="max-w-lg text-sm font-semibold leading-6 text-slate-300">
-                Recovery links are time-limited, valid for one use, and return
-                you to a protected password setup process.
+                Recovery links are time-limited, valid for one use,
+                and return you to a protected password setup
+                process.
               </p>
             </div>
           </div>
@@ -166,12 +202,15 @@ export default function ForgotPasswordPage() {
                 </h2>
 
                 <p className="mt-5 max-w-xl text-base font-semibold leading-8 text-slate-300">
-                  Enter your work email. We will send a secure, time-limited
-                  link to create a new password.
+                  Enter your work email. We will send a secure,
+                  time-limited link to create a new password.
                 </p>
               </div>
 
-              <form onSubmit={handleSubmit} className="mt-9 space-y-6">
+              <form
+                onSubmit={handleSubmit}
+                className="mt-9 space-y-6"
+              >
                 <label className="block">
                   <span className="mb-2.5 block text-xs font-black uppercase tracking-[0.22em] text-slate-300">
                     Work email
@@ -184,10 +223,14 @@ export default function ForgotPasswordPage() {
                     inputMode="email"
                     placeholder="you@company.com"
                     value={email}
-                    onChange={(event) => setEmail(event.target.value)}
+                    onChange={(event) =>
+                      setEmail(event.target.value)
+                    }
                     disabled={loading}
                     aria-invalid={Boolean(error)}
-                    aria-describedby={error ? "recovery-error" : undefined}
+                    aria-describedby={
+                      error ? "recovery-error" : undefined
+                    }
                     className={inputClassName}
                   />
                 </label>
@@ -196,6 +239,7 @@ export default function ForgotPasswordPage() {
                   <div
                     id="recovery-error"
                     role="alert"
+                    aria-live="polite"
                     className="rounded-2xl border border-red-300/20 bg-red-400/10 px-4 py-3 text-sm font-bold leading-6 text-red-200"
                   >
                     {error}
@@ -207,7 +251,9 @@ export default function ForgotPasswordPage() {
                   disabled={loading}
                   className="h-[60px] w-full rounded-2xl bg-gradient-to-r from-[#B9902F] via-[#C8A646] to-[#F5D77B] px-6 text-sm font-black uppercase tracking-[0.14em] text-slate-950 shadow-[0_22px_65px_rgba(200,166,70,0.34)] outline-none transition duration-200 hover:scale-[1.01] hover:shadow-[0_28px_80px_rgba(200,166,70,0.42)] focus-visible:ring-4 focus-visible:ring-[#F5D77B]/30 focus-visible:ring-offset-4 focus-visible:ring-offset-[#132238] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100"
                 >
-                  {loading ? "Sending recovery link..." : "Send reset link"}
+                  {loading
+                    ? "Sending recovery link..."
+                    : "Send reset link"}
                 </button>
               </form>
 
@@ -234,14 +280,17 @@ export default function ForgotPasswordPage() {
                   </span>
 
                   <p className="text-sm font-semibold leading-6 text-slate-300">
-                    Recovery links are encrypted, time-limited, and valid for
-                    one use.
+                    Recovery links are encrypted, time-limited, and
+                    valid for one use.
                   </p>
                 </div>
               </div>
             </div>
           ) : (
-            <div className="flex flex-1 flex-col">
+            <div
+              className="flex flex-1 flex-col"
+              aria-live="polite"
+            >
               <div className="mt-7">
                 <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-emerald-300/20 bg-emerald-400/10 text-2xl text-emerald-300">
                   ✓
@@ -260,8 +309,8 @@ export default function ForgotPasswordPage() {
                   <span className="font-black text-white">
                     {submittedEmail}
                   </span>
-                  . Use the newest email to continue through the protected
-                  password reset process.
+                  . Use the newest email to continue through the
+                  protected password reset process.
                 </p>
 
                 <div className="mt-8 rounded-3xl border border-white/10 bg-[#07111F]/75 p-5">
@@ -298,8 +347,8 @@ export default function ForgotPasswordPage() {
               </div>
 
               <p className="mt-auto pt-6 text-sm font-semibold leading-6 text-slate-400">
-                If the email does not arrive, check your spam folder or request
-                a new recovery link.
+                If the email does not arrive, check your spam folder
+                or request a new recovery link.
               </p>
             </div>
           )}
@@ -338,7 +387,10 @@ function RecoveryAssurance({
       </span>
 
       <div>
-        <p className="text-sm font-black text-white">{title}</p>
+        <p className="text-sm font-black text-white">
+          {title}
+        </p>
+
         <p className="mt-1 text-sm font-semibold leading-6 text-slate-400">
           {description}
         </p>
