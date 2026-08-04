@@ -547,6 +547,9 @@ const workspaceMembers: WorkspaceMember[] =
           canDelete={canDelete}
           workspaceStage={workspaceStage}
           governanceMessage={governanceMessage}
+                    pendingTransfer={null}
+          pendingTransferFromEmail={null}
+          pendingTransferToEmail={null}
           siteUrl={SITE_URL}
         />
       </div>
