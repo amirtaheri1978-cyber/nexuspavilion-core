@@ -1,0 +1,806 @@
+/* Nexus Pavilion Enterprise Report Engine
+ * A4 output is designed for browser Print > Save as PDF with background
+ * graphics enabled and browser headers/footers disabled.
+ */
+
+.report-page,
+.report-section-divider,
+.report-end-page,
+.report-header,
+.report-footer {
+  display: none;
+}
+
+@media print {
+  /* The interactive analytics workspace remains available on screen but is
+   * intentionally excluded from the board paper. */
+  .analytics-screen-content {
+    display: none !important;
+  }
+
+  .board-executive-report {
+    display: block !important;
+    width: 210mm !important;
+    max-width: 210mm !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .board-report-page__content {
+    display: flex;
+    flex-direction: column;
+    gap: 7mm;
+    margin-top: 10mm;
+  }
+
+  .board-metric-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 4mm;
+  }
+
+  .board-metric-grid--compact {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .board-metric {
+    min-height: 35mm;
+    border: 0.25mm solid #d9dee7;
+    border-top: 1.2mm solid #4976a8;
+    border-radius: 3mm;
+    padding: 5mm;
+    background: #fff !important;
+    break-inside: avoid;
+  }
+
+  .board-metric--gold {
+    border-top-color: #c8a646;
+  }
+
+  .board-metric--green {
+    border-top-color: #2f855a;
+  }
+
+  .board-metric--red {
+    border-top-color: #b54747;
+  }
+
+  .board-metric > span,
+  .board-callout > span,
+  .board-decision-strip > span,
+  .board-score-narrative > span,
+  .board-risk-hero span {
+    display: block;
+    color: #667085 !important;
+    font-size: 6.5pt;
+    font-weight: 900;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+  }
+
+  .board-metric > strong {
+    display: block;
+    margin-top: 4mm;
+    color: #101828 !important;
+    font-size: 19pt;
+    font-weight: 900;
+    letter-spacing: -0.04em;
+    line-height: 1;
+    overflow-wrap: anywhere;
+  }
+
+  .board-metric > p {
+    margin: 3mm 0 0;
+    color: #667085 !important;
+    font-size: 7.5pt;
+    line-height: 1.45;
+  }
+
+  .board-callout {
+    border: 0.25mm solid #d7c17c;
+    border-radius: 3mm;
+    padding: 6mm;
+    background: #fbf8ee !important;
+    break-inside: avoid;
+  }
+
+  .board-callout h3 {
+    margin: 3mm 0 0;
+    color: #1d2939 !important;
+    font-size: 13pt;
+    font-weight: 800;
+    line-height: 1.45;
+  }
+
+  .board-callout--navy {
+    border-color: #183653;
+    background: #061426 !important;
+  }
+
+  .board-callout--navy > span {
+    color: #d4b55c !important;
+  }
+
+  .board-callout--navy h3 {
+    color: #fff !important;
+  }
+
+  .board-two-column {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6mm;
+  }
+
+  .board-two-column--hero {
+    gap: 4mm;
+  }
+
+  .board-list {
+    break-inside: avoid;
+  }
+
+  .board-list > h3 {
+    margin: 0 0 4mm;
+    color: #c8a646 !important;
+    font-size: 7pt;
+    font-weight: 900;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+  }
+
+  .board-list > div {
+    border-top: 0.25mm solid #d9dee7;
+  }
+
+  .board-list article {
+    display: grid;
+    grid-template-columns: 10mm minmax(0, 1fr);
+    gap: 3mm;
+    align-items: start;
+    border-bottom: 0.25mm solid #d9dee7;
+    padding: 3.5mm 0;
+    break-inside: avoid;
+  }
+
+  .board-list article > span {
+    color: #c8a646 !important;
+    font-size: 7.5pt;
+    font-weight: 900;
+  }
+
+  .board-list article > p {
+    margin: 0;
+    color: #344054 !important;
+    font-size: 8.5pt;
+    font-weight: 650;
+    line-height: 1.5;
+  }
+
+  .board-decision-strip {
+    display: grid;
+    grid-template-columns: 36mm minmax(0, 1fr);
+    gap: 6mm;
+    align-items: center;
+    border-left: 1.2mm solid #c8a646;
+    padding: 5mm 6mm;
+    background: #f5f6f8 !important;
+    break-inside: avoid;
+  }
+
+  .board-decision-strip strong {
+    color: #101828 !important;
+    font-size: 10pt;
+    line-height: 1.45;
+  }
+
+  .board-score-narrative {
+    min-height: 42mm;
+    border: 0.25mm solid #d9dee7;
+    border-radius: 3mm;
+    padding: 6mm;
+    background: #f8f9fb !important;
+    break-inside: avoid;
+  }
+
+  .board-score-narrative strong {
+    display: block;
+    margin-top: 4mm;
+    color: #101828 !important;
+    font-size: 20pt;
+    font-weight: 900;
+    letter-spacing: -0.04em;
+  }
+
+  .board-score-narrative p {
+    margin: 4mm 0 0;
+    color: #667085 !important;
+    font-size: 8.5pt;
+    line-height: 1.55;
+  }
+
+  .board-risk-hero {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 4mm;
+  }
+
+  .board-risk-hero > div {
+    min-height: 35mm;
+    border-radius: 3mm;
+    padding: 6mm;
+    background: #061426 !important;
+  }
+
+  .board-risk-hero span {
+    color: #d4b55c !important;
+  }
+
+  .board-risk-hero strong {
+    display: block;
+    margin-top: 4mm;
+    color: #fff !important;
+    font-size: 23pt;
+    font-weight: 900;
+    letter-spacing: -0.04em;
+  }
+
+  .board-methodology {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 4mm;
+  }
+
+  .board-methodology article {
+    display: grid;
+    grid-template-columns: 10mm minmax(0, 1fr);
+    gap: 3mm;
+    min-height: 38mm;
+    border: 0.25mm solid #d9dee7;
+    border-radius: 3mm;
+    padding: 5mm;
+    break-inside: avoid;
+  }
+
+  .board-methodology article > span {
+    color: #c8a646 !important;
+    font-size: 8pt;
+    font-weight: 900;
+  }
+
+  .board-methodology h3 {
+    margin: 0;
+    color: #101828 !important;
+    font-size: 11pt;
+  }
+
+  .board-methodology p {
+    margin: 3mm 0 0;
+    color: #667085 !important;
+    font-size: 8pt;
+    line-height: 1.55;
+  }
+}
+
+@media print {
+  :root {
+    color-scheme: light;
+    --report-navy: #061426;
+    --report-gold: #c8a646;
+    --report-ink: #101828;
+    --report-muted: #667085;
+    --report-line: #d9dee7;
+  }
+
+  @page {
+    size: A4 portrait;
+    margin: 0;
+  }
+
+  html,
+  body {
+    width: 210mm !important;
+    min-height: 297mm !important;
+    margin: 0 !important;
+    background: #fff !important;
+  }
+
+  body {
+    font-size: 10pt;
+    line-height: 1.45;
+    print-color-adjust: exact !important;
+    -webkit-print-color-adjust: exact !important;
+  }
+
+  .report-page,
+  .report-section-divider,
+  .report-end-page {
+    box-sizing: border-box;
+    display: flex !important;
+    width: 210mm !important;
+    min-width: 210mm !important;
+    height: 297mm !important;
+    min-height: 297mm !important;
+    max-height: 297mm !important;
+    margin: 0 !important;
+    padding: 14mm 16mm 12mm !important;
+    overflow: hidden !important;
+    break-before: page;
+    break-after: page;
+    break-inside: avoid;
+    page-break-before: always;
+    page-break-after: always;
+    page-break-inside: avoid;
+  }
+
+  .report-cover {
+    box-sizing: border-box;
+    display: flex !important;
+    width: 210mm !important;
+    min-width: 210mm !important;
+    max-width: 210mm !important;
+    height: 297mm !important;
+    min-height: 297mm !important;
+    max-height: 297mm !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    break-after: page;
+    page-break-after: always;
+  }
+
+  .report-cover > div {
+    box-sizing: border-box;
+    width: 210mm !important;
+    min-width: 210mm !important;
+    max-width: 210mm !important;
+    height: 297mm !important;
+    min-height: 297mm !important;
+    max-height: 297mm !important;
+    padding: 16mm !important;
+  }
+
+  .report-page {
+    flex-direction: column;
+    background: #fff !important;
+    color: var(--report-ink) !important;
+  }
+
+  .report-page__frame {
+    display: flex;
+    min-height: 100%;
+    flex: 1;
+    flex-direction: column;
+  }
+
+  .report-page__body {
+    flex: 1;
+    padding-top: 13mm;
+  }
+
+  .report-kicker {
+    margin: 0;
+    color: var(--report-gold) !important;
+    font-size: 8pt;
+    font-weight: 900;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+  }
+
+  .report-page__title {
+    max-width: 160mm;
+    margin: 4mm 0 0;
+    color: var(--report-ink) !important;
+    font-size: 28pt;
+    font-weight: 900;
+    letter-spacing: -0.035em;
+    line-height: 1.05;
+  }
+
+  .report-page__lead {
+    max-width: 155mm;
+    margin: 5mm 0 0;
+    color: var(--report-muted) !important;
+    font-size: 11pt;
+    line-height: 1.65;
+  }
+
+  .report-header,
+  .report-footer {
+    display: flex !important;
+    align-items: center;
+    justify-content: space-between;
+    flex: 0 0 auto;
+    color: var(--report-ink) !important;
+  }
+
+  .report-header {
+    min-height: 14mm;
+    border-bottom: 0.25mm solid var(--report-line);
+    padding-bottom: 4mm;
+  }
+
+  .report-header__brand {
+    margin: 0;
+    color: var(--report-gold) !important;
+    font-size: 7.5pt;
+    font-weight: 900;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+  }
+
+  .report-header__title {
+    margin: 1.5mm 0 0;
+    font-size: 10pt;
+    font-weight: 800;
+  }
+
+  .report-header__company {
+    text-align: right;
+  }
+
+  .report-header__company span {
+    display: block;
+    color: var(--report-muted) !important;
+    font-size: 6.5pt;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+
+  .report-header__company strong {
+    display: block;
+    margin-top: 1mm;
+    font-size: 8.5pt;
+  }
+
+  .report-footer {
+    min-height: 9mm;
+    border-top: 0.25mm solid var(--report-line);
+    padding-top: 3mm;
+    color: var(--report-muted) !important;
+    font-size: 6.5pt;
+    letter-spacing: 0.04em;
+  }
+
+  .report-header--inverse,
+  .report-footer--inverse {
+    border-color: rgb(255 255 255 / 18%);
+    color: #fff !important;
+  }
+
+  .report-header--inverse .report-header__company span,
+  .report-footer--inverse {
+    color: #aeb8c7 !important;
+  }
+
+  .report-toc-list {
+    display: grid;
+    gap: 0;
+    margin-top: 14mm;
+    border-top: 0.25mm solid var(--report-line);
+  }
+
+  .report-toc-item {
+    display: grid;
+    grid-template-columns: 15mm 1fr;
+    gap: 5mm;
+    align-items: start;
+    border-bottom: 0.25mm solid var(--report-line);
+    padding: 5mm 0;
+  }
+
+  .report-toc-item__number {
+    color: var(--report-gold) !important;
+    font-size: 10pt;
+    font-weight: 900;
+  }
+
+  .report-toc-item strong {
+    color: var(--report-ink) !important;
+    font-size: 12pt;
+  }
+
+  .report-toc-item p {
+    margin: 1mm 0 0;
+    color: var(--report-muted) !important;
+    font-size: 8.5pt;
+  }
+
+  .report-executive-summary .report-page__body {
+    padding-top: 8mm;
+  }
+
+  .report-executive-summary .report-page__title {
+    font-size: 25pt;
+  }
+
+  .report-executive-summary .report-page__lead {
+    margin-top: 3mm;
+    font-size: 9pt;
+    line-height: 1.5;
+  }
+
+  .report-executive-summary .my-9 {
+    margin-top: 5mm !important;
+    margin-bottom: 5mm !important;
+  }
+
+  .report-executive-summary .rounded-3xl {
+    border-radius: 3mm !important;
+  }
+
+  .report-executive-summary .p-5,
+  .report-executive-summary .p-6 {
+    padding: 4mm !important;
+  }
+
+  .report-executive-summary .text-3xl {
+    font-size: 18pt !important;
+  }
+
+  .report-executive-summary .text-base,
+  .report-executive-summary .text-sm {
+    font-size: 8pt !important;
+    line-height: 1.45 !important;
+  }
+
+  .report-section-divider {
+    position: relative;
+    flex-direction: column;
+  }
+
+  .report-section-divider--navy {
+    background: var(--report-navy) !important;
+    color: #fff !important;
+  }
+
+  .report-section-divider--light {
+    background: #f5f6f8 !important;
+    color: var(--report-ink) !important;
+  }
+
+  .report-section-divider__content {
+    display: flex;
+    max-width: 160mm;
+    flex: 1;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .report-section-divider h2 {
+    max-width: 150mm;
+    margin: 7mm 0 0;
+    color: inherit !important;
+    font-size: 40pt;
+    font-weight: 900;
+    letter-spacing: -0.05em;
+    line-height: 0.98;
+  }
+
+  .report-gold-rule {
+    width: 24mm;
+    height: 0.8mm;
+    margin-top: 8mm;
+    background: var(--report-gold) !important;
+  }
+
+  .report-section-divider__description {
+    max-width: 135mm;
+    margin: 8mm 0 0;
+    color: #aeb8c7 !important;
+    font-size: 12pt;
+    line-height: 1.65;
+  }
+
+  .report-section-divider--light .report-section-divider__description {
+    color: var(--report-muted) !important;
+  }
+
+  .report-end-page {
+    flex-direction: column;
+    justify-content: space-between;
+    background: var(--report-navy) !important;
+    color: #fff !important;
+    break-after: auto !important;
+    page-break-after: auto !important;
+  }
+
+  .report-end-page__content {
+    max-width: 150mm;
+  }
+
+  .report-end-page__content h2 {
+    margin: 6mm 0 0;
+    color: #fff !important;
+    font-size: 32pt;
+    font-weight: 900;
+    letter-spacing: -0.04em;
+    line-height: 1.05;
+  }
+
+  .report-end-page__content > p:last-child {
+    max-width: 135mm;
+    margin: 8mm 0 0;
+    color: #aeb8c7 !important;
+    font-size: 11pt;
+    line-height: 1.65;
+  }
+
+  .report-end-page__meta {
+    display: flex;
+    justify-content: space-between;
+    border-top: 0.25mm solid rgb(255 255 255 / 15%);
+    padding-top: 5mm;
+    color: #8f9bad !important;
+    font-size: 7pt;
+  }
+
+  /* Screen-only navigation and controls never enter the report. */
+  main > div > .flex.min-h-10,
+  main > div > header,
+  main nav,
+  #reports,
+  [data-print-hide="true"] {
+    display: none !important;
+  }
+
+  /* Dashboard content follows the report front matter at full A4 width. */
+  main,
+  main > div {
+    width: 210mm !important;
+    max-width: 210mm !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /*
+   * Screen dashboards contain 980-1040px tables and several fixed-width
+   * responsive panels. In Chromium a single such child expands the print
+   * canvas and scales every page down. Neutralize those minimums so A4 remains
+   * a true 210mm canvas instead of a shrunken desktop screenshot.
+   */
+  .analytics-report-root,
+  .analytics-report-root > div,
+  .analytics-report-root section,
+  .analytics-report-root article,
+  .analytics-report-root header,
+  .analytics-report-root footer,
+  .analytics-report-root div,
+  .analytics-report-root table,
+  .analytics-report-root thead,
+  .analytics-report-root tbody,
+  .analytics-report-root tr,
+  .analytics-report-root th,
+  .analytics-report-root td {
+    min-width: 0 !important;
+    max-width: 100% !important;
+  }
+
+  .analytics-report-root table {
+    width: 100% !important;
+    table-layout: fixed !important;
+    font-size: 6.8pt !important;
+  }
+
+  .analytics-report-root th,
+  .analytics-report-root td {
+    padding: 2mm !important;
+    overflow-wrap: anywhere;
+    word-break: normal;
+  }
+
+  .analytics-report-root [class*="overflow-x-auto"] {
+    overflow: hidden !important;
+  }
+
+  /* Compact desktop cards into a readable two/four-column print system. */
+  .analytics-report-root .grid {
+    gap: 3mm !important;
+  }
+
+  .analytics-report-root [class*="grid-cols-5"],
+  .analytics-report-root [class*="grid-cols-4"] {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  }
+
+  .analytics-report-root [class*="grid-cols-3"] {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+
+  .analytics-report-root [class*="grid-cols-2"] {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .analytics-report-root [class*="xl:grid-cols-["],
+  .analytics-report-root [class*="lg:grid-cols-["] {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+  }
+
+  .analytics-report-root :is(.p-8, .sm\:p-8, .lg\:p-8) {
+    padding: 5mm !important;
+  }
+
+  .analytics-report-root :is(.p-7, .sm\:p-7, .lg\:p-7, .p-6, .sm\:p-6) {
+    padding: 4mm !important;
+  }
+
+  .analytics-report-root :is(.mt-8, .mt-7, .mt-6) {
+    margin-top: 4mm !important;
+  }
+
+  .analytics-report-root :is(.gap-8, .gap-7, .gap-6, .gap-5, .gap-4) {
+    gap: 3mm !important;
+  }
+
+  .analytics-report-root h1 {
+    font-size: 22pt !important;
+    line-height: 1.08 !important;
+  }
+
+  .analytics-report-root h2 {
+    font-size: 17pt !important;
+    line-height: 1.12 !important;
+  }
+
+  .analytics-report-root h3 {
+    font-size: 12pt !important;
+    line-height: 1.2 !important;
+  }
+
+  .analytics-report-root p,
+  .analytics-report-root li {
+    orphans: 3;
+    widows: 3;
+  }
+
+  .analytics-report-root article,
+  .analytics-report-root figure,
+  .analytics-report-root table,
+  .analytics-report-root tr,
+  .analytics-report-root .rounded-executive {
+    break-inside: avoid-page;
+    page-break-inside: avoid;
+  }
+
+  .analytics-report-root > div > section:not(.report-page):not(.report-section-divider):not(.report-end-page) {
+    break-inside: auto;
+    page-break-inside: auto;
+  }
+
+  main > div > section:not(.report-page):not(.report-section-divider):not(.report-end-page) {
+    box-sizing: border-box;
+    margin-right: 12mm !important;
+    margin-left: 12mm !important;
+  }
+
+  img,
+  svg,
+  canvas,
+  table {
+    max-width: 100% !important;
+  }
+
+  a {
+    color: inherit !important;
+    text-decoration: none !important;
+  }
+
+  /* Keep the curated board layer outside the compact screen-dashboard type
+   * overrides declared above. */
+  .analytics-report-root .board-report-page .report-page__title {
+    font-size: 28pt !important;
+    line-height: 1.05 !important;
+  }
+
+  .analytics-report-root .board-callout h3 {
+    font-size: 13pt !important;
+    line-height: 1.45 !important;
+  }
+
+  .analytics-report-root .board-list h3 {
+    font-size: 7pt !important;
+  }
+
+  .analytics-report-root .board-methodology h3 {
+    font-size: 11pt !important;
+  }
+}

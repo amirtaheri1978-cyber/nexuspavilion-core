@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "./enterprise-report-print.css";
 
 :root {
   color-scheme: dark;
@@ -153,5 +154,120 @@ body {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+}
+
+/* =========================================================
+   BOARD REPORT PRINT CLEANUP
+   Hides application chrome while preserving report content.
+========================================================= */
+
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 0;
+  }
+
+  html,
+  body {
+    min-height: auto !important;
+    overflow: visible !important;
+    background: #ffffff !important;
+  }
+
+  body {
+    margin: 0 !important;
+    color: #111827 !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  /*
+   * Hide only the outer application chrome:
+   * - mobile application header
+   * - desktop sidebar
+   * - desktop top application header
+   *
+   * Nested report headers remain visible.
+   */
+  body > div > header,
+  body > div > aside,
+  body > div > div > header {
+    display: none !important;
+  }
+
+  /*
+   * Hide outer site footers only.
+   * Internal report content remains untouched.
+   */
+  body > footer,
+  body > div > footer,
+  body > div > div > footer,
+  .site-footer,
+  #site-footer,
+  [data-print-hide="true"] {
+    display: none !important;
+  }
+
+  /*
+   * Remove the desktop sidebar offset from the content area.
+   */
+  body > div > div {
+    min-height: auto !important;
+    margin-left: 0 !important;
+    background: #ffffff !important;
+  }
+
+  /*
+   * Allow the report to use the full printable width.
+   */
+  body > div > div > main,
+  body > div > div > main > main {
+    min-height: auto !important;
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    background: #ffffff !important;
+  }
+
+  /*
+   * Prevent horizontal scrollbars from appearing in the PDF.
+   */
+  body > div > div > main * {
+    max-width: 100%;
+  }
+
+  /*
+   * Remove interactive controls that are not report content.
+   */
+  button,
+  [role="button"],
+  input,
+  textarea,
+  select {
+    display: none !important;
+  }
+
+  /*
+   * Improve page-breaking behavior for cards and panels.
+   */
+  article,
+  table,
+  figure,
+  .rounded-executive {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /*
+   * Avoid clipped content caused by screen-only overflow rules.
+   */
+  main,
+  section,
+  article,
+  div {
+    overflow: visible;
   }
 }

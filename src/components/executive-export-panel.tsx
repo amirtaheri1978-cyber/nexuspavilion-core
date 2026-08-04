@@ -13,38 +13,22 @@ description: string;
 };
 
 const exportActions: ExportAction[] = [
-{
-id: "board-report",
-label: "Executive",
-title: "Print / Save Board Report",
-status: "Available",
-description:
-"Uses the browser print workflow to save the currently generated executive report as PDF.",
-},
-{
-id: "export-summary",
-label: "Executive",
-title: "Copy Export Readiness Summary",
-status: "Available",
-description:
-"Copies a production-readiness summary for board reporting and export workflow status.",
-},
-{
-id: "cfo-summary",
-label: "Finance",
-title: "Export CFO Summary",
-status: "Coming Soon",
-description:
-"Requires awarded value, quote variance, savings calculations, and budget exposure analytics.",
-},
-{
-id: "supplier-portfolio",
-label: "Supplier",
-title: "Export Supplier Portfolio",
-status: "Coming Soon",
-description:
-"Requires validated supplier portfolio report rendering and export packaging.",
-},
+  {
+    id: "board-report",
+    label: "Executive",
+    title: "Print / Save Board Report",
+    status: "Available",
+    description:
+      "Uses the browser print workflow to save the currently generated executive report as PDF.",
+  },
+  {
+    id: "export-summary",
+    label: "Executive",
+    title: "Copy Export Readiness Summary",
+    status: "Available",
+    description:
+      "Copies a production-readiness summary for board reporting and export workflow status.",
+  },
 ];
 
 function getStatusClass(status: ExportStatus) {
@@ -130,14 +114,13 @@ Board Report Export Controls
 </h2>
 
 <p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-400">
-Export workflows are available only for validated executive report
-output. Financial and supplier exports remain locked until their
-reporting pipelines are backed by complete operating data.
+  Use the available export controls to print or save the current board
+  report as PDF and copy the executive export-readiness summary.
 </p>
 </div>
 
 <span className="inline-flex rounded-full border border-emerald-300/20 bg-emerald-400/10 px-4 py-2 text-[10px] font-black uppercase tracking-[0.18em] text-emerald-300">
-Partially Available
+Operational
 </span>
 </div>
 
@@ -193,10 +176,9 @@ Export Readiness
 </p>
 
 <p className="mt-3 text-sm font-semibold leading-7 text-slate-300">
-Status: Partially Available. Board report PDF export is available
-through the browser print workflow. CFO, supplier, and automated board
-deck exports remain locked until their data pipelines and rendering
-workflows are validated.
+  Status: Operational. Board reports can be printed or saved as PDF,
+  and the current export-readiness summary can be copied for executive
+  reporting and governance review.
 </p>
 </div>
 </section>

@@ -45,6 +45,12 @@ import { calculateExecutiveReadiness } from "@/lib/executive/executive-readiness
 import { buildExecutiveNarrative } from "@/lib/analytics/executive/executive-narrative";
 
 import { buildDecisionSupportReadiness } from "@/lib/analytics/executive/decision-support-readiness";
+import { BoardReportCover } from "@/components/analytics/board-report-cover";
+import { ExecutiveSummary } from "@/components/report-engine/ExecutiveSummary";
+import { BoardExecutiveReport } from "@/components/report-engine/BoardExecutiveReport";
+import { ReportEndPage } from "@/components/report-engine/ReportEndPage";
+import { ReportSectionDivider } from "@/components/report-engine/ReportSectionDivider";
+import { TableOfContents } from "@/components/report-engine/TableOfContents";
 
 type ExecutiveAlert = {
   level: "opportunity" | "healthy" | "warning";
@@ -53,7 +59,24 @@ type ExecutiveAlert = {
 };
 
 export default async function AnalyticsPage() {
-  const { rfqList, quoteList, companyList } = await loadAnalyticsSourceData();
+  const {
+    companyId,
+    rfqList,
+    quoteList,
+    companyList,
+  } = await loadAnalyticsSourceData();
+
+  const currentCompany =
+    companyList.find((company) => company.id === companyId) ?? null;
+
+  const reportCompanyName =
+    currentCompany?.name?.trim() || "Nexus Pavilion Organization";
+
+  const reportGeneratedAt = new Intl.DateTimeFormat("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  }).format(new Date());
 
   const {
     vendorLeaderboard,
@@ -1691,8 +1714,96 @@ remains ${ceoRiskLevel.toLowerCase()}.
   const executiveNarrative = buildExecutiveNarrative(executiveBrief);
 
   return (
-    <main className="min-h-screen bg-transparent px-4 py-5 text-white sm:px-6 lg:px-8 lg:py-6">
+    <main className="analytics-report-root min-h-screen bg-transparent px-4 py-5 text-white sm:px-6 lg:px-8 lg:py-6">
       <div className="mx-auto w-full max-w-[1600px]">
+        <BoardReportCover
+          companyName={reportCompanyName}
+          generatedAt={reportGeneratedAt}
+        />
+
+        <TableOfContents
+          companyName={reportCompanyName}
+          generatedAt={reportGeneratedAt}
+        />
+
+        <ExecutiveSummary
+          companyName={reportCompanyName}
+          generatedAt={reportGeneratedAt}
+          procurementHealth={enterpriseProcurementScore}
+          opportunityValue={`$${potentialSavings.toLocaleString()}`}
+          riskLevel={
+            procurementRiskIndex >= 70
+              ? "High"
+              : procurementRiskIndex >= 40
+                ? "Moderate"
+                : "Low"
+          }
+          confidence={forecastConfidenceLevel}
+          findings={[
+            benchmarkNarrative,
+            executiveCommandRecommendation,
+            procurementOutlook,
+          ]}
+          risks={decisionConfidenceRisks}
+          actions={[
+            benchmarkBoardRecommendation,
+            executiveCommandRecommendation,
+            boardForecastPriority,
+          ]}
+          recommendation={benchmarkBoardRecommendation}
+        />
+
+        <BoardExecutiveReport
+          companyName={reportCompanyName}
+          generatedAt={reportGeneratedAt}
+          decisionStatement={`${executiveNarrative.headline} ${executiveNarrative.summary}`}
+          recommendation={benchmarkBoardRecommendation}
+          boardPriority={boardForecastPriority}
+          enterpriseScore={enterpriseProcurementScore}
+          boardReadiness={boardReadinessScore}
+          decisionReadiness={decisionSupportReadiness.score}
+          riskIndex={procurementRiskIndex}
+          opportunityValue={`$${potentialSavings.toLocaleString()}`}
+          procurementVolume={`$${procurementVolume.toLocaleString()}`}
+          awardedVolume={`$${awardedVolume.toLocaleString()}`}
+          awardRate={`${awardRate}%`}
+          supplierCount={supplierRanking.length}
+          supplierEngagement={supplierEngagementScore}
+          supplierDiversification={supplierDiversificationScore}
+          portfolioHealth={portfolioHealthIndex}
+          forecastConfidence={forecastConfidenceLevel}
+          forecastNarrative={boardForecastBriefing}
+          benchmarkPosition={benchmarkPeerPosition}
+          benchmarkScore={benchmarkReadinessScore}
+          findings={[
+            benchmarkNarrative,
+            procurementOutlook,
+            executiveSummary,
+          ]}
+          risks={decisionConfidenceRisks}
+          opportunities={topQuarterOpportunities}
+          actions={[
+            benchmarkBoardRecommendation,
+            executiveCommandRecommendation,
+            boardForecastPriority,
+          ]}
+        />
+
+        <ReportEndPage
+          companyName={reportCompanyName}
+          generatedAt={reportGeneratedAt}
+        />
+
+        <div className="analytics-screen-content">
+
+        <ReportSectionDivider
+          number={1}
+          title="Executive Overview"
+          description="Enterprise posture, commercial opportunity, performance signals, and the priorities requiring board attention."
+          companyName={reportCompanyName}
+          generatedAt={reportGeneratedAt}
+        />
+
         <div className="flex min-h-10 items-center justify-between gap-4">
           <Link
             href="/dashboard"
@@ -1828,6 +1939,15 @@ remains ${ceoRiskLevel.toLowerCase()}.
             executiveNarrative={executiveNarrative}
           />
         </section>
+        <ReportSectionDivider
+          number={2}
+          title="Decision Intelligence"
+          description="Decision readiness, commercial exposure, opportunity capture, and the evidence supporting executive action."
+          companyName={reportCompanyName}
+          generatedAt={reportGeneratedAt}
+          tone="light"
+        />
+
         <section
           id="decision-command"
           className="scroll-mt-24 mt-6 overflow-hidden rounded-3xl border border-white/10 bg-[#061426]/82 text-white"
@@ -2371,6 +2491,14 @@ remains ${ceoRiskLevel.toLowerCase()}.
           </div>
         </section>
 
+        <ReportSectionDivider
+          number={3}
+          title="Board & Governance"
+          description="Forecast confidence, enterprise benchmark position, governance readiness, and board-level risk priorities."
+          companyName={reportCompanyName}
+          generatedAt={reportGeneratedAt}
+        />
+
         <section id="board-intelligence" className="scroll-mt-6">
           <BoardDashboard
             boardReadinessScore={boardReadinessScore}
@@ -2465,6 +2593,15 @@ remains ${ceoRiskLevel.toLowerCase()}.
           />
           <MetricCard title="Award Rate" value={`${awardRate}%`} />
         </section>
+
+        <ReportSectionDivider
+          number={4}
+          title="Portfolio Intelligence"
+          description="Procurement structure, supplier resilience, sourcing performance, and portfolio health across active activity."
+          companyName={reportCompanyName}
+          generatedAt={reportGeneratedAt}
+          tone="light"
+        />
 
         <section id="procurement-intelligence" className="scroll-mt-6">
           <ProcurementDashboard
@@ -2683,6 +2820,14 @@ remains ${ceoRiskLevel.toLowerCase()}.
           </div>
         </section>
 
+        <ReportSectionDivider
+          number={5}
+          title="Risk Intelligence"
+          description="Concentration, supplier dependency, confidence constraints, and the actions required to protect decision quality."
+          companyName={reportCompanyName}
+          generatedAt={reportGeneratedAt}
+        />
+
         <section id="risk-intelligence" className="scroll-mt-6">
           <ExecutiveRiskIntelligence
             supplierRiskRadar={supplierRiskRadar}
@@ -2767,6 +2912,8 @@ remains ${ceoRiskLevel.toLowerCase()}.
             awardPredictionConfidence={awardPredictionConfidence}
           />
         </section>
+
+        </div>
       </div>
     </main>
   );
