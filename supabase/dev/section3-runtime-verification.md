@@ -158,3 +158,29 @@ Run these Development-only checks after the company RLS correction and column-pr
 | CU-08 Controlled transfer projection | Valid recipient accepts pending transfer. | Acceptance succeeds; `companies.user_id` changes only with owner membership transition. | Exactly one Accepted and one Completed audit; reset fixture. Pass: sole active owner equals projection. |
 | CU-09 Recovery bypass disabled | Authenticated actor invokes emergency recovery endpoint. | HTTP 410; no company, membership, profile-role, or audit mutation. | Reset none. Pass: no unsynchronized recovery path remains. |
 | CU-10 Effective privilege metadata | Inspect Development table and column privileges, role membership/inheritance, and the ownership-transfer function owner after authorization. Inspect `PUBLIC`, `anon`, `authenticated`, and every inherited client-facing role applicable to authenticated execution; identify the `accept_company_ownership_transfer` function owner and verify its required company UPDATE capability. | Client roles: no effective generic table UPDATE, no effective `user_id` column UPDATE, and `anon` receives no company UPDATE. Authenticated: effective UPDATE only on `name`, `category`, `location`, `network_role`, and `logo_url`. Function owner: retains the capability required by the SECURITY DEFINER ownership projection. | Read-only metadata evidence; reset none. Pass: each client-role result is `NO GENERIC UPDATE`, `NO USER_ID UPDATE`, or `ALLOWLIST ONLY` as applicable; function-owner result is `OWNERSHIP RPC UPDATE PRESERVED`. Any inherited generic grant is a failure. |
+
+## Reconciled client table privilege baseline
+
+Verify this Development-only metadata baseline after the final reconciliation migration. These are effective privileges, including inherited `PUBLIC` privileges.
+
+| Table / role | Expected effective privileges | Pass condition |
+| --- | --- | --- |
+| `companies` / `anon` | SELECT only for the client-facing operations in scope; no INSERT or UPDATE. | `anon` SELECT is true; INSERT and UPDATE are false. |
+| `companies` / `authenticated` | SELECT and INSERT; no table-wide UPDATE; column UPDATE only for `name`, `category`, `location`, `network_role`, and `logo_url`; no `user_id` UPDATE. | All listed access is present and no additional company UPDATE capability exists. |
+| `ownership_transfer_requests` / `anon` | No table privileges. | SELECT, INSERT, UPDATE, DELETE, and TRUNCATE are false. |
+| `ownership_transfer_requests` / `authenticated` | SELECT only. | SELECT is true; INSERT, UPDATE, DELETE, and TRUNCATE are false. |
+| `ownership_transfer_requests` / `service_role` | Full required table access. | Required operational privileges, including mutation and TRUNCATE, are true. |
+
+## Company deletion authorization
+
+Run these Development-only checks using disposable synthetic companies. Company DELETE requires both the authenticated table privilege and the canonical active owner/admin RLS policy.
+
+| Check | Expected result |
+| --- | --- |
+| Privilege metadata | `anon` DELETE is false; authenticated DELETE is true. |
+| Active owner delete | Owner can delete the approved synthetic company. |
+| Active admin delete | Admin can delete the approved synthetic company. |
+| Member or viewer delete | Denied by RLS; no deletion occurs. |
+| Suspended owner delete | Denied by RLS; no deletion occurs. |
+| Cross-company owner/admin delete | Denied by RLS; no deletion occurs. |
+| Unauthenticated delete | Denied at the privilege layer. |

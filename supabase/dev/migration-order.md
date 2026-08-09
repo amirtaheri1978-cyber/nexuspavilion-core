@@ -85,8 +85,13 @@ Apply these existing migrations in this dependency-safe order after the base sch
     - Position: replaces the baseline request RPC behavior.
 
 17. `20260808_add_ownership_transfer_accepted_audit.sql`
-    - Requires: accept RPC, transfer requests, memberships, companies, audit logs.
-    - Creates/alters: accept RPC to emit Accepted immediately before Completed audit evidence.
-    - Position: last; it is the current-head replacement of acceptance behavior.
+   - Requires: accept RPC, transfer requests, memberships, companies, audit logs.
+   - Creates/alters: accept RPC to emit Accepted immediately before Completed audit evidence.
+   - Position: last; it is the current-head replacement of acceptance behavior.
+
+18. `20260809_reconcile_section3_client_table_privileges.sql`
+   - Requires: companies, ownership transfer requests, and the completed Section 3 privilege definitions.
+   - Creates/alters: reproducible client table privileges for company discovery/self-creation, ownership-safe company updates, and select-only browser access to transfer requests.
+   - Position: last; reconciles the final verified privilege baseline after all affected tables and RPCs exist.
 
 Do not substitute lexical filename order for this manifest. The listed order resolves the documented table, column, invariant, and RPC dependencies.
