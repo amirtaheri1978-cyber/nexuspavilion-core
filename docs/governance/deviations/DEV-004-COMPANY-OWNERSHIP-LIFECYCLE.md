@@ -168,6 +168,8 @@ The approved foundation is metadata/status only, uses authorized internal platfo
 
 Pending verification cases may be invalidated lazily at protected reviewer decision time when authoritative ownership eligibility is no longer valid. Invalidated is distinct from reviewer rejection and is neither cancellation, revocation, nor a generic application/database error. This eligibility validation depends on current ownership state but does not alter ownership authority, transfer semantics, recovery, D1-D6, RLS, or privilege reconciliation.
 
+Section 4 prohibits a new submission when an applicable verified case exists; rejected or invalidated history may permit a new eligible submission. This is protected-command enforcement, not UI behavior. It does not implement re-verification, revocation, ownership-transfer changes, recovery, cancellation, or D1-D6.
+
 ## Required Audit Events
 
 - OWNERSHIP_ESTABLISHED

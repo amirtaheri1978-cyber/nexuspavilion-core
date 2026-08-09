@@ -99,6 +99,7 @@ Implementation expectations:
 - Make terminal decisions idempotent, reject stale review safely, allow exactly one concurrent terminal decision, and deny cross-company access without disclosure.
 - Do not silently transfer verification authority when ownership changes while a case is pending; technical invalidation behavior requires separate design.
 - Rejected is an explicit negative reviewer decision. Invalidated is a controlled, non-sensitive eligibility-loss outcome applied lazily during a protected reviewer decision; it is not cancellation, revocation, or an application/database error.
+- A protected submission command must deny a new submission when an applicable verified case exists (`ALREADY_VERIFIED`) or a pending case exists (`DUPLICATE_PENDING_CASE`). Rejected or invalidated history may permit a new eligible submission. Re-verification is deferred; UI visibility is not authoritative enforcement.
 - Use static, integration, accessibility, responsive UI, and dedicated Development runtime verification before closeout.
 
 Out of scope:
