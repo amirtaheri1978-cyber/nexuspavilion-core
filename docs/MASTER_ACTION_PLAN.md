@@ -78,7 +78,7 @@ Dependency domain: DOM-003 Company Ownership.
 Scope:
 - Representative authority for a specific company, not company legal/business verification and not ownership itself.
 - Metadata/status-only verification cases; no raw documents, sensitive-evidence storage, external providers, or automated verification.
-- Lifecycle: `unverified -> pending_review -> verified | rejected`.
+- Lifecycle: `unverified -> pending_review -> verified | rejected | invalidated`; unverified is the absence of an applicable verified relationship.
 - Current canonical ownership is submission eligibility only; it is not a permanent representative-equals-owner invariant.
 - Authorized internal platform reviewers issue decisions; this authority is distinct from workspace, company, and procurement roles.
 
@@ -92,11 +92,13 @@ Required lifecycle events:
 - `REPRESENTATIVE_VERIFICATION_SUBMITTED`
 - `REPRESENTATIVE_VERIFICATION_REJECTED`
 - `REPRESENTATIVE_VERIFIED`
+- `REPRESENTATIVE_VERIFICATION_INVALIDATED`
 
 Implementation expectations:
 - Prevent multiple active pending cases for the same governed representative/company relationship.
 - Make terminal decisions idempotent, reject stale review safely, allow exactly one concurrent terminal decision, and deny cross-company access without disclosure.
 - Do not silently transfer verification authority when ownership changes while a case is pending; technical invalidation behavior requires separate design.
+- Rejected is an explicit negative reviewer decision. Invalidated is a controlled, non-sensitive eligibility-loss outcome applied lazily during a protected reviewer decision; it is not cancellation, revocation, or an application/database error.
 - Use static, integration, accessibility, responsive UI, and dedicated Development runtime verification before closeout.
 
 Out of scope:

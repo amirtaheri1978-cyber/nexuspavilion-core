@@ -1,4 +1,4 @@
-# DEV-004 — Company Ownership Lifecycle
+# DEV-004 â€” Company Ownership Lifecycle
 
 ## Status
 
@@ -6,15 +6,15 @@ Active - technical backend implementation verified; integration and UI/UX valida
 
 ## Parent Governance Record
 
-DEV-003 — Business Role Foundation
+DEV-003 â€” Business Role Foundation
 
 ## Architecture Specification
 
-RFC-001 — Company Ownership Domain
+RFC-001 â€” Company Ownership Domain
 
 ## Master Plan Position
 
-Section 3 — Company and Team Lifecycle
+Section 3 â€” Company and Team Lifecycle
 
 ## Objective
 
@@ -93,7 +93,7 @@ or replace an owner.
 
 ## Delivery Phases
 
-### Phase 1 — Repository and Recovery Audit
+### Phase 1 â€” Repository and Recovery Audit
 
 - Audit `src/lib/workspace/commands.ts`
 - Audit `/api/company/recover-admin`
@@ -101,14 +101,14 @@ or replace an owner.
 - Determine current owner-establishment behavior
 - Record migration dependencies
 
-### Phase 2 — Database Foundation
+### Phase 2 â€” Database Foundation
 
 - Create ownership-transfer request persistence
 - Add transfer state constraints
 - Add expiration and replay-protection constraints
 - Define canonical ownership synchronization requirements
 
-### Phase 3 — Atomic Domain Commands
+### Phase 3 â€” Atomic Domain Commands
 
 - Initiate ownership transfer
 - Accept ownership transfer
@@ -117,14 +117,14 @@ or replace an owner.
 - Expire ownership transfer
 - Complete ownership transfer atomically
 
-### Phase 4 — Application Contracts
+### Phase 4 â€” Application Contracts
 
 - Command-layer integration
 - Owner-only API endpoints
 - Recipient acceptance endpoint
 - Error contracts and authorization policies
 
-### Phase 5 — User Experience
+### Phase 5 â€” User Experience
 
 - Ownership and Controls section
 - Current-owner display
@@ -133,14 +133,14 @@ or replace an owner.
 - Pending-transfer status
 - Ownership history
 
-### Phase 6 — Recovery Hardening
+### Phase 6 â€” Recovery Hardening
 
 - Separate recovery eligibility from normal transfer
 - Require appropriate identity and company evidence
 - Produce recovery audit evidence
 - Prevent recovery while an active canonical owner exists, unless formally approved
 
-### Phase 7 — Validation and Closure
+### Phase 7 â€” Validation and Closure
 
 - Owner authorization tests
 - Admin, Member, and Viewer rejection tests
@@ -165,6 +165,8 @@ Representative Verification Foundation proceeds as a separately approved Section
 Section 4 does not reopen ownership transfer, cancellation, recovery, D1-D6, completed Section 3 RLS, completed privilege reconciliation, or the existing ownership RPC architecture. It does not modify workspace membership or RFQ Procurement. It must not establish, transfer, recover, revoke, remove, or otherwise mutate ownership projections or ownership-transfer request lifecycle.
 
 The approved foundation is metadata/status only, uses authorized internal platform review distinct from workspace/company/procurement roles, and excludes raw documents, external providers, automated verification, revocation, re-verification, and Production deployment. Retention, deletion/legal-hold, sensitive-evidence storage, external-provider policy, revocation, and re-verification remain deferred under the Section 4 governance contract.
+
+Pending verification cases may be invalidated lazily at protected reviewer decision time when authoritative ownership eligibility is no longer valid. Invalidated is distinct from reviewer rejection and is neither cancellation, revocation, nor a generic application/database error. This eligibility validation depends on current ownership state but does not alter ownership authority, transfer semantics, recovery, D1-D6, RLS, or privilege reconciliation.
 
 ## Required Audit Events
 
