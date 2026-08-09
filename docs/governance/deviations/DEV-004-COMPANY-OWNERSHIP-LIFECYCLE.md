@@ -170,6 +170,30 @@ Pending verification cases may be invalidated lazily at protected reviewer decis
 
 Section 4 prohibits a new submission when an applicable verified case exists; rejected or invalidated history may permit a new eligible submission. This is protected-command enforcement, not UI behavior. It does not implement re-verification, revocation, ownership-transfer changes, recovery, cancellation, or D1-D6.
 
+### Company-Side Representative Verification Status Read Boundary
+
+The next authorized Section 4 capability is a protected, read-only,
+company-scoped status boundary. Current canonical owners and active company
+admins may receive only one normalized current status: `unverified`,
+`pending_review`, `verified`, `rejected`, or `invalidated`. Authorization is
+company-local and must not use procurement roles, reviewer capability, generic
+authenticated access, service-role human identity, or client-side filtering.
+
+Current status is not case history. An applicable verified case takes
+precedence; otherwise a pending case takes precedence; otherwise the most
+recently decided terminal case by `decided_at` and `id` supplies `rejected` or
+`invalidated`; absence of a case supplies `unverified`. A later pending case
+supersedes terminal history for display, and a later verified case supersedes
+prior terminal history. Re-verification remains prohibited.
+
+This capability must not expose case IDs, identities, snapshots, timestamps,
+rejection or invalidation reasons, reviewer data, audit information, metadata,
+evidence, provider data, notes, or historical cases. It does not modify
+ownership, reopen ownership transfer, recovery, cancellation, or D1-D6, and it
+does not create re-verification or revocation. A future implementation requires
+one protected database read mechanism and a thin authenticated API adapter; UI
+is outside this capability. Production remains separately gated.
+
 ## Required Audit Events
 
 - OWNERSHIP_ESTABLISHED

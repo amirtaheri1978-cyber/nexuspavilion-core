@@ -88,6 +88,28 @@ Authorization and privacy:
 - Audit access is reviewer-authorized; submitters receive only appropriately redacted company-scoped information.
 - Audit events are immutable and use non-sensitive metadata. General activity feeds must not contain raw evidence or sensitive reviewer notes.
 
+### Next Authorized Capability: Company-Side Representative Verification Status Read Boundary
+
+The next authorized Section 4 capability is a read-only, company-scoped,
+status-only boundary for the current canonical owner and active company admins.
+It returns only one normalized current status: `unverified`, `pending_review`,
+`verified`, `rejected`, or `invalidated`.
+
+Current status is determined without exposing history: an applicable verified
+case takes precedence; otherwise a pending case takes precedence; otherwise the
+most recently decided terminal case by `decided_at`, with `id` as a deterministic
+tiebreaker, supplies `rejected` or `invalidated`; if no case exists, status is
+`unverified`. A later pending case therefore supersedes terminal history for
+current-status display, and a later verified case supersedes prior terminal
+history. Re-verification remains prohibited.
+
+This capability must not expose case IDs, identities, snapshots, timestamps,
+reason codes, reviewer data, audit records, metadata, evidence, provider data,
+or historical cases. Cross-company access is prohibited. Procurement roles and
+reviewer capability do not authorize company-side status reads. Future work
+requires one protected database read mechanism and one thin authenticated API
+adapter; no UI is authorized by this capability.
+
 Required lifecycle events:
 - `REPRESENTATIVE_VERIFICATION_SUBMITTED`
 - `REPRESENTATIVE_VERIFICATION_REJECTED`

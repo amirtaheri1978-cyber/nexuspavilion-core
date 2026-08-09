@@ -45,6 +45,32 @@ Required immutable events are `REPRESENTATIVE_VERIFICATION_SUBMITTED`, `REPRESEN
 
 An applicable verified case prohibits a new Section 4 submission and must be enforced by the protected submission command, not UI or API pre-checks. Pending cases return `DUPLICATE_PENDING_CASE`; applicable verified cases return `ALREADY_VERIFIED`. Rejected or invalidated history may permit a new submission subject to current eligibility. Re-verification, including manual, scheduled, automatic, provider-driven, and expiration-driven repeat verification, is deferred.
 
+### Company-Side Status Read Boundary
+
+Company-side status read is the next authorized Section 4 capability. It is
+read-only and available only to the current canonical owner and active company
+admins for the target company. It returns exactly one normalized current status:
+`unverified`, `pending_review`, `verified`, `rejected`, or `invalidated`.
+
+The protected database read must calculate current status as follows: an
+applicable verified case takes precedence; otherwise a pending case takes
+precedence; otherwise the most recently decided terminal case ordered by
+`decided_at` and then `id` supplies `rejected` or `invalidated`; absence of a
+case supplies `unverified`. This does not authorize a history list. A later
+pending case supersedes terminal history for display, and a later verified case
+supersedes prior terminal history; re-verification remains prohibited.
+
+The response must not include case IDs, identities, snapshots, timestamps,
+reason codes, reviewer identity or capability, audit information, metadata,
+evidence, provider data, or reviewer notes. Reason-code visibility,
+case-history access, audit access, reviewer queues, and UI are separately
+governed. Procurement roles, reviewer capability, generic authenticated access,
+and service-role human identity do not authorize company-side status access.
+Cross-company status inference is prohibited. Direct client table access is not
+authorized; a future thin authenticated API may invoke only the protected read
+mechanism. This reconciliation does not claim RFC approval or authorize
+Production.
+
 Section 4 excludes Section 3 D1-D6 execution, ownership-transfer cancellation, ownership recovery, company legal/business verification, raw document storage, external providers, automated verification, scheduled re-verification, revocation, workspace membership changes, RFQ Procurement changes, legacy ownership-field removal, and Production deployment.
 
 Retention duration and deletion/legal-hold policy are deferred and required before Production. Sensitive-evidence storage policy is deferred and required before a future raw-evidence capability. External-provider policy, revocation, and re-verification are deferred.
