@@ -16,7 +16,7 @@ record and must not be required to recover project state.
 | DOM-002 | Organization | Active | Company identity and organization records |
 | DOM-003 | Company Ownership | Active - technical backend baseline verified; integration validation deferred | Canonical ownership, verification, transfer, and recovery |
 | DOM-004 | Workspace Membership | Active | Membership lifecycle and operational workspace authority |
-| DOM-005 | Trust and Verification | Planned | Company and representative verification |
+| DOM-005 | Trust and Verification | Active - Section 4 authorized; technical discovery pending | Company and representative verification |
 | DOM-006 | Procurement | Active | RFQ, quote, award, and procurement workflows |
 | DOM-007 | Supplier Network | Active | Supplier discovery and organizational relationships |
 | DOM-008 | Executive Intelligence | Active | Procurement analytics and executive decision support |
@@ -28,7 +28,7 @@ record and must not be required to recover project state.
 | CAP-001 | Workspace Membership Management | DOM-004 | Implemented, under closeout | — | DEV-003 |
 | CAP-002 | Workspace Role Administration | DOM-004 | Implemented, under closeout | — | DEV-003 |
 | CAP-003 | Ownership Establishment | DOM-003 | Compatibility ownership baseline and transfer backend foundation verified; broader establishment and representative-verification workflow deferred | RFC-001 | DEV-004 |
-| CAP-004 | Representative Verification | DOM-003 / DOM-005 | Planned | RFC-001 | DEV-004 |
+| CAP-004 | Representative Verification | DOM-005, dependent on DOM-003 | Active - Section 4 governance contract approved; not implemented or verified | RFC-001 | DEV-004 |
 | CAP-005 | Ownership Transfer | DOM-003 | Backend implemented; pre-launch behavioral verification deferred | RFC-001 | DEV-004 |
 | CAP-006 | Ownership Recovery | DOM-003 | Deferred governance scope; normal recovery endpoint disabled | RFC-001 | DEV-004 |
 
@@ -58,4 +58,4 @@ record and must not be required to recover project state.
 - DEV-003: Technical implementation complete; deferred runtime verification remains visible
 - RFC-001: Draft; implementation reconciliation recorded without asserting formal RFC approval
 - DEV-004: Active; backend implementation verified, with integration and UI/UX validation deferred
-- Section 4: Authorized after independent governance reconciliation review and commit
+- Section 4: Representative Verification Foundation governance contract approved; technical discovery authorized; implementation, verification, and Production authorization remain pending

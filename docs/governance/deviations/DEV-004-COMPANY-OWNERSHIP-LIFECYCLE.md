@@ -158,6 +158,14 @@ or replace an owner.
 
 On 2026-08-09, the Product Owner accepted the Development technical baseline as PASS WITH DEFERRED PRE-LAUNCH BEHAVIORAL VERIFICATION. The following remain unresolved and must not be recorded as executed: authenticated request-to-accept, request-to-reject, expiration, replay/idempotency, concurrency/race, and role-specific company DELETE behavior. They do not block Section 4, but remain Production-launch requirements unless later governance changes that decision.
 
+### Section 4 Boundary - Representative Verification Foundation
+
+Representative Verification Foundation proceeds as a separately approved Section 4 capability under DOM-005 Trust and Verification, with DOM-003 Company Ownership as a dependency. It verifies representative authority for a specific company; it is neither company legal/business verification nor ownership itself. Current canonical ownership is initial submission eligibility only and does not create a permanent representative-equals-owner invariant.
+
+Section 4 does not reopen ownership transfer, cancellation, recovery, D1-D6, completed Section 3 RLS, completed privilege reconciliation, or the existing ownership RPC architecture. It does not modify workspace membership or RFQ Procurement. It must not establish, transfer, recover, revoke, remove, or otherwise mutate ownership projections or ownership-transfer request lifecycle.
+
+The approved foundation is metadata/status only, uses authorized internal platform review distinct from workspace/company/procurement roles, and excludes raw documents, external providers, automated verification, revocation, re-verification, and Production deployment. Retention, deletion/legal-hold, sensitive-evidence storage, external-provider policy, revocation, and re-verification remain deferred under the Section 4 governance contract.
+
 ## Required Audit Events
 
 - OWNERSHIP_ESTABLISHED

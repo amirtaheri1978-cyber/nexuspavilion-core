@@ -29,6 +29,24 @@ Authenticated request-to-accept, request-to-reject, expiration, replay/idempoten
 
 Ownership-transfer cancellation and its cancellation-specific audit event are deferred by design and are not implemented for Section 3.
 
+## Section 4 Representative Verification Foundation
+
+The Product Owner has approved the Section 4 capability direction and governance contract for a metadata-only Representative Verification Foundation. RFC-001 remains Draft; this alignment does not claim formal RFC approval.
+
+Representative verification concerns a representative's authority to represent a specific company. It is not company legal/business verification and is not ownership itself. Current canonical ownership is the initial submission-eligibility mechanism only; it does not create a permanent representative-equals-owner invariant.
+
+An authorized internal platform reviewer is the sole decision authority for the foundation. Reviewer authority is distinct from `workspace_role`, company owner/admin authority, and procurement roles. The initial lifecycle is `unverified -> pending_review -> verified | rejected`; `expired` and `revoked` are deferred.
+
+Verification is separately governed state. It must not establish, transfer, recover, revoke, remove, or otherwise mutate ownership, `companies.user_id`, the owner membership role, or `ownership_transfer_requests`.
+
+The foundation retains only minimum necessary metadata and status. It does not retain raw identity or legal documents, sensitive evidence, external-provider results, or automated verification. Status is available to the current canonical owner and active company admins; case metadata and reviewer decision/rationale are limited to the submitting representative and authorized internal reviewers. Submitter audit access is appropriately redacted and company-scoped. General company activity feeds must not contain raw evidence or sensitive reviewer notes.
+
+Required immutable events are `REPRESENTATIVE_VERIFICATION_SUBMITTED`, `REPRESENTATIVE_VERIFICATION_REJECTED`, and `REPRESENTATIVE_VERIFIED`, with non-sensitive metadata only. The implementation must prevent duplicate active pending cases for the same governed representative/company relationship, make duplicate terminal decisions idempotent, fail stale review safely, permit exactly one concurrent terminal decision, and deny cross-company access without disclosure. Ownership change while pending must not silently transfer verification authority; its technical invalidation mechanism requires separate design.
+
+Section 4 excludes Section 3 D1-D6 execution, ownership-transfer cancellation, ownership recovery, company legal/business verification, raw document storage, external providers, automated verification, scheduled re-verification, revocation, workspace membership changes, RFQ Procurement changes, legacy ownership-field removal, and Production deployment.
+
+Retention duration and deletion/legal-hold policy are deferred and required before Production. Sensitive-evidence storage policy is deferred and required before a future raw-evidence capability. External-provider policy, revocation, and re-verification are deferred.
+
 ---
 
 ## Supersedes
