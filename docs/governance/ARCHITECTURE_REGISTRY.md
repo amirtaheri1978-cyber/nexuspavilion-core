@@ -14,7 +14,7 @@ record and must not be required to recover project state.
 |---|---|---|---|
 | DOM-001 | Identity | Active | Authentication and user identity |
 | DOM-002 | Organization | Active | Company identity and organization records |
-| DOM-003 | Company Ownership | Proposed | Canonical ownership, verification, transfer, and recovery |
+| DOM-003 | Company Ownership | Active - technical backend baseline verified; integration validation deferred | Canonical ownership, verification, transfer, and recovery |
 | DOM-004 | Workspace Membership | Active | Membership lifecycle and operational workspace authority |
 | DOM-005 | Trust and Verification | Planned | Company and representative verification |
 | DOM-006 | Procurement | Active | RFQ, quote, award, and procurement workflows |
@@ -27,19 +27,19 @@ record and must not be required to recover project state.
 |---|---|---|---|---|---|
 | CAP-001 | Workspace Membership Management | DOM-004 | Implemented, under closeout | — | DEV-003 |
 | CAP-002 | Workspace Role Administration | DOM-004 | Implemented, under closeout | — | DEV-003 |
-| CAP-003 | Ownership Establishment | DOM-003 | Planned | RFC-001 | DEV-004 |
+| CAP-003 | Ownership Establishment | DOM-003 | Compatibility ownership baseline and transfer backend foundation verified; broader establishment and representative-verification workflow deferred | RFC-001 | DEV-004 |
 | CAP-004 | Representative Verification | DOM-003 / DOM-005 | Planned | RFC-001 | DEV-004 |
-| CAP-005 | Ownership Transfer | DOM-003 | Planned | RFC-001 | DEV-004 |
-| CAP-006 | Ownership Recovery | DOM-003 | Existing legacy flow; requires governance hardening | RFC-001 | DEV-004 |
+| CAP-005 | Ownership Transfer | DOM-003 | Backend implemented; pre-launch behavioral verification deferred | RFC-001 | DEV-004 |
+| CAP-006 | Ownership Recovery | DOM-003 | Deferred governance scope; normal recovery endpoint disabled | RFC-001 | DEV-004 |
 
 ## Governance Records
 
 | Record | Status | Purpose |
 |---|---|---|
 | PROJECT_CONSTITUTION | Active | Project-wide governance rules |
-| DEV-003 | Implemented, under completion audit | Business Role Foundation |
-| RFC-001 | Draft | Company Ownership Domain Specification |
-| DEV-004 | Proposed | Company Ownership Lifecycle implementation |
+| DEV-003 | Technical implementation complete; deferred pre-launch verification | Business Role Foundation |
+| RFC-001 | Draft - implementation reconciliation recorded | Company Ownership Domain Specification |
+| DEV-004 | Active - technical backend implementation verified; integration/UI validation deferred | Company Ownership Lifecycle implementation |
 
 ## Canonical Decisions
 
@@ -54,9 +54,8 @@ record and must not be required to recover project state.
 
 ## Current Execution Position
 
-- Sections 1–2: Complete
-- Section 3: In progress
-- DEV-003: Implemented; completion audit in progress
-- RFC-001: Draft created
-- DEV-004: Proposed
-- No DEV-004 product implementation has started
+- Section 3: Technical implementation complete; Development verification complete with deferred pre-launch behavioral items
+- DEV-003: Technical implementation complete; deferred runtime verification remains visible
+- RFC-001: Draft; implementation reconciliation recorded without asserting formal RFC approval
+- DEV-004: Active; backend implementation verified, with integration and UI/UX validation deferred
+- Section 4: Authorized after independent governance reconciliation review and commit

@@ -1,12 +1,14 @@
 # DEV-003 — Business Role Foundation
 
-**Status:** Active  
+**Status:** Technical implementation complete; Product Owner-authorized closeout with deferred pre-launch verification
 **Master Plan Position:** Section 3  
 **Affected Domain:** Company Workspace  
 **Secondary Dependency:** Procurement Authorization  
 **Return Point:** Master Launch Execution Plan — Section 3  
 **Owner:** Product Owner  
 **Last reviewed:** 2026-08-02
+
+**Closeout decision:** On 2026-08-09, the Product Owner accepted the Section 3 Development technical baseline and authorized Section 4 after independent governance review and commit. Deferred authenticated workflow and concurrency checks remain pre-launch / integration requirements and are not recorded as executed.
 
 ---
 
@@ -206,15 +208,15 @@ These flows must never be treated as the same business process.
 
 ### Engineering Validation
 
-- [ ] lint passes
+- [x] lint passes
 - [ ] production build passes
 - [ ] working tree is clean
-- [ ] migrations are committed
-- [ ] migration names are unique and ordered
-- [ ] RPC execute permissions are restricted to intended roles
+- [x] migrations are committed
+- [x] migration names are unique and ordered
+- [x] RPC execute permissions are restricted to intended roles
 - [ ] security-definer functions use a controlled `search_path`
-- [ ] no service-role key is exposed in application code
-- [ ] no unrelated Procurement Domain behavior was changed by this deviation
+- [x] no service-role key is exposed in application code
+- [x] no unrelated Procurement Domain behavior was changed by this deviation
 
 ---
 
@@ -274,6 +276,10 @@ DEV-003 may be marked complete only when:
 6. no Procurement Domain flow was unintentionally modified;
 7. the working tree is clean;
 8. the Product Owner approves closure.
+
+### Deferred Pre-Launch Verification
+
+The Section 3 technical baseline is accepted with the following unresolved verification work: authenticated Request -> Accept, Request -> Reject, expiration, replay/idempotency, concurrency/race, and role-specific company DELETE behavior. These items do not block Section 4, but they remain required before Production launch unless the Product Owner changes that decision.
 
 ---
 

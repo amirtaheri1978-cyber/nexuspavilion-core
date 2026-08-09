@@ -2,7 +2,7 @@
 
 ## Status
 
-Draft
+Draft - implementation reconciliation recorded; formal RFC approval not asserted
 
 Version: 1.1
 
@@ -20,6 +20,14 @@ Domain: DOM-003 - Company Ownership
 ## Implemented By
 
 DEV-004 - Company Ownership Lifecycle
+
+## Implementation and Closeout Status
+
+On 2026-08-09, the Product Owner accepted the Section 3 Development technical baseline: 18 migrations, schema, RLS, client privileges, ownership RPC definitions and ACLs, invariants, and implemented lifecycle audit contracts were verified in dedicated Development without touching Production. The RFC remains Draft; this records implementation alignment and does not claim formal RFC approval.
+
+Authenticated request-to-accept, request-to-reject, expiration, replay/idempotency, concurrency/race, and role-specific company DELETE behavior remain deferred pre-launch / integration verification. They do not block Section 4 but remain Production-launch requirements unless later governance changes that decision.
+
+Ownership-transfer cancellation and its cancellation-specific audit event are deferred by design and are not implemented for Section 3.
 
 ---
 
@@ -55,7 +63,7 @@ membership by:
 
 However:
 
-- voluntary ownership transfer is not implemented;
+- backend ownership-transfer foundation is implemented: request, accept, reject, expiration, ownership invariants, and implemented audit contracts exist; authenticated behavioral integration and UI/UX validation remain deferred;
 - ownership recovery is not governed as an enterprise workflow;
 - ownership lifecycle is not yet modeled as a canonical business domain.
 

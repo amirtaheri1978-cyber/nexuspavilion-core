@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed
+Active - technical backend implementation verified; integration and UI/UX validation deferred
 
 ## Parent Governance Record
 
@@ -32,8 +32,7 @@ The repository currently:
 - references a dedicated ownership-transfer workflow;
 - provides an existing ownership-recovery route.
 
-However, the voluntary ownership-transfer workflow is not implemented,
-and the existing recovery capability requires formal governance review.
+The voluntary ownership-transfer backend is now materially implemented through governed persistence, request/accept/reject commands, expiration handling, invariants, audit contracts, and client privilege boundaries. Integration and UI/UX validation remain incomplete, and recovery remains a separate deferred governance concern.
 
 ## Scope
 
@@ -92,7 +91,7 @@ or replace an owner.
 11. During migration, canonical ownership, owner membership, and
     `companies.user_id` must remain synchronized.
 
-## Proposed Delivery Phases
+## Delivery Phases
 
 ### Phase 1 — Repository and Recovery Audit
 
@@ -155,6 +154,10 @@ or replace an owner.
 - Audit-log evidence
 - Product Owner closure approval
 
+### Product Owner Section 3 Technical Closeout Decision
+
+On 2026-08-09, the Product Owner accepted the Development technical baseline as PASS WITH DEFERRED PRE-LAUNCH BEHAVIORAL VERIFICATION. The following remain unresolved and must not be recorded as executed: authenticated request-to-accept, request-to-reject, expiration, replay/idempotency, concurrency/race, and role-specific company DELETE behavior. They do not block Section 4, but remain Production-launch requirements unless later governance changes that decision.
+
 ## Required Audit Events
 
 - OWNERSHIP_ESTABLISHED
@@ -170,6 +173,8 @@ or replace an owner.
 - OWNERSHIP_RECOVERY_REJECTED
 - OWNERSHIP_RECOVERED
 
+OWNERSHIP_TRANSFER_CANCELLED is deferred by design and is not implemented for Section 3. Its event is deferred with the capability.
+
 ## Implementation Gate
 
 No product implementation may begin until:
@@ -178,7 +183,7 @@ No product implementation may begin until:
 2. the existing recovery implementation is audited;
 3. current ownership-establishment behavior is documented;
 4. schema ownership and migration dependencies are confirmed;
-5. this deviation is changed from `Proposed` to `Active`.
+5. this deviation is changed from Proposed to Active.
 
 ## Completion Criteria
 
