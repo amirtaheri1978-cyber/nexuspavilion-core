@@ -52,13 +52,26 @@ read-only and available only to the current canonical owner and active company
 admins for the target company. It returns exactly one normalized current status:
 `unverified`, `pending_review`, `verified`, `rejected`, or `invalidated`.
 
+For this company-side boundary, applicability is company-level: every
+Representative Verification case whose `company_id` is the target company
+remains applicable unless its own governed verification lifecycle state changes.
+It is not conditional on the current canonical owner, the submitting owner, or
+the representative still matching ownership. Ownership transfer has no direct
+verification effect: it does not revoke a verified case, reset status to
+`unverified`, require a new submission, or silently invalidate, replace, or
+reinterpret a case. A separate representative-relationship projection would be
+a future capability and is not implied by this foundation.
+
 The protected database read must calculate current status as follows: an
-applicable verified case takes precedence; otherwise a pending case takes
-precedence; otherwise the most recently decided terminal case ordered by
-`decided_at` and then `id` supplies `rejected` or `invalidated`; absence of a
-case supplies `unverified`. This does not authorize a history list. A later
-pending case supersedes terminal history for display, and a later verified case
-supersedes prior terminal history; re-verification remains prohibited.
+applicable verified case takes precedence; otherwise an applicable pending case
+takes precedence; otherwise the most recently decided applicable terminal case
+ordered by `decided_at` and then `id` supplies `rejected` or `invalidated`;
+absence of an applicable case supplies `unverified`. This does not authorize a
+history list. A later pending case supersedes terminal history for display, and
+a later verified case supersedes prior terminal history. Pending cases remain
+`pending_review` until a protected reviewer decision performs any authorized
+lazy invalidation; the status read does not revalidate eligibility or mutate
+lifecycle state. Re-verification remains prohibited.
 
 The response must not include case IDs, identities, snapshots, timestamps,
 reason codes, reviewer identity or capability, audit information, metadata,

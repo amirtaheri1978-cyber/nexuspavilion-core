@@ -179,12 +179,23 @@ admins may receive only one normalized current status: `unverified`,
 company-local and must not use procurement roles, reviewer capability, generic
 authenticated access, service-role human identity, or client-side filtering.
 
+Applicability is company-level: every Representative Verification case for the
+target company remains applicable unless its own governed verification lifecycle
+state changes. It is not conditional on current ownership or on the submitting
+owner/representative still matching the canonical owner. Ownership transfer has
+no direct verification effect: it neither revokes verified status nor resets
+status to `unverified`, requires a new submission, or silently invalidates,
+replaces, or reinterprets any verification case.
+
 Current status is not case history. An applicable verified case takes
-precedence; otherwise a pending case takes precedence; otherwise the most
-recently decided terminal case by `decided_at` and `id` supplies `rejected` or
-`invalidated`; absence of a case supplies `unverified`. A later pending case
-supersedes terminal history for display, and a later verified case supersedes
-prior terminal history. Re-verification remains prohibited.
+precedence; otherwise an applicable pending case takes precedence; otherwise
+the most recently decided applicable terminal case by `decided_at` and `id`
+supplies `rejected` or `invalidated`; absence of an applicable case supplies
+`unverified`. A later pending case supersedes terminal history for display, and
+a later verified case supersedes prior terminal history. A pending case whose
+submission eligibility becomes stale remains `pending_review` until a protected
+reviewer decision lazily invalidates it; status read does not revalidate
+eligibility or mutate lifecycle state. Re-verification remains prohibited.
 
 This capability must not expose case IDs, identities, snapshots, timestamps,
 rejection or invalidation reasons, reviewer data, audit information, metadata,

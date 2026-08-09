@@ -16,7 +16,7 @@ record and must not be required to recover project state.
 | DOM-002 | Organization | Active | Company identity and organization records |
 | DOM-003 | Company Ownership | Active - technical backend baseline verified; integration validation deferred | Canonical ownership, verification, transfer, and recovery |
 | DOM-004 | Workspace Membership | Active | Membership lifecycle and operational workspace authority |
-| DOM-005 | Trust and Verification | Active - protected lifecycle and API integration implemented; company-side status-read technical discovery next | Company and representative verification |
+| DOM-005 | Trust and Verification | Active - protected lifecycle and API integration implemented; company-side status-read applicability governed, technical implementation next | Company and representative verification |
 | DOM-006 | Procurement | Active | RFQ, quote, award, and procurement workflows |
 | DOM-007 | Supplier Network | Active | Supplier discovery and organizational relationships |
 | DOM-008 | Executive Intelligence | Active | Procurement analytics and executive decision support |
@@ -28,7 +28,7 @@ record and must not be required to recover project state.
 | CAP-001 | Workspace Membership Management | DOM-004 | Implemented, under closeout | — | DEV-003 |
 | CAP-002 | Workspace Role Administration | DOM-004 | Implemented, under closeout | — | DEV-003 |
 | CAP-003 | Ownership Establishment | DOM-003 | Compatibility ownership baseline and transfer backend foundation verified; broader establishment and representative-verification workflow deferred | RFC-001 | DEV-004 |
-| CAP-004 | Representative Verification | DOM-005, dependent on DOM-003 | Active - protected lifecycle commands and API integration implemented; company-side status read authorized, not implemented; Production gated | RFC-001 | DEV-004 |
+| CAP-004 | Representative Verification | DOM-005, dependent on DOM-003 | Active - protected lifecycle commands and API integration implemented; company-side status read applicability governed, not implemented; Production gated | RFC-001 | DEV-004 |
 | CAP-005 | Ownership Transfer | DOM-003 | Backend implemented; pre-launch behavioral verification deferred | RFC-001 | DEV-004 |
 | CAP-006 | Ownership Recovery | DOM-003 | Deferred governance scope; normal recovery endpoint disabled | RFC-001 | DEV-004 |
 
@@ -58,4 +58,4 @@ record and must not be required to recover project state.
 - DEV-003: Technical implementation complete; deferred runtime verification remains visible
 - RFC-001: Draft; implementation reconciliation recorded without asserting formal RFC approval
 - DEV-004: Active; backend implementation verified, with integration and UI/UX validation deferred
-- Section 4: Protected Representative Verification lifecycle commands and API integration implemented; company-side status-read technical discovery is next; Production authorization remains pending
+- Section 4: Protected Representative Verification lifecycle commands and API integration implemented; company-side status-read applicability is governed and technical implementation is next; Production authorization remains pending

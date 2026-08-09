@@ -95,13 +95,23 @@ status-only boundary for the current canonical owner and active company admins.
 It returns only one normalized current status: `unverified`, `pending_review`,
 `verified`, `rejected`, or `invalidated`.
 
+Applicability is company-level: every Representative Verification case for the
+target company remains applicable unless its own governed verification lifecycle
+state changes. It is not re-scoped to the current owner, submitting owner, or
+current representative. Ownership transfer has no direct verification effect:
+it does not revoke verified status, reset the company to `unverified`, require a
+new submission, or silently invalidate, replace, or reinterpret any case.
+
 Current status is determined without exposing history: an applicable verified
-case takes precedence; otherwise a pending case takes precedence; otherwise the
-most recently decided terminal case by `decided_at`, with `id` as a deterministic
-tiebreaker, supplies `rejected` or `invalidated`; if no case exists, status is
-`unverified`. A later pending case therefore supersedes terminal history for
-current-status display, and a later verified case supersedes prior terminal
-history. Re-verification remains prohibited.
+case takes precedence; otherwise an applicable pending case takes precedence;
+otherwise the most recently decided applicable terminal case by `decided_at`,
+with `id` as a deterministic tiebreaker, supplies `rejected` or `invalidated`;
+if no applicable case exists, status is `unverified`. A later pending case
+therefore supersedes terminal history for current-status display, and a later
+verified case supersedes prior terminal history. A pending case remains
+`pending_review` after an ownership change until a protected lifecycle decision
+command lazily invalidates it; status read performs no eligibility revalidation
+and never mutates lifecycle state. Re-verification remains prohibited.
 
 This capability must not expose case IDs, identities, snapshots, timestamps,
 reason codes, reviewer data, audit records, metadata, evidence, provider data,
