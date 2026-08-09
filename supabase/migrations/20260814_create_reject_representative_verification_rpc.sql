@@ -1,0 +1,189 @@
+begin;
+
+create or replace function public.reject_representative_verification(
+  p_case_id uuid,
+  p_rejection_reason_code text
+)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_user uuid := auth.uid();
+  v_case public.representative_verification_cases%rowtype;
+  v_assignment public.internal_reviewer_assignments%rowtype;
+  v_company public.companies%rowtype;
+  v_member public.organization_memberships%rowtype;
+  v_current_owner_membership public.organization_memberships%rowtype;
+  v_reason text;
+begin
+  if v_user is null then
+    return jsonb_build_object('success', false, 'error_code', 'AUTHENTICATION_REQUIRED');
+  end if;
+
+  select *
+  into v_assignment
+  from public.internal_reviewer_assignments
+  where reviewer_user_id = v_user
+    and capability = 'representative_verification.review'
+    and status = 'active'
+  for update;
+
+  if not found then
+    return jsonb_build_object('success', false, 'error_code', 'REVIEWER_NOT_AUTHORIZED');
+  end if;
+
+  if p_rejection_reason_code is distinct from 'REPRESENTATIVE_AUTHORITY_NOT_CONFIRMED' then
+    return jsonb_build_object('success', false, 'error_code', 'INVALID_REJECTION_REASON');
+  end if;
+
+  select *
+  into v_case
+  from public.representative_verification_cases
+  where id = p_case_id
+  for update;
+
+  if not found then
+    return jsonb_build_object('success', false, 'error_code', 'CASE_NOT_FOUND');
+  end if;
+
+  if v_case.status = 'rejected' then
+    if v_case.rejection_reason_code = p_rejection_reason_code then
+      return jsonb_build_object(
+        'success', true,
+        'case_id', v_case.id,
+        'status', 'rejected',
+        'idempotent', true
+      );
+    end if;
+
+    return jsonb_build_object('success', false, 'error_code', 'CASE_REJECTION_CONFLICT');
+  end if;
+
+  if v_case.status = 'invalidated' then
+    return jsonb_build_object('success', false, 'error_code', 'CASE_INVALIDATED');
+  end if;
+
+  if v_case.status <> 'pending_review' then
+    return jsonb_build_object('success', false, 'error_code', 'CASE_NOT_PENDING');
+  end if;
+
+  -- Reuse the ownership-command lock order: company, then memberships by user.
+  select *
+  into v_company
+  from public.companies
+  where id = v_case.company_id
+  for update;
+
+  if not found
+     or not exists (select 1 from public.profiles where id = v_case.representative_user_id)
+     or not exists (select 1 from public.profiles where id = v_case.submitted_by_user_id) then
+    v_reason := 'SUBJECT_UNAVAILABLE';
+  else
+    perform 1
+    from public.organization_memberships
+    where id = v_case.submitted_owner_membership_id
+       or (
+         company_id = v_case.company_id
+         and membership_status = 'active'
+         and workspace_role = 'owner'
+       )
+    order by user_id, id
+    for update;
+
+    select *
+    into v_member
+    from public.organization_memberships
+    where id = v_case.submitted_owner_membership_id
+    for update;
+
+    if not found
+       or v_member.company_id is distinct from v_case.company_id
+       or v_member.user_id is distinct from v_case.submitted_by_user_id
+       or v_member.membership_status <> 'active'
+       or v_member.workspace_role <> 'owner' then
+      v_reason := 'OWNER_MEMBERSHIP_INACTIVE';
+    else
+      select *
+      into v_current_owner_membership
+      from public.organization_memberships
+      where company_id = v_case.company_id
+        and membership_status = 'active'
+        and workspace_role = 'owner'
+      for update;
+
+      if not found then
+        v_reason := 'SUBJECT_UNAVAILABLE';
+      elsif v_current_owner_membership.user_id is distinct from v_company.user_id then
+        v_reason := 'OWNERSHIP_PROJECTION_MISMATCH';
+      elsif v_current_owner_membership.user_id is distinct from v_case.submitted_by_user_id
+         or v_current_owner_membership.user_id is distinct from v_case.submitted_company_owner_user_id then
+        v_reason := 'OWNER_CHANGED';
+      end if;
+    end if;
+  end if;
+
+  if v_reason is not null then
+    update public.representative_verification_cases
+    set status = 'invalidated',
+        decided_at = now(),
+        reviewed_by_user_id = null,
+        rejection_reason_code = null,
+        invalidation_reason_code = v_reason
+    where id = v_case.id
+      and status = 'pending_review';
+
+    insert into public.audit_logs(
+      action, entity_type, entity_id, user_id, company_id, metadata
+    ) values (
+      'REPRESENTATIVE_VERIFICATION_INVALIDATED',
+      'representative_verification_case',
+      v_case.id,
+      v_user,
+      v_case.company_id,
+      jsonb_build_object(
+        'case_id', v_case.id,
+        'representative_user_id', v_case.representative_user_id,
+        'invalidation_reason', v_reason,
+        'system_enforced', true
+      )
+    );
+
+    return jsonb_build_object('success', false, 'error_code', 'CASE_INVALIDATED');
+  end if;
+
+  update public.representative_verification_cases
+  set status = 'rejected',
+      reviewed_by_user_id = v_user,
+      decided_at = now(),
+      rejection_reason_code = 'REPRESENTATIVE_AUTHORITY_NOT_CONFIRMED',
+      invalidation_reason_code = null
+  where id = v_case.id
+    and status = 'pending_review';
+
+  insert into public.audit_logs(
+    action, entity_type, entity_id, user_id, company_id, metadata
+  ) values (
+    'REPRESENTATIVE_VERIFICATION_REJECTED',
+    'representative_verification_case',
+    v_case.id,
+    v_user,
+    v_case.company_id,
+    jsonb_build_object(
+      'case_id', v_case.id,
+      'representative_user_id', v_case.representative_user_id,
+      'rejection_reason_code', 'REPRESENTATIVE_AUTHORITY_NOT_CONFIRMED',
+      'status', 'rejected'
+    )
+  );
+
+  return jsonb_build_object('success', true, 'case_id', v_case.id, 'status', 'rejected');
+end;
+$$;
+
+revoke all on function public.reject_representative_verification(uuid, text) from public;
+revoke all on function public.reject_representative_verification(uuid, text) from anon;
+grant execute on function public.reject_representative_verification(uuid, text) to authenticated;
+
+commit;
