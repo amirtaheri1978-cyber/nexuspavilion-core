@@ -141,3 +141,20 @@ Do not run these until execution is separately authorized. Each is a read-only v
 | Reject-time expiration | `OWNERSHIP_TRANSFER_EXPIRED` | User B | expired request / Company A | request, users, expiry, detection `rejection`; count 1. |
 
 Cancellation is excluded. No cancellation command is tested or introduced.
+
+## Company ownership-sensitive update boundary
+
+Run these Development-only checks after the company RLS correction and column-privilege migration. Each case uses a fresh synthetic Company A fixture where mutation occurs; scope audits and privilege checks to the tested company and authenticated role.
+
+| ID | Setup / actor / action | Expected result and database state | Audit / reset / pass criteria |
+| --- | --- | --- | --- |
+| CU-01 Owner profile update | Active owner updates `name`, `category`, `location`, and `network_role`. | Success; only supplied ordinary fields change; `user_id` and memberships unchanged. | Existing company-update audit; restore values. Pass: allowlisted update succeeds. |
+| CU-02 Admin profile update | Active admin performs the same ordinary update. | Success; ownership projection unchanged. | Existing company-update audit; restore values. Pass: admin ordinary update succeeds. |
+| CU-03 Authorized logo update | Active owner or admin updates `logo_url`. | Success; only logo changes. | Existing logo audit; restore value. Pass: logo column remains writable. |
+| CU-04 Member/viewer denial | Active member and viewer separately attempt ordinary update. | Database/RLS denial; no company mutation. | No company-update audit; reset none. Pass: both denied. |
+| CU-05 Suspended/cross-company denial | Suspended owner and Company B member separately attempt Company A update. | Database/RLS denial; no mutation. | No company-update audit; reset none. Pass: both denied. |
+| CU-06 Owner direct ownership write denied | Active owner attempts direct authenticated `companies.user_id` update. | Privilege denial before ownership mutation. | No ownership audit or membership change; reset none. Pass: column is not writable. |
+| CU-07 Admin direct ownership write denied | Active admin attempts the same direct authenticated update. | Privilege denial before ownership mutation. | No ownership audit or membership change; reset none. Pass: column is not writable. |
+| CU-08 Controlled transfer projection | Valid recipient accepts pending transfer. | Acceptance succeeds; `companies.user_id` changes only with owner membership transition. | Exactly one Accepted and one Completed audit; reset fixture. Pass: sole active owner equals projection. |
+| CU-09 Recovery bypass disabled | Authenticated actor invokes emergency recovery endpoint. | HTTP 410; no company, membership, profile-role, or audit mutation. | Reset none. Pass: no unsynchronized recovery path remains. |
+| CU-10 Effective privilege metadata | Inspect Development table and column privileges, role membership/inheritance, and the ownership-transfer function owner after authorization. Inspect `PUBLIC`, `anon`, `authenticated`, and every inherited client-facing role applicable to authenticated execution; identify the `accept_company_ownership_transfer` function owner and verify its required company UPDATE capability. | Client roles: no effective generic table UPDATE, no effective `user_id` column UPDATE, and `anon` receives no company UPDATE. Authenticated: effective UPDATE only on `name`, `category`, `location`, `network_role`, and `logo_url`. Function owner: retains the capability required by the SECURITY DEFINER ownership projection. | Read-only metadata evidence; reset none. Pass: each client-role result is `NO GENERIC UPDATE`, `NO USER_ID UPDATE`, or `ALLOWLIST ONLY` as applicable; function-owner result is `OWNERSHIP RPC UPDATE PRESERVED`. Any inherited generic grant is a failure. |
