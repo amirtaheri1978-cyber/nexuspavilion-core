@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 
-import { logCompanyActivity } from "@/lib/activity/log-company-activity";
 import { sendEmail } from "@/lib/email/send-email";
 import { rfqCreatedEmail } from "@/lib/email/templates/rfq-created-email";
 import { createClient } from "@/lib/supabase/server";
@@ -233,24 +232,6 @@ entity_type: "rfq",
 entity_id: rfq.id,
 user_id: user.id,
 company_id: profile.company_id,
-metadata: {
-title: rfq.title,
-budget: rfq.budget,
-category: rfq.category,
-location: rfq.location,
-slug: rfq.slug,
-deadline: rfq.deadline,
-...procurementMetadata,
-},
-});
-
-await logCompanyActivity({
-supabase,
-companyId: profile.company_id,
-actorId: user.id,
-action: "RFQ_CREATED",
-entityType: "rfq",
-entityId: rfq.id,
 metadata: {
 title: rfq.title,
 budget: rfq.budget,
