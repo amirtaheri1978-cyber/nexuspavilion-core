@@ -2,12 +2,9 @@ import { NextResponse } from "next/server";
 
 import { sendEmail } from "@/lib/email/send-email";
 import { rfqCreatedEmail } from "@/lib/email/templates/rfq-created-email";
+import { getActiveMembershipForUserCompany } from "@/lib/auth/membership";
+import { canCreateCompanyRfq } from "@/lib/procurement/procurement-write-authorization";
 import { createClient } from "@/lib/supabase/server";
-
-import {
-  canCreateRfqDraft,
-  type UserRole,
-} from "@/lib/permissions";
 
 type ProcurementScope =
 | "material"
@@ -111,7 +108,7 @@ return NextResponse.json(
 
 const { data: profile, error: profileError } = await supabase
 .from("profiles")
-.select("id, email, role, company_id")
+.select("id, email, company_id")
 .eq("id", user.id)
 .single();
 
@@ -122,7 +119,24 @@ return NextResponse.json(
 );
 }
 
-if (!canCreateRfqDraft(profile.role as UserRole)) {
+let membership;
+
+try {
+membership = await getActiveMembershipForUserCompany(
+supabase,
+user.id,
+profile.company_id
+);
+} catch (membershipError) {
+console.error("RFQ create membership lookup failed:", membershipError);
+
+return NextResponse.json(
+{ error: "Unable to verify organization membership." },
+{ status: 500 }
+);
+}
+
+if (!canCreateCompanyRfq(membership, profile.company_id)) {
 return NextResponse.json(
 { error: "Only owners, admins, and buyers can create RFQs." },
 { status: 403 }

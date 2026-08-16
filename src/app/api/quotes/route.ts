@@ -2,12 +2,9 @@ import { NextResponse } from "next/server";
 
 import { sendEmail } from "@/lib/email/send-email";
 import { quoteSubmittedEmail } from "@/lib/email/templates/quote-submitted-email";
+import { getActiveMembershipForUserCompany } from "@/lib/auth/membership";
+import { canSubmitCompanyQuote } from "@/lib/procurement/procurement-write-authorization";
 import { createClient } from "@/lib/supabase/server";
-
-import {
-  canSubmitQuote,
-  type UserRole,
-} from "@/lib/permissions";
 
 const VALIDITY_DAY_OPTIONS = [30, 60, 90, 120];
 
@@ -129,7 +126,7 @@ return NextResponse.json(
 
 const { data: profile, error: profileError } = await supabase
 .from("profiles")
-.select("id, company_id, role, email")
+.select("id, company_id, email")
 .eq("id", user.id)
 .single();
 
@@ -139,7 +136,25 @@ return NextResponse.json(
 { status: 400 }
 );
 }
-if (!canSubmitQuote(profile.role as UserRole)) {
+
+let membership;
+
+try {
+membership = await getActiveMembershipForUserCompany(
+supabase,
+user.id,
+profile.company_id
+);
+} catch (membershipError) {
+console.error("Quote submit membership lookup failed:", membershipError);
+
+return NextResponse.json(
+{ error: "Unable to verify organization membership." },
+{ status: 500 }
+);
+}
+
+if (!canSubmitCompanyQuote(membership, profile.company_id)) {
   return NextResponse.json(
     {
       error:

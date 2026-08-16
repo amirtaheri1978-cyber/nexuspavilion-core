@@ -130,6 +130,52 @@ export async function getActiveMembershipForUser(
     : null;
 }
 
+export async function getActiveMembershipForUserCompany(
+  supabase: SupabaseClient,
+  userId: string,
+  companyId: string,
+): Promise<OrganizationMembership | null> {
+  const normalizedUserId = userId.trim();
+  const normalizedCompanyId = companyId.trim();
+
+  if (!normalizedUserId || !normalizedCompanyId) {
+    return null;
+  }
+
+  const { data, error } = await supabase
+    .from("organization_memberships")
+    .select(
+      `
+      id,
+      user_id,
+      company_id,
+      workspace_role,
+      procurement_function,
+      membership_type,
+      membership_status,
+      job_title,
+      job_function,
+      invited_by,
+      joined_at
+      `,
+    )
+    .eq("user_id", normalizedUserId)
+    .eq("company_id", normalizedCompanyId)
+    .eq("membership_status", "active")
+    .maybeSingle();
+
+  if (error) {
+    throw new MembershipLookupError(
+      "Unable to load the active organization membership.",
+      error,
+    );
+  }
+
+  return data
+    ? mapMembership(data as MembershipRow)
+    : null;
+}
+
 export function isMembershipActive(
   membership: OrganizationMembership | null,
 ) {
