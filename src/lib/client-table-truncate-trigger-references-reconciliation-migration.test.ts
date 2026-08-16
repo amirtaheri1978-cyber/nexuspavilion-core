@@ -5,11 +5,18 @@ import { describe, expect, it } from "vitest";
 const migrationsDirectory = path.resolve(process.cwd(), "supabase/migrations");
 const reconciliationMigrationName =
   "20260820_revoke_client_truncate_trigger_references.sql";
-const reconciliationMigration = readFileSync(
-  path.join(migrationsDirectory, reconciliationMigrationName),
-  "utf8",
-);
-const normalized = reconciliationMigration.replace(/\s+/g, " ").trim().toLowerCase();
+
+function normalizeSql(sql: string) {
+  return sql.replace(/\s+/g, " ").trim().toLowerCase();
+}
+
+function readNormalizedMigration(fileName: string) {
+  return normalizeSql(
+    readFileSync(path.join(migrationsDirectory, fileName), "utf8"),
+  );
+}
+
+const normalized = readNormalizedMigration(reconciliationMigrationName);
 
 const coveredTables = [
   "audit_logs",
@@ -83,12 +90,8 @@ describe("F16-04 client TRUNCATE/TRIGGER/REFERENCES reconciliation (STATIC)", ()
     expect(files).toContain("20260819_restrict_rfq_sourcing_access_rls.sql");
     expect(files).toContain("20260809_reconcile_section3_client_table_privileges.sql");
 
-    const section3 = readFileSync(
-      path.join(
-        migrationsDirectory,
-        "20260809_reconcile_section3_client_table_privileges.sql",
-      ),
-      "utf8",
+    const section3 = readNormalizedMigration(
+      "20260809_reconcile_section3_client_table_privileges.sql",
     );
     expect(section3).toContain(
       "grant select on table public.companies to anon, authenticated;",
@@ -106,48 +109,32 @@ describe("F16-04 client TRUNCATE/TRIGGER/REFERENCES reconciliation (STATIC)", ()
       "grant all privileges on table public.ownership_transfer_requests to service_role;",
     );
 
-    const procurement = readFileSync(
-      path.join(
-        migrationsDirectory,
-        "20260816_create_procurement_domain_schema.sql",
-      ),
-      "utf8",
+    const procurement = readNormalizedMigration(
+      "20260816_create_procurement_domain_schema.sql",
     );
     expect(procurement).toContain(
-      "grant select, insert, update, delete\non table public.rfqs\nto authenticated;",
+      "grant select, insert, update, delete on table public.rfqs to authenticated;",
     );
     expect(procurement).toContain(
-      "grant all privileges\non table public.rfqs,\n  public.quotes,\n  public.rfq_ai_reviews,\n  public.rfq_invites\nto service_role;",
+      "grant all privileges on table public.rfqs, public.quotes, public.rfq_ai_reviews, public.rfq_invites to service_role;",
     );
 
-    const f16_01 = readFileSync(
-      path.join(
-        migrationsDirectory,
-        "20260819_restrict_rfq_sourcing_access_rls.sql",
-      ),
-      "utf8",
+    const f16_01 = readNormalizedMigration(
+      "20260819_restrict_rfq_sourcing_access_rls.sql",
     );
     expect(f16_01).toContain(
       "create or replace function public.current_user_has_supplier_rfq_access",
     );
 
-    const memberships = readFileSync(
-      path.join(
-        migrationsDirectory,
-        "20260801_create_organization_memberships.sql",
-      ),
-      "utf8",
+    const memberships = readNormalizedMigration(
+      "20260801_create_organization_memberships.sql",
     );
     expect(memberships).toContain(
-      "grant select\non table public.organization_memberships\nto authenticated;",
+      "grant select on table public.organization_memberships to authenticated;",
     );
 
-    const profiles = readFileSync(
-      path.join(
-        migrationsDirectory,
-        "20260818_enable_secure_own_profile_read.sql",
-      ),
-      "utf8",
+    const profiles = readNormalizedMigration(
+      "20260818_enable_secure_own_profile_read.sql",
     );
     expect(profiles).toContain(
       "grant select on table public.profiles to authenticated;",
