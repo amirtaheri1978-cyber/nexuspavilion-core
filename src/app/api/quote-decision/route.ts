@@ -1,10 +1,7 @@
-import {
-  canUpdateQuoteDecision,
-  type UserRole,
-} from "@/lib/permissions";
-
 import { NextResponse } from "next/server";
 
+import { getActiveMembershipForUserCompany } from "@/lib/auth/membership";
+import { canDecideCompanyQuotes } from "@/lib/procurement/procurement-write-authorization";
 import { createClient } from "@/lib/supabase/server";
 
 type QuoteDecision = "approved" | "rejected";
@@ -66,7 +63,7 @@ export async function POST(request: Request) {
 
     const { data: profile, error: profileError } = await supabase
       .from("profiles")
-      .select("id, role, company_id")
+      .select("id, company_id")
       .eq("id", user.id)
       .maybeSingle();
 
@@ -77,7 +74,28 @@ export async function POST(request: Request) {
       );
     }
 
-    if (!canUpdateQuoteDecision(profile.role as UserRole)) {
+    let membership;
+
+    try {
+      membership = await getActiveMembershipForUserCompany(
+        supabase,
+        user.id,
+        profile.company_id,
+      );
+    } catch (membershipError) {
+      console.error("Quote decision membership lookup failed.", {
+        userId: user.id,
+        companyId: profile.company_id,
+        error: membershipError,
+      });
+
+      return NextResponse.json(
+        { error: "Unable to verify organization membership." },
+        { status: 500 },
+      );
+    }
+
+    if (!canDecideCompanyQuotes(membership, profile.company_id)) {
       return NextResponse.json(
         {
           error:
@@ -198,7 +216,8 @@ export async function POST(request: Request) {
           rfq_id: quote.rfq_id,
           previous_decision: previousDecision,
           new_decision: decision,
-          actor_role: profile.role,
+          actor_workspace_role: membership.workspaceRole,
+          actor_procurement_function: membership.procurementFunction,
           updated_at: new Date().toISOString(),
         },
       });

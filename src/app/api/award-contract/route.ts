@@ -2,12 +2,12 @@ import { NextResponse } from "next/server";
 
 import { sendEmail } from "@/lib/email/send-email";
 import { awardNotificationEmail } from "@/lib/email/templates/award-notification-email";
+import { getActiveMembershipForUserCompany } from "@/lib/auth/membership";
 import {
-  canAwardVerifiedOrganizationContract,
   type OrganizationVerificationStatus,
-  type UserRole,
   type WorkspaceStatus,
 } from "@/lib/permissions";
+import { canAwardVerifiedCompanyContract } from "@/lib/procurement/procurement-write-authorization";
 import { createClient } from "@/lib/supabase/server";
 
 type AwardRequestBody = {
@@ -83,7 +83,7 @@ export async function POST(request: Request) {
     const { data: profile, error: profileError } =
       await supabase
         .from("profiles")
-        .select("id, email, role, company_id")
+        .select("id, email, company_id")
         .eq("id", user.id)
         .maybeSingle();
 
@@ -94,6 +94,28 @@ export async function POST(request: Request) {
             "Company profile is required to award contracts.",
         },
         { status: 403 },
+      );
+    }
+
+    let membership;
+
+    try {
+      membership = await getActiveMembershipForUserCompany(
+        supabase,
+        user.id,
+        profile.company_id,
+      );
+    } catch (membershipError) {
+      console.error(
+        "Award contract membership lookup failed.",
+        membershipError,
+      );
+
+      return NextResponse.json(
+        {
+          error: "Unable to verify organization membership.",
+        },
+        { status: 500 },
       );
     }
 
@@ -128,13 +150,15 @@ export async function POST(request: Request) {
     }
 
     if (
-      !canAwardVerifiedOrganizationContract({
-        role: profile.role as UserRole,
+      !canAwardVerifiedCompanyContract({
+        membership,
+        companyId: profile.company_id,
         workspaceStatus:
           company.workspace_status as WorkspaceStatus,
         verificationStatus:
           company.status as OrganizationVerificationStatus,
-      })
+      }) ||
+      !membership
     ) {
       return NextResponse.json(
         {
@@ -477,7 +501,9 @@ export async function POST(request: Request) {
           awarded_quote_id: quoteId,
           awarded_company_id: selectedQuote.company_id,
           awarded_user_id: selectedQuote.user_id,
-          awarded_by_role: profile.role,
+          awarded_by_workspace_role: membership.workspaceRole,
+          awarded_by_procurement_function:
+            membership.procurementFunction,
           awarded_at: awardedAt,
           workspace_status: company.workspace_status,
           organization_verification_status:
