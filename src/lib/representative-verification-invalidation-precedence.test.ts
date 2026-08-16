@@ -32,12 +32,10 @@ describe("representative verification invalidation precedence reconciliation", (
       "v_submitted_membership_found := found;",
     );
 
-    expect(migration).toContain(
-      "elsif not v_submitted_membership_found",
-    );
+    expect(migration.match(/if not v_submitted_membership_found/g)).toHaveLength(2);
   });
 
-  it("gives canonical ownership changes precedence over stale submission membership", () => {
+  it("validates captured membership before loading the current canonical owner", () => {
     const approveStart = migration.indexOf(
       "create or replace function public.approve_representative_verification",
     );
@@ -49,19 +47,34 @@ describe("representative verification invalidation precedence reconciliation", (
     const rejectSql = migration.slice(rejectStart);
 
     for (const sql of [approveSql, rejectSql]) {
+      const capturedMembershipLoad = sql.indexOf("into v_member");
+      const membershipValidation = sql.indexOf(
+        "if not v_submitted_membership_found",
+      );
+      const membershipInactive = sql.indexOf(
+        "v_reason := 'OWNER_MEMBERSHIP_INACTIVE';",
+      );
+      const currentOwnerLoad = sql.indexOf(
+        "into v_current_owner_membership",
+      );
+      const subjectUnavailableAfterMembership = sql.indexOf(
+        "v_reason := 'SUBJECT_UNAVAILABLE';",
+        membershipInactive,
+      );
       const projectionMismatch = sql.indexOf(
         "v_reason := 'OWNERSHIP_PROJECTION_MISMATCH';",
       );
       const ownerChanged = sql.indexOf(
         "v_reason := 'OWNER_CHANGED';",
       );
-      const membershipInactive = sql.indexOf(
-        "v_reason := 'OWNER_MEMBERSHIP_INACTIVE';",
-      );
 
-      expect(projectionMismatch).toBeGreaterThan(-1);
+      expect(capturedMembershipLoad).toBeGreaterThan(-1);
+      expect(membershipValidation).toBeGreaterThan(capturedMembershipLoad);
+      expect(membershipInactive).toBeGreaterThan(membershipValidation);
+      expect(currentOwnerLoad).toBeGreaterThan(membershipInactive);
+      expect(subjectUnavailableAfterMembership).toBeGreaterThan(currentOwnerLoad);
+      expect(projectionMismatch).toBeGreaterThan(subjectUnavailableAfterMembership);
       expect(ownerChanged).toBeGreaterThan(projectionMismatch);
-      expect(membershipInactive).toBeGreaterThan(ownerChanged);
     }
   });
 

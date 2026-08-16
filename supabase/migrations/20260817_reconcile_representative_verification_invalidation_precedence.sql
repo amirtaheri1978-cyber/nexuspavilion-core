@@ -167,46 +167,18 @@ begin
 
 
     -------------------------------------------------------------------------
-    -- Load current canonical owner membership.
-    -------------------------------------------------------------------------
-
-    select *
-    into v_current_owner_membership
-    from public.organization_memberships
-    where company_id = v_case.company_id
-      and membership_status = 'active'
-      and workspace_role = 'owner'
-    for update;
-
-
-    -------------------------------------------------------------------------
     -- Invalidation precedence
     --
-    -- 1. No current canonical owner -> SUBJECT_UNAVAILABLE
-    -- 2. Current owner disagrees with companies.user_id ->
+    -- 1. Missing/stale/not owner-valid submission membership ->
+    --    OWNER_MEMBERSHIP_INACTIVE
+    -- 2. No current canonical owner -> SUBJECT_UNAVAILABLE
+    -- 3. Current owner disagrees with companies.user_id ->
     --    OWNERSHIP_PROJECTION_MISMATCH
-    -- 3. Current canonical owner is valid but differs from submission snapshot
+    -- 4. Current canonical owner is valid but differs from submission snapshot
     --    -> OWNER_CHANGED
-    -- 4. Ownership has not changed, but submission-time membership itself is
-    --    missing/stale/not owner-valid -> OWNER_MEMBERSHIP_INACTIVE
     -------------------------------------------------------------------------
 
-    if not found then
-      v_reason := 'SUBJECT_UNAVAILABLE';
-
-    elsif v_current_owner_membership.user_id
-          is distinct from v_company.user_id then
-
-      v_reason := 'OWNERSHIP_PROJECTION_MISMATCH';
-
-    elsif v_current_owner_membership.user_id
-          is distinct from v_case.submitted_by_user_id
-       or v_current_owner_membership.user_id
-          is distinct from v_case.submitted_company_owner_user_id then
-
-      v_reason := 'OWNER_CHANGED';
-
-    elsif not v_submitted_membership_found
+    if not v_submitted_membership_found
        or v_member.company_id
           is distinct from v_case.company_id
        or v_member.user_id
@@ -215,6 +187,35 @@ begin
        or v_member.workspace_role <> 'owner' then
 
       v_reason := 'OWNER_MEMBERSHIP_INACTIVE';
+    else
+      -----------------------------------------------------------------------
+      -- Load the current canonical owner only after the captured membership
+      -- has been validated, so it cannot override the required reason.
+      -----------------------------------------------------------------------
+
+      select *
+      into v_current_owner_membership
+      from public.organization_memberships
+      where company_id = v_case.company_id
+        and membership_status = 'active'
+        and workspace_role = 'owner'
+      for update;
+
+      if not found then
+        v_reason := 'SUBJECT_UNAVAILABLE';
+
+      elsif v_current_owner_membership.user_id
+            is distinct from v_company.user_id then
+
+        v_reason := 'OWNERSHIP_PROJECTION_MISMATCH';
+
+      elsif v_current_owner_membership.user_id
+            is distinct from v_case.submitted_by_user_id
+         or v_current_owner_membership.user_id
+            is distinct from v_case.submitted_company_owner_user_id then
+
+        v_reason := 'OWNER_CHANGED';
+      end if;
     end if;
   end if;
 
@@ -494,38 +495,10 @@ begin
 
 
     -------------------------------------------------------------------------
-    -- Load current canonical owner membership.
-    -------------------------------------------------------------------------
-
-    select *
-    into v_current_owner_membership
-    from public.organization_memberships
-    where company_id = v_case.company_id
-      and membership_status = 'active'
-      and workspace_role = 'owner'
-    for update;
-
-
-    -------------------------------------------------------------------------
     -- Same invalidation precedence as approval.
     -------------------------------------------------------------------------
 
-    if not found then
-      v_reason := 'SUBJECT_UNAVAILABLE';
-
-    elsif v_current_owner_membership.user_id
-          is distinct from v_company.user_id then
-
-      v_reason := 'OWNERSHIP_PROJECTION_MISMATCH';
-
-    elsif v_current_owner_membership.user_id
-          is distinct from v_case.submitted_by_user_id
-       or v_current_owner_membership.user_id
-          is distinct from v_case.submitted_company_owner_user_id then
-
-      v_reason := 'OWNER_CHANGED';
-
-    elsif not v_submitted_membership_found
+    if not v_submitted_membership_found
        or v_member.company_id
           is distinct from v_case.company_id
        or v_member.user_id
@@ -534,6 +507,30 @@ begin
        or v_member.workspace_role <> 'owner' then
 
       v_reason := 'OWNER_MEMBERSHIP_INACTIVE';
+    else
+      select *
+      into v_current_owner_membership
+      from public.organization_memberships
+      where company_id = v_case.company_id
+        and membership_status = 'active'
+        and workspace_role = 'owner'
+      for update;
+
+      if not found then
+        v_reason := 'SUBJECT_UNAVAILABLE';
+
+      elsif v_current_owner_membership.user_id
+            is distinct from v_company.user_id then
+
+        v_reason := 'OWNERSHIP_PROJECTION_MISMATCH';
+
+      elsif v_current_owner_membership.user_id
+            is distinct from v_case.submitted_by_user_id
+         or v_current_owner_membership.user_id
+            is distinct from v_case.submitted_company_owner_user_id then
+
+        v_reason := 'OWNER_CHANGED';
+      end if;
     end if;
   end if;
 
