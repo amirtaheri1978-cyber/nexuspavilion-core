@@ -12,31 +12,15 @@ type PageProps = {
   }>;
 };
 
-type Invitation = {
-  id: string;
-  company_id: string;
-  email: string;
-  role: string;
-  status: string;
-  token: string;
-  invited_by: string | null;
-  accepted_by: string | null;
-  accepted_at: string | null;
-  expires_at: string | null;
-  created_at: string | null;
-  companies?: {
-    id: string;
-    name: string | null;
-    slug: string | null;
-    category: string | null;
-    location: string | null;
-    logo_url: string | null;
-  } | null;
-};
-
-type InvitationStatus = {
-  label: string;
-  tone: "neutral" | "warning" | "success";
+type InvitationContext = {
+  invite_email: string | null;
+  invite_role: string | null;
+  invite_status: string | null;
+  invite_expires_at: string | null;
+  company_name: string | null;
+  company_category: string | null;
+  company_location: string | null;
+  company_logo_url: string | null;
 };
 
 function formatRole(role: string | null | undefined) {
@@ -46,61 +30,19 @@ function formatRole(role: string | null | undefined) {
   return "Supplier Representative";
 }
 
-function formatInvitationStatus(
-  status: string,
-  expired: boolean,
-): InvitationStatus {
-  if (expired) {
-    return {
-      label: "Invitation Expired",
-      tone: "warning",
-    };
-  }
-
-  if (status === "accepted") {
-    return {
-      label: "Access Activated",
-      tone: "success",
-    };
-  }
-
-  if (status === "pending") {
-    return {
-      label: "Pending Identity Verification",
-      tone: "warning",
-    };
-  }
-
-  return {
-    label: "Invitation Unavailable",
-    tone: "neutral",
-  };
-}
-
-function isExpired(expiresAt: string | null) {
-  if (!expiresAt) return false;
-
-  return new Date(expiresAt).getTime() < Date.now();
+function getInvitationLoginHref(token: string) {
+  return `/login?next=${encodeURIComponent(`/invite/${token}`)}`;
 }
 
 function resolveAccessState({
   hasUser,
   emailMismatch,
-  expired,
-  alreadyAccepted,
-  notPending,
 }: {
   hasUser: boolean;
   emailMismatch: boolean;
-  expired: boolean;
-  alreadyAccepted: boolean;
-  notPending: boolean;
 }): ExecutiveAccessState {
   if (!hasUser) return "unauthenticated";
   if (emailMismatch) return "identity_mismatch";
-  if (expired) return "expired";
-  if (alreadyAccepted) return "accepted";
-  if (notPending) return "unavailable";
 
   return "ready";
 }
@@ -108,30 +50,19 @@ function resolveAccessState({
 export default async function InviteAcceptPage({ params }: PageProps) {
   const { token } = await params;
   const supabase = await createClient();
+  const loginHref = getInvitationLoginHref(token);
 
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
   const { data: invitationData } = await supabase
-    .from("invitations")
-    .select(
-      `
-        *,
-        companies (
-          id,
-          name,
-          slug,
-          category,
-          location,
-          logo_url
-        )
-      `,
-    )
-    .eq("token", token)
-    .single();
+    .rpc("get_organization_invitation_context", {
+      p_token: token,
+    })
+    .maybeSingle();
 
-  const invitation = invitationData as Invitation | null;
+  const invitation = invitationData as InvitationContext | null;
 
   if (!invitation) {
     return (
@@ -149,35 +80,25 @@ export default async function InviteAcceptPage({ params }: PageProps) {
     );
   }
 
-  const expired = isExpired(invitation.expires_at);
-  const alreadyAccepted = invitation.status === "accepted";
-  const notPending = invitation.status !== "pending";
-
   const userEmail = String(user?.email || "").trim().toLowerCase();
-  const invitedEmail = String(invitation.email || "").trim().toLowerCase();
+  const invitedEmail = String(invitation.invite_email || "")
+    .trim()
+    .toLowerCase();
   const emailMismatch = Boolean(user && userEmail !== invitedEmail);
 
   const accessState = resolveAccessState({
     hasUser: Boolean(user),
     emailMismatch,
-    expired,
-    alreadyAccepted,
-    notPending,
   });
 
-  const signupHref = `/invite/${invitation.token}/signup`;
-  const status = formatInvitationStatus(invitation.status, expired);
-
+  const signupHref = `/invite/${token}/signup`;
   const companyName =
-    invitation.companies?.name || "Authorized Company Workspace";
-
+    invitation.company_name || "Authorized Company Workspace";
   const companyCategory =
-    invitation.companies?.category || "Enterprise Procurement";
-
+    invitation.company_category || "Enterprise Procurement";
   const companyLocation =
-    invitation.companies?.location || "Location not specified";
-
-  const roleLabel = formatRole(invitation.role);
+    invitation.company_location || "Location not specified";
+  const roleLabel = formatRole(invitation.invite_role);
 
   return (
     <ExecutiveAccessGateway
@@ -185,14 +106,15 @@ export default async function InviteAcceptPage({ params }: PageProps) {
       companyName={companyName}
       companyCategory={companyCategory}
       companyLocation={companyLocation}
-      companyLogoUrl={invitation.companies?.logo_url || null}
-      invitationEmail={invitation.email}
+      companyLogoUrl={invitation.company_logo_url || null}
+      invitationEmail={invitation.invite_email || ""}
       authenticatedEmail={user?.email || "Unknown identity"}
       roleLabel={roleLabel}
-      statusLabel={status.label}
-      statusTone={status.tone}
+      statusLabel="Pending Identity Verification"
+      statusTone="warning"
       signupHref={signupHref}
-      invitationToken={invitation.token}
+      loginHref={loginHref}
+      invitationToken={token}
     />
   );
 }

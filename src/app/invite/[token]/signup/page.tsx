@@ -14,23 +14,15 @@ import {
 } from "@/components/executive/enrollment/executive-enrollment-state";
 import { createClient } from "@/lib/supabase/client";
 
-type CompanyRecord = {
-  id: string;
-  name: string | null;
-  category: string | null;
-  location: string | null;
-  logo_url: string | null;
-};
-
-type InvitationRecord = {
-  id: string;
-  company_id: string;
-  email: string | null;
-  role: string | null;
-  status: string | null;
-  token: string | null;
-  expires_at: string | null;
-  companies: CompanyRecord | CompanyRecord[] | null;
+type InvitationContext = {
+  invite_email: string | null;
+  invite_role: string | null;
+  invite_status: string | null;
+  invite_expires_at: string | null;
+  company_name: string | null;
+  company_category: string | null;
+  company_location: string | null;
+  company_logo_url: string | null;
 };
 
 function formatRole(role: string | null | undefined) {
@@ -39,27 +31,17 @@ function formatRole(role: string | null | undefined) {
   return "Authorized Supplier";
 }
 
-function formatStatus(status: string | null | undefined, expired: boolean) {
-  if (expired) return "Expired";
-  if (status === "pending") return "Enrollment Ready";
-  if (status === "accepted") return "Access Activated";
-
-  return status
-    ? status.charAt(0).toUpperCase() + status.slice(1)
-    : "Status Unavailable";
-}
-
-function isExpired(expiresAt: string | null) {
-  if (!expiresAt) return false;
-  return new Date(expiresAt).getTime() < Date.now();
+function getInvitationLoginHref(token: string) {
+  return `/login?next=${encodeURIComponent(`/invite/${token}`)}`;
 }
 
 export default function InviteSignupPage() {
   const params = useParams<{ token: string }>();
   const supabase = useMemo(() => createClient(), []);
   const token = params.token;
+  const loginHref = getInvitationLoginHref(token);
 
-  const [invitation, setInvitation] = useState<InvitationRecord | null>(null);
+  const [invitation, setInvitation] = useState<InvitationContext | null>(null);
   const [loadingInvitation, setLoadingInvitation] = useState(true);
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -68,10 +50,6 @@ export default function InviteSignupPage() {
   const [error, setError] = useState("");
   const [enrollmentPhase, setEnrollmentPhase] =
     useState<EnrollmentPhase>("idle");
-
-  const company = Array.isArray(invitation?.companies)
-    ? invitation.companies[0]
-    : invitation?.companies;
 
   const passwordIsReady = password.length >= 8;
   const passwordsMatch = password.length > 0 && password === confirmPassword;
@@ -84,37 +62,19 @@ export default function InviteSignupPage() {
       setError("");
 
       const { data, error: invitationError } = await supabase
-        .from("invitations")
-        .select(
-          `
-            id,
-            company_id,
-            email,
-            role,
-            status,
-            token,
-            expires_at,
-            companies (
-              id,
-              name,
-              category,
-              location,
-              logo_url
-            )
-          `
-        )
-        .eq("token", token)
-        .single();
+        .rpc("get_organization_invitation_context", {
+          p_token: token,
+        })
+        .maybeSingle();
 
       setLoadingInvitation(false);
 
       if (invitationError || !data) {
-        setError("Invitation not found or no longer available.");
         setInvitation(null);
         return;
       }
 
-      setInvitation(data as InvitationRecord);
+      setInvitation(data as InvitationContext);
     }
 
     void loadInvitation();
@@ -150,20 +110,6 @@ export default function InviteSignupPage() {
       return;
     }
 
-    if (invitation.status !== "pending") {
-      setSubmitting(false);
-      setEnrollmentPhase("idle");
-      setError("This invitation is no longer pending.");
-      return;
-    }
-
-    if (isExpired(invitation.expires_at)) {
-      setSubmitting(false);
-      setEnrollmentPhase("idle");
-      setError("This invitation has expired.");
-      return;
-    }
-
     if (!passwordIsReady) {
       setSubmitting(false);
       setEnrollmentPhase("idle");
@@ -178,7 +124,7 @@ export default function InviteSignupPage() {
       return;
     }
 
-    const email = (invitation.email || "").trim().toLowerCase();
+    const email = (invitation.invite_email || "").trim().toLowerCase();
 
     if (!email) {
       setSubmitting(false);
@@ -239,24 +185,21 @@ export default function InviteSignupPage() {
     );
   }
 
-  const expired = isExpired(invitation.expires_at);
-  const unavailable = invitation.status !== "pending" || expired;
-
   return (
     <ExecutiveEnrollmentGateway
       token={token}
       company={{
-        name: company?.name || "Authorized Company Workspace",
-        category: company?.category || "Enterprise Procurement",
-        location: company?.location || "Location not specified",
-        logoUrl: company?.logo_url || null,
+        name: invitation.company_name || "Authorized Company Workspace",
+        category: invitation.company_category || "Enterprise Procurement",
+        location: invitation.company_location || "Location not specified",
+        logoUrl: invitation.company_logo_url || null,
       }}
-      email={invitation.email || "Invited recipient"}
-      role={formatRole(invitation.role)}
-      status={formatStatus(invitation.status, expired)}
+      email={invitation.invite_email || "Invited recipient"}
+      role={formatRole(invitation.invite_role)}
+      status="Enrollment Ready"
     >
       <ExecutiveEnrollmentForm
-        email={invitation.email || ""}
+        email={invitation.invite_email || ""}
         password={password}
         confirmPassword={confirmPassword}
         passwordIsReady={passwordIsReady}
@@ -265,8 +208,9 @@ export default function InviteSignupPage() {
         submitting={submitting}
         message={message}
         error={error}
-        unavailable={unavailable}
+        unavailable={false}
         enrollmentPhase={enrollmentPhase}
+        loginHref={loginHref}
         onPasswordChange={setPassword}
         onConfirmPasswordChange={setConfirmPassword}
         onSubmit={handleSignup}

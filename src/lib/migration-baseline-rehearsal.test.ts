@@ -11,6 +11,8 @@ const archivedMigrationsDirectory = path.resolve(
   "supabase/legacy-migrations/pre-baseline",
 );
 const baselineMigrationName = "20260822000000_dev_public_baseline.sql";
+const baselineMigrationTimestamp = "20260822000000";
+const activeMigrationFileNamePattern = /^(\d{14})_.+\.sql$/;
 
 function listSqlFiles(directory: string) {
   return readdirSync(directory)
@@ -76,8 +78,22 @@ function publicTableGrantsTo(role: "anon" | "authenticated" | "service_role") {
 }
 
 describe("NP migration ledger rehearsal baseline (STATIC)", () => {
-  it("keeps exactly one active SQL migration: the Dev public baseline", () => {
-    expect(activeSqlFiles).toEqual([baselineMigrationName]);
+  it("keeps the Dev public baseline first, then only later forward migrations", () => {
+    expect(activeSqlFiles[0]).toBe(baselineMigrationName);
+    expect(new Set(activeSqlFiles).size).toBe(activeSqlFiles.length);
+
+    for (const [index, fileName] of activeSqlFiles.entries()) {
+      const match = fileName.match(activeMigrationFileNamePattern);
+      expect(match, `invalid active migration filename: ${fileName}`).not.toBeNull();
+
+      const timestamp = match?.[1] ?? "";
+      if (index === 0) {
+        expect(timestamp).toBe(baselineMigrationTimestamp);
+        continue;
+      }
+
+      expect(timestamp > baselineMigrationTimestamp).toBe(true);
+    }
   });
 
   it("archives exactly 31 historical SQL migrations and does not duplicate them into active migrations", () => {

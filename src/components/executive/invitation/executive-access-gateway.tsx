@@ -22,6 +22,7 @@ type ExecutiveAccessGatewayProps = {
   statusLabel: string;
   statusTone: "neutral" | "warning" | "success";
   signupHref: string;
+  loginHref: string;
   invitationToken: string;
 };
 
@@ -43,13 +44,14 @@ export function ExecutiveAccessGateway({
   statusLabel,
   statusTone,
   signupHref,
+  loginHref,
   invitationToken,
 }: ExecutiveAccessGatewayProps) {
   return (
     <ExecutiveAccessPageShell>
       <div className="mx-auto w-full max-w-[1240px]">
         <Link
-          href="/login"
+          href={loginHref}
           className="inline-flex min-h-10 items-center gap-2 rounded-full border border-white/10 bg-white/[0.035] px-4 py-2 text-xs font-semibold text-nexus-text-secondary transition duration-200 hover:border-white/20 hover:bg-white/[0.07] hover:text-nexus-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2CC4E8] focus-visible:ring-offset-2 focus-visible:ring-offset-[#07111F]"
         >
           <span aria-hidden="true">←</span>
@@ -182,6 +184,7 @@ export function ExecutiveAccessGateway({
                 invitationEmail={invitationEmail}
                 authenticatedEmail={authenticatedEmail}
                 signupHref={signupHref}
+                loginHref={loginHref}
                 invitationToken={invitationToken}
                 roleLabel={roleLabel}
               />

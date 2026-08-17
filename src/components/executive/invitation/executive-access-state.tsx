@@ -10,6 +10,7 @@ type ExecutiveAccessStatePanelProps = {
   invitationEmail: string;
   authenticatedEmail: string;
   signupHref: string;
+  loginHref: string;
   invitationToken: string;
   roleLabel: string;
 };
@@ -34,6 +35,7 @@ export function ExecutiveAccessStatePanel({
   invitationEmail,
   authenticatedEmail,
   signupHref,
+  loginHref,
   invitationToken,
   roleLabel,
 }: ExecutiveAccessStatePanelProps) {
@@ -62,7 +64,7 @@ export function ExecutiveAccessStatePanel({
             Create Authorized Account
           </Link>
 
-          <Link href="/login" className={secondaryActionClass}>
+          <Link href={loginHref} className={secondaryActionClass}>
             Sign In With Existing Account
           </Link>
         </div>
@@ -100,7 +102,7 @@ export function ExecutiveAccessStatePanel({
         </dl>
 
         <Link
-          href="/login"
+          href={loginHref}
           className={`${primaryActionClass} mt-5 bg-amber-300 text-[#151006] shadow-[0_12px_32px_rgba(252,211,77,0.12)] hover:bg-amber-200 focus-visible:ring-amber-300`}
         >
           Sign In With Authorized Identity

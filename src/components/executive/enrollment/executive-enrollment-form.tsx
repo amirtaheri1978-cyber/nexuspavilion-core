@@ -21,6 +21,7 @@ type ExecutiveEnrollmentFormProps = {
   error: string;
   unavailable: boolean;
   enrollmentPhase: EnrollmentPhase;
+  loginHref: string;
   onPasswordChange: (value: string) => void;
   onConfirmPasswordChange: (value: string) => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
@@ -67,6 +68,7 @@ export function ExecutiveEnrollmentForm({
   error,
   unavailable,
   enrollmentPhase,
+  loginHref,
   onPasswordChange,
   onConfirmPasswordChange,
   onSubmit,
@@ -223,7 +225,7 @@ export function ExecutiveEnrollmentForm({
 
         <div className="mt-6 border-t border-white/8 pt-5 text-center">
           <Link
-            href="/login"
+            href={loginHref}
             className="text-sm font-semibold text-slate-400 transition hover:text-white"
           >
             Already registered?{" "}
