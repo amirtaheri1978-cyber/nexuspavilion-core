@@ -180,8 +180,8 @@ const { slug } = await params;
 const supabase = await createClient();
 
 const { data } = await supabase
-.from("companies")
-.select("*")
+.from("company_directory")
+.select("id, name, slug, category, location, network_role, status, logo_url")
 .eq("slug", slug)
 .in("status", ["approved", "verified"])
 .limit(1);

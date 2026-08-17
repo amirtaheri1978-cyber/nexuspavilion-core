@@ -100,7 +100,7 @@ return NextResponse.json(
 }
 
 const { data: vendorCompany } = await supabase
-.from("companies")
+.from("company_directory")
 .select("id, name, network_role, category")
 .eq("id", vendorCompanyId)
 .single();

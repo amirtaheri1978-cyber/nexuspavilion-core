@@ -57,7 +57,7 @@ export async function loadAnalyticsSourceData(): Promise<AnalyticsSourceData> {
       : { data: [] };
 
   const { data: companies } = await supabase
-    .from("companies")
+    .from("company_directory")
     .select("id,name");
 
   return {

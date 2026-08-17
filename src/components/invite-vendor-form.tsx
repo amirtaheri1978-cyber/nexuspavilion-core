@@ -89,7 +89,7 @@ export default function InviteVendorForm({
       }
 
       const { data: companyData, error: companyError } = await supabase
-        .from("companies")
+        .from("company_directory")
         .select("id, name, category, location, network_role")
         .in("id", vendorIds);
 

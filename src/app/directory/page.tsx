@@ -196,8 +196,8 @@ const [
 { data: approvedVendorData },
 ] = await Promise.all([
 supabase
-.from("companies")
-.select("*")
+.from("company_directory")
+.select("id, name, slug, category, location, network_role, status, logo_url, created_at")
 .in("status", ["approved", "verified"])
 .order("created_at", { ascending: false }),
 

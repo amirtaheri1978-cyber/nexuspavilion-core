@@ -317,7 +317,7 @@ const supplierCompanyIds =
 const { data: supplierCompanyData } =
   isOwner && supplierCompanyIds.length > 0
     ? await supabase
-        .from("companies")
+        .from("company_directory")
         .select("id, name, category, location, network_role")
         .in("id", supplierCompanyIds)
     : { data: [] };
