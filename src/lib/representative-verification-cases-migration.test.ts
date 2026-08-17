@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-const migration = readFileSync(resolve(process.cwd(), "supabase/migrations/20260811_add_representative_verification_cases.sql"), "utf8");
+const migration = readFileSync(resolve(process.cwd(), "supabase/legacy-migrations/pre-baseline/20260811_add_representative_verification_cases.sql"), "utf8");
 describe("representative verification case persistence", () => {
   it("is isolated, constrained, and non-client-mutable", () => {
     expect(migration).toContain("create table public.representative_verification_cases");

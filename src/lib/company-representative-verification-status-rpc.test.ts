@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 const sql = readFileSync(
   resolve(
     process.cwd(),
-    "supabase/migrations/20260816_create_company_representative_verification_status_rpc.sql",
+    "supabase/legacy-migrations/pre-baseline/20260816_create_company_representative_verification_status_rpc.sql",
   ),
   "utf8",
 );

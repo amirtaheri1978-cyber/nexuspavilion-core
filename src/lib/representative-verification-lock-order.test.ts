@@ -9,16 +9,16 @@ const read = (path: string) =>
     .toLowerCase();
 
 const correction = read(
-  "supabase/migrations/20260815_reconcile_verification_ownership_lock_order.sql",
+  "supabase/legacy-migrations/pre-baseline/20260815_reconcile_verification_ownership_lock_order.sql",
 );
 const approval = read(
-  "supabase/migrations/20260813_create_approve_representative_verification_rpc.sql",
+  "supabase/legacy-migrations/pre-baseline/20260813_create_approve_representative_verification_rpc.sql",
 );
 const rejection = read(
-  "supabase/migrations/20260814_create_reject_representative_verification_rpc.sql",
+  "supabase/legacy-migrations/pre-baseline/20260814_create_reject_representative_verification_rpc.sql",
 );
 const acceptance = read(
-  "supabase/migrations/20260808_add_ownership_transfer_accepted_audit.sql",
+  "supabase/legacy-migrations/pre-baseline/20260808_add_ownership_transfer_accepted_audit.sql",
 );
 
 const functionBody = (sql: string, name: string) => {

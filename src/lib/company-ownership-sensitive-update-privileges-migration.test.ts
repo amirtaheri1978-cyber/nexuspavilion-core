@@ -2,19 +2,18 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 
-const privilegeMigration = readFileSync(
-  path.resolve(
-    process.cwd(),
-    "supabase/migrations/20260808_restrict_company_ownership_sensitive_updates.sql",
-  ),
-  "utf8",
+function readArchivedSql(fileName: string) {
+  return readFileSync(
+    path.resolve(process.cwd(), "supabase/legacy-migrations/pre-baseline", fileName),
+    "utf8",
+  ).replace(/\r\n/g, "\n");
+}
+
+const privilegeMigration = readArchivedSql(
+  "20260808_restrict_company_ownership_sensitive_updates.sql",
 );
-const acceptanceMigration = readFileSync(
-  path.resolve(
-    process.cwd(),
-    "supabase/migrations/20260808_add_ownership_transfer_accepted_audit.sql",
-  ),
-  "utf8",
+const acceptanceMigration = readArchivedSql(
+  "20260808_add_ownership_transfer_accepted_audit.sql",
 );
 const migrationFiles = [
   "20260808_restrict_company_ownership_sensitive_updates.sql",
@@ -32,10 +31,7 @@ const migrationFiles = [
   "20260808_add_ownership_transfer_accepted_audit.sql",
 ].map((fileName) => ({
   fileName,
-  contents: readFileSync(
-    path.resolve(process.cwd(), "supabase/migrations", fileName),
-    "utf8",
-  ),
+  contents: readArchivedSql(fileName),
 }));
 const recoveryRoute = readFileSync(
   path.resolve(process.cwd(), "src/app/api/company/recover-admin/route.ts"),

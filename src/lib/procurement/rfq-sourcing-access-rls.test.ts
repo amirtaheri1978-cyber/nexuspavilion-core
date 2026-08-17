@@ -5,18 +5,18 @@ import { describe, expect, it } from "vitest";
 const originalMigration = readFileSync(
   resolve(
     process.cwd(),
-    "supabase/migrations/20260816_create_procurement_domain_schema.sql",
+    "supabase/legacy-migrations/pre-baseline/20260816_create_procurement_domain_schema.sql",
   ),
   "utf8",
-);
+).replace(/\r\n/g, "\n");
 
 const fixMigration = readFileSync(
   resolve(
     process.cwd(),
-    "supabase/migrations/20260819_restrict_rfq_sourcing_access_rls.sql",
+    "supabase/legacy-migrations/pre-baseline/20260819_restrict_rfq_sourcing_access_rls.sql",
   ),
   "utf8",
-);
+).replace(/\r\n/g, "\n");
 
 const normalizedFix = fixMigration.replace(/\s+/g, " ").trim().toLowerCase();
 const normalizedOriginal = originalMigration

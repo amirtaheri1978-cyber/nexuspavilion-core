@@ -2,26 +2,30 @@ import { readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 
-const migrationsDirectory = path.resolve(process.cwd(), "supabase/migrations");
-const reconciliationMigrationName =
-  "20260809_reconcile_section3_client_table_privileges.sql";
-const reconciliationMigration = readFileSync(
-  path.join(migrationsDirectory, reconciliationMigrationName),
-  "utf8",
-);
-const companyRlsMigration = readFileSync(
-  path.join(
-    migrationsDirectory,
-    "20260808_correct_company_rls_membership_authorization.sql",
-  ),
-  "utf8",
+const archivedMigrationsDirectory = path.resolve(
+  process.cwd(),
+  "supabase/legacy-migrations/pre-baseline",
 );
 
-const laterMigrations = readdirSync(migrationsDirectory)
+function readArchivedSql(fileName: string) {
+  return readFileSync(path.join(archivedMigrationsDirectory, fileName), "utf8").replace(
+    /\r\n/g,
+    "\n",
+  );
+}
+
+const reconciliationMigrationName =
+  "20260809_reconcile_section3_client_table_privileges.sql";
+const reconciliationMigration = readArchivedSql(reconciliationMigrationName);
+const companyRlsMigration = readArchivedSql(
+  "20260808_correct_company_rls_membership_authorization.sql",
+);
+
+const laterMigrations = readdirSync(archivedMigrationsDirectory)
   .filter((fileName) => fileName.endsWith(".sql") && fileName > reconciliationMigrationName)
   .map((fileName) => ({
     fileName,
-    contents: readFileSync(path.join(migrationsDirectory, fileName), "utf8"),
+    contents: readArchivedSql(fileName),
   }));
 
 describe("Section 3 client table privilege reconciliation (STATIC)", () => {

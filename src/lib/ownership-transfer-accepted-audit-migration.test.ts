@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 
-const migration = readFileSync(path.resolve(process.cwd(), "supabase/migrations/20260808_add_ownership_transfer_accepted_audit.sql"), "utf8");
+const migration = readFileSync(path.resolve(process.cwd(), "supabase/legacy-migrations/pre-baseline/20260808_add_ownership_transfer_accepted_audit.sql"), "utf8");
 
 describe("atomic ownership acceptance audit migration", () => {
   it("emits Accepted before Completed while retaining direct completion", () => {

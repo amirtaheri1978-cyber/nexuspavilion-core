@@ -6,7 +6,7 @@ import { describe, expect, it } from "vitest";
 const migration = readFileSync(
   path.resolve(
     process.cwd(),
-    "supabase/migrations/20260808_fix_request_company_ownership_transfer_expiration_audit.sql",
+    "supabase/legacy-migrations/pre-baseline/20260808_fix_request_company_ownership_transfer_expiration_audit.sql",
   ),
   "utf8",
 );

@@ -3,7 +3,7 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
 const migration = readFileSync(
-  resolve(process.cwd(), "supabase/migrations/20260810_add_internal_reviewer_authorization.sql"),
+  resolve(process.cwd(), "supabase/legacy-migrations/pre-baseline/20260810_add_internal_reviewer_authorization.sql"),
   "utf8",
 );
 

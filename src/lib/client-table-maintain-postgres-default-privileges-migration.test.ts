@@ -2,7 +2,10 @@ import { readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 
-const migrationsDirectory = path.resolve(process.cwd(), "supabase/migrations");
+const archivedMigrationsDirectory = path.resolve(
+  process.cwd(),
+  "supabase/legacy-migrations/pre-baseline",
+);
 const reconciliationMigrationName =
   "20260821_revoke_client_maintain_and_postgres_default_privileges.sql";
 
@@ -12,7 +15,7 @@ function normalizeSql(sql: string) {
 
 function readNormalizedMigration(fileName: string) {
   return normalizeSql(
-    readFileSync(path.join(migrationsDirectory, fileName), "utf8"),
+    readFileSync(path.join(archivedMigrationsDirectory, fileName), "utf8"),
   );
 }
 
@@ -118,7 +121,7 @@ describe("F16-05 client MAINTAIN and postgres default ACL (STATIC)", () => {
   });
 
   it("does not edit historical privilege or F16-01 through F16-04 migrations", () => {
-    const files = readdirSync(migrationsDirectory).filter((fileName) =>
+    const files = readdirSync(archivedMigrationsDirectory).filter((fileName) =>
       fileName.endsWith(".sql"),
     );
 

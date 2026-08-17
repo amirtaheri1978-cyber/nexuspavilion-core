@@ -6,7 +6,8 @@ const migration = readFileSync(
   join(
     process.cwd(),
     "supabase",
-    "migrations",
+    "legacy-migrations",
+    "pre-baseline",
     "20260817_reconcile_representative_verification_invalidation_precedence.sql",
   ),
   "utf8",

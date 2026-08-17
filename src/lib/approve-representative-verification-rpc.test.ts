@@ -5,10 +5,10 @@ import { describe, expect, it } from "vitest";
 const sql = readFileSync(
   resolve(
     process.cwd(),
-    "supabase/migrations/20260813_create_approve_representative_verification_rpc.sql",
+    "supabase/legacy-migrations/pre-baseline/20260813_create_approve_representative_verification_rpc.sql",
   ),
   "utf8",
-);
+).replace(/\r\n/g, "\n");
 
 describe("approve representative verification RPC", () => {
   it("uses a protected reviewer-authorized approval command", () => {

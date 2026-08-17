@@ -5,10 +5,10 @@ import { describe, expect, it } from "vitest";
 const migration = readFileSync(
   path.resolve(
     process.cwd(),
-    "supabase/migrations/20260808_correct_company_rls_membership_authorization.sql",
+    "supabase/legacy-migrations/pre-baseline/20260808_correct_company_rls_membership_authorization.sql",
   ),
   "utf8",
-);
+).replace(/\r\n/g, "\n");
 
 describe("company RLS membership authorization migration", () => {
   it("explicitly enables RLS while preserving public read and authenticated self-create", () => {
