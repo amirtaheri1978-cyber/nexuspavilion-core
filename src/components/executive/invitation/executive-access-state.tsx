@@ -4,6 +4,7 @@ import { ExecutiveBadge } from "@/components/executive/executive-badge";
 import { ExecutivePanel } from "@/components/executive/executive-panel";
 
 import type { ExecutiveAccessState } from "./executive-access-journey";
+import { SwitchAuthorizedIdentityButton } from "./switch-authorized-identity-button";
 
 type ExecutiveAccessStatePanelProps = {
   state: ExecutiveAccessState;
@@ -101,12 +102,7 @@ export function ExecutiveAccessStatePanel({
           />
         </dl>
 
-        <Link
-          href={loginHref}
-          className={`${primaryActionClass} mt-5 bg-amber-300 text-[#151006] shadow-[0_12px_32px_rgba(252,211,77,0.12)] hover:bg-amber-200 focus-visible:ring-amber-300`}
-        >
-          Sign In With Authorized Identity
-        </Link>
+        <SwitchAuthorizedIdentityButton loginHref={loginHref} />
 
         <SecurityAssurance>
           This control prevents unauthorized workspace attachment and protects

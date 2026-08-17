@@ -13,6 +13,12 @@ import {
   ExecutiveEnrollmentState,
 } from "@/components/executive/enrollment/executive-enrollment-state";
 import {
+  FRIENDLY_INVITE_ACCEPT_FAILED,
+  getFriendlyInviteSignInError,
+  getInvitationRecoveryPath,
+  isSuccessfulInvitationAcceptDestination,
+} from "@/lib/auth/invite-enrollment";
+import {
   getFriendlySignupError,
   isExistingAccountSignupError,
 } from "@/lib/auth/signup-error";
@@ -90,13 +96,26 @@ export default function InviteSignupPage() {
     const formData = new FormData();
     formData.append("token", token);
 
-    await fetch("/api/company-invitations/accept", {
-      method: "POST",
-      body: formData,
-      redirect: "manual",
-    });
+    try {
+      const response = await fetch("/api/company-invitations/accept", {
+        method: "POST",
+        body: formData,
+        redirect: "follow",
+        credentials: "same-origin",
+      });
 
-    window.location.assign("/dashboard");
+      if (isSuccessfulInvitationAcceptDestination(response.url)) {
+        window.location.assign("/dashboard");
+        return;
+      }
+    } catch {
+      // Keep the invitation token recoverable instead of a false success.
+    }
+
+    setSubmitting(false);
+    setEnrollmentPhase("idle");
+    setError(FRIENDLY_INVITE_ACCEPT_FAILED);
+    window.location.assign(getInvitationRecoveryPath(token));
   }
 
   async function handleSignup(event: React.FormEvent<HTMLFormElement>) {
@@ -142,7 +161,11 @@ export default function InviteSignupPage() {
       password,
     });
 
-    if (signupError && !isExistingAccountSignupError(signupError.message)) {
+    const existingAccount = Boolean(
+      signupError && isExistingAccountSignupError(signupError.message),
+    );
+
+    if (signupError && !existingAccount) {
       setSubmitting(false);
       setEnrollmentPhase("idle");
       setError(getFriendlySignupError(signupError.message));
@@ -160,6 +183,12 @@ export default function InviteSignupPage() {
     if (signInError) {
       setSubmitting(false);
       setEnrollmentPhase("idle");
+
+      if (existingAccount) {
+        setError(getFriendlyInviteSignInError(signInError.message));
+        return;
+      }
+
       setMessage(
         "Account created. Confirm your email if required, then sign in to complete workspace enrollment."
       );
