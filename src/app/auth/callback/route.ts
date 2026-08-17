@@ -1,18 +1,11 @@
 import { NextResponse } from "next/server";
 
+import { getSafeNextPath } from "@/lib/auth/login-continuation";
 import { createClient } from "@/lib/supabase/server";
 
 const SITE_URL =
 process.env.NEXT_PUBLIC_SITE_URL ||
 "https://scaling-invention-5g7q4p5rwrwj3vwq7-3000.app.github.dev";
-
-function getSafeNextPath(next: string | null) {
-if (!next) return "/dashboard";
-if (!next.startsWith("/")) return "/dashboard";
-if (next.startsWith("//")) return "/dashboard";
-
-return next;
-}
 
 function getSafeAuthMessage(errorCode: string) {
 if (errorCode === "missing_auth_code") {

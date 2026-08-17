@@ -2,9 +2,14 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useId, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useId, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 
+import {
+  DEFAULT_POST_LOGIN_PATH,
+  getSafeLoginStatusMessage,
+  getSafeNextPath,
+} from "@/lib/auth/login-continuation";
 import { createClient } from "@/lib/supabase/client";
 
 const BRAND_LOGO_SRC =
@@ -49,6 +54,41 @@ function getFriendlyAuthError(message: string) {
 }
 
 export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <LoginScreen
+          nextPath={DEFAULT_POST_LOGIN_PATH}
+          statusMessage={null}
+        />
+      }
+    >
+      <LoginFromQuery />
+    </Suspense>
+  );
+}
+
+function LoginFromQuery() {
+  const searchParams = useSearchParams();
+
+  return (
+    <LoginScreen
+      nextPath={getSafeNextPath(searchParams.get("next"))}
+      statusMessage={getSafeLoginStatusMessage(
+        searchParams.get("authStatus"),
+        searchParams.get("message"),
+      )}
+    />
+  );
+}
+
+function LoginScreen({
+  nextPath,
+  statusMessage,
+}: {
+  nextPath: string;
+  statusMessage: string | null;
+}) {
   const router = useRouter();
   const supabase = createClient();
 
@@ -134,7 +174,7 @@ export default function LoginPage() {
         );
       }
 
-      router.push("/dashboard");
+      router.push(nextPath);
       router.refresh();
     } catch (loginError) {
       console.error(
@@ -271,7 +311,7 @@ export default function LoginPage() {
                     disabled={loading}
                     aria-invalid={Boolean(error)}
                     aria-describedby={
-                      error ? errorId : undefined
+                      error || statusMessage ? errorId : undefined
                     }
                     className={inputClassName}
                   />
@@ -312,7 +352,7 @@ export default function LoginPage() {
                       disabled={loading}
                       aria-invalid={Boolean(error)}
                       aria-describedby={
-                        error ? errorId : undefined
+                        error || statusMessage ? errorId : undefined
                       }
                       className={`${inputClassName} password-input-no-native-reveal !pr-16`}
                     />
@@ -341,14 +381,14 @@ export default function LoginPage() {
                   </div>
                 </div>
 
-                {error ? (
+                {error || statusMessage ? (
                   <div
                     id={errorId}
                     role="alert"
                     aria-live="assertive"
                     className="rounded-2xl border border-red-300/30 bg-red-400/10 px-4 py-3 text-sm font-bold leading-6 text-red-100"
                   >
-                    {error}
+                    {error || statusMessage}
                   </div>
                 ) : null}
 
