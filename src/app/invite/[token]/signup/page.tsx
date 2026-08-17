@@ -12,6 +12,10 @@ import {
   ExecutiveEnrollmentLoading,
   ExecutiveEnrollmentState,
 } from "@/components/executive/enrollment/executive-enrollment-state";
+import {
+  getFriendlySignupError,
+  isExistingAccountSignupError,
+} from "@/lib/auth/signup-error";
 import { createClient } from "@/lib/supabase/client";
 
 type InvitationContext = {
@@ -138,13 +142,10 @@ export default function InviteSignupPage() {
       password,
     });
 
-    if (
-      signupError &&
-      !signupError.message.toLowerCase().includes("already")
-    ) {
+    if (signupError && !isExistingAccountSignupError(signupError.message)) {
       setSubmitting(false);
       setEnrollmentPhase("idle");
-      setError(signupError.message);
+      setError(getFriendlySignupError(signupError.message));
       return;
     }
 

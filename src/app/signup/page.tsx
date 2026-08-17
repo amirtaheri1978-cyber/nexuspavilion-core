@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
+import { getFriendlySignupError } from "@/lib/auth/signup-error";
 import { createClient } from "@/lib/supabase/client";
 
 type SignupResponseMessage = {
@@ -35,35 +36,6 @@ const inputClassName =
 
 function normalizeEmail(value: string) {
   return value.trim().toLowerCase();
-}
-
-function getFriendlySignupError(message: string) {
-  const normalized = message.toLowerCase();
-
-  if (
-    normalized.includes("already registered") ||
-    normalized.includes("already exists")
-  ) {
-    return "An account already exists for this email address. Please sign in or use password recovery.";
-  }
-
-  if (normalized.includes("password")) {
-    return "Please choose a stronger password that meets the account security requirements.";
-  }
-
-  if (normalized.includes("email")) {
-    return "Please enter a valid work email address.";
-  }
-
-  if (normalized.includes("rate") || normalized.includes("too many")) {
-    return "Too many account creation attempts. Please wait a moment and try again.";
-  }
-
-  if (normalized.includes("network") || normalized.includes("fetch")) {
-    return "We could not reach the secure account service. Please check your connection and try again.";
-  }
-
-  return "We could not create your account securely. Please review your details and try again.";
 }
 
 function getPasswordStrength(password: string) {
