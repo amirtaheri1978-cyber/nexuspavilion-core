@@ -4,11 +4,12 @@ TASK: NP-MASTER-16
 
 TITLE: Launch Security Authorization Boundary Closeout
 
-CLASSIFICATION: **SECURITY FINDINGS CLOSED — MIGRATION-LEDGER FOLLOW-UP REMAINS**
+CLASSIFICATION: **SECURITY FINDINGS CLOSED — MIGRATION-LEDGER RECONCILIATION COMPLETE**
 
-This record documents closeout evidence for Task 16 using already completed and
-validated security work. It does not modify application code, migrations,
-schema, grants, or persistent Development data.
+This record documents closeout evidence for Task 16, including the F16-05
+addendum and completed migration-ledger reconciliation. This documentation
+task does not modify application code, migrations, schema, grants, or
+persistent Development data.
 
 This is a validation/evidence report only.
 
@@ -24,23 +25,27 @@ filtering:
 - RFQ sourcing access at the database RLS boundary
 - procurement write-route authorization
 - SECURITY DEFINER / RPC execution boundaries
-- excessive client table privileges (`TRUNCATE`, `TRIGGER`, `REFERENCES`)
+- excessive client table privileges (`TRUNCATE`, `TRIGGER`, `REFERENCES`, `MAINTAIN`)
 - storage privilege/bucket exposure
 - service-role use as a human authorization path
+- migration-ledger reconciliation for CLI-driven Dev deployment
 
 Target: Nexus Pavilion Dev (`nexus-pavilion-dev`).
 
 Supabase project ref: `bzntqnwoytdakmstbtyh`.
 
-Canonical branch at closeout:
+Canonical branch at this addendum:
 
 - Branch: `executive-benchmark-engine`
-- HEAD: `28841d5795d1c547b14e0bb480230591b78d9818`
+- HEAD: `9069d4d`
+- F16-05 commit: `34daaa5`
+- Original F16-04 closeout HEAD: `28841d5795d1c547b14e0bb480230591b78d9818`
 
 Production: not contacted.
 
-No database mutation, `db push`, migration repair, `db pull`, or schema reset
-was performed for this closeout record.
+This documentation addendum does not mutate the database, run `db push`,
+repair the ledger, `db pull`, or reset schema. Those ledger actions were
+already completed on the canonical baseline commit and are recorded below.
 
 ---
 
@@ -52,12 +57,15 @@ was performed for this closeout record.
 | F16-02 procurement write membership authorization | Closed | `7c7019c3e22fd499776424003a348589ad9c84c1` |
 | F16-03 SECURITY DEFINER / RPC boundary | Closed — reviewed and validated; no remaining Task 16 remediation | n/a (no code change required) |
 | F16-04 client `TRUNCATE` / `TRIGGER` / `REFERENCES` | Closed | `28841d5795d1c547b14e0bb480230591b78d9818` |
+| F16-05 client `MAINTAIN` and postgres default ACL | Closed | `34daaa5` |
+| Migration-ledger reconciliation | Complete | `9069d4d` |
 
 Task 16 security findings are closed based on current evidence.
 
-Migration-ledger reconciliation remains required before future CLI-driven
-database migration deployment. That item is a separate tooling/governance
-follow-up and is not an unresolved F16 security finding.
+Migration-ledger reconciliation is complete. The Dev public schema is
+represented by a single active baseline migration, historical SQL is archived
+unchanged, and CLI-driven Dev deployment now reports the remote database up to
+date.
 
 ---
 
@@ -71,7 +79,7 @@ Message: `fix(security): enforce RFQ sourcing access in RLS`
 
 Forward-only migration:
 
-- `supabase/migrations/20260819_restrict_rfq_sourcing_access_rls.sql`
+- `supabase/legacy-migrations/pre-baseline/20260819_restrict_rfq_sourcing_access_rls.sql`
 
 Contract now enforced in RLS, independently of JavaScript filtering:
 
@@ -170,9 +178,54 @@ returned:
 
 Production was not used as an application target.
 
+After migration-ledger reconciliation, the historical F16-04 file is archived
+unchanged at:
+
+- `supabase/legacy-migrations/pre-baseline/20260820_revoke_client_truncate_trigger_references.sql`
+
 ---
 
-## 7. Service-role authorization-path gate
+## 7. F16-05 — residual client `MAINTAIN` and postgres-owned default ACL
+
+Status: **CLOSED**
+
+Commit: `34daaa5`
+
+Message: `fix(security): revoke client maintain privileges`
+
+Forward-only migration, now archived unchanged at:
+
+- `supabase/legacy-migrations/pre-baseline/20260821_revoke_client_maintain_and_postgres_default_privileges.sql`
+
+The migration revokes only `MAINTAIN` from `PUBLIC`, `anon`, and
+`authenticated` on launch-sensitive public tables. It also hardens
+postgres-owned default table privileges in `public` by revoking `TRUNCATE`,
+`REFERENCES`, `TRIGGER`, and `MAINTAIN` from those client roles. It does not
+change CRUD grants, RLS policies, schema ownership, RPC `EXECUTE` grants, or
+`service_role` privileges.
+
+### Dev current-table runtime
+
+`anon` / `authenticated` `MAINTAIN` is false on all audited public tables.
+`service_role` `MAINTAIN` remained true and unchanged.
+
+### postgres-owned public table default ACL
+
+After F16-05, postgres-owned future public tables no longer grant `Dxtm`
+(`TRUNCATE` / `REFERENCES` / `TRIGGER` / `MAINTAIN`) to `anon` or
+`authenticated`. `service_role` remains `Dxtm`.
+
+### supabase_admin default ACL
+
+`supabase_admin` default table ACL remained a separate platform-owned
+limitation during the F16-05 execution context. postgres could not
+`SET`/`MEMBER` `supabase_admin`, so F16-05 did not modify that default ACL.
+
+Production was not used as an application target.
+
+---
+
+## 8. Service-role authorization-path gate
 
 Status: **PASS**
 
@@ -187,7 +240,7 @@ No human authorization path backed by service-role authority was identified.
 
 ---
 
-## 8. Storage privilege / bucket audit
+## 9. Storage privilege / bucket audit
 
 Status: **COMPLETED**
 
@@ -196,35 +249,53 @@ security remediation is recorded for storage under this closeout.
 
 ---
 
-## 9. Migration-ledger drift — separate follow-up
+## 10. Migration-ledger reconciliation — complete
 
-Status: **OPEN TOOLING / GOVERNANCE FOLLOW-UP — NOT AN F16 SECURITY FINDING**
+Status: **COMPLETE**
 
-Observed on `nexus-pavilion-dev`:
+Canonical baseline commit: `9069d4d`
 
-- Supabase CLI is linked to Dev ref `bzntqnwoytdakmstbtyh`
-- `supabase_migrations.schema_migrations` does not exist on Dev
-- `npx supabase migration list` shows every local migration as absent remotely
-- `npx supabase db push --dry-run` would attempt all 30 local migrations
-- the repository contains duplicate migration versions:
-  - `20260801`: 7 files
-  - `20260802`: 6 files
-  - `20260808`: 4 files
-  - `20260816`: 2 files
-- Dev object/function inventory already contains the expected historical structures
+Message: `chore(db): establish reproducible migration baseline`
 
-Therefore historical migrations must not be blindly replayed.
+The earlier observation that Dev lacked a usable CLI migration ledger, and that
+historical files could not be blindly replayed, is closed. Reconciliation is
+complete.
 
-F16-04 was intentionally applied directly through the Dev SQL Editor instead of
-`db push`.
+Completed repository state:
 
-Migration-ledger reconciliation remains required before future CLI-driven
-database migration deployment. This closeout does not claim that reconciliation
-is complete and does not attempt to repair it.
+- single active migration: `supabase/migrations/20260822000000_dev_public_baseline.sql`
+- 31 historical migrations archived unchanged under `supabase/legacy-migrations/pre-baseline/`
+- historical migration tests now explicitly read immutable archive paths under `supabase/legacy-migrations/pre-baseline/`
+
+Baseline replay validation:
+
+- `supabase db reset` PASS
+
+Baseline vs linked Dev public schema:
+
+- `No schema changes found`
+- diff file length 0
+
+Repository validation recorded for the baseline commit:
+
+- lint PASS
+- build PASS
+- vitest PASS: 38 files / 286 tests / 0 failures
+
+Dev migration ledger repaired only to mark the baseline version applied:
+
+- Local `20260822000000`
+- Remote `20260822000000`
+
+Final CLI check:
+
+- `supabase db push --dry-run` => Remote database is up to date
+
+Production was not touched. No Production validation occurred.
 
 ---
 
-## 10. Production
+## 11. Production
 
 Production was not touched.
 
@@ -232,14 +303,16 @@ No Production validation occurred.
 
 ---
 
-## 11. Files / database / production for this closeout record
+## 12. Files / database / production for this closeout addendum
 
 - Application code: not modified
 - Migrations: not modified
 - Schema: not modified
 - Persistent database data: not modified
-- Grants: not modified by this closeout task
+- Grants: not modified by this documentation task
 - Production: not touched
+
+This addendum updates only `supabase/dev/np-master-16-security-audit-closeout.md`.
 
 ---
 
@@ -247,9 +320,9 @@ No Production validation occurred.
 
 **TASK 16 SECURITY FINDINGS ARE CLOSED** based on current evidence.
 
-F16-01, F16-02, F16-03, and F16-04 are closed. The service-role human
+F16-01, F16-02, F16-03, F16-04, and F16-05 are closed. The service-role human
 authorization-path gate passed. The storage privilege/bucket audit is complete.
 
-**Migration-ledger reconciliation remains required** before future CLI-driven
-database migration deployment. That remaining item is a separate
-tooling/governance blocker and is not an unresolved Task 16 security finding.
+**Migration-ledger reconciliation is complete.** The canonical baseline is
+`9069d4d`. CLI-driven Dev deployment reports the remote database up to date.
+Production remains untouched and was not validated.
