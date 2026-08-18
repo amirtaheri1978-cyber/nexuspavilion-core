@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 
 import SignOutButton from "@/components/sign-out-button";
+import { getFriendlyWorkspaceCreateError } from "@/lib/auth/workspace-bootstrap";
 
 type OrganizationType =
   | "owner_developer"
@@ -200,21 +201,7 @@ function normalizeValue(value: string) {
 }
 
 function getFriendlyCreateCompanyError(message?: string) {
-  const normalized = String(message || "").toLowerCase();
-
-  if (normalized.includes("unauthorized")) {
-    return "Please sign in to continue creating your workspace.";
-  }
-
-  if (normalized.includes("duplicate") || normalized.includes("already")) {
-    return "A workspace with similar company details may already exist. Please review your company name or contact your administrator.";
-  }
-
-  if (normalized.includes("network") || normalized.includes("fetch")) {
-    return "We could not reach the secure workspace service. Please check your connection and try again.";
-  }
-
-  return "We could not create your workspace securely. Please review your details and try again.";
+  return getFriendlyWorkspaceCreateError(message);
 }
 
 export default function CreateCompanyPage() {

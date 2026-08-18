@@ -28,6 +28,10 @@ const createCompanyPage = readFileSync(
   resolve(process.cwd(), "src/app/create-company/page.tsx"),
   "utf8",
 );
+const workspaceBootstrap = readFileSync(
+  resolve(process.cwd(), "src/lib/auth/workspace-bootstrap.ts"),
+  "utf8",
+);
 const forgotPasswordPage = readFileSync(
   resolve(process.cwd(), "src/app/forgot-password/page.tsx"),
   "utf8",
@@ -107,9 +111,10 @@ describe("signup confirmation session continuation", () => {
   });
 
   it("does not label missing create-company auth as an expired session", () => {
-    expect(createCompanyPage).toContain(
+    expect(workspaceBootstrap).toContain(
       "Please sign in to continue creating your workspace.",
     );
+    expect(createCompanyPage).toContain("getFriendlyWorkspaceCreateError");
     expect(createCompanyPage).not.toContain(
       "Your secure session has expired. Please sign in again to create your workspace.",
     );

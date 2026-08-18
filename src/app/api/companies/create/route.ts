@@ -1,5 +1,13 @@
 import { NextResponse } from "next/server";
 
+import {
+  WORKSPACE_ALREADY_CONNECTED_ERROR,
+  WORKSPACE_BOOTSTRAP_INCOMPLETE_ERROR,
+  WORKSPACE_CREATE_FAILED_ERROR,
+  WORKSPACE_ELIGIBILITY_ERROR,
+  WORKSPACE_RECOVERY_REQUIRED_ERROR,
+  planOwnedCompanyResolution,
+} from "@/lib/auth/workspace-bootstrap";
 import { companyWelcomeEmail } from "@/lib/email/templates/company-welcome-email";
 import { sendEmail } from "@/lib/email/send-email";
 import { createClient } from "@/lib/supabase/server";
@@ -305,164 +313,240 @@ export async function POST(request: Request) {
       );
 
       return NextResponse.json(
-        {
-          error:
-            "We could not verify your workspace eligibility. Please try again.",
-        },
+        { error: WORKSPACE_ELIGIBILITY_ERROR },
         { status: 500 },
       );
     }
 
-    if (profile?.company_id) {
-      return NextResponse.json(
+    const { data: ownedCompanies, error: ownedCompaniesError } =
+      await supabase
+        .from("companies")
+        .select("id")
+        .eq("user_id", user.id);
+
+    if (ownedCompaniesError) {
+      console.error(
+        "Company creation failed: owned-company lookup could not be completed.",
         {
-          error:
-            "This account is already connected to a company.",
+          userId: user.id,
+          error: ownedCompaniesError,
         },
+      );
+
+      return NextResponse.json(
+        { error: WORKSPACE_ELIGIBILITY_ERROR },
+        { status: 500 },
+      );
+    }
+
+    const companyPlan = planOwnedCompanyResolution({
+      profileCompanyId: profile?.company_id,
+      ownedCompanyIds: (ownedCompanies ?? []).map(
+        (ownedCompany) => ownedCompany.id,
+      ),
+    });
+
+    if (companyPlan.action === "already_connected") {
+      return NextResponse.json(
+        { error: WORKSPACE_ALREADY_CONNECTED_ERROR },
+        { status: 409 },
+      );
+    }
+
+    if (companyPlan.action === "recovery_required") {
+      return NextResponse.json(
+        { error: WORKSPACE_RECOVERY_REQUIRED_ERROR },
         { status: 409 },
       );
     }
 
     const slug = `${baseSlug}-${crypto.randomUUID().slice(0, 8)}`;
+    let company: {
+      id: string;
+      name: string;
+      slug: string;
+    } | null = null;
+    let createdNewCompany = false;
 
-    const { data: company, error: companyError } =
-      await supabase
-        .from("companies")
-        .insert({
-          name,
-          slug,
-          category: networkRole,
-          location,
-          network_role: networkRole,
-          status: "verified",
-          user_id: user.id,
-        })
-        .select()
-        .single();
+    if (companyPlan.action === "recover") {
+      const { data: recoveredCompany, error: recoverError } =
+        await supabase
+          .from("companies")
+          .select()
+          .eq("id", companyPlan.companyId)
+          .eq("user_id", user.id)
+          .maybeSingle();
 
-    if (companyError || !company) {
-      console.error(
-        "Company creation failed: company record was not created.",
-        {
-          userId: user.id,
-          slug,
-          accountType: rawAccountType,
-          networkRole,
-          error: companyError,
-        },
-      );
+      if (recoverError || !recoveredCompany) {
+        console.error(
+          "Company creation failed: owned company could not be recovered.",
+          {
+            userId: user.id,
+            companyId: companyPlan.companyId,
+            error: recoverError,
+          },
+        );
 
+        return NextResponse.json(
+          { error: WORKSPACE_ELIGIBILITY_ERROR },
+          { status: 500 },
+        );
+      }
+
+      company = recoveredCompany;
+    } else {
+      const { data: createdCompany, error: companyError } =
+        await supabase
+          .from("companies")
+          .insert({
+            name,
+            slug,
+            category: networkRole,
+            location,
+            network_role: networkRole,
+            status: "verified",
+            user_id: user.id,
+          })
+          .select()
+          .single();
+
+      if (companyError || !createdCompany) {
+        console.error(
+          "Company creation failed: company record was not created.",
+          {
+            userId: user.id,
+            slug,
+            accountType: rawAccountType,
+            networkRole,
+            error: companyError,
+          },
+        );
+
+        return NextResponse.json(
+          { error: WORKSPACE_CREATE_FAILED_ERROR },
+          { status: 500 },
+        );
+      }
+
+      company = createdCompany;
+      createdNewCompany = true;
+    }
+
+    if (!company) {
       return NextResponse.json(
-        { error: "Failed to create company." },
+        { error: WORKSPACE_CREATE_FAILED_ERROR },
         { status: 500 },
       );
     }
 
     const normalizedEmail = normalizeText(user.email).toLowerCase();
 
-    const { error: profileError } = await supabase
-      .from("profiles")
-      .upsert({
-        id: user.id,
-        email: normalizedEmail,
-        role: accountConfig.profileRole,
-        company_id: company.id,
-      });
+    const { data: bootstrapResult, error: bootstrapError } =
+      await supabase.rpc(
+        "bootstrap_owned_company_workspace",
+        {
+          p_company_id: company.id,
+          p_profile_role: accountConfig.profileRole,
+        },
+      );
 
-    if (profileError) {
+    const bootstrapPayload = bootstrapResult as
+      | { success?: boolean }
+      | null;
+
+    if (bootstrapError || bootstrapPayload?.success !== true) {
       console.error(
-        "Company creation partially failed: creator profile was not connected.",
+        "Workspace bootstrap incomplete: owned-company identity was not established.",
         {
           userId: user.id,
           companyId: company.id,
-          slug,
-          error: profileError,
+          createdNewCompany,
+          error: bootstrapError,
         },
       );
 
       return NextResponse.json(
-        {
-          error:
-            "Company created, but failed to connect your profile.",
-        },
+        { error: WORKSPACE_BOOTSTRAP_INCOMPLETE_ERROR },
         { status: 500 },
       );
     }
 
-    const { error: notificationError } = await supabase
-      .from("notifications")
-      .insert({
-        title: "Company Created",
-        message: `${name} workspace was created successfully.`,
-        type: "company",
-        is_read: false,
-        company_id: company.id,
-      });
-
-    if (notificationError) {
-      console.error(
-        "Company creation completed, but the notification was not recorded.",
-        {
-          userId: user.id,
-          companyId: company.id,
-          error: notificationError,
-        },
-      );
-    }
-
-    const { error: auditError } = await supabase
-      .from("audit_logs")
-      .insert({
-        action: "COMPANY_CREATED",
-        entity_type: "company",
-        entity_id: company.id,
-        user_id: user.id,
-        company_id: company.id,
-        metadata: {
-          name,
-          slug,
-          category: networkRole,
-          location,
-          account_type: rawAccountType,
-          profile_role: accountConfig.profileRole,
-          network_role: networkRole,
-          owner_email: normalizedEmail,
-          created_at: new Date().toISOString(),
-        },
-      });
-
-    if (auditError) {
-      console.error(
-        "Company creation completed, but the audit event was not recorded.",
-        {
-          userId: user.id,
-          companyId: company.id,
-          action: "COMPANY_CREATED",
-          error: auditError,
-        },
-      );
-    }
-
-    try {
-      if (user.email) {
-        await sendEmail({
-          to: user.email,
-          subject: "Welcome to Nexus Pavilion",
-          html: companyWelcomeEmail({
-            companyName: name,
-            workspaceUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/company/settings`,
-          }),
+    if (createdNewCompany) {
+      const { error: notificationError } = await supabase
+        .from("notifications")
+        .insert({
+          title: "Company Created",
+          message: `${name} workspace was created successfully.`,
+          type: "company",
+          is_read: false,
+          company_id: company.id,
         });
+
+      if (notificationError) {
+        console.error(
+          "Company creation completed, but the notification was not recorded.",
+          {
+            userId: user.id,
+            companyId: company.id,
+            error: notificationError,
+          },
+        );
       }
-    } catch (error) {
-      console.error(
-        "Company creation completed, but the welcome email failed.",
-        {
-          userId: user.id,
-          companyId: company.id,
-          error,
-        },
-      );
+
+      const { error: auditError } = await supabase
+        .from("audit_logs")
+        .insert({
+          action: "COMPANY_CREATED",
+          entity_type: "company",
+          entity_id: company.id,
+          user_id: user.id,
+          company_id: company.id,
+          metadata: {
+            name,
+            slug,
+            category: networkRole,
+            location,
+            account_type: rawAccountType,
+            profile_role: accountConfig.profileRole,
+            network_role: networkRole,
+            owner_email: normalizedEmail,
+            created_at: new Date().toISOString(),
+          },
+        });
+
+      if (auditError) {
+        console.error(
+          "Company creation completed, but the audit event was not recorded.",
+          {
+            userId: user.id,
+            companyId: company.id,
+            action: "COMPANY_CREATED",
+            error: auditError,
+          },
+        );
+      }
+
+      try {
+        if (user.email) {
+          await sendEmail({
+            to: user.email,
+            subject: "Welcome to Nexus Pavilion",
+            html: companyWelcomeEmail({
+              companyName: name,
+              workspaceUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/company/settings`,
+            }),
+          });
+        }
+      } catch (error) {
+        console.error(
+          "Company creation completed, but the welcome email failed.",
+          {
+            userId: user.id,
+            companyId: company.id,
+            error,
+          },
+        );
+      }
     }
 
     return NextResponse.json({
