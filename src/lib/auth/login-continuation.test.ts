@@ -42,6 +42,7 @@ describe("login continuation next path", () => {
     expect(getSafeNextPath("/company/settings")).toBe(
       "/company/settings",
     );
+    expect(getSafeNextPath("/create-company")).toBe("/create-company");
   });
 
   it("honors a valid internal path with a query string", () => {
@@ -107,6 +108,7 @@ describe("login continuation next path", () => {
     );
     expect(callbackRoute).toContain("getSafeNextPath(");
     expect(callbackRoute).not.toContain("function getSafeNextPath");
+    expect(callbackRoute).toContain("exchangeCodeForSession(code)");
   });
 });
 

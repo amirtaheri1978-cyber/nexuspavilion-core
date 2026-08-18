@@ -7,8 +7,32 @@ const protectedRoutes = [
 "/notifications",
 ];
 
+const COMPANY_SETUP_ROUTE = "/create-company";
+
+function isCompanySetupRoute(pathname: string) {
+return (
+pathname === COMPANY_SETUP_ROUTE ||
+pathname.startsWith(`${COMPANY_SETUP_ROUTE}/`)
+);
+}
+
+function hasSupabaseSessionCookie(request: NextRequest) {
+return Boolean(
+request.cookies.get("sb-access-token") ||
+request.cookies
+.getAll()
+.some((cookie) => cookie.name.startsWith("sb-"))
+);
+}
+
 export function middleware(request: NextRequest) {
 const { pathname } = request.nextUrl;
+
+if (isCompanySetupRoute(pathname) && !hasSupabaseSessionCookie(request)) {
+const loginUrl = new URL("/login", request.url);
+loginUrl.searchParams.set("next", COMPANY_SETUP_ROUTE);
+return NextResponse.redirect(loginUrl);
+}
 
 const isProtectedRoute = protectedRoutes.some((route) =>
 pathname.startsWith(route)
@@ -18,13 +42,7 @@ if (!isProtectedRoute) {
 return NextResponse.next();
 }
 
-const hasSupabaseSession =
-request.cookies.get("sb-access-token") ||
-request.cookies
-.getAll()
-.some((cookie) => cookie.name.startsWith("sb-"));
-
-if (!hasSupabaseSession) {
+if (!hasSupabaseSessionCookie(request)) {
 const loginUrl = new URL("/login", request.url);
 return NextResponse.redirect(loginUrl);
 }
@@ -38,5 +56,7 @@ matcher: [
 "/analytics/:path*",
 "/vendor-dashboard/:path*",
 "/notifications/:path*",
+"/create-company",
+"/create-company/:path*",
 ],
 };

@@ -203,7 +203,7 @@ function getFriendlyCreateCompanyError(message?: string) {
   const normalized = String(message || "").toLowerCase();
 
   if (normalized.includes("unauthorized")) {
-    return "Your secure session has expired. Please sign in again to create your workspace.";
+    return "Please sign in to continue creating your workspace.";
   }
 
   if (normalized.includes("duplicate") || normalized.includes("already")) {

@@ -159,11 +159,17 @@ export default function SignupPage() {
     }
 
     try {
+      const confirmationRedirect = new URL(
+        "/auth/callback",
+        window.location.origin,
+      );
+      confirmationRedirect.searchParams.set("next", "/create-company");
+
       const { error: signupError } = await supabase.auth.signUp({
         email: normalizedEmail,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/create-company`,
+          emailRedirectTo: confirmationRedirect.toString(),
         },
       });
 
