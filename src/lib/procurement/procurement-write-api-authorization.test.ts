@@ -21,7 +21,7 @@ describe("procurement write API membership authorization", () => {
     expect(membershipModule).toContain('.eq("company_id", normalizedCompanyId)');
     expect(membershipModule).toContain('.eq("membership_status", "active")');
 
-    for (const route of [rfqsRoute, quotesRoute, quoteDecisionRoute, awardRoute]) {
+    for (const route of [rfqsRoute, quotesRoute, quoteDecisionRoute]) {
       expect(route).toContain("getActiveMembershipForUserCompany");
       expect(route).not.toContain("profile.role");
       expect(route).not.toContain("canCreateRfqDraft");
@@ -30,16 +30,30 @@ describe("procurement write API membership authorization", () => {
       expect(route).not.toMatch(/as UserRole/);
     }
 
+    expect(awardRoute).not.toContain("profile.role");
+    expect(awardRoute).not.toContain("canCreateRfqDraft");
+    expect(awardRoute).not.toContain("canUpdateQuoteDecision");
+    expect(awardRoute).not.toContain("canAwardVerifiedOrganizationContract");
+    expect(awardRoute).not.toMatch(/as UserRole/);
+
     expect(quotesRoute).not.toContain("canSubmitQuote(");
     expect(quotesRoute).toContain("canSubmitCompanyQuote");
     expect(rfqsRoute).toContain("canCreateCompanyRfq");
     expect(quoteDecisionRoute).toContain("canDecideCompanyQuotes");
-    expect(awardRoute).toContain("canAwardVerifiedCompanyContract");
+    expect(awardRoute).toContain('.rpc(');
+    expect(awardRoute).toContain('"award_rfq_quote"');
+    expect(awardRoute).not.toContain("canAwardVerifiedCompanyContract");
   });
 
-  it("keeps quote-decision RFQ ownership and membership-derived audit metadata", () => {
+  it("keeps quote-decision RFQ ownership, awarded-state guards, and membership-derived audit metadata", () => {
     expect(quoteDecisionRoute).toContain(
       "rfq.company_id !== profile.company_id",
+    );
+    expect(quoteDecisionRoute).toContain(
+      "Quote decisions cannot be changed after the RFQ has been awarded.",
+    );
+    expect(quoteDecisionRoute).toContain(
+      "Awarded quotes cannot be approved or rejected.",
     );
     expect(quoteDecisionRoute).toContain("actor_workspace_role: membership.workspaceRole");
     expect(quoteDecisionRoute).toContain(
@@ -48,19 +62,18 @@ describe("procurement write API membership authorization", () => {
     expect(quoteDecisionRoute).not.toContain("actor_role:");
   });
 
-  it("keeps award ownership, trust-state, no-self-award, and award-state protections", () => {
-    expect(awardRoute).toContain("rfq.company_id !== profile.company_id");
-    expect(awardRoute).toContain('.select("status, workspace_status")');
-    expect(awardRoute).toContain("workspaceStatus:");
-    expect(awardRoute).toContain("verificationStatus:");
+  it("delegates award integrity to award_rfq_quote and keeps post-commit audit metadata", () => {
+    expect(awardRoute).toContain('.rpc(');
+    expect(awardRoute).toContain('"award_rfq_quote"');
+    expect(awardRoute).toContain("p_quote_id: quoteId");
+    expect(awardRoute).toContain("NOT_RFQ_COMPANY");
+    expect(awardRoute).toContain("SELF_AWARD_NOT_ALLOWED");
+    expect(awardRoute).toContain("RFQ_ALREADY_AWARDED");
+    expect(awardRoute).toContain("QUOTE_ALREADY_AWARDED");
     expect(awardRoute).toContain(
-      "selectedQuote.company_id === rfq.company_id",
-    );
-    expect(awardRoute).toContain('rfq.status === "awarded"');
-    expect(awardRoute).toContain('selectedQuote.decision === "awarded"');
-    expect(awardRoute).toContain(
-      "awarded_by_workspace_role: membership.workspaceRole",
+      "awarded_by_workspace_role: membership?.workspaceRole ?? null",
     );
     expect(awardRoute).not.toContain("awarded_by_role:");
+    expect(awardRoute).not.toContain('decision: "pending"');
   });
 });

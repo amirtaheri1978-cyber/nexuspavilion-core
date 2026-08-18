@@ -133,8 +133,8 @@ describe("public company directory column disclosure", () => {
   });
 
   it("keeps authorized internal company management on the companies table", () => {
-    expect(awardRoute).toContain('.from("companies")');
-    expect(awardRoute).toContain('.select("status, workspace_status")');
+    expect(awardRoute).toContain('.rpc(');
+    expect(awardRoute).toContain('"award_rfq_quote"');
     expect(companyUpdateRoute).toContain('.from("companies")');
     expect(companyUpdateRoute).toContain("workspace.companyId !== id");
   });

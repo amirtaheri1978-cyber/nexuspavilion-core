@@ -133,7 +133,7 @@ export async function POST(request: Request) {
 
     const { data: rfq, error: rfqError } = await supabase
       .from("rfqs")
-      .select("id, company_id, status")
+      .select("id, company_id, status, awarded_quote_id, awarded_at")
       .eq("id", quote.rfq_id)
       .maybeSingle();
 
@@ -165,6 +165,29 @@ export async function POST(request: Request) {
             "You can only update decisions for RFQs owned by your organization.",
         },
         { status: 403 },
+      );
+    }
+
+    if (
+      String(rfq.status || "").trim().toLowerCase() === "awarded" ||
+      rfq.awarded_quote_id ||
+      rfq.awarded_at
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "Quote decisions cannot be changed after the RFQ has been awarded.",
+        },
+        { status: 409 },
+      );
+    }
+
+    if (String(quote.decision || "").trim().toLowerCase() === "awarded") {
+      return NextResponse.json(
+        {
+          error: "Awarded quotes cannot be approved or rejected.",
+        },
+        { status: 409 },
       );
     }
 
