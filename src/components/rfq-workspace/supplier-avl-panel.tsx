@@ -3,6 +3,8 @@ type SupplierAvlPanelProps = {
   vendorsLoading: boolean;
   selectedVendorId: string;
   onSelectVendor: (vendorId: string) => void;
+  unavailable?: boolean;
+  unavailableMessage?: string;
 };
 
 export type SupplierAvlVendorOption = {
@@ -59,6 +61,8 @@ export function SupplierAvlPanel({
   vendorsLoading,
   selectedVendorId,
   onSelectVendor,
+  unavailable = false,
+  unavailableMessage,
 }: SupplierAvlPanelProps) {
   return (
     <section
@@ -83,13 +87,29 @@ export function SupplierAvlPanel({
         <div className="shrink-0 rounded-full border border-white/10 bg-white/[0.055] px-4 py-2 text-xs font-black text-nexus-muted">
           {vendorsLoading
             ? "Loading"
-            : `${vendors.length} eligible supplier${
-                vendors.length === 1 ? "" : "s"
-              }`}
+            : unavailable
+              ? "Unavailable"
+              : `${vendors.length} eligible supplier${
+                  vendors.length === 1 ? "" : "s"
+                }`}
         </div>
       </div>
 
-      {vendors.length > 0 ? (
+      {unavailable ? (
+        <div
+          className="mt-5 rounded-3xl border border-dashed border-white/15 bg-white/[0.035] p-5"
+          role="status"
+        >
+          <p className="text-sm font-black text-nexus-white">
+            Approved vendor management is not enabled in this environment.
+          </p>
+
+          <p className="mt-2 text-sm font-semibold leading-6 text-nexus-muted">
+            {unavailableMessage ||
+              "Invite by email remains available."}
+          </p>
+        </div>
+      ) : vendors.length > 0 ? (
         <div
           className="mt-5 grid gap-3"
           role="listbox"

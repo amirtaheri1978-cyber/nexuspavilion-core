@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 
 import { sendEmail } from "@/lib/email/send-email";
+import { getActiveMembershipForUserCompany } from "@/lib/auth/membership";
+import { canInviteCompanySuppliers } from "@/lib/procurement/procurement-write-authorization";
+import { APPROVED_VENDOR_DOMAIN_AVAILABLE } from "@/lib/procurement/supplier-domain-availability";
 import { createClient } from "@/lib/supabase/server";
 
 const SITE_URL =
@@ -31,10 +34,6 @@ function normalizeEmail(value: string) {
 
 function isValidEmail(email: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-}
-
-function isAllowedProcurementRole(role: string | null | undefined) {
-  return ["owner", "admin", "buyer"].includes(String(role || "").toLowerCase());
 }
 
 function isRfqOpenForInvitations(
@@ -333,7 +332,7 @@ export async function POST(request: Request) {
 
     const { data: profile, error: profileError } = await supabase
       .from("profiles")
-      .select("id, email, role, company_id")
+      .select("id, email, company_id")
       .eq("id", user.id)
       .single();
 
@@ -344,9 +343,33 @@ export async function POST(request: Request) {
       );
     }
 
-    if (!isAllowedProcurementRole(profile.role)) {
+    let membership;
+
+    try {
+      membership = await getActiveMembershipForUserCompany(
+        supabase,
+        user.id,
+        profile.company_id,
+      );
+    } catch (membershipError) {
+      console.error("Supplier invite membership lookup failed.", {
+        userId: user.id,
+        companyId: profile.company_id,
+        error: membershipError,
+      });
+
       return NextResponse.json(
-        { error: "Only authorized procurement users can invite suppliers." },
+        { error: "Unable to verify organization membership." },
+        { status: 500 },
+      );
+    }
+
+    if (!canInviteCompanySuppliers(membership, profile.company_id)) {
+      return NextResponse.json(
+        {
+          error:
+            "Only organization owners, administrators, or buyers can invite suppliers.",
+        },
         { status: 403 },
       );
     }
@@ -382,7 +405,7 @@ export async function POST(request: Request) {
       );
     }
 
-    if (vendorCompanyId) {
+    if (APPROVED_VENDOR_DOMAIN_AVAILABLE && vendorCompanyId) {
       const { data: approvedVendor, error: approvedVendorError } =
         await supabase
           .from("approved_vendors")
@@ -534,7 +557,9 @@ export async function POST(request: Request) {
           rfq_id: rfq.id,
           rfq_title: rfq.title,
           supplier_email: email,
-          vendor_company_id: vendorCompanyId,
+          vendor_company_id: APPROVED_VENDOR_DOMAIN_AVAILABLE
+            ? vendorCompanyId
+            : null,
           invite_token: token,
           invite_url: absoluteInviteUrl,
           procurement_scope: rfq.procurement_scope,
@@ -588,7 +613,9 @@ export async function POST(request: Request) {
       invite,
       inviteUrl: `/rfq/invite/${token}`,
       absoluteInviteUrl,
-      vendorCompanyId,
+      vendorCompanyId: APPROVED_VENDOR_DOMAIN_AVAILABLE
+        ? vendorCompanyId
+        : null,
       email: {
         sent: emailResult.success,
         skipped: emailResult.skipped,

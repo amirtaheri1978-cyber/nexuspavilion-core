@@ -10,6 +10,7 @@ const rfqsRoute = readSource("src/app/api/rfqs/route.ts");
 const quotesRoute = readSource("src/app/api/quotes/route.ts");
 const quoteDecisionRoute = readSource("src/app/api/quote-decision/route.ts");
 const awardRoute = readSource("src/app/api/award-contract/route.ts");
+const invitesRoute = readSource("src/app/api/invites/route.ts");
 const membershipModule = readSource("src/lib/auth/membership.ts");
 
 describe("procurement write API membership authorization", () => {
@@ -21,7 +22,7 @@ describe("procurement write API membership authorization", () => {
     expect(membershipModule).toContain('.eq("company_id", normalizedCompanyId)');
     expect(membershipModule).toContain('.eq("membership_status", "active")');
 
-    for (const route of [rfqsRoute, quotesRoute, quoteDecisionRoute]) {
+    for (const route of [rfqsRoute, quotesRoute, quoteDecisionRoute, invitesRoute]) {
       expect(route).toContain("getActiveMembershipForUserCompany");
       expect(route).not.toContain("profile.role");
       expect(route).not.toContain("canCreateRfqDraft");
@@ -40,6 +41,9 @@ describe("procurement write API membership authorization", () => {
     expect(quotesRoute).toContain("canSubmitCompanyQuote");
     expect(rfqsRoute).toContain("canCreateCompanyRfq");
     expect(quoteDecisionRoute).toContain("canDecideCompanyQuotes");
+    expect(invitesRoute).toContain("canInviteCompanySuppliers");
+    expect(invitesRoute).not.toContain("isAllowedProcurementRole");
+    expect(invitesRoute).toContain('select("id, email, company_id")');
     expect(awardRoute).toContain('.rpc(');
     expect(awardRoute).toContain('"award_rfq_quote"');
     expect(awardRoute).not.toContain("canAwardVerifiedCompanyContract");

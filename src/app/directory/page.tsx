@@ -5,6 +5,10 @@ import { useEffect, useMemo, useState } from "react";
 
 import { createClient } from "@/lib/supabase/client";
 import Image from "next/image";
+import {
+  APPROVED_VENDOR_DOMAIN_AVAILABLE,
+  APPROVED_VENDOR_UNAVAILABLE_MESSAGE,
+} from "@/lib/procurement/supplier-domain-availability";
 
 type Company = {
 id: string;
@@ -203,11 +207,11 @@ supabase
 
 supabase.from("quotes").select("id, company_id, amount, decision"),
 
-currentProfile?.company_id
+APPROVED_VENDOR_DOMAIN_AVAILABLE && currentProfile?.company_id
 ? supabase
 .from("approved_vendors")
 .select("vendor_company_id, status, rating")
-: Promise.resolve({ data: [] }),
+: Promise.resolve({ data: [] as ApprovedVendor[] }),
 ]);
 
 if (!companiesError && companiesData) {
@@ -337,7 +341,7 @@ rating: status === "approved" ? 85 : status === "conditional" ? 70 : 40,
 const data = await response.json();
 
 if (!response.ok) {
-setActionMessage(data.error || "Failed to update approved vendor.");
+setActionMessage(data.error || APPROVED_VENDOR_UNAVAILABLE_MESSAGE);
 return;
 }
 
@@ -385,14 +389,14 @@ Construction Supplier Network
 Discover verified construction companies, suppliers,
 contractors, manufacturers, consultants, architects, and
 engineers with procurement activity, award history, supplier
-intelligence, and approved vendor list controls.
+intelligence, and award history.
 </p>
 </div>
 
 <div className="flex w-full flex-col gap-3 lg:w-auto lg:min-w-[380px]">
 <input
 type="text"
-placeholder="Search companies, categories, regions, ranks, or AVL status..."
+placeholder="Search companies, categories, regions, or ranks..."
 value={search}
 onChange={(event) => setSearch(event.target.value)}
 className="h-[58px] w-full rounded-2xl border border-white/10 bg-[#07111F] px-5 text-sm font-semibold text-white outline-none transition placeholder:text-slate-500 focus:border-[#C8A646] focus:bg-[#081827] focus:ring-4 focus:ring-[#C8A646]/15"
@@ -449,24 +453,15 @@ detail="Supplier intelligence average"
 />
 </section>
 
-<section className="mt-6 grid gap-6 md:grid-cols-3">
-<MetricCard
-title="Approved Vendors"
-value={String(networkStats.approvedCount)}
-detail="Active AVL suppliers"
-/>
-
-<MetricCard
-title="Conditional Vendors"
-value={String(networkStats.conditionalCount)}
-detail="Suppliers under review"
-/>
-
-<MetricCard
-title="Suspended Vendors"
-value={String(networkStats.suspendedCount)}
-detail="Restricted supplier access"
-/>
+<section className="mt-6 rounded-[28px] border border-white/10 bg-white/[0.055] p-6">
+<p className="text-[10px] font-black uppercase tracking-[0.22em] text-slate-500">
+Approved Vendor List
+</p>
+<p className="mt-3 text-sm font-semibold leading-6 text-slate-300">
+{APPROVED_VENDOR_DOMAIN_AVAILABLE
+? "Approved vendor status is managed in this workspace."
+: APPROVED_VENDOR_UNAVAILABLE_MESSAGE}
+</p>
 </section>
 
 {topSupplier ? (
@@ -517,6 +512,7 @@ Try another search term or check back as the network grows.
 const avlRecord = approvedVendorMap.get(company.id);
 const isSelfCompany = profile?.company_id === company.id;
 const canShowAvlActions =
+APPROVED_VENDOR_DOMAIN_AVAILABLE &&
 canManageApprovedVendors &&
 !isSelfCompany &&
 isSupplierCompany(company);
@@ -588,9 +584,11 @@ value={String(company.awardsWon)}
 {company.reliabilitySignal}
 </StatusPill>
 
+{APPROVED_VENDOR_DOMAIN_AVAILABLE ? (
 <StatusPill tone={getAvlTone(avlRecord?.status)}>
 {getAvlStatusLabel(avlRecord?.status)}
 </StatusPill>
+) : null}
 
 {company.awardedRevenue > 0 && (
 <StatusPill tone="success">

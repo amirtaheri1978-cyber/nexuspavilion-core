@@ -27,10 +27,6 @@ const rfqPage = readFileSync(
   resolve(process.cwd(), "src/app/rfq/[slug]/page.tsx"),
   "utf8",
 );
-const inviteVendorForm = readFileSync(
-  resolve(process.cwd(), "src/components/invite-vendor-form.tsx"),
-  "utf8",
-);
 const awardRoute = readFileSync(
   resolve(process.cwd(), "src/app/api/award-contract/route.ts"),
   "utf8",
@@ -120,7 +116,6 @@ describe("public company directory column disclosure", () => {
       publicCompanyProfile,
       analyticsSource,
       rfqPage,
-      inviteVendorForm,
     ]) {
       expect(source).toContain('.from("company_directory")');
     }

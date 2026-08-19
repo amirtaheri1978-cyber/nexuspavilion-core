@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
 
+import {
+  APPROVED_VENDOR_DOMAIN_AVAILABLE,
+  APPROVED_VENDOR_UNAVAILABLE_MESSAGE,
+} from "@/lib/procurement/supplier-domain-availability";
 import { createClient } from "@/lib/supabase/server";
 
 const AVL_MANAGEMENT_ROLES = ["owner", "admin", "buyer"];
@@ -61,12 +65,19 @@ return NextResponse.json(
 );
 }
 
-const supabase = await createClient();
+    if (!APPROVED_VENDOR_DOMAIN_AVAILABLE) {
+      return NextResponse.json(
+        { error: APPROVED_VENDOR_UNAVAILABLE_MESSAGE },
+        { status: 404 },
+      );
+    }
 
-const {
-data: { user },
-error: userError,
-} = await supabase.auth.getUser();
+    const supabase = await createClient();
+
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
 
 if (userError || !user) {
 return NextResponse.json({ error: "Unauthorized." }, { status: 401 });

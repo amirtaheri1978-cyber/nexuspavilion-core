@@ -31,6 +31,13 @@ export function canCreateCompanyRfq(
   );
 }
 
+export function canInviteCompanySuppliers(
+  membership: OrganizationMembership | null,
+  companyId: string,
+): membership is OrganizationMembership {
+  return canCreateCompanyRfq(membership, companyId);
+}
+
 export function canSubmitCompanyQuote(
   membership: OrganizationMembership | null,
   companyId: string,

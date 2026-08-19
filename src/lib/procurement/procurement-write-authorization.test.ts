@@ -5,6 +5,7 @@ import {
   canAwardVerifiedCompanyContract,
   canCreateCompanyRfq,
   canDecideCompanyQuotes,
+  canInviteCompanySuppliers,
   canSubmitCompanyQuote,
 } from "@/lib/procurement/procurement-write-authorization";
 
@@ -204,6 +205,62 @@ describe("procurement write authorization", () => {
         workspaceStatus: "active",
         verificationStatus: "verified",
       }),
+    ).toBe(false);
+  });
+
+  it("allows supplier invites for owner, admin, or buyer membership only", () => {
+    expect(canInviteCompanySuppliers(null, COMPANY_ID)).toBe(false);
+    expect(
+      canInviteCompanySuppliers(
+        membership({ workspaceRole: "owner", procurementFunction: "none" }),
+        COMPANY_ID,
+      ),
+    ).toBe(true);
+    expect(
+      canInviteCompanySuppliers(
+        membership({ workspaceRole: "admin", procurementFunction: "supplier" }),
+        COMPANY_ID,
+      ),
+    ).toBe(true);
+    expect(
+      canInviteCompanySuppliers(
+        membership({ workspaceRole: "member", procurementFunction: "buyer" }),
+        COMPANY_ID,
+      ),
+    ).toBe(true);
+    expect(
+      canInviteCompanySuppliers(
+        membership({ workspaceRole: "member", procurementFunction: "none" }),
+        COMPANY_ID,
+      ),
+    ).toBe(false);
+    expect(
+      canInviteCompanySuppliers(
+        membership({ workspaceRole: "member", procurementFunction: "supplier" }),
+        COMPANY_ID,
+      ),
+    ).toBe(false);
+    expect(
+      canInviteCompanySuppliers(
+        membership({ workspaceRole: "viewer", procurementFunction: "none" }),
+        COMPANY_ID,
+      ),
+    ).toBe(false);
+    expect(
+      canInviteCompanySuppliers(
+        membership({ workspaceRole: "owner" }),
+        "22222222-2222-2222-2222-222222222222",
+      ),
+    ).toBe(false);
+    expect(
+      canInviteCompanySuppliers(
+        membership({
+          membershipStatus: "pending",
+          workspaceRole: "owner",
+          procurementFunction: "buyer",
+        }),
+        COMPANY_ID,
+      ),
     ).toBe(false);
   });
 });

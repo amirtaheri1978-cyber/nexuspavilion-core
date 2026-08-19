@@ -37,8 +37,8 @@ export function SupplierInvitationDelivery({
 
         <p className="mt-2 max-w-3xl text-sm font-semibold leading-6 text-nexus-muted">
           Enter the authorized supplier contact email. The invitation
-          will remain associated with this RFQ and the selected AVL
-          supplier when applicable.
+          remains associated with this RFQ. Invite by email remains
+          available.
         </p>
       </div>
 

@@ -3,6 +3,13 @@ import { redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
 import {
+  APPROVED_VENDOR_DOMAIN_AVAILABLE,
+  APPROVED_VENDOR_UNAVAILABLE_MESSAGE,
+  INVITE_BY_EMAIL_REMAINS_MESSAGE,
+  SUPPLIER_COMPLIANCE_DOMAIN_AVAILABLE,
+  SUPPLIER_COMPLIANCE_UNAVAILABLE_MESSAGE,
+} from "@/lib/procurement/supplier-domain-availability";
+import {
   type VendorWorkspaceApprovedVendor,
   type VendorWorkspaceCompliance,
   type VendorWorkspaceQuote,
@@ -81,7 +88,8 @@ if (!profile?.company_id) {
 redirect("/create-company");
 }
 
-const { data: approvedVendorsData } = await supabase
+const { data: approvedVendorsData } = APPROVED_VENDOR_DOMAIN_AVAILABLE
+? await supabase
 .from("approved_vendors")
 .select(
 `
@@ -102,14 +110,17 @@ status
 `
 )
 .eq("buyer_company_id", profile.company_id)
-.order("created_at", { ascending: false });
+.order("created_at", { ascending: false })
+: { data: [] as ApprovedVendor[] };
 
-const { data: complianceData } = await supabase
+const { data: complianceData } = SUPPLIER_COMPLIANCE_DOMAIN_AVAILABLE
+? await supabase
 .from("supplier_compliance")
 .select(
 "id, vendor_company_id, insurance_status, insurance_expiry, certificate_status, certificate_expiry, license_status, license_expiry, tax_status, compliance_score, overall_status"
 )
-.eq("buyer_company_id", profile.company_id);
+.eq("buyer_company_id", profile.company_id)
+: { data: [] as Compliance[] };
 
 const vendorCompanyIds = approvedVendorsData
 ? approvedVendorsData
@@ -149,16 +160,8 @@ vendor.vendor_company_id
 return compliance?.overall_status === "expiring_soon";
 }).length;
 
-const missingCompliance = approvedVendors.filter((vendor) => {
-const compliance = getComplianceForVendor(
-complianceList,
-vendor.vendor_company_id
-);
-
-return !compliance || compliance.overall_status === "missing";
-}).length;
-
-const highRiskVendors = approvedVendors.filter((vendor) => {
+const highRiskVendors = APPROVED_VENDOR_DOMAIN_AVAILABLE
+? approvedVendors.filter((vendor) => {
 const compliance = getComplianceForVendor(
 complianceList,
 vendor.vendor_company_id
@@ -167,7 +170,20 @@ vendor.vendor_company_id
 const risk = getVendorRiskLevel(compliance);
 
 return risk === "High" || risk === "Critical";
-}).length;
+}).length
+: 0;
+
+const missingCompliance = APPROVED_VENDOR_DOMAIN_AVAILABLE &&
+SUPPLIER_COMPLIANCE_DOMAIN_AVAILABLE
+? approvedVendors.filter((vendor) => {
+const compliance = getComplianceForVendor(
+complianceList,
+vendor.vendor_company_id
+);
+
+return !compliance || compliance.overall_status === "missing";
+}).length
+: 0;
 
 const expiryAlerts = approvedVendors.filter((vendor) => {
 const compliance = getComplianceForVendor(
@@ -246,6 +262,27 @@ Vendor Intelligence
 </span>
 </div>
 
+{!APPROVED_VENDOR_DOMAIN_AVAILABLE || !SUPPLIER_COMPLIANCE_DOMAIN_AVAILABLE ? (
+<section className="mt-6 rounded-[28px] border border-white/10 bg-white/[0.04] p-6 sm:p-8">
+<p className="text-[10px] font-black uppercase tracking-[0.22em] text-orange-400">
+Insufficient data
+</p>
+<p className="mt-3 text-sm font-semibold leading-6 text-slate-300">
+{!APPROVED_VENDOR_DOMAIN_AVAILABLE
+? APPROVED_VENDOR_UNAVAILABLE_MESSAGE
+: null}
+{" "}
+{!SUPPLIER_COMPLIANCE_DOMAIN_AVAILABLE
+? SUPPLIER_COMPLIANCE_UNAVAILABLE_MESSAGE
+: null}
+</p>
+<p className="mt-2 text-sm font-semibold leading-6 text-slate-400">
+Missing AVL and compliance dimensions are unavailable, not scored as
+zero or non-compliant.
+</p>
+</section>
+) : null}
+
 <section className="mt-6 overflow-hidden rounded-[32px] border border-white/10 bg-gradient-to-br from-white/[0.09] via-white/[0.055] to-white/[0.025] shadow-2xl shadow-black/25">
 <div className="grid lg:grid-cols-[1.35fr_0.65fr]">
 <div className="relative overflow-hidden p-6 sm:p-8 lg:p-10">
@@ -274,23 +311,51 @@ Review supplier eligibility, document exposure, and compliance readiness before 
 <div className="mt-8 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
 <ExecutiveMetric
 label="Approved Vendors"
-value={String(totalVendors)}
-detail="In the active procurement portfolio"
+value={
+APPROVED_VENDOR_DOMAIN_AVAILABLE ? String(totalVendors) : "Unavailable"
+}
+detail={
+APPROVED_VENDOR_DOMAIN_AVAILABLE
+? "In the active procurement portfolio"
+: "Insufficient data"
+}
 />
 <ExecutiveMetric
 label="Compliant"
-value={String(compliantVendors)}
-detail="Cleared for current participation"
+value={
+SUPPLIER_COMPLIANCE_DOMAIN_AVAILABLE
+? String(compliantVendors)
+: "Unavailable"
+}
+detail={
+SUPPLIER_COMPLIANCE_DOMAIN_AVAILABLE
+? "Cleared for current participation"
+: "Insufficient data"
+}
 />
 <ExecutiveMetric
 label="Expiring Soon"
-value={String(expiringSoon)}
-detail="Renewal action required"
+value={
+SUPPLIER_COMPLIANCE_DOMAIN_AVAILABLE ? String(expiringSoon) : "Unavailable"
+}
+detail={
+SUPPLIER_COMPLIANCE_DOMAIN_AVAILABLE
+? "Renewal action required"
+: "Insufficient data"
+}
 />
 <ExecutiveMetric
 label="Missing Records"
-value={String(missingCompliance)}
-detail="Compliance setup incomplete"
+value={
+SUPPLIER_COMPLIANCE_DOMAIN_AVAILABLE
+? String(missingCompliance)
+: "Unavailable"
+}
+detail={
+SUPPLIER_COMPLIANCE_DOMAIN_AVAILABLE
+? "Compliance setup incomplete"
+: "Insufficient data"
+}
 />
 </div>
 </div>
@@ -303,7 +368,9 @@ Executive Decision Brief
 
 <h2 className="mt-4 text-2xl font-black leading-tight tracking-[-0.03em]">
 {totalVendors === 0
+? APPROVED_VENDOR_DOMAIN_AVAILABLE
 ? "The approved supplier portfolio is not yet established."
+: APPROVED_VENDOR_UNAVAILABLE_MESSAGE
 : highRiskVendors > 0 ||
   missingCompliance > 0 ||
   criticalExpiryVendors > 0
@@ -313,7 +380,9 @@ Executive Decision Brief
 
 <p className="mt-4 text-sm font-semibold leading-6 text-slate-300">
 {totalVendors === 0
+? APPROVED_VENDOR_DOMAIN_AVAILABLE
 ? "No suppliers are currently governed through this workspace. Approve qualified vendors to activate compliance monitoring, eligibility control, and performance intelligence."
+: `${APPROVED_VENDOR_UNAVAILABLE_MESSAGE} ${SUPPLIER_COMPLIANCE_UNAVAILABLE_MESSAGE}`
 : highRiskVendors > 0 ||
   missingCompliance > 0 ||
   criticalExpiryVendors > 0
@@ -325,17 +394,38 @@ Executive Decision Brief
 <DarkMetric
 title="Avg Compliance"
 value={
-averageComplianceScore > 0
+!SUPPLIER_COMPLIANCE_DOMAIN_AVAILABLE
+? "Unavailable"
+: averageComplianceScore > 0
 ? `${averageComplianceScore}/100`
 : "Setup"
 }
 />
-<DarkMetric title="High Risk" value={String(highRiskVendors)} />
+<DarkMetric
+title="High Risk"
+value={
+APPROVED_VENDOR_DOMAIN_AVAILABLE &&
+SUPPLIER_COMPLIANCE_DOMAIN_AVAILABLE
+? String(highRiskVendors)
+: "Unavailable"
+}
+/>
 <DarkMetric
 title="Critical Expiry"
-value={String(criticalExpiryVendors)}
+value={
+SUPPLIER_COMPLIANCE_DOMAIN_AVAILABLE
+? String(criticalExpiryVendors)
+: "Unavailable"
+}
 />
-<DarkMetric title="Expired" value={String(expiredVendors)} />
+<DarkMetric
+title="Expired"
+value={
+SUPPLIER_COMPLIANCE_DOMAIN_AVAILABLE
+? String(expiredVendors)
+: "Unavailable"
+}
+/>
 </div>
 
 <div className="mt-6 rounded-2xl border border-white/10 bg-white/[0.05] p-4">
@@ -343,7 +433,9 @@ value={String(criticalExpiryVendors)}
 Decision Priority
 </p>
 <p className="mt-2 text-sm font-black text-white">
-{totalVendors === 0
+{!APPROVED_VENDOR_DOMAIN_AVAILABLE
+? APPROVED_VENDOR_UNAVAILABLE_MESSAGE
+: totalVendors === 0
 ? "Approve qualified suppliers to establish portfolio governance."
 : expiredVendors > 0
 ? "Resolve expired documents before supplier engagement."
@@ -384,7 +476,9 @@ Portfolio Action Layer
 </p>
 
 <span className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-slate-300">
-{totalVendors === 0
+{!APPROVED_VENDOR_DOMAIN_AVAILABLE
+? "Insufficient data"
+: totalVendors === 0
 ? "Portfolio Not Established"
 : expiredVendors > 0 ||
   criticalExpiryVendors > 0 ||
@@ -396,7 +490,9 @@ Portfolio Action Layer
 </div>
 
 <h2 className="mt-4 max-w-3xl text-2xl font-black leading-tight tracking-[-0.03em] text-white sm:text-3xl">
-{totalVendors === 0
+{!APPROVED_VENDOR_DOMAIN_AVAILABLE
+? APPROVED_VENDOR_UNAVAILABLE_MESSAGE
+: totalVendors === 0
 ? "Establish the approved supplier portfolio before governance can begin."
 : expiredVendors > 0
 ? `${expiredVendors} supplier ${
@@ -418,7 +514,9 @@ missingCompliance === 1 ? "record is" : "records are"
 </h2>
 
 <p className="mt-3 max-w-3xl text-sm font-semibold leading-6 text-slate-300">
-{totalVendors === 0
+{!APPROVED_VENDOR_DOMAIN_AVAILABLE
+? `${SUPPLIER_COMPLIANCE_UNAVAILABLE_MESSAGE} ${INVITE_BY_EMAIL_REMAINS_MESSAGE}`
+: totalVendors === 0
 ? "Approve qualified suppliers to activate document monitoring, RFQ eligibility controls, and supplier performance intelligence."
 : expiredVendors > 0
 ? "Resolve expired eligibility evidence before the affected suppliers participate in sourcing or award decisions."
@@ -468,7 +566,9 @@ Recommended Next Step
 </p>
 
 <p className="mt-3 max-w-xs text-sm font-black leading-6 text-white">
-{totalVendors === 0
+{!APPROVED_VENDOR_DOMAIN_AVAILABLE
+? INVITE_BY_EMAIL_REMAINS_MESSAGE
+: totalVendors === 0
 ? "Approve qualified suppliers from the Supplier Directory."
 : expiredVendors > 0
 ? "Resolve expired compliance evidence."
@@ -550,12 +650,15 @@ aria-hidden="true"
 />
 <div className="relative">
 <p className="text-2xl font-black tracking-[-0.02em] text-white">
-No approved vendors yet
+{APPROVED_VENDOR_DOMAIN_AVAILABLE
+? "No approved vendors yet"
+: APPROVED_VENDOR_UNAVAILABLE_MESSAGE}
 </p>
 
 <p className="mx-auto mt-3 max-w-xl text-sm font-semibold leading-6 text-slate-400">
-Approved vendors will appear here after they are added to your
-company’s approved vendor list.
+{APPROVED_VENDOR_DOMAIN_AVAILABLE
+? "Approved vendors will appear here after they are added to your company’s approved vendor list."
+: `${SUPPLIER_COMPLIANCE_UNAVAILABLE_MESSAGE} Existing RFQ and quote analytics remain available on the main analytics workspace.`}
 </p>
 
 <Link

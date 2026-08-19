@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
 
+import {
+  SUPPLIER_COMPLIANCE_DOMAIN_AVAILABLE,
+  SUPPLIER_COMPLIANCE_UNAVAILABLE_MESSAGE,
+} from "@/lib/procurement/supplier-domain-availability";
 import { createClient } from "@/lib/supabase/server";
 
 const COMPLIANCE_MANAGEMENT_ROLES = ["owner", "admin", "buyer"];
@@ -103,6 +107,13 @@ if (!vendorCompanyId) {
 return NextResponse.json(
 { error: "Vendor company ID is required." },
 { status: 400 }
+);
+}
+
+if (!SUPPLIER_COMPLIANCE_DOMAIN_AVAILABLE) {
+return NextResponse.json(
+{ error: SUPPLIER_COMPLIANCE_UNAVAILABLE_MESSAGE },
+{ status: 404 }
 );
 }
 
