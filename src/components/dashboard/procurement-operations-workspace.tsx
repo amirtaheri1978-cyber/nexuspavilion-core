@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ExecutiveBadge } from "@/components/executive/executive-badge";
 import { ExecutivePanel } from "@/components/executive/executive-panel";
 import { ExecutiveCommandStripCard } from "@/components/executive/workspace/executive-command-strip-card";
+import { EXECUTIVE_FOCUS_CYAN } from "@/lib/design-system/executive-contract";
 
 type CommandStripMetric = {
   title: string;
@@ -49,21 +50,18 @@ export function ProcurementOperationsWorkspace({
     <ExecutivePanel
       variant="operational"
       padding="lg"
-      className="mt-8"
+      className="np-region-major"
+      aria-labelledby="executive-pipeline-heading"
     >
       <div className="flex flex-col gap-4 border-b border-white/10 pb-6 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <p className="text-[10px] font-black uppercase tracking-[0.28em] text-slate-500">
-            Procurement Operations
-          </p>
-
-          <h2 className="mt-3 text-2xl font-black text-white">
-            Portfolio Execution Workspace
+          <p className="np-type-eyebrow">Pipeline</p>
+          <h2 id="executive-pipeline-heading" className="np-type-h2 mt-3">
+            Portfolio execution
           </h2>
-
-          <p className="mt-3 max-w-4xl text-sm font-semibold leading-7 text-slate-400">
-            Operational classification, award decisions, and highest-value RFQs
-            supporting the current executive procurement position.
+          <p className="np-type-body mt-3 max-w-4xl">
+            Operational classification, recorded awards, and highest-value RFQs
+            in the current workspace.
           </p>
         </div>
 
@@ -73,16 +71,11 @@ export function ProcurementOperationsWorkspace({
       </div>
 
       <div className="mt-6">
-        <p className="text-[10px] font-black uppercase tracking-[0.24em] text-[#9BE8F8]">
-          RFQ Classification Intelligence
-        </p>
+        <p className="np-type-meta text-nexus-cyan-bright">RFQ Classification</p>
+        <p className="np-type-body mt-3 max-w-5xl">{classification.description}</p>
 
-        <p className="mt-3 max-w-5xl text-sm font-semibold leading-7 text-slate-400">
-          {classification.description}
-        </p>
-
-        <div className="mt-5 overflow-hidden rounded-[22px] border border-white/10 bg-white/[0.03]">
-          <div className="grid md:grid-cols-2 xl:grid-cols-4">
+        <div className="mt-5 overflow-x-auto overflow-y-hidden rounded-executive border border-white/10 bg-white/[0.03]">
+          <div className="grid min-w-[520px] md:grid-cols-2 xl:min-w-0 xl:grid-cols-4">
             {classification.scopeMetrics.map((metric) => (
               <ExecutiveCommandStripCard
                 key={metric.title}
@@ -93,8 +86,8 @@ export function ProcurementOperationsWorkspace({
           </div>
         </div>
 
-        <div className="mt-3 overflow-hidden rounded-[22px] border border-white/10 bg-white/[0.03]">
-          <div className="grid md:grid-cols-2 xl:grid-cols-5">
+        <div className="mt-3 overflow-x-auto overflow-y-hidden rounded-executive border border-white/10 bg-white/[0.03]">
+          <div className="grid min-w-[640px] md:grid-cols-2 xl:min-w-0 xl:grid-cols-5">
             {classification.sourcingMetrics.map((metric) => (
               <ExecutiveCommandStripCard
                 key={metric.title}
@@ -108,12 +101,13 @@ export function ProcurementOperationsWorkspace({
 
       <div className="mt-7 grid gap-6 border-t border-white/10 pt-7 xl:grid-cols-2">
         <OperationalListSection
-          eyebrow="Award Decisions"
-          title="Recent Award Decisions"
+          eyebrow="Awards"
+          title="Recent award decisions"
+          headingId="executive-awards-heading"
           countLabel={`${recentAwards.length} Recorded`}
         >
           {recentAwards.length > 0 ? (
-            <div className="divide-y divide-white/10 overflow-hidden rounded-[22px] border border-white/10 bg-black/15">
+            <div className="divide-y divide-white/10 overflow-hidden rounded-executive border border-white/10 bg-black/15">
               {recentAwards.map((award) => (
                 <div
                   key={award.id}
@@ -123,18 +117,14 @@ export function ProcurementOperationsWorkspace({
                     <p className="truncate text-sm font-black text-white">
                       {award.title}
                     </p>
-
-                    <p className="mt-1 text-xs font-semibold text-slate-500">
-                      {award.location}
-                    </p>
+                    <p className="np-type-meta mt-1">{award.location}</p>
                   </div>
 
                   <div className="flex shrink-0 items-center justify-between gap-3 sm:justify-end">
-                    <p className="text-base font-black tabular-nums text-[#F5D77B]">
+                    <p className="np-type-kpi text-lg text-nexus-gold-bright">
                       {award.amount}
                     </p>
-
-                    <ExecutiveBadge tone="success" size="sm">
+                    <ExecutiveBadge tone="awarded" size="sm">
                       {award.status}
                     </ExecutiveBadge>
                   </div>
@@ -147,33 +137,31 @@ export function ProcurementOperationsWorkspace({
         </OperationalListSection>
 
         <OperationalListSection
-          eyebrow="Portfolio Value"
-          title="Highest-Value RFQs"
+          eyebrow="RFQs"
+          title="Highest-value RFQs"
+          headingId="executive-rfqs-heading"
           countLabel={`${highestValueRfqs.length} Available`}
         >
           {highestValueRfqs.length > 0 ? (
-            <div className="divide-y divide-white/10 overflow-hidden rounded-[22px] border border-white/10 bg-black/15">
+            <div className="divide-y divide-white/10 overflow-hidden rounded-executive border border-white/10 bg-black/15">
               {highestValueRfqs.map((rfq) => (
                 <Link
                   key={rfq.id}
                   href={rfq.href}
-                  className="group block px-4 py-4 transition-colors hover:bg-white/[0.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#2CC4E8]/40"
+                  className={`group block min-h-11 px-4 py-4 transition-colors hover:bg-white/[0.04] ${EXECUTIVE_FOCUS_CYAN}`}
                 >
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-black text-white transition-colors group-hover:text-[#9BE8F8]">
+                      <p className="truncate text-sm font-black text-white transition-colors group-hover:text-nexus-cyan-bright">
                         {rfq.title}
                       </p>
-
-                      <p className="mt-1 text-xs font-semibold leading-5 text-slate-500">
+                      <p className="np-type-meta mt-1">
                         {rfq.scope} · {rfq.location}
                       </p>
-
                       <div className="mt-3 flex flex-wrap gap-2">
                         <ExecutiveBadge tone="neutral" size="sm">
                           {rfq.sourcingMethod}
                         </ExecutiveBadge>
-
                         <ExecutiveBadge tone="neutral" size="sm">
                           {rfq.contractFramework}
                         </ExecutiveBadge>
@@ -184,8 +172,7 @@ export function ProcurementOperationsWorkspace({
                       <ExecutiveBadge tone="neutral" size="sm">
                         {rfq.status}
                       </ExecutiveBadge>
-
-                      <p className="text-base font-black tabular-nums text-[#F5D77B]">
+                      <p className="np-type-kpi text-lg text-nexus-gold-bright">
                         {rfq.budget}
                       </p>
                     </div>
@@ -205,30 +192,29 @@ export function ProcurementOperationsWorkspace({
 function OperationalListSection({
   eyebrow,
   title,
+  headingId,
   countLabel,
   children,
 }: {
   eyebrow: string;
   title: string;
+  headingId: string;
   countLabel: string;
   children: React.ReactNode;
 }) {
   return (
-    <section>
+    <section aria-labelledby={headingId}>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-[10px] font-black uppercase tracking-[0.24em] text-slate-500">
-            {eyebrow}
-          </p>
-
-          <h3 className="mt-2 text-xl font-black text-white">{title}</h3>
+          <p className="np-type-meta">{eyebrow}</p>
+          <h3 id={headingId} className="mt-2 text-xl font-black text-white">
+            {title}
+          </h3>
         </div>
-
         <ExecutiveBadge tone="neutral" size="sm">
           {countLabel}
         </ExecutiveBadge>
       </div>
-
       <div className="mt-4">{children}</div>
     </section>
   );
@@ -236,8 +222,8 @@ function OperationalListSection({
 
 function OperationalEmptyState({ message }: { message: string }) {
   return (
-    <div className="rounded-[22px] border border-dashed border-white/15 bg-white/[0.025] px-5 py-8 text-center">
-      <p className="text-sm font-bold text-slate-500">{message}</p>
+    <div className="rounded-executive border border-dashed border-white/15 bg-white/[0.025] px-5 py-8 text-center">
+      <p className="np-type-body">{message}</p>
     </div>
   );
 }

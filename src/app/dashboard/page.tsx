@@ -1,11 +1,12 @@
 import { redirect } from "next/navigation";
-import { ExecutiveHero } from "@/components/dashboard/executive-hero";
+import { ExecutiveAttentionStrip } from "@/components/dashboard/executive-attention-strip";
 import { ExecutiveDecisionWorkspace } from "@/components/dashboard/executive-decision-workspace";
+import { ExecutiveHero } from "@/components/dashboard/executive-hero";
+import { ExecutiveKpiRow } from "@/components/dashboard/executive-kpi-row";
 import { GovernanceReferenceWorkspace } from "@/components/dashboard/governance-reference-workspace";
 import { ProcurementOperationsWorkspace } from "@/components/dashboard/procurement-operations-workspace";
 import { StrategicIntelligenceWorkspace } from "@/components/dashboard/strategic-intelligence-workspace";
-import { ExecutivePanel } from "@/components/executive/executive-panel";
-import { ExecutiveCommandStripCard } from "@/components/executive/workspace/executive-command-strip-card";
+import { EXECUTIVE_PAGE_CLASS } from "@/lib/design-system/executive-contract";
 import { createClient } from "@/lib/supabase/server";
 
 type Experience = "owner" | "vendor" | "consultant";
@@ -579,12 +580,6 @@ submittedQuotes > 0
 ? Math.round((awardedQuotes.length / submittedQuotes) * 100)
 : 0;
 
-const enterpriseScoreLabel = hasProcurementData
-? `${procurementHealthScore}/100`
-: "Insufficient Data";
-
-const riskIndexLabel = hasProcurementData ? `${riskIndex}/100` : "Pending";
-
 const forecastAccuracyLabel = hasProcurementData
 ? `${forecastAccuracy}%`
 : "Insufficient Data";
@@ -765,12 +760,18 @@ const executiveDecisionMetrics =
         },
         {
           label: "Win Rate",
-          value: `${vendorWinRate}%`,
-          tone: "success" as const,
+          value:
+            submittedQuotes > 0
+              ? `${vendorWinRate}%`
+              : "Insufficient Data",
+          tone: submittedQuotes > 0 ? ("success" as const) : ("risk" as const),
         },
         {
           label: "Pipeline Value",
-          value: formatMoney(pipelineValue),
+          value:
+            submittedQuotes > 0
+              ? formatMoney(pipelineValue)
+              : "Insufficient Data",
           tone: "gold" as const,
         },
       ]
@@ -805,8 +806,10 @@ const executiveDecisionMetrics =
           },
           {
             label: "Procurement Health",
-            value: `${procurementHealthScore}%`,
-            tone: "blue" as const,
+            value: hasProcurementData
+              ? `${procurementHealthScore}%`
+              : "Insufficient Data",
+            tone: hasProcurementData ? ("blue" as const) : ("risk" as const),
           },
           {
             label: "Supplier Concentration",
@@ -814,40 +817,11 @@ const executiveDecisionMetrics =
             tone: "gold" as const,
           },
           {
-            label: "Executive Signals",
-            value: String(alerts.length),
-            tone: "gold" as const,
+            label: "Decision Data Confidence",
+            value: forecastAccuracyLabel,
+            tone: "blue" as const,
           },
         ];
-
-const executiveDecisionSignals = alerts.slice(0, 4).map((alert, index) => ({
-  id: `${alert.title}-${index}`,
-  rank: index + 1,
-  kind: alert.level,
-  title: alert.title,
-  description: alert.message,
-  priorityLabel:
-    alert.level === "warning"
-      ? "Executive Review Required"
-      : alert.level === "opportunity"
-        ? "Opportunity Review"
-        : "Monitoring",
-  recommendedResponse:
-    alert.level === "warning"
-      ? "Review this signal before approving the next procurement decision."
-      : alert.level === "opportunity"
-        ? "Evaluate the commercial value and decide whether this opportunity should enter the next action cycle."
-        : "Maintain current operating discipline and continue monitoring this signal.",
-}));
-
-const executiveDecisionHealth = {
-  score: hasProcurementData ? procurementHealthScore : 0,
-  status: executiveStatus,
-  riskIndex: riskIndexLabel,
-  decisionDataConfidence: forecastAccuracyLabel,
-  awardRate: `${awardRate}%`,
-  rfqMaturity: rfqMaturityLabel,
-};
 
 const boardNarrative = hasProcurementData
 ? `Current procurement activity shows ${totalRfqs} RFQs, ${submittedQuotes} supplier quotes, ${awardedRfqs} awarded RFQs, ${formatMoney(
@@ -880,7 +854,9 @@ const strategicRecommendations = aiRecommendations.map((item, index) => ({
 const strategicPrimaryMetrics = [
   {
     label: "Awarded Spend",
-    value: formatMoney(totalAwardedSpend),
+    value: hasProcurementData
+      ? formatMoney(totalAwardedSpend)
+      : "Insufficient Data",
     insight: "Awarded procurement spend recorded across current RFQs.",
     tone: "gold" as const,
   },
@@ -896,27 +872,22 @@ const strategicPrimaryMetrics = [
 const strategicOperatingMetrics = [
   {
     title: "Award Rate",
-    value: `${awardRate}%`,
-    detail: "Awarded RFQs relative to total RFQ activity.",
-    accentClassName: "text-emerald-300",
+    value: hasProcurementData ? `${awardRate}%` : "Insufficient Data",
+    insight: "Awarded RFQs relative to total RFQ activity.",
+    tone: "success" as const,
   },
   {
     title: "Procurement Velocity",
-    value: `${procurementVelocity}%`,
-    detail: "Current award progression across the RFQ portfolio.",
-    accentClassName: "text-[#9BE8F8]",
+    value: hasProcurementData ? `${procurementVelocity}%` : "Insufficient Data",
+    insight: "Current award progression across the RFQ portfolio.",
+    tone: "blue" as const,
   },
   {
     title: "Budget Utilization",
-    value: `${budgetUtilization}%`,
-    detail: "Awarded spend relative to the current planned budget.",
-    accentClassName: "text-[#F5D77B]",
+    value: hasProcurementData ? `${budgetUtilization}%` : "Insufficient Data",
+    insight: "Awarded spend relative to the current planned budget.",
+    tone: "gold" as const,
   },
-];
-
-const strategicSupportingSignals = [
-  { title: "Supplier Concentration", value: supplierConcentration },
-  { title: "Open RFQs", value: String(openRfqs) },
 ];
 
 const readinessTone =
@@ -1049,57 +1020,69 @@ const governanceNavigation = [
   },
 ];
 
+const setupIncomplete = readinessScore < 100;
+const primaryAction = setupIncomplete
+  ? { href: "/company/settings", label: "Continue Setup" }
+  : { href: "/rfq/new", label: "Create RFQ" };
+const secondaryAction = setupIncomplete
+  ? { href: "/rfq/new", label: "Create RFQ" }
+  : { href: "/rfq", label: "Review RFQs" };
+
+const attentionItems = [
+  ...alerts
+    .filter((alert) => alert.level === "warning" || alert.level === "opportunity")
+    .map((alert, index) => ({
+      id: `alert-${alert.title}-${index}`,
+      kind: alert.level as "warning" | "opportunity",
+      title: alert.title,
+      description: alert.message,
+    })),
+  ...incompleteGovernanceTasks.map((task) => ({
+    id: task.id,
+    kind: "warning" as const,
+    title: task.title,
+    description: task.description,
+    href: task.href,
+    hrefLabel: "Resolve",
+  })),
+].slice(0, 4);
+
 return (
-<main className="min-h-screen bg-[#030712] text-white">
-
-<div className="w-full max-w-none px-5 py-6 sm:px-8 lg:px-10 lg:py-8">
+<main className="min-h-screen bg-nexus-navy text-white">
+<div className={EXECUTIVE_PAGE_CLASS}>
 <ExecutiveHero
-welcomeTitle={dashboardCopy.title}
-welcomeDescription={dashboardCopy.subtitle}
-briefLabel={dashboardCopy.briefLabel}
-companyName={currentCompany?.name || "Company Workspace"}
-readinessScore={readinessScore}
-readinessTone={readinessTone}
-continueHref="/company/settings"
-continueLabel="Continue Setup"
+  eyebrow={dashboardCopy.eyebrow}
+  welcomeTitle={dashboardCopy.title}
+  welcomeDescription={dashboardCopy.subtitle}
+  briefLabel={dashboardCopy.briefLabel}
+  companyName={currentCompany?.name || "Company Workspace"}
+  readinessScore={readinessScore}
+  readinessTone={readinessTone}
+  primaryAction={primaryAction}
+  secondaryAction={secondaryAction}
 />
 
-<ExecutivePanel
-variant="operational"
-padding="sm"
-className="mt-6"
->
-<div className="grid sm:grid-cols-3">
-<ExecutiveCommandStripCard
-  title="Enterprise Score"
-  value={enterpriseScoreLabel}
-/>
-<ExecutiveCommandStripCard title="Risk Index" value={riskIndexLabel} />
-<ExecutiveCommandStripCard
-  title="Decision Data Confidence"
-  value={forecastAccuracyLabel}
-/>
-</div>
-</ExecutivePanel>
+<ExecutiveAttentionStrip items={attentionItems} />
 
-<ExecutiveDecisionWorkspace
-  title={dashboardCopy.briefTitle}
-  summary={executiveBriefSummary}
-  recommendedAction={dashboardCopy.recommendation}
-  status={executiveDecisionStatus}
+<ExecutiveKpiRow
   metrics={executiveDecisionMetrics}
-  signals={executiveDecisionSignals}
-  health={executiveDecisionHealth}
+  insufficientData={!hasProcurementData}
 />
 
 <StrategicIntelligenceWorkspace
   narrative={boardNarrative}
   availability={strategicAvailability}
   portfolioSignals={strategicPortfolioSignals}
-  recommendations={strategicRecommendations}
   primaryMetrics={strategicPrimaryMetrics}
   operatingMetrics={strategicOperatingMetrics}
-  supportingSignals={strategicSupportingSignals}
+/>
+
+<ExecutiveDecisionWorkspace
+  title={dashboardCopy.briefTitle}
+  summary={executiveBriefSummary}
+  recommendedAction={dashboardCopy.recommendation}
+  status={executiveDecisionStatus}
+  recommendations={strategicRecommendations}
 />
 
 <ProcurementOperationsWorkspace
