@@ -15,12 +15,18 @@
   --nexus-cobalt: #1e40ff;
   --nexus-blue: #2563eb;
   --nexus-violet: #7c3aed;
-  --nexus-gold: #f5c542;
+
+  /* Live executive gold / cyan — freeze for B02–B04. */
+  --nexus-gold: #c8a646;
+  --nexus-gold-deep: #b9902f;
+  --nexus-gold-bright: #f5d77b;
+  --nexus-cyan: #2cc4e8;
+  --nexus-cyan-bright: #9be8f8;
+  --nexus-info: var(--nexus-cyan);
 
   --nexus-success: #22c55e;
   --nexus-warning: #f59e0b;
   --nexus-danger: #ef4444;
-  --nexus-info: #38bdf8;
 
   --nexus-white: #ffffff;
   --nexus-muted: #94a3b8;
@@ -37,6 +43,12 @@
   --nexus-text-muted: var(--nexus-muted);
 
   --radius-executive: 24px;
+  --radius-panel: 32px;
+
+  --layout-content-max: 1680px;
+  --layout-sidebar-width: 330px;
+  --spacing-region: 24px;
+  --spacing-region-major: 32px;
 
   --shadow-executive: 0 30px 90px rgba(0, 0, 0, 0.35);
   --shadow-inner-executive: inset 0 1px 0 rgba(255, 255, 255, 0.08);
@@ -56,6 +68,10 @@
   --color-nexus-blue: var(--nexus-blue);
   --color-nexus-violet: var(--nexus-violet);
   --color-nexus-gold: var(--nexus-gold);
+  --color-nexus-gold-deep: var(--nexus-gold-deep);
+  --color-nexus-gold-bright: var(--nexus-gold-bright);
+  --color-nexus-cyan: var(--nexus-cyan);
+  --color-nexus-cyan-bright: var(--nexus-cyan-bright);
 
   --color-nexus-success: var(--nexus-success);
   --color-nexus-warning: var(--nexus-warning);
@@ -77,6 +93,7 @@
   --color-nexus-text-muted: var(--nexus-text-muted);
 
   --radius-executive: var(--radius-executive);
+  --radius-panel: var(--radius-panel);
 
   --shadow-executive: var(--shadow-executive);
   --shadow-inner-executive: var(--shadow-inner-executive);
@@ -101,12 +118,12 @@ body {
   background:
     radial-gradient(
       circle at top left,
-      rgba(37, 99, 235, 0.22),
+      rgba(44, 196, 232, 0.18),
       transparent 34%
     ),
     radial-gradient(
       circle at top right,
-      rgba(245, 197, 66, 0.14),
+      rgba(200, 166, 70, 0.14),
       transparent 30%
     ),
     linear-gradient(
@@ -130,6 +147,10 @@ body {
   border-radius: var(--radius-executive);
 }
 
+.rounded-panel {
+  border-radius: var(--radius-panel);
+}
+
 .shadow-executive {
   box-shadow: var(--shadow-executive);
 }
@@ -139,11 +160,111 @@ body {
 }
 
 .shadow-nexus {
-  box-shadow: 0 24px 70px rgba(37, 99, 235, 0.22);
+  box-shadow: 0 24px 70px rgba(44, 196, 232, 0.18);
 }
 
 .shadow-gold {
-  box-shadow: 0 24px 70px rgba(245, 197, 66, 0.18);
+  box-shadow: 0 24px 70px rgba(200, 166, 70, 0.18);
+}
+
+/* Frozen typography — Inter via root layout. Page owns the only h1. */
+.np-type-eyebrow {
+  font-size: 0.6875rem;
+  font-weight: 800;
+  letter-spacing: 0.28em;
+  line-height: 1.2;
+  text-transform: uppercase;
+  color: var(--nexus-gold);
+}
+
+.np-type-h1 {
+  font-size: 1.875rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+  color: var(--nexus-text-primary);
+}
+
+.np-type-h2 {
+  font-size: 1.5rem;
+  font-weight: 800;
+  line-height: 1.2;
+  color: var(--nexus-text-primary);
+}
+
+.np-type-body {
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.75rem;
+  color: var(--nexus-text-secondary);
+}
+
+.np-type-meta {
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.25rem;
+  color: var(--nexus-text-muted);
+}
+
+.np-type-kpi {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  line-height: 1;
+  color: var(--nexus-text-primary);
+}
+
+@media (min-width: 640px) {
+  .np-type-h1 {
+    font-size: 2.25rem;
+  }
+
+  .np-type-h2 {
+    font-size: 1.875rem;
+  }
+}
+
+@media (min-width: 1280px) {
+  .np-type-h1 {
+    font-size: 3rem;
+  }
+}
+
+.np-page {
+  width: 100%;
+  max-width: var(--layout-content-max);
+  margin-inline: auto;
+  padding: 1.5rem 1rem;
+}
+
+@media (min-width: 640px) {
+  .np-page {
+    padding-inline: 2rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .np-page {
+    padding: 2rem 2.5rem;
+  }
+}
+
+.np-region {
+  margin-top: var(--spacing-region);
+}
+
+.np-region-major {
+  margin-top: var(--spacing-region-major);
+}
+
+.np-focus-gold:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--nexus-gold) 70%, transparent);
+  outline-offset: 2px;
+}
+
+.np-focus-cyan:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--nexus-cyan) 40%, transparent);
+  outline-offset: 2px;
 }
 
 @media (prefers-reduced-motion: reduce) {

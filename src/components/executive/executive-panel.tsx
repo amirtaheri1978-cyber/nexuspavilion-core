@@ -14,20 +14,23 @@ export type ExecutivePanelTone =
   | "risk"
   | "success";
 
+export type ExecutivePanelRadius = "panel" | "tile";
+
 export type ExecutivePanelProps = ComponentPropsWithoutRef<"section"> & {
   variant?: ExecutivePanelVariant;
   padding?: ExecutivePanelPadding;
   tone?: ExecutivePanelTone;
+  radius?: ExecutivePanelRadius;
 };
 
 const basePanelClass =
-  "relative isolate overflow-hidden rounded-executive transition duration-300 before:pointer-events-none before:absolute before:inset-0 before:bg-gradient-to-b before:from-white/[0.04] before:to-transparent";
+  "relative isolate overflow-hidden transition duration-300 before:pointer-events-none before:absolute before:inset-0 before:bg-gradient-to-b before:from-white/[0.04] before:to-transparent";
 
 const variantClasses: Record<ExecutivePanelVariant, string> = {
   executive:
-    "border border-nexus-border bg-nexus-dark bg-nexus-radial text-nexus-white shadow-executive",
+    "border border-white/10 bg-nexus-dark bg-nexus-radial text-nexus-white shadow-executive",
   boardroom:
-    "border border-white/10 bg-[#07111F] text-nexus-white shadow-executive",
+    "border border-white/10 bg-nexus-navy text-nexus-white shadow-executive",
   operational:
     "border border-white/10 bg-white/[0.045] text-nexus-white shadow-inner-executive backdrop-blur-xl",
 };
@@ -41,10 +44,15 @@ const paddingClasses: Record<ExecutivePanelPadding, string> = {
 
 const toneClasses: Record<ExecutivePanelTone, string> = {
   neutral: "",
-  blue: "ring-1 ring-[#2CC4E8]/20",
-  gold: "ring-1 ring-[#C8A646]/25",
+  blue: "ring-1 ring-nexus-cyan/20",
+  gold: "ring-1 ring-nexus-gold/25",
   risk: "ring-1 ring-red-500/25",
   success: "ring-1 ring-emerald-500/25",
+};
+
+const radiusClasses: Record<ExecutivePanelRadius, string> = {
+  panel: "rounded-panel",
+  tile: "rounded-executive",
 };
 
 export function ExecutivePanel({
@@ -53,10 +61,12 @@ export function ExecutivePanel({
   variant = "executive",
   padding = "md",
   tone = "neutral",
+  radius = "panel",
   ...sectionProps
 }: ExecutivePanelProps) {
   const resolvedClassName = [
     basePanelClass,
+    radiusClasses[radius],
     variantClasses[variant],
     paddingClasses[padding],
     toneClasses[tone],

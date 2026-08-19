@@ -20,8 +20,8 @@ export type ExecutiveMetricCardProps = {
 
 const toneClasses: Record<ExecutiveMetricCardTone, string> = {
   neutral: "text-nexus-text-primary",
-  blue: "text-blue-300",
-  gold: "text-yellow-300",
+  blue: "text-nexus-cyan-bright",
+  gold: "text-nexus-gold-bright",
   risk: "text-red-300",
   success: "text-emerald-300",
 };
@@ -46,7 +46,7 @@ export function ExecutiveMetricCard({
     normalizedValue.length <= 16 && !/\s/.test(normalizedValue);
 
   const resolvedValueClassName = [
-    "mt-3 min-w-0 font-semibold leading-none tracking-tight tabular-nums",
+    "np-type-kpi mt-3 min-w-0 tabular-nums",
     isCompactValue
       ? "whitespace-nowrap text-[clamp(1.35rem,1.6vw,1.875rem)]"
       : "break-words text-2xl leading-tight [overflow-wrap:anywhere] sm:text-3xl",
@@ -63,6 +63,7 @@ export function ExecutiveMetricCard({
       aria-label={`${label}: ${value}`}
       className={panelClassName}
       padding="sm"
+      radius="tile"
       tone={tone}
     >
       <p className="flex min-h-8 items-end break-words text-xs font-semibold uppercase leading-4 tracking-[0.14em] text-nexus-text-muted [overflow-wrap:anywhere]">
@@ -85,7 +86,7 @@ export function ExecutiveMetricCard({
 
       {impact ? (
         <p
-          className={`${impactSpacingClassName} break-words rounded-2xl border border-nexus-border-subtle bg-white/[0.045] px-3 py-2 text-xs font-medium leading-5 text-nexus-text-primary [overflow-wrap:anywhere]`}
+          className={`${impactSpacingClassName} break-words rounded-executive border border-nexus-border-subtle bg-white/[0.045] px-3 py-2 text-xs font-medium leading-5 text-nexus-text-primary [overflow-wrap:anywhere]`}
         >
           {impact}
         </p>

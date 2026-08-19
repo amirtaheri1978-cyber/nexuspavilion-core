@@ -1,13 +1,8 @@
 import type { ReactNode } from "react";
 
-type ExecutiveBadgeTone =
-  | "neutral"
-  | "blue"
-  | "gold"
-  | "risk"
-  | "success"
-  | "warning"
-  | "board";
+import { EXECUTIVE_BADGE_TONES } from "@/lib/design-system/executive-contract";
+
+export type ExecutiveBadgeTone = (typeof EXECUTIVE_BADGE_TONES)[number];
 
 type ExecutiveBadgeSize = "sm" | "md";
 
@@ -18,15 +13,39 @@ type ExecutiveBadgeProps = {
   className?: string;
 };
 
-const toneClasses: Record<ExecutiveBadgeTone, string> = {
+type CanonicalBadgeTone =
+  | "neutral"
+  | "blue"
+  | "gold"
+  | "risk"
+  | "success"
+  | "warning"
+  | "board";
+
+const toneAliases: Record<ExecutiveBadgeTone, CanonicalBadgeTone> = {
+  neutral: "neutral",
+  locked: "neutral",
+  blue: "blue",
+  gold: "gold",
+  recommended: "gold",
+  risk: "risk",
+  success: "success",
+  awarded: "success",
+  warning: "warning",
+  pending: "warning",
+  board: "board",
+  live: "board",
+};
+
+const toneClasses: Record<CanonicalBadgeTone, string> = {
   neutral:
     "border-nexus-border-subtle bg-white/[0.06] text-nexus-text-secondary",
-  blue: "border-blue-400/20 bg-blue-500/10 text-blue-300",
-  gold: "border-yellow-400/25 bg-yellow-500/10 text-yellow-300",
+  blue: "border-nexus-cyan/25 bg-nexus-cyan/10 text-nexus-cyan-bright",
+  gold: "border-nexus-gold/25 bg-nexus-gold/10 text-nexus-gold-bright",
   risk: "border-red-400/25 bg-red-500/10 text-red-300",
   success: "border-emerald-400/25 bg-emerald-500/10 text-emerald-300",
   warning: "border-orange-400/25 bg-orange-500/10 text-orange-300",
-  board: "border-yellow-300/30 bg-yellow-400/10 text-nexus-gold",
+  board: "border-nexus-gold/30 bg-nexus-gold/10 text-nexus-gold",
 };
 
 const sizeClasses: Record<ExecutiveBadgeSize, string> = {
@@ -40,13 +59,15 @@ export function ExecutiveBadge({
   size = "sm",
   className = "",
 }: ExecutiveBadgeProps) {
+  const canonicalTone = toneAliases[tone];
+
   return (
     <span
       className={[
         "inline-flex shrink-0 items-center whitespace-nowrap rounded-full border",
         "font-semibold uppercase leading-none tracking-[0.12em]",
         "transition-colors duration-200",
-        toneClasses[tone],
+        toneClasses[canonicalTone],
         sizeClasses[size],
         className,
       ]
