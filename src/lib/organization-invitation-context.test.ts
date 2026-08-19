@@ -35,6 +35,12 @@ const acceptRoute = readFileSync(
   resolve(process.cwd(), "src/app/api/company-invitations/accept/route.ts"),
   "utf8",
 );
+const professionalIdentityPath =
+  "supabase/migrations/20260827000000_enable_professional_identity_primitives.sql";
+const professionalIdentitySql = readFileSync(
+  resolve(process.cwd(), professionalIdentityPath),
+  "utf8",
+).replace(/\r\n/g, "\n");
 
 describe("organization invitation token context RPC", () => {
   it("is a read-only SECURITY DEFINER token context command", () => {
@@ -154,5 +160,35 @@ describe("accept_organization_invitation authenticated boundary", () => {
     expect(acceptRoute).toContain("await supabase.auth.getUser()");
     expect(acceptRoute).toContain('"accept_organization_invitation"');
     expect(acceptRoute).toContain("`/login?next=${encodeURIComponent(");
+  });
+
+  it("keeps Task 17 accept bounds after the optional job-title parameter is added", () => {
+    const acceptBody = professionalIdentitySql.slice(
+      professionalIdentitySql.indexOf(
+        "create or replace function public.accept_organization_invitation(",
+      ),
+      professionalIdentitySql.indexOf(
+        "comment on function public.accept_organization_invitation(text, text)",
+      ),
+    );
+    const signature = acceptBody.slice(0, acceptBody.indexOf("returns jsonb"));
+
+    expect(signature).toContain("invitation_token text");
+    expect(signature).toContain("p_job_title text default null");
+    expect(signature).not.toContain("p_company_id");
+    expect(signature).not.toContain("p_user_id");
+    expect(acceptBody).toContain("security definer");
+    expect(acceptBody).toContain("actor_user_id := auth.uid()");
+    expect(acceptBody).toContain("'error_code', 'UNAUTHENTICATED'");
+    expect(acceptBody).toContain("'error_code', 'RECIPIENT_MISMATCH'");
+    expect(professionalIdentitySql).toContain(
+      "grant execute\non function public.accept_organization_invitation(text, text)\nto authenticated;",
+    );
+    expect(professionalIdentitySql).not.toContain(
+      "grant execute\non function public.accept_organization_invitation(text, text)\nto anon;",
+    );
+    expect(acceptRoute).toContain("invitation_token: token");
+    expect(acceptRoute).not.toContain("p_company_id");
+    expect(acceptRoute).not.toContain("p_user_id");
   });
 });
