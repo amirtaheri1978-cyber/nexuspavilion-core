@@ -6,12 +6,17 @@ import { ExecutiveMetricCard } from "@/components/executive/executive-metric-car
 import { ExecutivePanel } from "@/components/executive/executive-panel";
 import { RFQOwnerQuotes } from "@/components/rfq-workspace/rfq-owner-quotes";
 import { RFQSupplierQuotes } from "@/components/rfq-workspace/rfq-supplier-quotes";
+import {
+  EXECUTIVE_CTA_PRIMARY,
+  EXECUTIVE_CTA_SECONDARY,
+} from "@/lib/design-system/executive-contract";
 
 type RFQOwnerQuotesProps = ComponentProps<typeof RFQOwnerQuotes>;
 type RFQSupplierQuotesProps = ComponentProps<typeof RFQSupplierQuotes>;
 
 type RFQQuoteWorkspaceProps = {
   rfqSlug: string;
+  rfqTitle: string;
   isOwner: boolean;
   isOpen: boolean;
   canSubmitQuote: boolean;
@@ -26,6 +31,7 @@ type RFQQuoteWorkspaceProps = {
 
 export function RFQQuoteWorkspace({
   rfqSlug,
+  rfqTitle,
   isOwner,
   isOpen,
   canSubmitQuote,
@@ -86,7 +92,7 @@ export function RFQQuoteWorkspace({
             {canSubmitQuote ? (
               <Link
                 href={`/rfq/${rfqSlug}/submit`}
-                className="inline-flex min-h-12 items-center justify-center rounded-full border border-white/15 bg-white/[0.06] px-6 py-3 text-center text-sm font-black text-nexus-white transition duration-200 hover:border-white/25 hover:bg-white/[0.1] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-nexus-gold/70 focus-visible:ring-offset-2 focus-visible:ring-offset-nexus-navy"
+                className={EXECUTIVE_CTA_SECONDARY}
               >
                 Submit Quote
               </Link>
@@ -95,7 +101,7 @@ export function RFQQuoteWorkspace({
             {isOwner && commercialEvaluationUnlocked ? (
               <Link
                 href={`/rfq/${rfqSlug}/compare`}
-                className="inline-flex min-h-12 items-center justify-center rounded-full border border-nexus-gold/30 bg-nexus-gold/10 px-6 py-3 text-center text-sm font-black text-nexus-gold transition duration-200 hover:border-nexus-gold/40 hover:bg-nexus-gold/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-nexus-gold/70 focus-visible:ring-offset-2 focus-visible:ring-offset-nexus-navy"
+                className={EXECUTIVE_CTA_PRIMARY}
               >
                 Launch Comparative Evaluation
               </Link>
@@ -174,6 +180,7 @@ export function RFQQuoteWorkspace({
         ) : isOwner ? (
           <div className="mt-8">
             <RFQOwnerQuotes
+              rfqTitle={rfqTitle}
               quotes={scoredQuotes}
               recommendedQuoteId={recommendedQuoteId}
               lowestAmount={lowestAmount}

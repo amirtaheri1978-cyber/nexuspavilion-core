@@ -1,110 +1,176 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
+
+import { ExecutiveConfirmDialog } from "@/components/executive/executive-confirm-dialog";
+import {
+  EXECUTIVE_FOCUS_GOLD,
+} from "@/lib/design-system/executive-contract";
 
 type AwardContractButtonProps = {
-quoteId: string;
-disabled?: boolean;
+  quoteId: string;
+  disabled?: boolean;
+  rfqTitle?: string;
+  supplierLabel?: string;
+  amountLabel?: string;
 };
 
 type AwardContractResponse = {
-success?: boolean;
-error?: string;
-redirectTo?: string;
-rfq?: {
-slug?: string | null;
+  success?: boolean;
+  error?: string;
+  redirectTo?: string;
+  rfq?: {
+    slug?: string | null;
+  };
+  warnings?: {
+    notification?: string | null;
+    audit?: string | null;
+  };
 };
-warnings?: {
-notification?: string | null;
-audit?: string | null;
-};
-};
+
+function toWorkspaceError(message: string) {
+  if (
+    /postgres|supabase|permission denied|column |relation |stack|undefined/i.test(
+      message,
+    )
+  ) {
+    return "The award could not be completed. Please try again.";
+  }
+
+  return message;
+}
 
 export default function AwardContractButton({
-quoteId,
-disabled = false,
+  quoteId,
+  disabled = false,
+  rfqTitle = "this RFQ",
+  supplierLabel = "the selected supplier",
+  amountLabel = "the quoted amount",
 }: AwardContractButtonProps) {
-const router = useRouter();
+  const router = useRouter();
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
 
-const [loading, setLoading] = useState(false);
-const [error, setError] = useState("");
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-async function handleAward() {
-if (loading || disabled) return;
+  function closeDialog() {
+    setOpen(false);
+    requestAnimationFrame(() => {
+      triggerRef.current?.focus();
+    });
+  }
 
-const confirmed = window.confirm(
-"Award this contract? This will reject all other quotes for this RFQ and mark the RFQ as awarded."
-);
+  async function handleAward() {
+    if (loading || disabled) return;
 
-if (!confirmed) return;
+    setLoading(true);
+    setError("");
 
-setLoading(true);
-setError("");
+    try {
+      const response = await fetch("/api/award-contract", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          quoteId,
+        }),
+      });
 
-try {
-const response = await fetch("/api/award-contract", {
-method: "POST",
-headers: {
-"Content-Type": "application/json",
-},
-body: JSON.stringify({
-quoteId,
-}),
-});
+      const data = (await response.json()) as AwardContractResponse;
 
-const data = (await response.json()) as AwardContractResponse;
+      if (!response.ok) {
+        setError(toWorkspaceError(data.error || "Failed to award contract."));
+        return;
+      }
 
-if (!response.ok) {
-setError(data.error || "Failed to award contract.");
-return;
-}
+      if (data.warnings?.notification) {
+        console.warn("Award notification warning:", data.warnings.notification);
+      }
 
-if (data.warnings?.notification) {
-console.warn("Award notification warning:", data.warnings.notification);
-}
+      if (data.warnings?.audit) {
+        console.warn("Award audit warning:", data.warnings.audit);
+      }
 
-if (data.warnings?.audit) {
-console.warn("Award audit warning:", data.warnings.audit);
-}
+      setOpen(false);
 
-if (data.redirectTo) {
-router.push(data.redirectTo);
-router.refresh();
-return;
-}
+      if (data.redirectTo) {
+        router.push(data.redirectTo);
+        router.refresh();
+        return;
+      }
 
-if (data.rfq?.slug) {
-router.push(`/rfq/${data.rfq.slug}`);
-router.refresh();
-return;
-}
+      if (data.rfq?.slug) {
+        router.push(`/rfq/${data.rfq.slug}`);
+        router.refresh();
+        return;
+      }
 
-router.refresh();
-} catch (awardError) {
-console.error(awardError);
-setError("Failed to award contract.");
-} finally {
-setLoading(false);
-}
-}
+      router.refresh();
+    } catch (awardError) {
+      console.error(awardError);
+      setError("Failed to award contract.");
+    } finally {
+      setLoading(false);
+    }
+  }
 
-return (
-<div className="flex flex-col items-start gap-2">
-<button
-type="button"
-onClick={handleAward}
-disabled={loading || disabled}
-className="rounded-full bg-green-700 px-5 py-2 text-sm font-bold text-white transition hover:bg-green-800 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500"
->
-{loading ? "Awarding..." : "Award Contract"}
-</button>
+  return (
+    <div className="flex flex-col items-start gap-2">
+      <button
+        ref={triggerRef}
+        type="button"
+        onClick={() => {
+          if (loading || disabled) return;
+          setError("");
+          setOpen(true);
+        }}
+        disabled={loading || disabled}
+        className={`inline-flex min-h-11 items-center justify-center rounded-2xl border border-nexus-gold/30 bg-nexus-gold/15 px-5 py-2.5 text-sm font-black text-nexus-gold-bright transition-colors hover:bg-nexus-gold/20 disabled:cursor-not-allowed disabled:border-white/10 disabled:bg-white/5 disabled:text-nexus-text-muted ${EXECUTIVE_FOCUS_GOLD}`}
+      >
+        {loading ? "Awarding..." : "Award contract"}
+      </button>
 
-{error ? (
-<p className="max-w-[220px] text-xs font-bold leading-5 text-red-600">
-{error}
-</p>
-) : null}
-</div>
-);
+      {error ? (
+        <p role="alert" className="max-w-[240px] np-type-meta text-red-300">
+          {error}
+        </p>
+      ) : null}
+
+      <ExecutiveConfirmDialog
+        open={open}
+        title="Confirm contract award"
+        confirmLabel="Confirm award"
+        busy={loading}
+        onClose={closeDialog}
+        onConfirm={handleAward}
+        description={
+          <div className="space-y-3">
+            <p>
+              Awarding this quote will reject all other quotes for this RFQ and
+              mark the RFQ as awarded.
+            </p>
+            <dl className="space-y-2 rounded-executive border border-white/10 bg-white/[0.04] p-4">
+              <div>
+                <dt className="np-type-meta">RFQ</dt>
+                <dd className="np-type-body mt-1 text-white">{rfqTitle}</dd>
+              </div>
+              <div>
+                <dt className="np-type-meta">Supplier</dt>
+                <dd className="np-type-body mt-1 text-white">{supplierLabel}</dd>
+              </div>
+              <div>
+                <dt className="np-type-meta">Quoted amount</dt>
+                <dd className="np-type-kpi mt-1 text-lg text-nexus-gold-bright">
+                  {amountLabel}
+                </dd>
+              </div>
+            </dl>
+          </div>
+        }
+      />
+    </div>
+  );
 }

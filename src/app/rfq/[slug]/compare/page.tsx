@@ -1,7 +1,14 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import AwardContractButton from "@/components/award-contract-button";
+import { ExecutiveBadge } from "@/components/executive/executive-badge";
+import { ExecutiveMetricCard } from "@/components/executive/executive-metric-card";
+import { ExecutivePanel } from "@/components/executive/executive-panel";
+import { RfqQuoteComparison } from "@/components/rfq-workspace/rfq-quote-comparison";
+import {
+  EXECUTIVE_FOCUS_CYAN,
+  EXECUTIVE_PAGE_CLASS,
+} from "@/lib/design-system/executive-contract";
 import { createClient } from "@/lib/supabase/server";
 
 type PageProps = {
@@ -203,25 +210,6 @@ if (score >= 60) return "Medium Risk";
 return "High Risk";
 }
 
-function getRiskClass(risk: string) {
-if (risk === "Low Risk") return "bg-green-100 text-green-700";
-if (risk === "Medium Risk") return "bg-yellow-100 text-yellow-700";
-if (risk === "High Risk") return "bg-red-100 text-red-700";
-return "bg-slate-100 text-slate-600";
-}
-
-function getDecisionClass(decision: string | null) {
-if (decision === "awarded") return "bg-green-100 text-green-700";
-if (decision === "rejected") return "bg-red-100 text-red-700";
-return "bg-yellow-100 text-yellow-700";
-}
-
-function getScoreClass(score: number) {
-if (score >= 90) return "text-green-700";
-if (score >= 75) return "text-orange-700";
-return "text-red-700";
-}
-
 function getValidityScore(validityDays: number) {
 if (validityDays >= 120) return 100;
 if (validityDays >= 90) return 92;
@@ -375,9 +363,18 @@ const rfq = rfqData as RFQ | null;
 
 if (!rfq) {
 return (
-<main className="flex min-h-screen items-center justify-center bg-[#f6f6f3]">
-<p className="text-xl font-semibold text-black">RFQ not found</p>
-</main>
+<div className="min-h-full bg-nexus-navy text-white">
+<div className={EXECUTIVE_PAGE_CLASS}>
+<ExecutivePanel padding="lg" tone="risk" className="text-center">
+<p className="np-type-eyebrow">RFQ comparison</p>
+<h1 className="np-type-h1 mt-3">RFQ not found</h1>
+<p className="np-type-body mt-3">This comparison workspace could not be found.</p>
+<Link href="/rfq" className={`mt-6 inline-flex min-h-11 items-center text-sm font-black text-nexus-cyan-bright ${EXECUTIVE_FOCUS_CYAN}`}>
+Back to RFQ marketplace
+</Link>
+</ExecutivePanel>
+</div>
+</div>
 );
 }
 
@@ -410,6 +407,25 @@ const { data: quotes } = await supabase
 .order("amount", { ascending: true });
 
 const quoteList = (quotes ?? []) as Quote[];
+const supplierCompanyIds = [
+  ...new Set(
+    quoteList
+      .map((quote) => quote.company_id)
+      .filter((companyId): companyId is string => Boolean(companyId)),
+  ),
+];
+const { data: supplierCompanyData } =
+  supplierCompanyIds.length > 0
+    ? await supabase
+        .from("company_directory")
+        .select("id, name")
+        .in("id", supplierCompanyIds)
+    : { data: [] };
+const supplierNames = new Map(
+  ((supplierCompanyData ?? []) as { id: string; name: string | null }[]).map(
+    (company) => [company.id, company.name || "Named supplier"],
+  ),
+);
 const budget = Number(rfq.budget || 0);
 
 const amounts = commercialEvaluationUnlocked
@@ -590,531 +606,279 @@ Math.max(potentialSavings, 0)
 : "Comparable to average bid",
 ]
 : [];
-return (
-<main className="min-h-screen bg-[#f6f6f3] px-6 py-16">
-<div className="mx-auto max-w-7xl">
-<Link href={`/rfq/${rfq.slug}`} className="text-sm font-bold text-black/60">
-← Back to RFQ
-</Link>
 
-<section className="mt-6 rounded-[36px] border border-black/5 bg-white p-10">
-<p className="text-xs font-black uppercase tracking-[0.3em] text-orange-500">
-Procurement Intelligence
-</p>
+const comparisonQuotes = scoredQuotes.map((quote) => {
+  const isLowest =
+    lowestAmount !== null && quote.amountNumber === lowestAmount;
+  const isHighest =
+    highestAmount !== null &&
+    highestAmount !== lowestAmount &&
+    quote.amountNumber === highestAmount;
 
-<h1 className="mt-3 text-5xl font-black leading-tight text-slate-950">
-{rfq.title}
-</h1>
+  return {
+    id: quote.id,
+    supplierLabel:
+      (quote.company_id && supplierNames.get(quote.company_id)) ||
+      `Supplier quote #${quote.rank}`,
+    amountLabel: formatMoney(quote.amountNumber),
+    amountNumber: quote.amountNumber,
+    timeline: quote.timeline,
+    validityDays: Number(quote.validity_days || 30),
+    decision: quote.decision,
+    rank: quote.rank,
+    priceScore: quote.priceScore,
+    timelineScore: quote.timelineScore,
+    performanceScore: quote.performanceScore,
+    riskScore: quote.riskScore,
+    commercialScore: quote.commercialScore,
+    technicalScore: quote.technicalScore,
+    evaluationScore: quote.evaluationScore,
+    awardProbability: quote.awardProbability,
+    riskLevel: quote.riskLevel,
+    budgetVarianceLabel: formatMoney(quote.budgetVariance),
+    lowestBidVarianceLabel: formatMoney(quote.lowestBidVariance),
+    isRecommended: recommendedQuote?.id === quote.id,
+    isLowest,
+    isHighest,
+    isBelowAverage: averageBid > 0 && quote.amountNumber <= averageBid,
+    canAward: !hasAwardedContract && quote.decision !== "awarded",
+  };
+});
 
-<p className="mt-4 max-w-4xl text-sm leading-7 text-slate-600">
-Compare supplier quotes using price competitiveness, delivery
-timeline, supplier performance signals, risk scoring, award
-probability, and executive decision intelligence.
-</p>
-
-{blindBiddingEnabled ? (
-<div className="mt-6 rounded-3xl border border-orange-200 bg-orange-50 p-6">
-<p className="text-xs font-black uppercase tracking-[0.25em] text-orange-600">
-Blind Bidding Control
-</p>
-
-<p className="mt-3 text-sm font-bold leading-7 text-orange-800">
-{getBlindBiddingMessage(rfq)}
-</p>
-
-<div className="mt-5 grid gap-4 md:grid-cols-3">
-<LockMetric title="RFQ Deadline" value={formatDateTime(rfq.deadline)} />
-<LockMetric
-title="Submissions"
-value={`${quoteList.length} received`}
-/>
-<LockMetric
-title="Commercial Opening"
-value={commercialEvaluationUnlocked ? "Unlocked" : "Locked"}
-/>
-</div>
-</div>
-) : null}
-</section>
-
-<section className="mt-8 grid gap-6 md:grid-cols-4">
-<InsightCard
-title="Recommended Bid"
-value={
-commercialEvaluationUnlocked && recommendedQuote
-? formatMoney(recommendedQuote.amountNumber)
-: commercialEvaluationUnlocked
-? "No bids"
-: "Locked"
-}
-detail={
-commercialEvaluationUnlocked
-? "Best overall AI ranking"
-: "Hidden until deadline"
-}
-/>
-
-<InsightCard
-title="Award Probability"
-value={
-commercialEvaluationUnlocked && recommendedQuote
-? `${recommendedQuote.awardProbability}%`
-: "Locked"
-}
-detail={
-commercialEvaluationUnlocked
-? "Predicted award strength"
-: "Available after commercial opening"
-}
-/>
-
-<InsightCard
-title="Risk Level"
-value={
-commercialEvaluationUnlocked && recommendedQuote
-? recommendedQuote.riskLevel
-: "Locked"
-}
-detail={
-commercialEvaluationUnlocked
-? "Procurement risk signal"
-: "Evaluation locked"
-}
-/>
-
-<InsightCard
-title="Potential Savings"
-value={
-commercialEvaluationUnlocked
-? formatMoney(Math.max(potentialSavings, 0))
-: "Locked"
-}
-detail={
-commercialEvaluationUnlocked
-? "Compared to average bid"
-: "Available after deadline"
-}
-/>
-</section>
-
-<section className="mt-8 rounded-[36px] border border-black/5 bg-white p-8 shadow-sm">
-<p className="text-xs font-black uppercase tracking-[0.3em] text-orange-500">
-Executive Benchmark Engine
-</p>
-
-<div className="mt-5 grid gap-8 lg:grid-cols-[1fr_0.9fr]">
-<div>
-<h2 className="text-4xl font-black leading-tight text-slate-950">
-Budget, market, and award benchmark signals.
-</h2>
-
-<p className="mt-4 max-w-3xl text-sm font-semibold leading-7 text-slate-600">
-Nexus Pavilion benchmarks the recommended award path against submitted
-bid distribution, average bid position, approved budget, and final
-evaluation score. No synthetic market data is used.
-</p>
-
-<div className="mt-6 flex flex-wrap gap-3">
-<BenchmarkBadge>{benchmarkPosition}</BenchmarkBadge>
-<BenchmarkBadge>{budgetPosition}</BenchmarkBadge>
-<BenchmarkBadge>{bidSpreadPercent}% Bid Spread</BenchmarkBadge>
-</div>
-</div>
-
-<div className="grid gap-4 sm:grid-cols-2">
-<BenchmarkMetric
-title="Competitiveness"
-value={
-commercialEvaluationUnlocked && recommendedQuote
-? `${competitivenessIndex}/100`
-: "Locked"
-}
-/>
-
-<BenchmarkMetric
-title="Average Bid"
-value={
-commercialEvaluationUnlocked && averageBid
-? formatMoney(averageBid)
-: "Locked"
-}
-/>
-
-<BenchmarkMetric
-title="Budget Position"
-value={commercialEvaluationUnlocked ? budgetPosition : "Locked"}
-/>
-
-<BenchmarkMetric
-title="Bid Spread"
-value={
-commercialEvaluationUnlocked ? `${bidSpreadPercent}%` : "Locked"
-}
-/>
-</div>
-</div>
-</section>
-
-<section className="mt-8 overflow-hidden rounded-[36px] border border-black/5 bg-slate-950 text-white">
-<div className="grid gap-8 p-8 lg:grid-cols-[1.2fr_0.8fr]">
-<div>
-<p className="text-xs font-black uppercase tracking-[0.3em] text-orange-400">
-Executive Award Recommendation
-</p>
-
-<h2 className="mt-4 text-4xl font-black">
-{commercialEvaluationUnlocked && recommendedQuote
-? `Recommended Supplier Rank #${recommendedQuote.rank}`
-: commercialEvaluationUnlocked
-? "Awaiting supplier quotes"
-: "Commercial Evaluation Locked"}
-</h2>
-
-<p className="mt-4 max-w-3xl text-sm font-semibold leading-7 text-white/65">
-{executiveSummary}
-</p>
-
-<div className="mt-8 grid gap-4 md:grid-cols-4">
-<DarkMetric
-title="Confidence"
-value={
-commercialEvaluationUnlocked && recommendedQuote
-? `${confidenceScore}%`
-: "Locked"
-}
-/>
-
-<DarkMetric
-title="Evaluation"
-value={
-commercialEvaluationUnlocked && recommendedQuote
-? `${recommendedQuote.evaluationScore}/100`
-: "Locked"
-}
-/>
-
-<DarkMetric
-title="Recommended"
-value={
-commercialEvaluationUnlocked && recommendedQuote
-? formatMoney(recommendedQuote.amountNumber)
-: "Locked"
-}
-/>
-
-<DarkMetric
-title="Risk"
-value={
-commercialEvaluationUnlocked && recommendedQuote
-? recommendedQuote.riskLevel
-: "Locked"
-}
-/>
-</div>
-</div>
-
-<div className="rounded-3xl bg-white/10 p-6">
-<p className="text-xs font-black uppercase tracking-[0.25em] text-white/40">
-Decision Drivers
-</p>
-
-<div className="mt-4 space-y-3">
-{aiReasons.length > 0 ? (
-aiReasons.map((reason) => (
-<div
-key={reason}
-className="rounded-2xl bg-white px-4 py-3 text-sm font-black text-slate-800"
->
-✓ {reason}
-</div>
-))
-) : (
-<p className="text-sm font-bold leading-6 text-white/60">
-{commercialEvaluationUnlocked
-? "Supplier quotes are required before Nexus Pavilion can generate an executive award recommendation."
-: "Decision drivers remain locked until commercial opening. This preserves blind bidding integrity and prevents premature price visibility."}
-</p>
-)}
-</div>
-</div>
-</div>
-</section>
-
-{!commercialEvaluationUnlocked ? (
-<div className="mt-8 overflow-hidden rounded-[28px] border border-black/5 bg-white">
-<div className="grid grid-cols-4 bg-black px-6 py-4 text-xs font-black uppercase tracking-[0.15em] text-white">
-<div>Submissions</div>
-<div>Commercial Data</div>
-<div>Evaluation Matrix</div>
-<div>Status</div>
-</div>
-
-<div className="grid grid-cols-4 items-center border-t border-black/5 px-6 py-8">
-<div>
-<p className="text-4xl font-black text-black">
-{quoteList.length}
-</p>
-
-<p className="mt-1 text-xs font-bold text-black/50">
-Quotes submitted
-</p>
-</div>
-
-<div className="text-sm font-black text-black/60">
-Pricing locked
-</div>
-
-<div className="text-sm font-black text-black/60">
-Not opened
-</div>
-
-<div>
-<span className="rounded-full bg-orange-100 px-4 py-2 text-xs font-black text-orange-700">
-Blind Bidding Active
-</span>
-</div>
-</div>
-</div>
-) : (
-<div className="mt-8 overflow-hidden rounded-[28px] border border-black/5 bg-white">
-<div className="grid grid-cols-10 bg-black px-6 py-4 text-xs font-black uppercase tracking-[0.15em] text-white">
-<div>Rank</div>
-<div>Amount</div>
-<div>Timeline</div>
-<div>Validity</div>
-<div>Decision</div>
-<div>Evaluation</div>
-<div>Probability</div>
-<div>Risk</div>
-<div>Variance</div>
-<div>Action</div>
-</div>
-
-{scoredQuotes.map((quote) => {
-const isLowest =
-lowestAmount !== null && quote.amountNumber === lowestAmount;
-const isHighest =
-highestAmount !== null &&
-highestAmount !== lowestAmount &&
-quote.amountNumber === highestAmount;
-const isRecommended = recommendedQuote?.id === quote.id;
-const isBelowAverage =
-averageBid > 0 && quote.amountNumber <= averageBid;
+const rfqTitle = rfq.title || "Untitled RFQ";
 
 return (
-<div
-key={quote.id}
-className="grid grid-cols-10 items-center border-t border-black/5 px-6 py-6"
->
-<div>
-<p className="text-2xl font-black text-black">
-#{quote.rank}
-</p>
+  <div className="min-h-full bg-nexus-navy text-white">
+    <div className={EXECUTIVE_PAGE_CLASS}>
+      <Link
+        href={`/rfq/${rfq.slug}`}
+        className={`inline-flex min-h-11 items-center text-sm font-black text-nexus-cyan-bright ${EXECUTIVE_FOCUS_CYAN}`}
+      >
+        Back to RFQ
+      </Link>
 
-{isRecommended ? (
-<Badge className="bg-orange-100 text-orange-700">
-Recommended
-</Badge>
-) : null}
-</div>
+      <ExecutivePanel variant="executive" padding="lg" tone="gold" className="np-region">
+        <p className="np-type-eyebrow">Quote comparison</p>
+        <h1 className="np-type-h1 mt-4">{rfqTitle}</h1>
+        <p className="np-type-body mt-4 max-w-4xl">
+          Compare submitted quotes using the recorded commercial values and the
+          existing evaluation scores. Recommendation is decision evidence, not a
+          guaranteed outcome.
+        </p>
+        {blindBiddingEnabled ? (
+          <div className="mt-6 rounded-executive border border-nexus-gold/20 bg-nexus-gold/[0.08] p-5">
+            <ExecutiveBadge tone="warning">
+              {commercialEvaluationUnlocked ? "Commercial opening complete" : "Blind bidding active"}
+            </ExecutiveBadge>
+            <p className="np-type-body mt-3">{getBlindBiddingMessage(rfq)}</p>
+            <div className="mt-5 grid gap-4 sm:grid-cols-3">
+              <ExecutiveMetricCard label="RFQ deadline" value={formatDateTime(rfq.deadline)} />
+              <ExecutiveMetricCard label="Submissions" value={`${quoteList.length} received`} />
+              <ExecutiveMetricCard
+                label="Commercial opening"
+                value={commercialEvaluationUnlocked ? "Unlocked" : "Locked"}
+                tone={commercialEvaluationUnlocked ? "success" : "gold"}
+              />
+            </div>
+          </div>
+        ) : null}
+      </ExecutivePanel>
 
-<div className="text-xl font-black text-black">
-{formatMoney(quote.amountNumber)}
-</div>
+      <section className="np-region" aria-labelledby="compare-position-heading">
+        <p className="np-type-eyebrow">Position</p>
+        <h2 id="compare-position-heading" className="np-type-h2 mt-3">
+          Current award position
+        </h2>
+        <div className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <ExecutiveMetricCard
+            label="Recommended bid"
+            value={
+              commercialEvaluationUnlocked && recommendedQuote
+                ? formatMoney(recommendedQuote.amountNumber)
+                : commercialEvaluationUnlocked
+                  ? "No bids"
+                  : "Locked"
+            }
+            insight={
+              commercialEvaluationUnlocked
+                ? "Highest current evaluation score"
+                : "Hidden until deadline"
+            }
+            tone="gold"
+          />
+          <ExecutiveMetricCard
+            label="Award probability"
+            value={
+              commercialEvaluationUnlocked && recommendedQuote
+                ? `${recommendedQuote.awardProbability}%`
+                : "Locked"
+            }
+            insight="Predicted award strength from recorded scores"
+            tone="blue"
+          />
+          <ExecutiveMetricCard
+            label="Risk level"
+            value={
+              commercialEvaluationUnlocked && recommendedQuote
+                ? recommendedQuote.riskLevel
+                : "Locked"
+            }
+            insight="Procurement risk signal"
+            tone={
+              recommendedQuote?.riskLevel === "High Risk"
+                ? "risk"
+                : recommendedQuote?.riskLevel === "Low Risk"
+                  ? "success"
+                  : "neutral"
+            }
+          />
+          <ExecutiveMetricCard
+            label="Potential savings"
+            value={
+              commercialEvaluationUnlocked
+                ? formatMoney(Math.max(potentialSavings, 0))
+                : "Locked"
+            }
+            insight="Compared to average bid"
+            tone="gold"
+          />
+        </div>
+      </section>
 
-<div className="font-medium text-black/70">
-{quote.timeline || "N/A"}
-</div>
+      <ExecutivePanel variant="boardroom" padding="lg" className="np-region-major">
+        <p className="np-type-eyebrow">Benchmarks</p>
+        <h2 className="np-type-h2 mt-3">Budget and bid distribution</h2>
+        <p className="np-type-body mt-3 max-w-4xl">
+          Benchmarks use submitted bid distribution, average bid position, and
+          approved budget. No synthetic market data is used.
+        </p>
+        <div className="mt-5 flex flex-wrap gap-2">
+          <ExecutiveBadge tone="neutral">{benchmarkPosition}</ExecutiveBadge>
+          <ExecutiveBadge tone="neutral">{budgetPosition}</ExecutiveBadge>
+          <ExecutiveBadge tone="blue">{bidSpreadPercent}% bid spread</ExecutiveBadge>
+        </div>
+        <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <ExecutiveMetricCard
+            label="Competitiveness"
+            value={
+              commercialEvaluationUnlocked && recommendedQuote
+                ? `${competitivenessIndex}/100`
+                : "Locked"
+            }
+          />
+          <ExecutiveMetricCard
+            label="Average bid"
+            value={
+              commercialEvaluationUnlocked && averageBid
+                ? formatMoney(averageBid)
+                : "Locked"
+            }
+          />
+          <ExecutiveMetricCard
+            label="Budget position"
+            value={commercialEvaluationUnlocked ? budgetPosition : "Locked"}
+          />
+          <ExecutiveMetricCard
+            label="Bid spread"
+            value={commercialEvaluationUnlocked ? `${bidSpreadPercent}%` : "Locked"}
+          />
+        </div>
+      </ExecutivePanel>
 
-<div className="font-medium text-black/70">
-{quote.validity_days ? `${quote.validity_days} days` : "30 days"}
-</div>
+      <ExecutivePanel variant="operational" padding="lg" className="np-region-major">
+        <div className="flex flex-col items-start gap-4 sm:flex-row sm:justify-between">
+          <div>
+            <p className="np-type-eyebrow">Next action</p>
+            <h2 className="np-type-h2 mt-3">
+              {commercialEvaluationUnlocked && recommendedQuote
+                ? `Recommended supplier rank #${recommendedQuote.rank}`
+                : commercialEvaluationUnlocked
+                  ? "Awaiting supplier quotes"
+                  : "Commercial evaluation locked"}
+            </h2>
+            <p className="np-type-body mt-4 max-w-4xl">{executiveSummary}</p>
+          </div>
+          <ExecutiveBadge tone={hasAwardedContract ? "awarded" : commercialEvaluationUnlocked ? "gold" : "locked"}>
+            {hasAwardedContract
+              ? "Awarded"
+              : commercialEvaluationUnlocked
+                ? "Decision ready"
+                : "Locked"}
+          </ExecutiveBadge>
+        </div>
+        <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <ExecutiveMetricCard
+            label="Confidence"
+            value={
+              commercialEvaluationUnlocked && recommendedQuote
+                ? `${confidenceScore}%`
+                : "Locked"
+            }
+          />
+          <ExecutiveMetricCard
+            label="Evaluation"
+            value={
+              commercialEvaluationUnlocked && recommendedQuote
+                ? `${recommendedQuote.evaluationScore}/100`
+                : "Locked"
+            }
+          />
+          <ExecutiveMetricCard
+            label="Recommended"
+            value={
+              commercialEvaluationUnlocked && recommendedQuote
+                ? formatMoney(recommendedQuote.amountNumber)
+                : "Locked"
+            }
+            tone="gold"
+          />
+          <ExecutiveMetricCard
+            label="Risk"
+            value={
+              commercialEvaluationUnlocked && recommendedQuote
+                ? recommendedQuote.riskLevel
+                : "Locked"
+            }
+          />
+        </div>
+        <div className="mt-6 rounded-executive border border-white/10 bg-black/20 p-5">
+          <p className="np-type-meta">Decision drivers</p>
+          {aiReasons.length > 0 ? (
+            <ul className="mt-4 space-y-2">
+              {aiReasons.map((reason) => (
+                <li key={reason} className="np-type-body">
+                  {reason}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="np-type-body mt-3">
+              {commercialEvaluationUnlocked
+                ? "Supplier quotes are required before an executive award recommendation can be generated."
+                : "Decision drivers remain locked until commercial opening."}
+            </p>
+          )}
+        </div>
+      </ExecutivePanel>
 
-<div>
-<span
-className={`inline-flex rounded-full px-3 py-1 text-xs font-bold ${getDecisionClass(
-quote.decision
-)}`}
->
-{quote.decision || "pending"}
-</span>
-</div>
-
-<div>
-<div
-className={`text-lg font-black ${getScoreClass(
-quote.evaluationScore
-)}`}
->
-{quote.evaluationScore}/100
-</div>
-
-<div className="mt-1 text-xs text-black/40">
-C {quote.commercialScore} · T {quote.technicalScore} · R{" "}
-{quote.riskScore}
-</div>
-</div>
-
-<div className="text-lg font-black text-slate-950">
-{quote.awardProbability}%
-</div>
-
-<div>
-<span
-className={`rounded-full px-3 py-1 text-xs font-black ${getRiskClass(
-quote.riskLevel
-)}`}
->
-{quote.riskLevel}
-</span>
-</div>
-
-<div>
-<p className="text-xs font-bold text-black/50">
-Budget: {formatMoney(quote.budgetVariance)}
-</p>
-
-<p className="mt-1 text-xs font-bold text-black/50">
-Lowest: {formatMoney(quote.lowestBidVariance)}
-</p>
-
-<div className="mt-2 space-y-1">
-{isLowest ? (
-<Badge className="bg-emerald-100 text-emerald-700">
-Lowest Bid
-</Badge>
-) : null}
-
-{isBelowAverage ? (
-<Badge className="bg-purple-100 text-purple-700">
-Below Average
-</Badge>
-) : null}
-
-{quote.timelineScore >= 84 ? (
-<Badge className="bg-blue-100 text-blue-700">
-Strong Timeline
-</Badge>
-) : null}
-
-{isHighest ? (
-<Badge className="bg-red-100 text-red-700">
-Highest Bid
-</Badge>
-) : null}
-</div>
-</div>
-
-<div>
-{quote.decision === "awarded" ? (
-<span className="rounded-full bg-green-100 px-4 py-2 text-sm font-bold text-green-700">
-Contract Awarded
-</span>
-) : hasAwardedContract ? (
-<span className="rounded-full bg-slate-100 px-4 py-2 text-sm font-bold text-slate-500">
-Award Closed
-</span>
-) : (
-<AwardContractButton quoteId={quote.id} />
-)}
-</div>
-</div>
-);
-})}
-
-{scoredQuotes.length === 0 ? (
-<div className="px-6 py-10 text-center text-black/50">
-No supplier quotes submitted yet.
-</div>
-) : null}
-</div>
-)}
-</div>
-</main>
-);
-}
-
-function LockMetric({ title, value }: { title: string; value: string }) {
-return (
-<div className="rounded-2xl bg-white p-4">
-<p className="text-xs font-black uppercase tracking-[0.2em] text-orange-400">
-{title}
-</p>
-
-<p className="mt-2 text-lg font-black text-slate-950">{value}</p>
-</div>
-);
-}
-
-function Badge({
-children,
-className,
-}: {
-children: React.ReactNode;
-className: string;
-}) {
-return (
-<span className={`block rounded-full px-3 py-1 text-xs font-bold ${className}`}>
-{children}
-</span>
-);
-}
-
-function InsightCard({
-title,
-value,
-detail,
-}: {
-title: string;
-value: string;
-detail: string;
-}) {
-return (
-<div className="rounded-3xl border border-black/5 bg-white p-7">
-<p className="text-xs font-bold uppercase tracking-[0.2em] text-black/40">
-{title}
-</p>
-
-<p className="mt-3 text-3xl font-black text-black">{value}</p>
-
-<p className="mt-2 text-sm text-black/50">{detail}</p>
-</div>
-);
-}
-
-function DarkMetric({ title, value }: { title: string; value: string }) {
-return (
-<div className="rounded-3xl bg-white/10 p-5">
-<p className="text-xs font-black uppercase tracking-[0.2em] text-white/40">
-{title}
-</p>
-
-<p className="mt-2 text-2xl font-black text-white">{value}</p>
-</div>
-);
-}
-function BenchmarkBadge({ children }: { children: React.ReactNode }) {
-return (
-<span className="rounded-full bg-slate-100 px-4 py-2 text-xs font-black uppercase tracking-[0.15em] text-slate-700">
-{children}
-</span>
-);
-}
-
-function BenchmarkMetric({
-title,
-value,
-}: {
-title: string;
-value: string;
-}) {
-return (
-<div className="rounded-3xl bg-slate-50 p-5">
-<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
-{title}
-</p>
-
-<p className="mt-2 text-xl font-black text-slate-950">{value}</p>
-</div>
+      {!commercialEvaluationUnlocked ? (
+        <ExecutivePanel variant="operational" padding="lg" className="np-region">
+          <p className="np-type-eyebrow">Participation</p>
+          <h2 className="np-type-h2 mt-3">Commercial data remains sealed</h2>
+          <p className="np-type-body mt-3">
+            {quoteList.length} quote{quoteList.length === 1 ? "" : "s"} received.
+            Pricing, ranking, and award controls remain locked until the RFQ
+            deadline.
+          </p>
+        </ExecutivePanel>
+      ) : (
+        <RfqQuoteComparison
+          rfqTitle={rfqTitle}
+          quotes={comparisonQuotes}
+          awarded={hasAwardedContract}
+        />
+      )}
+    </div>
+  </div>
 );
 }

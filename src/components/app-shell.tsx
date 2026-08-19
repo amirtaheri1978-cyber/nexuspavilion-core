@@ -53,7 +53,9 @@ export default function AppShell({
    * footer so users remain focused on account access, invitation acceptance,
    * and workspace enrollment.
    */
-  if (isAuthenticationRoute || isOnboardingRoute) {
+  const isDevPreviewRoute = matchesRoute(pathname, ["/dev"]);
+
+  if (isAuthenticationRoute || isOnboardingRoute || isDevPreviewRoute) {
     return (
       <div className="min-h-screen bg-[#07111F] text-white">
         {children}

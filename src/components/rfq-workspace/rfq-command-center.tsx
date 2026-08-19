@@ -1,7 +1,11 @@
 import Link from "next/link";
 
+import { ExecutiveBadge } from "@/components/executive/executive-badge";
+import { ExecutivePanel } from "@/components/executive/executive-panel";
 import { ExecutiveCommandMetric } from "@/components/executive/workspace/executive-command-metric";
-import { ExecutiveCommandStripCard } from "@/components/executive/workspace/executive-command-strip-card";
+import {
+  EXECUTIVE_FOCUS_CYAN,
+} from "@/lib/design-system/executive-contract";
 
 type RFQCommandMetric = {
   title: string;
@@ -23,7 +27,8 @@ type RFQCommandCenterAward = {
 type RFQCommandCenterProps = {
   backHref?: string;
   statusLabel: string;
-  statusClassName: string;
+  statusTone?: "success" | "warning" | "neutral" | "live" | "awarded" | "locked";
+  statusClassName?: string;
   classificationBadges: string[];
   title: string;
   description: string;
@@ -37,7 +42,7 @@ type RFQCommandCenterProps = {
 export function RFQCommandCenter({
   backHref = "/rfq",
   statusLabel,
-  statusClassName,
+  statusTone = "live",
   classificationBadges,
   title,
   description,
@@ -51,111 +56,79 @@ export function RFQCommandCenter({
     <>
       <Link
         href={backHref}
-        className="text-sm font-semibold text-nexus-muted transition hover:text-nexus-white"
+        className={`inline-flex min-h-11 items-center text-sm font-black text-nexus-cyan-bright ${EXECUTIVE_FOCUS_CYAN}`}
       >
-       ← Return to RFQ Marketplace
+        Return to RFQ marketplace
       </Link>
 
-      <section className="mt-8 overflow-hidden rounded-[40px] border border-white/10 bg-slate-950 text-white shadow-[0_30px_100px_rgba(2,6,23,0.28)]">
-        <div className="relative overflow-hidden p-6 sm:p-8 lg:p-10">
-          <div className="absolute right-0 top-0 h-72 w-72 rounded-full bg-cyan-400/10 blur-3xl" />
-          <div className="absolute bottom-0 left-0 h-72 w-72 rounded-full bg-orange-400/10 blur-3xl" />
-
-          <div className="relative grid gap-10 lg:grid-cols-[1.25fr_0.75fr]">
-            <div>
-              <p className="text-xs font-black uppercase tracking-[0.35em] text-[#C8A646]">
-                Procurement Command Center
-              </p>
-
-              <div className="mt-4 flex flex-wrap items-center gap-3">
-                <span
-                  className={`rounded-full px-4 py-2 text-sm font-black ${statusClassName}`}
-                >
-                  {statusLabel}
-                </span>
-
-                {classificationBadges.map((badge) => (
-                  <RFQCommandBadge key={badge}>{badge}</RFQCommandBadge>
-                ))}
-              </div>
-
-              <h1 className="mt-6 text-4xl font-black leading-tight sm:text-5xl lg:text-6xl">
-                {title}
-              </h1>
-
-              <p className="mt-5 max-w-4xl text-sm font-semibold leading-7 text-slate-300">
-                {description}
-              </p>
-
-              <div className="mt-8 grid gap-4 md:grid-cols-3">
-                {commandMetrics.map((metric) => (
-                  <ExecutiveCommandMetric
-                    key={metric.title}
-                    title={metric.title}
-                    value={metric.value}
-                    detail={metric.detail}
-                    accentClassName={metric.accentClassName}
-                  />
-                ))}
-              </div>
+      <ExecutivePanel
+        variant="executive"
+        padding="lg"
+        tone="gold"
+        className="np-region"
+        aria-labelledby="rfq-command-heading"
+      >
+        <div className="grid gap-10 lg:grid-cols-[1.25fr_0.75fr]">
+          <div>
+            <p className="np-type-eyebrow">Procurement command center</p>
+            <div className="mt-4 flex flex-wrap items-center gap-3">
+              <ExecutiveBadge tone={statusTone} size="md">
+                {statusLabel}
+              </ExecutiveBadge>
+              {classificationBadges.map((badge) => (
+                <ExecutiveBadge key={badge} tone="neutral">
+                  {badge}
+                </ExecutiveBadge>
+              ))}
             </div>
-
-            <div className="relative rounded-[32px] border border-white/10 bg-white/10 p-6 backdrop-blur">
-              <p className="text-xs font-black uppercase tracking-[0.3em] text-cyan-300">
-                Executive Brief
-              </p>
-
-              <h2 className="mt-4 text-2xl font-black text-white">
-  Executive Procurement Summary
-</h2>
-
-              <p className="mt-4 text-sm font-semibold leading-7 text-slate-300">
-                {executiveBrief}
-              </p>
-
-              <div className="mt-6 rounded-3xl border border-white/10 bg-slate-950/60 p-5">
-                <p className="text-xs font-black uppercase tracking-[0.25em] text-[#C8A646]">
-  Recommended Executive Action
-</p>
-
-                <p className="mt-3 text-sm font-bold leading-6 text-white">
-                  {nextBestAction}
-                </p>
-              </div>
-
-              {award ? (
-                <div className="mt-4 rounded-3xl border border-emerald-400/20 bg-emerald-400/10 p-5">
-                  <p className="text-xs font-black uppercase tracking-[0.25em] text-emerald-300">
-                    {award.label}
-                  </p>
-
-                  <p className="mt-3 text-sm font-bold text-white">
-                    {award.value}
-                  </p>
-                </div>
-              ) : null}
+            <h1 id="rfq-command-heading" className="np-type-h1 mt-6">
+              {title}
+            </h1>
+            <p className="np-type-body mt-5 max-w-4xl">{description}</p>
+            <div className="mt-8 grid gap-4 md:grid-cols-3">
+              {commandMetrics.map((metric) => (
+                <ExecutiveCommandMetric
+                  key={metric.title}
+                  title={metric.title}
+                  value={metric.value}
+                  detail={metric.detail}
+                  accentClassName={metric.accentClassName}
+                />
+              ))}
             </div>
           </div>
-        </div>
 
-        <div className="grid border-t border-white/10 bg-white/[0.03] md:grid-cols-2 xl:grid-cols-6">
-          {stripItems.map((item) => (
-            <ExecutiveCommandStripCard
-              key={item.title}
-              title={item.title}
-              value={item.value}
-            />
-          ))}
+          <div className="rounded-executive border border-white/10 bg-white/[0.04] p-6">
+            <p className="np-type-meta text-nexus-cyan-bright">Executive brief</p>
+            <h2 className="np-type-h3 mt-3">Executive procurement summary</h2>
+            <p className="np-type-body mt-4">{executiveBrief}</p>
+            <div className="mt-6 rounded-executive border border-nexus-gold/20 bg-nexus-gold/[0.08] p-5">
+              <p className="np-type-meta text-nexus-gold-bright">
+                Recommended executive action
+              </p>
+              <p className="np-type-body mt-3">{nextBestAction}</p>
+            </div>
+            {award ? (
+              <div className="mt-4 rounded-executive border border-emerald-400/20 bg-emerald-400/10 p-5">
+                <ExecutiveBadge tone="awarded">{award.label}</ExecutiveBadge>
+                <p className="np-type-body mt-3 text-white">{award.value}</p>
+              </div>
+            ) : null}
+          </div>
         </div>
-      </section>
+      </ExecutivePanel>
+
+      <ul className="np-region grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+        {stripItems.map((item) => (
+          <li
+            key={item.title}
+            className="min-w-0 rounded-executive border border-white/10 bg-white/[0.035] px-4 py-3"
+          >
+            <p className="np-type-meta">{item.title}</p>
+            <p className="np-type-kpi mt-2 break-words text-lg">{item.value}</p>
+          </li>
+        ))}
+      </ul>
     </>
-  );
-}
-
-function RFQCommandBadge({ children }: { children: string }) {
-  return (
-    <span className="rounded-full bg-white/10 px-4 py-2 text-xs font-black uppercase tracking-[0.15em] text-white">
-      {children}
-    </span>
   );
 }

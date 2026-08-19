@@ -50,7 +50,6 @@ import {
   getBlindBiddingMessage,
   getFrameworkLabel,
   getProcurementFitMessage,
-  getRFQStatusClass,
   getRFQStatusLabel,
   getScopeLabel,
   getSourcingLabel,
@@ -61,6 +60,7 @@ import {
 } from "@/lib/procurement/rfq-metadata";
 
 import { ExecutivePanel } from "@/components/executive/executive-panel";
+import { EXECUTIVE_FOCUS_CYAN, EXECUTIVE_PAGE_CLASS } from "@/lib/design-system/executive-contract";
 import { RFQCommandCenter } from "@/components/rfq-workspace/rfq-command-center";
 import { RFQProcurementHealth } from "@/components/rfq-workspace/rfq-procurement-health";
 import { RFQExecutiveRiskMatrix } from "@/components/rfq-workspace/rfq-executive-risk-matrix";
@@ -199,24 +199,20 @@ const rfq = rfqData as RFQ | null;
 
 if (!rfq) {
 return (
-<main className="flex min-h-screen items-center justify-center bg-[#061426] px-6 text-white">
-<ExecutivePanel padding="lg" tone="risk" className="max-w-xl text-center">
-<p className="text-xs font-black uppercase tracking-[0.25em] text-red-300">
-RFQ Not Found
-</p>
-
-<h1 className="mt-3 text-3xl font-black text-nexus-white">
-This RFQ workspace could not be found.
-</h1>
-
+<div className="min-h-full bg-nexus-navy text-white">
+<div className={EXECUTIVE_PAGE_CLASS}>
+<ExecutivePanel padding="lg" tone="risk" className="text-center">
+<p className="np-type-eyebrow">RFQ workspace</p>
+<h1 className="np-type-h1 mt-3">This RFQ workspace could not be found.</h1>
 <Link
 href="/rfq"
-className="mt-6 inline-flex rounded-full border border-white/10 bg-white/10 px-6 py-3 text-sm font-black text-white transition hover:bg-white/15"
+className={`mt-6 inline-flex min-h-11 items-center text-sm font-black text-nexus-cyan-bright ${EXECUTIVE_FOCUS_CYAN}`}
 >
-Back to RFQ Marketplace
+Back to RFQ marketplace
 </Link>
 </ExecutivePanel>
-</main>
+</div>
+</div>
 );
 }
 
@@ -497,17 +493,21 @@ supplierRecommendationInput,
 });
 
 return (
-<main className="min-h-screen bg-[#061426] px-4 py-8 text-white sm:px-6 lg:px-8 lg:py-10">
-<div className="mx-auto w-full max-w-[1680px]">
+<div className="min-h-full bg-nexus-navy text-white">
+<div className={EXECUTIVE_PAGE_CLASS}>
 <RFQCommandCenter
   statusLabel={
     deadlinePassed
       ? "Submission Closed"
       : getRFQStatusLabel(rfq.status)
   }
-  statusClassName={getRFQStatusClass(
-    deadlinePassed ? "closed" : rfq.status
-  )}
+  statusTone={
+    rfqStatus === "awarded"
+      ? "awarded"
+      : deadlinePassed || rfqStatus === "closed"
+        ? "locked"
+        : "live"
+  }
   classificationBadges={[
     getScopeLabel(rfq.procurement_scope),
     getSourcingLabel(rfq.sourcing_method),
@@ -781,6 +781,7 @@ governance workflow.
 
 <RFQQuoteWorkspace
   rfqSlug={rfq.slug}
+  rfqTitle={rfq.title || "Untitled RFQ"}
   isOwner={isOwner}
   isOpen={isOpen}
   canSubmitQuote={canSubmitQuote}
@@ -795,6 +796,6 @@ governance workflow.
 
 
 </div>
-</main>
+</div>
 );
 }
