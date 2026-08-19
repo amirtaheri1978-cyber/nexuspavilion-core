@@ -28,6 +28,7 @@ describe("workspace bootstrap create route", () => {
     expect(route).toContain('"bootstrap_owned_company_workspace"');
     expect(route).toContain("p_company_id: company.id");
     expect(route).toContain("p_profile_role: accountConfig.profileRole");
+    expect(route).toContain("p_job_title: jobTitle || null");
     expect(route).toContain("bootstrapPayload?.success !== true");
     expect(route).toContain("success: true");
     expect(route).not.toContain(".upsert({");
@@ -57,6 +58,9 @@ describe("workspace bootstrap create route", () => {
     const recoverIndex = postHandler.indexOf(
       'companyPlan.action === "recover"',
     );
+    const nameSyncIndex = postHandler.indexOf(
+      "syncCurrentUserProfessionalNames",
+    );
     const companyInsertIndex = postHandler.indexOf('status: "verified"');
     const bootstrapIndex = postHandler.indexOf(
       '"bootstrap_owned_company_workspace"',
@@ -65,7 +69,8 @@ describe("workspace bootstrap create route", () => {
     expect(ownedLookupIndex).toBeGreaterThan(-1);
     expect(planIndex).toBeGreaterThan(ownedLookupIndex);
     expect(recoverIndex).toBeGreaterThan(planIndex);
-    expect(companyInsertIndex).toBeGreaterThan(recoverIndex);
+    expect(nameSyncIndex).toBeGreaterThan(planIndex);
+    expect(companyInsertIndex).toBeGreaterThan(nameSyncIndex);
     expect(bootstrapIndex).toBeGreaterThan(companyInsertIndex);
     expect(postHandler).toContain(
       'companyPlan.action === "already_connected"',

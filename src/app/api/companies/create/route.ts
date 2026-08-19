@@ -8,6 +8,14 @@ import {
   WORKSPACE_RECOVERY_REQUIRED_ERROR,
   planOwnedCompanyResolution,
 } from "@/lib/auth/workspace-bootstrap";
+import {
+  PROFESSIONAL_NAME_SYNC_ERROR,
+  normalizeJobTitle,
+  normalizeProfessionalName,
+  syncCurrentUserProfessionalNames,
+  validateFounderJobTitle,
+  validateProfessionalName,
+} from "@/lib/auth/professional-names";
 import { companyWelcomeEmail } from "@/lib/email/templates/company-welcome-email";
 import { sendEmail } from "@/lib/email/send-email";
 import { createClient } from "@/lib/supabase/server";
@@ -23,6 +31,9 @@ type RequestBody = {
   location?: unknown;
   accountType?: unknown;
   networkRole?: unknown;
+  firstName?: unknown;
+  lastName?: unknown;
+  jobTitle?: unknown;
 };
 
 const COMPANY_NAME_MIN_LENGTH = 2;
@@ -209,6 +220,9 @@ export async function POST(request: Request) {
     const location = normalizeText(body.location);
     const rawAccountType = normalizeText(body.accountType);
     const rawNetworkRole = normalizeText(body.networkRole);
+    const firstName = normalizeProfessionalName(body.firstName);
+    const lastName = normalizeProfessionalName(body.lastName);
+    const jobTitle = normalizeJobTitle(body.jobTitle);
 
     const nameValidationError = validateRequiredText({
       value: name,
@@ -234,6 +248,43 @@ export async function POST(request: Request) {
     if (locationValidationError) {
       return NextResponse.json(
         { error: locationValidationError },
+        { status: 400 },
+      );
+    }
+
+    const firstNameLengthError = validateProfessionalName(
+      firstName,
+      "First name",
+      { required: false },
+    );
+
+    if (firstNameLengthError) {
+      return NextResponse.json(
+        { error: firstNameLengthError },
+        { status: 400 },
+      );
+    }
+
+    const lastNameLengthError = validateProfessionalName(
+      lastName,
+      "Last name",
+      { required: false },
+    );
+
+    if (lastNameLengthError) {
+      return NextResponse.json(
+        { error: lastNameLengthError },
+        { status: 400 },
+      );
+    }
+
+    const jobTitleLengthError = validateFounderJobTitle(jobTitle, {
+      required: false,
+    });
+
+    if (jobTitleLengthError) {
+      return NextResponse.json(
+        { error: jobTitleLengthError },
         { status: 400 },
       );
     }
@@ -360,6 +411,40 @@ export async function POST(request: Request) {
       );
     }
 
+    if (companyPlan.action === "create") {
+      const requiredJobTitleError = validateFounderJobTitle(jobTitle, {
+        required: true,
+      });
+
+      if (requiredJobTitleError) {
+        return NextResponse.json(
+          { error: requiredJobTitleError },
+          { status: 400 },
+        );
+      }
+    }
+
+    const nameSyncResult = await syncCurrentUserProfessionalNames(
+      supabase,
+      {
+        firstName: firstName || undefined,
+        lastName: lastName || undefined,
+        requireNames: companyPlan.action === "create",
+      },
+    );
+
+    if (!nameSyncResult.ok) {
+      return NextResponse.json(
+        { error: nameSyncResult.error || PROFESSIONAL_NAME_SYNC_ERROR },
+        {
+          status:
+            nameSyncResult.error === PROFESSIONAL_NAME_SYNC_ERROR
+              ? 500
+              : 400,
+        },
+      );
+    }
+
     const slug = `${baseSlug}-${crypto.randomUUID().slice(0, 8)}`;
     let company: {
       id: string;
@@ -447,6 +532,7 @@ export async function POST(request: Request) {
         {
           p_company_id: company.id,
           p_profile_role: accountConfig.profileRole,
+          p_job_title: jobTitle || null,
         },
       );
 

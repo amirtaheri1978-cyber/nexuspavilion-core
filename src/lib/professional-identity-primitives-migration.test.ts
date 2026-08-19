@@ -214,6 +214,7 @@ describe("NP-MASTER-22-B04-1 professional identity primitives", () => {
     expect(bootstrapBody).toContain("'error_code', 'JOB_TITLE_TOO_LONG'");
     expect(createRoute).toContain("p_company_id: company.id");
     expect(createRoute).toContain("p_profile_role: accountConfig.profileRole");
+    expect(createRoute).toContain("p_job_title: jobTitle || null");
     expect(createRoute).not.toContain("p_user_id");
   });
 

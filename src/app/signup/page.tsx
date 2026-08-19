@@ -2,9 +2,19 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useId, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
+import {
+  EXECUTIVE_CTA_PRIMARY,
+  EXECUTIVE_PAGE_CLASS,
+} from "@/lib/design-system/executive-contract";
+import {
+  PROFESSIONAL_NAME_MAX_LENGTH,
+  normalizeProfessionalName,
+  syncCurrentUserProfessionalNames,
+  validateProfessionalName,
+} from "@/lib/auth/professional-names";
 import { getFriendlySignupError } from "@/lib/auth/signup-error";
 import { createClient } from "@/lib/supabase/client";
 
@@ -32,7 +42,7 @@ const setupSteps = [
 ];
 
 const inputClassName =
-  "h-[60px] w-full rounded-2xl border border-white/10 bg-[#07111F] px-5 text-sm font-semibold text-white outline-none transition placeholder:text-slate-500 focus:border-[#C8A646] focus:bg-[#081827] focus:ring-4 focus:ring-[#C8A646]/15 disabled:cursor-not-allowed disabled:opacity-60";
+  "h-[60px] w-full rounded-2xl border border-white/10 bg-[#07111F] px-5 text-sm font-semibold text-white outline-none transition placeholder:text-slate-500 focus:border-[#C8A646] focus:bg-[#081827] focus:ring-4 focus:ring-[#C8A646]/15 focus-visible:ring-2 focus-visible:ring-[#C8A646]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#07111F] disabled:cursor-not-allowed disabled:opacity-60";
 
 function normalizeEmail(value: string) {
   return value.trim().toLowerCase();
@@ -84,9 +94,24 @@ export default function SignupPage() {
   const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
 
+  const firstNameId = useId();
+  const lastNameId = useId();
+  const emailId = useId();
+  const passwordId = useId();
+  const confirmPasswordId = useId();
+  const firstNameErrorId = useId();
+  const lastNameErrorId = useId();
+  const emailErrorId = useId();
+  const passwordErrorId = useId();
+  const confirmPasswordErrorId = useId();
+  const formErrorId = useId();
+
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [attemptedSubmit, setAttemptedSubmit] = useState(false);
 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] =
@@ -95,7 +120,19 @@ export default function SignupPage() {
   const [responseMessage, setResponseMessage] =
     useState<SignupResponseMessage | null>(null);
 
+  const normalizedFirstName = normalizeProfessionalName(firstName);
+  const normalizedLastName = normalizeProfessionalName(lastName);
   const normalizedEmail = normalizeEmail(email);
+  const firstNameError = validateProfessionalName(
+    normalizedFirstName,
+    "First name",
+    { required: attemptedSubmit || firstName.length > 0 },
+  );
+  const lastNameError = validateProfessionalName(
+    normalizedLastName,
+    "Last name",
+    { required: attemptedSubmit || lastName.length > 0 },
+  );
 
   const passwordRules = [
     {
@@ -125,7 +162,16 @@ export default function SignupPage() {
   const passwordsMatch =
     password.length > 0 && password === confirmPassword;
 
+  const namesAreReady =
+    !validateProfessionalName(normalizedFirstName, "First name", {
+      required: true,
+    }) &&
+    !validateProfessionalName(normalizedLastName, "Last name", {
+      required: true,
+    });
+
   const formIsReady =
+    namesAreReady &&
     normalizedEmail.length > 0 &&
     passwordIsReady &&
     passwordsMatch;
@@ -137,8 +183,34 @@ export default function SignupPage() {
 
     if (loading) return;
 
+    setAttemptedSubmit(true);
     setLoading(true);
     setResponseMessage(null);
+
+    const submittedFirstName = normalizeProfessionalName(firstName);
+    const submittedLastName = normalizeProfessionalName(lastName);
+    const submittedFirstNameError = validateProfessionalName(
+      submittedFirstName,
+      "First name",
+      { required: true },
+    );
+    const submittedLastNameError = validateProfessionalName(
+      submittedLastName,
+      "Last name",
+      { required: true },
+    );
+
+    if (submittedFirstNameError || submittedLastNameError) {
+      setLoading(false);
+      setResponseMessage({
+        type: "error",
+        text:
+          submittedFirstNameError ||
+          submittedLastNameError ||
+          "Please enter your first and last name.",
+      });
+      return;
+    }
 
     if (!passwordIsReady) {
       setLoading(false);
@@ -170,6 +242,10 @@ export default function SignupPage() {
         password,
         options: {
           emailRedirectTo: confirmationRedirect.toString(),
+          data: {
+            first_name: submittedFirstName,
+            last_name: submittedLastName,
+          },
         },
       });
 
@@ -195,6 +271,12 @@ export default function SignupPage() {
         return;
       }
 
+      await syncCurrentUserProfessionalNames(supabase, {
+        firstName: submittedFirstName,
+        lastName: submittedLastName,
+        requireNames: true,
+      });
+
       router.push("/create-company");
       router.refresh();
     } catch {
@@ -208,12 +290,12 @@ export default function SignupPage() {
   }
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-[#061426] px-4 py-6 text-white sm:px-6 lg:px-10">
+    <main className="relative min-h-screen overflow-hidden bg-[#061426] text-white">
       <div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(circle_at_top_left,rgba(44,196,232,0.18),transparent_34%),radial-gradient(circle_at_top_right,rgba(200,166,70,0.15),transparent_30%),linear-gradient(180deg,#061426_0%,#07111F_45%,#020617_100%)]" />
 
       <div className="pointer-events-none fixed inset-0 -z-10 bg-[linear-gradient(120deg,rgba(255,255,255,0.05),transparent_34%,rgba(200,166,70,0.05)_68%,transparent)]" />
 
-      <section className="mx-auto grid min-h-[calc(100vh-3rem)] w-full max-w-[1680px] items-center gap-8 lg:grid-cols-[0.82fr_1.18fr] xl:gap-10">
+      <section className={`${EXECUTIVE_PAGE_CLASS} grid min-h-[calc(100vh-3rem)] items-center gap-8 lg:grid-cols-[0.82fr_1.18fr] xl:gap-10`}>
         <aside className="rounded-[38px] border border-white/10 bg-white/[0.045] p-7 shadow-[0_32px_110px_rgba(0,0,0,0.42)] backdrop-blur-2xl sm:p-9 lg:p-11 xl:p-12">
           <BrandTile />
 
@@ -291,38 +373,151 @@ export default function SignupPage() {
           <form
             onSubmit={handleSignup}
             className="mt-10 space-y-6"
+            noValidate
           >
-            <label className="block">
-              <span className="mb-2 block text-xs font-black uppercase tracking-[0.22em] text-slate-400">
+            <div className="grid gap-6 sm:grid-cols-2">
+              <div>
+                <label
+                  htmlFor={firstNameId}
+                  className="mb-2 block text-xs font-black uppercase tracking-[0.22em] text-slate-400"
+                >
+                  First name
+                </label>
+
+                <input
+                  id={firstNameId}
+                  type="text"
+                  name="firstName"
+                  required
+                  autoComplete="given-name"
+                  maxLength={PROFESSIONAL_NAME_MAX_LENGTH}
+                  placeholder="Alex"
+                  value={firstName}
+                  onChange={(event) => setFirstName(event.target.value)}
+                  disabled={loading}
+                  aria-invalid={Boolean(firstNameError)}
+                  aria-describedby={
+                    firstNameError ? firstNameErrorId : undefined
+                  }
+                  className={inputClassName}
+                />
+
+                {firstNameError ? (
+                  <p
+                    id={firstNameErrorId}
+                    role="alert"
+                    className="mt-2 text-xs font-bold leading-5 text-red-200"
+                  >
+                    {firstNameError}
+                  </p>
+                ) : null}
+              </div>
+
+              <div>
+                <label
+                  htmlFor={lastNameId}
+                  className="mb-2 block text-xs font-black uppercase tracking-[0.22em] text-slate-400"
+                >
+                  Last name
+                </label>
+
+                <input
+                  id={lastNameId}
+                  type="text"
+                  name="lastName"
+                  required
+                  autoComplete="family-name"
+                  maxLength={PROFESSIONAL_NAME_MAX_LENGTH}
+                  placeholder="Morgan"
+                  value={lastName}
+                  onChange={(event) => setLastName(event.target.value)}
+                  disabled={loading}
+                  aria-invalid={Boolean(lastNameError)}
+                  aria-describedby={
+                    lastNameError ? lastNameErrorId : undefined
+                  }
+                  className={inputClassName}
+                />
+
+                {lastNameError ? (
+                  <p
+                    id={lastNameErrorId}
+                    role="alert"
+                    className="mt-2 text-xs font-bold leading-5 text-red-200"
+                  >
+                    {lastNameError}
+                  </p>
+                ) : null}
+              </div>
+            </div>
+
+            <div>
+              <label
+                htmlFor={emailId}
+                className="mb-2 block text-xs font-black uppercase tracking-[0.22em] text-slate-400"
+              >
                 Work email
-              </span>
+              </label>
 
               <input
+                id={emailId}
                 type="email"
+                name="email"
                 required
+                autoComplete="email"
                 placeholder="you@company.com"
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
                 disabled={loading}
+                aria-invalid={
+                  attemptedSubmit && normalizedEmail.length === 0
+                }
+                aria-describedby={
+                  attemptedSubmit && normalizedEmail.length === 0
+                    ? emailErrorId
+                    : undefined
+                }
                 className={inputClassName}
               />
-            </label>
 
-            <label className="block">
-              <span className="mb-2 block text-xs font-black uppercase tracking-[0.22em] text-slate-400">
+              {attemptedSubmit && normalizedEmail.length === 0 ? (
+                <p
+                  id={emailErrorId}
+                  role="alert"
+                  className="mt-2 text-xs font-bold leading-5 text-red-200"
+                >
+                  Work email is required.
+                </p>
+              ) : null}
+            </div>
+
+            <div>
+              <label
+                htmlFor={passwordId}
+                className="mb-2 block text-xs font-black uppercase tracking-[0.22em] text-slate-400"
+              >
                 Password
-              </span>
+              </label>
 
               <div className="relative">
                 <input
+                  id={passwordId}
                   type={showPassword ? "text" : "password"}
+                  name="password"
                   required
+                  autoComplete="new-password"
                   placeholder="Create a secure password"
                   value={password}
                   onChange={(event) =>
                     setPassword(event.target.value)
                   }
                   disabled={loading}
+                  aria-invalid={attemptedSubmit && !passwordIsReady}
+                  aria-describedby={
+                    attemptedSubmit && !passwordIsReady
+                      ? passwordErrorId
+                      : undefined
+                  }
                   className={`${inputClassName} pr-20`}
                 />
 
@@ -332,30 +527,53 @@ export default function SignupPage() {
                     setShowPassword((current) => !current)
                   }
                   disabled={loading}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-black uppercase tracking-wide text-[#F5D77B] transition hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-black uppercase tracking-wide text-[#F5D77B] transition hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C8A646]/70 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {showPassword ? "Hide" : "Show"}
                 </button>
               </div>
-            </label>
 
-            <label className="block">
-              <span className="mb-2 block text-xs font-black uppercase tracking-[0.22em] text-slate-400">
+              {attemptedSubmit && !passwordIsReady ? (
+                <p
+                  id={passwordErrorId}
+                  role="alert"
+                  className="mt-2 text-xs font-bold leading-5 text-red-200"
+                >
+                  Please choose a password that meets all enterprise
+                  security requirements.
+                </p>
+              ) : null}
+            </div>
+
+            <div>
+              <label
+                htmlFor={confirmPasswordId}
+                className="mb-2 block text-xs font-black uppercase tracking-[0.22em] text-slate-400"
+              >
                 Confirm password
-              </span>
+              </label>
 
               <div className="relative">
                 <input
+                  id={confirmPasswordId}
                   type={
                     showConfirmPassword ? "text" : "password"
                   }
+                  name="confirmPassword"
                   required
+                  autoComplete="new-password"
                   placeholder="Confirm your secure password"
                   value={confirmPassword}
                   onChange={(event) =>
                     setConfirmPassword(event.target.value)
                   }
                   disabled={loading}
+                  aria-invalid={attemptedSubmit && !passwordsMatch}
+                  aria-describedby={
+                    attemptedSubmit && !passwordsMatch
+                      ? confirmPasswordErrorId
+                      : undefined
+                  }
                   className={`${inputClassName} pr-20`}
                 />
 
@@ -367,12 +585,23 @@ export default function SignupPage() {
                     )
                   }
                   disabled={loading}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-black uppercase tracking-wide text-[#F5D77B] transition hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-black uppercase tracking-wide text-[#F5D77B] transition hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C8A646]/70 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {showConfirmPassword ? "Hide" : "Show"}
                 </button>
               </div>
-            </label>
+
+              {attemptedSubmit && !passwordsMatch ? (
+                <p
+                  id={confirmPasswordErrorId}
+                  role="alert"
+                  className="mt-2 text-xs font-bold leading-5 text-red-200"
+                >
+                  The password confirmation does not match. Please
+                  review both fields.
+                </p>
+              ) : null}
+            </div>
 
             <div className="rounded-3xl border border-white/10 bg-[#07111F]/75 p-5">
               <div className="flex items-center justify-between gap-4">
@@ -409,7 +638,8 @@ export default function SignupPage() {
 
             {responseMessage ? (
               <div
-                role="status"
+                id={formErrorId}
+                role={responseMessage.type === "error" ? "alert" : "status"}
                 className={`rounded-2xl border px-4 py-3 text-sm font-bold leading-6 ${
                   responseMessage.type === "success"
                     ? "border-emerald-300/20 bg-emerald-400/10 text-emerald-200"
@@ -423,7 +653,7 @@ export default function SignupPage() {
             <button
               type="submit"
               disabled={loading || !formIsReady}
-              className="h-[60px] w-full rounded-2xl bg-gradient-to-r from-[#B9902F] via-[#C8A646] to-[#F5D77B] px-6 text-sm font-black uppercase tracking-[0.14em] text-slate-950 shadow-[0_22px_65px_rgba(200,166,70,0.34)] transition hover:scale-[1.01] hover:shadow-[0_28px_80px_rgba(200,166,70,0.42)] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100"
+              className={`${EXECUTIVE_CTA_PRIMARY} h-[60px] w-full disabled:cursor-not-allowed disabled:opacity-50`}
             >
               {loading
                 ? "Creating secure account..."

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { getSafeNextPath } from "@/lib/auth/login-continuation";
+import { syncCurrentUserProfessionalNames } from "@/lib/auth/professional-names";
 import { createClient } from "@/lib/supabase/server";
 
 const SITE_URL =
@@ -42,6 +43,14 @@ const { error } = await supabase.auth.exchangeCodeForSession(code);
 
 if (error) {
 return buildLoginRedirect("expired_or_invalid_link");
+}
+
+try {
+await syncCurrentUserProfessionalNames(supabase, {
+requireNames: false,
+});
+} catch {
+// Names are optional for existing users. Never block callback continuation.
 }
 
 return NextResponse.redirect(new URL(next, SITE_URL));

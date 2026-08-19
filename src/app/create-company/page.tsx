@@ -1,11 +1,26 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 
 import SignOutButton from "@/components/sign-out-button";
+import {
+  EXECUTIVE_CTA_PRIMARY,
+  EXECUTIVE_CTA_SECONDARY,
+  EXECUTIVE_PAGE_CLASS,
+} from "@/lib/design-system/executive-contract";
 import { getFriendlyWorkspaceCreateError } from "@/lib/auth/workspace-bootstrap";
+import {
+  JOB_TITLE_MAX_LENGTH,
+  PROFESSIONAL_NAME_MAX_LENGTH,
+  loadCurrentUserProfessionalNames,
+  normalizeJobTitle,
+  normalizeProfessionalName,
+  validateFounderJobTitle,
+  validateProfessionalName,
+} from "@/lib/auth/professional-names";
+import { createClient } from "@/lib/supabase/client";
 
 type OrganizationType =
   | "owner_developer"
@@ -194,7 +209,7 @@ const STEPS: {
 ];
 
 const inputClassName =
-  "h-[58px] w-full rounded-2xl border border-white/10 bg-[#07111F] px-5 text-sm font-semibold text-white outline-none transition placeholder:text-slate-500 focus:border-[#C8A646] focus:bg-[#081827] focus:ring-4 focus:ring-[#C8A646]/15 disabled:cursor-not-allowed disabled:opacity-60";
+  "h-[58px] w-full rounded-2xl border border-white/10 bg-[#07111F] px-5 text-sm font-semibold text-white outline-none transition placeholder:text-slate-500 focus:border-[#C8A646] focus:bg-[#081827] focus:ring-4 focus:ring-[#C8A646]/15 focus-visible:ring-2 focus-visible:ring-[#C8A646]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#07111F] disabled:cursor-not-allowed disabled:opacity-60";
 
 function normalizeValue(value: string) {
   return value.trim();
@@ -206,6 +221,14 @@ function getFriendlyCreateCompanyError(message?: string) {
 
 export default function CreateCompanyPage() {
   const router = useRouter();
+  const supabase = useMemo(() => createClient(), []);
+
+  const firstNameId = useId();
+  const lastNameId = useId();
+  const jobTitleId = useId();
+  const firstNameErrorId = useId();
+  const lastNameErrorId = useId();
+  const jobTitleErrorId = useId();
 
   const [currentStep, setCurrentStep] =
     useState<WizardStep>("identity");
@@ -215,6 +238,13 @@ export default function CreateCompanyPage() {
 
   const [name, setName] = useState("");
   const [location, setLocation] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [jobTitle, setJobTitle] = useState("");
+  const [attemptedReviewSubmit, setAttemptedReviewSubmit] =
+    useState(false);
+
+  const namesHydratedRef = useRef(false);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -231,8 +261,71 @@ export default function CreateCompanyPage() {
     );
   }, [name, location]);
 
+  const normalizedFirstName = normalizeProfessionalName(firstName);
+  const normalizedLastName = normalizeProfessionalName(lastName);
+  const normalizedJobTitle = normalizeJobTitle(jobTitle);
+
+  const firstNameError = validateProfessionalName(
+    normalizedFirstName,
+    "First name",
+    { required: attemptedReviewSubmit },
+  );
+  const lastNameError = validateProfessionalName(
+    normalizedLastName,
+    "Last name",
+    { required: attemptedReviewSubmit },
+  );
+  const jobTitleError = validateFounderJobTitle(normalizedJobTitle, {
+    required: attemptedReviewSubmit,
+  });
+
+  const founderIdentityIsReady =
+    !validateProfessionalName(normalizedFirstName, "First name", {
+      required: true,
+    }) &&
+    !validateProfessionalName(normalizedLastName, "Last name", {
+      required: true,
+    }) &&
+    !validateFounderJobTitle(normalizedJobTitle, { required: true });
+
   const formIsReady =
-    identityIsReady && Boolean(selectedOrganization);
+    identityIsReady &&
+    Boolean(selectedOrganization) &&
+    founderIdentityIsReady;
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function preloadFounderNames() {
+      const resolved = await loadCurrentUserProfessionalNames(
+        supabase,
+      );
+
+      if (cancelled || namesHydratedRef.current) {
+        return;
+      }
+
+      namesHydratedRef.current = true;
+
+      if (resolved.firstName) {
+        setFirstName((current) =>
+          current.trim() ? current : resolved.firstName || "",
+        );
+      }
+
+      if (resolved.lastName) {
+        setLastName((current) =>
+          current.trim() ? current : resolved.lastName || "",
+        );
+      }
+    }
+
+    void preloadFounderNames();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [supabase]);
 
   function goToStep(step: WizardStep) {
     if (loading) return;
@@ -289,12 +382,52 @@ export default function CreateCompanyPage() {
   ) {
     event.preventDefault();
 
+    if (currentStep !== "review") {
+      goNext();
+      return;
+    }
+
     const normalizedName = normalizeValue(name);
     const normalizedLocation = normalizeValue(location);
+    const submittedFirstName = normalizeProfessionalName(firstName);
+    const submittedLastName = normalizeProfessionalName(lastName);
+    const submittedJobTitle = normalizeJobTitle(jobTitle);
+
+    setAttemptedReviewSubmit(true);
 
     if (!formIsReady || !selectedOrganization) {
       setError(
         "Please select your organization type and complete the required fields.",
+      );
+      return;
+    }
+
+    const submittedFirstNameError = validateProfessionalName(
+      submittedFirstName,
+      "First name",
+      { required: true },
+    );
+    const submittedLastNameError = validateProfessionalName(
+      submittedLastName,
+      "Last name",
+      { required: true },
+    );
+    const submittedJobTitleError = validateFounderJobTitle(
+      submittedJobTitle,
+      { required: true },
+    );
+
+    if (
+      submittedFirstNameError ||
+      submittedLastNameError ||
+      submittedJobTitleError
+    ) {
+      setCurrentStep("review");
+      setError(
+        submittedFirstNameError ||
+          submittedLastNameError ||
+          submittedJobTitleError ||
+          "Please complete your professional identity details.",
       );
       return;
     }
@@ -313,6 +446,9 @@ export default function CreateCompanyPage() {
           location: normalizedLocation,
           accountType: selectedOrganization.accountType,
           networkRole: selectedOrganization.networkRole,
+          firstName: submittedFirstName,
+          lastName: submittedLastName,
+          jobTitle: submittedJobTitle,
         }),
       });
 
@@ -346,12 +482,12 @@ export default function CreateCompanyPage() {
   }
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-[#061426] px-4 py-6 text-white sm:px-6 lg:px-10">
+    <main className="relative min-h-screen overflow-hidden bg-[#061426] text-white">
       <div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(circle_at_top_left,rgba(44,196,232,0.18),transparent_34%),radial-gradient(circle_at_top_right,rgba(200,166,70,0.15),transparent_30%),linear-gradient(180deg,#061426_0%,#07111F_45%,#020617_100%)]" />
 
       <div className="pointer-events-none fixed inset-0 -z-10 bg-[linear-gradient(120deg,rgba(255,255,255,0.05),transparent_34%,rgba(200,166,70,0.05)_68%,transparent)]" />
 
-      <div className="mx-auto w-full max-w-[1680px]">
+      <div className={EXECUTIVE_PAGE_CLASS}>
         <header className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
           <BrandTile />
 
@@ -706,6 +842,150 @@ export default function CreateCompanyPage() {
                     </div>
                   </div>
 
+                  <section className="rounded-3xl border border-white/10 bg-white/[0.045] p-6">
+                    <p className="text-xs font-black uppercase tracking-[0.24em] text-[#C8A646]">
+                      Founder Professional Identity
+                    </p>
+
+                    <p className="mt-3 text-sm font-semibold leading-7 text-slate-300">
+                      Confirm your name and title for this workspace.
+                      Names collected at signup are prefilled and can
+                      be corrected before activation.
+                    </p>
+
+                    <div className="mt-6 grid gap-5 sm:grid-cols-2">
+                      <div>
+                        <label
+                          htmlFor={firstNameId}
+                          className="mb-2 block text-xs font-black uppercase tracking-[0.22em] text-slate-400"
+                        >
+                          First name
+                        </label>
+
+                        <input
+                          id={firstNameId}
+                          type="text"
+                          name="firstName"
+                          autoComplete="given-name"
+                          required
+                          maxLength={PROFESSIONAL_NAME_MAX_LENGTH}
+                          placeholder="Alex"
+                          value={firstName}
+                          onChange={(event) =>
+                            setFirstName(event.target.value)
+                          }
+                          disabled={loading}
+                          aria-invalid={Boolean(firstNameError)}
+                          aria-describedby={
+                            firstNameError
+                              ? firstNameErrorId
+                              : undefined
+                          }
+                          className={inputClassName}
+                        />
+
+                        {firstNameError ? (
+                          <p
+                            id={firstNameErrorId}
+                            role="alert"
+                            className="mt-2 text-xs font-bold leading-5 text-red-200"
+                          >
+                            {firstNameError}
+                          </p>
+                        ) : null}
+                      </div>
+
+                      <div>
+                        <label
+                          htmlFor={lastNameId}
+                          className="mb-2 block text-xs font-black uppercase tracking-[0.22em] text-slate-400"
+                        >
+                          Last name
+                        </label>
+
+                        <input
+                          id={lastNameId}
+                          type="text"
+                          name="lastName"
+                          autoComplete="family-name"
+                          required
+                          maxLength={PROFESSIONAL_NAME_MAX_LENGTH}
+                          placeholder="Morgan"
+                          value={lastName}
+                          onChange={(event) =>
+                            setLastName(event.target.value)
+                          }
+                          disabled={loading}
+                          aria-invalid={Boolean(lastNameError)}
+                          aria-describedby={
+                            lastNameError
+                              ? lastNameErrorId
+                              : undefined
+                          }
+                          className={inputClassName}
+                        />
+
+                        {lastNameError ? (
+                          <p
+                            id={lastNameErrorId}
+                            role="alert"
+                            className="mt-2 text-xs font-bold leading-5 text-red-200"
+                          >
+                            {lastNameError}
+                          </p>
+                        ) : null}
+                      </div>
+                    </div>
+
+                    <div className="mt-5">
+                      <label
+                        htmlFor={jobTitleId}
+                        className="mb-2 block text-xs font-black uppercase tracking-[0.22em] text-slate-400"
+                      >
+                        Job title
+                      </label>
+
+                      <input
+                        id={jobTitleId}
+                        type="text"
+                        name="jobTitle"
+                        autoComplete="organization-title"
+                        required
+                        maxLength={JOB_TITLE_MAX_LENGTH}
+                        placeholder="Chief Procurement Officer"
+                        value={jobTitle}
+                        onChange={(event) =>
+                          setJobTitle(event.target.value)
+                        }
+                        disabled={loading}
+                        aria-invalid={Boolean(jobTitleError)}
+                        aria-describedby={
+                          jobTitleError
+                            ? `${jobTitleErrorId} job-title-hint`
+                            : "job-title-hint"
+                        }
+                        className={inputClassName}
+                      />
+
+                      <p
+                        id="job-title-hint"
+                        className="mt-2 text-xs font-semibold leading-5 text-slate-500"
+                      >
+                        Your title in this workspace
+                      </p>
+
+                      {jobTitleError ? (
+                        <p
+                          id={jobTitleErrorId}
+                          role="alert"
+                          className="mt-2 text-xs font-bold leading-5 text-red-200"
+                        >
+                          {jobTitleError}
+                        </p>
+                      ) : null}
+                    </div>
+                  </section>
+
                   <section className="rounded-3xl border border-white/10 bg-white/[0.045] p-5">
                     <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">
                       What happens next?
@@ -755,7 +1035,7 @@ export default function CreateCompanyPage() {
                     type="button"
                     onClick={goBack}
                     disabled={loading}
-                    className="h-[58px] rounded-2xl border border-white/10 bg-white/[0.045] px-6 text-sm font-black text-white transition hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-50 sm:w-44"
+                    className={`${EXECUTIVE_CTA_SECONDARY} h-[58px] disabled:cursor-not-allowed disabled:opacity-50 sm:w-44`}
                   >
                     Back
                   </button>
@@ -766,7 +1046,7 @@ export default function CreateCompanyPage() {
                     type="button"
                     onClick={goNext}
                     disabled={loading}
-                    className="h-[58px] flex-1 rounded-2xl bg-gradient-to-r from-[#B9902F] via-[#C8A646] to-[#F5D77B] px-6 text-sm font-black uppercase tracking-[0.12em] text-slate-950 shadow-[0_18px_55px_rgba(200,166,70,0.3)] transition hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100"
+                    className={`${EXECUTIVE_CTA_PRIMARY} h-[58px] flex-1 disabled:cursor-not-allowed disabled:opacity-50`}
                   >
                     Continue
                   </button>
@@ -774,7 +1054,7 @@ export default function CreateCompanyPage() {
                   <button
                     type="submit"
                     disabled={loading || !formIsReady}
-                    className="h-[58px] flex-1 rounded-2xl bg-gradient-to-r from-[#B9902F] via-[#C8A646] to-[#F5D77B] px-6 text-sm font-black uppercase tracking-[0.12em] text-slate-950 shadow-[0_18px_55px_rgba(200,166,70,0.3)] transition hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100"
+                    className={`${EXECUTIVE_CTA_PRIMARY} h-[58px] flex-1 disabled:cursor-not-allowed disabled:opacity-50`}
                   >
                     {loading
                       ? "Activating Workspace..."

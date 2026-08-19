@@ -1,3 +1,11 @@
+import {
+  JOB_TITLE_MAX_LENGTH,
+  PROFESSIONAL_NAME_MAX_LENGTH,
+  PROFESSIONAL_NAME_SYNC_ERROR,
+} from "@/lib/auth/professional-names";
+
+export { PROFESSIONAL_NAME_SYNC_ERROR };
+
 export const WORKSPACE_ALREADY_CONNECTED_ERROR =
   "This account is already connected to a company.";
 
@@ -11,6 +19,16 @@ export const WORKSPACE_CREATE_FAILED_ERROR = "Failed to create company.";
 
 export const WORKSPACE_ELIGIBILITY_ERROR =
   "We could not verify your workspace eligibility. Please try again.";
+
+const BOUNDED_FOUNDER_IDENTITY_ERRORS = [
+  PROFESSIONAL_NAME_SYNC_ERROR,
+  "First name is required.",
+  "Last name is required.",
+  `First name must not exceed ${PROFESSIONAL_NAME_MAX_LENGTH} characters.`,
+  `Last name must not exceed ${PROFESSIONAL_NAME_MAX_LENGTH} characters.`,
+  "Job title is required.",
+  `Job title must not exceed ${JOB_TITLE_MAX_LENGTH} characters.`,
+];
 
 export type OwnedCompanyResolution =
   | { action: "already_connected" }
@@ -62,6 +80,10 @@ export function getFriendlyWorkspaceCreateError(message?: string) {
     normalized.includes("already connected to a company")
   ) {
     return WORKSPACE_ALREADY_CONNECTED_ERROR;
+  }
+
+  if (BOUNDED_FOUNDER_IDENTITY_ERRORS.includes(raw)) {
+    return raw;
   }
 
   if (

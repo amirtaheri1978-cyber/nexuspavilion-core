@@ -10,6 +10,7 @@ import {
   getSafeLoginStatusMessage,
   getSafeNextPath,
 } from "@/lib/auth/login-continuation";
+import { syncCurrentUserProfessionalNames } from "@/lib/auth/professional-names";
 import { createClient } from "@/lib/supabase/client";
 
 const BRAND_LOGO_SRC =
@@ -172,6 +173,9 @@ function LoginScreen({
           user.id,
           user.email ?? null,
         );
+        await syncCurrentUserProfessionalNames(supabase, {
+          requireNames: false,
+        });
       }
 
       router.push(nextPath);
