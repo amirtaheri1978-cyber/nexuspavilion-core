@@ -62,3 +62,45 @@ export function readOrganizationMemberIdentity(row: {
     email: row.email,
   });
 }
+
+export function getAccountIdentitySecondary(
+  identity: FormattedMemberIdentity,
+): string | null {
+  if (identity.jobTitle) {
+    return identity.jobTitle;
+  }
+
+  if (!identity.emailIsPrimary && identity.email) {
+    return identity.email;
+  }
+
+  return null;
+}
+
+export function formatOwnershipTransferOptionLabel(input: {
+  firstName?: string | null;
+  lastName?: string | null;
+  jobTitle?: string | null;
+  email?: string | null;
+  workspaceRole: string;
+}): string {
+  const identity = formatMemberIdentity(input);
+  const hasRenderablePrimary = Boolean(identity.fullName || identity.email);
+  const primary = hasRenderablePrimary ? identity.primary : "Member";
+
+  return `${primary} — ${input.workspaceRole}`;
+}
+
+export function formatMemberRemovalSubject(
+  memberLabel: string | null | undefined,
+  memberEmail: string | null | undefined,
+): string {
+  const label = String(memberLabel ?? "").trim();
+  const email = String(memberEmail ?? "").trim();
+
+  if (label && email && label !== email) {
+    return `${label} (${email})`;
+  }
+
+  return label || email || "this member";
+}

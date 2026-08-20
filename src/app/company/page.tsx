@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 
+import { AccountIdentityLine } from "@/components/account-identity-line";
 import CompanyMembersCenter from "@/components/company-members-center";
 import {
   getCurrentWorkspaceContext,
@@ -408,6 +409,10 @@ const workspaceMembers: WorkspaceMember[] =
   const workspaceRoleLabel =
     getWorkspaceRoleLabel(workspace.workspaceRole);
 
+  const currentWorkspaceMember = workspaceMembers.find(
+    ({ profile }) => profile.id === workspace.userId,
+  );
+
   const workspaceStage =
     workspace.membershipStatus === "active"
       ? "Active"
@@ -486,13 +491,13 @@ const workspaceMembers: WorkspaceMember[] =
                   {company.location || "Location N/A"}
                 </p>
 
-                <p className="mt-2 text-sm font-bold uppercase tracking-[0.2em] text-slate-500">
-                  Signed in as{" "}
-                  {workspace.email ||
-                    currentProfile.email ||
-                    "Workspace Member"}{" "}
-                  · {workspaceRoleLabel}
-                </p>
+                <AccountIdentityLine
+                  firstName={currentWorkspaceMember?.profile.first_name}
+                  lastName={currentWorkspaceMember?.profile.last_name}
+                  jobTitle={currentWorkspaceMember?.membership?.job_title}
+                  email={workspace.email || currentProfile.email}
+                  roleLabel={workspaceRoleLabel}
+                />
               </div>
             </div>
 

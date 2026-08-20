@@ -7,6 +7,7 @@ import { MemberIdentityDisplay } from "@/components/member-identity-display";
 import MemberActions from "@/components/member-actions";
 import OwnershipPanel from "@/components/ownership/ownership-panel";
 import RecoverOwnershipButton from "@/components/recover-ownership-button";
+import { formatMemberIdentity } from "@/lib/auth/professional-identity-display";
 
 type Profile = {
   id: string;
@@ -112,6 +113,31 @@ type CompanyMembersCenterProps = {
   pendingTransferToEmail: string | null;
   siteUrl: string;
 };
+
+function formatWorkspaceMemberPersonLabel(
+  member:
+    | {
+        profile: {
+          first_name?: string | null;
+          last_name?: string | null;
+          email?: string | null;
+        };
+        membership: { job_title?: string | null } | null;
+      }
+    | undefined,
+  fallback: string | null = null,
+) {
+  if (!member) {
+    return fallback;
+  }
+
+  return formatMemberIdentity({
+    firstName: member.profile.first_name,
+    lastName: member.profile.last_name,
+    jobTitle: member.membership?.job_title,
+    email: member.profile.email,
+  }).primary;
+}
 
 function getWorkspaceRoleLabel(
   role: Membership["workspace_role"] | null | undefined,
@@ -320,16 +346,32 @@ const transferTargets = workspaceMembers
   .map(({ profile, membership }) => ({
     id: profile.id,
     email: profile.email,
+    first_name: profile.first_name,
+    last_name: profile.last_name,
+    job_title: membership?.job_title ?? null,
     workspace_role: membership!.workspace_role,
     membership_status: membership!.membership_status,
   }));
 
-const currentOwnerEmail =
-  workspaceMembers.find(
-    ({ membership }) =>
-      membership?.workspace_role === "owner" &&
-      membership.membership_status === "active",
-  )?.profile.email ?? null;
+const currentOwner = workspaceMembers.find(
+  ({ membership }) =>
+    membership?.workspace_role === "owner" &&
+    membership.membership_status === "active",
+);
+const currentOwnerIdentity = currentOwner
+  ? formatMemberIdentity({
+      firstName: currentOwner.profile.first_name,
+      lastName: currentOwner.profile.last_name,
+      jobTitle: currentOwner.membership?.job_title,
+      email: currentOwner.profile.email,
+    })
+  : null;
+const pendingTransferFromMember = workspaceMembers.find(
+  ({ profile }) => profile.id === pendingTransfer?.from_user_id,
+);
+const pendingTransferToMember = workspaceMembers.find(
+  ({ profile }) => profile.id === pendingTransfer?.to_user_id,
+);
   
   return (
     <>
@@ -520,6 +562,10 @@ description="Manage company membership, workspace roles, and pending access invi
                              */}
                             <MemberActions
   memberId={profile.id}
+  memberLabel={formatWorkspaceMemberPersonLabel({
+    profile,
+    membership,
+  })}
   memberEmail={profile.email}
   memberWorkspaceRole={
     membership?.workspace_role ?? null
@@ -597,6 +643,10 @@ description="Manage company membership, workspace roles, and pending access invi
                     <div className="mt-4">
                       <MemberActions
                         memberId={profile.id}
+                        memberLabel={formatWorkspaceMemberPersonLabel({
+                          profile,
+                          membership,
+                        })}
                         memberEmail={profile.email}
                         memberWorkspaceRole={
                           membership?.workspace_role ?? null
@@ -731,12 +781,19 @@ description="Manage company membership, workspace roles, and pending access invi
           </div>
 <OwnershipPanel
   companyName={company.name || "Company Workspace"}
-  currentOwnerEmail={currentOwnerEmail}
+  currentOwnerLabel={currentOwnerIdentity?.primary ?? null}
+  currentOwnerEmail={currentOwnerIdentity?.email ?? null}
   currentUserId={currentProfile.id}
   currentUserWorkspaceRole={currentUserWorkspaceRole}
   pendingTransfer={pendingTransfer}
-  fromUserEmail={pendingTransferFromEmail}
-  toUserEmail={pendingTransferToEmail}
+  fromUserEmail={formatWorkspaceMemberPersonLabel(
+    pendingTransferFromMember,
+    pendingTransferFromEmail,
+  )}
+  toUserEmail={formatWorkspaceMemberPersonLabel(
+    pendingTransferToMember,
+    pendingTransferToEmail,
+  )}
   transferTargets={transferTargets}
 />
 

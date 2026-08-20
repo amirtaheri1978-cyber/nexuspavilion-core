@@ -1,12 +1,17 @@
 import Image from "next/image";
 import Link from "next/link";
 
+import { AccountIdentityLine } from "@/components/account-identity-line";
+
 type CompanyCommandCenterProps = {
 companyName: string;
 companyStatus: string;
 companyLogoUrl: string | null;
 companySlug: string | null;
-userEmail: string;
+userIdentityFirstName?: string | null;
+userIdentityLastName?: string | null;
+userIdentityJobTitle?: string | null;
+userIdentityEmail?: string | null;
 userRole: string;
 readinessScore: number;
 workspaceStage: string;
@@ -23,7 +28,10 @@ companyName,
 companyStatus,
 companyLogoUrl,
 companySlug,
-userEmail,
+userIdentityFirstName,
+userIdentityLastName,
+userIdentityJobTitle,
+userIdentityEmail,
 userRole,
 readinessScore,
 workspaceStage,
@@ -111,9 +119,13 @@ team, create your first RFQ, and activate executive procurement
 intelligence.
 </p>
 
-<p className="mt-4 text-xs font-bold uppercase tracking-[0.2em] text-slate-500">
-Signed in as {userEmail} · {userRole}
-</p>
+<AccountIdentityLine
+  firstName={userIdentityFirstName}
+  lastName={userIdentityLastName}
+  jobTitle={userIdentityJobTitle}
+  email={userIdentityEmail}
+  roleLabel={userRole}
+/>
 </div>
 </div>
 

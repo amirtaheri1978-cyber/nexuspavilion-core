@@ -7,10 +7,12 @@ import type {
   MembershipStatus,
   WorkspaceRole,
 } from "@/lib/auth/membership";
+import { formatMemberRemovalSubject } from "@/lib/auth/professional-identity-display";
 import {
   canChangeWorkspaceRoles,
   canManageWorkspaceMembers,
 } from "@/lib/authorization/workspace-permissions";
+import { EXECUTIVE_FOCUS_CYAN } from "@/lib/design-system/executive-contract";
 
 type EditableWorkspaceRole =
   | "admin"
@@ -19,6 +21,7 @@ type EditableWorkspaceRole =
 
 type MemberActionsProps = {
   memberId: string;
+  memberLabel: string | null;
   memberEmail: string | null;
 
   memberWorkspaceRole: WorkspaceRole | null;
@@ -103,6 +106,7 @@ function getPermissionMessage({
 
 export default function MemberActions({
   memberId,
+  memberLabel,
   memberEmail,
   memberWorkspaceRole,
   memberMembershipStatus,
@@ -209,9 +213,10 @@ export default function MemberActions({
     }
 
     const confirmed = window.confirm(
-      `Remove ${
-        memberEmail || "this member"
-      } from this company workspace?`,
+      `Remove ${formatMemberRemovalSubject(
+        memberLabel,
+        memberEmail,
+      )} from this company workspace?`,
     );
 
     if (!confirmed) {
@@ -288,7 +293,7 @@ export default function MemberActions({
             !canChangeMemberRoles ||
             loadingAction !== ""
           }
-          className="rounded-2xl border border-white/10 bg-[#07111F] px-3 py-2 text-xs font-black uppercase tracking-[0.15em] text-white outline-none transition focus:border-[#2CC4E8]/40 disabled:cursor-not-allowed disabled:opacity-50"
+          className={`rounded-2xl border border-white/10 bg-[#07111F] px-3 py-2 text-xs font-black uppercase tracking-[0.15em] text-white outline-none transition focus:border-[#2CC4E8]/40 disabled:cursor-not-allowed disabled:opacity-50 ${EXECUTIVE_FOCUS_CYAN}`}
         >
           {ROLE_OPTIONS.map((option) => (
             <option
@@ -309,7 +314,7 @@ export default function MemberActions({
             !roleHasChanged ||
             loadingAction === "role"
           }
-          className="rounded-full border border-[#C8A646]/25 bg-[#C8A646]/10 px-4 py-2 text-xs font-black text-[#F5D77B] transition hover:bg-[#C8A646]/15 disabled:cursor-not-allowed disabled:opacity-50"
+          className={`rounded-full border border-[#C8A646]/25 bg-[#C8A646]/10 px-4 py-2 text-xs font-black text-[#F5D77B] transition hover:bg-[#C8A646]/15 disabled:cursor-not-allowed disabled:opacity-50 ${EXECUTIVE_FOCUS_CYAN}`}
         >
           {loadingAction === "role"
             ? "Saving..."
@@ -323,7 +328,7 @@ export default function MemberActions({
             !canManageMemberAccess ||
             loadingAction === "remove"
           }
-          className="rounded-full border border-red-300/20 bg-red-400/10 px-4 py-2 text-xs font-black text-red-200 transition hover:bg-red-400/15 disabled:cursor-not-allowed disabled:opacity-50"
+          className={`rounded-full border border-red-300/20 bg-red-400/10 px-4 py-2 text-xs font-black text-red-200 transition hover:bg-red-400/15 disabled:cursor-not-allowed disabled:opacity-50 ${EXECUTIVE_FOCUS_CYAN}`}
         >
           {loadingAction === "remove"
             ? "Removing..."

@@ -2,6 +2,9 @@
 
 import { useMemo, useState } from "react";
 
+import { formatOwnershipTransferOptionLabel } from "@/lib/auth/professional-identity-display";
+import { EXECUTIVE_FOCUS_CYAN } from "@/lib/design-system/executive-contract";
+
 type OwnershipTransfer = {
   id: string;
   company_id: string;
@@ -25,6 +28,9 @@ type OwnershipTransfer = {
 type TransferTarget = {
   id: string;
   email: string | null;
+  first_name?: string | null;
+  last_name?: string | null;
+  job_title?: string | null;
   workspace_role:
     | "owner"
     | "admin"
@@ -39,6 +45,7 @@ type TransferTarget = {
 
 type OwnershipPanelProps = {
   companyName: string;
+  currentOwnerLabel: string | null;
   currentOwnerEmail: string | null;
   currentUserId: string;
   currentUserWorkspaceRole:
@@ -73,6 +80,7 @@ function formatDateTime(value: string | null) {
 
 export default function OwnershipPanel({
   companyName,
+  currentOwnerLabel,
   currentOwnerEmail,
   currentUserId,
   currentUserWorkspaceRole,
@@ -242,20 +250,30 @@ export default function OwnershipPanel({
         </p>
 
         <p className="mt-2 text-sm font-semibold text-slate-400">
-          {currentOwnerEmail
-            ? `Current owner: ${currentOwnerEmail}`
+          {currentOwnerLabel
+            ? `Current owner: ${currentOwnerLabel}`
             : "No current owner is assigned."}
         </p>
+        {currentOwnerEmail &&
+        currentOwnerLabel &&
+        currentOwnerEmail !== currentOwnerLabel ? (
+          <p
+            className="mt-1 break-words text-xs font-semibold text-slate-400"
+            title={currentOwnerEmail}
+          >
+            {currentOwnerEmail}
+          </p>
+        ) : null}
 
         <div className="mt-4">
           <span
             className={
-              currentOwnerEmail
+              currentOwnerLabel
                 ? "inline-flex rounded-full border border-emerald-300/20 bg-emerald-400/10 px-3 py-1 text-xs font-black uppercase tracking-[0.12em] text-emerald-200"
                 : "inline-flex rounded-full border border-orange-300/20 bg-orange-400/10 px-3 py-1 text-xs font-black uppercase tracking-[0.12em] text-orange-200"
             }
           >
-            {currentOwnerEmail
+            {currentOwnerLabel
               ? "Ownership Active"
               : "Ownership Missing"}
           </span>
@@ -406,7 +424,7 @@ export default function OwnershipPanel({
                         )
                       }
                       disabled={isSubmitting}
-                      className="mt-2 w-full rounded-2xl border border-white/10 bg-[#07111F] px-4 py-3 text-sm font-bold text-white outline-none transition focus:border-[#2CC4E8]/40 disabled:cursor-not-allowed disabled:opacity-60"
+                      className={`mt-2 w-full rounded-2xl border border-white/10 bg-[#07111F] px-4 py-3 text-sm font-bold text-white outline-none transition focus:border-[#2CC4E8]/40 disabled:cursor-not-allowed disabled:opacity-60 ${EXECUTIVE_FOCUS_CYAN}`}
                     >
                       <option value="">
                         Select an active member
@@ -418,8 +436,13 @@ export default function OwnershipPanel({
                           value={target.id}
                           className="bg-[#061426]"
                         >
-                          {target.email || target.id} —{" "}
-                          {target.workspace_role}
+                          {formatOwnershipTransferOptionLabel({
+                            firstName: target.first_name,
+                            lastName: target.last_name,
+                            jobTitle: target.job_title,
+                            email: target.email,
+                            workspaceRole: target.workspace_role,
+                          })}
                         </option>
                       ))}
                     </select>
