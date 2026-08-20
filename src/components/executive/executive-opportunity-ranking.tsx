@@ -238,7 +238,10 @@ export function ExecutiveOpportunityRanking({
             </p>
           </div>
 
-          <div className="mt-5 grid min-w-0 gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <div
+            data-rfq-opportunity-queue="true"
+            className="mt-5 grid min-w-0 grid-cols-1 gap-5 md:grid-cols-2"
+          >
             {opportunities.map((opportunity, index) => (
               <OpportunityCard
                 key={opportunity.title}
@@ -312,15 +315,6 @@ function OpportunityCard({
           ? "border-emerald-300/20 bg-emerald-300/[0.03]"
           : "border-white/10 bg-white/[0.035]";
 
-  const rankClass =
-    position === 1
-      ? "border-[#C8A646]/30 bg-[#C8A646]/10 text-[#E5C663]"
-      : position === 2
-        ? "border-[#2CC4E8]/25 bg-[#2CC4E8]/[0.08] text-[#9BE8F8]"
-        : position === 3
-          ? "border-emerald-300/20 bg-emerald-300/[0.07] text-emerald-300"
-          : "border-white/10 bg-white/[0.05] text-slate-300";
-
   const priorityClass =
     position === 1
       ? "text-[#E5C663]"
@@ -330,84 +324,51 @@ function OpportunityCard({
           ? "text-emerald-300"
           : "text-slate-300";
 
+  const rankLabel = String(position).padStart(2, "0");
+
   return (
     <article
-      className={`group relative flex min-w-0 flex-col overflow-hidden rounded-[26px] border p-5 transition-colors hover:border-white/20 sm:p-5 ${positionClass}`}
+      className={`flex min-w-0 flex-col rounded-[26px] border p-5 sm:p-6 ${positionClass}`}
     >
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-70"
-      />
-
-      <div className="flex min-w-0 items-start justify-between gap-3">
-        <div className="flex min-w-0 items-center gap-3">
-          <span
-            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full border text-[10px] font-black tabular-nums ${rankClass}`}
-          >
-            {String(position).padStart(2, "0")}
-          </span>
-
-          <div className="min-w-0">
-            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">
-              Ranked opportunity
-            </p>
-
-            <p
-              className={`mt-1 break-words text-[10px] font-black uppercase tracking-[0.14em] [overflow-wrap:anywhere] ${priorityClass}`}
-            >
-              {opportunity.priority}
-            </p>
-          </div>
-        </div>
-
-        <span className="max-w-[46%] shrink-0 break-words rounded-full border border-white/10 bg-black/10 px-3 py-1 text-right text-[10px] font-black uppercase leading-4 tracking-[0.12em] text-slate-300 [overflow-wrap:anywhere]">
-          {opportunity.impact}
-        </span>
-      </div>
-
-      <div className="mt-5 min-w-0">
-        <h4 className="break-words text-lg font-black leading-7 text-white [overflow-wrap:anywhere]">
-          {opportunity.title}
-        </h4>
-
-        <p className="mt-2 break-words text-sm font-semibold leading-6 text-slate-400 [overflow-wrap:anywhere]">
-          {opportunity.summary}
+      <header className="flex items-baseline justify-between gap-3">
+        <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">
+          [{rankLabel}] Ranked Opportunity
         </p>
-      </div>
 
-      <div className="mt-4 grid min-w-0 gap-3">
-        <div className="rounded-2xl border border-white/10 bg-black/10 p-4">
-          <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">
-            Enterprise impact
-          </p>
+        <p
+          className={`shrink-0 text-[10px] font-black uppercase tracking-[0.16em] ${priorityClass}`}
+        >
+          {opportunity.priority} Priority
+        </p>
+      </header>
 
-          <p className="mt-2 break-words text-sm font-black leading-6 text-white [overflow-wrap:anywhere]">
+      <h4 className="mt-4 text-xl font-black leading-[1.25] tracking-tight text-white">
+        {opportunity.title}
+      </h4>
+
+      <p className="mt-3 text-sm font-semibold leading-6 text-slate-300">
+        {opportunity.summary}
+      </p>
+
+      <dl className="mt-5 grid grid-cols-2 gap-4 border-t border-white/10 pt-4">
+        <div className="min-w-0">
+          <dt className="text-[10px] font-black uppercase tracking-[0.16em] text-slate-400">
+            Enterprise Impact
+          </dt>
+          <dd className="mt-1.5 text-sm font-black leading-5 text-white">
             {opportunity.impact}
-          </p>
+          </dd>
         </div>
 
-        <div className="rounded-2xl border border-[#C8A646]/18 bg-[#061426]/70 p-4">
-          <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#C8A646]">
-            Opportunity value
-          </p>
-
-          <p className="mt-2 break-words text-lg font-black leading-6 text-white [overflow-wrap:anywhere]">
+        <div className="min-w-0">
+          <dt className="text-[10px] font-black uppercase tracking-[0.16em] text-[#C8A646]">
+            Opportunity Value
+          </dt>
+          <dd className="mt-1.5 text-sm font-black leading-5 text-white">
             {opportunity.value}
-          </p>
+          </dd>
         </div>
-      </div>
-
-      <div className="mt-auto pt-4">
-        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 pt-4">
-          <p className="text-[10px] font-black uppercase tracking-[0.13em] text-slate-500">
-            Executive review
-          </p>
-
-          <p className={`text-[10px] font-black uppercase tracking-[0.13em] ${priorityClass}`}>
-            Priority assessment
-          </p>
-        </div>
-      </div>
+      </dl>
     </article>
   );
 }

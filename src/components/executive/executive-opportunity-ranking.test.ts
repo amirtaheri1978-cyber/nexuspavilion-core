@@ -79,3 +79,71 @@ describe("Task 24-RFQ-01 intelligence profile presentation", () => {
     expect(intelligenceSource).not.toContain("hover:-translate");
   });
 });
+
+describe("Task 24-RFQ-02 opportunity queue presentation", () => {
+  const queueSection = ranking.slice(
+    ranking.indexOf('aria-labelledby="opportunity-queue-heading"'),
+    ranking.indexOf('aria-labelledby="opportunity-intelligence-heading"'),
+  );
+  const opportunityCard = ranking.slice(
+    ranking.indexOf("function OpportunityCard"),
+    ranking.indexOf("function IntelligenceCard"),
+  );
+
+  it("keeps queue opportunity order, ranks, and wording intact", () => {
+    const { opportunities } = buildRfqExecutiveOpportunityIntelligence({
+      isOwner: true,
+      potentialSavings: 40000,
+      commercialEvaluationUnlocked: true,
+      quoteCount: 3,
+      documentCount: 4,
+      recommendedAwardConfidence: 88,
+    });
+
+    expect(opportunities.map((item) => item.title)).toEqual([
+      "Commercial Savings Opportunity",
+      "Award Readiness",
+      "Supplier Competition Expansion",
+      "Documentation Readiness",
+    ]);
+    expect(opportunities.map((item) => item.priority)).toEqual([
+      "High",
+      "High",
+      "Medium",
+      "Medium",
+    ]);
+    expect(opportunityCard).toContain("{opportunity.priority} Priority");
+    expect(opportunityCard).toContain("[{rankLabel}] Ranked Opportunity");
+    expect(opportunityCard).toContain("{opportunity.title}");
+    expect(opportunityCard).toContain("{opportunity.summary}");
+    expect(opportunityCard).toContain("{opportunity.impact}");
+    expect(opportunityCard).toContain("{opportunity.value}");
+  });
+
+  it("does not force four dense queue cards at ordinary desktop xl", () => {
+    expect(queueSection).toContain('data-rfq-opportunity-queue="true"');
+    expect(queueSection).toContain("grid-cols-1");
+    expect(queueSection).toContain("md:grid-cols-2");
+    expect(queueSection).not.toContain("xl:grid-cols-4");
+    expect(queueSection).not.toContain("md:grid-cols-4");
+  });
+
+  it("stops mid-word queue title fragmentation and nested peer boxes", () => {
+    expect(opportunityCard).not.toContain("overflow-wrap:anywhere");
+    expect(opportunityCard).not.toContain("break-all");
+    expect(opportunityCard).not.toContain("break-words");
+    expect(opportunityCard).toContain("text-xl font-black leading-[1.25]");
+    expect(opportunityCard).toContain("<dl");
+    expect(opportunityCard).toContain("Enterprise Impact");
+    expect(opportunityCard).toContain("Opportunity Value");
+    expect(opportunityCard).not.toContain("max-w-[46%] shrink-0");
+  });
+
+  it("keeps ranking visible in text and avoids hover-scale gimmicks", () => {
+    expect(opportunityCard).toContain("<h4");
+    expect(queueSection).toContain("<h3");
+    expect(opportunityCard).not.toContain("hover:scale");
+    expect(opportunityCard).not.toContain("hover:-translate");
+    expect(opportunityCard).not.toContain("bg-orange-500");
+  });
+});
