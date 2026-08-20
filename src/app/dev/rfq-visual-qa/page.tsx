@@ -3,9 +3,11 @@ import { notFound } from "next/navigation";
 import { RFQCommandCenter } from "@/components/rfq-workspace/rfq-command-center";
 import { RfqQuoteComparison } from "@/components/rfq-workspace/rfq-quote-comparison";
 import type { RfqQuoteComparisonItem } from "@/components/rfq-workspace/rfq-quote-comparison";
+import { ExecutiveOpportunityRanking } from "@/components/executive/executive-opportunity-ranking";
 import { ExecutiveBadge } from "@/components/executive/executive-badge";
 import { ExecutivePanel } from "@/components/executive/executive-panel";
 import { EXECUTIVE_PAGE_CLASS } from "@/lib/design-system/executive-contract";
+import { buildRfqExecutiveOpportunityIntelligence } from "@/lib/procurement/rfq-executive-opportunity-intelligence";
 
 function quote(partial: Partial<RfqQuoteComparisonItem> & Pick<RfqQuoteComparisonItem, "id" | "rank" | "supplierLabel" | "amountLabel" | "amountNumber">): RfqQuoteComparisonItem {
   return {
@@ -78,6 +80,15 @@ const awardedQuotes: RfqQuoteComparisonItem[] = populatedQuotes.map((item, index
   isRecommended: index === 0,
 }));
 
+const opportunityIntelligence = buildRfqExecutiveOpportunityIntelligence({
+  isOwner: true,
+  potentialSavings: 40000,
+  commercialEvaluationUnlocked: true,
+  quoteCount: 3,
+  documentCount: 4,
+  recommendedAwardConfidence: 88,
+});
+
 export default function RfqVisualQaPage() {
   if (process.env.NODE_ENV === "production") {
     notFound();
@@ -123,6 +134,14 @@ export default function RfqVisualQaPage() {
             { title: "Documents", value: "4" },
             { title: "Addenda", value: "1" },
           ]}
+        />
+
+        <div className="np-region-major border-t border-white/10 pt-10">
+          <p className="np-type-eyebrow">Visual QA · business impact and executive direction</p>
+        </div>
+        <ExecutiveOpportunityRanking
+          opportunities={opportunityIntelligence.opportunities}
+          intelligence={opportunityIntelligence.intelligence}
         />
 
         <div className="np-region-major border-t border-white/10 pt-10">

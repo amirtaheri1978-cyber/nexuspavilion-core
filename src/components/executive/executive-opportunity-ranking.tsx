@@ -276,7 +276,10 @@ export function ExecutiveOpportunityRanking({
             </span>
           </div>
 
-          <div className="mt-5 grid min-w-0 gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <div
+            data-rfq-intelligence-profiles="true"
+            className="mt-5 grid min-w-0 grid-cols-1 gap-5 md:grid-cols-2"
+          >
             {intelligence.map((opportunity) => (
               <IntelligenceCard
                 key={opportunity.title}
@@ -414,58 +417,62 @@ function IntelligenceCard({
 }: {
   opportunity: ExecutiveOpportunityIntelligence;
 }) {
+  const rankLabel = String(opportunity.rank).padStart(2, "0");
+
   return (
-    <article className="relative flex min-w-0 flex-col overflow-hidden rounded-[26px] border border-white/10 bg-[#061426]/72 p-5 transition-colors hover:border-[#2CC4E8]/20 sm:p-5">
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#2CC4E8]/35 to-transparent"
-      />
-
-      <div className="flex min-w-0 items-start justify-between gap-3">
-        <div className="flex min-w-0 items-start gap-3">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#2CC4E8]/20 bg-[#2CC4E8]/[0.07] text-[10px] font-black tabular-nums text-[#9BE8F8]">
-            {String(opportunity.rank).padStart(2, "0")}
-          </span>
-
-          <div className="min-w-0">
-            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#9BE8F8]">
-              Intelligence position
-            </p>
-
-            <h4 className="mt-2 break-words text-lg font-black leading-7 text-white [overflow-wrap:anywhere]">
-              {opportunity.title}
-            </h4>
-          </div>
-        </div>
-
-        <span className="shrink-0 rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.13em] text-slate-400">
-          Rank {String(opportunity.rank).padStart(2, "0")}
-        </span>
-      </div>
-
-      <div className="mt-4 rounded-2xl border border-white/10 bg-black/10 p-4">
-        <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">
-          Business impact
+    <article className="flex min-w-0 flex-col rounded-[26px] border border-white/10 bg-[#061426]/72 p-5 sm:p-6">
+      <header className="flex items-baseline justify-between gap-3">
+        <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#9BE8F8]">
+          [{rankLabel}] Intelligence Position
         </p>
 
-        <p className="mt-2 break-words text-sm font-semibold leading-6 text-slate-300 [overflow-wrap:anywhere]">
+        <p className="shrink-0 text-[10px] font-black uppercase tracking-[0.16em] text-slate-400">
+          Rank {rankLabel}
+        </p>
+      </header>
+
+      <h4 className="mt-4 text-xl font-black leading-[1.25] tracking-tight text-white">
+        {opportunity.title}
+      </h4>
+
+      <div className="mt-5 min-w-0">
+        <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">
+          Business Impact
+        </p>
+
+        <p className="mt-2 text-sm font-semibold leading-6 text-slate-300">
           {opportunity.businessImpact}
         </p>
       </div>
 
-      <div className="mt-4 grid flex-1 gap-3">
-        <InfoBlock
-          title="Execution Horizon"
-          value={opportunity.executionHorizon}
-        />
+      <dl className="mt-5 grid grid-cols-2 gap-4 border-y border-white/10 py-4">
+        <div className="min-w-0">
+          <dt className="text-[10px] font-black uppercase tracking-[0.16em] text-slate-400">
+            Execution Horizon
+          </dt>
+          <dd className="mt-1.5 text-sm font-black leading-5 text-white">
+            {opportunity.executionHorizon}
+          </dd>
+        </div>
 
-        <InfoBlock title="Board Priority" value={opportunity.boardPriority} />
+        <div className="min-w-0">
+          <dt className="text-[10px] font-black uppercase tracking-[0.16em] text-slate-400">
+            Board Priority
+          </dt>
+          <dd className="mt-1.5 text-sm font-black leading-5 text-white">
+            {opportunity.boardPriority}
+          </dd>
+        </div>
+      </dl>
 
-        <InfoBlock
-          title="CEO Recommendation"
-          value={opportunity.ceoRecommendation}
-          emphasis
-        />
+      <div className="mt-auto rounded-2xl border border-[#C8A646]/20 bg-[#C8A646]/[0.055] p-4">
+        <p className="text-[10px] font-black uppercase tracking-[0.17em] text-[#C8A646]">
+          CEO Recommendation
+        </p>
+
+        <p className="mt-2 text-sm font-bold leading-6 text-white">
+          {opportunity.ceoRecommendation}
+        </p>
       </div>
     </article>
   );
@@ -498,46 +505,6 @@ function TopOpportunitySignal({
       </p>
 
       <p className="mt-2 break-words text-sm font-black leading-6 text-white [overflow-wrap:anywhere]">
-        {value}
-      </p>
-    </div>
-  );
-}
-
-function InfoBlock({
-  title,
-  value,
-  emphasis = false,
-}: {
-  title: string;
-  value: string;
-  emphasis?: boolean;
-}) {
-  return (
-    <div
-      className={
-        emphasis
-          ? "rounded-2xl border border-[#C8A646]/20 bg-[#C8A646]/[0.055] p-4"
-          : "rounded-2xl border border-white/10 bg-white/[0.035] p-4"
-      }
-    >
-      <p
-        className={
-          emphasis
-            ? "text-[10px] font-black uppercase tracking-[0.17em] text-[#C8A646]"
-            : "text-[10px] font-black uppercase tracking-[0.17em] text-slate-500"
-        }
-      >
-        {title}
-      </p>
-
-      <p
-        className={
-          emphasis
-            ? "mt-2 break-words text-sm font-bold leading-6 text-white [overflow-wrap:anywhere]"
-            : "mt-2 break-words text-sm font-semibold leading-6 text-slate-300 [overflow-wrap:anywhere]"
-        }
-      >
         {value}
       </p>
     </div>
