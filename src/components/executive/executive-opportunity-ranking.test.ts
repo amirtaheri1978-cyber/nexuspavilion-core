@@ -16,7 +16,7 @@ const ranking = readSource(
 );
 const intelligenceSource = ranking.slice(
   ranking.indexOf("function IntelligenceCard"),
-  ranking.indexOf("function TopOpportunitySignal"),
+  ranking.indexOf("function EmptyState"),
 );
 const intelligenceSection = ranking.slice(
   ranking.indexOf('aria-labelledby="opportunity-intelligence-heading"'),
@@ -145,5 +145,89 @@ describe("Task 24-RFQ-02 opportunity queue presentation", () => {
     expect(opportunityCard).not.toContain("hover:scale");
     expect(opportunityCard).not.toContain("hover:-translate");
     expect(opportunityCard).not.toContain("bg-orange-500");
+  });
+});
+
+describe("Task 24-RFQ-03 priority decision position presentation", () => {
+  const decisionSection = ranking.slice(
+    ranking.indexOf('aria-labelledby="top-opportunity-position-heading"'),
+    ranking.indexOf('aria-labelledby="opportunity-queue-heading"'),
+  );
+
+  it("keeps the lead opportunity values and signal order unchanged", () => {
+    const { opportunities, intelligence } =
+      buildRfqExecutiveOpportunityIntelligence({
+        isOwner: true,
+        potentialSavings: 40000,
+        commercialEvaluationUnlocked: true,
+        quoteCount: 3,
+        documentCount: 4,
+        recommendedAwardConfidence: 88,
+      });
+
+    expect(opportunities[0].title).toBe("Commercial Savings Opportunity");
+    expect(opportunities[0].priority).toBe("High");
+    expect(opportunities[0].impact).toBe("Financial");
+    expect(opportunities[0].value).toBe("$40,000");
+    expect(intelligence[0].executionHorizon).toBe("Immediate");
+    expect(intelligence[0].boardPriority).toBe("Board-Level");
+    expect(intelligence[0].rank).toBe(1);
+    expect(intelligence[0].ceoRecommendation).toBe(
+      "Validate the bid spread and prepare negotiation strategy before final award.",
+    );
+
+    const signalBlock = decisionSection.slice(
+      decisionSection.indexOf("data-rfq-priority-decision-signals"),
+      decisionSection.indexOf("CEO action directive"),
+    );
+    const labels = [
+      "Priority",
+      "Enterprise Impact",
+      "Value Potential",
+      "Execution Horizon",
+      "Board Priority",
+      "Intelligence Position",
+    ];
+    let cursor = 0;
+    for (const label of labels) {
+      const next = signalBlock.indexOf(label, cursor);
+      expect(next).toBeGreaterThanOrEqual(0);
+      cursor = next + label.length;
+    }
+  });
+
+  it("stops unsafe wrapping and competing nested signal cards", () => {
+    expect(decisionSection).toContain('data-rfq-priority-decision="true"');
+    expect(decisionSection).not.toContain("overflow-wrap:anywhere");
+    expect(decisionSection).not.toContain("break-all");
+    expect(decisionSection).not.toContain("break-words");
+    expect(decisionSection).not.toContain("TopOpportunitySignal");
+    expect(decisionSection).not.toContain("xl:grid-cols-3");
+    expect(decisionSection).toContain("<dl");
+    expect(decisionSection).toContain("Priority Position Active");
+    expect(decisionSection).toContain("CEO action directive");
+    expect(decisionSection).toContain("{topOpportunity?.title");
+    expect(decisionSection).toContain("{topOpportunity?.summary");
+    expect(decisionSection).toContain('data-rfq-priority-decision-title="true"');
+    expect(decisionSection).toContain("min-w-0");
+    expect(decisionSection).toContain("text-pretty");
+  });
+
+  it("does not alter RFQ business data generation and leaves RFQ-01/02 blocks intact", () => {
+    expect(ranking).not.toContain("buildRfqExecutiveOpportunityIntelligence");
+    expect(ranking).toContain('data-rfq-intelligence-profiles="true"');
+    expect(ranking).toContain('data-rfq-opportunity-queue="true"');
+    expect(ranking).toContain("Business Impact and Executive Direction");
+    expect(ranking).toContain("Executive Opportunity Queue");
+    expect(ranking).not.toContain("function TopOpportunitySignal");
+  });
+
+  it("keeps heading hierarchy and does not encode status by color alone", () => {
+    expect(decisionSection).toContain("<h3");
+    expect(decisionSection).toContain("Priority Decision Position");
+    expect(decisionSection).toContain("[01] Highest commercial priority");
+    expect(decisionSection).not.toContain("hover:scale");
+    expect(decisionSection).not.toContain("hover:-translate");
+    expect(decisionSection).not.toContain("bg-orange-500");
   });
 });

@@ -84,133 +84,116 @@ export function ExecutiveOpportunityRanking({
       <div className="p-6 sm:p-8">
         <section
           aria-labelledby="top-opportunity-position-heading"
-          className="relative min-w-0 overflow-hidden rounded-[30px] border border-[#C8A646]/25 bg-[linear-gradient(135deg,rgba(200,166,70,0.09),rgba(6,20,38,0.16)_48%,rgba(44,196,232,0.035))]"
+          data-rfq-priority-decision="true"
+          className="relative min-w-0 rounded-[30px] border border-[#C8A646]/25 bg-[#C8A646]/[0.04] p-5 sm:p-6"
         >
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full border border-[#C8A646]/10"
-          />
+          <header className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div className="min-w-0">
+              <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[#C8A646]">
+                [01] Highest commercial priority
+              </p>
 
-          <div className="relative grid min-w-0 xl:grid-cols-[minmax(270px,0.72fr)_minmax(0,1.28fr)]">
-            <div className="flex min-w-0 flex-col justify-between border-b border-white/10 p-5 sm:p-6 xl:border-b-0 xl:border-r">
-              <div>
-                <div className="flex flex-wrap items-center gap-3">
-                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[#C8A646]/30 bg-[#C8A646]/10 text-xs font-black tabular-nums text-[#E5C663]">
-                    01
-                  </span>
+              <h3
+                id="top-opportunity-position-heading"
+                className="mt-2 text-lg font-black tracking-tight text-white sm:text-xl"
+              >
+                Priority Decision Position
+              </h3>
 
-                  <div className="min-w-0">
-                    <p className="text-[10px] font-black uppercase tracking-[0.24em] text-[#C8A646]">
-                      Highest commercial priority
-                    </p>
-
-                    <p className="mt-1 text-[10px] font-black uppercase tracking-[0.14em] text-slate-500">
-                      Immediate leadership focus
-                    </p>
-                  </div>
-                </div>
-
-                <h3
-                  id="top-opportunity-position-heading"
-                  className="mt-5 text-xl font-black tracking-tight text-white sm:text-2xl"
-                >
-                  Priority Decision Position
-                </h3>
-
-                <p className="mt-3 max-w-md text-xs font-semibold leading-6 text-slate-400">
-                  The leading opportunity in the active intelligence sequence,
-                  presented for executive prioritization and action alignment.
-                </p>
-              </div>
-
-              <div className="mt-6 rounded-2xl border border-white/10 bg-black/10 p-4">
-                <p className="text-[10px] font-black uppercase tracking-[0.17em] text-slate-500">
-                  Executive priority
-                </p>
-
-                <p className="mt-2 break-words text-base font-black leading-6 text-white [overflow-wrap:anywhere]">
-                  {topOpportunity?.priority || "Pending"}
-                </p>
-              </div>
+              <p className="mt-1 text-[10px] font-black uppercase tracking-[0.16em] text-slate-400">
+                Immediate leadership focus
+              </p>
             </div>
 
-            <div className="min-w-0 p-5 sm:p-6">
-              <div className="flex flex-col gap-4 border-b border-white/10 pb-5 sm:flex-row sm:items-start sm:justify-between">
-                <div className="min-w-0">
-                  <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">
-                    Immediate executive opportunity
-                  </p>
-
-                  <p className="mt-3 break-words text-2xl font-black leading-8 text-white [overflow-wrap:anywhere] sm:text-3xl">
-                    {topOpportunity?.title || "No Data"}
-                  </p>
-                </div>
-
-                <StatusBadge tone={topOpportunity ? "success" : "warning"}>
-                  {topOpportunity ? "Priority Position Active" : "Pending Review"}
-                </StatusBadge>
-              </div>
-
-              <div className="mt-5 grid min-w-0 gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                <TopOpportunitySignal
-                  label="Priority"
-                  value={topOpportunity?.priority || "Pending"}
-                />
-
-                <TopOpportunitySignal
-                  label="Enterprise Impact"
-                  value={topOpportunity?.impact || "Pending"}
-                />
-
-                <TopOpportunitySignal
-                  label="Value Potential"
-                  value={topOpportunity?.value || "Pending"}
-                  emphasis
-                />
-
-                <TopOpportunitySignal
-                  label="Execution Horizon"
-                  value={
-                    topOpportunityIntelligence?.executionHorizon || "Pending"
-                  }
-                />
-
-                <TopOpportunitySignal
-                  label="Board Priority"
-                  value={topOpportunityIntelligence?.boardPriority || "Pending"}
-                />
-
-                <TopOpportunitySignal
-                  label="Intelligence Position"
-                  value={
-                    topOpportunityIntelligence
-                      ? `Rank ${String(
-                          topOpportunityIntelligence.rank,
-                        ).padStart(2, "0")}`
-                      : "Pending"
-                  }
-                />
-              </div>
-
-              <div className="mt-4 rounded-[22px] border border-[#C8A646]/25 bg-[#C8A646]/[0.055] p-4 sm:p-5">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                  <div className="min-w-0">
-                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#C8A646]">
-                      CEO action directive
-                    </p>
-
-                    <p className="mt-2 break-words text-sm font-bold leading-6 text-slate-200 [overflow-wrap:anywhere]">
-                      {topOpportunityIntelligence?.ceoRecommendation ||
-                        "Leadership recommendation pending sufficient opportunity intelligence."}
-                    </p>
-                  </div>
-
-                  <span className="w-fit shrink-0 rounded-full border border-[#C8A646]/20 bg-[#C8A646]/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.14em] text-[#E5C663]">
-                    Executive Action
-                  </span>
-                </div>
-              </div>
+            <div className="shrink-0">
+              <StatusBadge tone={topOpportunity ? "success" : "warning"}>
+                {topOpportunity ? "Priority Position Active" : "Pending Review"}
+              </StatusBadge>
             </div>
+          </header>
+
+          <p
+            data-rfq-priority-decision-title="true"
+            className="mt-5 min-w-0 max-w-4xl text-pretty text-2xl font-black leading-[1.25] tracking-tight text-white sm:text-3xl"
+          >
+            {topOpportunity?.title || "No Data"}
+          </p>
+
+          <p className="mt-3 min-w-0 max-w-4xl text-pretty text-sm font-semibold leading-6 text-slate-300">
+            {topOpportunity?.summary ||
+              "The leading opportunity in the active intelligence sequence, presented for executive prioritization and action alignment."}
+          </p>
+
+          <dl
+            data-rfq-priority-decision-signals="true"
+            className="mt-5 grid min-w-0 grid-cols-1 gap-x-6 gap-y-4 border-y border-white/10 py-4 sm:grid-cols-2 lg:grid-cols-3"
+          >
+            <div className="min-w-0">
+              <dt className="text-[10px] font-black uppercase tracking-[0.16em] text-slate-400">
+                Priority
+              </dt>
+              <dd className="mt-1.5 text-sm font-black leading-5 text-white">
+                {topOpportunity?.priority || "Pending"}
+              </dd>
+            </div>
+
+            <div className="min-w-0">
+              <dt className="text-[10px] font-black uppercase tracking-[0.16em] text-slate-400">
+                Enterprise Impact
+              </dt>
+              <dd className="mt-1.5 text-sm font-black leading-5 text-white">
+                {topOpportunity?.impact || "Pending"}
+              </dd>
+            </div>
+
+            <div className="min-w-0">
+              <dt className="text-[10px] font-black uppercase tracking-[0.16em] text-[#C8A646]">
+                Value Potential
+              </dt>
+              <dd className="mt-1.5 text-sm font-black leading-5 text-white">
+                {topOpportunity?.value || "Pending"}
+              </dd>
+            </div>
+
+            <div className="min-w-0">
+              <dt className="text-[10px] font-black uppercase tracking-[0.16em] text-slate-400">
+                Execution Horizon
+              </dt>
+              <dd className="mt-1.5 text-sm font-black leading-5 text-white">
+                {topOpportunityIntelligence?.executionHorizon || "Pending"}
+              </dd>
+            </div>
+
+            <div className="min-w-0">
+              <dt className="text-[10px] font-black uppercase tracking-[0.16em] text-slate-400">
+                Board Priority
+              </dt>
+              <dd className="mt-1.5 text-sm font-black leading-5 text-white">
+                {topOpportunityIntelligence?.boardPriority || "Pending"}
+              </dd>
+            </div>
+
+            <div className="min-w-0">
+              <dt className="text-[10px] font-black uppercase tracking-[0.16em] text-slate-400">
+                Intelligence Position
+              </dt>
+              <dd className="mt-1.5 text-sm font-black leading-5 text-white">
+                {topOpportunityIntelligence
+                  ? `Rank ${String(topOpportunityIntelligence.rank).padStart(2, "0")}`
+                  : "Pending"}
+              </dd>
+            </div>
+          </dl>
+
+          <div className="mt-4 rounded-2xl border border-[#C8A646]/20 bg-[#C8A646]/[0.055] p-4">
+            <p className="text-[10px] font-black uppercase tracking-[0.17em] text-[#C8A646]">
+              CEO action directive
+            </p>
+
+            <p className="mt-2 text-sm font-bold leading-6 text-white">
+              {topOpportunityIntelligence?.ceoRecommendation ||
+                "Leadership recommendation pending sufficient opportunity intelligence."}
+            </p>
           </div>
         </section>
 
@@ -438,40 +421,6 @@ function IntelligenceCard({
     </article>
   );
 }
-function TopOpportunitySignal({
-  label,
-  value,
-  emphasis = false,
-}: {
-  label: string;
-  value: string;
-  emphasis?: boolean;
-}) {
-  return (
-    <div
-      className={
-        emphasis
-          ? "min-w-0 rounded-2xl border border-[#C8A646]/20 bg-[#C8A646]/[0.055] p-4"
-          : "min-w-0 rounded-2xl border border-white/10 bg-black/10 p-4"
-      }
-    >
-      <p
-        className={
-          emphasis
-            ? "text-[10px] font-black uppercase tracking-[0.17em] text-[#C8A646]"
-            : "text-[10px] font-black uppercase tracking-[0.17em] text-slate-500"
-        }
-      >
-        {label}
-      </p>
-
-      <p className="mt-2 break-words text-sm font-black leading-6 text-white [overflow-wrap:anywhere]">
-        {value}
-      </p>
-    </div>
-  );
-}
-
 function EmptyState({
   message,
 }: {
