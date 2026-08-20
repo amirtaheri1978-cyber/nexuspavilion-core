@@ -14,14 +14,22 @@ import {
 } from "@/components/executive/enrollment/executive-enrollment-state";
 import {
   FRIENDLY_INVITE_ACCEPT_FAILED,
+  FRIENDLY_INVITE_IDENTITY_REQUIRED,
+  buildInviteSignupTransitMetadata,
   getFriendlyInviteSignInError,
   getInvitationRecoveryPath,
   isSuccessfulInvitationAcceptDestination,
+  validateInvitationEnrollmentIdentity,
 } from "@/lib/auth/invite-enrollment";
 import {
   getFriendlySignupError,
   isExistingAccountSignupError,
 } from "@/lib/auth/signup-error";
+import {
+  normalizeJobTitle,
+  normalizeProfessionalName,
+  syncCurrentUserProfessionalNames,
+} from "@/lib/auth/professional-names";
 import { createClient } from "@/lib/supabase/client";
 
 type InvitationContext = {
@@ -53,18 +61,44 @@ export default function InviteSignupPage() {
 
   const [invitation, setInvitation] = useState<InvitationContext | null>(null);
   const [loadingInvitation, setLoadingInvitation] = useState(true);
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [jobTitle, setJobTitle] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [attemptedSubmit, setAttemptedSubmit] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [enrollmentPhase, setEnrollmentPhase] =
     useState<EnrollmentPhase>("idle");
 
+  const submittedFirstName = normalizeProfessionalName(firstName);
+  const submittedLastName = normalizeProfessionalName(lastName);
+  const submittedJobTitle = normalizeJobTitle(jobTitle);
+  const identityErrors = validateInvitationEnrollmentIdentity({
+    firstName: submittedFirstName,
+    lastName: submittedLastName,
+    jobTitle: submittedJobTitle,
+  });
+  const passwordError =
+    attemptedSubmit && password.length < 8
+      ? "Password must be at least 8 characters."
+      : null;
+  const confirmPasswordError =
+    attemptedSubmit && password !== confirmPassword
+      ? "Passwords do not match."
+      : null;
+  const firstNameError = attemptedSubmit ? identityErrors.firstNameError : null;
+  const lastNameError = attemptedSubmit ? identityErrors.lastNameError : null;
+  const jobTitleError = attemptedSubmit ? identityErrors.jobTitleError : null;
   const passwordIsReady = password.length >= 8;
   const passwordsMatch = password.length > 0 && password === confirmPassword;
+  const identityIsReady = Boolean(
+    submittedFirstName && submittedLastName && submittedJobTitle,
+  );
   const formIsReady =
-    Boolean(invitation) && passwordIsReady && passwordsMatch;
+    Boolean(invitation) && identityIsReady && passwordIsReady && passwordsMatch;
 
   useEffect(() => {
     async function loadInvitation() {
@@ -95,6 +129,9 @@ export default function InviteSignupPage() {
 
     const formData = new FormData();
     formData.append("token", token);
+    formData.append("firstName", submittedFirstName);
+    formData.append("lastName", submittedLastName);
+    formData.append("jobTitle", submittedJobTitle);
 
     try {
       const response = await fetch("/api/company-invitations/accept", {
@@ -120,6 +157,7 @@ export default function InviteSignupPage() {
 
   async function handleSignup(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    setAttemptedSubmit(true);
 
     setSubmitting(true);
     setEnrollmentPhase("creating-account");
@@ -130,6 +168,17 @@ export default function InviteSignupPage() {
       setSubmitting(false);
       setEnrollmentPhase("idle");
       setError("Invitation could not be loaded.");
+      return;
+    }
+
+    if (
+      identityErrors.firstNameError ||
+      identityErrors.lastNameError ||
+      identityErrors.jobTitleError
+    ) {
+      setSubmitting(false);
+      setEnrollmentPhase("idle");
+      setError(FRIENDLY_INVITE_IDENTITY_REQUIRED);
       return;
     }
 
@@ -159,6 +208,12 @@ export default function InviteSignupPage() {
     const { error: signupError } = await supabase.auth.signUp({
       email,
       password,
+      options: {
+        data: buildInviteSignupTransitMetadata(
+          submittedFirstName,
+          submittedLastName,
+        ),
+      },
     });
 
     const existingAccount = Boolean(
@@ -192,6 +247,19 @@ export default function InviteSignupPage() {
       setMessage(
         "Account created. Confirm your email if required, then sign in to complete workspace enrollment."
       );
+      return;
+    }
+
+    const nameSync = await syncCurrentUserProfessionalNames(supabase, {
+      firstName: submittedFirstName,
+      lastName: submittedLastName,
+      requireNames: true,
+    });
+
+    if (!nameSync.ok) {
+      setSubmitting(false);
+      setEnrollmentPhase("idle");
+      setError(nameSync.error);
       return;
     }
 
@@ -230,6 +298,9 @@ export default function InviteSignupPage() {
     >
       <ExecutiveEnrollmentForm
         email={invitation.invite_email || ""}
+        firstName={firstName}
+        lastName={lastName}
+        jobTitle={jobTitle}
         password={password}
         confirmPassword={confirmPassword}
         passwordIsReady={passwordIsReady}
@@ -238,9 +309,17 @@ export default function InviteSignupPage() {
         submitting={submitting}
         message={message}
         error={error}
+        firstNameError={firstNameError}
+        lastNameError={lastNameError}
+        jobTitleError={jobTitleError}
+        passwordError={passwordError}
+        confirmPasswordError={confirmPasswordError}
         unavailable={false}
         enrollmentPhase={enrollmentPhase}
         loginHref={loginHref}
+        onFirstNameChange={setFirstName}
+        onLastNameChange={setLastName}
+        onJobTitleChange={setJobTitle}
         onPasswordChange={setPassword}
         onConfirmPasswordChange={setConfirmPassword}
         onSubmit={handleSignup}

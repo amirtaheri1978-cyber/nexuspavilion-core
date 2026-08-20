@@ -4,6 +4,7 @@ import { ExecutiveBadge } from "@/components/executive/executive-badge";
 import { ExecutivePanel } from "@/components/executive/executive-panel";
 
 import type { ExecutiveAccessState } from "./executive-access-journey";
+import { InviteAcceptanceIdentityForm } from "./invite-acceptance-identity-form";
 import { SwitchAuthorizedIdentityButton } from "./switch-authorized-identity-button";
 
 type ExecutiveAccessStatePanelProps = {
@@ -14,6 +15,9 @@ type ExecutiveAccessStatePanelProps = {
   loginHref: string;
   invitationToken: string;
   roleLabel: string;
+  initialFirstName?: string;
+  initialLastName?: string;
+  preview?: boolean;
 };
 
 type ExecutiveAccessStateCardProps = {
@@ -39,6 +43,9 @@ export function ExecutiveAccessStatePanel({
   loginHref,
   invitationToken,
   roleLabel,
+  initialFirstName = "",
+  initialLastName = "",
+  preview = false,
 }: ExecutiveAccessStatePanelProps) {
   if (state === "unauthenticated") {
     return (
@@ -169,19 +176,12 @@ export function ExecutiveAccessStatePanel({
         </p>
       </div>
 
-      <form
-        action="/api/company-invitations/accept"
-        method="POST"
-        className="mt-5"
-      >
-        <input type="hidden" name="token" value={invitationToken} />
-        <button
-          type="submit"
-          className={`${primaryActionClass} bg-emerald-400 text-[#06130D] shadow-[0_12px_32px_rgba(52,211,153,0.14)] hover:bg-emerald-300 focus-visible:ring-emerald-300`}
-        >
-          Verify Identity and Activate Access
-        </button>
-      </form>
+      <InviteAcceptanceIdentityForm
+        invitationToken={invitationToken}
+        initialFirstName={initialFirstName}
+        initialLastName={initialLastName}
+        preview={preview}
+      />
 
       <SecurityAssurance>
         Acceptance records the authorized account, assigned role, and activation

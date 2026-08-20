@@ -1,7 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import type { FormEvent } from "react";
+import { useId, type FormEvent } from "react";
+
+import {
+  EXECUTIVE_CTA_PRIMARY,
+  EXECUTIVE_FOCUS_GOLD,
+} from "@/lib/design-system/executive-contract";
+import {
+  JOB_TITLE_MAX_LENGTH,
+  PROFESSIONAL_NAME_MAX_LENGTH,
+} from "@/lib/auth/professional-names";
 
 export type EnrollmentPhase =
   | "idle"
@@ -11,6 +20,9 @@ export type EnrollmentPhase =
 
 type ExecutiveEnrollmentFormProps = {
   email: string;
+  firstName: string;
+  lastName: string;
+  jobTitle: string;
   password: string;
   confirmPassword: string;
   passwordIsReady: boolean;
@@ -19,13 +31,31 @@ type ExecutiveEnrollmentFormProps = {
   submitting: boolean;
   message: string;
   error: string;
+  firstNameError: string | null;
+  lastNameError: string | null;
+  jobTitleError: string | null;
+  passwordError: string | null;
+  confirmPasswordError: string | null;
   unavailable: boolean;
   enrollmentPhase: EnrollmentPhase;
   loginHref: string;
+  onFirstNameChange: (value: string) => void;
+  onLastNameChange: (value: string) => void;
+  onJobTitleChange: (value: string) => void;
   onPasswordChange: (value: string) => void;
   onConfirmPasswordChange: (value: string) => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
 };
+
+const enrollmentInputClass = [
+  "w-full rounded-2xl border border-white/10 bg-white/[0.045] px-4 py-3.5 text-sm font-medium text-white outline-none transition",
+  "placeholder:text-slate-600 hover:border-white/20",
+  "focus:border-[#d6b977]/60 focus:bg-white/[0.065]",
+  EXECUTIVE_FOCUS_GOLD,
+].join(" ");
+
+const enrollmentReadonlyClass =
+  "w-full rounded-2xl border border-white/10 bg-black/15 px-4 py-3.5 text-sm font-semibold text-slate-400 outline-none";
 
 function LockIcon() {
   return (
@@ -58,6 +88,9 @@ function CheckIcon() {
 
 export function ExecutiveEnrollmentForm({
   email,
+  firstName,
+  lastName,
+  jobTitle,
   password,
   confirmPassword,
   passwordIsReady,
@@ -66,13 +99,36 @@ export function ExecutiveEnrollmentForm({
   submitting,
   message,
   error,
+  firstNameError,
+  lastNameError,
+  jobTitleError,
+  passwordError,
+  confirmPasswordError,
   unavailable,
   enrollmentPhase,
   loginHref,
+  onFirstNameChange,
+  onLastNameChange,
+  onJobTitleChange,
   onPasswordChange,
   onConfirmPasswordChange,
   onSubmit,
 }: ExecutiveEnrollmentFormProps) {
+  const firstNameId = useId();
+  const lastNameId = useId();
+  const jobTitleId = useId();
+  const emailId = useId();
+  const passwordId = useId();
+  const confirmPasswordId = useId();
+  const firstNameErrorId = useId();
+  const lastNameErrorId = useId();
+  const jobTitleErrorId = useId();
+  const passwordErrorId = useId();
+  const confirmPasswordErrorId = useId();
+  const formErrorId = useId();
+  const jobTitleHintId = useId();
+  const identityReady = Boolean(firstName.trim() && lastName.trim() && jobTitle.trim());
+
   return (
     <section className="overflow-hidden rounded-[30px] border border-white/10 bg-[#091a2d]/96 shadow-[0_34px_100px_rgba(0,0,0,0.48)] backdrop-blur-2xl">
       <div className="border-b border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.01))] px-6 py-6 sm:px-8">
@@ -88,8 +144,8 @@ export function ExecutiveEnrollmentForm({
               Activate Procurement Workspace
             </h2>
             <p className="mt-2 max-w-md text-sm leading-6 text-slate-400">
-              Establish the credential that will govern your authorized access,
-              role assignment, and workspace audit identity.
+              Confirm your professional identity, then establish the credential
+              that will govern authorized access and workspace audit identity.
             </p>
           </div>
         </div>
@@ -105,48 +161,228 @@ export function ExecutiveEnrollmentForm({
             the access brief for the current invitation status.
           </div>
         ) : (
-          <form onSubmit={onSubmit} className="space-y-5">
+          <form
+            method="post"
+            action="#"
+            onSubmit={(event) => {
+              event.preventDefault();
+              onSubmit(event);
+            }}
+            className="space-y-5"
+            noValidate
+          >
             <WorkflowControl
               label="Recipient identity"
               description="Matched to the verified invitation"
               state="verified"
             />
 
-            <Field label="Authorized recipient">
+            <div>
+              <label
+                htmlFor={emailId}
+                className="mb-2.5 block text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400"
+              >
+                Authorized recipient
+              </label>
               <input
+                id={emailId}
                 type="email"
+                name="email"
                 readOnly
                 value={email}
                 aria-label="Authorized recipient email"
-                className="w-full rounded-2xl border border-white/10 bg-black/15 px-4 py-3.5 text-sm font-semibold text-slate-400 outline-none"
+                className={enrollmentReadonlyClass}
               />
-            </Field>
+            </div>
 
-            <Field label="Create secure credential">
+            <fieldset className="min-w-0 space-y-4 rounded-2xl border border-white/8 bg-black/10 p-4">
+              <legend className="px-1 text-[10px] font-bold uppercase tracking-[0.19em] text-[#d6b977]">
+                Professional identity
+              </legend>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label
+                    htmlFor={firstNameId}
+                    className="mb-2.5 block text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400"
+                  >
+                    First name
+                  </label>
+                  <input
+                    id={firstNameId}
+                    type="text"
+                    name="firstName"
+                    required
+                    autoComplete="given-name"
+                    maxLength={PROFESSIONAL_NAME_MAX_LENGTH}
+                    placeholder="Alex"
+                    value={firstName}
+                    onChange={(event) => onFirstNameChange(event.target.value)}
+                    disabled={submitting}
+                    aria-invalid={Boolean(firstNameError)}
+                    aria-describedby={
+                      firstNameError ? firstNameErrorId : undefined
+                    }
+                    className={enrollmentInputClass}
+                  />
+                  {firstNameError ? (
+                    <p
+                      id={firstNameErrorId}
+                      role="alert"
+                      className="mt-2 text-xs font-semibold leading-5 text-rose-200"
+                    >
+                      {firstNameError}
+                    </p>
+                  ) : null}
+                </div>
+
+                <div>
+                  <label
+                    htmlFor={lastNameId}
+                    className="mb-2.5 block text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400"
+                  >
+                    Last name
+                  </label>
+                  <input
+                    id={lastNameId}
+                    type="text"
+                    name="lastName"
+                    required
+                    autoComplete="family-name"
+                    maxLength={PROFESSIONAL_NAME_MAX_LENGTH}
+                    placeholder="Morgan"
+                    value={lastName}
+                    onChange={(event) => onLastNameChange(event.target.value)}
+                    disabled={submitting}
+                    aria-invalid={Boolean(lastNameError)}
+                    aria-describedby={
+                      lastNameError ? lastNameErrorId : undefined
+                    }
+                    className={enrollmentInputClass}
+                  />
+                  {lastNameError ? (
+                    <p
+                      id={lastNameErrorId}
+                      role="alert"
+                      className="mt-2 text-xs font-semibold leading-5 text-rose-200"
+                    >
+                      {lastNameError}
+                    </p>
+                  ) : null}
+                </div>
+              </div>
+
+              <div>
+                <label
+                  htmlFor={jobTitleId}
+                  className="mb-2.5 block text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400"
+                >
+                  Job title
+                </label>
+                <input
+                  id={jobTitleId}
+                  type="text"
+                  name="jobTitle"
+                  required
+                  autoComplete="organization-title"
+                  maxLength={JOB_TITLE_MAX_LENGTH}
+                  placeholder="Procurement Director"
+                  value={jobTitle}
+                  onChange={(event) => onJobTitleChange(event.target.value)}
+                  disabled={submitting}
+                  aria-invalid={Boolean(jobTitleError)}
+                  aria-describedby={
+                    jobTitleError
+                      ? jobTitleErrorId
+                      : jobTitleHintId
+                  }
+                  className={enrollmentInputClass}
+                />
+                <p id={jobTitleHintId} className="mt-2 text-[11px] leading-4 text-slate-600">
+                  Your title in this invited workspace. Role assignment remains
+                  governed by the invitation.
+                </p>
+                {jobTitleError ? (
+                  <p
+                    id={jobTitleErrorId}
+                    role="alert"
+                    className="mt-2 text-xs font-semibold leading-5 text-rose-200"
+                  >
+                    {jobTitleError}
+                  </p>
+                ) : null}
+              </div>
+            </fieldset>
+
+            <div>
+              <label
+                htmlFor={passwordId}
+                className="mb-2.5 block text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400"
+              >
+                Create secure credential
+              </label>
               <input
+                id={passwordId}
                 type="password"
+                name="password"
                 required
                 minLength={8}
                 autoComplete="new-password"
                 placeholder="Minimum 8 characters"
                 value={password}
                 onChange={(event) => onPasswordChange(event.target.value)}
-                className="w-full rounded-2xl border border-white/10 bg-white/[0.045] px-4 py-3.5 text-sm font-medium text-white outline-none transition placeholder:text-slate-600 hover:border-white/20 focus:border-[#d6b977]/60 focus:bg-white/[0.065] focus:ring-4 focus:ring-[#c9a35d]/10"
+                disabled={submitting}
+                aria-invalid={Boolean(passwordError)}
+                aria-describedby={passwordError ? passwordErrorId : undefined}
+                className={enrollmentInputClass}
               />
-            </Field>
+              {passwordError ? (
+                <p
+                  id={passwordErrorId}
+                  role="alert"
+                  className="mt-2 text-xs font-semibold leading-5 text-rose-200"
+                >
+                  {passwordError}
+                </p>
+              ) : null}
+            </div>
 
-            <Field label="Confirm secure credential">
+            <div>
+              <label
+                htmlFor={confirmPasswordId}
+                className="mb-2.5 block text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400"
+              >
+                Confirm secure credential
+              </label>
               <input
+                id={confirmPasswordId}
                 type="password"
+                name="confirmPassword"
                 required
                 minLength={8}
                 autoComplete="new-password"
                 placeholder="Re-enter your password"
                 value={confirmPassword}
-                onChange={(event) => onConfirmPasswordChange(event.target.value)}
-                className="w-full rounded-2xl border border-white/10 bg-white/[0.045] px-4 py-3.5 text-sm font-medium text-white outline-none transition placeholder:text-slate-600 hover:border-white/20 focus:border-[#d6b977]/60 focus:bg-white/[0.065] focus:ring-4 focus:ring-[#c9a35d]/10"
+                onChange={(event) =>
+                  onConfirmPasswordChange(event.target.value)
+                }
+                disabled={submitting}
+                aria-invalid={Boolean(confirmPasswordError)}
+                aria-describedby={
+                  confirmPasswordError ? confirmPasswordErrorId : undefined
+                }
+                className={enrollmentInputClass}
               />
-            </Field>
+              {confirmPasswordError ? (
+                <p
+                  id={confirmPasswordErrorId}
+                  role="alert"
+                  className="mt-2 text-xs font-semibold leading-5 text-rose-200"
+                >
+                  {confirmPasswordError}
+                </p>
+              ) : null}
+            </div>
 
             <div className="rounded-2xl border border-white/8 bg-black/10 p-4">
               <div className="flex items-center justify-between">
@@ -160,6 +396,11 @@ export function ExecutiveEnrollmentForm({
 
               <div className="mt-4 space-y-3">
                 <WorkflowControl
+                  label="Professional identity"
+                  description="First name, last name, and job title"
+                  state={identityReady ? "verified" : "pending"}
+                />
+                <WorkflowControl
                   label="Password policy"
                   description="Minimum 8-character credential"
                   state={passwordIsReady ? "verified" : "pending"}
@@ -170,8 +411,13 @@ export function ExecutiveEnrollmentForm({
                   state={passwordsMatch ? "verified" : "pending"}
                 />
                 <WorkflowControl
+                  label="Enrollment completeness"
+                  description="Identity and credential checks are complete"
+                  state={formIsReady ? "verified" : "pending"}
+                />
+                <WorkflowControl
                   label="Workspace governance"
-                  description="Role assignment and audit identity"
+                  description="Role assignment remains invitation-controlled"
                   state="ready"
                 />
               </div>
@@ -192,6 +438,7 @@ export function ExecutiveEnrollmentForm({
 
             {error ? (
               <div
+                id={formErrorId}
                 role="alert"
                 className="rounded-2xl border border-rose-300/20 bg-rose-300/[0.07] px-4 py-3 text-sm font-semibold leading-6 text-rose-200"
               >
@@ -201,19 +448,12 @@ export function ExecutiveEnrollmentForm({
 
             <button
               type="submit"
-              disabled={submitting || !formIsReady}
-              className="group relative flex w-full items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-r from-[#c49a4d] via-[#d6b977] to-[#c49a4d] px-6 py-4 text-sm font-bold text-[#102035] shadow-[0_18px_45px_rgba(201,163,93,.18)] transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_22px_55px_rgba(201,163,93,.28)] focus:outline-none focus:ring-4 focus:ring-[#d6b977]/20 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0"
+              disabled={submitting}
+              className={`${EXECUTIVE_CTA_PRIMARY} w-full disabled:cursor-not-allowed disabled:opacity-40`}
             >
-              <span>
-                {submitting
-                  ? "Provisioning executive access..."
-                  : "Provision Executive Access"}
-              </span>
-              {!submitting ? (
-                <span className="ml-2 transition duration-300 group-hover:translate-x-1">
-                  →
-                </span>
-              ) : null}
+              {submitting
+                ? "Provisioning executive access..."
+                : "Provision Executive Access"}
             </button>
 
             <p className="text-center text-xs leading-5 text-slate-600">
@@ -226,7 +466,7 @@ export function ExecutiveEnrollmentForm({
         <div className="mt-6 border-t border-white/8 pt-5 text-center">
           <Link
             href={loginHref}
-            className="text-sm font-semibold text-slate-400 transition hover:text-white"
+            className={`text-sm font-semibold text-slate-400 transition hover:text-white ${EXECUTIVE_FOCUS_GOLD} rounded-lg px-1`}
           >
             Already registered?{" "}
             <span className="text-[#d6b977]">Sign in securely</span>
@@ -234,23 +474,6 @@ export function ExecutiveEnrollmentForm({
         </div>
       </div>
     </section>
-  );
-}
-
-function Field({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <label className="block">
-      <span className="mb-2.5 block text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">
-        {label}
-      </span>
-      {children}
-    </label>
   );
 }
 

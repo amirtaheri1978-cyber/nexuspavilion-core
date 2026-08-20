@@ -24,6 +24,9 @@ type ExecutiveAccessGatewayProps = {
   signupHref: string;
   loginHref: string;
   invitationToken: string;
+  initialFirstName?: string;
+  initialLastName?: string;
+  preview?: boolean;
 };
 
 type BriefItemProps = {
@@ -46,6 +49,9 @@ export function ExecutiveAccessGateway({
   signupHref,
   loginHref,
   invitationToken,
+  initialFirstName = "",
+  initialLastName = "",
+  preview = false,
 }: ExecutiveAccessGatewayProps) {
   return (
     <ExecutiveAccessPageShell>
@@ -187,6 +193,9 @@ export function ExecutiveAccessGateway({
                 loginHref={loginHref}
                 invitationToken={invitationToken}
                 roleLabel={roleLabel}
+                initialFirstName={initialFirstName}
+                initialLastName={initialLastName}
+                preview={preview}
               />
             </aside>
           </div>

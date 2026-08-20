@@ -4,6 +4,7 @@ import {
 } from "@/components/executive/invitation/executive-access-gateway";
 import type { ExecutiveAccessState } from "@/components/executive/invitation/executive-access-journey";
 import { ExecutiveAccessStateCard } from "@/components/executive/invitation/executive-access-state";
+import { loadCurrentUserProfessionalNames } from "@/lib/auth/professional-names";
 import { createClient } from "@/lib/supabase/server";
 
 type PageProps = {
@@ -99,6 +100,10 @@ export default async function InviteAcceptPage({ params }: PageProps) {
   const companyLocation =
     invitation.company_location || "Location not specified";
   const roleLabel = formatRole(invitation.invite_role);
+  const canPrefillOwnNames = Boolean(user) && !emailMismatch;
+  const ownNames = canPrefillOwnNames
+    ? await loadCurrentUserProfessionalNames(supabase)
+    : { firstName: null, lastName: null };
 
   return (
     <ExecutiveAccessGateway
@@ -115,6 +120,8 @@ export default async function InviteAcceptPage({ params }: PageProps) {
       signupHref={signupHref}
       loginHref={loginHref}
       invitationToken={token}
+      initialFirstName={ownNames.firstName || ""}
+      initialLastName={ownNames.lastName || ""}
     />
   );
 }

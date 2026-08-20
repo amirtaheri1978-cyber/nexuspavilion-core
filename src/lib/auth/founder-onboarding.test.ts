@@ -251,9 +251,6 @@ describe("NP-MASTER-22-B04-2 create API and bootstrap call", () => {
 describe("NP-MASTER-22-B04-2 invitation flow isolation", () => {
   it("does not change Task 17 invitation signup or accept authorization", () => {
     expect(inviteSignupPage).toContain("supabase.auth.signUp({");
-    expect(inviteSignupPage).not.toContain("first_name");
-    expect(inviteSignupPage).not.toContain("last_name");
-    expect(inviteSignupPage).not.toContain("jobTitle");
     expect(inviteSignupPage).toContain("/api/company-invitations/accept");
     expect(inviteSignupPage).toContain(
       "`/login?next=${encodeURIComponent(`/invite/${token}`)}`",
@@ -261,10 +258,16 @@ describe("NP-MASTER-22-B04-2 invitation flow isolation", () => {
     expect(inviteLanding).toContain(
       "`/login?next=${encodeURIComponent(`/invite/${token}`)}`",
     );
+    expect(inviteSignupPage).not.toContain(
+      "/auth/callback?next=/create-company",
+    );
     expect(acceptRoute).toContain('"accept_organization_invitation"');
     expect(acceptRoute).toContain("invitation_token: token");
     expect(acceptRoute).not.toContain("p_company_id");
     expect(acceptRoute).not.toContain("p_user_id");
-    expect(acceptRoute).not.toContain("firstName");
+    expect(acceptRoute).not.toContain("p_workspace_role");
+    expect(acceptRoute).not.toContain("p_procurement_function");
+    expect(inviteSignupPage).not.toContain("p_company_id");
+    expect(inviteSignupPage).not.toContain("p_user_id");
   });
 });

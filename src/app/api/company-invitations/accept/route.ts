@@ -1,5 +1,16 @@
 import { NextResponse } from "next/server";
 
+import {
+  FRIENDLY_INVITE_IDENTITY_REQUIRED,
+  parseInvitationAcceptInput,
+  validateInvitationEnrollmentIdentity,
+} from "@/lib/auth/invite-enrollment";
+import {
+  PROFESSIONAL_NAME_SYNC_ERROR,
+  syncCurrentUserProfessionalNames,
+  validateFounderJobTitle,
+  validateProfessionalName,
+} from "@/lib/auth/professional-names";
 import { createClient } from "@/lib/supabase/server";
 
 const SITE_URL =
@@ -51,6 +62,11 @@ function getFailureRedirect(
         "/dashboard?error=invalid-invitation",
       );
 
+    case "IDENTITY_REQUIRED":
+      return redirectTo(
+        `/invite/${token}?error=identity-required`,
+      );
+
     default:
       return redirectTo(
         `/invite/${token}?error=accept-failed`,
@@ -61,10 +77,11 @@ function getFailureRedirect(
 export async function POST(request: Request) {
   try {
     const formData = await request.formData();
-
-    const token = String(
-      formData.get("token") || "",
-    ).trim();
+    const input = parseInvitationAcceptInput(formData);
+    const token = input.token;
+    const firstName = input.firstName;
+    const lastName = input.lastName;
+    const jobTitle = input.jobTitle;
 
     if (!token) {
       return redirectTo(
@@ -87,10 +104,61 @@ export async function POST(request: Request) {
       );
     }
 
+    const firstNameLengthError = validateProfessionalName(
+      firstName,
+      "First name",
+      { required: false },
+    );
+    const lastNameLengthError = validateProfessionalName(
+      lastName,
+      "Last name",
+      { required: false },
+    );
+    const jobTitleError = validateFounderJobTitle(jobTitle, {
+      required: true,
+    });
+
+    if (firstNameLengthError || lastNameLengthError || jobTitleError) {
+      console.warn("Invitation acceptance identity validation failed.", {
+        userId: user.id,
+        reason: FRIENDLY_INVITE_IDENTITY_REQUIRED,
+      });
+      return getFailureRedirect(token, "IDENTITY_REQUIRED");
+    }
+
+    const nameSync = await syncCurrentUserProfessionalNames(supabase, {
+      firstName,
+      lastName,
+      requireNames: true,
+    });
+
+    if (!nameSync.ok) {
+      console.warn("Invitation acceptance name sync failed.", {
+        userId: user.id,
+        reason: nameSync.error || PROFESSIONAL_NAME_SYNC_ERROR,
+      });
+      return getFailureRedirect(token, "IDENTITY_REQUIRED");
+    }
+
+    const identityErrors = validateInvitationEnrollmentIdentity({
+      firstName: nameSync.firstName ?? "",
+      lastName: nameSync.lastName ?? "",
+      jobTitle,
+    });
+
+    if (
+      identityErrors.firstNameError ||
+      identityErrors.lastNameError ||
+      identityErrors.jobTitleError
+    ) {
+      return getFailureRedirect(token, "IDENTITY_REQUIRED");
+    }
+
     const { data, error } = await supabase.rpc(
       "accept_organization_invitation",
       {
         invitation_token: token,
+        p_job_title: jobTitle || null,
       },
     );
 
