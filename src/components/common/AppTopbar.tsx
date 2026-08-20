@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 import { NexusPavilionLogo } from "@/components/branding/nexus-pavilion-logo";
 import SignOutButton from "@/components/sign-out-button";
@@ -6,10 +9,16 @@ import {
   EXECUTIVE_FOCUS_CYAN,
   EXECUTIVE_FOCUS_GOLD,
 } from "@/lib/design-system/executive-contract";
+import { getAppSectionTitle } from "@/lib/navigation/application-nav";
+
+const BOARDROOM_INTELLIGENCE = "Boardroom Intelligence";
 
 export default function AppTopbar() {
+  const pathname = usePathname() ?? "/";
+  const title = getAppSectionTitle(pathname) || BOARDROOM_INTELLIGENCE;
+
   return (
-    <header className="flex h-[76px] items-center justify-between border-b border-white/10 bg-[#07111F]/95 px-4 text-white backdrop-blur sm:px-6 lg:px-8">
+    <header className="hidden h-[76px] items-center justify-between border-b border-white/10 bg-[#07111F]/95 px-4 text-white backdrop-blur sm:px-6 lg:flex lg:px-8">
       <div className="flex min-w-0 items-center gap-4">
         <NexusPavilionLogo
           className="hidden shrink-0 xl:flex"
@@ -23,7 +32,7 @@ export default function AppTopbar() {
           </p>
 
           <p className="mt-1 truncate text-lg font-black text-white">
-            Boardroom Intelligence
+            {title}
           </p>
         </div>
       </div>

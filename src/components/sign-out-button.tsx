@@ -9,49 +9,11 @@ import {
   useSyncExternalStore,
 } from "react";
 import { createPortal } from "react-dom";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 import { NexusPavilionLogo } from "@/components/branding/nexus-pavilion-logo";
+import { ACCOUNT_MENU_LINKS, isActivePath } from "@/lib/navigation/application-nav";
 import { createClient } from "@/lib/supabase/client";
-
-const WORKSPACE_LINKS = [
-  {
-    href: "/dashboard",
-    label: "Executive Dashboard",
-    description: "Command center, executive brief, and workspace overview.",
-    icon: "📊",
-  },
-  {
-    href: "/company/settings",
-    label: "Company Command",
-    description: "Governance, members, invitations, and company settings.",
-    icon: "🏢",
-  },
-  {
-    href: "/rfq",
-    label: "Procurement Workspace",
-    description: "RFQs, opportunities, sourcing, and supplier activity.",
-    icon: "📑",
-  },
-  {
-    href: "/directory",
-    label: "Supplier Network",
-    description: "Supplier directory, scorecards, and marketplace signals.",
-    icon: "🤝",
-  },
-  {
-    href: "/analytics",
-    label: "Executive Analytics",
-    description: "Board reporting, risk, confidence, and intelligence.",
-    icon: "📈",
-  },
-  {
-    href: "/notifications",
-    label: "Activity Center",
-    description: "Alerts, workflow signals, and recent workspace activity.",
-    icon: "🔔",
-  },
-] as const;
 
 type SignOutButtonMode = "workspace-menu" | "logout-only";
 
@@ -80,6 +42,7 @@ export default function SignOutButton({
   className = "",
 }: SignOutButtonProps) {
   const router = useRouter();
+  const pathname = usePathname() ?? "/";
   const supabase = createClient();
   const mounted = useHasMounted();
 
@@ -215,12 +178,13 @@ export default function SignOutButton({
             </div>
 
             <div className="mt-3 space-y-1">
-              {WORKSPACE_LINKS.map((item) => (
+              {ACCOUNT_MENU_LINKS.map((item) => (
                 <MenuLink
                   key={item.href}
                   href={item.href}
                   icon={item.icon}
                   description={item.description}
+                  current={isActivePath(pathname, item.href)}
                   onNavigate={() => setOpen(false)}
                 >
                   {item.label}
@@ -256,7 +220,8 @@ export default function SignOutButton({
           aria-expanded={open}
           aria-haspopup="menu"
           aria-controls="executive-workspace-menu"
-          className={`flex items-center gap-3 rounded-full border border-white/10 bg-[#061426]/90 px-3 py-2 text-left text-white shadow-executive backdrop-blur transition-colors hover:border-[#2CC4E8]/30 hover:bg-[#07111F] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2CC4E8]/40 ${className}`}
+          aria-label="Executive workspace menu"
+          className={`flex min-h-11 items-center gap-3 rounded-full border border-white/10 bg-[#061426]/90 px-3 py-2 text-left text-white shadow-executive backdrop-blur transition-colors hover:border-[#2CC4E8]/30 hover:bg-[#07111F] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2CC4E8]/40 ${className}`}
         >
           <NexusPavilionLogo variant="icon" size={32} />
 
@@ -288,12 +253,14 @@ function MenuLink({
   href,
   icon,
   description,
+  current,
   children,
   onNavigate,
 }: {
   href: string;
   icon: string;
   description: string;
+  current: boolean;
   children: ReactNode;
   onNavigate: () => void;
 }) {
@@ -301,6 +268,7 @@ function MenuLink({
     <Link
       href={href}
       role="menuitem"
+      aria-current={current ? "page" : undefined}
       onClick={onNavigate}
       className="group flex min-h-11 items-start gap-3 rounded-[18px] px-4 py-3 text-sm transition-colors hover:bg-white/[0.055] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2CC4E8]/40"
     >

@@ -5,78 +5,14 @@ import { usePathname } from "next/navigation";
 
 import { NexusPavilionLogo } from "@/components/branding/nexus-pavilion-logo";
 import { EXECUTIVE_FOCUS_CYAN } from "@/lib/design-system/executive-contract";
-
-type NavigationItem = {
-  href: string;
-  label: string;
-};
-
-type NavigationSection = {
-  label: string;
-  items: NavigationItem[];
-};
-
-const NAVIGATION_SECTIONS: NavigationSection[] = [
-  {
-    label: "Executive",
-    items: [
-      {
-        href: "/dashboard",
-        label: "Executive Dashboard",
-      },
-      {
-        href: "/analytics",
-        label: "Boardroom Intelligence",
-      },
-    ],
-  },
-  {
-    label: "Procurement",
-    items: [
-      {
-        href: "/rfq",
-        label: "RFQs & Sourcing",
-      },
-      {
-        href: "/directory",
-        label: "Supplier Intelligence",
-      },
-    ],
-  },
-  {
-    label: "Workspace",
-    items: [
-      {
-        href: "/company/settings",
-        label: "Company Workspace",
-      },
-      {
-        href: "/notifications",
-        label: "Workspace & Procurement Activity",
-      },
-    ],
-  },
-  {
-    label: "Administration",
-    items: [
-      {
-        href: "/contact",
-        label: "Support & Contact",
-      },
-    ],
-  },
-];
-
-function isActivePath(pathname: string, href: string) {
-  if (href === "/dashboard") {
-    return pathname === "/dashboard";
-  }
-
-  return pathname === href || pathname.startsWith(`${href}/`);
-}
+import {
+  getAppSidebarSections,
+  isActivePath,
+} from "@/lib/navigation/application-nav";
 
 export default function AppSidebar() {
   const pathname = usePathname();
+  const sections = getAppSidebarSections();
 
   return (
     <aside className="min-h-screen w-64 border-r border-white/10 bg-[#061426] px-5 py-7 text-white">
@@ -103,7 +39,7 @@ export default function AppSidebar() {
         aria-label="Primary navigation"
         className="mt-8 space-y-6"
       >
-        {NAVIGATION_SECTIONS.map((section) => (
+        {sections.map((section) => (
           <section key={section.label}>
             <p className="px-3 text-[10px] font-black uppercase tracking-[0.24em] text-[#C8A646]">
               {section.label}
@@ -115,10 +51,7 @@ export default function AppSidebar() {
                   key={item.href}
                   href={item.href}
                   label={item.label}
-                  active={isActivePath(
-                    pathname,
-                    item.href,
-                  )}
+                  active={isActivePath(pathname, item.href)}
                 />
               ))}
             </div>
