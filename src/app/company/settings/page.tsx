@@ -3,6 +3,15 @@ import Link from "next/link";
 import CompanyCommandCenter from "@/components/company-command-center";
 import CompanyGovernanceCenter from "@/components/company-governance-center";
 import CompanyMembersCenter from "@/components/company-members-center";
+import { ExecutivePanel } from "@/components/executive/executive-panel";
+import { ProfessionalIdentitySettingsForm } from "@/components/professional-identity-settings-form";
+import { formatMemberIdentity } from "@/lib/auth/professional-identity-display";
+import { loadCurrentUserProfessionalNames } from "@/lib/auth/professional-names";
+import {
+  EXECUTIVE_CTA_PRIMARY,
+  EXECUTIVE_CTA_SECONDARY,
+  EXECUTIVE_PAGE_CLASS,
+} from "@/lib/design-system/executive-contract";
 import { createClient } from "@/lib/supabase/server";
 
 
@@ -11,6 +20,8 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "";
 type Profile = {
 id: string;
 email: string | null;
+first_name?: string | null;
+last_name?: string | null;
 role: string | null;
 company_id: string | null;
 created_at?: string | null;
@@ -31,6 +42,7 @@ type Membership = {
     | "active"
     | "suspended"
     | "revoked";
+  job_title?: string | null;
 };
 type OrganizationMemberRow = {
   membership_id: string;
@@ -38,6 +50,9 @@ type OrganizationMemberRow = {
   company_id: string;
 
   email: string | null;
+  first_name: string | null;
+  last_name: string | null;
+  job_title: string | null;
   legacy_role: string | null;
   profile_created_at: string | null;
 
@@ -280,6 +295,8 @@ const workspaceMembers: WorkspaceMember[] =
     profile: {
       id: row.user_id,
       email: row.email,
+      first_name: row.first_name,
+      last_name: row.last_name,
       role: row.legacy_role,
       company_id: row.company_id,
       created_at: row.profile_created_at,
@@ -293,6 +310,7 @@ const workspaceMembers: WorkspaceMember[] =
       procurement_function:
         row.procurement_function,
       membership_status: row.membership_status,
+      job_title: row.job_title,
     },
   }));
   const memberList = workspaceMembers.map(
@@ -408,6 +426,19 @@ company.name && company.category && company.location
 
 const canManage = canManageWorkspace(currentProfile.role);
 const canDelete = canDeleteWorkspace(currentProfile.role);
+const ownNames = await loadCurrentUserProfessionalNames(supabase);
+const currentMember = workspaceMembers.find(
+  ({ profile }) => profile.id === currentProfile.id,
+);
+const ownJobTitle = currentMember?.membership?.job_title || "";
+const ownEmail =
+  currentProfile.email || user.email || "";
+const ownIdentity = formatMemberIdentity({
+  firstName: ownNames.firstName,
+  lastName: ownNames.lastName,
+  jobTitle: ownJobTitle,
+  email: ownEmail,
+});
 
 const readinessScore = getWorkspaceReadiness({
 memberCount: memberList.length,
@@ -428,12 +459,12 @@ pendingInviteCount: pendingInvitations.length,
 });
 
 return (
-<main className="relative min-h-screen overflow-hidden bg-[#061426] px-4 py-6 text-white sm:px-6 lg:px-10">
-<div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(circle_at_top_left,rgba(44,196,232,0.18),transparent_34%),radial-gradient(circle_at_top_right,rgba(200,166,70,0.15),transparent_30%),linear-gradient(180deg,#061426_0%,#07111F_45%,#020617_100%)]" />
+<main className="relative min-h-screen overflow-hidden bg-[#07111F] text-white">
+<div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(circle_at_top_left,rgba(44,196,232,0.18),transparent_34%),radial-gradient(circle_at_top_right,rgba(200,166,70,0.15),transparent_30%),linear-gradient(180deg,#07111F_0%,#07111F_45%,#020617_100%)]" />
 <div className="pointer-events-none fixed inset-0 -z-10 bg-[linear-gradient(120deg,rgba(255,255,255,0.055),transparent_32%,rgba(200,166,70,0.05)_66%,transparent)]" />
 
-<div className="mx-auto w-full max-w-[1680px]">
-<section className="mb-8 rounded-[34px] border border-white/10 bg-white/[0.045] p-6 shadow-[0_28px_90px_rgba(0,0,0,0.32)] backdrop-blur-2xl sm:p-8">
+<div className={EXECUTIVE_PAGE_CLASS}>
+<section className="mb-8 rounded-[32px] border border-white/10 bg-white/[0.045] p-6 shadow-[0_28px_90px_rgba(0,0,0,0.32)] backdrop-blur-2xl sm:p-8">
 <div className="flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
 <div>
 <p className="text-[11px] font-black uppercase tracking-[0.34em] text-[#C8A646]">
@@ -454,21 +485,21 @@ controls from one executive-grade command layer.
 <div className="flex flex-wrap gap-3">
 <Link
 href="/dashboard"
-className="rounded-full border border-white/10 bg-white/[0.055] px-5 py-3 text-sm font-black text-white transition hover:bg-white/[0.08]"
+className={`${EXECUTIVE_CTA_SECONDARY} min-h-12 px-5`}
 >
 Dashboard
 </Link>
 
 <Link
 href="/rfq/new"
-className="rounded-full bg-gradient-to-r from-[#B9902F] via-[#C8A646] to-[#F5D77B] px-5 py-3 text-sm font-black text-slate-950 shadow-[0_18px_55px_rgba(200,166,70,0.24)] transition hover:scale-[1.01]"
+className={`${EXECUTIVE_CTA_PRIMARY} min-h-12 px-5`}
 >
 Create RFQ
 </Link>
 
 <Link
 href="/analytics"
-className="rounded-full border border-[#2CC4E8]/25 bg-[#2CC4E8]/10 px-5 py-3 text-sm font-black text-[#9BE8F8] transition hover:bg-[#2CC4E8]/15"
+className={`${EXECUTIVE_CTA_SECONDARY} min-h-12 px-5`}
 >
 Executive Analytics
 </Link>
@@ -481,7 +512,7 @@ companyName={company.name || "Company Workspace"}
 companyStatus={company.status || "verified"}
 companyLogoUrl={company.logo_url}
 companySlug={company.slug}
-userEmail={currentProfile.email || user.email || "User"}
+userEmail={ownIdentity.primary}
 userRole={getRoleLabel(currentProfile.role)}
 readinessScore={readinessScore}
 workspaceStage={workspaceStage}
@@ -513,6 +544,31 @@ category={company.category || "N/A"}
 location={company.location || "N/A"}
 networkRole={company.network_role || "Enterprise Workspace"}
 />
+
+<ExecutivePanel
+  variant="operational"
+  padding="lg"
+  tone="gold"
+  className="mt-8"
+>
+  <p className="text-xs font-black uppercase tracking-[0.3em] text-[#C8A646]">
+    Account Identity
+  </p>
+  <h2 className="mt-3 text-3xl font-black text-white">
+    Professional Identity
+  </h2>
+  <p className="mt-3 max-w-3xl text-sm font-semibold leading-7 text-slate-400">
+    Confirm your name and title for this workspace. Email remains
+    the account identifier and is shown as a fallback when a name
+    is not yet stored.
+  </p>
+  <ProfessionalIdentitySettingsForm
+    initialFirstName={ownNames.firstName || ""}
+    initialLastName={ownNames.lastName || ""}
+    initialJobTitle={ownJobTitle}
+    email={ownEmail || "No email"}
+  />
+</ExecutivePanel>
 
 <CompanyMembersCenter
   company={company}
@@ -603,14 +659,14 @@ return (
 <div className="mt-8 grid gap-3 sm:grid-cols-2">
 <Link
 href={primaryHref}
-className="flex h-[56px] items-center justify-center rounded-2xl bg-gradient-to-r from-[#B9902F] via-[#C8A646] to-[#F5D77B] px-6 text-sm font-black uppercase tracking-[0.12em] text-slate-950 shadow-[0_18px_55px_rgba(200,166,70,0.3)] transition hover:scale-[1.01]"
+className={EXECUTIVE_CTA_PRIMARY}
 >
 {primaryLabel}
 </Link>
 
 <Link
 href={secondaryHref}
-className="flex h-[56px] items-center justify-center rounded-2xl border border-white/10 bg-white/[0.045] px-6 text-sm font-black text-white transition hover:bg-white/[0.08]"
+className={EXECUTIVE_CTA_SECONDARY}
 >
 {secondaryLabel}
 </Link>

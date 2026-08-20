@@ -3,6 +3,7 @@ import CompanySettingsForm from "@/components/company-settings-form";
 import DeleteCompanyButton from "@/components/connections/DeleteCompanyButton";
 import InvitationActions from "@/components/invitation-actions";
 import InviteUserForm from "@/components/invite-user-form";
+import { MemberIdentityDisplay } from "@/components/member-identity-display";
 import MemberActions from "@/components/member-actions";
 import OwnershipPanel from "@/components/ownership/ownership-panel";
 import RecoverOwnershipButton from "@/components/recover-ownership-button";
@@ -10,6 +11,8 @@ import RecoverOwnershipButton from "@/components/recover-ownership-button";
 type Profile = {
   id: string;
   email: string | null;
+  first_name?: string | null;
+  last_name?: string | null;
   role: string | null;
   company_id: string | null;
   created_at?: string | null;
@@ -30,6 +33,7 @@ type Membership = {
     | "active"
     | "suspended"
     | "revoked";
+  job_title?: string | null;
 };
 
 type WorkspaceMember = {
@@ -424,12 +428,12 @@ description="Manage company membership, workspace roles, and pending access invi
           }
         >
           <div className="mt-6 overflow-hidden rounded-[26px] border border-white/10 bg-[#061426]/70">
-            <div className="overflow-x-auto">
+            <div className="hidden overflow-x-auto lg:block">
               <table className="w-full min-w-[920px] text-left">
                 <thead className="border-b border-white/10 bg-white/[0.055] text-white">
                   <tr>
                     <th className="px-5 py-4 text-xs font-black uppercase tracking-[0.2em] text-slate-400">
-                      Email
+                      Member
                     </th>
 
                     <th className="px-5 py-4 text-xs font-black uppercase tracking-[0.2em] text-slate-400">
@@ -459,17 +463,15 @@ description="Manage company membership, workspace roles, and pending access invi
                           className="border-t border-white/10"
                         >
                           <td className="px-5 py-4 align-top">
-                            <p className="font-black text-white">
-                              {profile.email ||
-                                "No email"}
-                            </p>
-
-                            {profile.id ===
-                            currentProfile.id ? (
-                              <p className="mt-1 text-xs font-black text-[#F5D77B]">
-                                Current user
-                              </p>
-                            ) : null}
+                            <MemberIdentityDisplay
+                              firstName={profile.first_name}
+                              lastName={profile.last_name}
+                              jobTitle={membership?.job_title}
+                              email={profile.email}
+                              isCurrentUser={
+                                profile.id === currentProfile.id
+                              }
+                            />
                           </td>
 
                           <td className="px-5 py-4 align-top">
@@ -549,6 +551,71 @@ description="Manage company membership, workspace roles, and pending access invi
                   )}
                 </tbody>
               </table>
+            </div>
+
+            <div className="space-y-3 p-3 lg:hidden">
+              {workspaceMembers.length > 0 ? (
+                workspaceMembers.map(({ profile, membership }) => (
+                  <article
+                    key={profile.id}
+                    className="rounded-2xl border border-white/10 bg-white/[0.04] p-4"
+                  >
+                    <MemberIdentityDisplay
+                      firstName={profile.first_name}
+                      lastName={profile.last_name}
+                      jobTitle={membership?.job_title}
+                      email={profile.email}
+                      isCurrentUser={profile.id === currentProfile.id}
+                    />
+
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <StatusPill
+                        className={getRoleClass(membership?.workspace_role)}
+                      >
+                        {getWorkspaceRoleLabel(membership?.workspace_role)}
+                      </StatusPill>
+                      <StatusPill
+                        className={getProcurementFunctionClass(
+                          membership?.procurement_function,
+                        )}
+                      >
+                        {getProcurementFunctionLabel(
+                          membership?.procurement_function,
+                        )}
+                      </StatusPill>
+                      <StatusPill
+                        className={
+                          membership?.membership_status === "active"
+                            ? "border-emerald-300/20 bg-emerald-400/10 text-emerald-200"
+                            : "border-amber-300/20 bg-amber-400/10 text-amber-200"
+                        }
+                      >
+                        {membership?.membership_status || "missing"}
+                      </StatusPill>
+                    </div>
+
+                    <div className="mt-4">
+                      <MemberActions
+                        memberId={profile.id}
+                        memberEmail={profile.email}
+                        memberWorkspaceRole={
+                          membership?.workspace_role ?? null
+                        }
+                        memberMembershipStatus={
+                          membership?.membership_status ?? null
+                        }
+                        currentUserId={currentProfile.id}
+                        currentUserWorkspaceRole={currentUserWorkspaceRole}
+                        currentUserMembershipStatus={
+                          currentUserMembershipStatus
+                        }
+                      />
+                    </div>
+                  </article>
+                ))
+              ) : (
+                <EmptyState message="No members found." />
+              )}
             </div>
           </div>
         </ExecutivePanel>

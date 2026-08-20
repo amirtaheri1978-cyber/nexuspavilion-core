@@ -29,6 +29,8 @@ type Company = {
 type Profile = {
   id: string;
   email: string | null;
+  first_name?: string | null;
+  last_name?: string | null;
   role: string | null;
   company_id: string | null;
   created_at?: string | null;
@@ -49,6 +51,7 @@ type Membership = {
     | "active"
     | "suspended"
     | "revoked";
+  job_title?: string | null;
 };
 
 type OrganizationMemberRow = {
@@ -57,6 +60,9 @@ type OrganizationMemberRow = {
   company_id: string;
 
   email: string | null;
+  first_name: string | null;
+  last_name: string | null;
+  job_title: string | null;
   legacy_role: string | null;
   profile_created_at: string | null;
 
@@ -333,6 +339,8 @@ const workspaceMembers: WorkspaceMember[] =
     profile: {
       id: row.user_id,
       email: row.email,
+      first_name: row.first_name,
+      last_name: row.last_name,
       role: row.legacy_role,
       company_id: row.company_id,
       created_at: row.profile_created_at,
@@ -346,6 +354,7 @@ const workspaceMembers: WorkspaceMember[] =
       procurement_function:
         row.procurement_function,
       membership_status: row.membership_status,
+      job_title: row.job_title,
     },
   }));
 

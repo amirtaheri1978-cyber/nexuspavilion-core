@@ -49,7 +49,7 @@ className="text-sm font-bold text-slate-500 hover:text-slate-950"
 <div className="flex flex-wrap items-center gap-3">
 <Link
 href="/rfq/new"
-className="rounded-full bg-orange-500 px-5 py-3 text-sm font-black text-white transition hover:bg-orange-600"
+className="rounded-full bg-gradient-to-r from-[#B9902F] via-[#C8A646] to-[#F5D77B] px-5 py-3 text-sm font-black text-slate-950 shadow-[0_18px_55px_rgba(200,166,70,0.24)] transition hover:shadow-[0_22px_65px_rgba(200,166,70,0.34)]"
 >
 Create First RFQ
 </Link>
@@ -75,7 +75,7 @@ Public Profile
 <section className="mt-8 overflow-hidden rounded-[44px] border border-black/5 bg-slate-950 text-white shadow-2xl">
 <div className="grid gap-0 lg:grid-cols-[1.15fr_0.85fr]">
 <div className="p-10">
-<p className="text-xs font-black uppercase tracking-[0.35em] text-orange-400">
+<p className="text-xs font-black uppercase tracking-[0.35em] text-[#C8A646]">
 Executive Workspace Command Center
 </p>
 
@@ -96,9 +96,9 @@ className="h-24 w-24 rounded-3xl border border-white/10 bg-white object-contain 
 
 <div>
 <div className="flex flex-wrap items-center gap-3">
-<h1 className="text-5xl font-black leading-tight">
+<h2 className="text-5xl font-black leading-tight">
 {companyName}
-</h1>
+</h2>
 
 <span className="rounded-full bg-green-400/10 px-4 py-2 text-xs font-black uppercase tracking-[0.15em] text-green-300">
 {companyStatus || "verified"}
@@ -127,7 +127,7 @@ Signed in as {userEmail} · {userRole}
 <div className="mt-8 flex flex-wrap gap-3">
 <a
 href="#invite-users"
-className="rounded-full bg-orange-500 px-5 py-3 text-sm font-black text-white transition hover:bg-orange-600"
+className="rounded-full bg-gradient-to-r from-[#B9902F] via-[#C8A646] to-[#F5D77B] px-5 py-3 text-sm font-black text-slate-950 shadow-[0_18px_55px_rgba(200,166,70,0.24)]"
 >
 Invite Team
 </a>
@@ -156,7 +156,7 @@ Launch Intelligence
 </div>
 
 <aside className="border-t border-white/10 bg-white/5 p-10 lg:border-l lg:border-t-0">
-<p className="text-xs font-black uppercase tracking-[0.3em] text-orange-400">
+<p className="text-xs font-black uppercase tracking-[0.3em] text-[#C8A646]">
 Launch Readiness
 </p>
 
@@ -234,7 +234,7 @@ return (
 className={`rounded-full px-3 py-1 text-xs font-black ${
 ready
 ? "bg-green-400/10 text-green-300"
-: "bg-orange-400/10 text-orange-300"
+: "bg-amber-400/10 text-amber-200"
 }`}
 >
 {ready ? "Ready" : "Next"}
