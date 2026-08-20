@@ -67,7 +67,7 @@ export function SupplierDecisionSidebar({
                     ? `/rfq/${rfq.slug}/compare`
                     : "/vendor-dashboard"
                 }
-                className="group min-w-0 rounded-3xl border border-white/10 bg-white/[0.045] p-5 transition duration-300 hover:-translate-y-0.5 hover:border-nexus-gold/25 hover:bg-white/[0.065]"
+                className="group min-w-0 rounded-3xl border border-white/10 bg-white/[0.045] p-5 transition duration-300 hover:border-nexus-gold/25 hover:bg-white/[0.065]"
               >
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="min-w-0">

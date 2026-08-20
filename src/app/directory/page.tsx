@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { createClient } from "@/lib/supabase/client";
 import Image from "next/image";
+import { EXECUTIVE_FOCUS_CYAN, EXECUTIVE_PAGE_CLASS } from "@/lib/design-system/executive-contract";
 import {
   APPROVED_VENDOR_DOMAIN_AVAILABLE,
   APPROVED_VENDOR_UNAVAILABLE_MESSAGE,
@@ -370,11 +371,11 @@ setSavingVendorId(null);
 
 const canManageApprovedVendors = canManageAvl(profile?.role);
 return (
-<main className="relative min-h-screen overflow-hidden bg-[#061426] px-4 py-6 text-white sm:px-6 lg:px-10">
+<main className="relative min-h-screen overflow-hidden bg-[#061426] text-white">
 <div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(circle_at_top_left,rgba(44,196,232,0.18),transparent_34%),radial-gradient(circle_at_top_right,rgba(200,166,70,0.15),transparent_30%),linear-gradient(180deg,#061426_0%,#07111F_45%,#020617_100%)]" />
 
-<div className="mx-auto w-full max-w-[1680px]">
-<section className="rounded-[40px] border border-white/10 bg-white/[0.065] p-7 shadow-[0_36px_120px_rgba(0,0,0,0.52)] backdrop-blur-2xl sm:p-10">
+<div className={EXECUTIVE_PAGE_CLASS}>
+<section className="rounded-[32px] border border-white/10 bg-white/[0.065] p-7 shadow-[0_36px_120px_rgba(0,0,0,0.52)] backdrop-blur-2xl sm:p-10">
 <div className="flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
 <div>
 <p className="text-xs font-black uppercase tracking-[0.35em] text-[#C8A646]">
@@ -399,20 +400,21 @@ type="text"
 placeholder="Search companies, categories, regions, or ranks..."
 value={search}
 onChange={(event) => setSearch(event.target.value)}
-className="h-[58px] w-full rounded-2xl border border-white/10 bg-[#07111F] px-5 text-sm font-semibold text-white outline-none transition placeholder:text-slate-500 focus:border-[#C8A646] focus:bg-[#081827] focus:ring-4 focus:ring-[#C8A646]/15"
+aria-label="Search supplier network"
+className="h-[58px] w-full rounded-2xl border border-white/10 bg-[#07111F] px-5 text-sm font-semibold text-white outline-none transition placeholder:text-slate-400 focus:border-[#C8A646] focus:bg-[#081827] focus-visible:ring-2 focus-visible:ring-[#C8A646]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#07111F]"
 />
 
 <div className="grid grid-cols-2 gap-3">
 <Link
 href="/login"
-className="flex h-[52px] items-center justify-center rounded-2xl border border-white/10 bg-white/[0.045] px-5 text-center text-sm font-black text-white transition hover:bg-white/[0.08]"
+className={`flex h-[52px] items-center justify-center rounded-2xl border border-white/10 bg-white/[0.045] px-5 text-center text-sm font-black text-white transition hover:bg-white/[0.08] ${EXECUTIVE_FOCUS_CYAN}`}
 >
 Sign In
 </Link>
 
 <Link
 href="/signup"
-className="flex h-[52px] items-center justify-center rounded-2xl bg-gradient-to-r from-[#B9902F] via-[#C8A646] to-[#F5D77B] px-5 text-center text-sm font-black text-slate-950 transition hover:scale-[1.01]"
+className="flex h-[52px] items-center justify-center rounded-2xl bg-gradient-to-r from-[#B9902F] via-[#C8A646] to-[#F5D77B] px-5 text-center text-sm font-black text-slate-950 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C8A646]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#07111F]"
 >
 Join Network
 </Link>
@@ -520,9 +522,9 @@ isSupplierCompany(company);
 return (
 <div
 key={company.id}
-className="group rounded-[32px] border border-white/10 bg-white/[0.055] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.26)] transition hover:-translate-y-1 hover:border-[#2CC4E8]/25 hover:bg-white/[0.07]"
+className="group rounded-[32px] border border-white/10 bg-white/[0.055] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.26)] transition hover:border-[#2CC4E8]/25 hover:bg-white/[0.07]"
 >
-<Link href={`/company/${company.slug}`} className="block">
+<Link href={`/company/${company.slug}`} className="block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2CC4E8]/40 focus-visible:ring-offset-2 focus-visible:ring-offset-[#07111F]">
 <div className="flex items-start justify-between gap-4">
 <div className="flex items-start gap-4">
 {company.logo_url ? (
@@ -610,7 +612,7 @@ disabled={savingVendorId === company.id}
 onClick={() =>
 updateApprovedVendor(company.id, "approved")
 }
-className="rounded-full bg-gradient-to-r from-[#B9902F] via-[#C8A646] to-[#F5D77B] px-4 py-3 text-xs font-black text-slate-950 transition hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-50"
+className="rounded-full bg-gradient-to-r from-[#B9902F] via-[#C8A646] to-[#F5D77B] px-4 py-3 text-xs font-black text-slate-950 transition disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C8A646]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#07111F]"
 >
 {savingVendorId === company.id
 ? "Saving..."

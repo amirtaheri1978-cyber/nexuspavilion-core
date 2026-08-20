@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 
+import { EXECUTIVE_CTA_PRIMARY } from "@/lib/design-system/executive-contract";
+
 type ExecutiveEnrollmentStateProps = {
   eyebrow: string;
   title: string;
@@ -75,7 +77,7 @@ export function ExecutiveEnrollmentState({
 
         <Link
           href={actionHref}
-          className="mt-8 inline-flex items-center justify-center rounded-2xl bg-gradient-to-r from-[#c49a4d] via-[#d6b977] to-[#c49a4d] px-6 py-3.5 text-sm font-bold text-[#102035] transition hover:-translate-y-0.5"
+          className={`${EXECUTIVE_CTA_PRIMARY} mt-8 min-h-12 px-6`}
         >
           {actionLabel}
         </Link>

@@ -93,7 +93,7 @@ response quality risks.
 type="button"
 onClick={handleGenerateReview}
 disabled={loading}
-className="rounded-full bg-gradient-to-r from-[#B9902F] via-[#C8A646] to-[#F5D77B] px-6 py-3 text-sm font-black text-slate-950 shadow-[0_18px_55px_rgba(200,166,70,0.22)] transition hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-50"
+className="rounded-full bg-gradient-to-r from-[#B9902F] via-[#C8A646] to-[#F5D77B] px-6 py-3 text-sm font-black text-slate-950 shadow-[0_18px_55px_rgba(200,166,70,0.22)] transition disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C8A646]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#07111F]"
 >
 {loading ? "Reviewing RFQ..." : "Generate AI Review"}
 </button>
@@ -108,13 +108,13 @@ className="rounded-full bg-gradient-to-r from-[#B9902F] via-[#C8A646] to-[#F5D77
 {review ? (
 <div className="mt-8 grid gap-6 xl:grid-cols-[0.75fr_1.25fr]">
 <div className="rounded-[28px] border border-white/10 bg-[#07111F]/75 p-6">
-<p className="text-xs font-black uppercase tracking-[0.22em] text-slate-500">
+<p className="text-xs font-black uppercase tracking-[0.22em] text-slate-400">
 Readiness Score
 </p>
 
 <p className="mt-4 text-6xl font-black tracking-[-0.06em] text-white">
 {review.readiness_score}
-<span className="text-2xl text-slate-500">/100</span>
+<span className="text-2xl text-slate-400">/100</span>
 </p>
 
 <div className="mt-5 h-3 overflow-hidden rounded-full bg-white/10">
@@ -124,7 +124,7 @@ style={{ width: `${review.readiness_score}%` }}
 />
 </div>
 
-<p className="mt-6 text-xs font-black uppercase tracking-[0.22em] text-slate-500">
+<p className="mt-6 text-xs font-black uppercase tracking-[0.22em] text-slate-400">
 Risk Level
 </p>
 
@@ -169,7 +169,7 @@ emptyText="No recommendations generated."
 No AI review generated yet.
 </p>
 
-<p className="mt-3 text-sm font-semibold leading-6 text-slate-500">
+<p className="mt-3 text-sm font-semibold leading-6 text-slate-400">
 Generate a review to evaluate RFQ readiness, missing procurement
 inputs, document completeness, and executive risk posture.
 </p>
@@ -190,7 +190,7 @@ emptyText: string;
 }) {
 return (
 <div className="rounded-[28px] border border-white/10 bg-[#07111F]/75 p-6">
-<p className="text-xs font-black uppercase tracking-[0.22em] text-slate-500">
+<p className="text-xs font-black uppercase tracking-[0.22em] text-slate-400">
 {title}
 </p>
 
@@ -205,7 +205,7 @@ className="rounded-2xl border border-white/10 bg-[#061426]/75 px-4 py-3 text-sm 
 </div>
 ))
 ) : (
-<p className="text-sm font-semibold leading-6 text-slate-500">
+<p className="text-sm font-semibold leading-6 text-slate-400">
 {emptyText}
 </p>
 )}

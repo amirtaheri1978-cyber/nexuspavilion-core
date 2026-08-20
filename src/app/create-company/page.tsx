@@ -8,6 +8,7 @@ import SignOutButton from "@/components/sign-out-button";
 import {
   EXECUTIVE_CTA_PRIMARY,
   EXECUTIVE_CTA_SECONDARY,
+  EXECUTIVE_FOCUS_GOLD,
   EXECUTIVE_PAGE_CLASS,
 } from "@/lib/design-system/executive-contract";
 import { getFriendlyWorkspaceCreateError } from "@/lib/auth/workspace-bootstrap";
@@ -738,11 +739,12 @@ export default function CreateCompanyPage() {
                               item.value,
                             )
                           }
-                          className={`rounded-3xl border p-5 text-left transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60 ${
+                          className={`min-h-11 rounded-3xl border p-5 text-left transition disabled:cursor-not-allowed disabled:opacity-60 ${EXECUTIVE_FOCUS_GOLD} ${
                             selected
                               ? "border-[#C8A646]/45 bg-slate-950 text-white shadow-[0_18px_45px_rgba(0,0,0,0.35)]"
                               : "border-white/10 bg-white/[0.045] text-white hover:border-[#C8A646]/40 hover:bg-white/[0.07]"
                           }`}
+                          aria-pressed={selected}
                         >
                           <div className="flex items-start justify-between gap-4">
                             <div>

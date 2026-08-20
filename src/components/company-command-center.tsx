@@ -2,6 +2,10 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { AccountIdentityLine } from "@/components/account-identity-line";
+import {
+  EXECUTIVE_FOCUS_CYAN,
+  EXECUTIVE_FOCUS_GOLD,
+} from "@/lib/design-system/executive-contract";
 
 type CompanyCommandCenterProps = {
 companyName: string;
@@ -49,7 +53,7 @@ return (
 <div className="flex items-center justify-between gap-6">
 <Link
 href="/dashboard"
-className="text-sm font-bold text-slate-500 hover:text-slate-950"
+className={`text-sm font-bold text-slate-400 hover:text-white ${EXECUTIVE_FOCUS_CYAN}`}
 >
 ← Back to Dashboard
 </Link>
@@ -57,14 +61,14 @@ className="text-sm font-bold text-slate-500 hover:text-slate-950"
 <div className="flex flex-wrap items-center gap-3">
 <Link
 href="/rfq/new"
-className="rounded-full bg-gradient-to-r from-[#B9902F] via-[#C8A646] to-[#F5D77B] px-5 py-3 text-sm font-black text-slate-950 shadow-[0_18px_55px_rgba(200,166,70,0.24)] transition hover:shadow-[0_22px_65px_rgba(200,166,70,0.34)]"
+className={`rounded-full bg-gradient-to-r from-[#B9902F] via-[#C8A646] to-[#F5D77B] px-5 py-3 text-sm font-black text-slate-950 shadow-[0_18px_55px_rgba(200,166,70,0.24)] transition-[box-shadow] duration-200 hover:shadow-[0_22px_65px_rgba(200,166,70,0.34)] ${EXECUTIVE_FOCUS_GOLD}`}
 >
 Create First RFQ
 </Link>
 
 <Link
 href="/directory"
-className="rounded-full bg-slate-950 px-5 py-3 text-sm font-bold text-white transition hover:bg-slate-800"
+className={`rounded-full border border-white/10 bg-white/[0.045] px-5 py-3 text-sm font-black text-white transition hover:bg-white/[0.08] ${EXECUTIVE_FOCUS_CYAN}`}
 >
 Supplier Network
 </Link>
@@ -72,7 +76,7 @@ Supplier Network
 {companySlug ? (
 <Link
 href={`/company/${companySlug}`}
-className="rounded-full bg-white px-5 py-3 text-sm font-bold text-slate-950 shadow-sm transition hover:shadow-md"
+className={`rounded-full border border-[#2CC4E8]/25 bg-[#2CC4E8]/10 px-5 py-3 text-sm font-black text-[#9BE8F8] transition hover:bg-[#2CC4E8]/15 ${EXECUTIVE_FOCUS_CYAN}`}
 >
 Public Profile
 </Link>
@@ -80,7 +84,7 @@ Public Profile
 </div>
 </div>
 
-<section className="mt-8 overflow-hidden rounded-[44px] border border-black/5 bg-slate-950 text-white shadow-2xl">
+<section className="mt-8 overflow-hidden rounded-[32px] border border-white/10 bg-slate-950 text-white shadow-2xl">
 <div className="grid gap-0 lg:grid-cols-[1.15fr_0.85fr]">
 <div className="p-10">
 <p className="text-xs font-black uppercase tracking-[0.35em] text-[#C8A646]">
@@ -104,7 +108,7 @@ className="h-24 w-24 rounded-3xl border border-white/10 bg-white object-contain 
 
 <div>
 <div className="flex flex-wrap items-center gap-3">
-<h2 className="text-5xl font-black leading-tight">
+<h2 className="break-words text-4xl font-black leading-tight sm:text-5xl">
 {companyName}
 </h2>
 
@@ -129,7 +133,7 @@ intelligence.
 </div>
 </div>
 
-<div className="mt-10 grid gap-4 md:grid-cols-4">
+<div className="mt-10 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
 <CommandMetric title="Readiness" value={`${readinessScore}%`} />
 <CommandMetric title="Stage" value={workspaceStage} />
 <CommandMetric title="Team" value={memberCount} />
@@ -139,28 +143,28 @@ intelligence.
 <div className="mt-8 flex flex-wrap gap-3">
 <a
 href="#invite-users"
-className="rounded-full bg-gradient-to-r from-[#B9902F] via-[#C8A646] to-[#F5D77B] px-5 py-3 text-sm font-black text-slate-950 shadow-[0_18px_55px_rgba(200,166,70,0.24)]"
+className={`inline-flex min-h-11 items-center rounded-full bg-gradient-to-r from-[#B9902F] via-[#C8A646] to-[#F5D77B] px-5 py-3 text-sm font-black text-slate-950 shadow-[0_18px_55px_rgba(200,166,70,0.24)] ${EXECUTIVE_FOCUS_GOLD}`}
 >
 Invite Team
 </a>
 
 <Link
 href="/rfq/new"
-className="rounded-full bg-white px-5 py-3 text-sm font-black text-slate-950 transition hover:bg-slate-100"
+className={`inline-flex min-h-11 items-center rounded-full border border-white/10 bg-white/[0.045] px-5 py-3 text-sm font-black text-white transition hover:bg-white/[0.08] ${EXECUTIVE_FOCUS_CYAN}`}
 >
 Create RFQ
 </Link>
 
 <a
 href="#company-profile"
-className="rounded-full bg-white/10 px-5 py-3 text-sm font-black text-white transition hover:bg-white/15"
+className={`inline-flex min-h-11 items-center rounded-full border border-white/10 bg-white/10 px-5 py-3 text-sm font-black text-white transition hover:bg-white/15 ${EXECUTIVE_FOCUS_CYAN}`}
 >
 Complete Profile
 </a>
 
 <Link
 href="/analytics"
-className="rounded-full bg-white/10 px-5 py-3 text-sm font-black text-white transition hover:bg-white/15"
+className={`inline-flex min-h-11 items-center rounded-full border border-white/10 bg-white/10 px-5 py-3 text-sm font-black text-white transition hover:bg-white/15 ${EXECUTIVE_FOCUS_CYAN}`}
 >
 Launch Intelligence
 </Link>
@@ -190,7 +194,7 @@ Launch Readiness
 </div>
 </section>
 
-<section className="mt-8 grid gap-6 md:grid-cols-4">
+<section className="mt-8 grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
 <ActionCard
 title="Invite Team"
 value="Add procurement, finance, operations, or executive stakeholders."
@@ -267,10 +271,10 @@ href: string;
 return (
 <Link
 href={href}
-className="rounded-3xl border border-black/5 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-xl"
+className={`rounded-3xl border border-white/10 bg-white/[0.045] p-6 transition hover:border-[#2CC4E8]/25 hover:bg-white/[0.07] ${EXECUTIVE_FOCUS_CYAN}`}
 >
-<p className="text-lg font-black text-slate-950">{title}</p>
-<p className="mt-3 text-sm leading-6 text-slate-600">{value}</p>
+<p className="text-lg font-black text-white">{title}</p>
+<p className="mt-3 text-sm leading-6 text-slate-400">{value}</p>
 </Link>
 );
 }

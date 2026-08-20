@@ -264,7 +264,7 @@ className="bg-[#061426] text-white"
 <button
 type="submit"
 disabled={loading}
-className="h-[56px] w-full rounded-full bg-gradient-to-r from-[#B9902F] via-[#C8A646] to-[#F5D77B] px-6 text-sm font-black text-slate-950 shadow-[0_18px_55px_rgba(200,166,70,0.22)] transition hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-50 md:w-auto"
+className="h-[56px] w-full rounded-full bg-gradient-to-r from-[#B9902F] via-[#C8A646] to-[#F5D77B] px-6 text-sm font-black text-slate-950 shadow-[0_18px_55px_rgba(200,166,70,0.22)] transition disabled:cursor-not-allowed disabled:opacity-50 md:w-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C8A646]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#07111F]"
 >
 {loading ? "Sending..." : "Send Workspace Invitation"}
 </button>
@@ -273,7 +273,7 @@ className="h-[56px] w-full rounded-full bg-gradient-to-r from-[#B9902F] via-[#C8
 
 {selectedRole ? (
 <div className="mt-4 rounded-[24px] border border-white/10 bg-[#061426]/70 p-5">
-<p className="text-xs font-black uppercase tracking-[0.22em] text-slate-500">
+<p className="text-xs font-black uppercase tracking-[0.22em] text-slate-400">
 Selected Access Level
 </p>
 
@@ -337,7 +337,7 @@ in the workspace invitation.
 
 function FormLabel({ children }: { children: React.ReactNode }) {
 return (
-<span className="mb-2 block text-xs font-black uppercase tracking-[0.2em] text-slate-500">
+<span className="mb-2 block text-xs font-black uppercase tracking-[0.2em] text-slate-400">
 {children}
 </span>
 );

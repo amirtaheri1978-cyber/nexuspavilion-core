@@ -266,7 +266,7 @@ export default function MemberActions({
   ) {
     return (
       <div className="mt-4 rounded-[22px] border border-white/10 bg-white/[0.035] px-4 py-3">
-        <p className="text-xs font-bold leading-5 text-slate-500">
+        <p className="text-xs font-bold leading-5 text-slate-400">
           {getPermissionMessage({
             isCurrentUser,
             isOwner,
@@ -336,7 +336,7 @@ export default function MemberActions({
         </button>
       </div>
 
-      <p className="mt-3 text-xs font-semibold leading-5 text-slate-500">
+      <p className="mt-3 text-xs font-semibold leading-5 text-slate-400">
         This control changes workspace authority only.
         Procurement function remains unchanged.
       </p>

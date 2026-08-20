@@ -191,7 +191,7 @@ export default async function RFQMarketplacePage() {
       <div className="pointer-events-none fixed inset-0 -z-10 bg-[linear-gradient(120deg,rgba(255,255,255,0.055),transparent_32%,rgba(200,166,70,0.05)_66%,transparent)]" />
 
       <div className="mx-auto w-full max-w-[1680px]">
-        <section className="rounded-[38px] border border-white/10 bg-white/[0.045] p-6 shadow-[0_32px_110px_rgba(0,0,0,0.42)] backdrop-blur-2xl sm:p-8 lg:p-10">
+        <section className="rounded-[32px] border border-white/10 bg-white/[0.045] p-6 shadow-[0_32px_110px_rgba(0,0,0,0.42)] backdrop-blur-2xl sm:p-8 lg:p-10">
           <div className="flex flex-col gap-8 xl:flex-row xl:items-start xl:justify-between">
             <div className="min-w-0">
               <p className="text-xs font-black uppercase tracking-[0.34em] text-[#C8A646]">
@@ -256,7 +256,7 @@ export default async function RFQMarketplacePage() {
             {marketplace.canCreateRfq ? (
               <Link
                 href="/rfq/new"
-                className="rounded-full bg-gradient-to-r from-[#B9902F] via-[#C8A646] to-[#F5D77B] px-6 py-3 text-sm font-black text-slate-950 shadow-[0_18px_55px_rgba(200,166,70,0.24)] transition hover:scale-[1.01]"
+                className="rounded-full bg-gradient-to-r from-[#B9902F] via-[#C8A646] to-[#F5D77B] px-6 py-3 text-sm font-black text-slate-950 shadow-[0_18px_55px_rgba(200,166,70,0.24)] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C8A646]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#07111F]"
               >
                 Create RFQ
               </Link>
@@ -264,14 +264,14 @@ export default async function RFQMarketplacePage() {
 
             <Link
               href="/dashboard"
-              className="rounded-full border border-white/10 bg-white/[0.055] px-6 py-3 text-sm font-black text-white transition hover:bg-white/[0.08]"
+              className="rounded-full border border-white/10 bg-white/[0.055] px-6 py-3 text-sm font-black text-white transition hover:bg-white/[0.08] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2CC4E8]/40 focus-visible:ring-offset-2 focus-visible:ring-offset-[#07111F]"
             >
               Dashboard
             </Link>
 
             <Link
               href="/analytics"
-              className="rounded-full border border-[#2CC4E8]/25 bg-[#2CC4E8]/10 px-6 py-3 text-sm font-black text-[#9BE8F8] transition hover:bg-[#2CC4E8]/15"
+              className="rounded-full border border-[#2CC4E8]/25 bg-[#2CC4E8]/10 px-6 py-3 text-sm font-black text-[#9BE8F8] transition hover:bg-[#2CC4E8]/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2CC4E8]/40 focus-visible:ring-offset-2 focus-visible:ring-offset-[#07111F]"
             >
               Executive Analytics
             </Link>
@@ -354,7 +354,7 @@ function MarketplaceCard({
   return (
     <Link
       href={`/rfq/${rfq.slug}`}
-      className="group min-w-0 rounded-[30px] border border-white/10 bg-[#061426]/72 p-6 shadow-[0_22px_70px_rgba(0,0,0,0.22)] transition hover:-translate-y-1 hover:border-[#2CC4E8]/25 hover:bg-[#07111F]"
+      className={`group min-w-0 rounded-[30px] border border-white/10 bg-[#061426]/72 p-6 shadow-[0_22px_70px_rgba(0,0,0,0.22)] transition hover:border-[#2CC4E8]/25 hover:bg-[#07111F] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2CC4E8]/40 focus-visible:ring-offset-2 focus-visible:ring-offset-[#07111F]`}
     >
       <div className="flex items-start justify-between gap-4">
         <p className="min-w-0 break-words text-xs font-black uppercase tracking-[0.25em] text-[#C8A646]">
@@ -463,7 +463,7 @@ function HeroMetric({
 }) {
   return (
     <div className="rounded-[26px] border border-white/10 bg-[#061426]/75 p-5">
-      <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">
+      <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
         {title}
       </p>
 
@@ -483,7 +483,7 @@ function StatusCard({
 }) {
   return (
     <div className="rounded-[28px] border border-white/10 bg-white/[0.045] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.26)] backdrop-blur-xl">
-      <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">
+      <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
         {title}
       </p>
 
@@ -511,7 +511,7 @@ function SignalBlock({
 }) {
   return (
     <div className="min-w-0 rounded-[22px] border border-white/10 bg-white/[0.035] p-4">
-      <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-500">
+      <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-400">
         {label}
       </p>
 
@@ -548,7 +548,7 @@ function EmptyState({
       {canCreate ? (
         <Link
           href="/rfq/new"
-          className="mt-7 inline-flex rounded-full bg-gradient-to-r from-[#B9902F] via-[#C8A646] to-[#F5D77B] px-6 py-3 text-sm font-black text-slate-950 shadow-[0_18px_55px_rgba(200,166,70,0.24)] transition hover:scale-[1.01]"
+          className="mt-7 inline-flex rounded-full bg-gradient-to-r from-[#B9902F] via-[#C8A646] to-[#F5D77B] px-6 py-3 text-sm font-black text-slate-950 shadow-[0_18px_55px_rgba(200,166,70,0.24)] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C8A646]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#07111F]"
         >
           Create RFQ
         </Link>

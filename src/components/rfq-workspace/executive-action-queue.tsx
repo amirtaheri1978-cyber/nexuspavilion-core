@@ -105,7 +105,7 @@ function ActionQueueCard({
   index: number;
 }) {
   const className =
-    "group flex min-w-0 flex-col rounded-[32px] border border-white/10 bg-white/[0.045] p-5 transition duration-300 hover:-translate-y-0.5 hover:border-nexus-gold/25 hover:bg-white/[0.065] hover:shadow-executive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-nexus-gold/70 focus-visible:ring-offset-2 focus-visible:ring-offset-nexus-navy sm:p-6";
+    "group flex min-w-0 flex-col rounded-[32px] border border-white/10 bg-white/[0.045] p-5 transition duration-300 hover:border-nexus-gold/25 hover:bg-white/[0.065] hover:shadow-executive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-nexus-gold/70 focus-visible:ring-offset-2 focus-visible:ring-offset-nexus-navy sm:p-6";
 
   const content = (
     <>

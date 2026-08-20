@@ -612,7 +612,7 @@ start a new RFQ.
 <button
 type="button"
 onClick={handleResumeDraft}
-className="rounded-full bg-gradient-to-r from-[#B9902F] via-[#C8A646] to-[#F5D77B] px-6 py-3 text-sm font-black text-slate-950"
+className="rounded-full bg-gradient-to-r from-[#B9902F] via-[#C8A646] to-[#F5D77B] px-6 py-3 text-sm font-black text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C8A646]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#07111F]"
 >
 Resume Draft
 </button>
@@ -633,24 +633,26 @@ Discard Draft
 )}
 
 
-<section className="mt-8 rounded-[34px] border border-white/10 bg-white/[0.045] p-5 shadow-[0_24px_80px_rgba(0,0,0,0.25)] backdrop-blur-xl sm:p-6">
-<div className="grid gap-3 md:grid-cols-5">
+<section className="mt-8 rounded-[32px] border border-white/10 bg-white/[0.045] p-5 shadow-[0_24px_80px_rgba(0,0,0,0.25)] backdrop-blur-xl sm:p-6">
+<div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
 {WIZARD_STEPS.map((step, index) => (
 <button
 key={step}
 type="button"
 onClick={() => setActiveStep(index as WizardStep)}
-className={`rounded-[22px] border p-4 text-left transition ${
+aria-current={activeStep === index ? "step" : undefined}
+className={`min-h-11 rounded-[22px] border p-4 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C8A646]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#07111F] ${
 activeStep === index
 ? "border-[#C8A646]/35 bg-[#C8A646]/10"
 : "border-white/10 bg-[#061426]/55 hover:border-[#2CC4E8]/25 hover:bg-[#07111F]"
 }`}
 >
-<p className="text-[10px] font-black uppercase tracking-[0.22em] text-slate-500">
+<p className="text-[10px] font-black uppercase tracking-[0.22em] text-slate-400">
 Step {index + 1}
+{activeStep === index ? " · Current" : ""}
 </p>
 
-<p className="mt-2 text-sm font-black text-white">{step}</p>
+<p className="mt-2 break-words text-sm font-black text-white">{step}</p>
 </button>
 ))}
 </div>
@@ -1149,7 +1151,7 @@ Cancel
 type="button"
 onClick={goToNextStep}
 disabled={loading}
-className="rounded-full bg-gradient-to-r from-[#B9902F] via-[#C8A646] to-[#F5D77B] px-7 py-3 text-sm font-black text-slate-950 shadow-[0_18px_55px_rgba(200,166,70,0.22)] transition hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-50"
+className="rounded-full bg-gradient-to-r from-[#B9902F] via-[#C8A646] to-[#F5D77B] px-7 py-3 text-sm font-black text-slate-950 shadow-[0_18px_55px_rgba(200,166,70,0.22)] transition disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C8A646]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#07111F]"
 >
 Continue →
 </button>
@@ -1157,7 +1159,7 @@ Continue →
 <button
 type="submit"
 disabled={loading || publishSuccess || !isFormReady}
-className="rounded-full bg-gradient-to-r from-[#B9902F] via-[#C8A646] to-[#F5D77B] px-7 py-3 text-sm font-black text-slate-950 shadow-[0_18px_55px_rgba(200,166,70,0.22)] transition hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-50"
+className="rounded-full bg-gradient-to-r from-[#B9902F] via-[#C8A646] to-[#F5D77B] px-7 py-3 text-sm font-black text-slate-950 shadow-[0_18px_55px_rgba(200,166,70,0.22)] transition disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C8A646]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#07111F]"
 >
 {loading ? `Publishing... ${publishProgress}%` : "Publish RFQ"}
 </button>

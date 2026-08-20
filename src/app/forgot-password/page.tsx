@@ -249,7 +249,7 @@ export default function ForgotPasswordPage() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="h-[60px] w-full rounded-2xl bg-gradient-to-r from-[#B9902F] via-[#C8A646] to-[#F5D77B] px-6 text-sm font-black uppercase tracking-[0.14em] text-slate-950 shadow-[0_22px_65px_rgba(200,166,70,0.34)] outline-none transition duration-200 hover:scale-[1.01] hover:shadow-[0_28px_80px_rgba(200,166,70,0.42)] focus-visible:ring-4 focus-visible:ring-[#F5D77B]/30 focus-visible:ring-offset-4 focus-visible:ring-offset-[#132238] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100"
+                  className="h-[60px] w-full rounded-2xl bg-gradient-to-r from-[#B9902F] via-[#C8A646] to-[#F5D77B] px-6 text-sm font-black uppercase tracking-[0.14em] text-slate-950 shadow-[0_22px_65px_rgba(200,166,70,0.34)] outline-none transition duration-200 hover:shadow-[0_28px_80px_rgba(200,166,70,0.42)] focus-visible:ring-4 focus-visible:ring-[#F5D77B]/30 focus-visible:ring-offset-4 focus-visible:ring-offset-[#132238] disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {loading
                     ? "Sending recovery link..."
@@ -339,7 +339,7 @@ export default function ForgotPasswordPage() {
 
                   <Link
                     href="/login"
-                    className="flex h-[56px] items-center justify-center rounded-2xl bg-gradient-to-r from-[#B9902F] via-[#C8A646] to-[#F5D77B] px-5 text-sm font-black uppercase tracking-[0.12em] text-slate-950 shadow-[0_18px_55px_rgba(200,166,70,0.3)] outline-none transition hover:scale-[1.01] focus-visible:ring-4 focus-visible:ring-[#F5D77B]/30 focus-visible:ring-offset-4 focus-visible:ring-offset-[#132238]"
+                    className="flex h-[56px] items-center justify-center rounded-2xl bg-gradient-to-r from-[#B9902F] via-[#C8A646] to-[#F5D77B] px-5 text-sm font-black uppercase tracking-[0.12em] text-slate-950 shadow-[0_18px_55px_rgba(200,166,70,0.3)] outline-none transition focus-visible:ring-4 focus-visible:ring-[#F5D77B]/30 focus-visible:ring-offset-4 focus-visible:ring-offset-[#132238]"
                   >
                     Back to sign in
                   </Link>

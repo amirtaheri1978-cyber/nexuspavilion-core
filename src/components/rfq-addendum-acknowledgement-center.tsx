@@ -163,7 +163,7 @@ value={allRequiredAcknowledged ? "Clear" : "Blocked"}
 No addenda issued yet.
 </p>
 
-<p className="mt-3 text-sm font-semibold leading-6 text-slate-500">
+<p className="mt-3 text-sm font-semibold leading-6 text-slate-400">
 Addenda and clarification notices will appear here when issued by
 the buyer.
 </p>
@@ -220,7 +220,7 @@ acknowledged
 
 {addendum.affected_documents ? (
 <div className="mt-5 rounded-2xl border border-white/10 bg-[#061426]/70 p-4">
-<p className="text-xs font-black uppercase tracking-[0.18em] text-slate-500">
+<p className="text-xs font-black uppercase tracking-[0.18em] text-slate-400">
 Affected Documents
 </p>
 
@@ -236,7 +236,7 @@ Affected Documents
 type="button"
 onClick={() => void handleAcknowledge(addendum.id)}
 disabled={loadingId === addendum.id}
-className="rounded-full bg-gradient-to-r from-[#B9902F] via-[#C8A646] to-[#F5D77B] px-6 py-3 text-sm font-black text-slate-950 shadow-[0_18px_55px_rgba(200,166,70,0.22)] transition hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-50"
+className="rounded-full bg-gradient-to-r from-[#B9902F] via-[#C8A646] to-[#F5D77B] px-6 py-3 text-sm font-black text-slate-950 shadow-[0_18px_55px_rgba(200,166,70,0.22)] transition disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C8A646]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#07111F]"
 >
 {loadingId === addendum.id
 ? "Acknowledging..."
@@ -257,7 +257,7 @@ className="rounded-full bg-gradient-to-r from-[#B9902F] via-[#C8A646] to-[#F5D77
 function ComplianceMetric({ title, value }: { title: string; value: string }) {
 return (
 <div className="rounded-[24px] border border-white/10 bg-[#07111F]/75 p-5">
-<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">
+<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
 {title}
 </p>
 

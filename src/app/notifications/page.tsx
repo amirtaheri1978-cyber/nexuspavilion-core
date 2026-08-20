@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 
+import { EXECUTIVE_PAGE_CLASS } from "@/lib/design-system/executive-contract";
 import { createClient } from "@/lib/supabase/server";
 
 type Notification = {
@@ -78,19 +79,19 @@ String(notification.type || "").toLowerCase().includes("invite"),
 const totalCount = notificationList.length;
 
 return (
-<main className="relative min-h-screen overflow-hidden bg-[#061426] px-4 py-6 text-white sm:px-6 lg:px-10">
+<main className="relative min-h-screen overflow-hidden bg-[#061426] text-white">
 <div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(circle_at_top_left,rgba(44,196,232,0.18),transparent_34%),radial-gradient(circle_at_top_right,rgba(200,166,70,0.15),transparent_30%),linear-gradient(180deg,#061426_0%,#07111F_45%,#020617_100%)]" />
 <div className="pointer-events-none fixed inset-0 -z-10 bg-[linear-gradient(120deg,rgba(255,255,255,0.055),transparent_32%,rgba(200,166,70,0.05)_66%,transparent)]" />
 
-<div className="mx-auto w-full max-w-[1400px]">
-<section className="rounded-[38px] border border-white/10 bg-white/[0.045] p-6 shadow-[0_32px_110px_rgba(0,0,0,0.42)] backdrop-blur-2xl sm:p-8 lg:p-10">
+<div className={EXECUTIVE_PAGE_CLASS}>
+<section className="rounded-[32px] border border-white/10 bg-white/[0.045] p-6 shadow-[0_32px_110px_rgba(0,0,0,0.42)] backdrop-blur-2xl sm:p-8 lg:p-10">
 <div className="flex flex-col gap-8 xl:flex-row xl:items-start xl:justify-between">
 <div>
 <p className="text-xs font-black uppercase tracking-[0.35em] text-[#C8A646]">
 Executive Activity Center
 </p>
 
-<h1 className="mt-4 max-w-4xl text-4xl font-black tracking-[-0.05em] text-white sm:text-5xl xl:text-[64px] xl:leading-[0.98]">
+<h1 className="mt-4 max-w-4xl break-words text-4xl font-black tracking-[-0.05em] text-white sm:text-5xl">
 Notifications
 </h1>
 
@@ -101,7 +102,7 @@ company workspace.
 </p>
 </div>
 
-<div className="grid min-w-full gap-4 sm:grid-cols-2 xl:min-w-[520px]">
+<div className="grid min-w-0 gap-4 sm:grid-cols-2 xl:grid-cols-4">
 <ActivityMetric title="Total Activity" value={totalCount} />
 <ActivityMetric title="Unread" value={unreadCount} />
 <ActivityMetric title="Awards" value={awardCount} />
@@ -110,7 +111,7 @@ company workspace.
 </div>
 </section>
 
-<section className="mt-8 rounded-[36px] border border-white/10 bg-white/[0.045] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.28)] backdrop-blur-xl sm:p-8">
+<section className="mt-8 rounded-[32px] border border-white/10 bg-white/[0.045] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.28)] backdrop-blur-xl sm:p-8">
 <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
 <div>
 <p className="text-xs font-black uppercase tracking-[0.3em] text-[#C8A646]">
@@ -168,7 +169,7 @@ Unread
 {notification.message || "No message provided."}
 </p>
 
-<p className="mt-4 text-xs font-bold uppercase tracking-[0.18em] text-slate-500">
+<p className="mt-4 text-xs font-bold uppercase tracking-[0.18em] text-slate-400">
 {formatNotificationDate(notification.created_at)}
 </p>
 </div>
@@ -192,7 +193,7 @@ Unread
 function ActivityMetric({ title, value }: { title: string; value: number }) {
 return (
 <div className="rounded-[26px] border border-white/10 bg-[#061426]/75 p-5">
-<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">
+<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
 {title}
 </p>
 

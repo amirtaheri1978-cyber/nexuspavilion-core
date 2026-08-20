@@ -75,7 +75,7 @@ export function ProcurementOperationsWorkspace({
         <p className="np-type-body mt-3 max-w-5xl">{classification.description}</p>
 
         <div className="mt-5 overflow-x-auto overflow-y-hidden rounded-executive border border-white/10 bg-white/[0.03]">
-          <div className="grid min-w-[520px] md:grid-cols-2 xl:min-w-0 xl:grid-cols-4">
+          <div className="grid sm:grid-cols-2 xl:grid-cols-4">
             {classification.scopeMetrics.map((metric) => (
               <ExecutiveCommandStripCard
                 key={metric.title}
@@ -87,7 +87,7 @@ export function ProcurementOperationsWorkspace({
         </div>
 
         <div className="mt-3 overflow-x-auto overflow-y-hidden rounded-executive border border-white/10 bg-white/[0.03]">
-          <div className="grid min-w-[640px] md:grid-cols-2 xl:min-w-0 xl:grid-cols-5">
+          <div className="grid sm:grid-cols-2 xl:grid-cols-5">
             {classification.sourcingMetrics.map((metric) => (
               <ExecutiveCommandStripCard
                 key={metric.title}

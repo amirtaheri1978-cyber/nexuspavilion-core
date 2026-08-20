@@ -27,7 +27,7 @@ networkRole,
 }: CompanyGovernanceCenterProps) {
 return (
 <>
-<section className="mt-8 rounded-[36px] border border-white/10 bg-white/[0.045] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.28)] backdrop-blur-xl sm:p-8">
+<section className="mt-8 rounded-[32px] border border-white/10 bg-white/[0.045] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.28)] backdrop-blur-xl sm:p-8">
 <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
 <div>
 <p className="text-xs font-black uppercase tracking-[0.3em] text-[#C8A646]">
@@ -54,7 +54,7 @@ Workspace Stage
 </div>
 </div>
 
-<div className="mt-6 grid gap-4 md:grid-cols-5">
+<div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
 <SecurityCheck label="Owner" status={hasOwner ? "Active" : "Missing"} />
 
 <SecurityCheck
@@ -100,7 +100,7 @@ status={rfqCount > 0 ? "Active" : "Ready"}
 function SecurityCheck({ label, status }: { label: string; status: string }) {
 return (
 <div className="rounded-[26px] border border-white/10 bg-[#061426]/70 p-5">
-<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">
+<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
 {label}
 </p>
 
@@ -112,7 +112,7 @@ return (
 function InfoCard({ title, value }: { title: string; value: string }) {
 return (
 <div className="rounded-[28px] border border-white/10 bg-white/[0.045] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.26)] backdrop-blur-xl">
-<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">
+<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
 {title}
 </p>
 

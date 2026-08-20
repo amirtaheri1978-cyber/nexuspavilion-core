@@ -704,7 +704,7 @@ description="Manage company membership, workspace roles, and pending access invi
                       </StatusPill>
                     </div>
 
-                    <p className="mt-3 text-xs font-bold text-slate-500">
+                    <p className="mt-3 text-xs font-bold text-slate-400">
                       Sent{" "}
                       {formatDate(
                         invitation.created_at,
@@ -748,7 +748,7 @@ description="Manage company membership, workspace roles, and pending access invi
                     {getActivityLabel(log.action)}
                   </p>
 
-                  <p className="mt-2 text-xs font-bold text-slate-500">
+                  <p className="mt-2 text-xs font-bold text-slate-400">
                     {formatDate(log.created_at)} ·{" "}
                     {log.entity_type || "workspace"}
                   </p>
@@ -767,7 +767,7 @@ description="Manage company membership, workspace roles, and pending access invi
           description="Manage ownership, recovery, and permanent workspace controls. These actions are restricted to authorized company leaders."
         >
           <div className="mt-6 rounded-[26px] border border-white/10 bg-[#061426]/70 p-5">
-            <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">
+            <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
               Security posture
             </p>
 
@@ -944,7 +944,7 @@ function EmptyState({
 }) {
   return (
     <div className="rounded-[26px] border border-dashed border-white/15 bg-white/[0.035] p-8 text-center">
-      <p className="text-sm font-bold text-slate-500">
+      <p className="text-sm font-bold text-slate-400">
         {message}
       </p>
     </div>

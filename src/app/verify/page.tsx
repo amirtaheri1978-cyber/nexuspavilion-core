@@ -188,7 +188,7 @@ access company-level procurement workspaces.
 <div className="mt-9 grid gap-3 sm:grid-cols-2">
 <Link
 href={content.primaryHref}
-className="flex h-[58px] items-center justify-center rounded-2xl bg-gradient-to-r from-[#B9902F] via-[#C8A646] to-[#F5D77B] px-5 text-center text-sm font-black uppercase tracking-[0.12em] text-slate-950 shadow-[0_18px_55px_rgba(200,166,70,0.3)] transition hover:scale-[1.01]"
+className="flex h-[58px] items-center justify-center rounded-2xl bg-gradient-to-r from-[#B9902F] via-[#C8A646] to-[#F5D77B] px-5 text-center text-sm font-black uppercase tracking-[0.12em] text-slate-950 shadow-[0_18px_55px_rgba(200,166,70,0.3)] transition"
 >
 {content.primaryLabel}
 </Link>

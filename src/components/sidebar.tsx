@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 
 import { NexusPavilionLogo } from "@/components/branding/nexus-pavilion-logo";
 import { createClient } from "@/lib/supabase/client";
+import { EXECUTIVE_FOCUS_CYAN } from "@/lib/design-system/executive-contract";
 
 type Stats = {
 activeRfqs: number;
@@ -354,11 +355,13 @@ return (
 <Link
 key={`${item.key}-${item.href}`}
 href={item.href}
+aria-current={isActive ? "page" : undefined}
 className={[
-"group flex items-center gap-3 rounded-[14px] px-3 py-3 text-sm transition",
+"group flex min-h-11 items-center gap-3 rounded-[14px] px-3 py-3 text-sm transition",
 isActive
-? "bg-gradient-to-r from-[#0B3D91]/45 to-[#2CC4E8]/10 text-white shadow-[0_0_32px_rgba(44,196,232,0.2)] ring-1 ring-[#2CC4E8]/25"
+? "bg-gradient-to-r from-[#0B3D91]/45 to-[#2CC4E8]/10 text-white ring-1 ring-[#2CC4E8]/25"
 : "text-slate-300 hover:bg-white/[0.045] hover:text-white",
+EXECUTIVE_FOCUS_CYAN,
 ].join(" ")}
 >
 <span
@@ -376,7 +379,7 @@ isActive
 <span className="block truncate font-semibold leading-5">
 {item.label}
 </span>
-<span className="mt-0.5 block truncate text-[11px] font-medium leading-4 text-slate-500">
+<span className="mt-0.5 block break-words text-[11px] font-medium leading-4 text-slate-400">
 {item.description}
 </span>
 </span>
@@ -401,7 +404,7 @@ return (
 <>
 <header className="sticky top-0 z-30 border-b border-white/10 bg-[#07111F]/95 px-5 py-4 text-white backdrop-blur lg:hidden">
 <div className="flex items-center justify-between gap-4">
-<Link href="/dashboard" className="flex min-w-0 items-center gap-3">
+<Link href="/dashboard" className={`flex min-w-0 items-center gap-3 rounded-xl ${EXECUTIVE_FOCUS_CYAN}`}>
 <NexusPavilionLogo
 className="shrink-0"
 variant="icon"
@@ -422,7 +425,7 @@ Nexus Pavilion
 
 <Link
 href="/notifications"
-className="rounded-full bg-white/[0.06] px-4 py-2 text-xs font-black text-white ring-1 ring-white/10"
+className={`inline-flex min-h-11 items-center rounded-full bg-white/[0.06] px-4 py-2 text-xs font-black text-white ring-1 ring-white/10 ${EXECUTIVE_FOCUS_CYAN}`}
 >
 {stats.unreadNotifications > 0
 ? `${stats.unreadNotifications} Alerts`
@@ -500,13 +503,13 @@ Decisions Deliver.
 Nexus Pavilion AI
 </p>
 
-<p className="mt-1 text-center text-xs font-medium text-slate-500">
+<p className="mt-1 text-center text-xs font-medium text-slate-400">
 Your AI Procurement Advisor
 </p>
 
 <Link
 href="/analytics"
-className="mt-4 flex items-center justify-center gap-2 rounded-[14px] border border-white/10 bg-[#07111F]/75 px-4 py-2.5 text-xs font-black text-white transition hover:border-[#2CC4E8]/30 hover:bg-[#2CC4E8]/10"
+className={`mt-4 flex min-h-11 items-center justify-center gap-2 rounded-[14px] border border-white/10 bg-[#07111F]/75 px-4 py-2.5 text-xs font-black text-white transition hover:border-[#2CC4E8]/30 hover:bg-[#2CC4E8]/10 ${EXECUTIVE_FOCUS_CYAN}`}
 >
 Ask Nexus AI
 <span aria-hidden="true">→</span>
@@ -515,13 +518,13 @@ Ask Nexus AI
 
 <div className="flex items-center justify-between rounded-[18px] border border-white/10 bg-[#07111F]/75 px-4 py-3">
 <div className="min-w-0">
-<p className="text-[10px] font-black uppercase tracking-[0.22em] text-slate-500">
+<p className="text-[10px] font-black uppercase tracking-[0.22em] text-slate-400">
 Workspace
 </p>
 <p className="mt-1 truncate text-xs font-black text-white">
 {context.companyName || "Company Workspace"}
 </p>
-<p className="mt-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+<p className="mt-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-400">
 {getExperienceLabel(experience)}
 </p>
 </div>
@@ -531,13 +534,13 @@ Workspace
 </StatusPill>
 </div>
 
-<div className="flex items-center justify-between text-[11px] font-semibold text-slate-500">
+<div className="flex items-center justify-between text-[11px] font-semibold text-slate-400">
 <span className="inline-flex items-center gap-2">
 <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
 v 2.0.0 · Enterprise
 </span>
 
-<Link href="/notifications" className="text-slate-400 hover:text-white">
+<Link href="/notifications" className={`rounded-md text-slate-400 hover:text-white ${EXECUTIVE_FOCUS_CYAN}`}>
 Activity
 </Link>
 </div>

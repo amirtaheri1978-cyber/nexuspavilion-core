@@ -245,7 +245,7 @@ function ScenarioCard({
 
   return (
     <li
-      className={`flex min-w-0 flex-col rounded-[32px] border p-5 transition duration-300 hover:-translate-y-0.5 hover:bg-white/[0.06] hover:shadow-executive sm:p-6 ${
+      className={`flex min-w-0 flex-col rounded-[32px] border p-5 transition duration-300 hover:bg-white/[0.06] hover:shadow-executive sm:p-6 ${
         primary
           ? "border-nexus-gold/30 bg-nexus-gold/[0.07]"
           : "border-white/10 bg-white/[0.045]"

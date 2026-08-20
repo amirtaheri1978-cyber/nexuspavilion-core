@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { NexusPavilionLogo } from "@/components/branding/nexus-pavilion-logo";
+import { EXECUTIVE_FOCUS_CYAN } from "@/lib/design-system/executive-contract";
 
 type NavigationItem = {
   href: string;
@@ -81,7 +82,7 @@ export default function AppSidebar() {
     <aside className="min-h-screen w-64 border-r border-white/10 bg-[#061426] px-5 py-7 text-white">
       <Link
         href="/dashboard"
-        className="block rounded-2xl border border-white/10 bg-white/[0.035] px-4 py-4 transition hover:bg-white/[0.055]"
+        className={`block rounded-2xl border border-white/10 bg-white/[0.035] px-4 py-4 transition hover:bg-white/[0.055] ${EXECUTIVE_FOCUS_CYAN}`}
       >
         <NexusPavilionLogo
           variant="horizontal"
@@ -125,7 +126,7 @@ export default function AppSidebar() {
         ))}
 
         <section>
-          <p className="px-3 text-[10px] font-black uppercase tracking-[0.24em] text-slate-500">
+          <p className="px-3 text-[10px] font-black uppercase tracking-[0.24em] text-slate-400">
             Platform Status
           </p>
 
@@ -160,10 +161,11 @@ function AppSidebarLink({
       href={href}
       aria-current={active ? "page" : undefined}
       className={[
-        "block rounded-xl px-3 py-2.5 text-sm font-bold transition",
+        "block min-h-11 rounded-xl px-3 py-2.5 text-sm font-bold transition",
         active
           ? "bg-[#0B3D91]/45 text-white ring-1 ring-[#2CC4E8]/25"
           : "text-slate-300 hover:bg-white/[0.055] hover:text-white",
+        EXECUTIVE_FOCUS_CYAN,
       ].join(" ")}
     >
       {label}

@@ -1,5 +1,6 @@
 import { ExecutiveBadge } from "@/components/executive/executive-badge";
 import { ExecutivePanel } from "@/components/executive/executive-panel";
+import { EXECUTIVE_FOCUS_CYAN } from "@/lib/design-system/executive-contract";
 
 type ActionPriority = "low" | "medium" | "high" | "critical";
 
@@ -93,9 +94,9 @@ Expected Business Impact
 type="button"
 onClick={onClick}
 className={[
-"mt-5 inline-flex items-center justify-center rounded-full border px-5 py-3 text-sm font-black",
-"transition-all duration-200 hover:scale-[1.02]",
-"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2CC4E8]/40",
+"mt-5 inline-flex min-h-11 items-center justify-center rounded-full border px-5 py-3 text-sm font-black",
+"transition-[background-color] duration-200",
+EXECUTIVE_FOCUS_CYAN,
 buttonStyles[priority],
 ].join(" ")}
 >

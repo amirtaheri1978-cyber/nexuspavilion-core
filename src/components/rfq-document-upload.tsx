@@ -160,7 +160,7 @@ Optional
 </div>
 
 <label className="mt-5 block">
-<span className="mb-2 block text-xs font-black uppercase tracking-[0.18em] text-slate-500">
+<span className="mb-2 block text-xs font-black uppercase tracking-[0.18em] text-slate-400">
 Revision Label
 </span>
 
@@ -204,7 +204,7 @@ className="hidden"
 Drag and drop files here
 </p>
 
-<p className="mt-2 text-xs font-semibold text-slate-500">
+<p className="mt-2 text-xs font-semibold text-slate-400">
 or choose files from your device
 </p>
 
@@ -230,7 +230,7 @@ className="rounded-2xl border border-white/10 bg-[#07111F]/80 px-4 py-3"
 {file.name}
 </p>
 
-<p className="mt-1 text-xs font-semibold text-slate-500">
+<p className="mt-1 text-xs font-semibold text-slate-400">
 {formatFileSize(file.size)} · {file.type || "Unknown file type"}
 </p>
 </div>
@@ -266,7 +266,7 @@ Uploading document package...
 type="button"
 onClick={() => void uploadFiles(selectedFiles)}
 disabled={uploading || selectedFiles.length === 0}
-className="mt-5 w-full rounded-full bg-gradient-to-r from-[#B9902F] via-[#C8A646] to-[#F5D77B] px-5 py-3 text-sm font-black text-slate-950 shadow-[0_18px_55px_rgba(200,166,70,0.18)] transition hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-50"
+className="mt-5 w-full rounded-full bg-gradient-to-r from-[#B9902F] via-[#C8A646] to-[#F5D77B] px-5 py-3 text-sm font-black text-slate-950 shadow-[0_18px_55px_rgba(200,166,70,0.18)] transition disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C8A646]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#07111F]"
 >
 {uploading ? "Uploading..." : "Upload Selected Files"}
 </button>

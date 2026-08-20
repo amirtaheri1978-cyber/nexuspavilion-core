@@ -168,7 +168,7 @@ Your current role has read-only access to company profile settings.
 <button
 type="submit"
 disabled={loading || !canUpdateCompany}
-className="rounded-full bg-gradient-to-r from-[#B9902F] via-[#C8A646] to-[#F5D77B] px-7 py-4 text-sm font-black text-slate-950 shadow-[0_18px_55px_rgba(200,166,70,0.22)] transition hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-50"
+className="rounded-full bg-gradient-to-r from-[#B9902F] via-[#C8A646] to-[#F5D77B] px-7 py-4 text-sm font-black text-slate-950 shadow-[0_18px_55px_rgba(200,166,70,0.22)] transition disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C8A646]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#07111F]"
 >
 {loading ? "Saving changes..." : "Save Company Settings"}
 </button>
@@ -178,7 +178,7 @@ className="rounded-full bg-gradient-to-r from-[#B9902F] via-[#C8A646] to-[#F5D77
 
 function FormLabel({ children }: { children: React.ReactNode }) {
 return (
-<span className="mb-2 block text-xs font-black uppercase tracking-[0.2em] text-slate-500">
+<span className="mb-2 block text-xs font-black uppercase tracking-[0.2em] text-slate-400">
 {children}
 </span>
 );

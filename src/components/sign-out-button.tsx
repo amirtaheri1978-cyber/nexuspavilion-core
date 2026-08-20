@@ -207,7 +207,7 @@ export default function SignOutButton({
                     Executive Workspace
                   </p>
 
-                  <p className="mt-1 text-xs font-semibold text-slate-500">
+                  <p className="mt-1 text-xs font-semibold text-slate-400">
                     Secure enterprise session
                   </p>
                 </div>
@@ -265,14 +265,14 @@ export default function SignOutButton({
               Executive Workspace
             </p>
 
-            <p className="mt-1 text-[10px] font-bold uppercase tracking-wide text-slate-500">
+            <p className="mt-1 text-[10px] font-bold uppercase tracking-wide text-slate-400">
               Verified Access
             </p>
           </div>
 
           <span
             aria-hidden="true"
-            className="hidden text-slate-500 transition-transform xl:inline"
+            className="hidden text-slate-400 transition-transform xl:inline"
           >
             {open ? "▴" : "▾"}
           </span>
@@ -316,7 +316,7 @@ function MenuLink({
           {children}
         </span>
 
-        <span className="mt-1 block text-xs font-semibold leading-5 text-slate-500">
+        <span className="mt-1 block text-xs font-semibold leading-5 text-slate-400">
           {description}
         </span>
       </span>

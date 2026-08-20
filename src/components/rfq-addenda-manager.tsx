@@ -184,7 +184,7 @@ Requires acknowledgement
 
 <div className="mt-6 grid gap-5">
 <label className="block">
-<span className="mb-2 block text-xs font-black uppercase tracking-[0.18em] text-slate-500">
+<span className="mb-2 block text-xs font-black uppercase tracking-[0.18em] text-slate-400">
 Title *
 </span>
 
@@ -199,7 +199,7 @@ className="w-full rounded-2xl border border-white/10 bg-[#061426]/80 px-4 py-4 t
 </label>
 
 <label className="block">
-<span className="mb-2 block text-xs font-black uppercase tracking-[0.18em] text-slate-500">
+<span className="mb-2 block text-xs font-black uppercase tracking-[0.18em] text-slate-400">
 Description
 </span>
 
@@ -214,7 +214,7 @@ className="w-full resize-none rounded-2xl border border-white/10 bg-[#061426]/80
 </label>
 
 <label className="block">
-<span className="mb-2 block text-xs font-black uppercase tracking-[0.18em] text-slate-500">
+<span className="mb-2 block text-xs font-black uppercase tracking-[0.18em] text-slate-400">
 Affected Documents
 </span>
 
@@ -232,7 +232,7 @@ className="w-full resize-none rounded-2xl border border-white/10 bg-[#061426]/80
 <button
 type="submit"
 disabled={loading}
-className="mt-6 rounded-full bg-gradient-to-r from-[#B9902F] via-[#C8A646] to-[#F5D77B] px-7 py-4 text-sm font-black text-slate-950 shadow-[0_18px_55px_rgba(200,166,70,0.22)] transition hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-50"
+className="mt-6 rounded-full bg-gradient-to-r from-[#B9902F] via-[#C8A646] to-[#F5D77B] px-7 py-4 text-sm font-black text-slate-950 shadow-[0_18px_55px_rgba(200,166,70,0.22)] transition disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C8A646]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#07111F]"
 >
 {loading ? "Issuing Addendum..." : "Issue Addendum"}
 </button>
@@ -258,7 +258,7 @@ className="mt-6 rounded-full bg-gradient-to-r from-[#B9902F] via-[#C8A646] to-[#
 No addenda issued yet.
 </p>
 
-<p className="mt-3 text-sm font-semibold leading-6 text-slate-500">
+<p className="mt-3 text-sm font-semibold leading-6 text-slate-400">
 Formal drawing changes, scope clarifications, and vendor notices
 will appear here.
 </p>
@@ -300,7 +300,7 @@ Addendum #{addendum.addendum_number}
 
 {addendum.affected_documents ? (
 <div className="mt-5 rounded-2xl border border-white/10 bg-[#061426]/70 p-4">
-<p className="text-xs font-black uppercase tracking-[0.18em] text-slate-500">
+<p className="text-xs font-black uppercase tracking-[0.18em] text-slate-400">
 Affected Documents
 </p>
 

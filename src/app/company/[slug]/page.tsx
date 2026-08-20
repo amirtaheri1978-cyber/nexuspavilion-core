@@ -396,7 +396,7 @@ Create RFQ
 
 <Link
 href="/rfq"
-className="rounded-full bg-gradient-to-r from-[#B9902F] via-[#C8A646] to-[#F5D77B] px-5 py-3 text-sm font-black text-slate-950 transition hover:scale-[1.01]"
+className="rounded-full bg-gradient-to-r from-[#B9902F] via-[#C8A646] to-[#F5D77B] px-5 py-3 text-sm font-black text-slate-950 transition"
 >
 View Marketplace
 </Link>
@@ -493,7 +493,7 @@ Company RFQs
 
 <Link
 href="/rfq"
-className="inline-flex rounded-full bg-gradient-to-r from-[#B9902F] via-[#C8A646] to-[#F5D77B] px-5 py-3 text-sm font-black text-slate-950 transition hover:scale-[1.02]"
+className="inline-flex rounded-full bg-gradient-to-r from-[#B9902F] via-[#C8A646] to-[#F5D77B] px-5 py-3 text-sm font-black text-slate-950 transition"
 >
 Open Marketplace
 </Link>
@@ -711,7 +711,7 @@ contract awards, invitations, and workspace management.
 
 <Link
 href="/analytics"
-className="inline-flex rounded-full bg-gradient-to-r from-[#B9902F] via-[#C8A646] to-[#F5D77B] px-5 py-3 text-sm font-black text-slate-950 transition hover:scale-[1.02]"
+className="inline-flex rounded-full bg-gradient-to-r from-[#B9902F] via-[#C8A646] to-[#F5D77B] px-5 py-3 text-sm font-black text-slate-950 transition"
 >
 Open Analytics
 </Link>
@@ -988,7 +988,7 @@ return (
 <div className="mt-8 grid gap-3 sm:grid-cols-2">
 <Link
 href={primaryHref}
-className="flex h-[56px] items-center justify-center rounded-2xl bg-gradient-to-r from-[#B9902F] via-[#C8A646] to-[#F5D77B] px-6 text-sm font-black uppercase tracking-[0.12em] text-slate-950 shadow-[0_18px_55px_rgba(200,166,70,0.3)] transition hover:scale-[1.01]"
+className="flex h-[56px] items-center justify-center rounded-2xl bg-gradient-to-r from-[#B9902F] via-[#C8A646] to-[#F5D77B] px-6 text-sm font-black uppercase tracking-[0.12em] text-slate-950 shadow-[0_18px_55px_rgba(200,166,70,0.3)] transition"
 >
 {primaryLabel}
 </Link>

@@ -241,7 +241,7 @@ export default function OwnershipPanel({
   return (
     <div className="mt-6 space-y-5">
       <div className="rounded-[26px] border border-white/10 bg-[#061426]/70 p-5">
-        <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">
+        <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
           Current Ownership
         </p>
 
@@ -301,7 +301,7 @@ export default function OwnershipPanel({
 
           <dl className="mt-5 grid gap-3 text-sm sm:grid-cols-2">
             <div>
-              <dt className="font-black text-slate-500">
+              <dt className="font-black text-slate-400">
                 Requested
               </dt>
 
@@ -313,7 +313,7 @@ export default function OwnershipPanel({
             </div>
 
             <div>
-              <dt className="font-black text-slate-500">
+              <dt className="font-black text-slate-400">
                 Expires
               </dt>
 
@@ -325,7 +325,7 @@ export default function OwnershipPanel({
             </div>
 
             <div>
-              <dt className="font-black text-slate-500">
+              <dt className="font-black text-slate-400">
                 Previous owner role
               </dt>
 
@@ -335,7 +335,7 @@ export default function OwnershipPanel({
             </div>
 
             <div>
-              <dt className="font-black text-slate-500">
+              <dt className="font-black text-slate-400">
                 Reason
               </dt>
 
@@ -399,7 +399,7 @@ export default function OwnershipPanel({
 
           {currentUserWorkspaceRole === "owner" ? (
             <>
-              <p className="mt-2 text-sm font-semibold leading-6 text-slate-500">
+              <p className="mt-2 text-sm font-semibold leading-6 text-slate-400">
                 Select an active workspace member and
                 create a governed ownership-transfer
                 request.
@@ -410,7 +410,7 @@ export default function OwnershipPanel({
                   <div>
                     <label
                       htmlFor="ownership-transfer-target"
-                      className="text-xs font-black uppercase tracking-[0.16em] text-slate-500"
+                      className="text-xs font-black uppercase tracking-[0.16em] text-slate-400"
                     >
                       Proposed owner
                     </label>
@@ -451,7 +451,7 @@ export default function OwnershipPanel({
                   <div>
                     <label
                       htmlFor="previous-owner-next-role"
-                      className="text-xs font-black uppercase tracking-[0.16em] text-slate-500"
+                      className="text-xs font-black uppercase tracking-[0.16em] text-slate-400"
                     >
                       Your role after transfer
                     </label>
@@ -487,7 +487,7 @@ export default function OwnershipPanel({
                   <div>
                     <label
                       htmlFor="ownership-transfer-reason"
-                      className="text-xs font-black uppercase tracking-[0.16em] text-slate-500"
+                      className="text-xs font-black uppercase tracking-[0.16em] text-slate-400"
                     >
                       Reason
                     </label>
@@ -530,7 +530,7 @@ export default function OwnershipPanel({
               )}
             </>
           ) : (
-            <p className="mt-2 text-sm font-semibold leading-6 text-slate-500">
+            <p className="mt-2 text-sm font-semibold leading-6 text-slate-400">
               There are no ownership actions requiring
               your attention.
             </p>

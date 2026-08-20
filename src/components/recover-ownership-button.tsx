@@ -3,6 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import { EXECUTIVE_CTA_PRIMARY } from "@/lib/design-system/executive-contract";
+
 type ApiResponse = {
 success?: boolean;
 error?: string;
@@ -55,13 +57,13 @@ return (
 type="button"
 onClick={handleRecover}
 disabled={loading}
-className="rounded-full bg-orange-500 px-5 py-3 text-sm font-black text-white transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-50"
+className={`${EXECUTIVE_CTA_PRIMARY} min-h-12 px-5 disabled:cursor-not-allowed disabled:opacity-50`}
 >
 {loading ? "Recovering..." : "Recover Ownership"}
 </button>
 
 {result ? (
-<p className="mt-3 rounded-2xl bg-white px-4 py-3 text-sm font-bold leading-6 text-slate-700">
+<p className="mt-3 rounded-2xl border border-white/10 bg-white/[0.045] px-4 py-3 text-sm font-bold leading-6 text-slate-200" role="status">
 {result}
 </p>
 ) : null}

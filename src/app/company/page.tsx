@@ -11,6 +11,7 @@ import {
   canDeleteCompanyWorkspace,
   canManageCompanyWorkspace,
 } from "@/lib/authorization/workspace-permissions";
+import { EXECUTIVE_FOCUS_CYAN } from "@/lib/design-system/executive-contract";
 import { createClient } from "@/lib/supabase/server";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "";
@@ -430,7 +431,7 @@ const workspaceMembers: WorkspaceMember[] =
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <Link
             href="/dashboard"
-            className="inline-flex w-fit rounded-full border border-white/10 bg-white/[0.045] px-5 py-3 text-sm font-black text-slate-300 transition hover:bg-white/[0.08] hover:text-white"
+            className={`inline-flex w-fit rounded-full border border-white/10 bg-white/[0.045] px-5 py-3 text-sm font-black text-slate-300 transition hover:bg-white/[0.08] hover:text-white ${EXECUTIVE_FOCUS_CYAN}`}
           >
             ← Back to Dashboard
           </Link>
@@ -447,14 +448,14 @@ const workspaceMembers: WorkspaceMember[] =
 
             <Link
               href="/rfq"
-              className="rounded-full bg-gradient-to-r from-[#B9902F] via-[#C8A646] to-[#F5D77B] px-5 py-3 text-sm font-black text-slate-950 transition hover:scale-[1.01]"
+              className="rounded-full bg-gradient-to-r from-[#B9902F] via-[#C8A646] to-[#F5D77B] px-5 py-3 text-sm font-black text-slate-950 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C8A646]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#07111F]"
             >
               Open Marketplace
             </Link>
           </div>
         </div>
 
-        <section className="rounded-[40px] border border-white/10 bg-white/[0.065] p-7 shadow-[0_36px_120px_rgba(0,0,0,0.52)] backdrop-blur-2xl sm:p-10">
+        <section className="rounded-[32px] border border-white/10 bg-white/[0.065] p-7 shadow-[0_36px_120px_rgba(0,0,0,0.52)] backdrop-blur-2xl sm:p-10">
           <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between">
             <div className="flex items-start gap-6">
               {company.logo_url ? (
@@ -592,7 +593,7 @@ function SystemState({
     <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#061426] px-4 py-10 text-white sm:px-6 lg:px-10">
       <div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(circle_at_top_left,rgba(44,196,232,0.18),transparent_34%),radial-gradient(circle_at_top_right,rgba(200,166,70,0.15),transparent_30%),linear-gradient(180deg,#061426_0%,#07111F_45%,#020617_100%)]" />
 
-      <section className="w-full max-w-2xl rounded-[40px] border border-white/10 bg-white/[0.065] p-8 text-center shadow-[0_36px_120px_rgba(0,0,0,0.52)] backdrop-blur-2xl sm:p-10">
+      <section className="w-full max-w-2xl rounded-[32px] border border-white/10 bg-white/[0.065] p-8 text-center shadow-[0_36px_120px_rgba(0,0,0,0.52)] backdrop-blur-2xl sm:p-10">
         <p className="text-xs font-black uppercase tracking-[0.34em] text-[#C8A646]">
           {eyebrow}
         </p>
@@ -608,7 +609,7 @@ function SystemState({
         <div className="mt-8 grid gap-3 sm:grid-cols-2">
           <Link
             href={primaryHref}
-            className="flex h-[56px] items-center justify-center rounded-2xl bg-gradient-to-r from-[#B9902F] via-[#C8A646] to-[#F5D77B] px-6 text-sm font-black uppercase tracking-[0.12em] text-slate-950 shadow-[0_18px_55px_rgba(200,166,70,0.3)] transition hover:scale-[1.01]"
+            className="flex h-[56px] items-center justify-center rounded-2xl bg-gradient-to-r from-[#B9902F] via-[#C8A646] to-[#F5D77B] px-6 text-sm font-black uppercase tracking-[0.12em] text-slate-950 shadow-[0_18px_55px_rgba(200,166,70,0.3)] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C8A646]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#07111F]"
           >
             {primaryLabel}
           </Link>
@@ -634,7 +635,7 @@ function MiniMetric({
 }) {
   return (
     <div className="rounded-3xl border border-white/10 bg-white/[0.045] p-5">
-      <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">
+      <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
         {title}
       </p>
 
@@ -654,7 +655,7 @@ function InfoCard({
 }) {
   return (
     <div className="rounded-3xl border border-white/10 bg-[#07111F]/75 p-6">
-      <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">
+      <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
         {title}
       </p>
 
