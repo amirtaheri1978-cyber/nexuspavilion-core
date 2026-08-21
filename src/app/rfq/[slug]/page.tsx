@@ -763,26 +763,30 @@ recommendedQuote={recommendedQuote}
 {capabilities.canInviteSuppliers ? (
 <ExecutivePanel
 id="supplier-invitations"
-className="mt-8"
+className="mt-8 min-w-0 @container"
 padding="lg"
 tone="blue"
+data-rfq-supplier-invitations="true"
 >
-<p className="text-xs font-black uppercase tracking-[0.3em] text-[#9BE8F8]">
-Supplier Invitation Center
+<p className="text-xs font-black uppercase tracking-[0.3em] text-nexus-gold">
+Supplier Invitation
 </p>
 
-<h2 className="mt-3 text-3xl font-black text-nexus-white">
+<h2
+id="rfq-supplier-invitation-heading"
+className="mt-3 min-w-0 text-pretty text-2xl font-black tracking-tight text-nexus-white sm:text-3xl"
+>
 Build Competitive Bid Coverage
 </h2>
 
-<p className="mt-3 max-w-3xl text-sm font-semibold leading-7 text-nexus-muted">
+<p className="mt-3 max-w-3xl min-w-0 text-pretty text-sm font-semibold leading-7 text-nexus-muted">
 Invite qualified suppliers directly into this RFQ workspace while
 preserving buyer-side control, commercial confidentiality, and the current
 governance workflow.
 </p>
 
-<div className="mt-6">
-<InviteVendorForm rfqId={rfq.id} />
+<div className="mt-6 min-w-0">
+<InviteVendorForm embedded rfqId={rfq.id} />
 </div>
 </ExecutivePanel>
 ) : null}

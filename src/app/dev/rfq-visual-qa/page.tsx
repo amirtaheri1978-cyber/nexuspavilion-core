@@ -5,6 +5,7 @@ import { RFQExecutiveActions } from "@/components/rfq-workspace/rfq-executive-ac
 import { RfqQuoteComparison } from "@/components/rfq-workspace/rfq-quote-comparison";
 import type { RfqQuoteComparisonItem } from "@/components/rfq-workspace/rfq-quote-comparison";
 import { RFQQuoteWorkspace } from "@/components/rfq-workspace/rfq-quote-workspace";
+import InviteVendorForm from "@/components/invite-vendor-form";
 import { RFQDocumentWorkspace } from "@/components/rfq-workspace/rfq-document-workspace";
 import { ExecutiveOpportunityRanking } from "@/components/executive/executive-opportunity-ranking";
 import { ExecutiveBadge } from "@/components/executive/executive-badge";
@@ -405,6 +406,50 @@ export default function RfqVisualQaPage() {
             addenda={[]}
             acknowledgements={[]}
           />
+        </div>
+
+        <div className="np-region-major border-t border-white/10 pt-10">
+          <p className="np-type-eyebrow">Visual QA · supplier invitation</p>
+          <p className="np-type-meta mt-3 max-w-3xl">
+            Chromeless fixture. Authenticated RFQ detail sits beside the 330px
+            application sidebar, so a 1440 viewport yields about 1110px of
+            content width. Supplier invitation must not nest a second
+            ExecutivePanel or fire an xl access-control row at that width.
+            Long AVL and invitation copy must wrap on word boundaries. This
+            fixture mounts the live invitation form and does not submit.
+          </p>
+        </div>
+        <div
+          className="w-full max-w-[1110px]"
+          data-rfq-invitation-shell-width="1110"
+        >
+          <ExecutivePanel
+            id="supplier-invitations"
+            className="mt-8 min-w-0 @container"
+            padding="lg"
+            tone="blue"
+            data-rfq-supplier-invitations="true"
+          >
+            <p className="text-xs font-black uppercase tracking-[0.3em] text-nexus-gold">
+              Supplier Invitation
+            </p>
+            <h2
+              id="rfq-supplier-invitation-heading"
+              className="mt-3 min-w-0 text-pretty text-2xl font-black tracking-tight text-nexus-white sm:text-3xl"
+            >
+              Build Competitive Bid Coverage for the North Harbor refrigeration
+              replacement and bonded warehouse commissioning program
+            </h2>
+            <p className="mt-3 max-w-3xl min-w-0 text-pretty text-sm font-semibold leading-7 text-nexus-muted">
+              Invite qualified suppliers directly into this RFQ workspace while
+              preserving buyer-side control, commercial confidentiality, and the
+              current governance workflow for authorized vendor contacts across
+              the North Harbor distribution campus.
+            </p>
+            <div className="mt-6 min-w-0">
+              <InviteVendorForm embedded rfqId="visual-qa-rfq" />
+            </div>
+          </ExecutivePanel>
         </div>
 
         <div className="np-region-major border-t border-white/10 pt-10">

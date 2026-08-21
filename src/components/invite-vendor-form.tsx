@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 
+import { ExecutiveBadge } from "@/components/executive/executive-badge";
 import { ExecutivePanel } from "@/components/executive/executive-panel";
 import {
   SupplierAvlPanel,
@@ -17,6 +18,7 @@ import {
 
 type InviteVendorFormProps = {
   rfqId: string;
+  embedded?: boolean;
 };
 
 type InviteResponse = {
@@ -27,6 +29,7 @@ type InviteResponse = {
 
 export default function InviteVendorForm({
   rfqId,
+  embedded = false,
 }: InviteVendorFormProps) {
   const [email, setEmail] = useState("");
   const [selectedVendorId, setSelectedVendorId] = useState("");
@@ -107,75 +110,86 @@ export default function InviteVendorForm({
     );
   }
 
-  return (
-    <ExecutivePanel
-      variant="operational"
-      padding="md"
-      tone="blue"
+  const invitationBody = (
+    <section
+      className="min-w-0 @container"
+      aria-labelledby={
+        embedded
+          ? "rfq-supplier-invitation-heading"
+          : "supplier-invitation-form-title"
+      }
+      data-rfq-invite-vendor-form="true"
     >
-      <section aria-labelledby="supplier-invitation-form-title">
-        <div className="flex flex-col gap-6 xl:flex-row xl:items-start xl:justify-between">
-          <div className="min-w-0">
-            <p className="text-xs font-black uppercase tracking-[0.3em] text-nexus-gold">
-              Supplier Invitations
-            </p>
+      {embedded ? null : (
+        <div className="min-w-0">
+          <p className="text-xs font-black uppercase tracking-[0.3em] text-nexus-gold">
+            Supplier Invitations
+          </p>
 
-            <h3
-              id="supplier-invitation-form-title"
-              className="mt-3 text-2xl font-black tracking-tight text-nexus-white sm:text-3xl"
-            >
-              Invite Suppliers to Quote
-            </h3>
+          <h3
+            id="supplier-invitation-form-title"
+            className="mt-3 min-w-0 text-pretty text-2xl font-black tracking-tight text-nexus-white sm:text-3xl"
+          >
+            Invite Suppliers to Quote
+          </h3>
 
-            <p className="mt-3 max-w-3xl text-sm font-semibold leading-7 text-nexus-muted">
-              Route secure RFQ invitations by email. {INVITE_BY_EMAIL_REMAINS_MESSAGE}
-            </p>
-          </div>
-
-          <div className="min-w-[210px] rounded-3xl border border-nexus-gold/20 bg-nexus-gold/[0.07] px-5 py-4">
-            <p className="text-xs font-black uppercase tracking-[0.22em] text-nexus-muted">
-              Access Control
-            </p>
-
-            <p className="mt-2 text-sm font-black text-nexus-gold">
-              Email invitation
-            </p>
-
-            <p className="mt-2 text-xs font-semibold leading-5 text-nexus-muted">
-              {APPROVED_VENDOR_DOMAIN_AVAILABLE
-                ? "Supplier selection and direct invitations remain recorded against this RFQ."
-                : `${APPROVED_VENDOR_UNAVAILABLE_MESSAGE} ${INVITE_BY_EMAIL_REMAINS_MESSAGE}`}
-            </p>
-          </div>
+          <p className="mt-3 max-w-3xl min-w-0 text-pretty text-sm font-semibold leading-7 text-nexus-muted">
+            Route secure RFQ invitations by email. {INVITE_BY_EMAIL_REMAINS_MESSAGE}
+          </p>
         </div>
+      )}
 
-        <SupplierAvlPanel
-          unavailable={!APPROVED_VENDOR_DOMAIN_AVAILABLE}
-          unavailableMessage={`${APPROVED_VENDOR_UNAVAILABLE_MESSAGE} ${INVITE_BY_EMAIL_REMAINS_MESSAGE}`}
-          vendors={vendors}
-          vendorsLoading={false}
-          selectedVendorId={selectedVendorId}
-          onSelectVendor={handleVendorSelection}
-        />
+      <div
+        className={embedded ? "min-w-0" : "mt-6 min-w-0 border-t border-white/10 pt-6"}
+        data-rfq-invitation-access="true"
+      >
+        <p className="np-type-meta text-nexus-gold-bright">Invitation access</p>
+        <div className="mt-3">
+          <ExecutiveBadge tone="gold">Email invitation</ExecutiveBadge>
+        </div>
+        <p className="mt-3 max-w-3xl min-w-0 text-pretty text-sm font-semibold leading-6 text-nexus-muted">
+          {APPROVED_VENDOR_DOMAIN_AVAILABLE
+            ? "Supplier selection and direct invitations remain recorded against this RFQ."
+            : `${APPROVED_VENDOR_UNAVAILABLE_MESSAGE} ${INVITE_BY_EMAIL_REMAINS_MESSAGE}`}
+        </p>
+      </div>
 
-        <SupplierInvitationDelivery
-          email={email}
-          loading={loading}
-          selectedVendor={selectedVendor}
-          selectedVendorId={selectedVendorId}
-          onEmailChange={setEmail}
-          onClearVendor={() => setSelectedVendorId("")}
-          onSubmit={handleSubmit}
-        />
+      <SupplierAvlPanel
+        unavailable={!APPROVED_VENDOR_DOMAIN_AVAILABLE}
+        unavailableMessage={INVITE_BY_EMAIL_REMAINS_MESSAGE}
+        vendors={vendors}
+        vendorsLoading={false}
+        selectedVendorId={selectedVendorId}
+        onSelectVendor={handleVendorSelection}
+      />
 
-        <SupplierInvitationResult
-          error={error}
-          successMessage={successMessage}
-          inviteUrl={inviteUrl}
-          copyMessage={copyMessage}
-          onCopyInviteLink={copyInviteLink}
-        />
-      </section>
+      <SupplierInvitationDelivery
+        email={email}
+        loading={loading}
+        selectedVendor={selectedVendor}
+        selectedVendorId={selectedVendorId}
+        onEmailChange={setEmail}
+        onClearVendor={() => setSelectedVendorId("")}
+        onSubmit={handleSubmit}
+      />
+
+      <SupplierInvitationResult
+        error={error}
+        successMessage={successMessage}
+        inviteUrl={inviteUrl}
+        copyMessage={copyMessage}
+        onCopyInviteLink={copyInviteLink}
+      />
+    </section>
+  );
+
+  if (embedded) {
+    return invitationBody;
+  }
+
+  return (
+    <ExecutivePanel variant="operational" padding="md" tone="blue">
+      {invitationBody}
     </ExecutivePanel>
   );
 }
