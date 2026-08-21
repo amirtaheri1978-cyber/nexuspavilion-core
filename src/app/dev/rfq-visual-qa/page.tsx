@@ -7,6 +7,10 @@ import type { RfqQuoteComparisonItem } from "@/components/rfq-workspace/rfq-quot
 import { RFQQuoteWorkspace } from "@/components/rfq-workspace/rfq-quote-workspace";
 import InviteVendorForm from "@/components/invite-vendor-form";
 import { RFQDocumentWorkspace } from "@/components/rfq-workspace/rfq-document-workspace";
+import {
+  RfqInviteQuoteSubmission,
+  RfqInviteQuoteUnavailable,
+} from "@/components/rfq-workspace/rfq-invite-quote-submission";
 import { ExecutiveOpportunityRanking } from "@/components/executive/executive-opportunity-ranking";
 import { ExecutiveBadge } from "@/components/executive/executive-badge";
 import { ExecutiveMetricCard } from "@/components/executive/executive-metric-card";
@@ -905,6 +909,52 @@ export default function RfqVisualQaPage() {
             </div>
           </ExecutivePanel>
         </div>
+
+        <div className="np-region-major border-t border-white/10 pt-10">
+          <p className="np-type-eyebrow">
+            Visual QA · invite-token quote submission
+          </p>
+          <p className="np-type-meta mt-3 max-w-3xl">
+            Chromeless route. `/rfq/invite/[token]` does not use the 330px
+            application sidebar, so 1440 and 1110 are full content widths for
+            this surface. Long RFQ titles, emails, timelines, proposal notes,
+            and helper copy must wrap on word boundaries. This fixture mounts
+            the live invite submission workspace and does not submit a quote.
+          </p>
+        </div>
+        <div
+          className="w-full max-w-[1110px]"
+          data-rfq-invite-quote-shell-width="1110"
+        >
+          <RfqInviteQuoteSubmission
+            preview
+            previewAmount="1240000"
+            previewTimeline="16-month phased commissioning across North Harbor bonded warehouse operations"
+            previewMessage="Phased delivery for the North Harbor distribution campus, including redundant compressor commissioning, bonded warehouse continuity, and quality-assurance coverage through the full cutover window."
+            previewError="Please login before submitting a quote."
+            invitation={{
+              invite_email:
+                "procurement.director.north.harbor@harbor-steel-co.example.com",
+              rfq_id: "visual-qa-invite-rfq",
+              rfq_title:
+                "North Harbor refrigeration replacement and bonded warehouse commissioning for the distribution campus",
+              rfq_slug: "air-charter-dxb-lhr",
+              rfq_description:
+                "Long-cycle industrial refrigeration replacement and commissioning for the North Harbor distribution campus, including redundant compressor coverage and bonded warehouse continuity.",
+              rfq_category: "Industrial refrigeration",
+              rfq_location: "North Harbor bonded warehouse corridor",
+              rfq_budget: "$1,280,000",
+              rfq_deadline: "August 21, 2026, 06:00 PM",
+            }}
+          />
+        </div>
+
+        <div className="np-region-major border-t border-white/10 pt-10">
+          <p className="np-type-eyebrow">
+            Visual QA · invite-token unavailable
+          </p>
+        </div>
+        <RfqInviteQuoteUnavailable />
       </div>
     </div>
   );
