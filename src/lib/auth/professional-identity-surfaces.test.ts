@@ -124,10 +124,15 @@ describe("NP-MASTER-22-B04-5 company vs person identity", () => {
     expect(rfqComparePage).toContain("supplierLabel:");
     expect(rfqComparePage).toContain("supplierNames.get(quote.company_id)");
     expect(rfqComparePage).toContain("`Supplier quote #${quote.rank}`");
-    expect(rfqOwnerQuotes).toContain("Supplier quote #${quote.rank}");
+    expect(rfqOwnerQuotes).toContain("resolveRfqOwnerSupplierLabel");
+    expect(rfqOwnerQuotes).toContain("quote.company_id");
+    expect(rfqOwnerQuotes).not.toContain("first_name");
+    expect(rfqOwnerQuotes).not.toContain("last_name");
+    expect(rfqOwnerQuotes).not.toContain("formatMemberIdentity");
     expect(rfqComparePage).not.toContain("first_name");
     expect(rfqComparePage).not.toContain("last_name");
     expect(rfqComparePage).not.toContain("formatMemberIdentity");
+    expect(rfqDetailPage).toContain("supplierCompanies={supplierCompanies}");
     expect(rfqDetailPage).toContain('.select("id, email, role, company_id")');
     expect(visualQaFixture).toContain("Harbor Steel Co.");
     expect(visualQaFixture).toContain("Company identity remains company-level");

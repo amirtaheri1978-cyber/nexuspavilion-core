@@ -87,6 +87,72 @@ const awardedQuotes: RfqQuoteComparisonItem[] = populatedQuotes.map((item, index
   isRecommended: index === 0,
 }));
 
+const ownerIdentityQuotes = [
+  {
+    id: "q1",
+    company_id: "harbor-steel",
+    amountNumber: 1240000,
+    timeline: "16 months",
+    validity_days: 90,
+    decision: "pending",
+    rank: 1,
+    priceScore: 92,
+    timelineScore: 84,
+    riskScore: 80,
+    performanceScore: 70,
+    totalScore: 91,
+    awardConfidence: 88,
+    riskLevel: "Low Risk",
+    budgetVariance: -40000,
+    lowestBidVariance: 0,
+  },
+  {
+    id: "q2",
+    company_id: "atlas-trade",
+    amountNumber: 1310000,
+    timeline: "18 months",
+    validity_days: 60,
+    decision: "pending",
+    rank: 2,
+    priceScore: 87,
+    timelineScore: 78,
+    riskScore: 72,
+    performanceScore: 68,
+    totalScore: 84,
+    awardConfidence: 71,
+    riskLevel: "Medium Risk",
+    budgetVariance: 30000,
+    lowestBidVariance: 70000,
+  },
+  {
+    id: "q3",
+    company_id: "northline",
+    amountNumber: 1480000,
+    timeline: "14 months",
+    validity_days: 45,
+    decision: "pending",
+    rank: 3,
+    priceScore: 76,
+    timelineScore: 88,
+    riskScore: 58,
+    performanceScore: 64,
+    totalScore: 72,
+    awardConfidence: 54,
+    riskLevel: "High Risk",
+    budgetVariance: 200000,
+    lowestBidVariance: 240000,
+  },
+];
+
+const ownerSupplierCompanies = [
+  {
+    id: "harbor-steel",
+    name: "Harbor Steel Co. North American Refrigeration Division",
+  },
+  { id: "atlas-trade", name: "Atlas Trade Group" },
+  { id: "northline", name: "Northline Equipment" },
+];
+
 const respondentQuotes = [
   {
     id: "supplier-q1",
@@ -427,6 +493,41 @@ export default function RfqVisualQaPage() {
               commercialEvaluationUnlocked
             />
           </div>
+        </div>
+
+        <div className="np-region-major border-t border-white/10 pt-10">
+          <p className="np-type-eyebrow">
+            Visual QA · owner quote identity wrapping
+          </p>
+          <p className="np-type-meta mt-3 max-w-3xl">
+            Chromeless fixture. Authenticated RFQ detail sits beside the 330px
+            application sidebar, so a 1440 viewport yields about 1110px of
+            content width. Owner quote identity must use the canonical
+            company_directory name already loaded for this RFQ, wrap that name
+            on word boundaries, and keep rank as secondary comparison
+            information. This fixture mounts the live owner quotes workspace
+            and does not award a contract.
+          </p>
+        </div>
+        <div
+          className="w-full max-w-[1110px]"
+          data-rfq-owner-quote-identity-shell-width="1110"
+        >
+          <RFQQuoteWorkspace
+            rfqSlug="air-charter-dxb-lhr"
+            rfqTitle="Air charter · DXB-LHR"
+            isOwner
+            isOpen
+            canSubmitQuote={false}
+            commercialEvaluationUnlocked
+            quoteList={[]}
+            scoredQuotes={ownerIdentityQuotes}
+            recommendedQuoteId="q1"
+            lowestAmount={1240000}
+            highestAmount={1480000}
+            averageBid={1343333}
+            supplierCompanies={ownerSupplierCompanies}
+          />
         </div>
 
         <div className="np-region-major border-t border-white/10 pt-10">

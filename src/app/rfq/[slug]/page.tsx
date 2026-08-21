@@ -812,6 +812,7 @@ governance workflow.
   lowestAmount={lowestAmount}
   highestAmount={highestAmount}
   averageBid={averageBid}
+  supplierCompanies={supplierCompanies}
 />
 
 

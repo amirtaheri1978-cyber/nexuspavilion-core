@@ -10,6 +10,7 @@ import {
   EXECUTIVE_CTA_PRIMARY,
   EXECUTIVE_CTA_SECONDARY,
 } from "@/lib/design-system/executive-contract";
+import type { RfqOwnerSupplierCompanyIdentity } from "@/lib/procurement/rfq-owner-supplier-identity";
 
 type RFQOwnerQuotesProps = ComponentProps<typeof RFQOwnerQuotes>;
 type RFQSupplierQuotesProps = ComponentProps<typeof RFQSupplierQuotes>;
@@ -27,6 +28,7 @@ type RFQQuoteWorkspaceProps = {
   lowestAmount: number | null;
   highestAmount: number | null;
   averageBid: number;
+  supplierCompanies?: ReadonlyArray<RfqOwnerSupplierCompanyIdentity>;
 };
 
 export function RFQQuoteWorkspace({
@@ -42,6 +44,7 @@ export function RFQQuoteWorkspace({
   lowestAmount,
   highestAmount,
   averageBid,
+  supplierCompanies,
 }: RFQQuoteWorkspaceProps) {
   const workspaceLabel = isOwner
     ? "Quote Intelligence"
@@ -187,6 +190,7 @@ export function RFQQuoteWorkspace({
               highestAmount={highestAmount}
               averageBid={averageBid}
               isOpen={isOpen}
+              supplierCompanies={supplierCompanies}
             />
           </div>
         ) : (

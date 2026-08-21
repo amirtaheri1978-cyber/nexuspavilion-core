@@ -171,7 +171,7 @@ export function RfqQuoteComparison({
                     ) : null}
                   </th>
                   <td className="min-w-0 px-3 py-4 align-top">
-                    <p className="np-type-h3 min-w-0 text-pretty">
+                    <p className="np-type-h3 min-w-0 whitespace-normal text-pretty">
                       {quote.supplierLabel}
                     </p>
                   </td>
@@ -248,7 +248,7 @@ export function RfqQuoteComparison({
             <header className="flex min-w-0 flex-col gap-3 @md:flex-row @md:items-start @md:justify-between">
               <div className="min-w-0">
                 <p className="np-type-meta">Rank #{quote.rank}</p>
-                <h3 className="np-type-h3 mt-2 min-w-0 text-pretty">
+                <h3 className="np-type-h3 mt-2 min-w-0 whitespace-normal text-pretty">
                   {quote.supplierLabel}
                 </h3>
                 <p className="np-type-kpi mt-3 min-w-0 text-pretty text-2xl">

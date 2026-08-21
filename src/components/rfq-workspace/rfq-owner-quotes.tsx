@@ -1,7 +1,13 @@
 import { RfqQuoteComparison } from "@/components/rfq-workspace/rfq-quote-comparison";
+import {
+  buildRfqOwnerSupplierNameById,
+  resolveRfqOwnerSupplierLabel,
+  type RfqOwnerSupplierCompanyIdentity,
+} from "@/lib/procurement/rfq-owner-supplier-identity";
 
 type RFQOwnerQuote = {
   id: string;
+  company_id?: string | null;
   amountNumber: number;
   timeline: string | null;
   validity_days?: number | null;
@@ -26,6 +32,7 @@ type RFQOwnerQuotesProps = {
   highestAmount: number | null;
   averageBid: number;
   isOpen: boolean;
+  supplierCompanies?: ReadonlyArray<RfqOwnerSupplierCompanyIdentity>;
 };
 
 function formatMoney(value: number) {
@@ -40,7 +47,10 @@ export function RFQOwnerQuotes({
   highestAmount,
   averageBid,
   isOpen,
+  supplierCompanies,
 }: RFQOwnerQuotesProps) {
+  const supplierNameById = buildRfqOwnerSupplierNameById(supplierCompanies);
+
   return (
     <RfqQuoteComparison
       embedded
@@ -56,7 +66,11 @@ export function RFQOwnerQuotes({
 
         return {
           id: quote.id,
-          supplierLabel: `Supplier quote #${quote.rank}`,
+          supplierLabel: resolveRfqOwnerSupplierLabel({
+            companyId: quote.company_id,
+            rank: quote.rank,
+            supplierNameById,
+          }),
           amountLabel: formatMoney(quote.amountNumber),
           amountNumber: quote.amountNumber,
           timeline: quote.timeline,
