@@ -138,6 +138,64 @@ export default function RfqVisualQaPage() {
         />
 
         <div className="np-region-major border-t border-white/10 pt-10">
+          <p className="np-type-eyebrow">
+            Visual QA · command center long copy
+          </p>
+          <p className="np-type-meta mt-3 max-w-3xl">
+            Chromeless fixture. Authenticated RFQ detail sits beside the 330px
+            application sidebar, so a 1440 viewport yields about 1110px of
+            content width. Long titles and recommendations must wrap on word
+            boundaries without mid-word breaks.
+          </p>
+        </div>
+        <RFQCommandCenter
+          statusLabel="Awarded"
+          statusTone="awarded"
+          classificationBadges={[
+            "Trade RFQ",
+            "Invited RFQ",
+            "Project-Specific",
+            "Blind Bidding",
+          ]}
+          title="Long-cycle industrial refrigeration replacement and commissioning for the North Harbor distribution campus"
+          description="Replace the primary cold-chain plant, commission redundant compressors, and keep bonded warehouse operations continuous through the cutover window."
+          commandMetrics={[
+            {
+              title: "Procurement Health",
+              value: "81/100",
+              detail: "Healthy",
+              accentClassName: "text-nexus-cyan-bright",
+            },
+            {
+              title: "Deadline",
+              value: "Closed",
+              detail: "Closed Friday 18:00 America/Toronto",
+              accentClassName: "text-nexus-cyan-bright",
+            },
+            {
+              title: "Commercial Status",
+              value: "Commercial Evaluation",
+              detail: "Comparative evaluation available",
+              accentClassName: "text-nexus-gold-bright",
+            },
+          ]}
+          executiveBrief="Harbor Steel holds the strongest evaluation score with a low-risk commercial profile, and the board brief still needs a final award confirmation before supplier notification."
+          nextBestAction="Open comparison and confirm the Harbor Steel award if the commercial evidence remains acceptable for this refrigerated campus replacement program."
+          award={{
+            label: "Award Complete",
+            value: "Awarded at $1,240,000",
+          }}
+          stripItems={[
+            { title: "Category", value: "Industrial refrigeration" },
+            { title: "Location", value: "North Harbor, Dubai Logistics Corridor" },
+            { title: "Budget", value: "$1,280,000" },
+            { title: "Quotes", value: "3" },
+            { title: "Documents", value: "4" },
+            { title: "Addenda", value: "1" },
+          ]}
+        />
+
+        <div className="np-region-major border-t border-white/10 pt-10">
           <p className="np-type-eyebrow">Visual QA · business impact and executive direction</p>
         </div>
         <div className="min-w-0" data-rfq-detail-composition="true">

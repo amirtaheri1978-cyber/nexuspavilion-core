@@ -90,7 +90,7 @@ describe("Task 24-RFQ-04 RFQ detail structural composition", () => {
     expect(detail).toContain('from("quotes")');
     expect(detail).not.toContain("award_rfq_quote");
 
-    expect(command).toContain("lg:grid-cols-[1.25fr_0.75fr]");
+    expect(command).toContain('data-rfq-command-center="true"');
     expect(documents).toContain('id="document-center"');
     expect(quotes).toContain('id="quote-intelligence"');
     expect(actions).not.toContain("hover:scale");

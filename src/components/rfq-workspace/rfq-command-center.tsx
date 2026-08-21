@@ -53,7 +53,7 @@ export function RFQCommandCenter({
   stripItems,
 }: RFQCommandCenterProps) {
   return (
-    <>
+    <div className="min-w-0 @container" data-rfq-command-center="true">
       <Link
         href={backHref}
         className={`inline-flex min-h-11 items-center text-sm font-black text-nexus-cyan-bright ${EXECUTIVE_FOCUS_CYAN}`}
@@ -65,13 +65,13 @@ export function RFQCommandCenter({
         variant="executive"
         padding="lg"
         tone="gold"
-        className="np-region"
+        className="np-region min-w-0"
         aria-labelledby="rfq-command-heading"
       >
-        <div className="grid gap-10 lg:grid-cols-[1.25fr_0.75fr]">
-          <div>
+        <div className="grid min-w-0 gap-8 @7xl:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] @7xl:items-start @7xl:gap-10">
+          <div className="min-w-0 @container">
             <p className="np-type-eyebrow">Procurement command center</p>
-            <div className="mt-4 flex flex-wrap items-center gap-3">
+            <div className="mt-4 flex min-w-0 flex-wrap items-center gap-3">
               <ExecutiveBadge tone={statusTone} size="md">
                 {statusLabel}
               </ExecutiveBadge>
@@ -81,11 +81,16 @@ export function RFQCommandCenter({
                 </ExecutiveBadge>
               ))}
             </div>
-            <h1 id="rfq-command-heading" className="np-type-h1 mt-6">
+            <h1
+              id="rfq-command-heading"
+              className="np-type-h1 mt-6 min-w-0 max-w-4xl text-pretty"
+            >
               {title}
             </h1>
-            <p className="np-type-body mt-5 max-w-4xl">{description}</p>
-            <div className="mt-8 grid gap-4 md:grid-cols-3">
+            <p className="np-type-body mt-5 min-w-0 max-w-4xl text-pretty">
+              {description}
+            </p>
+            <div className="mt-8 grid grid-cols-1 gap-4 @sm:grid-cols-2 @4xl:grid-cols-3">
               {commandMetrics.map((metric) => (
                 <ExecutiveCommandMetric
                   key={metric.title}
@@ -96,39 +101,58 @@ export function RFQCommandCenter({
                 />
               ))}
             </div>
+            <dl className="mt-8 grid grid-cols-1 gap-x-6 gap-y-4 border-t border-white/10 pt-6 @sm:grid-cols-2">
+              {stripItems.map((item) => (
+                <div key={item.title} className="min-w-0">
+                  <dt className="np-type-meta">{item.title}</dt>
+                  <dd className="np-type-kpi mt-2 text-pretty text-lg">
+                    {item.value}
+                  </dd>
+                </div>
+              ))}
+            </dl>
           </div>
 
-          <div className="rounded-executive border border-white/10 bg-white/[0.04] p-6">
+          <section
+            className="min-w-0"
+            aria-labelledby="rfq-command-brief-heading"
+            data-rfq-command-brief="true"
+          >
             <p className="np-type-meta text-nexus-cyan-bright">Executive brief</p>
-            <h2 className="np-type-h3 mt-3">Executive procurement summary</h2>
-            <p className="np-type-body mt-4">{executiveBrief}</p>
-            <div className="mt-6 rounded-executive border border-nexus-gold/20 bg-nexus-gold/[0.08] p-5">
-              <p className="np-type-meta text-nexus-gold-bright">
+            <h2
+              id="rfq-command-brief-heading"
+              className="np-type-h3 mt-3 text-pretty"
+            >
+              Executive procurement summary
+            </h2>
+            <p className="np-type-body mt-4 min-w-0 text-pretty">
+              {executiveBrief}
+            </p>
+            <div
+              className="mt-6 border-t border-nexus-gold/25 pt-5"
+              data-rfq-command-recommended-action="true"
+            >
+              <h3 className="np-type-meta text-nexus-gold-bright">
                 Recommended executive action
+              </h3>
+              <p className="np-type-body mt-3 min-w-0 text-pretty">
+                {nextBestAction}
               </p>
-              <p className="np-type-body mt-3">{nextBestAction}</p>
             </div>
             {award ? (
-              <div className="mt-4 rounded-executive border border-emerald-400/20 bg-emerald-400/10 p-5">
+              <div
+                className="mt-5 border-t border-emerald-400/25 pt-5"
+                data-rfq-command-award="true"
+              >
                 <ExecutiveBadge tone="awarded">{award.label}</ExecutiveBadge>
-                <p className="np-type-body mt-3 text-white">{award.value}</p>
+                <p className="np-type-body mt-3 min-w-0 text-pretty text-white">
+                  {award.value}
+                </p>
               </div>
             ) : null}
-          </div>
+          </section>
         </div>
       </ExecutivePanel>
-
-      <ul className="np-region grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-        {stripItems.map((item) => (
-          <li
-            key={item.title}
-            className="min-w-0 rounded-executive border border-white/10 bg-white/[0.035] px-4 py-3"
-          >
-            <p className="np-type-meta">{item.title}</p>
-            <p className="np-type-kpi mt-2 break-words text-lg">{item.value}</p>
-          </li>
-        ))}
-      </ul>
-    </>
+    </div>
   );
 }
