@@ -105,6 +105,42 @@ const awardedRespondentQuotes = [
   },
 ];
 
+const visualQaAddenda = [
+  {
+    id: "addendum-2",
+    title:
+      "North Harbor refrigeration sequence revision and bonded warehouse commissioning bulletin",
+    description:
+      "Revise compressor staging, keep bonded warehouse operations continuous through the cutover window, and confirm redundant plant coverage before the next supplier submission deadline.",
+    addendum_number: 2,
+    affected_documents:
+      "North-Harbor-Refrigeration-Replacement-Commissioning-Drawings-Package-Rev-C.pdf\nBonded Warehouse Cold Chain Technical Specifications MasterFormat Division 23.docx\nBOQ Rev 2 — North Harbor Cold Chain Plant",
+    requires_acknowledgement: true,
+    created_at: "2026-08-12T12:00:00.000Z",
+  },
+  {
+    id: "addendum-1",
+    title:
+      "Informational site-access reminder for the North Harbor logistics corridor",
+    description:
+      "Supplier deliveries remain limited to the bonded warehouse receiving hours already stated in the original RFQ package.",
+    addendum_number: 1,
+    affected_documents: "RFQ Instructions to Bidders — Site Access",
+    requires_acknowledgement: false,
+    created_at: "2026-08-04T12:00:00.000Z",
+  },
+];
+
+const visualQaAcknowledgements = [
+  {
+    id: "ack-addendum-1",
+    addendum_id: "addendum-1",
+    rfq_id: "visual-qa-rfq",
+    company_id: "visual-qa-supplier",
+    acknowledged_at: "2026-08-05T14:00:00.000Z",
+  },
+];
+
 const visualQaDocuments = [
   {
     id: "doc-drawing-1",
@@ -403,8 +439,36 @@ export default function RfqVisualQaPage() {
             companyId="visual-qa-company"
             isOwner
             documents={visualQaDocuments}
-            addenda={[]}
+            addenda={visualQaAddenda}
             acknowledgements={[]}
+          />
+        </div>
+
+        <div className="np-region-major border-t border-white/10 pt-10">
+          <p className="np-type-eyebrow">
+            Visual QA · addenda acknowledgement
+          </p>
+          <p className="np-type-meta mt-3 max-w-3xl">
+            Chromeless fixture. Authenticated RFQ detail sits beside the 330px
+            application sidebar, so a 1440 viewport yields about 1110px of
+            content width. Addenda management must not nest a second card
+            surface or fire viewport lg/md grids at that width. Long titles
+            and affected-document lists must wrap on word boundaries. These
+            fixtures mount the live addenda components and do not create or
+            acknowledge addenda.
+          </p>
+        </div>
+        <div
+          className="w-full max-w-[1110px]"
+          data-rfq-addenda-shell-width="1110"
+        >
+          <RFQDocumentWorkspace
+            rfqId="visual-qa-rfq"
+            companyId="visual-qa-company"
+            isOwner={false}
+            documents={visualQaDocuments}
+            addenda={visualQaAddenda}
+            acknowledgements={visualQaAcknowledgements}
           />
         </div>
 
