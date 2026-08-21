@@ -518,51 +518,165 @@ export default function RfqVisualQaPage() {
 
         <div className="np-region-major border-t border-white/10 pt-10">
           <p className="np-type-eyebrow">Visual QA · submit quote</p>
-        </div>
-        <ExecutivePanel variant="executive" padding="lg" tone="gold">
-          <p className="np-type-eyebrow">Supplier response</p>
-          <h1 className="np-type-h1 mt-4">Submit quote</h1>
-          <p className="np-type-body mt-4">
-            Commercial response for Air charter · DXB-LHR.
+          <p className="np-type-meta mt-3 max-w-3xl">
+            Chromeless fixture. Authenticated RFQ detail sits beside the 330px
+            application sidebar, so a 1440 viewport yields about 1110px of
+            content width. Submit must not nest metric-card panels or fire a
+            three-column md grid at that width. Long RFQ titles, commercial
+            terms, and helper copy must wrap on word boundaries. This fixture
+            mirrors the live submit workspace and does not post a quote.
           </p>
-        </ExecutivePanel>
-        <ExecutivePanel variant="operational" padding="lg" className="np-region">
-          <ExecutiveBadge tone="warning">Confidential submission</ExecutiveBadge>
-          <form className="mt-6 space-y-6">
-            <div>
-              <label htmlFor="qa-amount" className="np-type-meta">
-                Quote amount
-              </label>
-              <input
-                id="qa-amount"
-                defaultValue="1,240,000"
-                className="mt-3 w-full rounded-executive border border-white/10 bg-black/20 px-5 py-4 text-white"
-              />
+        </div>
+        <div
+          className="w-full max-w-[1110px]"
+          data-rfq-submit-shell-width="1110"
+        >
+          <ExecutivePanel
+            variant="executive"
+            padding="lg"
+            tone="gold"
+            className="np-region min-w-0 @container"
+            data-rfq-submit-workspace="true"
+          >
+            <p className="np-type-eyebrow">Supplier response</p>
+            <h1 className="np-type-h1 mt-4 min-w-0 text-pretty">Submit quote</h1>
+            <p className="np-type-body mt-4 max-w-3xl min-w-0 text-pretty">
+              Commercial response for long-cycle industrial refrigeration
+              replacement and commissioning for the North Harbor distribution
+              campus.
+            </p>
+            <dl
+              className="mt-8 grid min-w-0 grid-cols-1 gap-4 border-t border-white/10 pt-6 @lg:grid-cols-3"
+              data-rfq-submit-status="true"
+            >
+              <div className="min-w-0">
+                <dt className="np-type-meta">RFQ status</dt>
+                <dd className="mt-2 min-w-0 text-pretty text-lg font-black text-nexus-white">
+                  Open for quotes
+                </dd>
+              </div>
+              <div className="min-w-0">
+                <dt className="np-type-meta">Deadline</dt>
+                <dd className="mt-2 min-w-0 text-pretty text-lg font-black text-nexus-white">
+                  August 21, 2026, 06:00 PM
+                </dd>
+              </div>
+              <div className="min-w-0">
+                <dt className="np-type-meta">Governance</dt>
+                <dd className="mt-2 min-w-0 text-pretty text-lg font-black text-nexus-white">
+                  Deadline enforced
+                </dd>
+              </div>
+            </dl>
+            <div className="mt-8 min-w-0 rounded-executive border border-nexus-gold/20 bg-nexus-gold/[0.08] p-5">
+              <ExecutiveBadge tone="warning">Confidential submission</ExecutiveBadge>
+              <p className="np-type-body mt-3 min-w-0 text-pretty">
+                Your submission is confidential. Competing suppliers cannot view
+                your commercial response. Submissions after the RFQ deadline are
+                rejected automatically.
+              </p>
             </div>
-            <div>
-              <label htmlFor="qa-timeline" className="np-type-meta">
-                Delivery timeline
-              </label>
-              <input
-                id="qa-timeline"
-                defaultValue="16 months"
-                className="mt-3 w-full rounded-executive border border-white/10 bg-black/20 px-5 py-4 text-white"
-              />
+            <div className="mt-8 min-w-0 space-y-8">
+              <section aria-labelledby="qa-submit-commercial-heading">
+                <h2 id="qa-submit-commercial-heading" className="np-type-h3">
+                  Commercial offer
+                </h2>
+                <div className="mt-5 min-w-0">
+                  <div className="flex min-w-0 flex-wrap items-center justify-between gap-3">
+                    <label htmlFor="qa-amount" className="np-type-meta">
+                      Quote amount
+                    </label>
+                    <ExecutiveBadge tone="neutral">USD</ExecutiveBadge>
+                  </div>
+                  <div className="mt-3 flex min-w-0 overflow-hidden rounded-executive border border-white/10 bg-black/20">
+                    <div className="flex shrink-0 items-center border-r border-white/10 px-4 np-type-meta sm:px-5">
+                      USD
+                    </div>
+                    <input
+                      id="qa-amount"
+                      defaultValue="1,240,000"
+                      className="min-h-14 min-w-0 w-full bg-transparent px-4 py-4 text-lg font-black text-white outline-none sm:px-5"
+                    />
+                  </div>
+                  <p className="np-type-meta mt-3 min-w-0 text-pretty">
+                    Enter the full contract value. Commas are added
+                    automatically. Preview: $1,240,000
+                  </p>
+                </div>
+                <div className="mt-6 min-w-0">
+                  <label htmlFor="qa-timeline" className="np-type-meta">
+                    Delivery timeline
+                  </label>
+                  <input
+                    id="qa-timeline"
+                    defaultValue="16-month phased commissioning"
+                    className="mt-3 min-h-14 min-w-0 w-full rounded-executive border border-white/10 bg-black/20 px-5 py-4 text-sm font-semibold text-white"
+                  />
+                </div>
+                <div className="mt-6 min-w-0">
+                  <label htmlFor="qa-note" className="np-type-meta">
+                    Proposal note
+                  </label>
+                  <textarea
+                    id="qa-note"
+                    defaultValue="Phased delivery for the North Harbor distribution campus, including redundant compressor commissioning, bonded warehouse continuity, and quality-assurance coverage through the full cutover window."
+                    rows={7}
+                    className="mt-3 min-h-14 min-w-0 w-full rounded-executive border border-white/10 bg-black/20 px-5 py-4 text-sm font-semibold text-white"
+                  />
+                </div>
+              </section>
+              <p
+                className="min-w-0 rounded-executive border border-red-400/20 bg-red-500/10 px-5 py-4 text-pretty text-sm font-bold text-red-300"
+                data-rfq-submit-error-preview="true"
+              >
+                Preview error placement. Quote amount appears too low. Please
+                enter the full contract value.
+              </p>
+              <div
+                className="min-w-0 border-t border-white/10 pt-6"
+                data-rfq-submit-summary="true"
+              >
+                <h3 className="np-type-meta">Submission summary</h3>
+                <dl className="mt-4 grid min-w-0 grid-cols-1 gap-4 @sm:grid-cols-3">
+                  <div className="min-w-0">
+                    <dt className="np-type-meta">Amount</dt>
+                    <dd className="mt-2 min-w-0 text-pretty text-lg font-black text-nexus-white">
+                      $1,240,000
+                    </dd>
+                  </div>
+                  <div className="min-w-0">
+                    <dt className="np-type-meta">Currency</dt>
+                    <dd className="mt-2 min-w-0 text-pretty text-lg font-black text-nexus-white">
+                      USD
+                    </dd>
+                  </div>
+                  <div className="min-w-0">
+                    <dt className="np-type-meta">Timeline</dt>
+                    <dd className="mt-2 min-w-0 text-pretty text-lg font-black text-nexus-white">
+                      16-month phased commissioning across North Harbor bonded
+                      warehouse operations
+                    </dd>
+                  </div>
+                </dl>
+              </div>
+              <div className="sticky bottom-4 z-10 flex min-w-0 flex-col gap-3 rounded-executive bg-nexus-navy/90 p-3 @sm:flex-row">
+                <button
+                  type="button"
+                  className="inline-flex min-h-14 w-full items-center justify-center rounded-2xl bg-nexus-gold px-6 text-sm font-black uppercase tracking-[0.12em] text-nexus-navy @sm:w-auto"
+                >
+                  Submit quote
+                </button>
+                <button
+                  type="button"
+                  className="inline-flex min-h-14 w-full items-center justify-center rounded-2xl border border-white/10 bg-white/[0.045] px-6 text-sm font-black text-white @sm:w-auto"
+                >
+                  Cancel
+                </button>
+              </div>
+              <p className="np-type-meta">Preview only. This fixture does not submit.</p>
             </div>
-            <div>
-              <label htmlFor="qa-note" className="np-type-meta">
-                Proposal note
-              </label>
-              <textarea
-                id="qa-note"
-                defaultValue="Phased delivery with quality assurance and warranty coverage."
-                rows={4}
-                className="mt-3 w-full rounded-executive border border-white/10 bg-black/20 px-5 py-4 text-white"
-              />
-            </div>
-            <p className="np-type-meta">Preview only. This fixture does not submit.</p>
-          </form>
-        </ExecutivePanel>
+          </ExecutivePanel>
+        </div>
       </div>
     </div>
   );
