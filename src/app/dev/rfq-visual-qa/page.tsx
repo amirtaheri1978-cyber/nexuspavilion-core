@@ -4,6 +4,7 @@ import { RFQCommandCenter } from "@/components/rfq-workspace/rfq-command-center"
 import { RFQExecutiveActions } from "@/components/rfq-workspace/rfq-executive-actions";
 import { RfqQuoteComparison } from "@/components/rfq-workspace/rfq-quote-comparison";
 import type { RfqQuoteComparisonItem } from "@/components/rfq-workspace/rfq-quote-comparison";
+import { RFQQuoteWorkspace } from "@/components/rfq-workspace/rfq-quote-workspace";
 import { ExecutiveOpportunityRanking } from "@/components/executive/executive-opportunity-ranking";
 import { ExecutiveBadge } from "@/components/executive/executive-badge";
 import { ExecutivePanel } from "@/components/executive/executive-panel";
@@ -80,6 +81,27 @@ const awardedQuotes: RfqQuoteComparisonItem[] = populatedQuotes.map((item, index
   decision: index === 0 ? "awarded" : "rejected",
   isRecommended: index === 0,
 }));
+
+const respondentQuotes = [
+  {
+    id: "supplier-q1",
+    amount: 1240000,
+    timeline:
+      "16-month phased commissioning across North Harbor bonded warehouse operations",
+    validity_days: 90,
+    decision: "Submitted",
+    message:
+      "Phased delivery for the North Harbor distribution campus, including redundant compressor commissioning, bonded warehouse continuity, and quality-assurance coverage through the full cutover window.",
+  },
+];
+
+const awardedRespondentQuotes = [
+  {
+    ...respondentQuotes[0],
+    id: "supplier-q1-awarded",
+    decision: "awarded",
+  },
+];
 
 const opportunityIntelligence = buildRfqExecutiveOpportunityIntelligence({
   isOwner: true,
@@ -260,6 +282,79 @@ export default function RfqVisualQaPage() {
           rfqTitle="Single submission RFQ"
           quotes={[populatedQuotes[0]]}
           awarded={false}
+        />
+
+        <div className="np-region-major border-t border-white/10 pt-10">
+          <p className="np-type-eyebrow">
+            Visual QA · respondent supplier quotes
+          </p>
+          <p className="np-type-meta mt-3 max-w-3xl">
+            Chromeless fixture. Authenticated RFQ detail sits beside the 330px
+            application sidebar, so a 1440 viewport yields about 1110px of
+            content width. Respondent quotes must not use a min-width 920px
+            table or horizontal scrolling at that width. The 1110px constraint
+            below simulates shell-adjusted content width; awarded and empty
+            respondent fixtures remain unconstrained.
+          </p>
+        </div>
+        <div
+          className="w-full max-w-[1110px]"
+          data-rfq-supplier-quote-shell-width="1110"
+        >
+          <RFQQuoteWorkspace
+            rfqSlug="air-charter-dxb-lhr"
+            rfqTitle="Air charter · DXB-LHR"
+            isOwner={false}
+            isOpen
+            canSubmitQuote={false}
+            commercialEvaluationUnlocked={false}
+            quoteList={respondentQuotes}
+            scoredQuotes={[]}
+            recommendedQuoteId={null}
+            lowestAmount={null}
+            highestAmount={null}
+            averageBid={0}
+          />
+        </div>
+
+        <div className="np-region-major border-t border-white/10 pt-10">
+          <p className="np-type-eyebrow">
+            Visual QA · respondent awarded submission
+          </p>
+        </div>
+        <RFQQuoteWorkspace
+          rfqSlug="air-charter-dxb-lhr"
+          rfqTitle="Air charter · DXB-LHR"
+          isOwner={false}
+          isOpen={false}
+          canSubmitQuote={false}
+          commercialEvaluationUnlocked={false}
+          quoteList={awardedRespondentQuotes}
+          scoredQuotes={[]}
+          recommendedQuoteId={null}
+          lowestAmount={null}
+          highestAmount={null}
+          averageBid={0}
+        />
+
+        <div className="np-region-major border-t border-white/10 pt-10">
+          <p className="np-type-eyebrow">
+            Visual QA · respondent empty submission
+          </p>
+        </div>
+        <RFQQuoteWorkspace
+          rfqSlug="air-charter-dxb-lhr"
+          rfqTitle="Air charter · DXB-LHR"
+          isOwner={false}
+          isOpen
+          canSubmitQuote
+          commercialEvaluationUnlocked={false}
+          quoteList={[]}
+          scoredQuotes={[]}
+          recommendedQuoteId={null}
+          lowestAmount={null}
+          highestAmount={null}
+          averageBid={0}
         />
 
         <div className="np-region-major border-t border-white/10 pt-10">
