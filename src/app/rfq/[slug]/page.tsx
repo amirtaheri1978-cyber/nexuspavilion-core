@@ -59,6 +59,7 @@ import {
   type SourcingMethod,
 } from "@/lib/procurement/rfq-metadata";
 
+import { ExecutiveOpportunityRanking } from "@/components/executive/executive-opportunity-ranking";
 import { ExecutivePanel } from "@/components/executive/executive-panel";
 import { EXECUTIVE_FOCUS_CYAN, EXECUTIVE_PAGE_CLASS } from "@/lib/design-system/executive-contract";
 import { RFQCommandCenter } from "@/components/rfq-workspace/rfq-command-center";
@@ -493,8 +494,11 @@ supplierRecommendationInput,
 });
 
 return (
-<div className="min-h-full bg-nexus-navy text-white">
-<div className={EXECUTIVE_PAGE_CLASS}>
+<div
+  className="min-h-full min-w-0 bg-nexus-navy text-white"
+  data-rfq-detail-layout="true"
+>
+<div className={`${EXECUTIVE_PAGE_CLASS} min-w-0`}>
 <RFQCommandCenter
   statusLabel={
     deadlinePassed
@@ -596,13 +600,16 @@ return (
     },
   ]}
 />
-<section className="mt-8 grid gap-6 xl:grid-cols-[1fr_0.85fr]">
+<section
+  className="np-region-major grid min-w-0 gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,0.85fr)]"
+  aria-label="Procurement health and executive guidance"
+>
 <RFQProcurementHealth
   healthScore={healthScore}
   healthLabel={getHealthLabel(healthScore)}
   healthBreakdown={healthBreakdown}
 />
-<div className="grid gap-6">
+<div className="grid min-w-0 gap-6">
   <RFQExecutiveRiskMatrix risks={executiveRiskMatrix} />
 
   <RFQExecutiveGuidance
@@ -612,14 +619,25 @@ return (
 </div>
 </section>
 
-<section className="mt-8 space-y-8">
+<div className="np-region-major min-w-0">
   <RFQProcurementContext
     description={getProcurementFitMessage(rfq)}
     sourcingLabel={getSourcingLabel(rfq.sourcing_method)}
     frameworkLabel={getFrameworkLabel(rfq.contract_framework)}
     blindBiddingEnabled={blindBiddingEnabled}
   />
+</div>
 
+{isOwner ? (
+  <div className="np-region-major min-w-0">
+    <ExecutiveOpportunityRanking
+      opportunities={executiveOpportunities}
+      intelligence={executiveOpportunityIntelligence}
+    />
+  </div>
+) : null}
+
+<div className="np-region-major min-w-0">
   <RFQExecutiveActions
     rfqSlug={rfq.slug}
     isOwner={isOwner}
@@ -629,13 +647,11 @@ return (
     hasMyQuote={hasMyQuote}
     deadlinePassed={deadlinePassed}
     commercialEvaluationUnlocked={commercialEvaluationUnlocked}
-    opportunities={executiveOpportunities}
-    intelligence={executiveOpportunityIntelligence}
   />
-</section>
+</div>
 
 {capabilities.canViewBlindBiddingControl ? (
-  <section className="mt-8">
+  <section className="np-region-major min-w-0">
     <RFQBlindBiddingNotice
       message={getBlindBiddingMessage(rfq)}
       quoteCount={quoteList.length}
@@ -643,7 +659,7 @@ return (
   </section>
 ) : null}
 
-<section className="mt-8">
+<section className="np-region-major min-w-0">
   <RFQGovernanceNotice
     reservationNotice={RIGHT_TO_REJECT_NOTICE}
   />

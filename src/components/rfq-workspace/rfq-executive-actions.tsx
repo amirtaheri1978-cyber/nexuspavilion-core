@@ -1,13 +1,6 @@
-import type { ComponentProps } from "react";
-
 import { ExecutiveActionAnchor } from "@/components/executive/actions/executive-action-anchor";
 import { ExecutiveActionLink } from "@/components/executive/actions/executive-action-link";
-import { ExecutiveOpportunityRanking } from "@/components/executive/executive-opportunity-ranking";
 import { ExecutivePanel } from "@/components/executive/executive-panel";
-
-type ExecutiveOpportunityRankingProps = ComponentProps<
-  typeof ExecutiveOpportunityRanking
->;
 
 type RFQExecutiveActionsProps = {
   rfqSlug: string;
@@ -18,8 +11,6 @@ type RFQExecutiveActionsProps = {
   hasMyQuote: boolean;
   deadlinePassed: boolean;
   commercialEvaluationUnlocked: boolean;
-  opportunities: ExecutiveOpportunityRankingProps["opportunities"];
-  intelligence: ExecutiveOpportunityRankingProps["intelligence"];
 };
 
 export function RFQExecutiveActions({
@@ -31,11 +22,14 @@ export function RFQExecutiveActions({
   hasMyQuote,
   deadlinePassed,
   commercialEvaluationUnlocked,
-  opportunities,
-  intelligence,
 }: RFQExecutiveActionsProps) {
   return (
-    <ExecutivePanel padding="lg" tone="gold">
+    <ExecutivePanel
+      data-rfq-priority-actions="true"
+      className="min-w-0"
+      padding="lg"
+      tone="gold"
+    >
       <p className="text-xs font-black uppercase tracking-[0.3em] text-nexus-gold">
         CEO Action Center
       </p>
@@ -44,18 +38,11 @@ export function RFQExecutiveActions({
         Priority Actions
       </h2>
 
-      <div className="mt-6 grid gap-3">
+      <div className="mt-6 grid min-w-0 gap-3">
         {canSubmitQuote ? (
           <ExecutiveActionLink
             href={`/rfq/${rfqSlug}/submit`}
             label="Submit Quote"
-          />
-        ) : null}
-
-        {isOwner ? (
-          <ExecutiveOpportunityRanking
-            opportunities={opportunities}
-            intelligence={intelligence}
           />
         ) : null}
 

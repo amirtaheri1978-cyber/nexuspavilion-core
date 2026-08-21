@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 
 import { RFQCommandCenter } from "@/components/rfq-workspace/rfq-command-center";
+import { RFQExecutiveActions } from "@/components/rfq-workspace/rfq-executive-actions";
 import { RfqQuoteComparison } from "@/components/rfq-workspace/rfq-quote-comparison";
 import type { RfqQuoteComparisonItem } from "@/components/rfq-workspace/rfq-quote-comparison";
 import { ExecutiveOpportunityRanking } from "@/components/executive/executive-opportunity-ranking";
@@ -139,10 +140,24 @@ export default function RfqVisualQaPage() {
         <div className="np-region-major border-t border-white/10 pt-10">
           <p className="np-type-eyebrow">Visual QA · business impact and executive direction</p>
         </div>
-        <ExecutiveOpportunityRanking
-          opportunities={opportunityIntelligence.opportunities}
-          intelligence={opportunityIntelligence.intelligence}
-        />
+        <div className="min-w-0" data-rfq-detail-composition="true">
+          <ExecutiveOpportunityRanking
+            opportunities={opportunityIntelligence.opportunities}
+            intelligence={opportunityIntelligence.intelligence}
+          />
+          <div className="np-region-major min-w-0">
+            <RFQExecutiveActions
+              rfqSlug="air-charter-dxb-lhr"
+              isOwner
+              isOpen
+              canSubmitQuote={false}
+              hasCompany
+              hasMyQuote={false}
+              deadlinePassed={false}
+              commercialEvaluationUnlocked
+            />
+          </div>
+        </div>
 
         <div className="np-region-major border-t border-white/10 pt-10">
           <p className="np-type-eyebrow">Visual QA · compare multiple quotes</p>
