@@ -49,7 +49,7 @@ export function ExecutiveMetricCard({
     "np-type-kpi mt-3 min-w-0 tabular-nums",
     isCompactValue
       ? "whitespace-nowrap text-[clamp(1.35rem,1.6vw,1.875rem)]"
-      : "break-words text-2xl leading-tight [overflow-wrap:anywhere] sm:text-3xl",
+      : "text-pretty text-2xl leading-tight sm:text-3xl",
     toneClasses[tone],
     valueClassName,
   ]
@@ -66,27 +66,27 @@ export function ExecutiveMetricCard({
       radius="tile"
       tone={tone}
     >
-      <p className="flex min-h-8 items-end break-words text-xs font-semibold uppercase leading-4 tracking-[0.14em] text-nexus-text-muted [overflow-wrap:anywhere]">
+      <p className="flex min-h-8 min-w-0 items-end text-pretty text-xs font-semibold uppercase leading-4 tracking-[0.14em] text-nexus-text-muted">
         {label}
       </p>
 
       <p className={resolvedValueClassName}>{value}</p>
 
       {trend ? (
-        <p className="mt-2 break-words text-xs font-medium leading-5 text-nexus-text-secondary [overflow-wrap:anywhere]">
+        <p className="mt-2 min-w-0 text-pretty text-xs font-medium leading-5 text-nexus-text-secondary">
           {trend}
         </p>
       ) : null}
 
       {insight ? (
-        <p className="mt-4 break-words text-sm font-medium leading-6 text-nexus-text-muted [overflow-wrap:anywhere]">
+        <p className="mt-4 min-w-0 text-pretty text-sm font-medium leading-6 text-nexus-text-muted">
           {insight}
         </p>
       ) : null}
 
       {impact ? (
         <p
-          className={`${impactSpacingClassName} break-words rounded-executive border border-nexus-border-subtle bg-white/[0.045] px-3 py-2 text-xs font-medium leading-5 text-nexus-text-primary [overflow-wrap:anywhere]`}
+          className={`${impactSpacingClassName} min-w-0 rounded-executive border border-nexus-border-subtle bg-white/[0.045] px-3 py-2 text-pretty text-xs font-medium leading-5 text-nexus-text-primary`}
         >
           {impact}
         </p>

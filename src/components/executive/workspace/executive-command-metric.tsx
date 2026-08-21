@@ -24,13 +24,13 @@ export function ExecutiveCommandMetric({
         .filter(Boolean)
         .join(" ")}
     >
-      <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+      <p className="min-w-0 text-pretty text-xs font-black uppercase tracking-[0.2em] text-slate-400">
         {title}
       </p>
 
       <p
         className={[
-          "mt-3 break-words text-3xl font-black",
+          "mt-3 min-w-0 text-pretty text-3xl font-black",
           accentClassName,
           valueClassName,
         ]
@@ -40,7 +40,7 @@ export function ExecutiveCommandMetric({
         {value}
       </p>
 
-      <p className="mt-2 text-xs font-bold leading-5 text-slate-300">
+      <p className="mt-2 min-w-0 text-pretty text-xs font-bold leading-5 text-slate-300">
         {detail}
       </p>
     </div>

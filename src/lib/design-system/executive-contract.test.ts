@@ -121,6 +121,16 @@ describe("NP-MASTER-22-B01 executive design contract", () => {
     expect(metric).toContain("text-nexus-text-muted");
   });
 
+  it("wraps ExecutiveMetricCard copy on word boundaries instead of anywhere", () => {
+    expect(metric).toContain("text-pretty");
+    expect(metric).toContain("min-w-0");
+    expect(metric).toContain("whitespace-nowrap");
+    expect(metric).not.toContain("break-words");
+    expect(metric).not.toContain("break-all");
+    expect(metric).not.toContain("overflow-wrap:anywhere");
+    expect(metric).not.toContain("[overflow-wrap:anywhere]");
+  });
+
   it("stops AppTopbar from emitting a page h1", () => {
     expect(topbar).not.toMatch(/<h1[\s>]/);
     expect(topbar).toContain("Boardroom Intelligence");

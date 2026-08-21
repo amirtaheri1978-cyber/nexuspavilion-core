@@ -9,7 +9,10 @@ import InviteVendorForm from "@/components/invite-vendor-form";
 import { RFQDocumentWorkspace } from "@/components/rfq-workspace/rfq-document-workspace";
 import { ExecutiveOpportunityRanking } from "@/components/executive/executive-opportunity-ranking";
 import { ExecutiveBadge } from "@/components/executive/executive-badge";
+import { ExecutiveMetricCard } from "@/components/executive/executive-metric-card";
 import { ExecutivePanel } from "@/components/executive/executive-panel";
+import { ExecutiveCommandMetric } from "@/components/executive/workspace/executive-command-metric";
+import { ExecutiveKpiRow } from "@/components/dashboard/executive-kpi-row";
 import { EXECUTIVE_PAGE_CLASS } from "@/lib/design-system/executive-contract";
 import { buildRfqExecutiveOpportunityIntelligence } from "@/lib/procurement/rfq-executive-opportunity-intelligence";
 
@@ -279,6 +282,130 @@ export default function RfqVisualQaPage() {
             { title: "Addenda", value: "1" },
           ]}
         />
+
+        <div className="np-region-major border-t border-white/10 pt-10">
+          <p className="np-type-eyebrow">
+            Visual QA · executive metric wrapping
+          </p>
+          <p className="np-type-meta mt-3 max-w-3xl">
+            Chromeless fixture. Authenticated RFQ detail sits beside the 330px
+            application sidebar, so a 1440 viewport yields about 1110px of
+            content width. Metric labels, dates, currencies, percentages,
+            status, rank, and long human-readable values must wrap on word
+            boundaries without mid-word breaks. Compact numeric values stay
+            intact. The 1110px constraint below simulates shell-adjusted
+            content width.
+          </p>
+        </div>
+        <div
+          className="w-full max-w-[1110px] space-y-8"
+          data-rfq-metric-wrapping-shell-width="1110"
+        >
+          <div
+            className="@container min-w-0"
+            data-rfq-metric-wrapping="true"
+          >
+            <div
+              className="grid min-w-0 gap-4 @sm:grid-cols-2 @4xl:grid-cols-3"
+              data-rfq-metric-card-grid="true"
+              aria-label="RFQ metric wrapping cards"
+            >
+              <ExecutiveMetricCard
+                label="Harbor Steel Co. North American Refrigeration Division"
+                value="$1,280,000"
+                insight="Highest current evaluation score for the North Harbor distribution campus"
+                tone="gold"
+              />
+              <ExecutiveMetricCard
+                label="RFQ deadline"
+                value="August 21, 2026, 06:00 PM"
+                insight="Closes Friday 18:00 America/Toronto"
+                tone="blue"
+              />
+              <ExecutiveMetricCard
+                label="Award confidence"
+                value="88%"
+                insight="Recommended award path confidence"
+                tone="success"
+              />
+              <ExecutiveMetricCard
+                label="Procurement Health"
+                value="Healthy"
+                insight="81/100 recorded operating score"
+                tone="success"
+              />
+              <ExecutiveMetricCard
+                label="Recommended rank"
+                value="#1"
+                insight="Harbor Steel holds the strongest evaluation score"
+                tone="gold"
+              />
+              <ExecutiveMetricCard
+                label="Commercial Status"
+                value="Commercial Evaluation"
+                insight="Comparative evaluation available"
+                tone="gold"
+              />
+            </div>
+
+            <div
+              className="mt-6 grid min-w-0 gap-4 @sm:grid-cols-2 @4xl:grid-cols-3"
+              data-rfq-command-metric-grid="true"
+              aria-label="RFQ command metric wrapping"
+            >
+              <ExecutiveCommandMetric
+                title="Procurement Health"
+                value="81/100"
+                detail="Healthy"
+                accentClassName="text-nexus-cyan-bright"
+              />
+              <ExecutiveCommandMetric
+                title="Deadline"
+                value="August 21, 2026"
+                detail="Closes Friday 18:00 America/Toronto"
+                accentClassName="text-nexus-cyan-bright"
+              />
+              <ExecutiveCommandMetric
+                title="Commercial Status"
+                value="Commercial Evaluation"
+                detail="Comparative evaluation available"
+                accentClassName="text-nexus-gold-bright"
+              />
+            </div>
+          </div>
+
+          <div data-non-rfq-kpi-row="true">
+            <ExecutiveKpiRow
+              insufficientData={false}
+              metrics={[
+                {
+                  label: "Open Opportunities",
+                  value: "12",
+                  tone: "blue",
+                  insight:
+                    "Recorded open RFQs for the current company workspace",
+                },
+                {
+                  label: "Submitted Quotes",
+                  value: "8",
+                  tone: "gold",
+                },
+                {
+                  label: "Win Rate",
+                  value: "42%",
+                  tone: "success",
+                },
+                {
+                  label: "Pipeline Value",
+                  value: "$1,280,000",
+                  tone: "gold",
+                  insight:
+                    "Highest current evaluation score for the North Harbor distribution campus",
+                },
+              ]}
+            />
+          </div>
+        </div>
 
         <div className="np-region-major border-t border-white/10 pt-10">
           <p className="np-type-eyebrow">Visual QA · business impact and executive direction</p>
