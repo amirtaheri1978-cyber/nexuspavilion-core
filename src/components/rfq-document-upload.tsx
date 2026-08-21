@@ -144,17 +144,17 @@ setDragActive(false);
 }
 
 return (
-<div className="rounded-[26px] border border-white/10 bg-[#061426]/75 p-5">
-<div className="flex items-start justify-between gap-4">
-<div>
-<p className="text-lg font-black text-white">{title}</p>
+<div className="min-w-0 @container rounded-executive border border-white/10 bg-black/20 p-5">
+<div className="flex min-w-0 flex-col gap-3 @sm:flex-row @sm:items-start @sm:justify-between">
+<div className="min-w-0">
+<p className="min-w-0 text-pretty text-lg font-black text-white">{title}</p>
 
-<p className="mt-2 text-sm font-semibold leading-6 text-slate-400">
+<p className="mt-2 min-w-0 text-pretty text-sm font-semibold leading-6 text-slate-400">
 {description}
 </p>
 </div>
 
-<span className="rounded-full border border-[#2CC4E8]/25 bg-[#2CC4E8]/10 px-3 py-1 text-xs font-black uppercase tracking-[0.14em] text-[#9BE8F8]">
+<span className="w-fit shrink-0 rounded-full border border-[#2CC4E8]/25 bg-[#2CC4E8]/10 px-3 py-1 text-xs font-black uppercase tracking-[0.14em] text-[#9BE8F8]">
 Optional
 </span>
 </div>
@@ -212,7 +212,7 @@ or choose files from your device
 type="button"
 onClick={() => inputRef.current?.click()}
 disabled={uploading}
-className="mt-4 rounded-full border border-[#C8A646]/25 bg-[#C8A646]/10 px-5 py-3 text-sm font-black text-[#F5D77B] transition hover:bg-[#C8A646]/15 disabled:cursor-not-allowed disabled:opacity-50"
+className="mt-4 inline-flex min-h-11 items-center justify-center rounded-full border border-[#C8A646]/25 bg-[#C8A646]/10 px-5 py-3 text-sm font-black text-[#F5D77B] transition hover:bg-[#C8A646]/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C8A646]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#07111F] disabled:cursor-not-allowed disabled:opacity-50"
 >
 Choose Files
 </button>
@@ -226,7 +226,7 @@ Choose Files
 key={`${file.name}-${file.size}`}
 className="rounded-2xl border border-white/10 bg-[#07111F]/80 px-4 py-3"
 >
-<p className="truncate text-sm font-black text-white">
+<p className="min-w-0 text-pretty text-sm font-black text-white">
 {file.name}
 </p>
 
@@ -266,7 +266,7 @@ Uploading document package...
 type="button"
 onClick={() => void uploadFiles(selectedFiles)}
 disabled={uploading || selectedFiles.length === 0}
-className="mt-5 w-full rounded-full bg-gradient-to-r from-[#B9902F] via-[#C8A646] to-[#F5D77B] px-5 py-3 text-sm font-black text-slate-950 shadow-[0_18px_55px_rgba(200,166,70,0.18)] transition disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C8A646]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#07111F]"
+className="mt-5 inline-flex min-h-11 w-full items-center justify-center rounded-full bg-gradient-to-r from-[#B9902F] via-[#C8A646] to-[#F5D77B] px-5 py-3 text-sm font-black text-slate-950 shadow-[0_18px_55px_rgba(200,166,70,0.18)] transition disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C8A646]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#07111F]"
 >
 {uploading ? "Uploading..." : "Upload Selected Files"}
 </button>

@@ -177,20 +177,13 @@ documents: documents.filter(
 );
 
 return (
-<section className="mt-8 rounded-[32px] border border-white/10 bg-[#061426]/90 p-6 text-white shadow-[0_24px_80px_rgba(0,0,0,0.28)] sm:p-8">
-<div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
-<div>
-<p className="text-xs font-black uppercase tracking-[0.3em] text-[#C8A646]">
-Uploaded Documents
-</p>
-
-<h2 className="mt-3 text-3xl font-black text-white">
-Construction Document Library
-</h2>
-
-<p className="mt-3 max-w-4xl text-sm font-semibold leading-7 text-slate-400">
+<section className="min-w-0 @container" data-rfq-document-library="true">
+<div className="flex min-w-0 flex-col gap-4 @md:flex-row @md:items-start @md:justify-between">
+<div className="min-w-0">
+<p className="np-type-meta">Uploaded documents</p>
+<p className="np-type-body mt-2 min-w-0 text-pretty">
 RFQ drawings, specifications, BOQ files, addenda, photos, and
-supporting documents are grouped into construction folders.
+supporting documents are grouped by package type.
 </p>
 </div>
 
@@ -198,7 +191,7 @@ supporting documents are grouped into construction folders.
 type="button"
 onClick={() => void loadDocuments()}
 disabled={loading}
-className="rounded-full border border-white/10 bg-white/[0.055] px-5 py-3 text-sm font-black text-white transition hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-50"
+className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/[0.055] px-5 py-3 text-sm font-black text-white transition hover:bg-white/[0.08] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2CC4E8]/40 focus-visible:ring-offset-2 focus-visible:ring-offset-[#07111F] disabled:cursor-not-allowed disabled:opacity-50"
 >
 {loading ? "Refreshing..." : "Refresh"}
 </button>
@@ -211,12 +204,12 @@ className="rounded-full border border-white/10 bg-white/[0.055] px-5 py-3 text-s
 ) : null}
 
 {documents.length === 0 ? (
-<div className="mt-8 rounded-[26px] border border-dashed border-white/10 bg-[#07111F]/70 p-10 text-center">
-<p className="text-xl font-black text-white">
+<div className="mt-6 rounded-executive border border-dashed border-white/10 px-5 py-8 text-center" role="status">
+<p className="np-type-h3 min-w-0 text-pretty">
 No construction documents uploaded yet.
 </p>
 
-<p className="mt-3 text-sm font-semibold leading-6 text-slate-500">
+<p className="mt-3 min-w-0 text-pretty text-sm font-semibold leading-6 text-slate-500">
 Uploaded drawings, specifications, BOQs, photos, addenda, and
 supporting documents will appear here automatically.
 </p>
@@ -253,19 +246,17 @@ deletingId: string;
 onDelete: (document: RFQAttachment) => void;
 }) {
 return (
-<section className="rounded-[28px] border border-white/10 bg-[#07111F]/70 p-5">
-<div className="flex flex-col gap-3 border-b border-white/10 pb-5 sm:flex-row sm:items-center sm:justify-between">
-<div>
-<p className="text-xl font-black text-white">📁 {title}</p>
+<section className="min-w-0 rounded-executive border border-white/10 p-5">
+<div className="flex min-w-0 flex-col gap-3 border-b border-white/10 pb-4 @sm:flex-row @sm:items-center @sm:justify-between">
+<div className="min-w-0">
+<h4 className="min-w-0 text-pretty text-lg font-black text-white">
+{title}
+</h4>
 
 <p className="mt-1 text-sm font-semibold text-slate-500">
 {documents.length} document{documents.length === 1 ? "" : "s"}
 </p>
 </div>
-
-<span className="w-fit rounded-full border border-[#2CC4E8]/25 bg-[#2CC4E8]/10 px-4 py-2 text-xs font-black uppercase tracking-[0.14em] text-[#9BE8F8]">
-{documents.length} Files
-</span>
 </div>
 
 <div className="mt-5 space-y-4">
@@ -295,15 +286,15 @@ deletingId: string;
 onDelete: (document: RFQAttachment) => void;
 }) {
 return (
-<article className="rounded-[24px] border border-white/10 bg-[#061426]/75 p-5">
-<div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+<article className="min-w-0 rounded-executive border border-white/10 bg-black/20 p-4">
+<div className="flex min-w-0 flex-col gap-4 @md:flex-row @md:items-start @md:justify-between">
 <div className="flex min-w-0 items-start gap-4">
-<div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-[#2CC4E8]/20 bg-[#2CC4E8]/10 text-xl">
+<div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-[#2CC4E8]/20 bg-[#2CC4E8]/10 text-xl" aria-hidden="true">
 {getFileIcon(document.file_name)}
 </div>
 
 <div className="min-w-0">
-<p className="truncate text-lg font-black text-white">
+<p className="min-w-0 text-pretty text-lg font-black text-white">
 {document.file_name}
 </p>
 
@@ -327,12 +318,12 @@ return (
 </div>
 </div>
 
-<div className="flex flex-wrap gap-3">
+<div className="flex min-w-0 flex-wrap gap-3" aria-label="Document actions">
 <a
 href={document.file_url}
 target="_blank"
 rel="noreferrer"
-className="rounded-full border border-[#2CC4E8]/25 bg-[#2CC4E8]/10 px-5 py-3 text-sm font-black text-[#9BE8F8] transition hover:bg-[#2CC4E8]/15"
+className="inline-flex min-h-11 items-center justify-center rounded-full border border-[#2CC4E8]/25 bg-[#2CC4E8]/10 px-5 py-3 text-sm font-black text-[#9BE8F8] transition hover:bg-[#2CC4E8]/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2CC4E8]/40 focus-visible:ring-offset-2 focus-visible:ring-offset-[#07111F]"
 >
 Preview
 </a>
@@ -340,7 +331,7 @@ Preview
 <a
 href={document.file_url}
 download
-className="rounded-full border border-white/10 bg-white/[0.055] px-5 py-3 text-sm font-black text-white transition hover:bg-white/[0.08]"
+className="inline-flex min-h-11 items-center justify-center rounded-full border border-white/10 bg-white/[0.055] px-5 py-3 text-sm font-black text-white transition hover:bg-white/[0.08] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2CC4E8]/40 focus-visible:ring-offset-2 focus-visible:ring-offset-[#07111F]"
 >
 Download
 </a>
@@ -350,7 +341,7 @@ Download
 type="button"
 onClick={() => onDelete(document)}
 disabled={deletingId === document.id}
-className="rounded-full border border-red-300/15 bg-red-400/10 px-5 py-3 text-sm font-black text-red-300 transition hover:bg-red-400/15 disabled:cursor-not-allowed disabled:opacity-50"
+className="inline-flex min-h-11 items-center justify-center rounded-full border border-red-300/15 bg-red-400/10 px-5 py-3 text-sm font-black text-red-300 transition hover:bg-red-400/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#07111F] disabled:cursor-not-allowed disabled:opacity-50"
 >
 {deletingId === document.id ? "Deleting..." : "Delete"}
 </button>

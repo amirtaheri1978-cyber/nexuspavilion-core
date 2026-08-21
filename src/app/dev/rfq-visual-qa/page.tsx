@@ -5,6 +5,7 @@ import { RFQExecutiveActions } from "@/components/rfq-workspace/rfq-executive-ac
 import { RfqQuoteComparison } from "@/components/rfq-workspace/rfq-quote-comparison";
 import type { RfqQuoteComparisonItem } from "@/components/rfq-workspace/rfq-quote-comparison";
 import { RFQQuoteWorkspace } from "@/components/rfq-workspace/rfq-quote-workspace";
+import { RFQDocumentWorkspace } from "@/components/rfq-workspace/rfq-document-workspace";
 import { ExecutiveOpportunityRanking } from "@/components/executive/executive-opportunity-ranking";
 import { ExecutiveBadge } from "@/components/executive/executive-badge";
 import { ExecutivePanel } from "@/components/executive/executive-panel";
@@ -100,6 +101,31 @@ const awardedRespondentQuotes = [
     ...respondentQuotes[0],
     id: "supplier-q1-awarded",
     decision: "awarded",
+  },
+];
+
+const visualQaDocuments = [
+  {
+    id: "doc-drawing-1",
+    file_name:
+      "North-Harbor-Refrigeration-Replacement-Commissioning-Drawings-Package-Rev-C.pdf",
+    file_url: "#document-preview-drawing",
+    file_path: "visual-qa/drawing-rev-c.pdf",
+    file_size: 2457600,
+    attachment_type: "drawing",
+    revision_label: "Rev C",
+    created_at: "2026-08-01T12:00:00.000Z",
+  },
+  {
+    id: "doc-spec-1",
+    file_name:
+      "Bonded Warehouse Cold Chain Technical Specifications MasterFormat Division 23.docx",
+    file_url: "#document-preview-spec",
+    file_path: "visual-qa/spec-div-23.docx",
+    file_size: 812000,
+    attachment_type: "specification",
+    revision_label: "Rev B",
+    created_at: "2026-07-28T12:00:00.000Z",
   },
 ];
 
@@ -356,6 +382,30 @@ export default function RfqVisualQaPage() {
           highestAmount={null}
           averageBid={0}
         />
+
+        <div className="np-region-major border-t border-white/10 pt-10">
+          <p className="np-type-eyebrow">Visual QA · document workspace</p>
+          <p className="np-type-meta mt-3 max-w-3xl">
+            Chromeless fixture. Authenticated RFQ detail sits beside the 330px
+            application sidebar, so a 1440 viewport yields about 1110px of
+            content width. Document workspace must not nest extra panels or
+            fire a three-column xl upload grid at that width. Long file names
+            must wrap on word boundaries instead of truncating.
+          </p>
+        </div>
+        <div
+          className="w-full max-w-[1110px]"
+          data-rfq-document-shell-width="1110"
+        >
+          <RFQDocumentWorkspace
+            rfqId="visual-qa-rfq"
+            companyId="visual-qa-company"
+            isOwner
+            documents={visualQaDocuments}
+            addenda={[]}
+            acknowledgements={[]}
+          />
+        </div>
 
         <div className="np-region-major border-t border-white/10 pt-10">
           <p className="np-type-eyebrow">Visual QA · submit quote</p>
