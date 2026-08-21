@@ -76,7 +76,9 @@ describe("NP-MASTER-22-B03 Golden RFQ compare / submit", () => {
     expect(comparison).toContain("<caption");
     expect(comparison).toContain('scope="col"');
     expect(comparison).toContain('scope="row"');
-    expect(comparison).toContain("lg:hidden");
+    expect(comparison).toContain("@min-[1500px]:hidden");
+    expect(comparison).not.toContain("lg:hidden");
+    expect(comparison).not.toContain("overflow-x-auto");
     expect(comparison).toContain("<article");
     expect(comparison).toContain("<h3");
     expect(comparison).not.toContain("grid-cols-10");

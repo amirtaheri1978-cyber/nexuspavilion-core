@@ -43,6 +43,7 @@ export function RFQOwnerQuotes({
 }: RFQOwnerQuotesProps) {
   return (
     <RfqQuoteComparison
+      embedded
       rfqTitle={rfqTitle}
       awarded={!isOpen || quotes.some((quote) => quote.decision === "awarded")}
       quotes={quotes.map((quote) => {

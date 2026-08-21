@@ -39,7 +39,7 @@ const populatedQuotes: RfqQuoteComparisonItem[] = [
   quote({
     id: "q1",
     rank: 1,
-    supplierLabel: "Harbor Steel Co.",
+    supplierLabel: "Harbor Steel Co. North American Refrigeration Division",
     amountLabel: "$1,240,000",
     amountNumber: 1240000,
     isRecommended: true,
@@ -219,12 +219,25 @@ export default function RfqVisualQaPage() {
 
         <div className="np-region-major border-t border-white/10 pt-10">
           <p className="np-type-eyebrow">Visual QA · compare multiple quotes</p>
+          <p className="np-type-meta mt-3 max-w-3xl">
+            Chromeless fixture. Authenticated RFQ detail sits beside the 330px
+            application sidebar, so a 1440 viewport yields about 1110px of
+            content width. Owner quote comparison must not rely on a
+            seven-column lg table or horizontal scrolling at that width. The
+            1110px constraint below simulates that shell-adjusted content
+            width; awarded/empty/one-quote fixtures remain unconstrained.
+          </p>
         </div>
-        <RfqQuoteComparison
-          rfqTitle="Air charter · DXB-LHR"
-          quotes={populatedQuotes}
-          awarded={false}
-        />
+        <div
+          className="w-full max-w-[1110px]"
+          data-rfq-quote-shell-width="1110"
+        >
+          <RfqQuoteComparison
+            rfqTitle="Air charter · DXB-LHR"
+            quotes={populatedQuotes}
+            awarded={false}
+          />
+        </div>
 
         <div className="np-region-major border-t border-white/10 pt-10">
           <p className="np-type-eyebrow">Visual QA · awarded state</p>

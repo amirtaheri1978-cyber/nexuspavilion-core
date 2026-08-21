@@ -62,12 +62,12 @@ export function RFQQuoteWorkspace({
   return (
     <ExecutivePanel
       id="quote-intelligence"
-      className="mt-8"
+      className="mt-8 min-w-0 @container"
       padding="lg"
       tone="blue"
     >
       <section aria-labelledby="rfq-quote-workspace-title">
-        <div className="flex flex-col gap-6 xl:flex-row xl:items-start xl:justify-between">
+        <div className="flex min-w-0 flex-col gap-6 @4xl:flex-row @4xl:items-start @4xl:justify-between">
           <div className="min-w-0">
             <p className="text-xs font-black uppercase tracking-[0.3em] text-nexus-gold">
               {workspaceLabel}
@@ -75,18 +75,18 @@ export function RFQQuoteWorkspace({
 
             <h2
               id="rfq-quote-workspace-title"
-              className="mt-3 break-words text-2xl font-black tracking-tight text-nexus-white sm:text-3xl"
+              className="mt-3 min-w-0 text-pretty text-2xl font-black tracking-tight text-nexus-white sm:text-3xl"
             >
               {workspaceTitle}
             </h2>
 
-            <p className="mt-3 max-w-3xl break-words text-sm font-semibold leading-7 text-nexus-muted">
+            <p className="mt-3 max-w-3xl min-w-0 text-pretty text-sm font-semibold leading-7 text-nexus-muted">
               {workspaceDescription}
             </p>
           </div>
 
           <div
-            className="flex min-w-0 flex-col gap-3 sm:flex-row sm:flex-wrap xl:max-w-xl xl:justify-end"
+            className="flex min-w-0 flex-col gap-3 sm:flex-row sm:flex-wrap @4xl:max-w-xl @4xl:justify-end"
             aria-label="Quote workspace actions"
           >
             {canSubmitQuote ? (
@@ -120,7 +120,7 @@ export function RFQQuoteWorkspace({
               aria-labelledby="commercial-lockbox-status-title"
               aria-describedby="commercial-lockbox-status-description"
             >
-              <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+              <div className="flex flex-col gap-5 @4xl:flex-row @4xl:items-start @4xl:justify-between">
                 <div className="min-w-0">
                   <p className="text-xs font-black uppercase tracking-[0.24em] text-nexus-gold">
                     Commercial Governance Status
@@ -128,14 +128,14 @@ export function RFQQuoteWorkspace({
 
                   <h3
                     id="commercial-lockbox-status-title"
-                    className="mt-3 text-xl font-black tracking-tight text-nexus-white sm:text-2xl"
+                    className="mt-3 min-w-0 text-pretty text-xl font-black tracking-tight text-nexus-white sm:text-2xl"
                   >
                     Blind Bidding Controls Active
                   </h3>
 
                   <p
                     id="commercial-lockbox-status-description"
-                    className="mt-3 max-w-3xl text-sm font-semibold leading-7 text-nexus-muted"
+                    className="mt-3 max-w-3xl min-w-0 text-pretty text-sm font-semibold leading-7 text-nexus-muted"
                   >
                     Supplier submissions have been received, but commercial
                     pricing and comparative evaluation remain protected until
@@ -151,7 +151,7 @@ export function RFQQuoteWorkspace({
               </div>
 
               <div
-                className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3"
+                className="mt-6 grid grid-cols-1 gap-4 @sm:grid-cols-2"
                 aria-label="Commercial lockbox metrics"
               >
                 <ExecutiveMetricCard
