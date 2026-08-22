@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { sendEmail } from "@/lib/email/send-email";
 import { rfqCreatedEmail } from "@/lib/email/templates/rfq-created-email";
 import { getActiveMembershipForUserCompany } from "@/lib/auth/membership";
+import { joinPublicSitePath } from "@/lib/ops/public-site-url";
 import { canCreateCompanyRfq } from "@/lib/procurement/procurement-write-authorization";
 import { createClient } from "@/lib/supabase/server";
 
@@ -268,7 +269,8 @@ company_id: profile.company_id,
 });
 
 try {
-if (user.email) {
+const rfqUrl = joinPublicSitePath(`/rfq/${rfq.slug}`);
+if (user.email && rfqUrl) {
 await sendEmail({
 to: user.email,
 subject: `RFQ Created: ${rfq.title}`,
@@ -276,7 +278,7 @@ html: rfqCreatedEmail({
 rfqTitle: rfq.title || "New RFQ",
 category: rfq.category || "Procurement",
 budget: rfq.budget ? String(rfq.budget) : "Not specified",
-rfqUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/rfq/${rfq.slug}`,
+rfqUrl,
 procurementScope: getProcurementScopeLabel(procurementScope),
 sourcingMethod: getSourcingMethodLabel(sourcingMethod),
 contractFramework: getContractFrameworkLabel(contractFramework),

@@ -18,6 +18,7 @@ import {
 } from "@/lib/auth/professional-names";
 import { companyWelcomeEmail } from "@/lib/email/templates/company-welcome-email";
 import { sendEmail } from "@/lib/email/send-email";
+import { joinPublicSitePath } from "@/lib/ops/public-site-url";
 import { createClient } from "@/lib/supabase/server";
 
 type AccountType =
@@ -613,13 +614,14 @@ export async function POST(request: Request) {
       }
 
       try {
-        if (user.email) {
+        const workspaceUrl = joinPublicSitePath("/company/settings");
+        if (user.email && workspaceUrl) {
           await sendEmail({
             to: user.email,
             subject: "Welcome to Nexus Pavilion",
             html: companyWelcomeEmail({
               companyName: name,
-              workspaceUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/company/settings`,
+              workspaceUrl,
             }),
           });
         }

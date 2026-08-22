@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { sendEmail } from "@/lib/email/send-email";
 import { awardNotificationEmail } from "@/lib/email/templates/award-notification-email";
 import { getActiveMembershipForUserCompany } from "@/lib/auth/membership";
+import { joinPublicSitePath } from "@/lib/ops/public-site-url";
 import { createClient } from "@/lib/supabase/server";
 
 type AwardRequestBody = {
@@ -207,7 +208,8 @@ export async function POST(request: Request) {
     }
 
     try {
-      if (user.email) {
+      const awardUrl = joinPublicSitePath(`/rfq/${updatedRfq.slug}`);
+      if (user.email && awardUrl) {
         await sendEmail({
           to: user.email,
           subject: `Contract Awarded: ${
@@ -218,7 +220,7 @@ export async function POST(request: Request) {
             amount: formatCurrency(
               awardedQuote.amount,
             ),
-            awardUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/rfq/${updatedRfq.slug}`,
+            awardUrl,
           }),
         });
       }

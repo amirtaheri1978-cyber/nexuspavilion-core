@@ -2,12 +2,12 @@ import { NextResponse } from "next/server";
 
 import { buildCompanyInvitationEmail } from "@/lib/email/templates/company-invitation-email";
 import { sendEmail } from "@/lib/email/send-email";
+import {
+getPublicSiteUrl,
+PUBLIC_SITE_URL_UNCONFIGURED,
+} from "@/lib/ops/public-site-url";
 import { canInviteUsers, type UserRole } from "@/lib/permissions";
 import { createClient } from "@/lib/supabase/server";
-
-const SITE_URL =
-process.env.NEXT_PUBLIC_SITE_URL ||
-"https://scaling-invention-5g7q4p5rwrwj3vwq7-3000.app.github.dev";
 
 export async function POST(request: Request) {
 try {
@@ -93,7 +93,10 @@ return NextResponse.json(
 );
 }
 
-const inviteUrl = `${SITE_URL}/invite/${invitation.token}`;
+const publicSiteUrl = getPublicSiteUrl();
+const inviteUrl = publicSiteUrl
+? `${publicSiteUrl}/invite/${invitation.token}`
+: `/invite/${invitation.token}`;
 
 const invitationEmail = buildCompanyInvitationEmail({
 companyName: company.name || "Your company",
@@ -102,12 +105,19 @@ invitedRole: invitation.role || "vendor",
 inviteUrl,
 });
 
-const emailResult = await sendEmail({
+const emailResult = publicSiteUrl
+? await sendEmail({
 to: invitation.email,
 subject: invitationEmail.subject,
 html: invitationEmail.html,
 text: invitationEmail.text,
-});
+})
+: {
+success: false,
+skipped: true,
+id: null,
+error: PUBLIC_SITE_URL_UNCONFIGURED,
+};
 
 await supabase.from("audit_logs").insert({
 action: "INVITATION_RESENT",

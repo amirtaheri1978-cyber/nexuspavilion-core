@@ -2,13 +2,13 @@ import { NextResponse } from "next/server";
 
 import { sendEmail } from "@/lib/email/send-email";
 import { getActiveMembershipForUserCompany } from "@/lib/auth/membership";
+import {
+  getPublicSiteUrl,
+  PUBLIC_SITE_URL_UNCONFIGURED,
+} from "@/lib/ops/public-site-url";
 import { canInviteCompanySuppliers } from "@/lib/procurement/procurement-write-authorization";
 import { APPROVED_VENDOR_DOMAIN_AVAILABLE } from "@/lib/procurement/supplier-domain-availability";
 import { createClient } from "@/lib/supabase/server";
-
-const SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL ||
-  "https://scaling-invention-5g7q4p5rwrwj3vwq7-3000.app.github.dev";
 
 type ProcurementScope =
   "material" | "subcontractor" | "equipment" | "professional_service";
@@ -458,8 +458,12 @@ export async function POST(request: Request) {
       );
     }
 
+    const publicSiteUrl = getPublicSiteUrl();
+
     if (existingInvite) {
-      const existingInviteUrl = `${SITE_URL}/rfq/invite/${existingInvite.token}`;
+      const existingInviteUrl = publicSiteUrl
+        ? `${publicSiteUrl}/rfq/invite/${existingInvite.token}`
+        : `/rfq/invite/${existingInvite.token}`;
 
       return NextResponse.json({
         success: true,
@@ -476,7 +480,9 @@ export async function POST(request: Request) {
     }
 
     const token = generateToken();
-    const absoluteInviteUrl = `${SITE_URL}/rfq/invite/${token}`;
+    const absoluteInviteUrl = publicSiteUrl
+      ? `${publicSiteUrl}/rfq/invite/${token}`
+      : `/rfq/invite/${token}`;
 
     const { data: invite, error: inviteError } = await supabase
       .from("rfq_invites")
@@ -521,29 +527,38 @@ export async function POST(request: Request) {
 
     let emailResult: InviteEmailDeliveryResult;
 
-    try {
-      const result = await sendEmail({
-        to: email,
-        subject: invitationEmail.subject,
-        html: invitationEmail.html,
-        text: invitationEmail.text,
-      });
-
-      emailResult = {
-        success: Boolean(result.success),
-        skipped: Boolean(result.skipped),
-        id: result.id ?? null,
-        error: result.error ?? null,
-      };
-    } catch (emailError) {
-      console.error("Supplier invitation email delivery failed.", emailError);
-
+    if (!publicSiteUrl) {
       emailResult = {
         success: false,
-        skipped: false,
+        skipped: true,
         id: null,
-        error: "Invitation created, but email delivery failed.",
+        error: PUBLIC_SITE_URL_UNCONFIGURED,
       };
+    } else {
+      try {
+        const result = await sendEmail({
+          to: email,
+          subject: invitationEmail.subject,
+          html: invitationEmail.html,
+          text: invitationEmail.text,
+        });
+
+        emailResult = {
+          success: Boolean(result.success),
+          skipped: Boolean(result.skipped),
+          id: result.id ?? null,
+          error: result.error ?? null,
+        };
+      } catch (emailError) {
+        console.error("Supplier invitation email delivery failed.", emailError);
+
+        emailResult = {
+          success: false,
+          skipped: false,
+          id: null,
+          error: "Invitation created, but email delivery failed.",
+        };
+      }
     }
 
     try {

@@ -57,6 +57,8 @@ export const LAUNCH_REGRESSION_TEST_FILES = [
   "src/lib/migration-baseline-rehearsal.test.ts",
   "src/lib/navigation/application-nav.test.ts",
   "src/lib/navigation/application-shell.test.ts",
+  "src/lib/ops/launch-operations-readiness.test.ts",
+  "src/lib/ops/public-site-url.test.ts",
   "src/lib/organization-invitation-context.test.ts",
   "src/lib/ownership-transfer-accepted-audit-migration.test.ts",
   "src/lib/ownership-transfer-request-expiration-migration.test.ts",

@@ -11,11 +11,10 @@ import {
   validateFounderJobTitle,
   validateProfessionalName,
 } from "@/lib/auth/professional-names";
+import { resolveRequestSiteUrl } from "@/lib/ops/public-site-url";
 import { createClient } from "@/lib/supabase/server";
 
-const SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL ||
-  "http://localhost:3000";
+let SITE_URL = "";
 
 type AcceptInvitationResponse = {
   success?: boolean;
@@ -76,6 +75,7 @@ function getFailureRedirect(
 
 export async function POST(request: Request) {
   try {
+    SITE_URL = resolveRequestSiteUrl(request.url);
     const formData = await request.formData();
     const input = parseInvitationAcceptInput(formData);
     const token = input.token;
@@ -166,7 +166,6 @@ export async function POST(request: Request) {
       console.error(
         "Invitation acceptance RPC failed.",
         {
-          token,
           userId: user.id,
           error,
         },
@@ -184,10 +183,8 @@ export async function POST(request: Request) {
       console.warn(
         "Invitation acceptance was rejected.",
         {
-          token,
           userId: user.id,
           errorCode: result?.error_code,
-          errorMessage: result?.error_message,
         },
       );
 

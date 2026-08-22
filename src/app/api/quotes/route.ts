@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { sendEmail } from "@/lib/email/send-email";
 import { quoteSubmittedEmail } from "@/lib/email/templates/quote-submitted-email";
 import { getActiveMembershipForUserCompany } from "@/lib/auth/membership";
+import { joinPublicSitePath } from "@/lib/ops/public-site-url";
 import { canSubmitCompanyQuote } from "@/lib/procurement/procurement-write-authorization";
 import { createClient } from "@/lib/supabase/server";
 
@@ -262,7 +263,8 @@ submitted_at: new Date().toISOString(),
 });
 
 try {
-if (user.email) {
+const quoteUrl = joinPublicSitePath(`/rfq/${rfq.slug}/compare`);
+if (user.email && quoteUrl) {
 await sendEmail({
 to: user.email,
 subject: `Quote Submitted: ${rfq.title}`,
@@ -271,7 +273,7 @@ rfqTitle: rfq.title || "RFQ",
 amount: amount ? String(amount) : "Not specified",
 timeline: timeline || "Not specified",
 validityDays: `${validityDays} days`,
-quoteUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/rfq/${rfq.slug}/compare`,
+quoteUrl,
 }),
 });
 }
