@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 
 import { ExecutiveBadge } from "@/components/executive/executive-badge";
@@ -149,6 +149,7 @@ export default function SubmitQuotePage() {
   const [message, setMessage] = useState("");
 
   const [loading, setLoading] = useState(false);
+  const submitLock = useRef(false);
   const [error, setError] = useState("");
   const [errorField, setErrorField] = useState<FieldKey | null>(null);
 
@@ -189,12 +190,11 @@ export default function SubmitQuotePage() {
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    setLoading(true);
-    setError("");
-    setErrorField(null);
+    if (submitLock.current || loading || rfqLoading) {
+      return;
+    }
 
     if (submissionClosed) {
-      setLoading(false);
       setErrorField("form");
       setError(
         deadlinePassed
@@ -204,7 +204,13 @@ export default function SubmitQuotePage() {
       return;
     }
 
+    submitLock.current = true;
+    setLoading(true);
+    setError("");
+    setErrorField(null);
+
     if (amountNumber < 1000) {
+      submitLock.current = false;
       setLoading(false);
       setErrorField("amount");
       setError(
@@ -214,6 +220,7 @@ export default function SubmitQuotePage() {
     }
 
     if (!timeline.trim()) {
+      submitLock.current = false;
       setLoading(false);
       setErrorField("timeline");
       setError("Please enter a delivery timeline.");
@@ -221,39 +228,57 @@ export default function SubmitQuotePage() {
     }
 
     if (!message.trim()) {
+      submitLock.current = false;
       setLoading(false);
       setErrorField("message");
       setError("Please include a proposal note.");
       return;
     }
 
-    const response = await fetch("/api/quotes", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        slug,
-        amount: amountNumber,
-        currency,
-        timeline: timeline.trim(),
-        message: message.trim(),
-      }),
-    });
+    try {
+      const response = await fetch("/api/quotes", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          slug,
+          amount: amountNumber,
+          currency,
+          timeline: timeline.trim(),
+          message: message.trim(),
+        }),
+      });
 
-    const text = await response.text();
-    const data = text ? JSON.parse(text) : null;
+      let data: { error?: string } | null = null;
 
-    setLoading(false);
+      try {
+        const text = await response.text();
+        data = text ? (JSON.parse(text) as { error?: string }) : null;
+      } catch {
+        submitLock.current = false;
+        setLoading(false);
+        setErrorField("form");
+        setError("The quote could not be submitted. Please try again.");
+        return;
+      }
 
-    if (!response.ok) {
+      if (!response.ok) {
+        submitLock.current = false;
+        setLoading(false);
+        setErrorField("form");
+        setError(toWorkspaceError(data?.error || "Failed to submit quote."));
+        return;
+      }
+
+      router.push(`/rfq/${slug}`);
+      router.refresh();
+    } catch {
+      submitLock.current = false;
+      setLoading(false);
       setErrorField("form");
-      setError(toWorkspaceError(data?.error || "Failed to submit quote."));
-      return;
+      setError("The quote could not be submitted. Please try again.");
     }
-
-    router.push(`/rfq/${slug}`);
-    router.refresh();
   }
 
   const errorId = error ? "quote-submit-error" : undefined;

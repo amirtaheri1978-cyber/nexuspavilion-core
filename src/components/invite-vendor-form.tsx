@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import { ExecutiveBadge } from "@/components/executive/executive-badge";
 import { ExecutivePanel } from "@/components/executive/executive-panel";
@@ -39,6 +39,7 @@ export default function InviteVendorForm({
   const [successMessage, setSuccessMessage] = useState("");
   const [copyMessage, setCopyMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const inviteLock = useRef(false);
   const [error, setError] = useState("");
 
   const selectedVendor =
@@ -49,6 +50,11 @@ export default function InviteVendorForm({
   ) {
     event.preventDefault();
 
+    if (inviteLock.current || loading) {
+      return;
+    }
+
+    inviteLock.current = true;
     setLoading(true);
     setError("");
     setInviteUrl("");
@@ -85,6 +91,7 @@ export default function InviteVendorForm({
         "The supplier invitation could not be created. Verify your connection and try again.",
       );
     } finally {
+      inviteLock.current = false;
       setLoading(false);
     }
   }

@@ -52,6 +52,7 @@ export const LAUNCH_REGRESSION_TEST_FILES = [
   "src/lib/internal-reviewer-authorization-migration.test.ts",
   "src/lib/launch/launch-candidate-invariants.test.ts",
   "src/lib/launch/launch-regression-catalog.test.ts",
+  "src/lib/launch/launch-reliability-hardening.test.ts",
   "src/lib/launch/procurement-write-route-guards.test.ts",
   "src/lib/migration-baseline-rehearsal.test.ts",
   "src/lib/navigation/application-nav.test.ts",

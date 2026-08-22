@@ -54,6 +54,7 @@ export default function AwardContractButton({
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const awardLock = useRef(false);
 
   function closeDialog() {
     setOpen(false);
@@ -64,7 +65,9 @@ export default function AwardContractButton({
 
   async function handleAward() {
     if (loading || disabled) return;
+    if (awardLock.current) return;
 
+    awardLock.current = true;
     setLoading(true);
     setError("");
 
@@ -82,6 +85,8 @@ export default function AwardContractButton({
       const data = (await response.json()) as AwardContractResponse;
 
       if (!response.ok) {
+        awardLock.current = false;
+        setLoading(false);
         setError(toWorkspaceError(data.error || "Failed to award contract."));
         return;
       }
@@ -111,9 +116,9 @@ export default function AwardContractButton({
       router.refresh();
     } catch (awardError) {
       console.error(awardError);
-      setError("Failed to award contract.");
-    } finally {
+      awardLock.current = false;
       setLoading(false);
+      setError("Failed to award contract.");
     }
   }
 

@@ -393,13 +393,21 @@ currentCompany?.network_role || null
 );
 const dashboardCopy = getDashboardCopy(experience);
 
-const { data: rfqs } = await supabase
+const [rfqResult, notificationResult] = await Promise.all([
+supabase
 .from("rfqs")
 .select("*")
 .eq("company_id", profile.company_id)
-.order("created_at", { ascending: false });
+.order("created_at", { ascending: false }),
+supabase
+.from("notifications")
+.select("*")
+.eq("company_id", profile.company_id)
+.order("created_at", { ascending: false })
+.limit(8),
+]);
 
-const rfqList = (rfqs ?? []) as RFQ[];
+const rfqList = (rfqResult.data ?? []) as RFQ[];
 const rfqIds = rfqList.map((rfq) => rfq.id);
 
 const { data: quotes } =
@@ -412,13 +420,7 @@ rfqIds.length > 0
 : { data: [] };
 
 const quoteList = (quotes ?? []) as Quote[];
-
-const { data: notifications } = await supabase
-.from("notifications")
-.select("*")
-.eq("company_id", profile.company_id)
-.order("created_at", { ascending: false })
-.limit(8);
+const notifications = notificationResult.data;
 
 const notificationList = (notifications ?? []) as Notification[];
 

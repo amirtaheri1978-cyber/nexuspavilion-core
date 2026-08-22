@@ -233,63 +233,62 @@ const commercialEvaluationUnlocked =
 const isOpen =
 (!rfq.status || rfqStatus === "open") && !deadlinePassed;
 
-const { data: quotes } = isOwner
-? await supabase
+const [
+quotesResult,
+attachmentResult,
+addendaResult,
+acknowledgementResult,
+aiReviewResult,
+] = await Promise.all([
+isOwner
+? supabase
 .from("quotes")
 .select("*")
 .eq("rfq_id", rfq.id)
 .order("amount", { ascending: true })
 : profile?.company_id
-? await supabase
+? supabase
 .from("quotes")
 .select("*")
 .eq("rfq_id", rfq.id)
 .eq("company_id", profile.company_id)
 .order("created_at", { ascending: false })
-: { data: [] };
-
-const quoteList = (quotes ?? []) as Quote[];
-
-const { data: attachmentData } = await supabase
+: Promise.resolve({ data: [] }),
+supabase
 .from("rfq_attachments")
 .select("*")
 .eq("rfq_id", rfq.id)
-.order("created_at", { ascending: false });
-
-const rfqAttachments = attachmentData ?? [];
-
-const { data: addendaData } = await supabase
+.order("created_at", { ascending: false }),
+supabase
 .from("rfq_addenda")
 .select("*")
 .eq("rfq_id", rfq.id)
 .order("addendum_number", { ascending: false })
-.order("created_at", { ascending: false });
-
-const rfqAddenda = addendaData ?? [];
-
-const { data: acknowledgementData } =
+.order("created_at", { ascending: false }),
 !isOwner && profile?.company_id
-? await supabase
+? supabase
 .from("rfq_addendum_acknowledgements")
 .select("*")
 .eq("rfq_id", rfq.id)
 .eq("company_id", profile.company_id)
 .order("acknowledged_at", { ascending: false })
-: { data: [] };
-
-const rfqAcknowledgements = acknowledgementData ?? [];
-
-const { data: aiReviewData } = isOwner
-? await supabase
+: Promise.resolve({ data: [] }),
+isOwner
+? supabase
 .from("rfq_ai_reviews")
 .select("*")
 .eq("rfq_id", rfq.id)
 .order("created_at", { ascending: false })
 .limit(1)
 .maybeSingle()
-: { data: null };
+: Promise.resolve({ data: null }),
+]);
 
-const latestAiReview = aiReviewData ?? null;
+const quoteList = (quotesResult.data ?? []) as Quote[];
+const rfqAttachments = attachmentResult.data ?? [];
+const rfqAddenda = addendaResult.data ?? [];
+const rfqAcknowledgements = acknowledgementResult.data ?? [];
+const latestAiReview = aiReviewResult.data ?? null;
 
 const budget = Number(rfq.budget || 0);
 
@@ -311,27 +310,28 @@ const {
 const supplierCompanyIds =
   getRfqSupplierCompanyIds(scoredQuotes);
 
-const { data: supplierCompanyData } =
+const [supplierCompanyResult, priorBuyerRfqResult] = await Promise.all([
   isOwner && supplierCompanyIds.length > 0
-    ? await supabase
+    ? supabase
         .from("company_directory")
         .select("id, name, category, location, network_role")
         .in("id", supplierCompanyIds)
-    : { data: [] };
-
-const supplierCompanies =
-  (supplierCompanyData ?? []) as RfqSupplierCompany[];
-
-const { data: priorBuyerRfqData } =
+    : Promise.resolve({ data: [] }),
   isOwner &&
   rfq.company_id &&
   supplierCompanyIds.length > 0
-    ? await supabase
+    ? supabase
         .from("rfqs")
         .select("id")
         .eq("company_id", rfq.company_id)
         .neq("id", rfq.id)
-    : { data: [] };
+    : Promise.resolve({ data: [] }),
+]);
+
+const supplierCompanies =
+  (supplierCompanyResult.data ?? []) as RfqSupplierCompany[];
+
+const priorBuyerRfqData = priorBuyerRfqResult.data;
 
 const priorBuyerRfqIds = (priorBuyerRfqData ?? [])
   .map((priorRfq) => priorRfq.id)

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import { EXECUTIVE_CTA_PRIMARY } from "@/lib/design-system/executive-contract";
 import { createClient } from "@/lib/supabase/client";
@@ -32,6 +32,7 @@ export default function SubmitQuoteForm({
   const [message, setMessage] = useState(preview ? previewMessage : "");
 
   const [submitting, setSubmitting] = useState(false);
+  const submitLock = useRef(false);
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
 
@@ -42,6 +43,11 @@ export default function SubmitQuoteForm({
       return;
     }
 
+    if (submitLock.current || submitting) {
+      return;
+    }
+
+    submitLock.current = true;
     setSubmitting(true);
     setSuccess("");
     setError("");
@@ -54,6 +60,7 @@ export default function SubmitQuoteForm({
 
     if (!user) {
       setError("Please login before submitting a quote.");
+      submitLock.current = false;
       setSubmitting(false);
       return;
     }
@@ -79,6 +86,7 @@ export default function SubmitQuoteForm({
     if (error) {
       console.error(error);
       setError("Could not submit quote.");
+      submitLock.current = false;
       setSubmitting(false);
       return;
     }
@@ -87,6 +95,7 @@ export default function SubmitQuoteForm({
     setTimeline("");
     setMessage("");
     setSuccess("Quote submitted successfully.");
+    submitLock.current = false;
     setSubmitting(false);
   }
 

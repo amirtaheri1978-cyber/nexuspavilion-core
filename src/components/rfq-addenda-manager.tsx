@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 
 type Addendum = {
   id: string;
@@ -41,6 +41,7 @@ export default function RFQAddendaManager({
   const [affectedDocuments, setAffectedDocuments] = useState("");
   const [requiresAcknowledgement, setRequiresAcknowledgement] = useState(true);
   const [loading, setLoading] = useState(false);
+  const createLock = useRef(false);
   const [refreshing, setRefreshing] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -75,11 +76,14 @@ export default function RFQAddendaManager({
 
     if (!canManage) return;
 
+    if (createLock.current || loading) return;
+
     if (!title.trim()) {
       setError("Addendum title is required.");
       return;
     }
 
+    createLock.current = true;
     setLoading(true);
     setMessage("");
     setError("");
@@ -117,6 +121,7 @@ export default function RFQAddendaManager({
       console.error(createError);
       setError("Request failed. Please try again.");
     } finally {
+      createLock.current = false;
       setLoading(false);
     }
   }
