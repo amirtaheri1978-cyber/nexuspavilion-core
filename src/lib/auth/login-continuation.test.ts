@@ -43,6 +43,7 @@ describe("login continuation next path", () => {
       "/company/settings",
     );
     expect(getSafeNextPath("/create-company")).toBe("/create-company");
+    expect(getSafeNextPath("/rfq")).toBe("/rfq");
   });
 
   it("honors a valid internal path with a query string", () => {

@@ -102,6 +102,7 @@ describe("Task 25 launch-candidate cross-feature invariants", () => {
   });
 
   it("continues login onto RFQ routes while rejecting open redirects", () => {
+    expect(getSafeNextPath("/rfq")).toBe("/rfq");
     expect(getSafeNextPath("/rfq/harbor-package/submit")).toBe(
       "/rfq/harbor-package/submit",
     );

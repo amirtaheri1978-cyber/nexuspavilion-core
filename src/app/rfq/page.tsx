@@ -1,7 +1,9 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
 
 import { ExecutiveBadge } from "@/components/executive/executive-badge";
+import { getSafeNextPath } from "@/lib/auth/login-continuation";
 import type {
   ProcurementContractFramework,
   ProcurementRfq,
@@ -9,6 +11,7 @@ import type {
   RfqAccessReason,
 } from "@/lib/procurement/rfq-access-contract";
 import { getProcurementContext } from "@/lib/procurement/procurement-context-repository";
+import { createClient } from "@/lib/supabase/server";
 import {
   buildProcurementMarketplaceViewModel,
   type MarketplaceRecord,
@@ -180,6 +183,15 @@ function getParticipantRoleTone(
 }
 
 export default async function RFQMarketplacePage() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect(`/login?next=${encodeURIComponent(getSafeNextPath("/rfq"))}`);
+  }
+
   const context = await getProcurementContext();
 
   const marketplace =
