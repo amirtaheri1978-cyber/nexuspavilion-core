@@ -34,6 +34,10 @@ yarn-error.log*
 .env*
 !.env.example
 
+# operator database dumps and copied Storage objects (Task 29)
+# Do not commit backup payloads.
+/backups/
+
 # vercel
 .vercel
 

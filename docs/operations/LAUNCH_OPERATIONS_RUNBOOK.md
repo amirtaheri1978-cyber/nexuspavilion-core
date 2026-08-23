@@ -1,11 +1,18 @@
 # Nexus Pavilion launch operations runbook
 
-Status: Task 27 operational documentation. This runbook describes capabilities
-that exist in the Launch Candidate application and host dashboards. It does not
-invent APM, paging, or backup products.
+Status: Task 29 operator evidence recorded. This runbook describes
+capabilities that exist in the Launch Candidate application and host
+dashboards. It does not invent APM, paging, or backup products.
 
-Production mutation, Production SQL, Production migration, Production
-configuration change, and secret rotation remain prohibited until Task 29.
+Launch backend (intentional): Supabase project `nexus-pavilion-dev`,
+ref `bzntqnwoytdakmstbtyh`. This same project is the launch/production
+backend. Do not use a retired project. A distinct Production Supabase
+project is **not** a remaining requirement.
+
+Migrations `20260828000000` and `20260829000000` are **already applied**
+and live-validated on that backend. **DO NOT RE-APPLY 280 OR 290.**
+Remaining launch work is application deployment, host configuration, and
+Product Owner Go/No-Go — not another database migration apply.
 
 ## Ownership (do not invent extra roles)
 
@@ -40,20 +47,24 @@ on-call rotation in this document.
 - Automated: `npm run test:launch`, `npx vitest run`, `npx eslint src`,
   `npm run build`
 
-There is no in-repo proof that Production backups or PITR are enabled. Treat
-backup as Task 28 operator-console evidence. See
-`docs/operations/TASK_28_OPERATOR_EVIDENCE.md`.
+Scheduled backups and PITR are **unavailable** on the current Free Plan.
+Product Owner accepted a manual pre-launch database dump plus copied
+Storage objects as the launch-stage recovery checkpoint. Recorded
+filenames, sizes, and SHA-256 hashes live in
+`docs/operations/TASK_28_OPERATOR_EVIDENCE.md`. Do not claim PITR exists.
 
 ## Shared stop conditions
 
 Stop launching or stop writing when any of the following is true:
 
-- `/api/health` does not return `ok: true`
+- `/api/health` does not return `ok: true` from the real public application origin
 - Auth login or `/auth/callback` cannot establish a session
 - RFQ/quote/award writes fail for authorized users
 - Cross-company data is visible
-- Backup/PITR evidence for the Production project is missing (Task 28 Go/No-Go)
-- Host env still points `NEXT_PUBLIC_SITE_URL` at a leftover Codespace host
+- Host `NEXT_PUBLIC_SITE_URL` is unset, localhost, parked, or a leftover
+  Codespace host
+- Host `NEXT_PUBLIC_SUPABASE_URL` is not `bzntqnwoytdakmstbtyh.supabase.co`
+- Anyone proposes re-applying `20260828000000` or `20260829000000`
 
 ---
 
@@ -91,40 +102,49 @@ Stop launching or stop writing when any of the following is true:
 
 ## 3. Database migration rollback (Task 29)
 
-- Detection signal: migration apply error; post-migration RPC/RLS failure;
-  award/quote unique-constraint or function errors in host logs.
-- Immediate stop: do not continue applying later migrations. Do not run
-  Production SQL from this repository during Task 27.
-- Owner: Product Owner; database/Supabase operator executes only after
-  written reverse SQL is reviewed.
-- Containment: application may stay on the previous SHA if the new app
-  requires the new schema.
-- Rollback/recovery: Task 29 must attach a reviewed reverse migration
-  **before** Production apply. Postgres does not auto-undo an applied
-  Supabase migration. If reverse SQL is not prepared, the stop condition is
-  “do not apply.” Point-in-time restore is a last resort and is a Supabase
-  console action (see backup verification).
-- Verification: after reverse or restore, `award_rfq_quote`, quote submit,
-  and RFQ reads succeed; no duplicate awarded quotes.
-- Escalation: restore would discard Production writes that occurred after
-  the restore point — Product Owner decision only.
+- Detection signal: RPC/RLS failure after 280/290; award/quote unique-
+  constraint or function errors in host logs.
+- Immediate stop: **DO NOT RE-APPLY 280 OR 290.** Do not run casual
+  launch-backend SQL from this repository.
+- Owner: Product Owner; database/Supabase operator executes reverse SQL
+  only after written review.
+- Containment: prefer **application rollback or forward-fix first**.
+  Application rollback does not undo Postgres migrations.
+- Rollback/recovery: emergency reverse artifacts already exist:
+  `docs/operations/sql/task28_reverse_20260829000000.sql` then
+  `docs/operations/sql/task28_reverse_20260828000000.sql`. Postgres does
+  not auto-undo an applied Supabase migration. Reverse SQL does not delete
+  `schema_migrations` rows. The 290 reverse is **emergency-only** and
+  restores the known pre-290 confidentiality/integrity weakness. It is
+  **not** normal rollback. PITR is not available; the accepted checkpoint
+  is the recorded manual dump (see backup verification).
+- Verification: after reverse or dump restore, `award_rfq_quote`, quote
+  submit, and RFQ reads succeed; no duplicate awarded quotes.
+- Escalation: restore would discard writes after the dump point, or 290
+  reverse would re-open locked quotes — Product Owner decision only.
 
 ## 4. Production backup verification
 
-- Detection signal: Task 28 Go/No-Go checklist incomplete; operator cannot
-  show Backups/PITR for the Production project ref.
-- Immediate stop: Task 28 is No-Go until console evidence exists. This
-  runbook does **not** claim backups exist.
-- Owner: Product Owner; database/Supabase operator captures screenshots /
-  export of backup settings (no secrets).
-- Containment: no Production writes that cannot be restored.
-- Rollback/recovery: follow the operator checklist in
-  `TASK_28_OPERATOR_EVIDENCE.md`. Restore is a Supabase console action, not
-  a repository script.
-- Verification: Production project ref ≠ Development project ref; backup or
-  PITR setting is visible; restore drill owner is named.
-- Escalation: backup product not included on the current Supabase plan —
-  launch cannot claim recoverability.
+- Detection signal: operator cannot locate the recorded manual dump or
+  Storage object copies; hashes do not match
+  `TASK_28_OPERATOR_EVIDENCE.md`.
+- Immediate stop: do not claim scheduled backups or PITR. They are
+  unavailable on Free Plan.
+- Owner: Product Owner accepted the manual checkpoint; database/Supabase
+  operator preserves the local dump and Storage copies (not in git).
+- Containment: treat
+  `backups/nexus-pavilion-dev-prelaunch-2026-08-22.dump` plus the three
+  recorded Storage object copies as the launch-stage restore point.
+- Rollback/recovery: `pg_restore` of that dump after Product Owner
+  authorization; restore Storage bytes from the recorded local copies.
+  Dashboard PITR is not available.
+- Verification: dump SHA-256
+  `6A7D76ACDE4E7D8C7CF7FA7761809639C2EDE38F10A2CD9D541D4D3F9621D687`;
+  `pg_restore -l` already succeeded (541 TOC entries, custom/gzip,
+  Postgres 17.6). Restore into the live database was **not** executed as
+  part of evidence capture.
+- Escalation: dump missing, hash mismatch, or Product Owner later requires
+  paid PITR.
 
 ## 5. Supabase incident
 
@@ -224,8 +244,9 @@ Stop launching or stop writing when any of the following is true:
   prefix or become public unexpectedly.
 - Owner: application/operator (upload routes); database/Supabase operator
   (Storage policies and backup).
-- Containment: Postgres PITR does **not** by itself prove Storage object
-  restore. Confirm Storage backup separately in the operator checklist.
+- Containment: a database dump does **not** restore Storage object bytes.
+  Use the recorded local Storage copies in
+  `TASK_28_OPERATOR_EVIDENCE.md`. PITR is not available.
 - Rollback/recovery: app rollback if the upload route regresses; object
   restore is a Supabase Storage console action.
 - Verification: authorized upload + list on one RFQ; other company cannot
@@ -261,7 +282,24 @@ imaginary APM suite.
     the Production origin, never a Codespace host.
 13. Document failures — `rfq-attachments` upload/list.
 14. Rollback triggers — health fail, auth outage, award dual-write,
-    cross-company leak, missing backup evidence.
+    cross-company leak, missing manual dump/Storage-copy evidence.
+
+## Remaining launch blockers
+
+Launch backend identity and Task 28 schema apply are **closed**. Do not
+re-open launch-backend identity or treat 280/290 as a pending apply.
+
+Still open:
+
+- Real public application origin
+- Application deployment SHA on that origin
+- Host `NEXT_PUBLIC_SITE_URL`
+- Host `NEXT_PUBLIC_SUPABASE_URL`
+- Auth redirect URL configuration
+- Email / `CONTACT_EMAIL` configuration
+- Final Product Owner Go/No-Go
+- Still-binding D1–D6 and retention / legal-hold governance items unless
+  the Product Owner explicitly changes those gates
 
 ## Environment notes (names only)
 

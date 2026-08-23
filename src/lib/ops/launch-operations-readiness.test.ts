@@ -104,6 +104,9 @@ describe("Task 27 launch operations readiness", () => {
     ).toBe(true);
 
     const runbook = readSource("docs/operations/LAUNCH_OPERATIONS_RUNBOOK.md");
+    const evidence = readSource(
+      "docs/operations/TASK_28_OPERATOR_EVIDENCE.md",
+    );
     expect(runbook).toContain("Failed deployment");
     expect(runbook).toContain("Application rollback");
     expect(runbook).toContain("Database migration rollback");
@@ -115,6 +118,92 @@ describe("Task 27 launch operations readiness", () => {
     expect(runbook).toContain("Cross-company/security incident");
     expect(runbook).toContain("Document/storage incident");
     expect(runbook).not.toContain("PITR is enabled");
+    expect(evidence).not.toContain("PITR is enabled");
+    expect(runbook).not.toContain(
+      "Production project ref ≠ Development project ref",
+    );
+    expect(evidence).toContain(
+      "launch required a second, distinct Supabase project is **superseded**",
+    );
+
+    expect(evidence).toContain("nexus-pavilion-dev");
+    expect(evidence).toContain("bzntqnwoytdakmstbtyh");
+    expect(runbook).toContain("nexus-pavilion-dev");
+    expect(runbook).toContain("bzntqnwoytdakmstbtyh");
+
+    expect(evidence).toContain("DO NOT RE-APPLY 280 OR 290");
+    expect(runbook).toContain("DO NOT RE-APPLY 280 OR 290");
+    expect(evidence).toContain(
+      "20260828000000_enable_company_scoped_audit_and_notification_access.sql",
+    );
+    expect(evidence).toContain(
+      "20260829000000_restrict_issuer_quote_select_until_commercial_unlock.sql",
+    );
+    expect(evidence).toContain("already applied");
+
+    expect(evidence).toContain(
+      "backups/nexus-pavilion-dev-prelaunch-2026-08-22.dump",
+    );
+    expect(evidence).toContain("445004");
+    expect(evidence).toContain(
+      "6A7D76ACDE4E7D8C7CF7FA7761809639C2EDE38F10A2CD9D541D4D3F9621D687",
+    );
+    expect(evidence).toContain("pg_restore -l");
+    expect(evidence).toContain("541");
+    expect(evidence).toContain("17.6");
+
+    expect(evidence).toContain("branding/logo-horizontal-512.png");
+    expect(evidence).toContain("60026");
+    expect(evidence).toContain(
+      "526D1AA097B65BDA0B9F8C243EACC50663C3F3FC4218DBBF7D271ED90CE5EA98",
+    );
+    expect(evidence).toContain(
+      "Company-logos/293b1013-f488-48a5-ae63-e028569519ee-1785587789135.png",
+    );
+    expect(evidence).toContain("3696");
+    expect(evidence).toContain(
+      "23F1656A4FE72D62B81C8605DFE6006E17AB258EC626F08560B483A92FF0257D",
+    );
+    expect(evidence).toContain(
+      "Company-logos/logos/1779691535466-7d651ea6-3845-466f-8fb9-ea89f8038379.jpg",
+    );
+    expect(evidence).toContain("31282");
+    expect(evidence).toContain(
+      "06651FFB10077DBBDCA7F0206B91501B9F4F13F97E80C549A93ADFC65CD48591",
+    );
+
+    expect(evidence).toContain("Free Plan");
+    expect(evidence).toContain("unavailable / not enabled");
+    expect(evidence).toContain("chose **not** to purchase PITR");
+    expect(runbook).toContain("Free Plan");
+    expect(runbook).toContain("unavailable");
+
+    expect(evidence).toContain(
+      "docs/operations/sql/task28_reverse_20260828000000.sql",
+    );
+    expect(evidence).toContain(
+      "docs/operations/sql/task28_reverse_20260829000000.sql",
+    );
+    expect(runbook).toContain(
+      "docs/operations/sql/task28_reverse_20260829000000.sql",
+    );
+    expect(runbook).toContain("application rollback or forward-fix first");
+    expect(runbook).toContain("emergency-only");
+    expect(runbook).toContain("known pre-290 confidentiality/integrity weakness");
+
+    expect(runbook).toContain("Real public application origin");
+    expect(runbook).toContain("Application deployment SHA");
+    expect(runbook).toContain("NEXT_PUBLIC_SITE_URL");
+    expect(runbook).toContain("NEXT_PUBLIC_SUPABASE_URL");
+    expect(runbook).toContain("Auth redirect URL configuration");
+    expect(runbook).toContain("CONTACT_EMAIL");
+    expect(runbook).toContain("Final Product Owner Go/No-Go");
+    expect(runbook).toContain("D1–D6");
+    expect(evidence).not.toContain("Production Supabase project unknown");
+    expect(runbook).not.toContain("280/290 not applied");
+
+    const gitignore = readSource(".gitignore");
+    expect(gitignore).toContain("/backups/");
   });
 
   it("keeps env example names-only and committable", () => {
