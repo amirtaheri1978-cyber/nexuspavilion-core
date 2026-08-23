@@ -23,6 +23,7 @@ type RFQQuoteWorkspaceProps = {
   canSubmitQuote: boolean;
   commercialEvaluationUnlocked: boolean;
   quoteList: RFQSupplierQuotesProps["quotes"];
+  submissionCount?: number;
   scoredQuotes: RFQOwnerQuotesProps["quotes"];
   recommendedQuoteId: string | null;
   lowestAmount: number | null;
@@ -39,6 +40,7 @@ export function RFQQuoteWorkspace({
   canSubmitQuote,
   commercialEvaluationUnlocked,
   quoteList,
+  submissionCount,
   scoredQuotes,
   recommendedQuoteId,
   lowestAmount,
@@ -159,7 +161,7 @@ export function RFQQuoteWorkspace({
               >
                 <ExecutiveMetricCard
                   label="Submissions"
-                  value={String(quoteList.length)}
+                  value={String(submissionCount ?? quoteList.length)}
                   insight="Supplier responses received"
                   tone="gold"
                 />

@@ -5,6 +5,7 @@ import { quoteSubmittedEmail } from "@/lib/email/templates/quote-submitted-email
 import { getActiveMembershipForUserCompany } from "@/lib/auth/membership";
 import { joinPublicSitePath } from "@/lib/ops/public-site-url";
 import { canSubmitCompanyQuote } from "@/lib/procurement/procurement-write-authorization";
+import { recordTrustedProcurementActivity } from "@/lib/procurement/record-procurement-activity";
 import { createClient } from "@/lib/supabase/server";
 
 const VALIDITY_DAY_OPTIONS = [30, 60, 90, 120];
@@ -244,23 +245,15 @@ return NextResponse.json(
 );
 }
 
-await supabase.from("audit_logs").insert({
-action: "QUOTE_SUBMITTED",
-entity_type: "quote",
-entity_id: quote.id,
-user_id: user.id,
-company_id: profile.company_id,
-metadata: {
-rfq_id: rfq.id,
-rfq_title: rfq.title,
-amount,
-timeline,
-validity_days: validityDays,
-score,
-deadline: rfq.deadline,
-submitted_at: new Date().toISOString(),
+await recordTrustedProcurementActivity(
+supabase,
+"quote_submitted",
+quote.id,
+{
+userId: user.id,
+companyId: profile.company_id,
 },
-});
+);
 
 try {
 const quoteUrl = joinPublicSitePath(`/rfq/${rfq.slug}/compare`);
@@ -280,14 +273,6 @@ quoteUrl,
 } catch (error) {
 console.error("Quote submitted email failed:", error);
 }
-
-await supabase.from("notifications").insert({
-title: "Quote Submitted",
-message: `A new quote was submitted for ${rfq.title}.`,
-type: "quote",
-is_read: false,
-company_id: rfq.company_id,
-});
 
 return NextResponse.json({
 success: true,

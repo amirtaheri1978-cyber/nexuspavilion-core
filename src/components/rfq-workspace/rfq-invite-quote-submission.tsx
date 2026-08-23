@@ -1,10 +1,11 @@
 import Link from "next/link";
 
 import { ExecutivePanel } from "@/components/executive/executive-panel";
-import SubmitQuoteForm from "@/components/submit-quote-form";
 import {
+  EXECUTIVE_CTA_PRIMARY,
   EXECUTIVE_CTA_SECONDARY,
   EXECUTIVE_FOCUS_CYAN,
+  EXECUTIVE_FOCUS_GOLD,
 } from "@/lib/design-system/executive-contract";
 
 export type RfqInviteQuoteContext = {
@@ -21,11 +22,6 @@ export type RfqInviteQuoteContext = {
 
 type RfqInviteQuoteSubmissionProps = {
   invitation: RfqInviteQuoteContext;
-  preview?: boolean;
-  previewAmount?: string;
-  previewTimeline?: string;
-  previewMessage?: string;
-  previewError?: string;
 };
 
 function InviteInfo({ title, value }: { title: string; value: string | null }) {
@@ -61,11 +57,6 @@ export function RfqInviteQuoteUnavailable() {
 
 export function RfqInviteQuoteSubmission({
   invitation,
-  preview = false,
-  previewAmount,
-  previewTimeline,
-  previewMessage,
-  previewError,
 }: RfqInviteQuoteSubmissionProps) {
   return (
     <ExecutivePanel
@@ -84,6 +75,10 @@ export function RfqInviteQuoteSubmission({
         <span className="min-w-0 font-bold text-nexus-white">
           {invitation.invite_email}
         </span>
+      </p>
+      <p className="np-type-body mt-4 max-w-3xl min-w-0 text-pretty">
+        Continue into the authenticated supplier workspace to submit your
+        quotation. Quote submission is not completed on this invitation page.
       </p>
 
       <section
@@ -111,19 +106,17 @@ export function RfqInviteQuoteSubmission({
         </dl>
       </section>
 
-      <div className="mt-8 min-w-0 border-t border-white/10 pt-6">
-        <SubmitQuoteForm
-          rfqId={invitation.rfq_id}
-          embedded
-          preview={preview}
-          previewAmount={previewAmount}
-          previewTimeline={previewTimeline}
-          previewMessage={previewMessage}
-          previewError={previewError}
-        />
-      </div>
-
-      <div className="mt-8 min-w-0">
+      <div
+        className="mt-8 flex min-w-0 flex-col gap-3 border-t border-white/10 pt-6 @sm:flex-row"
+        data-rfq-invite-continue="true"
+      >
+        <Link
+          href={`/rfq/${invitation.rfq_slug}/submit`}
+          className={`${EXECUTIVE_CTA_PRIMARY} ${EXECUTIVE_FOCUS_GOLD} min-h-14 w-full @sm:w-auto`}
+          data-rfq-invite-continue-submit="true"
+        >
+          Continue to Submit Quote
+        </Link>
         <Link
           href={`/rfq/${invitation.rfq_slug}`}
           className={`${EXECUTIVE_CTA_SECONDARY} ${EXECUTIVE_FOCUS_CYAN} min-h-14 w-full @sm:w-auto`}

@@ -917,9 +917,9 @@ export default function RfqVisualQaPage() {
           <p className="np-type-meta mt-3 max-w-3xl">
             Chromeless route. `/rfq/invite/[token]` does not use the 330px
             application sidebar, so 1440 and 1110 are full content widths for
-            this surface. Long RFQ titles, emails, timelines, proposal notes,
-            and helper copy must wrap on word boundaries. This fixture mounts
-            the live invite submission workspace and does not submit a quote.
+            this surface. Long RFQ titles, emails, and helper copy must wrap on
+            word boundaries. This fixture mounts the live invitation
+            continuation surface and does not submit a quote.
           </p>
         </div>
         <div
@@ -927,11 +927,6 @@ export default function RfqVisualQaPage() {
           data-rfq-invite-quote-shell-width="1110"
         >
           <RfqInviteQuoteSubmission
-            preview
-            previewAmount="1240000"
-            previewTimeline="16-month phased commissioning across North Harbor bonded warehouse operations"
-            previewMessage="Phased delivery for the North Harbor distribution campus, including redundant compressor commissioning, bonded warehouse continuity, and quality-assurance coverage through the full cutover window."
-            previewError="Please login before submitting a quote."
             invitation={{
               invite_email:
                 "procurement.director.north.harbor@harbor-steel-co.example.com",

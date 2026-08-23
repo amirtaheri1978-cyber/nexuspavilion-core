@@ -158,6 +158,16 @@ return false;
 return new Date().getTime() > deadlineDate.getTime();
 }
 
+function readQuoteSubmissionCount(value: unknown) {
+const count = Number(value);
+
+if (!Number.isFinite(count) || count < 0) {
+return 0;
+}
+
+return Math.trunc(count);
+}
+
 function getDaysUntilDeadline(deadline: string | null | undefined) {
 if (!deadline) return null;
 
@@ -233,20 +243,24 @@ const commercialEvaluationUnlocked =
 const isOpen =
 (!rfq.status || rfqStatus === "open") && !deadlinePassed;
 
+const loadIssuerQuoteRows = isOwner && commercialEvaluationUnlocked;
+const loadIssuerQuoteCount = isOwner && !commercialEvaluationUnlocked;
+
 const [
 quotesResult,
+issuerSubmissionCountResult,
 attachmentResult,
 addendaResult,
 acknowledgementResult,
 aiReviewResult,
 ] = await Promise.all([
-isOwner
+loadIssuerQuoteRows
 ? supabase
 .from("quotes")
 .select("*")
 .eq("rfq_id", rfq.id)
 .order("amount", { ascending: true })
-: profile?.company_id
+: !isOwner && profile?.company_id
 ? supabase
 .from("quotes")
 .select("*")
@@ -254,6 +268,9 @@ isOwner
 .eq("company_id", profile.company_id)
 .order("created_at", { ascending: false })
 : Promise.resolve({ data: [] }),
+loadIssuerQuoteCount
+? supabase.rpc("count_rfq_quote_submissions", { p_rfq_id: rfq.id })
+: Promise.resolve({ data: null }),
 supabase
 .from("rfq_attachments")
 .select("*")
@@ -285,6 +302,9 @@ isOwner
 ]);
 
 const quoteList = (quotesResult.data ?? []) as Quote[];
+const quoteCount = loadIssuerQuoteCount
+  ? readQuoteSubmissionCount(issuerSubmissionCountResult.data)
+  : quoteList.length;
 const rfqAttachments = attachmentResult.data ?? [];
 const rfqAddenda = addendaResult.data ?? [];
 const rfqAcknowledgements = acknowledgementResult.data ?? [];
@@ -389,7 +409,7 @@ const canSubmitQuote = capabilities.canSubmitQuote;
 const healthScore = getHealthScore({
 isOpen,
 deadlinePassed,
-quoteCount: quoteList.length,
+quoteCount,
 documentCount: rfqAttachments.length,
 addendaCount: rfqAddenda.length,
 hasBudget: budget > 0,
@@ -404,7 +424,7 @@ isOpen,
 deadlinePassed,
 blindBiddingEnabled,
 commercialEvaluationUnlocked,
-quoteCount: quoteList.length,
+quoteCount,
 documentCount: rfqAttachments.length,
 addendaCount: rfqAddenda.length,
 healthScore,
@@ -415,7 +435,7 @@ const nextBestAction = getNextBestAction({
 isOwner,
 isOpen,
 canSubmitQuote,
-quoteCount: quoteList.length,
+quoteCount,
 documentCount: rfqAttachments.length,
 addendaCount: rfqAddenda.length,
 commercialEvaluationUnlocked,
@@ -423,7 +443,7 @@ recommendedQuote,
 });
 
 const healthBreakdown = getProcurementHealthBreakdown({
-quoteCount: quoteList.length,
+quoteCount,
 documentCount: rfqAttachments.length,
 addendaCount: rfqAddenda.length,
 hasBudget: budget > 0,
@@ -435,7 +455,7 @@ commercialEvaluationUnlocked,
 const executiveRiskMatrix = getExecutiveRiskMatrix({
 isOpen,
 deadlinePassed,
-quoteCount: quoteList.length,
+quoteCount,
 documentCount: rfqAttachments.length,
 addendaCount: rfqAddenda.length,
 commercialEvaluationUnlocked,
@@ -451,7 +471,7 @@ recommendedQuote,
 const copilotSuggestions = getCopilotSuggestions({
 isOwner,
 isOpen,
-quoteCount: quoteList.length,
+quoteCount,
 documentCount: rfqAttachments.length,
 addendaCount: rfqAddenda.length,
 commercialEvaluationUnlocked,
@@ -466,7 +486,7 @@ const {
   isOwner,
   potentialSavings,
   commercialEvaluationUnlocked,
-  quoteCount: quoteList.length,
+  quoteCount,
   documentCount: rfqAttachments.length,
   recommendedAwardConfidence: recommendedQuote?.awardConfidence ?? null,
 });
@@ -477,7 +497,7 @@ isOwner,
 isOpen,
 commercialEvaluationUnlocked,
 healthScore,
-quoteCount: quoteList.length,
+quoteCount,
 documentCount: rfqAttachments.length,
 addendaCount: rfqAddenda.length,
 averageBid,
@@ -588,7 +608,7 @@ return (
     },
     {
       title: "Quotes",
-      value: String(quoteList.length),
+      value: String(quoteCount),
     },
     {
       title: "Documents",
@@ -654,7 +674,7 @@ return (
   <section className="np-region-major min-w-0">
     <RFQBlindBiddingNotice
       message={getBlindBiddingMessage(rfq)}
-      quoteCount={quoteList.length}
+      quoteCount={quoteCount}
     />
   </section>
 ) : null}
@@ -676,7 +696,7 @@ return (
   isOpen={isOpen}
   commercialEvaluationUnlocked={commercialEvaluationUnlocked}
   healthScore={healthScore}
-  quoteCount={quoteList.length}
+  quoteCount={quoteCount}
   documentCount={rfqAttachments.length}
   addendaCount={rfqAddenda.length}
   potentialSavings={potentialSavings}
@@ -692,7 +712,7 @@ return (
   isOwner={isOwner}
   isOpen={isOpen}
   commercialEvaluationUnlocked={commercialEvaluationUnlocked}
-  quoteCount={quoteList.length}
+  quoteCount={quoteCount}
   documentCount={rfqAttachments.length}
   addendaCount={rfqAddenda.length}
   recommendedQuote={recommendedQuote}
@@ -708,7 +728,7 @@ return (
 
 <ExecutiveReadinessMeter
 healthScore={healthScore}
-quoteCount={quoteList.length}
+quoteCount={quoteCount}
 documentCount={rfqAttachments.length}
 addendaCount={rfqAddenda.length}
 commercialEvaluationUnlocked={commercialEvaluationUnlocked}
@@ -719,7 +739,7 @@ recommendedQuote={recommendedQuote}
     isOwner={isOwner}
     commercialEvaluationUnlocked={commercialEvaluationUnlocked}
     recommendedQuote={recommendedQuote}
-       quoteCount={quoteList.length}
+       quoteCount={quoteCount}
           executive={executive}
 />
 
@@ -729,7 +749,7 @@ recommendedQuote={recommendedQuote}
   recommendedQuote={recommendedQuote}
   averageBid={averageBid}
   lowestAmount={lowestAmount}
-  quoteCount={quoteList.length}
+  quoteCount={quoteCount}
   executive={executive}
 />
 
@@ -739,7 +759,7 @@ recommendedQuote={recommendedQuote}
   recommendedQuote={recommendedQuote}
   averageBid={averageBid}
   lowestAmount={lowestAmount}
-  quoteCount={quoteList.length}
+  quoteCount={quoteCount}
   budget={budget}
   executive={executive}
 />
@@ -748,7 +768,7 @@ recommendedQuote={recommendedQuote}
   isOwner={isOwner}
   commercialEvaluationUnlocked={commercialEvaluationUnlocked}
   recommendedQuote={recommendedQuote}
-  quoteCount={quoteList.length}
+  quoteCount={quoteCount}
   executive={executive}
 />
 </ExecutiveIntelligenceProvider>
@@ -807,6 +827,7 @@ governance workflow.
   canSubmitQuote={canSubmitQuote}
   commercialEvaluationUnlocked={commercialEvaluationUnlocked}
   quoteList={quoteList}
+  submissionCount={quoteCount}
   scoredQuotes={scoredQuotes}
   recommendedQuoteId={recommendedQuote?.id ?? null}
   lowestAmount={lowestAmount}

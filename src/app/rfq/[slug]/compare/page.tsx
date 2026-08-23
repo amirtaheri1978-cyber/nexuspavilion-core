@@ -10,13 +10,17 @@ import {
   EXECUTIVE_PAGE_CLASS,
 } from "@/lib/design-system/executive-contract";
 import { createClient } from "@/lib/supabase/server";
+import {
+  getBlindBiddingMessage,
+  shouldEnforceBlindBidding,
+  type ContractFramework,
+  type ProcurementScope,
+  type SourcingMethod,
+} from "@/lib/procurement/rfq-metadata";
 
 type PageProps = {
 params: Promise<{ slug: string }>;
 };
-
-type SourcingMethod = "open" | "invited" | "sealed_bid";
-type ContractFramework = "project_specific" | "framework";
 
 type RFQ = {
 id: string;
@@ -25,6 +29,7 @@ title: string | null;
 budget: number | string | null;
 deadline: string | null;
 company_id: string | null;
+procurement_scope: ProcurementScope | null;
 sourcing_method: SourcingMethod | null;
 contract_framework: ContractFramework | null;
 };
@@ -92,24 +97,14 @@ if (Number.isNaN(deadlineDate.getTime())) return false;
 return new Date().getTime() > deadlineDate.getTime();
 }
 
-function shouldEnforceBlindBidding(rfq: RFQ) {
-return (
-rfq.sourcing_method === "invited" ||
-rfq.sourcing_method === "sealed_bid" ||
-rfq.contract_framework === "framework"
-);
+function readQuoteSubmissionCount(value: unknown) {
+const count = Number(value);
+
+if (!Number.isFinite(count) || count < 0) {
+return 0;
 }
 
-function getBlindBiddingMessage(rfq: RFQ) {
-if (rfq.sourcing_method === "sealed_bid") {
-return "This sealed bid RFQ is under blind bidding control. Commercial submissions remain locked until the official closing deadline.";
-}
-
-if (rfq.contract_framework === "framework") {
-return "This framework RFQ uses controlled commercial access. Supplier pricing remains hidden until the RFQ deadline has passed.";
-}
-
-return "This invited RFQ uses blind bidding controls. Buyer-side users can monitor participation, but commercial pricing remains locked until closing.";
+return Math.trunc(count);
 }
 
 function getTimelineMonths(timeline: string | null) {
@@ -400,13 +395,26 @@ const deadlinePassed = hasDeadlinePassed(rfq.deadline);
 const blindBiddingEnabled = shouldEnforceBlindBidding(rfq);
 const commercialEvaluationUnlocked = !blindBiddingEnabled || deadlinePassed;
 
+let quoteList: Quote[] = [];
+let quoteCount = 0;
+
+if (commercialEvaluationUnlocked) {
 const { data: quotes } = await supabase
 .from("quotes")
 .select("*")
 .eq("rfq_id", rfq.id)
 .order("amount", { ascending: true });
 
-const quoteList = (quotes ?? []) as Quote[];
+quoteList = (quotes ?? []) as Quote[];
+quoteCount = quoteList.length;
+} else {
+const { data: submissionCount } = await supabase.rpc(
+"count_rfq_quote_submissions",
+{ p_rfq_id: rfq.id },
+);
+
+quoteCount = readQuoteSubmissionCount(submissionCount);
+}
 const supplierCompanyIds = [
   ...new Set(
     quoteList
@@ -673,7 +681,7 @@ return (
             <p className="np-type-body mt-3">{getBlindBiddingMessage(rfq)}</p>
             <div className="mt-5 grid gap-4 sm:grid-cols-3">
               <ExecutiveMetricCard label="RFQ deadline" value={formatDateTime(rfq.deadline)} />
-              <ExecutiveMetricCard label="Submissions" value={`${quoteList.length} received`} />
+              <ExecutiveMetricCard label="Submissions" value={`${quoteCount} received`} />
               <ExecutiveMetricCard
                 label="Commercial opening"
                 value={commercialEvaluationUnlocked ? "Unlocked" : "Locked"}
@@ -866,7 +874,7 @@ return (
           <p className="np-type-eyebrow">Participation</p>
           <h2 className="np-type-h2 mt-3">Commercial data remains sealed</h2>
           <p className="np-type-body mt-3">
-            {quoteList.length} quote{quoteList.length === 1 ? "" : "s"} received.
+            {quoteCount} quote{quoteCount === 1 ? "" : "s"} received.
             Pricing, ranking, and award controls remain locked until the RFQ
             deadline.
           </p>

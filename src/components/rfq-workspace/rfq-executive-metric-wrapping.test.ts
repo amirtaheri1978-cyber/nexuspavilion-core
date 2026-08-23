@@ -108,7 +108,7 @@ describe("Task 24-RFQ-12 executive metric wrapping closeout", () => {
     expect(decisionCenter).toContain("<ExecutiveMetricCard");
     expect(compare).toContain("<ExecutiveMetricCard");
     expect(compare).toContain("value={formatDateTime(rfq.deadline)}");
-    expect(compare).toContain("value={`${quoteList.length} received`}");
+    expect(compare).toContain("value={`${quoteCount} received`}");
     expect(submit).not.toContain("ExecutiveMetricCard");
   });
 

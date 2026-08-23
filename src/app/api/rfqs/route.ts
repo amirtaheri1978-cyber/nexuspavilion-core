@@ -5,6 +5,7 @@ import { rfqCreatedEmail } from "@/lib/email/templates/rfq-created-email";
 import { getActiveMembershipForUserCompany } from "@/lib/auth/membership";
 import { joinPublicSitePath } from "@/lib/ops/public-site-url";
 import { canCreateCompanyRfq } from "@/lib/procurement/procurement-write-authorization";
+import { recordTrustedProcurementActivity } from "@/lib/procurement/record-procurement-activity";
 import { createClient } from "@/lib/supabase/server";
 
 type ProcurementScope =
@@ -229,44 +230,15 @@ return NextResponse.json(
 );
 }
 
-const procurementMetadata = {
-procurement_scope: procurementScope,
-procurement_scope_label: getProcurementScopeLabel(procurementScope),
-sourcing_method: sourcingMethod,
-sourcing_method_label: getSourcingMethodLabel(sourcingMethod),
-contract_framework: contractFramework,
-contract_framework_label: getContractFrameworkLabel(contractFramework),
-bid_model: bidModel,
-deadline_timezone: deadlineTimezone,
-rfi_deadline_timezone: rfiDeadlineTimezone,
-};
-
-await supabase.from("audit_logs").insert({
-action: "RFQ_CREATED",
-entity_type: "rfq",
-entity_id: rfq.id,
-user_id: user.id,
-company_id: profile.company_id,
-metadata: {
-title: rfq.title,
-budget: rfq.budget,
-category: rfq.category,
-location: rfq.location,
-slug: rfq.slug,
-deadline: rfq.deadline,
-...procurementMetadata,
-},
-});
-
-await supabase.from("notifications").insert({
-title: "RFQ Created",
-message: `${rfq.title} procurement opportunity has been published as a ${getProcurementScopeLabel(
-procurementScope
-)}.`,
-type: "rfq",
-is_read: false,
-company_id: profile.company_id,
-});
+await recordTrustedProcurementActivity(
+  supabase,
+  "rfq_created",
+  rfq.id,
+  {
+    userId: user.id,
+    companyId: profile.company_id,
+  },
+);
 
 try {
 const rfqUrl = joinPublicSitePath(`/rfq/${rfq.slug}`);

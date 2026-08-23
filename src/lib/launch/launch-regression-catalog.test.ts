@@ -44,5 +44,11 @@ describe("Task 25 launch-regression catalog", () => {
     expect(LAUNCH_REGRESSION_TEST_FILES).toContain(
       "src/lib/procurement/award-rfq-quote-integrity-migration.test.ts",
     );
+    expect(LAUNCH_REGRESSION_TEST_FILES).toContain(
+      "src/lib/company-scoped-audit-notification-access-migration.test.ts",
+    );
+    expect(LAUNCH_REGRESSION_TEST_FILES).toContain(
+      "src/lib/launch/rfq-activity-audit-write-contract.test.ts",
+    );
   });
 });
