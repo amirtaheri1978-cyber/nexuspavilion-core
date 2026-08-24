@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 
 import { sendEmail } from "@/lib/email/send-email";
 import { awardNotificationEmail } from "@/lib/email/templates/award-notification-email";
-import { getActiveMembershipForUserCompany } from "@/lib/auth/membership";
 import { joinPublicSitePath } from "@/lib/ops/public-site-url";
 import { createClient } from "@/lib/supabase/server";
 
@@ -141,72 +140,6 @@ export async function POST(request: Request) {
       );
     }
 
-    let membership = null;
-
-    try {
-      membership = await getActiveMembershipForUserCompany(
-        supabase,
-        user.id,
-        updatedRfq.company_id,
-      );
-    } catch (membershipError) {
-      console.error(
-        "Award contract membership lookup failed.",
-        membershipError,
-      );
-    }
-
-    const { error: notificationError } = await supabase
-      .from("notifications")
-      .insert({
-        title: "Contract Awarded",
-        message: `${
-          updatedRfq.title ?? "Project"
-        } procurement contract has been awarded at ${formatCurrency(
-          awardedQuote.amount,
-        )}.`,
-        type: "award",
-        is_read: false,
-        company_id: updatedRfq.company_id,
-      });
-
-    if (notificationError) {
-      console.error(
-        "Award notification creation failed:",
-        notificationError,
-      );
-    }
-
-    const { error: auditError } = await supabase
-      .from("audit_logs")
-      .insert({
-        action: "CONTRACT_AWARDED",
-        entity_type: "quote",
-        entity_id: quoteId,
-        user_id: user.id,
-        company_id: updatedRfq.company_id,
-        metadata: {
-          rfq_id: updatedRfq.id,
-          rfq_slug: updatedRfq.slug,
-          rfq_title: updatedRfq.title,
-          awarded_amount: awardedQuote.amount,
-          awarded_quote_id: quoteId,
-          awarded_company_id: awardedQuote.company_id,
-          awarded_user_id: awardedQuote.user_id,
-          awarded_by_workspace_role: membership?.workspaceRole ?? null,
-          awarded_by_procurement_function:
-            membership?.procurementFunction ?? null,
-          awarded_at: awardedQuote.awarded_at,
-        },
-      });
-
-    if (auditError) {
-      console.error(
-        "Contract award audit logging failed:",
-        auditError,
-      );
-    }
-
     try {
       const awardUrl = joinPublicSitePath(`/rfq/${updatedRfq.slug}`);
       if (user.email && awardUrl) {
@@ -237,9 +170,12 @@ export async function POST(request: Request) {
       rfq: updatedRfq,
       redirectTo: `/rfq/${updatedRfq.slug}`,
       warnings: {
-        notification:
-          notificationError?.message || null,
-        audit: auditError?.message || null,
+        notification: null,
+        audit: null,
+        ownerNotification: null,
+        supplierNotification: null,
+        ownerAudit: null,
+        supplierAudit: null,
       },
     });
   } catch (error) {

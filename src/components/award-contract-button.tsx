@@ -26,6 +26,10 @@ type AwardContractResponse = {
   warnings?: {
     notification?: string | null;
     audit?: string | null;
+    ownerNotification?: string | null;
+    supplierNotification?: string | null;
+    ownerAudit?: string | null;
+    supplierAudit?: string | null;
   };
 };
 

@@ -99,6 +99,7 @@ return `$${amount.toLocaleString()}`;
 
 function getActivityLabel(action: string | null) {
 if (action === "CONTRACT_AWARDED") return "Contract Awarded";
+if (action === "CONTRACT_AWARD_RECEIVED") return "Award Received";
 if (action === "QUOTE_SUBMITTED") return "Quote Submitted";
 if (action === "RFQ_CREATED") return "RFQ Created";
 if (action === "INVITATION_CREATED") return "Invitation Created";
@@ -111,6 +112,7 @@ return action || "Activity";
 
 function getActivityIcon(action: string | null) {
 if (action === "CONTRACT_AWARDED") return "🏆";
+if (action === "CONTRACT_AWARD_RECEIVED") return "🏆";
 if (action === "QUOTE_SUBMITTED") return "💰";
 if (action === "RFQ_CREATED") return "📋";
 if (action === "INVITATION_CREATED") return "📨";
@@ -129,6 +131,13 @@ const title = metadata.rfq_title || "Procurement contract";
 const amount = Number(metadata.awarded_amount || 0);
 
 return `${title} awarded at $${amount.toLocaleString()}.`;
+}
+
+if (log.action === "CONTRACT_AWARD_RECEIVED") {
+const title = metadata.rfq_title || "Procurement contract";
+const amount = Number(metadata.awarded_amount || 0);
+
+return `${title} award received at $${amount.toLocaleString()}.`;
 }
 
 if (log.action === "QUOTE_SUBMITTED") {

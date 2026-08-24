@@ -300,6 +300,10 @@ function getActivityLabel(action: string | null) {
     return "Contract Awarded";
   }
 
+  if (action === "CONTRACT_AWARD_RECEIVED") {
+    return "Award Received";
+  }
+
   return action || "Workspace Activity";
 }
 
