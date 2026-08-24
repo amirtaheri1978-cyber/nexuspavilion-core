@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { rfqCreatedEmail } from "@/lib/email/templates/rfq-created-email";
 import { sendEmail } from "@/lib/email/send-email";
 import { logCompanyActivity } from "@/lib/activity/log-company-activity";
+import { resolveRfqDeadlineForStorage } from "@/lib/datetime/local-date-time-to-utc";
 import { createClient } from "@/lib/supabase/server";
 
 function createSlug(title: string) {
@@ -64,6 +65,20 @@ return NextResponse.json(
 );
 }
 
+let storedDeadline: { deadline: string; deadline_timezone: string };
+
+try {
+storedDeadline = resolveRfqDeadlineForStorage({
+deadline: body.deadline,
+deadline_timezone: body.deadline_timezone,
+});
+} catch {
+return NextResponse.json(
+{ error: "Submission closing date, time, and timezone are required." },
+{ status: 400 }
+);
+}
+
 const slug = createSlug(title);
 
 const { data: rfq, error } = await supabase
@@ -75,7 +90,8 @@ description: body.description,
 category: body.category,
 location: body.location,
 budget: body.budget,
-deadline: body.deadline,
+deadline: storedDeadline.deadline,
+deadline_timezone: storedDeadline.deadline_timezone,
 status: "open",
 company_id: profile.company_id,
 user_id: user.id,

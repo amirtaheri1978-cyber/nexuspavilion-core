@@ -85,6 +85,7 @@ category: formData.category.trim(),
 location: formData.location.trim(),
 budget: formData.budget.trim(),
 deadline: formData.deadline,
+deadline_timezone: "America/Toronto",
 }),
 });
 
@@ -233,7 +234,7 @@ className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text
 
 <FieldLabel label="Deadline" required>
 <input
-type="date"
+type="datetime-local"
 required
 value={formData.deadline}
 onChange={(event) =>
