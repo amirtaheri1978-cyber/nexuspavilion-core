@@ -85,27 +85,33 @@ const { data: profile } = user
 
 const companyId = profile?.company_id;
 
-const { data: rfqs } = companyId
-? await supabase
-.from("rfqs")
-.select("*")
-.eq("company_id", companyId)
-.order("created_at", { ascending: false })
-: { data: [] };
-
-const rfqList = (rfqs ?? []) as RFQ[];
-const rfqIds = rfqList.map((rfq) => rfq.id);
-
-const { data: quotes } =
-rfqIds.length > 0
-? await supabase
-.from("quotes")
-.select("*")
-.in("rfq_id", rfqIds)
-.order("created_at", { ascending: false })
-: { data: [] };
+const { data: quotes } = companyId
+  ? await supabase
+      .from("quotes")
+      .select("*")
+      .eq("company_id", companyId)
+      .order("created_at", { ascending: false })
+  : { data: [] };
 
 const quoteList = (quotes ?? []) as Quote[];
+
+const rfqIds = [...new Set(quoteList.map((quote) => quote.rfq_id))];
+
+const { data: rfqs } =
+  rfqIds.length > 0
+    ? await supabase
+        .from("rfqs")
+        .select("*")
+        .in("id", rfqIds)
+        .order("created_at", { ascending: false })
+
+    : { data: [] };
+   
+
+const rfqList = (rfqs ?? []) as RFQ[];
+
+
+
 
 const submittedQuotes = quoteList.length;
 const awardedQuotes = quoteList.filter((quote) => quote.decision === "awarded");
