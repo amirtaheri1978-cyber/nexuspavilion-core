@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { sendEmail } from "@/lib/email/send-email";
 import { rfqCreatedEmail } from "@/lib/email/templates/rfq-created-email";
 import { getActiveMembershipForUserCompany } from "@/lib/auth/membership";
+import { resolveRfqDeadlineForStorage } from "@/lib/datetime/local-date-time-to-utc";
 import { joinPublicSitePath } from "@/lib/ops/public-site-url";
 import { canCreateCompanyRfq } from "@/lib/procurement/procurement-write-authorization";
 import { recordTrustedProcurementActivity } from "@/lib/procurement/record-procurement-activity";
@@ -152,8 +153,39 @@ const description = normalizeText(body.description);
 const category = normalizeText(body.category);
 const location = normalizeText(body.location);
 const budget = normalizeText(body.budget);
-const deadline = normalizeText(body.deadline);
-const deadlineTimezone = normalizeTimezone(body.deadline_timezone);
+const rawDeadline = normalizeText(body.deadline);
+
+if (!rawDeadline) {
+return NextResponse.json(
+{ error: "Submission closing date and time are required." },
+{ status: 400 }
+);
+}
+
+let resolvedDeadline: {
+deadline: string;
+deadline_timezone: string;
+};
+
+try {
+resolvedDeadline = resolveRfqDeadlineForStorage({
+deadline: rawDeadline,
+deadline_timezone: body.deadline_timezone,
+});
+} catch (deadlineError) {
+return NextResponse.json(
+{
+error:
+deadlineError instanceof Error
+? deadlineError.message
+: "Invalid submission deadline or timezone.",
+},
+{ status: 400 }
+);
+}
+
+const deadline = resolvedDeadline.deadline;
+const deadlineTimezone = resolvedDeadline.deadline_timezone;
 
 const projectName = normalizeText(body.project_name);
 const ownerClient = normalizeText(body.owner_client);
@@ -173,13 +205,6 @@ const bidModel = normalizeBidModel(body.bid_model);
 if (!title) {
 return NextResponse.json(
 { error: "RFQ title is required." },
-{ status: 400 }
-);
-}
-
-if (!deadline) {
-return NextResponse.json(
-{ error: "Submission closing date and time are required." },
 { status: 400 }
 );
 }
