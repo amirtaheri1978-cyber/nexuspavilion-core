@@ -35,6 +35,7 @@ export const LAUNCH_REGRESSION_TEST_FILES = [
   "src/lib/auth/signup-confirmation-continuation.test.ts",
   "src/lib/auth/signup-error.test.ts",
   "src/lib/auth/workspace-bootstrap.test.ts",
+  "src/lib/bootstrap-vendor-supplier-founder-capability-migration.test.ts",
   "src/lib/client-table-maintain-postgres-default-privileges-migration.test.ts",
   "src/lib/client-table-truncate-trigger-references-reconciliation-migration.test.ts",
   "src/lib/company-directory-public-columns-migration.test.ts",
