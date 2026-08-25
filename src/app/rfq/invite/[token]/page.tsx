@@ -17,6 +17,7 @@ type InvitationContext = {
   rfq_location: string | null;
   rfq_budget: string | null;
   rfq_deadline: string;
+  rfq_deadline_timezone: string | null;
 };
 
 export default async function InvitePage({

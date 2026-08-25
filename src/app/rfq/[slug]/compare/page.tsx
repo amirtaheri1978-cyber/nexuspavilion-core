@@ -9,6 +9,7 @@ import {
   EXECUTIVE_FOCUS_CYAN,
   EXECUTIVE_PAGE_CLASS,
 } from "@/lib/design-system/executive-contract";
+import { formatRfqDeadlineForDisplay as formatDateTime } from "@/lib/datetime/format-rfq-deadline-display";
 import { createClient } from "@/lib/supabase/server";
 import {
   getBlindBiddingMessage,
@@ -28,6 +29,7 @@ slug: string;
 title: string | null;
 budget: number | string | null;
 deadline: string | null;
+deadline_timezone?: string | null;
 company_id: string | null;
 procurement_scope: ProcurementScope | null;
 sourcing_method: SourcingMethod | null;
@@ -69,22 +71,6 @@ const amount = Number(value);
 if (!Number.isFinite(amount)) return "$0";
 
 return `$${amount.toLocaleString()}`;
-}
-
-function formatDateTime(value: string | null | undefined) {
-if (!value) return "N/A";
-
-const date = new Date(value);
-
-if (Number.isNaN(date.getTime())) return value;
-
-return date.toLocaleString("en-US", {
-year: "numeric",
-month: "long",
-day: "numeric",
-hour: "2-digit",
-minute: "2-digit",
-});
 }
 
 function hasDeadlinePassed(deadline: string | null | undefined) {
@@ -680,7 +666,7 @@ return (
             </ExecutiveBadge>
             <p className="np-type-body mt-3">{getBlindBiddingMessage(rfq)}</p>
             <div className="mt-5 grid gap-4 sm:grid-cols-3">
-              <ExecutiveMetricCard label="RFQ deadline" value={formatDateTime(rfq.deadline)} />
+              <ExecutiveMetricCard label="RFQ deadline" value={formatDateTime(rfq.deadline, rfq.deadline_timezone)} />
               <ExecutiveMetricCard label="Submissions" value={`${quoteCount} received`} />
               <ExecutiveMetricCard
                 label="Commercial opening"

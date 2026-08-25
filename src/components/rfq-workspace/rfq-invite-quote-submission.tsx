@@ -7,6 +7,7 @@ import {
   EXECUTIVE_FOCUS_CYAN,
   EXECUTIVE_FOCUS_GOLD,
 } from "@/lib/design-system/executive-contract";
+import { formatRfqDeadlineForDisplay } from "@/lib/datetime/format-rfq-deadline-display";
 
 export type RfqInviteQuoteContext = {
   invite_email: string;
@@ -18,6 +19,7 @@ export type RfqInviteQuoteContext = {
   rfq_location: string | null;
   rfq_budget: string | null;
   rfq_deadline: string;
+  rfq_deadline_timezone: string | null;
 };
 
 type RfqInviteQuoteSubmissionProps = {
@@ -102,7 +104,13 @@ export function RfqInviteQuoteSubmission({
           <InviteInfo title="Category" value={invitation.rfq_category} />
           <InviteInfo title="Location" value={invitation.rfq_location} />
           <InviteInfo title="Budget" value={invitation.rfq_budget} />
-          <InviteInfo title="Deadline" value={invitation.rfq_deadline} />
+          <InviteInfo
+            title="Deadline"
+            value={formatRfqDeadlineForDisplay(
+              invitation.rfq_deadline,
+              invitation.rfq_deadline_timezone
+            )}
+          />
         </dl>
       </section>
 
