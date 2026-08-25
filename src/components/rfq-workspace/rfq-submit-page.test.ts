@@ -9,7 +9,7 @@ function readSource(relativePath: string) {
   );
 }
 
-const submit = readSource("src/app/rfq/[slug]/submit/page.tsx");
+const submit = readSource("src/components/rfq-workspace/rfq-submit-workspace.tsx");
 const visualQa = readSource("src/app/dev/rfq-visual-qa/page.tsx");
 const documents = readSource(
   "src/components/rfq-workspace/rfq-document-workspace.tsx",

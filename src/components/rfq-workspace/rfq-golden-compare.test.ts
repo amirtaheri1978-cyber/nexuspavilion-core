@@ -7,7 +7,7 @@ function read(relativePath: string) {
 }
 
 const compare = read("src/app/rfq/[slug]/compare/page.tsx");
-const submit = read("src/app/rfq/[slug]/submit/page.tsx");
+const submit = read("src/components/rfq-workspace/rfq-submit-workspace.tsx");
 const detail = read("src/app/rfq/[slug]/page.tsx");
 const award = read("src/components/award-contract-button.tsx");
 const dialog = read("src/components/executive/executive-confirm-dialog.tsx");

@@ -35,7 +35,7 @@ const launchCritical = {
   rfqList: readSource("src/app/rfq/page.tsx"),
   rfqNew: readSource("src/app/rfq/new/page.tsx"),
   rfqCompare: readSource("src/app/rfq/[slug]/compare/page.tsx"),
-  rfqSubmit: readSource("src/app/rfq/[slug]/submit/page.tsx"),
+  rfqSubmit: readSource("src/components/rfq-workspace/rfq-submit-workspace.tsx"),
   recover: readSource("src/components/recover-ownership-button.tsx"),
   actionCard: readSource("src/components/executive/executive-action-card.tsx"),
   inviteForm: readSource("src/components/invite-user-form.tsx"),

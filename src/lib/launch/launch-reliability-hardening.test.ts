@@ -13,7 +13,7 @@ function readSource(relativePath: string) {
 
 const detail = readSource("src/app/rfq/[slug]/page.tsx");
 const dashboard = readSource("src/app/dashboard/page.tsx");
-const submit = readSource("src/app/rfq/[slug]/submit/page.tsx");
+const submit = readSource("src/components/rfq-workspace/rfq-submit-workspace.tsx");
 const award = readSource("src/components/award-contract-button.tsx");
 const invite = readSource("src/components/invite-vendor-form.tsx");
 const addenda = readSource("src/components/rfq-addenda-manager.tsx");
