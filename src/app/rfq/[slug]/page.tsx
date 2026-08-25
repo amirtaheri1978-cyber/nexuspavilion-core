@@ -18,6 +18,10 @@ import {
   resolveRfqParticipantRole,
 } from "@/lib/procurement/rfq-access-contract";
 import {
+  canExposeRfqBuyerExecutiveIntelligence,
+  selectRfqDetailCommandMetrics,
+} from "@/lib/procurement/rfq-detail-intelligence-boundary";
+import {
   getExecutiveRiskMatrix,
   getHealthLabel,
   getHealthScore,
@@ -287,12 +291,22 @@ const {
   highestAmount,
   averageBid,
   potentialSavings,
-} = buildCommercialIntelligence({
+} = isOwner
+  ? buildCommercialIntelligence({
   quoteList,
   budget,
   commercialEvaluationUnlocked,
   isOwner,
-});
+})
+  : {
+      scoredQuotes: [],
+      recommendedQuote: null,
+      awardedQuote: null,
+      lowestAmount: null,
+      highestAmount: null,
+      averageBid: 0,
+      potentialSavings: 0,
+    };
 
 const supplierCompanyIds =
   getRfqSupplierCompanyIds(scoredQuotes);
@@ -371,19 +385,109 @@ hasMyQuote,
 hasRecommendedQuote: Boolean(recommendedQuote),
 });
 
+const canViewBuyerExecutiveIntelligence =
+  canExposeRfqBuyerExecutiveIntelligence(capabilities);
+
 const canSubmitQuote = capabilities.canSubmitQuote;
 
-const healthScore = getHealthScore({
-isOpen,
-deadlinePassed,
-quoteCount,
-documentCount: rfqAttachments.length,
-addendaCount: rfqAddenda.length,
-hasBudget: budget > 0,
-hasDescription: Boolean(rfq.description),
-blindBiddingEnabled,
-commercialEvaluationUnlocked,
-});
+let healthScore = 0;
+let healthBreakdown: ReturnType<typeof getProcurementHealthBreakdown> | null =
+  null;
+let executiveRiskMatrix: ReturnType<typeof getExecutiveRiskMatrix> | null =
+  null;
+let predictedTimeline: ReturnType<typeof getPredictedTimeline> | null = null;
+let copilotSuggestions: ReturnType<typeof getCopilotSuggestions> | null = null;
+let executiveOpportunities: ReturnType<
+  typeof buildRfqExecutiveOpportunityIntelligence
+>["opportunities"] | null = null;
+let executiveOpportunityIntelligence: ReturnType<
+  typeof buildRfqExecutiveOpportunityIntelligence
+>["intelligence"] | null = null;
+let executive: ReturnType<typeof buildExecutiveIntelligence> | null = null;
+
+if (canViewBuyerExecutiveIntelligence) {
+  healthScore = getHealthScore({
+    isOpen,
+    deadlinePassed,
+    quoteCount,
+    documentCount: rfqAttachments.length,
+    addendaCount: rfqAddenda.length,
+    hasBudget: budget > 0,
+    hasDescription: Boolean(rfq.description),
+    blindBiddingEnabled,
+    commercialEvaluationUnlocked,
+  });
+
+  healthBreakdown = getProcurementHealthBreakdown({
+    quoteCount,
+    documentCount: rfqAttachments.length,
+    addendaCount: rfqAddenda.length,
+    hasBudget: budget > 0,
+    hasDescription: Boolean(rfq.description),
+    blindBiddingEnabled,
+    commercialEvaluationUnlocked,
+  });
+
+  executiveRiskMatrix = getExecutiveRiskMatrix({
+    isOpen,
+    deadlinePassed,
+    quoteCount,
+    documentCount: rfqAttachments.length,
+    addendaCount: rfqAddenda.length,
+    commercialEvaluationUnlocked,
+  });
+
+  predictedTimeline = getPredictedTimeline({
+    deadlinePassed,
+    daysUntilDeadline,
+    commercialEvaluationUnlocked,
+    recommendedQuote,
+  });
+
+  copilotSuggestions = getCopilotSuggestions({
+    isOwner,
+    isOpen,
+    quoteCount,
+    documentCount: rfqAttachments.length,
+    addendaCount: rfqAddenda.length,
+    commercialEvaluationUnlocked,
+    recommendedQuote,
+    potentialSavings,
+  });
+
+  const opportunityIntelligence = buildRfqExecutiveOpportunityIntelligence({
+    isOwner,
+    potentialSavings,
+    commercialEvaluationUnlocked,
+    quoteCount,
+    documentCount: rfqAttachments.length,
+    recommendedAwardConfidence: recommendedQuote?.awardConfidence ?? null,
+  });
+  executiveOpportunities = opportunityIntelligence.opportunities;
+  executiveOpportunityIntelligence = opportunityIntelligence.intelligence;
+
+  executive = buildExecutiveIntelligence({
+    rfqSlug: rfq.slug,
+    isOwner,
+    isOpen,
+    commercialEvaluationUnlocked,
+    healthScore,
+    quoteCount,
+    documentCount: rfqAttachments.length,
+    addendaCount: rfqAddenda.length,
+    averageBid,
+    lowestAmount,
+    budget,
+    potentialSavings,
+    recommendedQuote,
+    awardedQuote: awardedQuote
+      ? {
+          amountNumber: awardedQuote.amountNumber,
+        }
+      : null,
+    supplierRecommendationInput,
+  });
+}
 
 const executiveBrief = getExecutiveBrief({
 isOwner,
@@ -407,77 +511,6 @@ documentCount: rfqAttachments.length,
 addendaCount: rfqAddenda.length,
 commercialEvaluationUnlocked,
 recommendedQuote,
-});
-
-const healthBreakdown = getProcurementHealthBreakdown({
-quoteCount,
-documentCount: rfqAttachments.length,
-addendaCount: rfqAddenda.length,
-hasBudget: budget > 0,
-hasDescription: Boolean(rfq.description),
-blindBiddingEnabled,
-commercialEvaluationUnlocked,
-});
-
-const executiveRiskMatrix = getExecutiveRiskMatrix({
-isOpen,
-deadlinePassed,
-quoteCount,
-documentCount: rfqAttachments.length,
-addendaCount: rfqAddenda.length,
-commercialEvaluationUnlocked,
-});
-
-const predictedTimeline = getPredictedTimeline({
-deadlinePassed,
-daysUntilDeadline,
-commercialEvaluationUnlocked,
-recommendedQuote,
-});
-
-const copilotSuggestions = getCopilotSuggestions({
-isOwner,
-isOpen,
-quoteCount,
-documentCount: rfqAttachments.length,
-addendaCount: rfqAddenda.length,
-commercialEvaluationUnlocked,
-recommendedQuote,
-potentialSavings,
-});
-
-const {
-  opportunities: executiveOpportunities,
-  intelligence: executiveOpportunityIntelligence,
-} = buildRfqExecutiveOpportunityIntelligence({
-  isOwner,
-  potentialSavings,
-  commercialEvaluationUnlocked,
-  quoteCount,
-  documentCount: rfqAttachments.length,
-  recommendedAwardConfidence: recommendedQuote?.awardConfidence ?? null,
-});
-
-const executive = buildExecutiveIntelligence({
-rfqSlug: rfq.slug,
-isOwner,
-isOpen,
-commercialEvaluationUnlocked,
-healthScore,
-quoteCount,
-documentCount: rfqAttachments.length,
-addendaCount: rfqAddenda.length,
-averageBid,
-lowestAmount,
-budget,
-potentialSavings,
-recommendedQuote,
-awardedQuote: awardedQuote
-? {
-amountNumber: awardedQuote.amountNumber,
-}
-: null,
-supplierRecommendationInput,
 });
 
 return (
@@ -507,44 +540,49 @@ return (
   ]}
   title={rfq.title || "Untitled RFQ"}
   description={rfq.description || "No description provided."}
-  commandMetrics={[
-    {
-      title: "Procurement Health",
-      value: `${healthScore}/100`,
-      detail: getHealthLabel(healthScore),
-      accentClassName: getHealthTone(healthScore),
-    },
-    {
-      title: "Deadline",
-      value: deadlinePassed
-        ? "Closed"
-        : daysUntilDeadline === null
-          ? "N/A"
-          : daysUntilDeadline <= 0
-            ? "Due Today"
-            : `${daysUntilDeadline} Days`,
-      detail: formatDateTime(rfq.deadline, rfq.deadline_timezone),
-      accentClassName: "text-cyan-300",
-    },
-    {
-    title: isOwner ? "Commercial Status" : "Participation Status",
-      value: isOwner
-  ? commercialEvaluationUnlocked
-    ? "Commercial Evaluation"
-    : "Commercially Locked"
-  : hasMyQuote
-    ? "Quote Submitted"
-    : canSubmitQuote
-      ? "Ready for Submission"
-      : "Awaiting Submission",
-      detail: isOwner
-  ? commercialEvaluationUnlocked
-    ? "Comparative evaluation available"
-    : "Commercial submissions protected"
-  : "Organization-level confidential access",
-      accentClassName: "text-[#C8A646]",
-    },
-  ]}
+  commandMetrics={selectRfqDetailCommandMetrics({
+    canViewExecutiveIntelligence: canViewBuyerExecutiveIntelligence,
+    procurementHealthMetric: canViewBuyerExecutiveIntelligence
+      ? {
+          title: "Procurement Health",
+          value: `${healthScore}/100`,
+          detail: getHealthLabel(healthScore),
+          accentClassName: getHealthTone(healthScore),
+        }
+      : null,
+    sharedMetrics: [
+      {
+        title: "Deadline",
+        value: deadlinePassed
+          ? "Closed"
+          : daysUntilDeadline === null
+            ? "N/A"
+            : daysUntilDeadline <= 0
+              ? "Due Today"
+              : `${daysUntilDeadline} Days`,
+        detail: formatDateTime(rfq.deadline, rfq.deadline_timezone),
+        accentClassName: "text-cyan-300",
+      },
+      {
+        title: isOwner ? "Commercial Status" : "Participation Status",
+        value: isOwner
+          ? commercialEvaluationUnlocked
+            ? "Commercial Evaluation"
+            : "Commercially Locked"
+          : hasMyQuote
+            ? "Quote Submitted"
+            : canSubmitQuote
+              ? "Ready for Submission"
+              : "Awaiting Submission",
+        detail: isOwner
+          ? commercialEvaluationUnlocked
+            ? "Comparative evaluation available"
+            : "Commercial submissions protected"
+          : "Organization-level confidential access",
+        accentClassName: "text-[#C8A646]",
+      },
+    ],
+  })}
   executiveBrief={executiveBrief}
   nextBestAction={nextBestAction}
   award={
@@ -587,6 +625,11 @@ return (
     },
   ]}
 />
+{canViewBuyerExecutiveIntelligence &&
+healthBreakdown &&
+executiveRiskMatrix &&
+predictedTimeline &&
+copilotSuggestions ? (
 <section
   className="np-region-major grid min-w-0 gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,0.85fr)]"
   aria-label="Procurement health and executive guidance"
@@ -605,6 +648,7 @@ return (
   />
 </div>
 </section>
+) : null}
 
 <div className="np-region-major min-w-0">
   <RFQProcurementContext
@@ -615,7 +659,9 @@ return (
   />
 </div>
 
-{isOwner ? (
+{canViewBuyerExecutiveIntelligence &&
+executiveOpportunities &&
+executiveOpportunityIntelligence ? (
   <div className="np-region-major min-w-0">
     <ExecutiveOpportunityRanking
       opportunities={executiveOpportunities}
@@ -652,9 +698,12 @@ return (
   />
 </section>
 
+{canViewBuyerExecutiveIntelligence ? (
+<>
 {capabilities.canViewExecutiveIntelligence ? (
 <RFQAIAdvisor rfqId={rfq.id} initialReview={latestAiReview} />
 ) : null}
+{executive ? (
 <ExecutiveIntelligenceProvider executive={executive}>
 
 <ExecutiveDecisionCenter
@@ -739,6 +788,9 @@ recommendedQuote={recommendedQuote}
   executive={executive}
 />
 </ExecutiveIntelligenceProvider>
+) : null}
+</>
+) : null}
 
 {capabilities.canViewRecommendedAwardPath && recommendedQuote ? (
   <RFQRecommendedAwardPath
