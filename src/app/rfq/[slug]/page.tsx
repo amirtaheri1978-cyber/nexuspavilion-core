@@ -24,6 +24,7 @@ import {
   getHealthTone,
   getProcurementHealthBreakdown,
 } from "@/lib/procurement/rfq-procurement-health";
+import { formatRfqDeadlineForDisplay as formatDateTime } from "@/lib/datetime/format-rfq-deadline-display";
 
 import {
   getCopilotSuggestions,
@@ -112,40 +113,6 @@ return "$0";
 }
 return `$${amount.toLocaleString()}`;
 }
-function formatDateTime(
-value: string | null | undefined,
-timeZone?: string | null
-) {
-if (!value) return "N/A";
-
-const date = new Date(value);
-
-if (Number.isNaN(date.getTime())) {
-return value;
-}
-
-const resolvedTimeZone = timeZone || "America/Toronto";
-
-try {
-return `${date.toLocaleString("en-US", {
-year: "numeric",
-month: "long",
-day: "numeric",
-hour: "2-digit",
-minute: "2-digit",
-timeZone: resolvedTimeZone,
-})} ${resolvedTimeZone}`;
-} catch {
-return date.toLocaleString("en-US", {
-year: "numeric",
-month: "long",
-day: "numeric",
-hour: "2-digit",
-minute: "2-digit",
-});
-}
-}
-
 function hasDeadlinePassed(deadline: string | null | undefined) {
 if (!deadline) return false;
 

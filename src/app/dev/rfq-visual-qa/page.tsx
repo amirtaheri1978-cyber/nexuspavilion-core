@@ -939,7 +939,8 @@ export default function RfqVisualQaPage() {
               rfq_category: "Industrial refrigeration",
               rfq_location: "North Harbor bonded warehouse corridor",
               rfq_budget: "$1,280,000",
-              rfq_deadline: "August 21, 2026, 06:00 PM",
+              rfq_deadline: "2026-08-21T22:00:00.000Z",
+              rfq_deadline_timezone: "America/Toronto",
             }}
           />
         </div>
