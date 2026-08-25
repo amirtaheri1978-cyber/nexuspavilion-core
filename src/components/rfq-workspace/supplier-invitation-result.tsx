@@ -1,18 +1,77 @@
+type InviteEmailResult = {
+  sent?: boolean;
+  skipped?: boolean;
+  id?: string | null;
+  error?: string | null;
+};
+
 type SupplierInvitationResultProps = {
   error: string;
   successMessage: string;
+  emailResult?: InviteEmailResult | null;
   inviteUrl: string;
   copyMessage: string;
   onCopyInviteLink: () => void;
 };
 
+function getEmailDeliveryCopy(emailResult: InviteEmailResult | null | undefined) {
+  if (!emailResult) {
+    return {
+      title: "Invitation Created",
+      message:
+        "The supplier invitation record was created. Confirm whether the invitation email was sent before treating delivery as complete.",
+      tone: "warning" as const,
+    };
+  }
+
+  if (emailResult.sent) {
+    return {
+      title: "Invitation Email Sent",
+      message:
+        "The supplier invitation email was sent. The copy link remains available as a fallback.",
+      tone: "success" as const,
+    };
+  }
+
+  if (emailResult.skipped) {
+    return {
+      title: "Invitation Created, Email Not Sent",
+      message: emailResult.error
+        ? `The invitation record exists, but email delivery was skipped: ${emailResult.error}`
+        : "The invitation record exists, but the invitation email was not sent. Use the copy link as a fallback.",
+      tone: "warning" as const,
+    };
+  }
+
+  return {
+    title: "Invitation Created, Email Failed",
+    message: emailResult.error
+      ? `The invitation record exists, but email delivery failed: ${emailResult.error}`
+      : "The invitation record exists, but the invitation email was not sent. Use the copy link as a fallback.",
+    tone: "warning" as const,
+  };
+}
+
 export function SupplierInvitationResult({
   error,
   successMessage,
+  emailResult = null,
   inviteUrl,
   copyMessage,
   onCopyInviteLink,
 }: SupplierInvitationResultProps) {
+  const delivery = successMessage
+    ? getEmailDeliveryCopy(emailResult)
+    : null;
+  const deliveryClassName =
+    delivery?.tone === "success"
+      ? "border-emerald-300/15 bg-emerald-400/[0.08]"
+      : "border-amber-300/20 bg-amber-400/[0.08]";
+  const deliveryLabelClassName =
+    delivery?.tone === "success" ? "text-emerald-300" : "text-amber-200";
+  const deliveryBodyClassName =
+    delivery?.tone === "success" ? "text-emerald-100" : "text-amber-100";
+
   return (
     <div className="min-w-0" data-rfq-supplier-result="true">
       {error ? (
@@ -31,18 +90,37 @@ export function SupplierInvitationResult({
         </div>
       ) : null}
 
-      {successMessage ? (
+      {delivery ? (
         <div
-          className="mt-5 min-w-0 rounded-executive border border-emerald-300/15 bg-emerald-400/[0.08] px-5 py-4"
+          className={`mt-5 min-w-0 rounded-executive border px-5 py-4 ${deliveryClassName}`}
           role="status"
           aria-live="polite"
+          data-rfq-invitation-email-status={
+            emailResult?.sent
+              ? "sent"
+              : emailResult?.skipped
+                ? "skipped"
+                : emailResult
+                  ? "failed"
+                  : "unknown"
+          }
         >
-          <p className="text-xs font-black uppercase tracking-[0.2em] text-emerald-300">
-            Invitation Created
+          <p
+            className={`text-xs font-black uppercase tracking-[0.2em] ${deliveryLabelClassName}`}
+          >
+            {delivery.title}
           </p>
 
-          <p className="mt-2 min-w-0 text-pretty text-sm font-bold leading-6 text-emerald-100">
+          <p
+            className={`mt-2 min-w-0 text-pretty text-sm font-bold leading-6 ${deliveryBodyClassName}`}
+          >
             {successMessage}
+          </p>
+
+          <p
+            className={`mt-2 min-w-0 text-pretty text-sm font-bold leading-6 ${deliveryBodyClassName}`}
+          >
+            {delivery.message}
           </p>
         </div>
       ) : null}

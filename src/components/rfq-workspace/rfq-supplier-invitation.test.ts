@@ -72,6 +72,10 @@ describe("Task 24-RFQ-09 supplier invitation density", () => {
     expect(delivery).not.toContain("rounded-[30px]");
     expect(delivery).not.toContain("md:grid-cols-[1fr_auto]");
     expect(result).toContain('data-rfq-supplier-result="true"');
+    expect(result).toContain("data-rfq-invitation-email-status");
+    expect(result).toContain("Invitation Email Sent");
+    expect(result).toContain("Invitation Created, Email Not Sent");
+    expect(result).toContain("Invitation Created, Email Failed");
     expect(result).not.toContain("rounded-[30px]");
   });
 
@@ -107,6 +111,8 @@ describe("Task 24-RFQ-09 supplier invitation density", () => {
     expect(invite).toContain("method: \"POST\"");
     expect(invite).toContain("rfqId");
     expect(invite).toContain("email");
+    expect(invite).toContain("setEmailResult(data.email || null)");
+    expect(invite).toContain("emailResult={emailResult}");
     expect(invite).toContain("const vendors: SupplierAvlVendorOption[] = [];");
     expect(invite).toContain("unavailable={!APPROVED_VENDOR_DOMAIN_AVAILABLE}");
     expect(domain).toContain(

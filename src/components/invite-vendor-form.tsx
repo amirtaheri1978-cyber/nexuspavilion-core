@@ -21,10 +21,18 @@ type InviteVendorFormProps = {
   embedded?: boolean;
 };
 
+type InviteEmailResult = {
+  sent?: boolean;
+  skipped?: boolean;
+  id?: string | null;
+  error?: string | null;
+};
+
 type InviteResponse = {
   inviteUrl?: string;
   message?: string;
   error?: string;
+  email?: InviteEmailResult;
 };
 
 export default function InviteVendorForm({
@@ -37,6 +45,9 @@ export default function InviteVendorForm({
 
   const [inviteUrl, setInviteUrl] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
+  const [emailResult, setEmailResult] = useState<InviteEmailResult | null>(
+    null,
+  );
   const [copyMessage, setCopyMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const inviteLock = useRef(false);
@@ -59,6 +70,7 @@ export default function InviteVendorForm({
     setError("");
     setInviteUrl("");
     setSuccessMessage("");
+    setEmailResult(null);
     setCopyMessage("");
 
     try {
@@ -81,8 +93,9 @@ export default function InviteVendorForm({
       }
 
       setInviteUrl(data.inviteUrl || "");
+      setEmailResult(data.email || null);
       setSuccessMessage(
-        data.message || "Supplier invite created successfully.",
+        data.message || "Supplier invitation record created.",
       );
       setEmail("");
       setSelectedVendorId("");
@@ -183,6 +196,7 @@ export default function InviteVendorForm({
       <SupplierInvitationResult
         error={error}
         successMessage={successMessage}
+        emailResult={emailResult}
         inviteUrl={inviteUrl}
         copyMessage={copyMessage}
         onCopyInviteLink={copyInviteLink}

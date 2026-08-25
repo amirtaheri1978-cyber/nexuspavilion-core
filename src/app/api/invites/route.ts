@@ -108,6 +108,94 @@ function getContractFrameworkLabel(
   return "Project-Specific RFQ";
 }
 
+function buildInvitationEmailPayload(
+  rfq: {
+    title: string | null;
+    category: string | null;
+    budget: number | string | null;
+    deadline: string | null;
+    procurement_scope: string | null;
+    sourcing_method: string | null;
+    contract_framework: string | null;
+  },
+  inviteUrl: string,
+) {
+  const procurementScope = getProcurementScopeLabel(
+    rfq.procurement_scope as ProcurementScope | null,
+  );
+  const sourcingMethod = getSourcingMethodLabel(
+    rfq.sourcing_method as SourcingMethod | null,
+  );
+  const contractFramework = getContractFrameworkLabel(
+    rfq.contract_framework as ContractFramework | null,
+  );
+
+  return {
+    procurementScope,
+    sourcingMethod,
+    contractFramework,
+    email: buildRfqInvitationEmail({
+      rfqTitle: rfq.title || "Procurement RFQ",
+      category: rfq.category || "Procurement",
+      budget: formatMoney(rfq.budget),
+      deadline: formatDate(rfq.deadline),
+      procurementScope,
+      sourcingMethod,
+      contractFramework,
+      sourcingMethodKey: rfq.sourcing_method,
+      inviteUrl,
+    }),
+  };
+}
+
+async function deliverRfqInvitationEmail({
+  publicSiteUrl,
+  to,
+  invitationEmail,
+}: {
+  publicSiteUrl: string | null;
+  to: string;
+  invitationEmail: { subject: string; html: string; text: string };
+}): Promise<InviteEmailDeliveryResult> {
+  if (!publicSiteUrl) {
+    console.warn(
+      "RFQ invitation email skipped because the public site URL is not configured.",
+    );
+
+    return {
+      success: false,
+      skipped: true,
+      id: null,
+      error: PUBLIC_SITE_URL_UNCONFIGURED,
+    };
+  }
+
+  try {
+    const result = await sendEmail({
+      to,
+      subject: invitationEmail.subject,
+      html: invitationEmail.html,
+      text: invitationEmail.text,
+    });
+
+    return {
+      success: Boolean(result.success),
+      skipped: Boolean(result.skipped),
+      id: result.id ?? null,
+      error: result.error ?? null,
+    };
+  } catch {
+    console.error("Supplier invitation email delivery failed.");
+
+    return {
+      success: false,
+      skipped: false,
+      id: null,
+      error: "Invitation created, but email delivery failed.",
+    };
+  }
+}
+
 export async function POST(request: Request) {
   try {
     let body: Record<string, unknown>;
@@ -284,6 +372,15 @@ export async function POST(request: Request) {
       const existingInviteUrl = publicSiteUrl
         ? `${publicSiteUrl}/rfq/invite/${existingInvite.token}`
         : `/rfq/invite/${existingInvite.token}`;
+      const existingInvitation = buildInvitationEmailPayload(
+        rfq,
+        existingInviteUrl,
+      );
+      const emailResult = await deliverRfqInvitationEmail({
+        publicSiteUrl,
+        to: email,
+        invitationEmail: existingInvitation.email,
+      });
 
       return NextResponse.json({
         success: true,
@@ -292,9 +389,10 @@ export async function POST(request: Request) {
         absoluteInviteUrl: existingInviteUrl,
         message: "Supplier has already been invited to this RFQ.",
         email: {
-          sent: false,
-          skipped: true,
-          error: "Existing invite reused. Email was not resent.",
+          sent: emailResult.success,
+          skipped: emailResult.skipped,
+          id: emailResult.id,
+          error: emailResult.error,
         },
       });
     }
@@ -324,63 +422,18 @@ export async function POST(request: Request) {
       );
     }
 
-    const procurementScope = getProcurementScopeLabel(
-      rfq.procurement_scope as ProcurementScope | null,
-    );
-    const sourcingMethod = getSourcingMethodLabel(
-      rfq.sourcing_method as SourcingMethod | null,
-    );
-    const contractFramework = getContractFrameworkLabel(
-      rfq.contract_framework as ContractFramework | null,
-    );
-
-    const invitationEmail = buildRfqInvitationEmail({
-      rfqTitle: rfq.title || "Procurement RFQ",
-      category: rfq.category || "Procurement",
-      budget: formatMoney(rfq.budget),
-      deadline: formatDate(rfq.deadline),
+    const {
       procurementScope,
       sourcingMethod,
       contractFramework,
-      sourcingMethodKey: rfq.sourcing_method,
-      inviteUrl: absoluteInviteUrl,
+      email: invitationEmail,
+    } = buildInvitationEmailPayload(rfq, absoluteInviteUrl);
+
+    const emailResult = await deliverRfqInvitationEmail({
+      publicSiteUrl,
+      to: email,
+      invitationEmail,
     });
-
-    let emailResult: InviteEmailDeliveryResult;
-
-    if (!publicSiteUrl) {
-      emailResult = {
-        success: false,
-        skipped: true,
-        id: null,
-        error: PUBLIC_SITE_URL_UNCONFIGURED,
-      };
-    } else {
-      try {
-        const result = await sendEmail({
-          to: email,
-          subject: invitationEmail.subject,
-          html: invitationEmail.html,
-          text: invitationEmail.text,
-        });
-
-        emailResult = {
-          success: Boolean(result.success),
-          skipped: Boolean(result.skipped),
-          id: result.id ?? null,
-          error: result.error ?? null,
-        };
-      } catch (emailError) {
-        console.error("Supplier invitation email delivery failed.", emailError);
-
-        emailResult = {
-          success: false,
-          skipped: false,
-          id: null,
-          error: "Invitation created, but email delivery failed.",
-        };
-      }
-    }
 
     try {
       const { error: auditError } = await supabase.from("audit_logs").insert({
