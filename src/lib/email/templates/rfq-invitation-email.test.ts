@@ -28,7 +28,8 @@ describe("RFQ invitation email family", () => {
       'from "@/lib/email/templates/rfq-invitation-email"',
     );
     expect(invitesRoute).toContain("buildRfqInvitationEmail({");
-    expect(invitesRoute).toContain("inviteUrl: absoluteInviteUrl");
+    expect(invitesRoute).toContain("deliverRfqInvitationEmail");
+    expect(invitesRoute).toContain("inviteUrl,");
     expect(invitesRoute).toContain(
       "`${publicSiteUrl}/rfq/invite/${token}`",
     );
