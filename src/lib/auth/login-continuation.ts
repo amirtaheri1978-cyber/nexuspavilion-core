@@ -28,6 +28,20 @@ export function getSafeNextPath(next: string | null | undefined) {
   return next;
 }
 
+const RFQ_SUBMIT_CONTINUATION_PATHNAME = /^\/rfq\/[^/]+\/submit$/;
+
+export function isRfqSubmitContinuationPath(
+  next: string | null | undefined,
+) {
+  if (!isInternalNextPath(next)) {
+    return false;
+  }
+
+  const pathname = next.split(/[?#]/, 1)[0] ?? "";
+
+  return RFQ_SUBMIT_CONTINUATION_PATHNAME.test(pathname);
+}
+
 export function getSignupHref(next: string | null | undefined) {
   const safeNextPath = getSafeNextPath(next);
 
