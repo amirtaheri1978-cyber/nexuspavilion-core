@@ -9,6 +9,7 @@ import {
   DEFAULT_POST_LOGIN_PATH,
   getSafeLoginStatusMessage,
   getSafeNextPath,
+  getSignupHref,
 } from "@/lib/auth/login-continuation";
 import { syncCurrentUserProfessionalNames } from "@/lib/auth/professional-names";
 import { createClient } from "@/lib/supabase/client";
@@ -419,7 +420,7 @@ function LoginScreen({
               </p>
 
               <Link
-                href="/signup"
+                href={getSignupHref(nextPath)}
                 className="mt-5 flex min-h-[56px] w-full items-center justify-center rounded-2xl border border-[#F5D77B]/55 bg-[#F5D77B]/15 px-5 text-sm font-black uppercase tracking-[0.12em] text-[#FFF1B8] outline-none transition hover:border-[#F5D77B]/80 hover:bg-[#F5D77B]/20 hover:text-white focus-visible:ring-4 focus-visible:ring-[#F5D77B]/25 focus-visible:ring-offset-4 focus-visible:ring-offset-[#0C1825]"
               >
                 Create an account

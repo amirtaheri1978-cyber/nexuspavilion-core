@@ -2,8 +2,8 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useId, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useId, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import {
   EXECUTIVE_CTA_PRIMARY,
@@ -15,6 +15,11 @@ import {
   syncCurrentUserProfessionalNames,
   validateProfessionalName,
 } from "@/lib/auth/professional-names";
+import {
+  DEFAULT_POST_LOGIN_PATH,
+  getCompanyOnboardingPath,
+  getSafeNextPath,
+} from "@/lib/auth/login-continuation";
 import { getFriendlySignupError } from "@/lib/auth/signup-error";
 import { createClient } from "@/lib/supabase/client";
 
@@ -91,8 +96,25 @@ function getPasswordStrength(password: string) {
 }
 
 export default function SignupPage() {
+  return (
+    <Suspense fallback={<SignupScreen nextPath={DEFAULT_POST_LOGIN_PATH} />}>
+      <SignupFromQuery />
+    </Suspense>
+  );
+}
+
+function SignupFromQuery() {
+  const searchParams = useSearchParams();
+
+  return (
+    <SignupScreen nextPath={getSafeNextPath(searchParams.get("next"))} />
+  );
+}
+
+function SignupScreen({ nextPath }: { nextPath: string }) {
   const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
+  const onboardingPath = getCompanyOnboardingPath(nextPath);
 
   const firstNameId = useId();
   const lastNameId = useId();
@@ -235,7 +257,7 @@ export default function SignupPage() {
         "/auth/callback",
         window.location.origin,
       );
-      confirmationRedirect.searchParams.set("next", "/create-company");
+      confirmationRedirect.searchParams.set("next", onboardingPath);
 
       const { error: signupError } = await supabase.auth.signUp({
         email: normalizedEmail,
@@ -277,7 +299,7 @@ export default function SignupPage() {
         requireNames: true,
       });
 
-      router.push("/create-company");
+      router.push(onboardingPath);
       router.refresh();
     } catch {
       setResponseMessage({
@@ -348,7 +370,11 @@ export default function SignupPage() {
 
         <section className="mx-auto w-full max-w-[700px] rounded-[40px] border border-white/10 bg-white/[0.065] p-7 shadow-[0_36px_120px_rgba(0,0,0,0.52)] backdrop-blur-2xl sm:p-10 lg:p-12 xl:p-14">
           <Link
-            href="/login"
+            href={
+              nextPath === DEFAULT_POST_LOGIN_PATH
+                ? "/login"
+                : `/login?next=${encodeURIComponent(nextPath)}`
+            }
             className="inline-flex text-sm font-bold text-slate-400 transition hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2CC4E8]/40"
           >
             ← Back to login
@@ -664,7 +690,11 @@ export default function SignupPage() {
           <p className="mt-7 text-sm font-semibold text-slate-400">
             Already have an account?{" "}
             <Link
-              href="/login"
+              href={
+                nextPath === DEFAULT_POST_LOGIN_PATH
+                  ? "/login"
+                  : `/login?next=${encodeURIComponent(nextPath)}`
+              }
               className="font-black text-[#F5D77B]"
             >
               Sign in

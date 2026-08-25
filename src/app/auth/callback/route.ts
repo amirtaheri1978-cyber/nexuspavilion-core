@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 
-import { getSafeNextPath } from "@/lib/auth/login-continuation";
+import {
+  getSafeNextPath,
+  isInternalNextPath,
+} from "@/lib/auth/login-continuation";
 import { syncCurrentUserProfessionalNames } from "@/lib/auth/professional-names";
 import { resolveRequestSiteUrl } from "@/lib/ops/public-site-url";
 import { createClient } from "@/lib/supabase/server";
@@ -17,10 +20,18 @@ return "This secure authentication link has expired or is no longer valid. Pleas
 return "We could not complete your secure sign-in. Please try again.";
 }
 
-function buildLoginRedirect(errorCode: string, SITE_URL: string) {
+function buildLoginRedirect(
+errorCode: string,
+SITE_URL: string,
+next?: string | null,
+) {
 const url = new URL("/login", SITE_URL);
 url.searchParams.set("message", getSafeAuthMessage(errorCode));
 url.searchParams.set("authStatus", "attention");
+
+if (isInternalNextPath(next)) {
+url.searchParams.set("next", next);
+}
 
 return NextResponse.redirect(url);
 }
@@ -29,10 +40,11 @@ export async function GET(request: Request) {
 const requestUrl = new URL(request.url);
 const SITE_URL = resolveRequestSiteUrl(request.url);
 const code = requestUrl.searchParams.get("code");
-const next = getSafeNextPath(requestUrl.searchParams.get("next"));
+const requestedNext = requestUrl.searchParams.get("next");
+const next = getSafeNextPath(requestedNext);
 
 if (!code) {
-return buildLoginRedirect("missing_auth_code", SITE_URL);
+return buildLoginRedirect("missing_auth_code", SITE_URL, requestedNext);
 }
 
 const supabase = await createClient();
@@ -40,7 +52,7 @@ const supabase = await createClient();
 const { error } = await supabase.auth.exchangeCodeForSession(code);
 
 if (error) {
-return buildLoginRedirect("expired_or_invalid_link", SITE_URL);
+return buildLoginRedirect("expired_or_invalid_link", SITE_URL, requestedNext);
 }
 
 try {

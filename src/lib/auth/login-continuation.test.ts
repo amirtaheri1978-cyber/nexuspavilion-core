@@ -3,9 +3,14 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
 import {
+  DEFAULT_POST_COMPANY_CREATE_PATH,
   DEFAULT_POST_LOGIN_PATH,
+  getCompanyOnboardingPath,
+  getPostCompanyCreatePath,
   getSafeLoginStatusMessage,
   getSafeNextPath,
+  getSignupHref,
+  isInternalNextPath,
 } from "@/lib/auth/login-continuation";
 
 const loginPage = readFileSync(
@@ -47,6 +52,9 @@ describe("login continuation next path", () => {
     expect(getSafeNextPath("/rfq/harbor-point/submit")).toBe(
       "/rfq/harbor-point/submit",
     );
+    expect(
+      getSafeNextPath("/create-company?next=/rfq/harbor-point/submit"),
+    ).toBe("/create-company?next=/rfq/harbor-point/submit");
   });
 
   it("honors a valid internal path with a query string", () => {
@@ -174,5 +182,62 @@ describe("login page continuation wiring", () => {
     expect(loginPage).toContain("signInWithPassword");
     expect(loginPage).toContain("getFriendlyAuthError");
     expect(loginPage).not.toContain('router.push("/dashboard")');
+    expect(loginPage).toContain("getSignupHref(nextPath)");
+    expect(loginPage).not.toContain('href="/signup"');
+  });
+});
+
+describe("signup and company onboarding continuation helpers", () => {
+  it("preserves a safe RFQ next on the signup href", () => {
+    expect(getSignupHref("/rfq/harbor-point/submit")).toBe(
+      "/signup?next=%2Frfq%2Fharbor-point%2Fsubmit",
+    );
+    expect(getSignupHref("/rfq/harbor-point/submit")).toContain(
+      encodeURIComponent("/rfq/harbor-point/submit"),
+    );
+  });
+
+  it("does not propagate unsafe next values to signup", () => {
+    expect(getSignupHref("https://evil.example/phish")).toBe("/signup");
+    expect(getSignupHref("//evil.example/login")).toBe("/signup");
+    expect(getSignupHref("/\\evil.example")).toBe("/signup");
+    expect(getSignupHref(null)).toBe("/signup");
+    expect(getSignupHref("/dashboard")).toBe("/signup");
+    expect(isInternalNextPath("https://evil.example/phish")).toBe(false);
+  });
+
+  it("composes create-company with a nested safe RFQ destination", () => {
+    expect(getCompanyOnboardingPath("/rfq/harbor-point/submit")).toBe(
+      "/create-company?next=%2Frfq%2Fharbor-point%2Fsubmit",
+    );
+    expect(getCompanyOnboardingPath(null)).toBe("/create-company");
+    expect(getCompanyOnboardingPath("/dashboard")).toBe("/create-company");
+    expect(getCompanyOnboardingPath("/create-company")).toBe("/create-company");
+    expect(
+      getCompanyOnboardingPath("/create-company?next=/rfq/harbor-point/submit"),
+    ).toBe("/create-company?next=/rfq/harbor-point/submit");
+    expect(getCompanyOnboardingPath("https://evil.example")).toBe(
+      "/create-company",
+    );
+  });
+
+  it("returns to a safe RFQ submit path after company creation", () => {
+    expect(getPostCompanyCreatePath("/rfq/harbor-point/submit")).toBe(
+      "/rfq/harbor-point/submit",
+    );
+    expect(getPostCompanyCreatePath(null)).toBe(
+      DEFAULT_POST_COMPANY_CREATE_PATH,
+    );
+    expect(getPostCompanyCreatePath("https://evil.example/phish")).toBe(
+      DEFAULT_POST_COMPANY_CREATE_PATH,
+    );
+    expect(getPostCompanyCreatePath("//evil.example/rfq/x/submit")).toBe(
+      DEFAULT_POST_COMPANY_CREATE_PATH,
+    );
+    expect(getPostCompanyCreatePath("/\\evil.example")).toBe(
+      DEFAULT_POST_COMPANY_CREATE_PATH,
+    );
+    expect(DEFAULT_POST_COMPANY_CREATE_PATH).toBe("/company/settings");
+    expect(DEFAULT_POST_LOGIN_PATH).toBe("/dashboard");
   });
 });
