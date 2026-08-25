@@ -16,6 +16,7 @@ import {
   validateFounderJobTitle,
   validateProfessionalName,
 } from "@/lib/auth/professional-names";
+import { getPostCompanyCreatePath } from "@/lib/auth/login-continuation";
 import { companyWelcomeEmail } from "@/lib/email/templates/company-welcome-email";
 import { sendEmail } from "@/lib/email/send-email";
 import { joinPublicSitePath } from "@/lib/ops/public-site-url";
@@ -35,6 +36,7 @@ type RequestBody = {
   firstName?: unknown;
   lastName?: unknown;
   jobTitle?: unknown;
+  next?: unknown;
 };
 
 const COMPANY_NAME_MIN_LENGTH = 2;
@@ -642,7 +644,9 @@ export async function POST(request: Request) {
       company,
       accountType: rawAccountType,
       role: accountConfig.profileRole,
-      redirectTo: "/company/settings",
+      redirectTo: getPostCompanyCreatePath(
+        typeof body.next === "string" ? body.next : null,
+      ),
     });
   } catch (error) {
     console.error(

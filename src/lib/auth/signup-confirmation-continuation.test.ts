@@ -45,14 +45,19 @@ describe("signup confirmation session continuation", () => {
     expect(inactiveSrcMiddleware).not.toContain("redirectToLoginWithNext");
   });
 
-  it("sends confirmation through the auth callback with next=/create-company", () => {
+  it("sends confirmation through the auth callback with a sanitized onboarding next", () => {
     expect(signupPage).toContain("new URL(");
     expect(signupPage).toContain('"/auth/callback"');
+    expect(signupPage).toContain("getCompanyOnboardingPath(nextPath)");
     expect(signupPage).toContain(
-      'confirmationRedirect.searchParams.set("next", "/create-company")',
+      'confirmationRedirect.searchParams.set("next", onboardingPath)',
     );
+    expect(signupPage).toContain("router.push(onboardingPath)");
     expect(signupPage).toContain(
       "emailRedirectTo: confirmationRedirect.toString()",
+    );
+    expect(signupPage).not.toContain(
+      'confirmationRedirect.searchParams.set("next", "/create-company")',
     );
     expect(signupPage).not.toContain(
       "emailRedirectTo: `${window.location.origin}/create-company`",
@@ -70,7 +75,7 @@ describe("signup confirmation session continuation", () => {
   it("resolves a successful callback continuation to create-company", () => {
     expect(getSafeNextPath("/create-company")).toBe("/create-company");
     expect(callbackRoute).toContain(
-      'getSafeNextPath(requestUrl.searchParams.get("next"))',
+      "getSafeNextPath(requestedNext)",
     );
     expect(callbackRoute).toContain(
       "NextResponse.redirect(new URL(next, SITE_URL))",
@@ -81,10 +86,12 @@ describe("signup confirmation session continuation", () => {
     expect(activeMiddleware).toContain(
       "isCompanySetupRoute(pathname) && !hasSupabaseSessionCookie(request)",
     );
-    expect(activeMiddleware).toContain(
-      'loginUrl.searchParams.set("next", COMPANY_SETUP_ROUTE)',
-    );
+    expect(activeMiddleware).toContain("isInternalNextPath(setupDestination)");
+    expect(activeMiddleware).toContain("COMPANY_SETUP_ROUTE");
     expect(getSafeNextPath("/create-company")).toBe("/create-company");
+    expect(
+      getSafeNextPath("/create-company?next=/rfq/harbor-point/submit"),
+    ).toBe("/create-company?next=/rfq/harbor-point/submit");
   });
 
   it("keeps authenticated create-company access allowed", () => {
