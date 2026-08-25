@@ -29,6 +29,10 @@ describe("workspace bootstrap create route", () => {
     expect(route).toContain("p_company_id: company.id");
     expect(route).toContain("p_profile_role: accountConfig.profileRole");
     expect(route).toContain("p_job_title: jobTitle || null");
+    expect(route).toContain(
+      "p_account_type: createdNewCompany ? rawAccountType : null",
+    );
+    expect(route).not.toContain("p_procurement_function");
     expect(route).toContain("bootstrapPayload?.success !== true");
     expect(route).toContain("success: true");
     expect(route).not.toContain(".upsert({");

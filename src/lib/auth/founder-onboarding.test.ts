@@ -205,7 +205,7 @@ describe("NP-MASTER-22-B04-2 create-company founder identity", () => {
 });
 
 describe("NP-MASTER-22-B04-2 create API and bootstrap call", () => {
-  it("passes only p_job_title into bootstrap_owned_company_workspace", () => {
+  it("passes job title and bounded account type into bootstrap_owned_company_workspace", () => {
     const rpcCall = createRoute.slice(
       createRoute.indexOf('"bootstrap_owned_company_workspace"'),
       createRoute.indexOf("const bootstrapPayload"),
@@ -214,7 +214,11 @@ describe("NP-MASTER-22-B04-2 create API and bootstrap call", () => {
     expect(rpcCall).toContain("p_company_id: company.id");
     expect(rpcCall).toContain("p_profile_role: accountConfig.profileRole");
     expect(rpcCall).toContain("p_job_title: jobTitle || null");
+    expect(rpcCall).toContain(
+      "p_account_type: createdNewCompany ? rawAccountType : null",
+    );
     expect(rpcCall).not.toContain("p_user_id");
+    expect(rpcCall).not.toContain("p_procurement_function");
     expect(rpcCall).not.toContain("p_first_name");
     expect(rpcCall).not.toContain("user_id:");
     expect(rpcCall.split("p_company_id").length).toBe(2);
