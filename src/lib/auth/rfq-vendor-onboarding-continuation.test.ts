@@ -126,6 +126,22 @@ describe("Task 32B RFQ vendor onboarding continuation", () => {
     );
   });
 
+  it("hands authenticated no-company submit into the existing create-company continuation", () => {
+    expect(submitPage).toContain("getCompanyOnboardingPath");
+    expect(submitPage).toContain(
+      "redirect(getCompanyOnboardingPath(submitPath))",
+    );
+    expect(submitPage).toContain(".eq(\"id\", user.id)");
+    expect(submitPage).toContain(".maybeSingle()");
+    expect(submitPage).toContain("if (profileError)");
+    expect(submitPage).toContain("if (!profile?.company_id)");
+    expect(submitPage).toContain("<RfqSubmitWorkspace slug={slug} />");
+    expect(getCompanyOnboardingPath("/rfq/harbor-point/submit")).toBe(
+      "/create-company?next=%2Frfq%2Fharbor-point%2Fsubmit",
+    );
+    expect(signupPage).toContain("getCompanyOnboardingPath(nextPath)");
+  });
+
   it("does not grant supplier capability in Task 32B", () => {
     expect(createRoute).toContain("p_profile_role: accountConfig.profileRole");
     expect(createRoute).not.toContain("p_procurement_function");

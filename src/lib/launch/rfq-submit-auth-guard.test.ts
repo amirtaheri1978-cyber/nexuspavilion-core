@@ -3,7 +3,11 @@ import { resolve } from "node:path";
 
 import { describe, expect, it } from "vitest";
 
-import { getSafeNextPath } from "@/lib/auth/login-continuation";
+import {
+  getCompanyOnboardingPath,
+  getSafeNextPath,
+  isRfqSubmitContinuationPath,
+} from "@/lib/auth/login-continuation";
 
 function readSource(relativePath: string) {
   return readFileSync(resolve(process.cwd(), relativePath), "utf8").replace(
@@ -42,6 +46,53 @@ describe("anonymous RFQ submit auth continuation", () => {
     expect(submitPage).not.toContain('"use client"');
     expect(submitPage).not.toContain('data-rfq-submit-workspace="true"');
     expect(submitPage).not.toContain('fetch("/api/quotes"');
+  });
+
+  it("sends authenticated users without a company into RFQ-aware create-company continuation", () => {
+    const userIndex = submitPage.indexOf("supabase.auth.getUser()");
+    const loginRedirectIndex = submitPage.indexOf(
+      "redirect(`/login?next=${encodeURIComponent(submitPath)}`)",
+    );
+    const profileLookupIndex = submitPage.indexOf('.from("profiles")');
+    const profileErrorIndex = submitPage.indexOf("if (profileError)");
+    const onboardingRedirectIndex = submitPage.indexOf(
+      "redirect(getCompanyOnboardingPath(submitPath))",
+    );
+    const workspaceIndex = submitPage.indexOf("<RfqSubmitWorkspace");
+
+    expect(submitPage).toContain("getCompanyOnboardingPath");
+    expect(submitPage).toContain('.select("company_id")');
+    expect(submitPage).toContain(".eq(\"id\", user.id)");
+    expect(submitPage).toContain(".maybeSingle()");
+    expect(submitPage).toContain("if (!profile?.company_id)");
+    expect(submitPage).not.toContain("`/create-company?next=");
+    expect(profileLookupIndex).toBeGreaterThan(loginRedirectIndex);
+    expect(profileErrorIndex).toBeGreaterThan(profileLookupIndex);
+    expect(onboardingRedirectIndex).toBeGreaterThan(profileErrorIndex);
+    expect(workspaceIndex).toBeGreaterThan(onboardingRedirectIndex);
+    expect(userIndex).toBeGreaterThan(-1);
+    expect(
+      getCompanyOnboardingPath("/rfq/harbor-point/submit"),
+    ).toBe("/create-company?next=%2Frfq%2Fharbor-point%2Fsubmit");
+    expect(
+      isRfqSubmitContinuationPath("/rfq/harbor-point/submit"),
+    ).toBe(true);
+  });
+
+  it("does not treat a profile query failure as a missing company", () => {
+    const profileErrorIndex = submitPage.indexOf("if (profileError)");
+    const throwIndex = submitPage.indexOf(
+      'throw new Error("Unable to verify company workspace.")',
+    );
+    const onboardingRedirectIndex = submitPage.indexOf(
+      "redirect(getCompanyOnboardingPath(submitPath))",
+    );
+
+    expect(profileErrorIndex).toBeGreaterThan(-1);
+    expect(throwIndex).toBeGreaterThan(profileErrorIndex);
+    expect(onboardingRedirectIndex).toBeGreaterThan(throwIndex);
+    expect(submitPage).toContain("RFQ submit profile lookup failed:");
+    expect(submitPage).toContain("userId: user.id");
   });
 
   it("continues signed-out submit access through the existing safe login next path", () => {
