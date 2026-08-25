@@ -215,7 +215,11 @@ describe("NP-MASTER-22-B04-1 professional identity primitives", () => {
     expect(createRoute).toContain("p_company_id: company.id");
     expect(createRoute).toContain("p_profile_role: accountConfig.profileRole");
     expect(createRoute).toContain("p_job_title: jobTitle || null");
+    expect(createRoute).toContain(
+      "p_account_type: createdNewCompany ? rawAccountType : null",
+    );
     expect(createRoute).not.toContain("p_user_id");
+    expect(createRoute).not.toContain("p_procurement_function");
   });
 
   it("extends invitation accept with p_job_title without reopening Task 17 authority", () => {

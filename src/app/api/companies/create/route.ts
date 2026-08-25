@@ -536,6 +536,7 @@ export async function POST(request: Request) {
           p_company_id: company.id,
           p_profile_role: accountConfig.profileRole,
           p_job_title: jobTitle || null,
+          p_account_type: createdNewCompany ? rawAccountType : null,
         },
       );
 
