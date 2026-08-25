@@ -66,11 +66,17 @@ describe("NP-MASTER-22-B04-2 signup field collection", () => {
     expect(signupPage).not.toContain("full_name");
   });
 
-  it("keeps confirmation emailRedirectTo on /auth/callback?next=/create-company", () => {
+  it("keeps confirmation emailRedirectTo on the sanitized company onboarding path", () => {
     expect(signupPage).toContain('"/auth/callback"');
+    expect(signupPage).toContain("getCompanyOnboardingPath(nextPath)");
     expect(signupPage).toContain(
+      'confirmationRedirect.searchParams.set("next", onboardingPath)',
+    );
+    expect(signupPage).toContain("router.push(onboardingPath)");
+    expect(signupPage).not.toContain(
       'confirmationRedirect.searchParams.set("next", "/create-company")',
     );
+    expect(signupPage).not.toContain('router.push("/create-company")');
     expect(signupPage).toContain(
       "emailRedirectTo: confirmationRedirect.toString()",
     );

@@ -1,5 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
+import { isInternalNextPath } from "@/lib/auth/login-continuation";
+
 const protectedRoutes = [
 "/dashboard",
 "/analytics",
@@ -30,7 +32,13 @@ const { pathname } = request.nextUrl;
 
 if (isCompanySetupRoute(pathname) && !hasSupabaseSessionCookie(request)) {
 const loginUrl = new URL("/login", request.url);
-loginUrl.searchParams.set("next", COMPANY_SETUP_ROUTE);
+const setupDestination = `${pathname}${request.nextUrl.search}`;
+loginUrl.searchParams.set(
+"next",
+isInternalNextPath(setupDestination)
+? setupDestination
+: COMPANY_SETUP_ROUTE
+);
 return NextResponse.redirect(loginUrl);
 }
 

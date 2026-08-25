@@ -56,7 +56,7 @@ describe("anonymous RFQ submit auth continuation", () => {
     );
     expect(loginPage).toContain("getSafeNextPath(searchParams.get(\"next\"))");
     expect(callbackRoute).toContain(
-      "getSafeNextPath(requestUrl.searchParams.get(\"next\"))",
+      "getSafeNextPath(requestedNext)",
     );
   });
 

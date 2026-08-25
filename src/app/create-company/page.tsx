@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useId, useMemo, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useEffect, useId, useMemo, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 
 import SignOutButton from "@/components/sign-out-button";
@@ -12,6 +12,7 @@ import {
   EXECUTIVE_PAGE_CLASS,
 } from "@/lib/design-system/executive-contract";
 import { getFriendlyWorkspaceCreateError } from "@/lib/auth/workspace-bootstrap";
+import { getPostCompanyCreatePath } from "@/lib/auth/login-continuation";
 import {
   JOB_TITLE_MAX_LENGTH,
   PROFESSIONAL_NAME_MAX_LENGTH,
@@ -221,8 +222,18 @@ function getFriendlyCreateCompanyError(message?: string) {
 }
 
 export default function CreateCompanyPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#061426]" />}>
+      <CreateCompanyWizard />
+    </Suspense>
+  );
+}
+
+function CreateCompanyWizard() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const supabase = useMemo(() => createClient(), []);
+  const continuationNext = searchParams.get("next");
 
   const firstNameId = useId();
   const lastNameId = useId();
@@ -450,6 +461,7 @@ export default function CreateCompanyPage() {
           firstName: submittedFirstName,
           lastName: submittedLastName,
           jobTitle: submittedJobTitle,
+          next: continuationNext,
         }),
       });
 
@@ -471,7 +483,10 @@ export default function CreateCompanyPage() {
       }
 
       router.push(
-        data.redirectTo || "/company/settings",
+        getPostCompanyCreatePath(
+          continuationNext,
+          data.redirectTo || "/company/settings",
+        ),
       );
       router.refresh();
     } catch {
