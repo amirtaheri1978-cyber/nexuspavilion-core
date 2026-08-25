@@ -12,7 +12,10 @@ import {
   EXECUTIVE_PAGE_CLASS,
 } from "@/lib/design-system/executive-contract";
 import { getFriendlyWorkspaceCreateError } from "@/lib/auth/workspace-bootstrap";
-import { getPostCompanyCreatePath } from "@/lib/auth/login-continuation";
+import {
+  getPostCompanyCreatePath,
+  isRfqSubmitContinuationPath,
+} from "@/lib/auth/login-continuation";
 import {
   JOB_TITLE_MAX_LENGTH,
   PROFESSIONAL_NAME_MAX_LENGTH,
@@ -234,6 +237,8 @@ function CreateCompanyWizard() {
   const searchParams = useSearchParams();
   const supabase = useMemo(() => createClient(), []);
   const continuationNext = searchParams.get("next");
+  const isRfqQuoteContinuation =
+    isRfqSubmitContinuationPath(continuationNext);
 
   const firstNameId = useId();
   const lastNameId = useId();
@@ -246,7 +251,9 @@ function CreateCompanyWizard() {
     useState<WizardStep>("identity");
 
   const [organizationType, setOrganizationType] =
-    useState<OrganizationType>("owner_developer");
+    useState<OrganizationType>(() =>
+      isRfqQuoteContinuation ? "supplier" : "owner_developer",
+    );
 
   const [name, setName] = useState("");
   const [location, setLocation] = useState("");
@@ -651,6 +658,15 @@ function CreateCompanyWizard() {
                 })}
               </div>
             </div>
+
+            {isRfqQuoteContinuation ? (
+              <p
+                className="mt-6 rounded-2xl border border-[#C8A646]/35 bg-[#C8A646]/10 px-4 py-3 text-sm font-semibold leading-6 text-slate-200"
+                role="status"
+              >
+                You are continuing to submit an RFQ quote. Supplier has therefore been preselected. You may choose another organization type if that better describes your company.
+              </p>
+            ) : null}
 
             <form
               onSubmit={handleCreateCompany}

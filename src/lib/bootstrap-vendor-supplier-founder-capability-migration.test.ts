@@ -202,11 +202,9 @@ describe("Task 32C create-company route mapping", () => {
     expect(rpcCall.split("p_company_id").length).toBe(2);
   });
 
-  it("keeps create-company Supplier mapped to vendor_supplier without changing defaults", () => {
+  it("keeps create-company Supplier mapped to vendor_supplier", () => {
     expect(createCompanyPage).toContain('accountType: "vendor_supplier"');
-    expect(createCompanyPage).toContain(
-      'useState<OrganizationType>("owner_developer")',
-    );
+    expect(createCompanyPage).toContain('value: "supplier"');
     expect(createCompanyPage).toContain('accountType: "buyer_owner"');
     expect(createCompanyPage).toContain('accountType: "consultant"');
     expect(createCompanyPage).toContain('accountType: "service_provider"');

@@ -11,6 +11,7 @@ import {
   getSafeNextPath,
   getSignupHref,
   isInternalNextPath,
+  isRfqSubmitContinuationPath,
 } from "@/lib/auth/login-continuation";
 
 const loginPage = readFileSync(
@@ -239,5 +240,45 @@ describe("signup and company onboarding continuation helpers", () => {
     );
     expect(DEFAULT_POST_COMPANY_CREATE_PATH).toBe("/company/settings");
     expect(DEFAULT_POST_LOGIN_PATH).toBe("/dashboard");
+  });
+});
+
+describe("RFQ submit continuation path detection", () => {
+  it("detects an exact /rfq/{slug}/submit continuation", () => {
+    expect(isRfqSubmitContinuationPath("/rfq/harbor-point/submit")).toBe(true);
+    expect(
+      isRfqSubmitContinuationPath("/rfq/north-harbor-bonded-warehouse/submit"),
+    ).toBe(true);
+    expect(
+      isRfqSubmitContinuationPath("/rfq/harbor-point/submit?view=open"),
+    ).toBe(true);
+    expect(
+      isRfqSubmitContinuationPath("/rfq/harbor-point/submit#quote"),
+    ).toBe(true);
+  });
+
+  it("rejects unsafe and non-RFQ submit continuations", () => {
+    expect(isRfqSubmitContinuationPath(null)).toBe(false);
+    expect(isRfqSubmitContinuationPath(undefined)).toBe(false);
+    expect(isRfqSubmitContinuationPath("")).toBe(false);
+    expect(isRfqSubmitContinuationPath("/dashboard")).toBe(false);
+    expect(isRfqSubmitContinuationPath("/create-company")).toBe(false);
+    expect(
+      isRfqSubmitContinuationPath("https://evil.example/rfq/harbor-point/submit"),
+    ).toBe(false);
+    expect(
+      isRfqSubmitContinuationPath("//evil.example/rfq/harbor-point/submit"),
+    ).toBe(false);
+    expect(
+      isRfqSubmitContinuationPath("/\\rfq/harbor-point/submit"),
+    ).toBe(false);
+    expect(isRfqSubmitContinuationPath("/rfq")).toBe(false);
+    expect(isRfqSubmitContinuationPath("/rfq/harbor-point")).toBe(false);
+    expect(isRfqSubmitContinuationPath("/rfq/harbor-point/compare")).toBe(false);
+    expect(isRfqSubmitContinuationPath("/rfq/invite/opaque-token")).toBe(false);
+    expect(
+      isRfqSubmitContinuationPath("/rfq/harbor-point/submit/extra"),
+    ).toBe(false);
+    expect(isRfqSubmitContinuationPath("/rfq//submit")).toBe(false);
   });
 });
