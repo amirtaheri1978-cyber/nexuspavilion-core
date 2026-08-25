@@ -71,6 +71,7 @@ export const LAUNCH_REGRESSION_TEST_FILES = [
   "src/lib/procurement/procurement-write-authorization.test.ts",
   "src/lib/procurement/rfq-commercial-intelligence.test.ts",
   "src/lib/procurement/rfq-commercial-scoring.test.ts",
+  "src/lib/procurement/rfq-detail-intelligence-boundary.test.ts",
   "src/lib/procurement/rfq-owner-supplier-identity.test.ts",
   "src/lib/procurement/rfq-sourcing-access-rls.test.ts",
   "src/lib/procurement/rfq-supplier-recommendation-input.test.ts",
