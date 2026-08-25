@@ -42,7 +42,7 @@ const decisionCenter = readSource(
   "src/components/rfq-workspace/executive-decision-center.tsx",
 );
 const compare = readSource("src/app/rfq/[slug]/compare/page.tsx");
-const submit = readSource("src/app/rfq/[slug]/submit/page.tsx");
+const submit = readSource("src/components/rfq-workspace/rfq-submit-workspace.tsx");
 const visualQa = readSource("src/app/dev/rfq-visual-qa/page.tsx");
 const kpiRow = readSource("src/components/dashboard/executive-kpi-row.tsx");
 const ranking = readSource(

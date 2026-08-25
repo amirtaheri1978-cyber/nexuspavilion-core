@@ -13,7 +13,9 @@ const invitePage = readSource("src/app/rfq/invite/[token]/page.tsx");
 const inviteWorkspace = readSource(
   "src/components/rfq-workspace/rfq-invite-quote-submission.tsx",
 );
-const frozenSubmit = readSource("src/app/rfq/[slug]/submit/page.tsx");
+const frozenSubmit = readSource(
+  "src/components/rfq-workspace/rfq-submit-workspace.tsx",
+);
 const companySubmit = readSource("src/app/company/[slug]/submit/page.tsx");
 const visualQa = readSource("src/app/dev/rfq-visual-qa/page.tsx");
 const nav = readSource("src/lib/navigation/application-nav.ts");

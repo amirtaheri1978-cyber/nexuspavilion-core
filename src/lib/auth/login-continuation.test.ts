@@ -44,6 +44,9 @@ describe("login continuation next path", () => {
     );
     expect(getSafeNextPath("/create-company")).toBe("/create-company");
     expect(getSafeNextPath("/rfq")).toBe("/rfq");
+    expect(getSafeNextPath("/rfq/harbor-point/submit")).toBe(
+      "/rfq/harbor-point/submit",
+    );
   });
 
   it("honors a valid internal path with a query string", () => {
