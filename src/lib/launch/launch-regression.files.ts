@@ -65,6 +65,7 @@ export const LAUNCH_REGRESSION_TEST_FILES = [
   "src/lib/organization-invitation-context.test.ts",
   "src/lib/ownership-transfer-accepted-audit-migration.test.ts",
   "src/lib/ownership-transfer-request-expiration-migration.test.ts",
+  "src/lib/procurement/award-activity-propagation-migration.test.ts",
   "src/lib/procurement/award-rfq-quote-integrity-migration.test.ts",
   "src/lib/procurement/procurement-write-api-authorization.test.ts",
   "src/lib/procurement/procurement-write-authorization.test.ts",

@@ -74,9 +74,8 @@ describe("procurement write API membership authorization", () => {
     expect(awardRoute).toContain("SELF_AWARD_NOT_ALLOWED");
     expect(awardRoute).toContain("RFQ_ALREADY_AWARDED");
     expect(awardRoute).toContain("QUOTE_ALREADY_AWARDED");
-    expect(awardRoute).toContain(
-      "awarded_by_workspace_role: membership?.workspaceRole ?? null",
-    );
+    expect(awardRoute).not.toContain('.from("audit_logs")');
+    expect(awardRoute).not.toContain('.from("notifications")');
     expect(awardRoute).not.toContain("awarded_by_role:");
     expect(awardRoute).not.toContain('decision: "pending"');
   });
