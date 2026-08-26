@@ -48,7 +48,7 @@ className={`flex items-center justify-center bg-transparent ${className}`}
 >
 <Image
 src={src}
-alt="Nexus Pavilion"
+alt="NexusPavilion"
 width={dimensions.width}
 height={dimensions.height}
 priority={priority}
