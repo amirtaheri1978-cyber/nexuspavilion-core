@@ -3,6 +3,8 @@ import { resolve } from "node:path";
 
 import { describe, expect, it } from "vitest";
 
+import { getAppShellKind } from "@/lib/navigation/application-nav";
+
 function readSource(relativePath: string) {
   return readFileSync(resolve(process.cwd(), relativePath), "utf8").replace(
     /\r\n/g,
@@ -32,6 +34,7 @@ const companyPage = readSource("src/app/company/page.tsx");
 const vendorDashboardPage = readSource("src/app/vendor-dashboard/page.tsx");
 const privacyPage = readSource("src/app/privacy/page.tsx");
 const termsPage = readSource("src/app/terms/page.tsx");
+const applicationNav = readSource("src/lib/navigation/application-nav.ts");
 
 function assertNoCorporateHomeDetour(source: string) {
   expect(source).not.toContain('redirect("/")');
@@ -52,7 +55,7 @@ describe("Cursor Corp 02 Slice A corporate root contract", () => {
   it("identifies NexusPavilion Inc. as the corporate parent on the root", () => {
     expect(rootPage).toContain("NexusPavilion Inc.");
     expect(rootPage).toContain("parent company");
-    expect(rootPage).toContain("id=\"corporate-hero-heading\"");
+    expect(rootPage).toContain('id="corporate-hero-heading"');
     expect(rootPage).toContain("<h1");
   });
 
@@ -133,31 +136,109 @@ describe("Cursor Corp 02 Slice A corporate root contract", () => {
       "redirect(`/login?next=${encodeURIComponent(submitPath)}`)",
     );
     expect(appShell).toMatch(/if \(shellKind === "public"\)[\s\S]*<Footer \/>/);
-    expect(applicationFooter).toContain("Confidential procurement workspace");
   });
 
   it("defines corporate root metadata rather than procurement-only site identity", () => {
-    expect(rootPage).toContain('absolute: CORPORATE_TITLE');
+    expect(rootPage).toContain("absolute: CORPORATE_TITLE");
     expect(rootPage).toContain(
       'const CORPORATE_TITLE = "NexusPavilion Inc. | Corporate Home"',
     );
-    expect(rootPage).toContain("canonical: \"/\"");
+    expect(rootPage).toContain('canonical: "/"');
     expect(rootPage).toContain("index: true");
     expect(rootPage).toContain("follow: true");
     expect(rootPage).toContain('siteName: "NexusPavilion Inc."');
-    expect(rootPage).toContain("parent company of NexusPavilion Intelligent Procurement");
+    expect(rootPage).toContain(
+      "parent company of NexusPavilion Intelligent Procurement",
+    );
     expect(rootPage).not.toContain("Procurement Intelligence Platform");
     expect(rootPage).not.toContain("Nexus Pavilion |");
   });
 
-  it("does not change Slice B/C or unresolved legal surfaces", () => {
-    expect(applicationFooter).not.toContain("/about");
-    expect(applicationFooter).not.toContain("/pricing");
-    expect(layout).toContain('default: "Nexus Pavilion | Procurement Intelligence Platform"');
+  it("leaves Slice C identity surfaces and unresolved legal page copy unchanged", () => {
+    expect(layout).toContain(
+      'default: "Nexus Pavilion | Procurement Intelligence Platform"',
+    );
     expect(sitemap).toContain('url: "https://nexuspavilion.com"');
-    expect(robots).toContain("sitemap: \"https://nexuspavilion.com/sitemap.xml\"");
-    expect(privacyPage).toContain("Nexus Pavilion is committed to protecting company information");
+    expect(robots).toContain(
+      'sitemap: "https://nexuspavilion.com/sitemap.xml"',
+    );
+    expect(privacyPage).toContain(
+      "Nexus Pavilion is committed to protecting company information",
+    );
     expect(termsPage).toContain("Nexus Pavilion Terms");
     expect(logo).toContain('alt="NexusPavilion"');
+  });
+});
+
+describe("Cursor Corp 02 Slice B application footer contract", () => {
+  it("attributes Intelligent Procurement to NexusPavilion Inc.", () => {
+    expect(applicationFooter).toContain("Intelligent Procurement");
+    expect(applicationFooter).toContain("NexusPavilion Inc.");
+    expect(applicationFooter).toContain(
+      "Intelligent Procurement · A NexusPavilion Inc. product",
+    );
+    expect(applicationFooter).not.toContain(
+      "Nexus Pavilion · Confidential procurement workspace",
+    );
+    expect(applicationFooter).not.toMatch(/Nexus Pavilion(?! Inc\.)/);
+  });
+
+  it("exposes only compact real trust destinations", () => {
+    expect(applicationFooter).toContain('href="/privacy"');
+    expect(applicationFooter).toContain('href="/terms"');
+    expect(applicationFooter).toContain('href="/contact"');
+    expect(applicationFooter).toContain(">Privacy<");
+    expect(applicationFooter).toContain(">Terms<");
+    expect(applicationFooter).toContain(">Support<");
+
+    expect(applicationFooter).not.toContain("/about");
+    expect(applicationFooter).not.toContain("/pricing");
+    expect(applicationFooter).not.toContain("/security");
+    expect(applicationFooter).not.toContain("/status");
+    expect(applicationFooter).not.toContain("/help");
+    expect(applicationFooter).not.toContain("/products");
+    expect(applicationFooter).not.toContain("All rights reserved");
+    expect(applicationFooter).not.toContain("©");
+  });
+
+  it("keeps AppShell public vs application footer separation intact", () => {
+    expect(appShell).toContain('import Footer from "@/components/footer"');
+    expect(appShell).toContain(
+      'import ApplicationFooter from "@/components/application-footer"',
+    );
+    expect(appShell).toMatch(/if \(shellKind === "public"\)[\s\S]*<Footer \/>/);
+    expect(appShell).toContain("<ApplicationFooter />");
+    expect(appShell).toMatch(
+      /shellKind === "application"|authenticated application shell/,
+    );
+
+    const chromelessBlock = appShell.slice(
+      appShell.indexOf('if (shellKind === "chromeless")'),
+      appShell.indexOf('if (shellKind === "public")'),
+    );
+    expect(chromelessBlock).not.toContain("<ApplicationFooter");
+    expect(chromelessBlock).not.toContain("<Footer");
+  });
+
+  it("keeps chromeless auth and invitation routing without application footer", () => {
+    expect(getAppShellKind("/login")).toBe("chromeless");
+    expect(getAppShellKind("/signup")).toBe("chromeless");
+    expect(getAppShellKind("/create-company")).toBe("chromeless");
+    expect(getAppShellKind("/rfq/invite/opaque-token")).toBe("chromeless");
+    expect(getAppShellKind("/dashboard")).toBe("application");
+    expect(getAppShellKind("/")).toBe("public");
+
+    expect(applicationNav).toContain('"/login"');
+    expect(applicationNav).toContain('"/signup"');
+    expect(applicationNav).toContain('"/create-company"');
+    expect(applicationNav).toContain('"/rfq/invite"');
+
+    const chromelessReturn = appShell.slice(
+      appShell.indexOf('if (shellKind === "chromeless")'),
+      appShell.indexOf('if (shellKind === "public")'),
+    );
+    expect(chromelessReturn).toContain("{children}");
+    expect(chromelessReturn).not.toContain("ApplicationFooter");
+    expect(chromelessReturn).not.toContain("<Footer");
   });
 });
