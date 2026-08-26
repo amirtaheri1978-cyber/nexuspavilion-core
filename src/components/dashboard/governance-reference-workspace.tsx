@@ -13,16 +13,6 @@ type GovernanceTask = {
   href: string;
 };
 
-type ActivityItem = {
-  id: string;
-  title: string;
-  description: string;
-  type: string;
-  severity: "success" | "info" | "warning" | "critical";
-  relativeTime: string;
-  href: string;
-};
-
 type NavigationItem = {
   title: string;
   description: string;
@@ -45,33 +35,15 @@ type GovernanceReferenceWorkspaceProps = {
     incompleteTasksCount: number;
     tasks: GovernanceTask[];
   };
-  activity: {
-    label: string;
-    title: string;
-    items: ActivityItem[];
-  };
   navigation: NavigationItem[];
+  unreadNotificationCount?: number;
 };
-
-const activityTone = {
-  success: "success",
-  info: "blue",
-  warning: "warning",
-  critical: "risk",
-} as const;
-
-const activityLabel = {
-  success: "Completed",
-  info: "Update",
-  warning: "Warning",
-  critical: "Critical",
-} as const;
 
 export function GovernanceReferenceWorkspace({
   company,
   readiness,
-  activity,
   navigation,
+  unreadNotificationCount = 0,
 }: GovernanceReferenceWorkspaceProps) {
   const readinessTone =
     readiness.incompleteTasksCount === 0
@@ -91,11 +63,12 @@ export function GovernanceReferenceWorkspace({
         <div>
           <p className="np-type-eyebrow">Workspace</p>
           <h2 id="executive-governance-heading" className="np-type-h2 mt-3">
-            Activity and drill-down
+            Workspace and drill-down
           </h2>
           <p className="np-type-body mt-3 max-w-4xl">
-            Recent recorded activity, remaining setup requirements, and routes
-            into primary workspaces.
+            Company profile, remaining setup requirements, and routes into
+            primary workspaces. Event history and alerts live in Activity
+            Center.
           </p>
         </div>
 
@@ -198,56 +171,31 @@ export function GovernanceReferenceWorkspace({
       </div>
 
       <div className="mt-7 grid gap-6 border-t border-white/10 pt-7 xl:grid-cols-[1.2fr_0.8fr]">
-        <section aria-labelledby="executive-activity-heading">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <p className="np-type-meta">{activity.label}</p>
-              <h3 id="executive-activity-heading" className="mt-2 text-xl font-black text-white">
-                {activity.title}
-              </h3>
-            </div>
-            <ExecutiveBadge tone="neutral" size="sm">
-              {activity.items.length} Events
-            </ExecutiveBadge>
-          </div>
+        <section aria-labelledby="executive-activity-center-heading">
+          <p className="np-type-meta">Activity Center</p>
+          <h3
+            id="executive-activity-center-heading"
+            className="mt-2 text-xl font-black text-white"
+          >
+            Events and workflow history
+          </h3>
+          <p className="np-type-body mt-3 max-w-2xl">
+            Alerts, notifications, and procurement events are recorded in
+            Activity Center. They are not duplicated here as action queue items.
+          </p>
 
-          <div className="mt-4">
-            {activity.items.length > 0 ? (
-              <div className="divide-y divide-white/10 overflow-hidden rounded-executive border border-white/10 bg-black/15">
-                {activity.items.map((item) => (
-                  <Link
-                    key={item.id}
-                    href={item.href}
-                    className={`group flex min-h-11 items-start gap-4 px-4 py-4 transition-colors hover:bg-white/[0.04] ${EXECUTIVE_FOCUS_CYAN}`}
-                  >
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                        <p className="text-sm font-black text-white transition-colors group-hover:text-nexus-cyan-bright">
-                          {item.title}
-                        </p>
-                        <div className="flex shrink-0 items-center gap-2">
-                          <ExecutiveBadge
-                            tone={activityTone[item.severity]}
-                            size="sm"
-                          >
-                            {activityLabel[item.severity]}
-                          </ExecutiveBadge>
-                          <span className="np-type-meta">{item.relativeTime}</span>
-                        </div>
-                      </div>
-                      <p className="np-type-meta mt-2 text-nexus-text-muted">
-                        {item.description}
-                      </p>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            ) : (
-              <div className="rounded-executive border border-dashed border-white/15 bg-white/[0.025] px-5 py-8 text-center">
-                <p className="np-type-body">No recent workspace activity.</p>
-              </div>
-            )}
-          </div>
+          <Link
+            href="/notifications"
+            className={`mt-5 inline-flex min-h-11 items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.04] px-5 py-2.5 text-sm font-black text-white transition-colors hover:bg-white/[0.06] ${EXECUTIVE_FOCUS_CYAN}`}
+          >
+            Open Activity Center
+            {unreadNotificationCount > 0 ? (
+              <span className="rounded-full bg-white/[0.08] px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-nexus-cyan-bright">
+                {unreadNotificationCount} unread
+              </span>
+            ) : null}
+            <span aria-hidden="true">→</span>
+          </Link>
         </section>
 
         <section aria-labelledby="executive-nav-heading">

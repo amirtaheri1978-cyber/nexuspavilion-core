@@ -35,14 +35,17 @@ export function ExecutiveAttentionStrip({
       variant="operational"
       padding="lg"
       className="np-region"
-      aria-labelledby="executive-attention-heading"
+      aria-labelledby="executive-action-queue-heading"
     >
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <p className="np-type-eyebrow">Attention</p>
-          <h2 id="executive-attention-heading" className="np-type-h2 mt-3">
-            What requires attention
+          <p className="np-type-eyebrow">Action Queue</p>
+          <h2 id="executive-action-queue-heading" className="np-type-h2 mt-3">
+            Action Queue
           </h2>
+          <p className="np-type-body mt-3 max-w-3xl">
+            Decisions and actions requiring attention
+          </p>
         </div>
 
         <ExecutiveBadge tone={items.length > 0 ? "warning" : "success"} size="md">

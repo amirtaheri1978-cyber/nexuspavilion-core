@@ -91,13 +91,13 @@ describe("NP-MASTER-22-B02 golden executive dashboard", () => {
   it("keeps bounded empty and loading states", () => {
     expect(attention).toContain("No Immediate Action");
     expect(attention).toContain("border-dashed");
-    expect(decision).toContain("No Priority Queue");
+    expect(decision).toContain("No Decision Signals");
     expect(
       readSource("src/components/dashboard/procurement-operations-workspace.tsx"),
     ).toContain("No award decisions have been recorded.");
     expect(
       readSource("src/components/dashboard/governance-reference-workspace.tsx"),
-    ).toContain("No recent workspace activity.");
+    ).toContain("Open Activity Center");
     expect(loading).toContain('aria-busy="true"');
     expect(loading).toContain("Loading executive dashboard");
   });
