@@ -72,7 +72,7 @@ export const APP_SHELL_CHROMELESS_PREFIXES = ["/dev", "/rfq/invite"] as const;
 
 export type AppShellKind = "chromeless" | "public" | "application";
 
-export const BOARDROOM_INTELLIGENCE_TITLE = "Boardroom Intelligence";
+export const BOARDROOM_INTELLIGENCE_TITLE = "Strategic Insights";
 
 export const ACCOUNT_MENU_LINKS = [
   {
@@ -83,13 +83,13 @@ export const ACCOUNT_MENU_LINKS = [
   },
   {
     href: "/analytics",
-    label: "Boardroom Intelligence",
+    label: "Strategic Insights",
     description: "Risk, board reporting, and executive decisions.",
     icon: "📈",
   },
   {
     href: "/rfq",
-    label: "RFQ & Sourcing",
+    label: "Procurement Center",
     description: "Create, manage, and review procurement opportunities.",
     icon: "📑",
   },
@@ -107,7 +107,7 @@ export const ACCOUNT_MENU_LINKS = [
   },
   {
     href: "/company/settings",
-    label: "Company Command",
+    label: "Company Governance",
     description: "Profile, team, access, and governance controls.",
     icon: "🏢",
   },
@@ -168,9 +168,8 @@ export function getExperience(
 }
 
 export function getExperienceLabel(experience: ApplicationExperience) {
-  if (experience === "vendor") return "Supplier Workspace";
-  if (experience === "consultant") return "Consultant Workspace";
-  return "Executive Workspace";
+  void experience;
+  return "Company Workspace";
 }
 
 function formatCountBadge(value: number) {
@@ -184,29 +183,39 @@ export function getNavigation(
   if (experience === "vendor") {
     return [
       {
-        title: "Supplier Command",
+        title: "Overview",
         items: [
           {
             label: "Executive Overview",
             href: "/dashboard",
             key: "dashboard",
-            description: "Supplier operating view",
+            description: "Company operating view",
             badge: "Live",
           },
+        ],
+      },
+      {
+        title: "Company Operations",
+        items: [
           {
-            label: "Opportunities",
+            label: "Procurement Center",
             href: "/rfq",
             key: "rfq",
             description: "Open RFQs and buyer requests",
             badge: formatCountBadge(stats.activeRfqs),
           },
           {
-            label: "My Quotes",
+            label: "Bid & Proposal Submissions",
             href: "/vendor-dashboard",
             key: "vendor-dashboard",
             description: "Submitted quote activity",
             badge: formatCountBadge(stats.supplierQuotes),
           },
+        ],
+      },
+      {
+        title: "Intelligence",
+        items: [
           {
             label: "Activity Center",
             href: "/notifications",
@@ -214,8 +223,13 @@ export function getNavigation(
             description: "Updates and workflow signals",
             badge: formatCountBadge(stats.unreadNotifications),
           },
+        ],
+      },
+      {
+        title: "Company",
+        items: [
           {
-            label: "Company Command",
+            label: "Company Governance",
             href: "/company/settings",
             key: "company",
             description: "Profile, team, access, governance",
@@ -228,22 +242,32 @@ export function getNavigation(
   if (experience === "consultant") {
     return [
       {
-        title: "Consultant Command",
+        title: "Overview",
         items: [
           {
             label: "Executive Overview",
             href: "/dashboard",
             key: "dashboard",
-            description: "Consultant operating view",
+            description: "Company operating view",
             badge: "Live",
           },
+        ],
+      },
+      {
+        title: "Company Operations",
+        items: [
           {
-            label: "Project Opportunities",
+            label: "Procurement Center",
             href: "/rfq",
             key: "rfq",
             description: "Open procurement activity",
             badge: formatCountBadge(stats.activeRfqs),
           },
+        ],
+      },
+      {
+        title: "Intelligence",
+        items: [
           {
             label: "Activity Center",
             href: "/notifications",
@@ -251,8 +275,13 @@ export function getNavigation(
             description: "Updates, alerts, messages",
             badge: formatCountBadge(stats.unreadNotifications),
           },
+        ],
+      },
+      {
+        title: "Company",
+        items: [
           {
-            label: "Company Command",
+            label: "Company Governance",
             href: "/company/settings",
             key: "company",
             description: "Profile, team, access, governance",
@@ -264,7 +293,7 @@ export function getNavigation(
 
   return [
     {
-      title: "Executive Navigation",
+      title: "Overview",
       items: [
         {
           label: "Executive Overview",
@@ -273,14 +302,13 @@ export function getNavigation(
           description: "Procurement command center",
           badge: "Live",
         },
+      ],
+    },
+    {
+      title: "Company Operations",
+      items: [
         {
-          label: "Boardroom Intelligence",
-          href: "/analytics",
-          key: "analytics",
-          description: "Risk, board reporting, actions",
-        },
-        {
-          label: "RFQ & Sourcing",
+          label: "Procurement Center",
           href: "/rfq",
           key: "rfq",
           description: "Create, manage, review RFQs",
@@ -292,6 +320,17 @@ export function getNavigation(
           key: "directory",
           description: "AVL, suppliers, partners",
         },
+      ],
+    },
+    {
+      title: "Intelligence",
+      items: [
+        {
+          label: "Strategic Insights",
+          href: "/analytics",
+          key: "analytics",
+          description: "Risk, board reporting, actions",
+        },
         {
           label: "Activity Center",
           href: "/notifications",
@@ -299,8 +338,13 @@ export function getNavigation(
           description: "Alerts and workflow signals",
           badge: formatCountBadge(stats.unreadNotifications),
         },
+      ],
+    },
+    {
+      title: "Company",
+      items: [
         {
-          label: "Company Command",
+          label: "Company Governance",
           href: "/company/settings",
           key: "company",
           description: "Company governance controls",
@@ -335,7 +379,7 @@ export function getAppSectionTitle(pathname: string) {
   }
 
   if (isActivePath(pathname, "/rfq")) {
-    return "RFQ & Sourcing";
+    return "Procurement Center";
   }
 
   if (isActivePath(pathname, "/directory")) {
@@ -347,11 +391,11 @@ export function getAppSectionTitle(pathname: string) {
   }
 
   if (isActivePath(pathname, "/company")) {
-    return "Company Command";
+    return "Company Governance";
   }
 
   if (isActivePath(pathname, "/vendor-dashboard")) {
-    return "Supplier Workspace";
+    return "Bid & Proposal Submissions";
   }
 
   return BOARDROOM_INTELLIGENCE_TITLE;
@@ -365,7 +409,7 @@ export function getAppBreadcrumbs(pathname: string): ApplicationBreadcrumb[] {
       return [];
     }
 
-    const rfqRoot = { href: "/rfq", label: "RFQ & Sourcing" };
+    const rfqRoot = { href: "/rfq", label: "Procurement Center" };
 
     if (segments[1] === "new") {
       return [rfqRoot, { href: "/rfq/new", label: "New Opportunity" }];
@@ -420,20 +464,26 @@ export function getAppSidebarSections(): Array<{
 
   return [
     {
-      label: "Executive",
-      items: [pick("/dashboard"), pick("/analytics")].filter(
+      label: "Overview",
+      items: [pick("/dashboard")].filter(
         (item): item is { href: string; label: string } => Boolean(item),
       ),
     },
     {
-      label: "Procurement",
+      label: "Company Operations",
       items: [pick("/rfq"), pick("/directory")].filter(
         (item): item is { href: string; label: string } => Boolean(item),
       ),
     },
     {
-      label: "Workspace",
-      items: [pick("/notifications"), pick("/company/settings")].filter(
+      label: "Intelligence",
+      items: [pick("/analytics"), pick("/notifications")].filter(
+        (item): item is { href: string; label: string } => Boolean(item),
+      ),
+    },
+    {
+      label: "Company",
+      items: [pick("/company/settings")].filter(
         (item): item is { href: string; label: string } => Boolean(item),
       ),
     },

@@ -207,7 +207,7 @@ export default function Sidebar() {
 
             <div className="min-w-0">
               <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[#C8A646]">
-                Nexus Pavilion
+                NexusPavilion
               </p>
 
               <p className="mt-1 truncate text-sm font-black text-white">
@@ -255,7 +255,7 @@ export default function Sidebar() {
           <Link
             href="/dashboard"
             className="block rounded-[28px] px-3 py-3 transition hover:bg-white/[0.045]"
-            aria-label="Go to Nexus Pavilion dashboard"
+            aria-label="Go to NexusPavilion dashboard"
           >
             <NexusPavilionLogo variant="horizontal" size={72} priority />
 
@@ -275,8 +275,8 @@ export default function Sidebar() {
           aria-label="Primary navigation"
           className="relative flex-1 overflow-y-auto px-5 pb-5 [scrollbar-color:#1E293B_#07111F] [scrollbar-width:thin]"
         >
-          {navSections.map((section) => (
-            <div key={section.title}>
+          {navSections.map((section, index) => (
+            <div key={section.title} className={index > 0 ? "mt-6" : undefined}>
               <p className="mb-3 px-3 text-[10px] font-black uppercase tracking-[0.28em] text-[#C8A646]">
                 {section.title}
               </p>
@@ -293,7 +293,7 @@ export default function Sidebar() {
             </div>
 
             <p className="text-center text-sm font-black uppercase tracking-[0.08em] text-white">
-              Nexus Pavilion AI
+              NexusPavilion AI
             </p>
 
             <p className="mt-1 text-center text-xs font-medium text-slate-400">
