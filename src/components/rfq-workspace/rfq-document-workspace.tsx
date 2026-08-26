@@ -49,7 +49,7 @@ export function RFQDocumentWorkspace({
         <div className="flex min-w-0 flex-col gap-6 @4xl:flex-row @4xl:items-start @4xl:justify-between">
           <div className="min-w-0">
             <p className="text-xs font-black uppercase tracking-[0.3em] text-nexus-gold">
-              Executive Document Center
+              Procurement package
             </p>
 
             <div className="mt-3 flex min-w-0 flex-wrap items-center gap-3">
@@ -62,13 +62,13 @@ export function RFQDocumentWorkspace({
               id="rfq-document-workspace-title"
               className="mt-3 min-w-0 text-pretty text-2xl font-black tracking-tight text-nexus-white sm:text-3xl"
             >
-              Procurement Package Control Room
+              Procurement package &amp; documents
             </h2>
 
             <p className="mt-3 max-w-4xl min-w-0 text-pretty text-sm font-semibold leading-7 text-nexus-muted">
               A controlled environment for drawings, specifications, bills of
               quantities, site records, supporting documents, issued addenda,
-              supplier acknowledgements, and procurement package governance.
+              respondent acknowledgements, and procurement package governance.
             </p>
           </div>
 
@@ -112,7 +112,7 @@ export function RFQDocumentWorkspace({
                 Add drawings, specifications, BOQ files, site photos,
                 clarifications, and supporting records to the active RFQ
                 package. Files uploaded here remain connected to the live
-                supplier-facing workspace without changing the RFQ creation
+                respondent workspace without changing the RFQ creation
                 workflow.
               </p>
             </div>
@@ -201,24 +201,25 @@ export function RFQDocumentWorkspace({
         </section>
 
         <section
+          id="clarifications-addenda"
           className="mt-8 min-w-0 border-t border-nexus-gold/20 pt-8"
           aria-labelledby="rfq-addenda-workspace-title"
           data-rfq-addenda-workspace="true"
         >
           <div className="mb-6 min-w-0">
             <p className="text-xs font-black uppercase tracking-[0.25em] text-nexus-gold">
-              RFQ Addenda &amp; Clarifications
+              Clarifications &amp; Addenda
             </p>
 
             <h3
               id="rfq-addenda-workspace-title"
               className="mt-3 min-w-0 text-pretty text-xl font-black tracking-tight text-nexus-white sm:text-2xl"
             >
-              Revisions, Bulletins &amp; Supplier Acknowledgements
+              Revisions, bulletins &amp; acknowledgements
             </h3>
 
             <p className="mt-3 max-w-3xl min-w-0 text-pretty text-sm font-semibold leading-7 text-nexus-muted">
-              Manage issued addenda and supplier acknowledgements within the
+              Manage issued addenda and respondent acknowledgements within the
               same controlled RFQ workspace while preserving the existing
               document and governance workflows.
             </p>

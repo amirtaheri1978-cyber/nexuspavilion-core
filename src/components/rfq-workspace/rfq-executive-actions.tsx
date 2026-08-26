@@ -13,6 +13,76 @@ type RFQExecutiveActionsProps = {
   commercialEvaluationUnlocked: boolean;
 };
 
+type LifecycleStage = {
+  label: string;
+  href: string;
+  external?: boolean;
+};
+
+function buildIssuerLifecycleStages(): LifecycleStage[] {
+  return [
+    {
+      label: "Drafting & Configuration",
+      href: "#document-center",
+    },
+    {
+      label: "Market Engagement & Publishing",
+      href: "#supplier-invitations",
+    },
+    {
+      label: "Clarifications & Addenda",
+      href: "#clarifications-addenda",
+    },
+    {
+      label: "Evaluation & Award",
+      href: "#quote-intelligence",
+    },
+  ];
+}
+
+function buildRespondentLifecycleStages(
+  rfqSlug: string,
+  canSubmitQuote: boolean,
+): LifecycleStage[] {
+  return [
+    {
+      label: "RFQ Review & Scoping",
+      href: "#procurement-context",
+    },
+    {
+      label: "Clarifications & Addenda",
+      href: "#clarifications-addenda",
+    },
+    {
+      label: "Quote & Proposal Preparation",
+      href: canSubmitQuote
+        ? `/rfq/${rfqSlug}/submit`
+        : "#quote-intelligence",
+      external: canSubmitQuote,
+    },
+    {
+      label: "Submission & Award Tracking",
+      href: "#quote-intelligence",
+    },
+  ];
+}
+
+function LifecycleStageLink({
+  stage,
+  index,
+}: {
+  stage: LifecycleStage;
+  index: number;
+}) {
+  const label = `${index + 1}. ${stage.label}`;
+
+  if (stage.external) {
+    return <ExecutiveActionLink href={stage.href} label={label} />;
+  }
+
+  return <ExecutiveActionAnchor href={stage.href} label={label} />;
+}
+
 export function RFQExecutiveActions({
   rfqSlug,
   isOwner,
@@ -23,6 +93,10 @@ export function RFQExecutiveActions({
   deadlinePassed,
   commercialEvaluationUnlocked,
 }: RFQExecutiveActionsProps) {
+  const lifecycleStages = isOwner
+    ? buildIssuerLifecycleStages()
+    : buildRespondentLifecycleStages(rfqSlug, canSubmitQuote);
+
   return (
     <ExecutivePanel
       data-rfq-priority-actions="true"
@@ -31,51 +105,73 @@ export function RFQExecutiveActions({
       tone="gold"
     >
       <p className="text-xs font-black uppercase tracking-[0.3em] text-nexus-gold">
-        CEO Action Center
+        Procurement lifecycle
       </p>
 
       <h2 className="mt-3 text-3xl font-black text-nexus-white">
-        Priority Actions
+        {isOwner ? "Issuer workflow" : "Respondent workflow"}
       </h2>
 
-      <div className="mt-6 grid min-w-0 gap-3">
+      <nav
+        className="mt-6 grid min-w-0 gap-3"
+        aria-label={
+          isOwner
+            ? "Issuer procurement lifecycle navigation"
+            : "Respondent procurement lifecycle navigation"
+        }
+        data-rfq-lifecycle-nav="true"
+      >
+        {lifecycleStages.map((stage, index) => (
+          <LifecycleStageLink
+            key={stage.label}
+            stage={stage}
+            index={index}
+          />
+        ))}
+      </nav>
+
+      <p className="mt-8 text-xs font-black uppercase tracking-[0.3em] text-nexus-gold">
+        Priority actions
+      </p>
+
+      <div className="mt-4 grid min-w-0 gap-3">
         {canSubmitQuote ? (
           <ExecutiveActionLink
             href={`/rfq/${rfqSlug}/submit`}
-            label="Submit Quote"
+            label="Submit quote"
           />
         ) : null}
 
         {isOwner && isOpen ? (
           <ExecutiveActionAnchor
             href="#supplier-invitations"
-            label="Invite Suppliers"
+            label="Invite respondents"
           />
         ) : null}
 
         {isOwner && hasCompany ? (
           <ExecutiveActionAnchor
             href="#document-center"
-            label="Upload Documents"
+            label="Upload documents"
           />
         ) : null}
 
         <ExecutiveActionAnchor
           href="#document-center"
-          label="Review Document Center"
+          label="Review procurement package"
         />
 
         {isOwner && commercialEvaluationUnlocked ? (
           <ExecutiveActionLink
             href={`/rfq/${rfqSlug}/compare`}
-            label="Open Compare View"
+            label="Open quote comparison"
           />
         ) : null}
 
         {isOwner && !commercialEvaluationUnlocked ? (
           <ExecutivePanel variant="operational" padding="sm" tone="gold">
             <p className="text-sm font-black leading-6 text-nexus-gold">
-              Commercial evaluation is locked until the deadline.
+              Quote evaluation is locked until the submission deadline.
             </p>
           </ExecutivePanel>
         ) : null}

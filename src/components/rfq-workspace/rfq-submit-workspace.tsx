@@ -312,12 +312,12 @@ export function RfqSubmitWorkspace({ slug }: RfqSubmitWorkspaceProps) {
           className="np-region min-w-0 @container"
           data-rfq-submit-workspace="true"
         >
-          <p className="np-type-eyebrow">Supplier response</p>
+          <p className="np-type-eyebrow">Respondent submission</p>
           <h1 className="np-type-h1 mt-4 min-w-0 text-pretty">Submit quote</h1>
           <p className="np-type-body mt-4 max-w-3xl min-w-0 text-pretty">
             {rfq?.title
-              ? `Commercial response for ${rfq.title}.`
-              : "Submit your commercial offer with a validated contract amount, delivery timeline, and proposal note."}
+              ? `Quote and proposal submission for ${rfq.title}.`
+              : "Submit your quote with a validated contract amount, delivery timeline, and proposal note."}
           </p>
 
           <dl

@@ -650,7 +650,7 @@ copilotSuggestions ? (
 </section>
 ) : null}
 
-<div className="np-region-major min-w-0">
+<div className="np-region-major min-w-0" id="procurement-context">
   <RFQProcurementContext
     description={getProcurementFitMessage(rfq)}
     sourcingLabel={getSourcingLabel(rfq.sourcing_method)}
@@ -808,19 +808,19 @@ tone="blue"
 data-rfq-supplier-invitations="true"
 >
 <p className="text-xs font-black uppercase tracking-[0.3em] text-nexus-gold">
-Supplier Invitation
+Respondent invitation
 </p>
 
 <h2
 id="rfq-supplier-invitation-heading"
 className="mt-3 min-w-0 text-pretty text-2xl font-black tracking-tight text-nexus-white sm:text-3xl"
 >
-Build Competitive Bid Coverage
+Build competitive quote coverage
 </h2>
 
 <p className="mt-3 max-w-3xl min-w-0 text-pretty text-sm font-semibold leading-7 text-nexus-muted">
-Invite qualified suppliers directly into this RFQ workspace while
-preserving buyer-side control, commercial confidentiality, and the current
+Invite qualified respondents directly into this RFQ workspace while
+preserving issuer-side control, commercial confidentiality, and the current
 governance workflow.
 </p>
 

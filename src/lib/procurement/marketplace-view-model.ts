@@ -27,6 +27,9 @@ export type ProcurementMarketplaceViewModel = {
   title: string;
   description: string;
   experienceLabel: string;
+  contextLabel: string;
+  pipelineTitle: string;
+  pipelineDescription: string;
   availabilityLabel: "Available" | "Insufficient Data";
   records: MarketplaceRecord[];
   hero: {
@@ -300,11 +303,11 @@ export function buildProcurementMarketplaceViewModel(
     mode === "supplier"
       ? [
           {
-            label: "Open Opportunities",
+            label: "Open RFQs",
             value: openCount,
           },
           {
-            label: "My Quotes",
+            label: "Submitted quotes",
             value: context.supplier.submittedQuotes.length,
           },
           {
@@ -339,24 +342,33 @@ export function buildProcurementMarketplaceViewModel(
     mode,
     title:
       mode === "supplier"
-        ? "Supplier Opportunity Center"
-        : "RFQ Command Center",
+        ? "Open & Invited Opportunities"
+        : "Company RFQs",
     description:
       mode === "supplier"
-        ? "Review open public and authorized procurement opportunities available to your supplier organization."
-        : "Create, classify, monitor, and manage RFQs governed by your enterprise procurement workspace.",
-    experienceLabel:
+        ? "Review open public and authorized RFQs available to your company as a respondent."
+        : "Create, classify, monitor, and manage RFQs issued by your company workspace.",
+    experienceLabel: "Procurement Activity",
+    contextLabel:
       mode === "supplier"
-        ? "Supplier Opportunity View"
-        : "Buyer Procurement Workspace",
+        ? "Respondent opportunities"
+        : "Company-managed RFQs",
+    pipelineTitle:
+      mode === "supplier"
+        ? "Accessible RFQ Records"
+        : "Managed RFQ Records",
+    pipelineDescription:
+      mode === "supplier"
+        ? "Review open public and invited RFQs your company can respond to."
+        : "Review sourcing controls, contract framework, budget visibility, and governance status across company RFQs.",
     availabilityLabel:
       records.length > 0 ? "Available" : "Insufficient Data",
     records,
     hero: {
       primaryLabel:
         mode === "supplier"
-          ? "Open Opportunities"
-          : "Owned RFQs",
+          ? "Open RFQs"
+          : "Company RFQs",
       primaryValue: String(
         mode === "supplier"
           ? openCount
@@ -365,13 +377,13 @@ export function buildProcurementMarketplaceViewModel(
       health,
       openLabel:
         mode === "supplier"
-          ? "Active Opportunity Pipeline"
+          ? "Active procurement pipeline"
           : "Open RFQs",
       openValue: String(openCount),
       budgetLabel:
         mode === "supplier"
-          ? "Accessible Opportunity Budget"
-          : "Planned RFQ Budget",
+          ? "Accessible RFQ budget"
+          : "Planned RFQ budget",
       budgetValue: formatMoney(totalBudget),
     },
     statusMetrics,
@@ -381,11 +393,11 @@ export function buildProcurementMarketplaceViewModel(
     emptyState: {
       title:
         mode === "supplier"
-          ? "No Open Opportunities"
-          : "No RFQs Found",
+          ? "No open RFQs"
+          : "No RFQs found",
       description:
         mode === "supplier"
-          ? "No public or authorized RFQ opportunities are currently available to your supplier organization."
+          ? "No public or authorized RFQs are currently available for your company to respond to."
           : "Create the first classified procurement opportunity for this company workspace.",
     },
   };

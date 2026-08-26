@@ -25,9 +25,9 @@ const visualQa = readSource("src/app/dev/rfq-visual-qa/page.tsx");
 
 describe("Task 24-RFQ-05 command center density closeout", () => {
   it("keeps command-center copy, destinations, and award distinction intact", () => {
-    expect(command).toContain("Return to RFQ marketplace");
+    expect(command).toContain("Return to Procurement Center");
     expect(command).toContain('backHref = "/rfq"');
-    expect(command).toContain("Procurement command center");
+    expect(command).toContain("RFQ workspace");
     expect(command).toContain("Executive brief");
     expect(command).toContain("Executive procurement summary");
     expect(command).toContain("Recommended executive action");
@@ -121,7 +121,8 @@ describe("Task 24-RFQ-05 command center density closeout", () => {
     expect(ranking).toContain('data-rfq-opportunity-queue="true"');
     expect(ranking).toContain('data-rfq-intelligence-profiles="true"');
     expect(actions).toContain('data-rfq-priority-actions="true"');
-    expect(actions).toContain("Open Compare View");
+    expect(actions).toContain('data-rfq-lifecycle-nav="true"');
+    expect(actions).toContain("Open quote comparison");
     expect(detail).toContain("<ExecutiveOpportunityRanking");
     expect(detail).toContain("<RFQExecutiveActions");
     expect(detail).not.toContain("award_rfq_quote");

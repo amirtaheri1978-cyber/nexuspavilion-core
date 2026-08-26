@@ -207,7 +207,7 @@ export default async function RFQMarketplacePage() {
           <div className="flex flex-col gap-8 xl:flex-row xl:items-start xl:justify-between">
             <div className="min-w-0">
               <p className="text-xs font-black uppercase tracking-[0.34em] text-[#C8A646]">
-                Executive Procurement Workspace
+                Procurement Center
               </p>
 
               <h1 className="mt-4 max-w-5xl text-4xl font-black tracking-[-0.05em] text-white sm:text-5xl xl:text-[64px] xl:leading-[0.98]">
@@ -234,9 +234,7 @@ export default async function RFQMarketplacePage() {
                 </ExecutiveBadge>
 
                 <ExecutiveBadge tone="neutral">
-                  {marketplace.mode === "supplier"
-                    ? "Supplier Workspace"
-                    : "Buyer Workspace"}
+                  {marketplace.contextLabel}
                 </ExecutiveBadge>
               </div>
             </div>
@@ -310,15 +308,11 @@ export default async function RFQMarketplacePage() {
               </p>
 
               <h2 className="mt-3 text-3xl font-black text-white">
-                {marketplace.mode === "supplier"
-                  ? "Accessible Opportunity Records"
-                  : "Managed RFQ Records"}
+                {marketplace.pipelineTitle}
               </h2>
 
               <p className="mt-3 max-w-3xl text-sm font-semibold leading-7 text-slate-400">
-                {marketplace.mode === "supplier"
-                  ? "Review open public and authorized sourcing opportunities available to your supplier organization."
-                  : "Review sourcing controls, contract framework, budget visibility, and governance status across company-managed RFQs."}
+                {marketplace.pipelineDescription}
               </p>
             </div>
 

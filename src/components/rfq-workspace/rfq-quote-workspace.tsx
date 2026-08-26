@@ -49,20 +49,20 @@ export function RFQQuoteWorkspace({
   supplierCompanies,
 }: RFQQuoteWorkspaceProps) {
   const workspaceLabel = isOwner
-    ? "Quote Intelligence"
-    : "Supplier Submission";
+    ? "Quote evaluation"
+    : "Respondent submission";
 
   const workspaceTitle = isOwner
     ? commercialEvaluationUnlocked
-      ? "Supplier Evaluation Intelligence"
-      : "Commercial Submission Lockbox"
-    : "Your Organization’s Commercial Submission";
+      ? "Response evaluation intelligence"
+      : "Commercial submission lockbox"
+    : "Your organization’s quote submission";
 
   const workspaceDescription = !isOwner
-    ? "Supplier pricing remains confidential. Your organization can review only its own submission. Competitor pricing, comparative evaluation, ranking, and award controls remain restricted to authorized buyer-side users after commercial opening."
+    ? "Quote pricing remains confidential. Your organization can review only its own submission. Competitor pricing, comparative evaluation, ranking, and award controls remain restricted to the issuer after commercial opening."
     : commercialEvaluationUnlocked
-      ? "Supplier evaluation applies weighted commercial and execution criteria across price, timeline, performance signals, procurement risk, and proposal validity."
-      : "Commercial submissions remain protected until the RFQ deadline. Buyer-side users can monitor participation volume while pricing, ranking, supplier comparison, and award controls remain unavailable.";
+      ? "Quote evaluation applies weighted commercial and execution criteria across price, timeline, performance signals, procurement risk, and proposal validity."
+      : "Commercial submissions remain protected until the RFQ deadline. Issuers can monitor participation volume while pricing, ranking, comparison, and award controls remain unavailable.";
 
   return (
     <ExecutivePanel
@@ -99,7 +99,7 @@ export function RFQQuoteWorkspace({
                 href={`/rfq/${rfqSlug}/submit`}
                 className={EXECUTIVE_CTA_SECONDARY}
               >
-                Submit Quote
+                Submit quote
               </Link>
             ) : null}
 
@@ -108,7 +108,7 @@ export function RFQQuoteWorkspace({
                 href={`/rfq/${rfqSlug}/compare`}
                 className={EXECUTIVE_CTA_PRIMARY}
               >
-                Launch Comparative Evaluation
+                Launch quote comparison
               </Link>
             ) : null}
           </div>
@@ -143,8 +143,8 @@ export function RFQQuoteWorkspace({
                     className="mt-3 max-w-3xl min-w-0 text-pretty text-sm font-semibold leading-7 text-nexus-muted"
                   >
                     Supplier submissions have been received, but commercial
-                    pricing and comparative evaluation remain protected until
-                    the authorized commercial opening stage.
+                    pricing and quote comparison remain protected until the
+                    authorized commercial opening stage.
                   </p>
                 </div>
 

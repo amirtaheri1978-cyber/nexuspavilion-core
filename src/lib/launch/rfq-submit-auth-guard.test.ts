@@ -124,6 +124,11 @@ describe("anonymous RFQ submit auth continuation", () => {
 
   it("keeps authenticated submit on the existing quote workspace and POST /api/quotes", () => {
     expect(submitPage).toContain("<RfqSubmitWorkspace slug={slug} />");
+    expect(submitPage).toContain("canRespondToRfqSourcing");
+    expect(submitPage).toContain("resolveRfqParticipantRole");
+    expect(submitPage).toContain("data-rfq-submit-access-blocked={reason}");
+    expect(submitPage).toContain('reason="issuer"');
+    expect(submitPage).toContain('reason="sourcing"');
     expect(submitWorkspace).toContain('"use client"');
     expect(submitWorkspace).toContain('data-rfq-submit-workspace="true"');
     expect(submitWorkspace).toContain('fetch("/api/quotes"');
@@ -131,6 +136,34 @@ describe("anonymous RFQ submit auth continuation", () => {
     expect(submitPage).not.toContain("getProcurementContext(");
     expect(submitPage).not.toContain("canSubmitCompanyQuote");
     expect(submitPage).not.toContain("bootstrap_owned_company_workspace");
+  });
+
+  it("aligns submit-page UX with existing RFQ sourcing access before rendering the form", () => {
+    const profileGateIndex = submitPage.indexOf("if (!profile?.company_id)");
+    const rfqLookupIndex = submitPage.indexOf(
+      '.select("id, slug, company_id, sourcing_method")',
+    );
+    const participantRoleIndex = submitPage.indexOf(
+      "const participantRole = resolveRfqParticipantRole",
+    );
+    const issuerBlockIndex = submitPage.indexOf('reason="issuer"');
+    const rpcIndex = submitPage.indexOf("current_user_has_supplier_rfq_access");
+    const sourcingGateIndex = submitPage.indexOf(
+      "if (!canRespondToRfqSourcing(rfq.sourcing_method, hasRestrictedRfqAccess))",
+    );
+    const sourcingBlockIndex = submitPage.indexOf('reason="sourcing"');
+    const workspaceIndex = submitPage.indexOf("<RfqSubmitWorkspace slug={slug} />");
+
+    expect(rfqLookupIndex).toBeGreaterThan(profileGateIndex);
+    expect(participantRoleIndex).toBeGreaterThan(rfqLookupIndex);
+    expect(issuerBlockIndex).toBeGreaterThan(participantRoleIndex);
+    expect(rpcIndex).toBeGreaterThan(issuerBlockIndex);
+    expect(sourcingGateIndex).toBeGreaterThan(rpcIndex);
+    expect(sourcingBlockIndex).toBeGreaterThan(sourcingGateIndex);
+    expect(workspaceIndex).toBeGreaterThan(sourcingBlockIndex);
+    expect(submitPage).toContain('participantRole === "issuer"');
+    expect(submitPage).toContain("isPublicSourcingMethod");
+    expect(submitPage).not.toContain('data-rfq-submit-workspace="true"');
   });
 
   it("keeps the invitation CTA on the canonical submit route", () => {

@@ -41,9 +41,10 @@ describe("Task 24-RFQ-04 RFQ detail structural composition", () => {
     expect(actions).not.toContain("opportunities");
     expect(actions).not.toContain("intelligence");
     expect(actions).toContain('data-rfq-priority-actions="true"');
-    expect(actions).toContain("Priority Actions");
-    expect(actions).toContain("Submit Quote");
-    expect(actions).toContain("Open Compare View");
+    expect(actions).toContain("Priority actions");
+    expect(actions).toContain("Submit quote");
+    expect(actions).toContain("Open quote comparison");
+    expect(actions).toContain('data-rfq-lifecycle-nav="true"');
 
     const rankingMount = detail.indexOf("<ExecutiveOpportunityRanking");
     const actionsMount = detail.indexOf("<RFQExecutiveActions");
@@ -92,6 +93,7 @@ describe("Task 24-RFQ-04 RFQ detail structural composition", () => {
 
     expect(command).toContain('data-rfq-command-center="true"');
     expect(documents).toContain('id="document-center"');
+    expect(documents).toContain('id="clarifications-addenda"');
     expect(quotes).toContain('id="quote-intelligence"');
     expect(actions).not.toContain("hover:scale");
     expect(detail).not.toContain("hover:scale");

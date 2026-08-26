@@ -58,7 +58,7 @@ export function RFQCommandCenter({
         href={backHref}
         className={`inline-flex min-h-11 items-center text-sm font-black text-nexus-cyan-bright ${EXECUTIVE_FOCUS_CYAN}`}
       >
-        Return to RFQ marketplace
+        Return to Procurement Center
       </Link>
 
       <ExecutivePanel
@@ -70,7 +70,7 @@ export function RFQCommandCenter({
       >
         <div className="grid min-w-0 gap-8 @7xl:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] @7xl:items-start @7xl:gap-10">
           <div className="min-w-0 @container">
-            <p className="np-type-eyebrow">Procurement command center</p>
+            <p className="np-type-eyebrow">RFQ workspace</p>
             <div className="mt-4 flex min-w-0 flex-wrap items-center gap-3">
               <ExecutiveBadge tone={statusTone} size="md">
                 {statusLabel}

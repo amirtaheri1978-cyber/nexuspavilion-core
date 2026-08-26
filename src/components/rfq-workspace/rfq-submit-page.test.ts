@@ -52,6 +52,7 @@ describe("Task 24-RFQ-11 submit page presentation", () => {
     expect(submit).toContain('id="quote-submit-error"');
     expect(submit).toContain('role="alert"');
     expect(submit).toContain("Submit quote");
+    expect(submit).toContain("Respondent submission");
     expect(submit).toContain("Submitting quote...");
     expect(submit).toContain("Cancel");
     expect(submit.match(/<h1\b/g)?.length).toBe(1);
