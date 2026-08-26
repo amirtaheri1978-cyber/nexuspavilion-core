@@ -42,10 +42,9 @@ export function canSubmitCompanyQuote(
   membership: OrganizationMembership | null,
   companyId: string,
 ): membership is OrganizationMembership {
-  return (
-    isActiveMembershipForCompany(membership, companyId) &&
-    membership.procurementFunction === "supplier"
-  );
+  // Layer 2 respondent prerequisite: active acting-company membership.
+  // procurement_function is not a global RFQ-response permission.
+  return isActiveMembershipForCompany(membership, companyId);
 }
 
 export function canDecideCompanyQuotes(

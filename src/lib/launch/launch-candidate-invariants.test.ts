@@ -114,7 +114,7 @@ describe("Task 25 launch-candidate cross-feature invariants", () => {
     expect(getSafeNextPath("//evil.example/login")).toBe("/dashboard");
   });
 
-  it("separates buyer RFQ writes from supplier quote writes and keeps award behind verified ownership", () => {
+  it("keeps issuer RFQ writes independent of respondent quote writes and keeps award behind verified ownership", () => {
     const buyer = membership({ procurementFunction: "buyer" });
     const supplier = membership({ procurementFunction: "supplier" });
     const owner = membership({
@@ -124,7 +124,7 @@ describe("Task 25 launch-candidate cross-feature invariants", () => {
 
     expect(canCreateCompanyRfq(buyer, COMPANY_ID)).toBe(true);
     expect(canInviteCompanySuppliers(buyer, COMPANY_ID)).toBe(true);
-    expect(canSubmitCompanyQuote(buyer, COMPANY_ID)).toBe(false);
+    expect(canSubmitCompanyQuote(buyer, COMPANY_ID)).toBe(true);
 
     expect(canSubmitCompanyQuote(supplier, COMPANY_ID)).toBe(true);
     expect(canCreateCompanyRfq(supplier, COMPANY_ID)).toBe(false);

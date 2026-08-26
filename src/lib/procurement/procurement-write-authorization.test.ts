@@ -66,7 +66,7 @@ describe("procurement write authorization", () => {
     ).toBe(true);
   });
 
-  it("allows quote submit for an active supplier membership", () => {
+  it("allows quote submit for any active acting-company membership", () => {
     expect(
       canSubmitCompanyQuote(
         membership({ procurementFunction: "supplier" }),
@@ -79,6 +79,42 @@ describe("procurement write authorization", () => {
           workspaceRole: "owner",
           procurementFunction: "buyer",
         }),
+        COMPANY_ID,
+      ),
+    ).toBe(true);
+    expect(
+      canSubmitCompanyQuote(
+        membership({ procurementFunction: "none" }),
+        COMPANY_ID,
+      ),
+    ).toBe(true);
+    expect(
+      canSubmitCompanyQuote(
+        membership({ procurementFunction: "consultant" }),
+        COMPANY_ID,
+      ),
+    ).toBe(true);
+    expect(
+      canSubmitCompanyQuote(
+        membership({ procurementFunction: "buyer" }),
+        COMPANY_ID,
+      ),
+    ).toBe(true);
+    expect(
+      canCreateCompanyRfq(
+        membership({ procurementFunction: "none" }),
+        COMPANY_ID,
+      ),
+    ).toBe(false);
+    expect(
+      canInviteCompanySuppliers(
+        membership({ procurementFunction: "consultant" }),
+        COMPANY_ID,
+      ),
+    ).toBe(false);
+    expect(
+      canDecideCompanyQuotes(
+        membership({ procurementFunction: "supplier" }),
         COMPANY_ID,
       ),
     ).toBe(false);

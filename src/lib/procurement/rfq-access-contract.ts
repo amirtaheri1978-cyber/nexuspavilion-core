@@ -135,6 +135,15 @@ export function isRestrictedSourcingMethod(
   );
 }
 
+export function canRespondToRfqSourcing(
+  sourcingMethod: ProcurementSourcingMethod,
+  hasRestrictedRfqAccess: boolean,
+) {
+  return (
+    isPublicSourcingMethod(sourcingMethod) || hasRestrictedRfqAccess === true
+  );
+}
+
 export function resolveRfqParticipantRole({
   currentCompanyId,
   rfqCompanyId,

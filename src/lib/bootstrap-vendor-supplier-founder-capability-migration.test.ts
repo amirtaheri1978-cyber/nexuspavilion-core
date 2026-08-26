@@ -235,7 +235,7 @@ describe("Task 32C authorization invariants remain unchanged", () => {
     expect(sourcingRls).toContain("i.status in ('sent', 'invited')");
     expect(baseline).toContain("current_user_has_supplier_rfq_access");
     expect(quotesRoute).toContain("canSubmitCompanyQuote");
-    expect(quotesAuth).toContain(
+    expect(quotesAuth).not.toContain(
       'membership.procurementFunction === "supplier"',
     );
   });

@@ -4,6 +4,10 @@ import { sendEmail } from "@/lib/email/send-email";
 import { quoteSubmittedEmail } from "@/lib/email/templates/quote-submitted-email";
 import { getActiveMembershipForUserCompany } from "@/lib/auth/membership";
 import { joinPublicSitePath } from "@/lib/ops/public-site-url";
+import {
+  canRespondToRfqSourcing,
+  isPublicSourcingMethod,
+} from "@/lib/procurement/rfq-access-contract";
 import { canSubmitCompanyQuote } from "@/lib/procurement/procurement-write-authorization";
 import { recordTrustedProcurementActivity } from "@/lib/procurement/record-procurement-activity";
 import { createClient } from "@/lib/supabase/server";
@@ -160,7 +164,7 @@ if (!canSubmitCompanyQuote(membership, profile.company_id)) {
   return NextResponse.json(
     {
       error:
-        "Only authorized supplier accounts can submit quotations.",
+        "You must belong to an active company to submit a quotation.",
     },
     { status: 403 },
   );
@@ -169,7 +173,7 @@ if (!canSubmitCompanyQuote(membership, profile.company_id)) {
 const rfqQuery = supabase
 .from("rfqs")
 .select(
-"id, title, slug, status, company_id, awarded_quote_id, awarded_at, deadline"
+"id, title, slug, status, company_id, awarded_quote_id, awarded_at, deadline, sourcing_method"
 );
 
 const { data: rfq, error: rfqError } = rfqId
@@ -203,6 +207,35 @@ return NextResponse.json(
 { error: "Your company cannot submit a quote to its own RFQ." },
 { status: 403 }
 );
+}
+
+let hasRestrictedRfqAccess = false;
+
+if (!isPublicSourcingMethod(rfq.sourcing_method)) {
+  const { data: restrictedAccess, error: accessError } = await supabase.rpc(
+    "current_user_has_supplier_rfq_access",
+    { p_rfq_id: rfq.id },
+  );
+
+  if (accessError) {
+    console.error("Quote submit RFQ access lookup failed:", accessError);
+
+    return NextResponse.json(
+      { error: "Unable to verify RFQ access." },
+      { status: 500 },
+    );
+  }
+
+  hasRestrictedRfqAccess = restrictedAccess === true;
+}
+
+if (!canRespondToRfqSourcing(rfq.sourcing_method, hasRestrictedRfqAccess)) {
+  return NextResponse.json(
+    {
+      error: "You do not have access to submit a quotation for this RFQ.",
+    },
+    { status: 403 },
+  );
 }
 
 const { data: existingQuote } = await supabase

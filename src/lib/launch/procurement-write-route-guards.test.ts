@@ -196,13 +196,11 @@ describe("launch-critical write route guards", () => {
     expect(membershipMock).not.toHaveBeenCalled();
   });
 
-  it("rejects a buyer membership on the canonical quote API and a supplier membership on RFQ create and invite", async () => {
+  it("rejects missing quote membership and a supplier membership on RFQ create and invite", async () => {
     mockClient({ id: USER_ID, email: "workspace@example.com" });
 
-    membershipMock.mockResolvedValueOnce(
-      membership({ procurementFunction: "buyer" }),
-    );
-    const quoteAsBuyer = await readJson(
+    membershipMock.mockResolvedValueOnce(null);
+    const quoteWithoutMembership = await readJson(
       await postQuotes(
         jsonRequest("http://localhost/api/quotes", {
           slug: "harbor-package",
@@ -232,9 +230,9 @@ describe("launch-critical write route guards", () => {
       ),
     );
 
-    expect(quoteAsBuyer.status).toBe(403);
-    expect(quoteAsBuyer.body.error).toBe(
-      "Only authorized supplier accounts can submit quotations.",
+    expect(quoteWithoutMembership.status).toBe(403);
+    expect(quoteWithoutMembership.body.error).toBe(
+      "You must belong to an active company to submit a quotation.",
     );
     expect(rfqAsSupplier.status).toBe(403);
     expect(rfqAsSupplier.body.error).toBe(

@@ -39,6 +39,14 @@ describe("procurement write API membership authorization", () => {
 
     expect(quotesRoute).not.toContain("canSubmitQuote(");
     expect(quotesRoute).toContain("canSubmitCompanyQuote");
+    expect(quotesRoute).toContain("canRespondToRfqSourcing");
+    expect(quotesRoute).toContain("current_user_has_supplier_rfq_access");
+    expect(quotesRoute).not.toContain(
+      "Only authorized supplier accounts can submit quotations.",
+    );
+    expect(quotesRoute).not.toContain("body.isInvited");
+    expect(quotesRoute).not.toContain("invite_token");
+    expect(quotesRoute).not.toContain("p_token");
     expect(rfqsRoute).toContain("canCreateCompanyRfq");
     expect(quoteDecisionRoute).toContain("canDecideCompanyQuotes");
     expect(invitesRoute).toContain("canInviteCompanySuppliers");

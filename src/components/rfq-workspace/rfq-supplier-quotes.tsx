@@ -220,8 +220,8 @@ function SupplierQuoteEmptyState({
 
       <p className="mx-auto mt-3 max-w-xl min-w-0 text-pretty text-sm font-semibold leading-6 text-nexus-muted">
         {isOpen
-          ? "This RFQ is currently open for an authorized supplier submission."
-          : "This RFQ is closed and is no longer accepting supplier submissions."}
+          ? "This RFQ is currently open for an authorized company submission."
+          : "This RFQ is closed and is no longer accepting submissions."}
       </p>
 
       {canSubmitQuote ? (
