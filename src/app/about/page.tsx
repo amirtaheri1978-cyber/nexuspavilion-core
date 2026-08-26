@@ -1,4 +1,36 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+
+const ABOUT_TITLE = "About | NexusPavilion Inc.";
+const ABOUT_DESCRIPTION =
+  "Learn about NexusPavilion Inc., the parent company of NexusPavilion Intelligent Procurement.";
+
+export const metadata: Metadata = {
+  title: {
+    absolute: ABOUT_TITLE,
+  },
+  description: ABOUT_DESCRIPTION,
+  alternates: {
+    canonical: "/about",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
+  openGraph: {
+    title: ABOUT_TITLE,
+    description: ABOUT_DESCRIPTION,
+    url: "/about",
+    siteName: "NexusPavilion Inc.",
+    type: "website",
+    locale: "en_US",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: ABOUT_TITLE,
+    description: ABOUT_DESCRIPTION,
+  },
+};
 
 const intelligenceCards = [
 {

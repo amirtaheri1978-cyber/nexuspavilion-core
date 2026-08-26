@@ -1,4 +1,18 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+
+const PRIVACY_TITLE = "Privacy | NexusPavilion";
+
+export const metadata: Metadata = {
+  title: {
+    absolute: PRIVACY_TITLE,
+  },
+  description: "Privacy information for NexusPavilion services.",
+  robots: {
+    index: false,
+    follow: true,
+  },
+};
 
 const policySections = [
 {

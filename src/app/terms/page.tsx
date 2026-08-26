@@ -1,4 +1,18 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+
+const TERMS_TITLE = "Terms | NexusPavilion";
+
+export const metadata: Metadata = {
+  title: {
+    absolute: TERMS_TITLE,
+  },
+  description: "Terms of use for NexusPavilion services.",
+  robots: {
+    index: false,
+    follow: true,
+  },
+};
 
 const sections = [
 {

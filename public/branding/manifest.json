@@ -1,8 +1,8 @@
 {
-  "name": "Nexus Pavilion",
-  "short_name": "Nexus Pavilion",
-  "description": "Executive procurement intelligence for construction.",
-  "start_url": "/",
+  "name": "NexusPavilion Intelligent Procurement",
+  "short_name": "Intelligent Procurement",
+  "description": "Structured RFQ, quotation, supplier evaluation, award, and executive procurement workflows.",
+  "start_url": "/login",
   "display": "standalone",
   "background_color": "#061426",
   "theme_color": "#0B3D91",

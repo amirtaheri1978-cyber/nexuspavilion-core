@@ -1,6 +1,38 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 
 import ContactForm from "@/components/contact-form";
+
+const CONTACT_TITLE = "Contact | NexusPavilion Inc.";
+const CONTACT_DESCRIPTION =
+  "Contact NexusPavilion Inc. for corporate and product inquiries.";
+
+export const metadata: Metadata = {
+  title: {
+    absolute: CONTACT_TITLE,
+  },
+  description: CONTACT_DESCRIPTION,
+  alternates: {
+    canonical: "/contact",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
+  openGraph: {
+    title: CONTACT_TITLE,
+    description: CONTACT_DESCRIPTION,
+    url: "/contact",
+    siteName: "NexusPavilion Inc.",
+    type: "website",
+    locale: "en_US",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: CONTACT_TITLE,
+    description: CONTACT_DESCRIPTION,
+  },
+};
 
 const trustCapabilities = [
 "RFQ Governance",

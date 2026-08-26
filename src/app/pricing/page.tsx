@@ -1,4 +1,36 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+
+const PRICING_TITLE = "Pricing | NexusPavilion Intelligent Procurement";
+const PRICING_DESCRIPTION =
+  "Pricing for NexusPavilion Intelligent Procurement workspace plans and procurement workflows.";
+
+export const metadata: Metadata = {
+  title: {
+    absolute: PRICING_TITLE,
+  },
+  description: PRICING_DESCRIPTION,
+  alternates: {
+    canonical: "/pricing",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
+  openGraph: {
+    title: PRICING_TITLE,
+    description: PRICING_DESCRIPTION,
+    url: "/pricing",
+    siteName: "NexusPavilion Intelligent Procurement",
+    type: "website",
+    locale: "en_US",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: PRICING_TITLE,
+    description: PRICING_DESCRIPTION,
+  },
+};
 
 const plans = [
 {
