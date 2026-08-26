@@ -46,6 +46,12 @@ describe("Task 24-RFQ-07 respondent supplier quote density", () => {
     expect(supplierQuotes).toContain("href={`/rfq/${rfqSlug}/submit`}");
     expect(supplierQuotes).toContain("canSubmitQuote");
     expect(supplierQuotes).toContain("No Commercial Submission Recorded");
+    expect(supplierQuotes).toContain(
+      "This RFQ is currently open for an authorized company submission.",
+    );
+    expect(supplierQuotes).not.toContain(
+      "authorized supplier submission",
+    );
     expect(supplierQuotes).not.toContain("AwardContractButton");
     expect(supplierQuotes).not.toContain("award_rfq_quote");
     expect(supplierQuotes).not.toContain(".from(\"quotes\")");

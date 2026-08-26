@@ -348,7 +348,7 @@ export function RfqSubmitWorkspace({ slug }: RfqSubmitWorkspaceProps) {
             <div className="mt-8 min-w-0 rounded-executive border border-red-400/20 bg-red-500/10 p-5">
               <ExecutiveBadge tone="risk">Submission closed</ExecutiveBadge>
               <p className="np-type-body mt-3 min-w-0 text-pretty">
-                This RFQ is no longer accepting supplier submissions. Late bids
+                This RFQ is no longer accepting submissions. Late bids
                 are rejected automatically.
               </p>
             </div>
