@@ -36,6 +36,21 @@ const forgotPasswordPage = readFileSync(
   resolve(process.cwd(), "src/app/forgot-password/page.tsx"),
   "utf8",
 );
+const rfqInvitePage = readFileSync(
+  resolve(process.cwd(), "src/app/rfq/invite/[token]/page.tsx"),
+  "utf8",
+);
+const rfqInviteWorkspace = readFileSync(
+  resolve(
+    process.cwd(),
+    "src/components/rfq-workspace/rfq-invite-quote-submission.tsx",
+  ),
+  "utf8",
+);
+const rfqSubmitPage = readFileSync(
+  resolve(process.cwd(), "src/app/rfq/[slug]/submit/page.tsx"),
+  "utf8",
+);
 
 describe("signup confirmation session continuation", () => {
   it("uses the active root middleware.ts for create-company continuation", () => {
@@ -133,5 +148,76 @@ describe("signup confirmation session continuation", () => {
     expect(forgotPasswordPage).toContain(
       "${siteUrl}/auth/callback?next=/set-password",
     );
+  });
+
+  it("keeps RFQ routes outside the active middleware protected-route list", () => {
+    const protectedRoutesStart = activeMiddleware.indexOf("const protectedRoutes");
+    const protectedRoutesEnd = activeMiddleware.indexOf("];", protectedRoutesStart) + 2;
+    const protectedRoutesBlock = activeMiddleware.slice(
+      protectedRoutesStart,
+      protectedRoutesEnd,
+    );
+
+    expect(protectedRoutesBlock).not.toContain('"/rfq"');
+    expect(protectedRoutesBlock).not.toContain('"/rfq/');
+  });
+
+  it("keeps RFQ routes outside the active middleware matcher", () => {
+    const matcherStart = activeMiddleware.indexOf("matcher: [");
+    const matcherEnd = activeMiddleware.indexOf("],", matcherStart) + 2;
+    const matcherBlock = activeMiddleware.slice(matcherStart, matcherEnd);
+
+    expect(matcherBlock).not.toContain('"/rfq"');
+    expect(matcherBlock).not.toContain('"/rfq/:path*"');
+  });
+
+  it("does not introduce a corporate-root detour in active middleware", () => {
+    expect(activeMiddleware).not.toContain('new URL("/", request.url)');
+    expect(activeMiddleware).not.toContain('new URL("/", request.nextUrl)');
+    expect(activeMiddleware).not.toContain('NextResponse.redirect("/")');
+  });
+
+  it("keeps the RFQ invitation page as a direct token entry", () => {
+    expect(rfqInvitePage).toContain(
+      '.rpc("get_rfq_invitation_context", { p_token: cleanToken })',
+    );
+    expect(rfqInvitePage).toContain("params: Promise<{ token: string }>");
+    expect(rfqInvitePage).not.toContain("getUser()");
+    expect(rfqInvitePage).not.toContain("redirect(");
+  });
+
+  it("continues RFQ invitations directly to the RFQ submit route", () => {
+    expect(rfqInviteWorkspace).toContain(
+      "href={`/rfq/${invitation.rfq_slug}/submit`}",
+    );
+    expect(rfqInviteWorkspace).toContain(
+      'data-rfq-invite-continue-submit="true"',
+    );
+    expect(rfqInviteWorkspace).not.toContain('href="/"');
+  });
+
+  it("preserves signed-out RFQ submit login continuation", () => {
+    expect(rfqSubmitPage).toContain(
+      "redirect(`/login?next=${encodeURIComponent(submitPath)}`)",
+    );
+    expect(rfqSubmitPage).toContain("if (!user)");
+    expect(rfqSubmitPage).not.toContain('redirect("/login")');
+  });
+
+  it("preserves no-company RFQ submit onboarding continuation", () => {
+    expect(rfqSubmitPage).toContain("if (!profile?.company_id)");
+    expect(rfqSubmitPage).toContain(
+      "redirect(getCompanyOnboardingPath(submitPath))",
+    );
+    expect(rfqSubmitPage).not.toContain('redirect("/create-company")');
+  });
+
+  it("keeps RFQ submit destinations sanitized through the existing next helper", () => {
+    expect(rfqSubmitPage).toContain(
+      "const submitPath = getSafeNextPath(`/rfq/${slug}/submit`);",
+    );
+    expect(rfqSubmitPage).toContain("getCompanyOnboardingPath");
+    expect(rfqSubmitPage).toContain("getSafeNextPath");
+    expect(rfqSubmitPage).not.toContain('redirect("/")');
   });
 });
