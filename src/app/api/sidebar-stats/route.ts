@@ -4,7 +4,6 @@ import {
   getProcurementContext,
   ProcurementContextError,
 } from "@/lib/procurement/procurement-context-repository";
-import { createClient } from "@/lib/supabase/server";
 
 type SidebarStats = {
   activeRfqs: number;
@@ -56,32 +55,11 @@ function getRoleSpecificStats(
 export async function GET() {
   try {
     const context = await getProcurementContext();
-    const supabase = await createClient();
-
-    const { data: notifications, error: notificationsError } =
-      context.identity.companyId
-        ? await supabase
-            .from("notifications")
-            .select("id, is_read")
-            .eq("company_id", context.identity.companyId)
-        : { data: [], error: null };
-
-    if (notificationsError) {
-      console.error(
-        "[Sidebar Stats] Unable to load notifications",
-        notificationsError,
-      );
-    }
-
     const roleSpecificStats = getRoleSpecificStats(context);
-
-    const unreadNotifications =
-      notifications?.filter((notification) => !notification.is_read)
-        .length ?? 0;
 
     return NextResponse.json({
       ...roleSpecificStats,
-      unreadNotifications,
+      unreadNotifications: 0,
       experience: context.experience.mode,
     } satisfies SidebarStats);
   } catch (error) {

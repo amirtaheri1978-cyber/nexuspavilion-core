@@ -226,11 +226,6 @@ export default function Sidebar() {
               className={`inline-flex min-h-11 min-w-11 items-center justify-center rounded-full bg-white/[0.06] px-4 text-xs font-black text-white ring-1 ring-white/10 ${EXECUTIVE_FOCUS_CYAN}`}
             >
               {mobileOpen ? "Close" : "Menu"}
-              {!mobileOpen && stats.unreadNotifications > 0 ? (
-                <span className="ml-2 rounded-full bg-white/[0.08] px-2 py-0.5 text-[10px] font-black text-white">
-                  {stats.unreadNotifications}
-                </span>
-              ) : null}
             </button>
 
             <SignOutButton />

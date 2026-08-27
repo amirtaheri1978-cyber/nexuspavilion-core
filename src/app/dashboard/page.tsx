@@ -44,11 +44,6 @@ type Quote = {
   created_at: string | null;
 };
 
-type Notification = {
-  id: string;
-  is_read: boolean | null;
-};
-
 type Company = {
   id: string;
   name: string | null;
@@ -212,7 +207,7 @@ export default async function DashboardPage() {
 
   const currentCompany = company as Company | null;
 
-  const [rfqResult, notificationResult] = await Promise.all([
+  const [rfqResult] = await Promise.all([
     supabase
       .from("rfqs")
       .select("*")
@@ -239,7 +234,6 @@ export default async function DashboardPage() {
       : { data: [] };
 
   const quoteList = (quotes ?? []) as Quote[];
-  const notificationList = (notificationResult.data ?? []) as Notification[];
 
   const portfolio = buildPortfolioIntelligence({
     rfqList,
@@ -630,10 +624,6 @@ export default async function DashboardPage() {
     },
   ];
 
-  const unreadNotificationCount = notificationList.filter(
-    (notification) => !notification.is_read,
-  ).length;
-
   const setupIncomplete = readinessScore < 100;
   const primaryAction = setupIncomplete
     ? { href: "/company/settings", label: "Continue Setup" }
@@ -710,7 +700,6 @@ export default async function DashboardPage() {
           company={governanceCompany}
           readiness={governanceReadiness}
           navigation={governanceNavigation}
-          unreadNotificationCount={unreadNotificationCount}
         />
       </div>
     </main>

@@ -36,14 +36,12 @@ type GovernanceReferenceWorkspaceProps = {
     tasks: GovernanceTask[];
   };
   navigation: NavigationItem[];
-  unreadNotificationCount?: number;
 };
 
 export function GovernanceReferenceWorkspace({
   company,
   readiness,
   navigation,
-  unreadNotificationCount = 0,
 }: GovernanceReferenceWorkspaceProps) {
   const readinessTone =
     readiness.incompleteTasksCount === 0
@@ -189,11 +187,6 @@ export function GovernanceReferenceWorkspace({
             className={`mt-5 inline-flex min-h-11 items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.04] px-5 py-2.5 text-sm font-black text-white transition-colors hover:bg-white/[0.06] ${EXECUTIVE_FOCUS_CYAN}`}
           >
             Open Activity Center
-            {unreadNotificationCount > 0 ? (
-              <span className="rounded-full bg-white/[0.08] px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-nexus-cyan-bright">
-                {unreadNotificationCount} unread
-              </span>
-            ) : null}
             <span aria-hidden="true">→</span>
           </Link>
         </section>
