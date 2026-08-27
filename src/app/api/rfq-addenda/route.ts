@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { getActiveMembershipForUserCompany } from "@/lib/auth/membership";
 import { canCreateCompanyRfq } from "@/lib/procurement/procurement-write-authorization";
+import { recordTrustedProcurementActivity } from "@/lib/procurement/record-procurement-activity";
 import { createClient } from "@/lib/supabase/server";
 
 function normalizeText(value: unknown) {
@@ -122,6 +123,16 @@ export async function POST(request: Request) {
       { status: 500 },
     );
   }
+
+  await recordTrustedProcurementActivity(
+    supabase,
+    "addendum_published",
+    data.id,
+    {
+      userId: user.id,
+      companyId: rfq.company_id,
+    },
+  );
 
   return NextResponse.json({ success: true, addendum: data });
 }

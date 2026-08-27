@@ -8,6 +8,7 @@ import {
   PUBLIC_SITE_URL_UNCONFIGURED,
 } from "@/lib/ops/public-site-url";
 import { canInviteCompanySuppliers } from "@/lib/procurement/procurement-write-authorization";
+import { recordTrustedProcurementActivity } from "@/lib/procurement/record-procurement-activity";
 import { APPROVED_VENDOR_DOMAIN_AVAILABLE } from "@/lib/procurement/supplier-domain-availability";
 import { createClient } from "@/lib/supabase/server";
 
@@ -422,12 +423,10 @@ export async function POST(request: Request) {
       );
     }
 
-    const {
-      procurementScope,
-      sourcingMethod,
-      contractFramework,
-      email: invitationEmail,
-    } = buildInvitationEmailPayload(rfq, absoluteInviteUrl);
+    const { email: invitationEmail } = buildInvitationEmailPayload(
+      rfq,
+      absoluteInviteUrl,
+    );
 
     const emailResult = await deliverRfqInvitationEmail({
       publicSiteUrl,
@@ -435,67 +434,15 @@ export async function POST(request: Request) {
       invitationEmail,
     });
 
-    try {
-      const { error: auditError } = await supabase.from("audit_logs").insert({
-        action: "RFQ_SUPPLIER_INVITED",
-        entity_type: "rfq_invite",
-        entity_id: invite.id,
-        user_id: user.id,
-        company_id: profile.company_id,
-        metadata: {
-          rfq_id: rfq.id,
-          rfq_title: rfq.title,
-          supplier_email: email,
-          vendor_company_id: APPROVED_VENDOR_DOMAIN_AVAILABLE
-            ? vendorCompanyId
-            : null,
-          invite_token: token,
-          invite_url: absoluteInviteUrl,
-          procurement_scope: rfq.procurement_scope,
-          procurement_scope_label: procurementScope,
-          sourcing_method: rfq.sourcing_method,
-          sourcing_method_label: sourcingMethod,
-          contract_framework: rfq.contract_framework,
-          contract_framework_label: contractFramework,
-          deadline: rfq.deadline,
-          email_sent: emailResult.success,
-          email_skipped: emailResult.skipped,
-          email_id: emailResult.id,
-          email_error: emailResult.error,
-          created_at: new Date().toISOString(),
-        },
-      });
-
-      if (auditError) {
-        console.error("Supplier invitation audit log failed.", auditError);
-      }
-    } catch (auditFailure) {
-      console.error("Supplier invitation audit log failed.", auditFailure);
-    }
-
-    try {
-      const { error: notificationError } = await supabase
-        .from("notifications")
-        .insert({
-          title: "Supplier Invited",
-          message: `${email} was invited to quote on ${rfq.title}.`,
-          type: "invitation",
-          is_read: false,
-          company_id: profile.company_id,
-        });
-
-      if (notificationError) {
-        console.error(
-          "Supplier invitation notification failed.",
-          notificationError,
-        );
-      }
-    } catch (notificationFailure) {
-      console.error(
-        "Supplier invitation notification failed.",
-        notificationFailure,
-      );
-    }
+    await recordTrustedProcurementActivity(
+      supabase,
+      "rfq_invitation_sent",
+      invite.id,
+      {
+        userId: user.id,
+        companyId: profile.company_id,
+      },
+    );
 
     return NextResponse.json({
       success: true,

@@ -6,6 +6,7 @@ import {
   isPublicSourcingMethod,
 } from "@/lib/procurement/rfq-access-contract";
 import { canSubmitCompanyQuote } from "@/lib/procurement/procurement-write-authorization";
+import { recordTrustedProcurementActivity } from "@/lib/procurement/record-procurement-activity";
 import { createClient } from "@/lib/supabase/server";
 
 function normalizeText(value: unknown) {
@@ -201,6 +202,16 @@ export async function POST(request: Request) {
     .single();
 
   if (!error && data) {
+    await recordTrustedProcurementActivity(
+      supabase,
+      "addendum_acknowledged",
+      data.id,
+      {
+        userId: user.id,
+        companyId: profile.company_id,
+      },
+    );
+
     return NextResponse.json({
       success: true,
       acknowledgement: data,

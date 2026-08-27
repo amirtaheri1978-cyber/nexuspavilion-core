@@ -1,4 +1,11 @@
-type ProcurementActivityKind = "rfq_created" | "quote_submitted";
+type ProcurementActivityKind =
+  | "rfq_created"
+  | "quote_submitted"
+  | "rfq_invitation_sent"
+  | "rfi_submitted"
+  | "rfi_responded"
+  | "addendum_published"
+  | "addendum_acknowledged";
 
 type ProcurementActivityClient = {
   rpc: (

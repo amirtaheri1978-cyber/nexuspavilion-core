@@ -9,6 +9,7 @@ import {
   canCreateCompanyRfq,
   canSubmitCompanyQuote,
 } from "@/lib/procurement/procurement-write-authorization";
+import { recordTrustedProcurementActivity } from "@/lib/procurement/record-procurement-activity";
 import { createClient } from "@/lib/supabase/server";
 
 function normalizeText(value: unknown) {
@@ -260,6 +261,11 @@ export async function POST(request: Request) {
     );
   }
 
+  await recordTrustedProcurementActivity(supabase, "rfi_submitted", data.id, {
+    userId: user.id,
+    companyId: profile.company_id,
+  });
+
   return NextResponse.json({ success: true, rfi: data });
 }
 
@@ -353,6 +359,11 @@ export async function PATCH(request: Request) {
       { status: 500 },
     );
   }
+
+  await recordTrustedProcurementActivity(supabase, "rfi_responded", data.id, {
+    userId: user.id,
+    companyId: rfq.company_id,
+  });
 
   return NextResponse.json({ success: true, rfi: data });
 }

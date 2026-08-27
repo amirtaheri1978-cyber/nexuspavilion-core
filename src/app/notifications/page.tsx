@@ -30,9 +30,14 @@ const value = String(type || "").toLowerCase();
 
 if (value.includes("award")) return "success";
 if (value.includes("risk") || value.includes("warning")) return "warning";
-if (value.includes("invite")) return "blue";
+if (value.includes("invite") || value.includes("invitation")) return "blue";
 
 return "neutral";
+}
+
+function isInvitationNotification(type: string | null) {
+const value = String(type || "").toLowerCase();
+return value.includes("invite") || value.includes("invitation");
 }
 
 export default async function NotificationsPage() {
@@ -73,7 +78,7 @@ String(notification.type || "").toLowerCase().includes("award"),
 ).length;
 
 const inviteCount = notificationList.filter((notification) =>
-String(notification.type || "").toLowerCase().includes("invite"),
+isInvitationNotification(notification.type),
 ).length;
 
 const totalCount = notificationList.length;
