@@ -219,7 +219,6 @@ const visualQaDocuments = [
     id: "doc-drawing-1",
     file_name:
       "North-Harbor-Refrigeration-Replacement-Commissioning-Drawings-Package-Rev-C.pdf",
-    file_url: "#document-preview-drawing",
     file_path: "visual-qa/drawing-rev-c.pdf",
     file_size: 2457600,
     attachment_type: "drawing",
@@ -230,7 +229,6 @@ const visualQaDocuments = [
     id: "doc-spec-1",
     file_name:
       "Bonded Warehouse Cold Chain Technical Specifications MasterFormat Division 23.docx",
-    file_url: "#document-preview-spec",
     file_path: "visual-qa/spec-div-23.docx",
     file_size: 812000,
     attachment_type: "specification",

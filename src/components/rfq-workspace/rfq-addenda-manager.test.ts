@@ -45,13 +45,15 @@ describe("Task 24-RFQ-10 addenda manager presentation", () => {
     expect(manager).toContain('fetch("/api/rfq-addenda"');
     expect(manager).toContain("method: \"POST\"");
     expect(manager).toContain("rfqId");
-    expect(manager).toContain("companyId");
+    expect(manager).not.toContain("companyId,");
+    expect(manager).not.toContain("companyId:");
     expect(manager).toContain("title: title.trim()");
     expect(manager).toContain("description: description.trim()");
     expect(manager).toContain("affectedDocuments: affectedDocuments.trim()");
     expect(manager).toContain("requiresAcknowledgement");
     expect(manager).toContain("Issue Addendum");
     expect(manager).toContain("Refreshing...");
+    expect(documents).toContain("RFQRfiWorkspace");
     expect(acknowledgement).toContain(
       'fetch("/api/rfq-addendum-acknowledgements"',
     );

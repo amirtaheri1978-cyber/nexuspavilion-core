@@ -252,6 +252,62 @@ return NextResponse.json(
 );
 }
 
+const { data: requiredAddenda, error: requiredAddendaError } = await supabase
+.from("rfq_addenda")
+.select("id")
+.eq("rfq_id", rfq.id)
+.eq("requires_acknowledgement", true);
+
+if (requiredAddendaError) {
+console.error(
+"Quote submit required addenda lookup failed:",
+requiredAddendaError
+);
+
+return NextResponse.json(
+{ error: "Unable to verify required RFQ addenda acknowledgements." },
+{ status: 500 }
+);
+}
+
+if ((requiredAddenda || []).length > 0) {
+const requiredIds = (requiredAddenda || []).map((item) => item.id);
+
+const { data: acknowledgements, error: acknowledgementError } =
+await supabase
+.from("rfq_addendum_acknowledgements")
+.select("addendum_id")
+.eq("company_id", profile.company_id)
+.in("addendum_id", requiredIds);
+
+if (acknowledgementError) {
+console.error(
+"Quote submit addendum acknowledgement lookup failed:",
+acknowledgementError
+);
+
+return NextResponse.json(
+{ error: "Unable to verify required RFQ addenda acknowledgements." },
+{ status: 500 }
+);
+}
+
+const acknowledgedIds = new Set(
+(acknowledgements || []).map((item) => item.addendum_id)
+);
+const missingRequired = requiredIds.some((id) => !acknowledgedIds.has(id));
+
+if (missingRequired) {
+return NextResponse.json(
+{
+error:
+"Required RFQ addenda must be acknowledged before submitting a quotation.",
+},
+{ status: 403 }
+);
+}
+}
+
 const score = calculateScore(amount, timeline);
 
 const { data: quote, error: quoteError } = await supabase

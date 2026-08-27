@@ -53,12 +53,22 @@ describe("Task 24-RFQ-08 document workspace density", () => {
     expect(upload).toContain('from("rfq-attachments")');
     expect(upload).toContain('fetch("/api/rfq-attachments"');
     expect(upload).toContain("rfq-documents-updated");
+    expect(upload).not.toContain("fileUrl");
+    expect(upload).not.toContain("createSignedUrl");
     expect(library).toContain(".from(\"rfq_attachments\")");
     expect(library).toContain(".from(\"rfq-attachments\")");
+    expect(library).toContain("createSignedUrl");
     expect(library).toContain("window.confirm");
+    expect(library).not.toContain("file_url");
+    expect(documents).toContain("RFQRfiWorkspace");
     expect(detail).toContain('id="supplier-invitations"');
     expect(detail).toContain("InviteVendorForm");
     expect(invite).toContain('fetch("/api/invites"');
+    expect(detail).toContain("rfiDeadline={effectiveRfiDeadline}");
+    expect(detail).toContain(
+      "rfiDeadlineTimezone={effectiveRfiDeadlineTimezone}",
+    );
+    expect(detail).not.toContain("rfiDeadline={rfq.rfi_deadline}");
   });
 
   it("does not nest extra document panels or fire viewport xl grids under the shell", () => {

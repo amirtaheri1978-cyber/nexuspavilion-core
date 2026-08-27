@@ -7,6 +7,7 @@ import RFQAddendaManager from "@/components/rfq-addenda-manager";
 import RFQAddendumAcknowledgementCenter from "@/components/rfq-addendum-acknowledgement-center";
 import RFQDocumentLibrary from "@/components/rfq-document-library";
 import RFQDocumentUpload from "@/components/rfq-document-upload";
+import { RFQRfiWorkspace } from "@/components/rfq-workspace/rfq-rfi-workspace";
 
 type RFQDocumentLibraryProps = ComponentProps<typeof RFQDocumentLibrary>;
 type RFQAddendaManagerProps = ComponentProps<typeof RFQAddendaManager>;
@@ -18,6 +19,8 @@ type RFQDocumentWorkspaceProps = {
   rfqId: string;
   companyId: string | null;
   isOwner: boolean;
+  rfiDeadline?: string | null;
+  rfiDeadlineTimezone?: string | null;
   documents: NonNullable<RFQDocumentLibraryProps["initialDocuments"]>;
   addenda: NonNullable<RFQAddendaManagerProps["initialAddenda"]>;
   acknowledgements: NonNullable<
@@ -29,6 +32,8 @@ export function RFQDocumentWorkspace({
   rfqId,
   companyId,
   isOwner,
+  rfiDeadline = null,
+  rfiDeadlineTimezone = null,
   documents,
   addenda,
   acknowledgements,
@@ -67,8 +72,9 @@ export function RFQDocumentWorkspace({
 
             <p className="mt-3 max-w-4xl min-w-0 text-pretty text-sm font-semibold leading-7 text-nexus-muted">
               A controlled environment for drawings, specifications, bills of
-              quantities, site records, supporting documents, issued addenda,
-              respondent acknowledgements, and procurement package governance.
+              quantities, site records, supporting documents, private RFIs,
+              issued addenda, respondent acknowledgements, and procurement
+              package governance.
             </p>
           </div>
 
@@ -215,30 +221,38 @@ export function RFQDocumentWorkspace({
               id="rfq-addenda-workspace-title"
               className="mt-3 min-w-0 text-pretty text-xl font-black tracking-tight text-nexus-white sm:text-2xl"
             >
-              Revisions, bulletins &amp; acknowledgements
+              Private RFI, revisions, bulletins &amp; acknowledgements
             </h3>
 
             <p className="mt-3 max-w-3xl min-w-0 text-pretty text-sm font-semibold leading-7 text-nexus-muted">
-              Manage issued addenda and respondent acknowledgements within the
-              same controlled RFQ workspace while preserving the existing
-              document and governance workflows.
+              Submit private respondent inquiries, manage issued addenda, and
+              track acknowledgements within the same controlled RFQ workspace
+              while preserving the existing document and governance workflows.
             </p>
           </div>
 
-          {isOwner && companyId ? (
-            <RFQAddendaManager
+          <div className="min-w-0 space-y-8">
+            <RFQRfiWorkspace
               rfqId={rfqId}
-              companyId={companyId}
-              initialAddenda={addenda}
-              canManage
+              isOwner={isOwner}
+              rfiDeadline={rfiDeadline}
+              rfiDeadlineTimezone={rfiDeadlineTimezone}
             />
-          ) : (
-            <RFQAddendumAcknowledgementCenter
-              rfqId={rfqId}
-              initialAddenda={addenda}
-              initialAcknowledgements={acknowledgements}
-            />
-          )}
+
+            {isOwner && companyId ? (
+              <RFQAddendaManager
+                rfqId={rfqId}
+                initialAddenda={addenda}
+                canManage
+              />
+            ) : (
+              <RFQAddendumAcknowledgementCenter
+                rfqId={rfqId}
+                initialAddenda={addenda}
+                initialAcknowledgements={acknowledgements}
+              />
+            )}
+          </div>
         </section>
       </section>
     </ExecutivePanel>

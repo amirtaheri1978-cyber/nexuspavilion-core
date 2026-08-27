@@ -281,6 +281,27 @@ const rfqAddenda = addendaResult.data ?? [];
 const rfqAcknowledgements = acknowledgementResult.data ?? [];
 const latestAiReview = aiReviewResult.data ?? null;
 
+let effectiveRfiDeadline: string | null = null;
+let effectiveRfiDeadlineTimezone: string | null =
+  rfq.rfi_deadline_timezone ?? rfq.deadline_timezone ?? null;
+
+if (rfq.rfi_deadline) {
+  effectiveRfiDeadline = rfq.rfi_deadline;
+  effectiveRfiDeadlineTimezone = rfq.rfi_deadline_timezone ?? null;
+} else {
+  const { data: parsedDeadline, error: parsedDeadlineError } =
+    await supabase.rpc("parse_rfq_deadline_timestamptz", {
+      p_deadline: rfq.deadline ?? null,
+    });
+
+  if (!parsedDeadlineError && parsedDeadline) {
+    effectiveRfiDeadline = String(parsedDeadline);
+    effectiveRfiDeadlineTimezone = rfq.deadline_timezone ?? null;
+  } else {
+    effectiveRfiDeadline = null;
+  }
+}
+
 const budget = Number(rfq.budget || 0);
 
 const {
@@ -833,6 +854,8 @@ governance workflow.
   rfqId={rfq.id}
   companyId={rfq.company_id}
   isOwner={isOwner}
+  rfiDeadline={effectiveRfiDeadline}
+  rfiDeadlineTimezone={effectiveRfiDeadlineTimezone}
   documents={rfqAttachments}
   addenda={rfqAddenda}
   acknowledgements={rfqAcknowledgements}

@@ -190,8 +190,32 @@ const deadlineTimezone = resolvedDeadline.deadline_timezone;
 const projectName = normalizeText(body.project_name);
 const ownerClient = normalizeText(body.owner_client);
 const internalProjectId = normalizeText(body.internal_project_id);
-const rfiDeadline = normalizeText(body.rfi_deadline);
-const rfiDeadlineTimezone = normalizeTimezone(body.rfi_deadline_timezone);
+const rawRfiDeadline = normalizeText(body.rfi_deadline);
+
+let rfiDeadline: string | null = null;
+let rfiDeadlineTimezone = normalizeTimezone(body.rfi_deadline_timezone);
+
+if (rawRfiDeadline) {
+  try {
+    const resolvedRfiDeadline = resolveRfqDeadlineForStorage({
+      deadline: rawRfiDeadline,
+      deadline_timezone: body.rfi_deadline_timezone,
+    });
+    rfiDeadline = resolvedRfiDeadline.deadline;
+    rfiDeadlineTimezone = resolvedRfiDeadline.deadline_timezone;
+  } catch (rfiDeadlineError) {
+    return NextResponse.json(
+      {
+        error:
+          rfiDeadlineError instanceof Error
+            ? rfiDeadlineError.message
+            : "Invalid RFI deadline or timezone.",
+      },
+      { status: 400 },
+    );
+  }
+}
+
 const mobilizationDate = normalizeText(body.mobilization_date);
 const substantialCompletionDate = normalizeText(
 body.substantial_completion_date
@@ -225,7 +249,7 @@ deadline_timezone: deadlineTimezone,
 project_name: projectName,
 owner_client: ownerClient,
 internal_project_id: internalProjectId,
-rfi_deadline: rfiDeadline || null,
+rfi_deadline: rfiDeadline,
 rfi_deadline_timezone: rfiDeadlineTimezone,
 mobilization_date: mobilizationDate || null,
 substantial_completion_date: substantialCompletionDate || null,

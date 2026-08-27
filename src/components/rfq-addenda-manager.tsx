@@ -14,7 +14,6 @@ type Addendum = {
 
 type RFQAddendaManagerProps = {
   rfqId: string;
-  companyId: string;
   initialAddenda?: Addendum[];
   canManage?: boolean;
 };
@@ -31,7 +30,6 @@ function formatDate(value: string | null) {
 
 export default function RFQAddendaManager({
   rfqId,
-  companyId,
   initialAddenda = [],
   canManage = false,
 }: RFQAddendaManagerProps) {
@@ -96,7 +94,6 @@ export default function RFQAddendaManager({
         },
         body: JSON.stringify({
           rfqId,
-          companyId,
           title: title.trim(),
           description: description.trim(),
           affectedDocuments: affectedDocuments.trim(),
@@ -253,8 +250,12 @@ export default function RFQAddendaManager({
                 Issue New Addendum
               </p>
               <h4 className="mt-2 min-w-0 text-pretty text-xl font-black text-nexus-white sm:text-2xl">
-                Addendum #{nextAddendumNumber}
+                Preview Addendum #{nextAddendumNumber}
               </h4>
+              <p className="mt-2 min-w-0 text-pretty text-xs font-semibold leading-5 text-nexus-muted">
+                The issued addendum number is assigned by the database and may
+                differ under concurrent issuance.
+              </p>
             </div>
 
             <label className="flex min-h-11 min-w-0 items-center gap-3 rounded-full border border-white/10 bg-white/[0.055] px-4 py-3">
