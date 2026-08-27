@@ -12,6 +12,9 @@ function readSource(relativePath: string) {
 const migration = readSource(
   "supabase/migrations/20260835000000_expand_procurement_activity_event_writers.sql",
 );
+const fanoutMigration = readSource(
+  "supabase/migrations/20260836000000_deliver_addendum_respondent_activity.sql",
+);
 const helper = readSource(
   "src/lib/procurement/record-procurement-activity.ts",
 );
@@ -33,6 +36,20 @@ const functionBody = migration.slice(
   migration.indexOf(
     "comment on function public.record_procurement_activity",
   ),
+);
+
+const fanoutFunctionBody = fanoutMigration.slice(
+  fanoutMigration.indexOf(
+    "create or replace function public.record_procurement_activity",
+  ),
+  fanoutMigration.indexOf(
+    "comment on function public.record_procurement_activity",
+  ),
+);
+
+const addendumPublishedBranch = fanoutFunctionBody.slice(
+  fanoutFunctionBody.indexOf("-- addendum_published"),
+  fanoutFunctionBody.indexOf("-- addendum_acknowledged"),
 );
 
 describe("Cursor 05B procurement activity event writers", () => {
@@ -160,5 +177,146 @@ describe("Cursor 05B procurement activity event writers", () => {
     );
     expect(migration).not.toContain("accept_organization_invitation");
     expect(migration).not.toContain("company-invitations");
+  });
+});
+
+describe("Cursor 05G R-43 addendum respondent activity fanout", () => {
+  it("fans out from S1 quotes, S2 rfq_rfis, and S3 acknowledgements only", () => {
+    expect(addendumPublishedBranch).toContain("from public.quotes q");
+    expect(addendumPublishedBranch).toContain("q.company_id");
+    expect(addendumPublishedBranch).toContain(
+      "where q.rfq_id = addendum_row.rfq_id",
+    );
+    expect(addendumPublishedBranch).toContain("from public.rfq_rfis rfi");
+    expect(addendumPublishedBranch).toContain("rfi.respondent_company_id");
+    expect(addendumPublishedBranch).toContain(
+      "where rfi.rfq_id = addendum_row.rfq_id",
+    );
+    expect(addendumPublishedBranch).toContain(
+      "from public.rfq_addendum_acknowledgements ack",
+    );
+    expect(addendumPublishedBranch).toContain("ack.company_id");
+    expect(addendumPublishedBranch).toContain(
+      "where ack.rfq_id = addendum_row.rfq_id",
+    );
+    expect(addendumPublishedBranch).toContain(
+      "select distinct established.company_id",
+    );
+    expect(addendumPublishedBranch).toContain(
+      "and q.company_id <> issuer_company_id",
+    );
+    expect(addendumPublishedBranch).toContain(
+      "and rfi.respondent_company_id <> issuer_company_id",
+    );
+    expect(addendumPublishedBranch).toContain(
+      "and ack.company_id <> issuer_company_id",
+    );
+  });
+
+  it("does not use invitation email bridges or open-market broadcast", () => {
+    const fanoutLoop = addendumPublishedBranch.slice(
+      addendumPublishedBranch.indexOf("for respondent_company_id in"),
+    );
+
+    expect(fanoutLoop).not.toContain("profiles.company_id");
+    expect(fanoutLoop).not.toContain("from public.profiles");
+    expect(fanoutLoop).not.toContain("from public.rfq_invites");
+    expect(fanoutLoop).not.toContain("from public.organization_memberships");
+    expect(fanoutLoop).not.toContain("network_role");
+    expect(fanoutLoop).not.toContain("from public.companies");
+    expect(addendumPublishedBranch).not.toContain("profiles.company_id");
+    expect(addendumPublishedBranch).not.toContain("from public.rfq_invites");
+  });
+
+  it("classifies required open Addenda as addendum_action_required", () => {
+    expect(addendumPublishedBranch).toContain(
+      "addendum_row.requires_acknowledgement = true",
+    );
+    expect(addendumPublishedBranch).toContain("rfq_row.status = 'open'");
+    expect(addendumPublishedBranch).toContain(
+      "notification_type := 'addendum_action_required'",
+    );
+    expect(addendumPublishedBranch).toContain(
+      "'Addendum Acknowledgement Required'",
+    );
+    expect(addendumPublishedBranch).toContain(
+      "Acknowledgement is required before quote submission.",
+    );
+    expect(addendumPublishedBranch).not.toContain("deadline");
+    expect(addendumPublishedBranch).not.toContain("urgent");
+  });
+
+  it("uses informational addendum type when acknowledgement is not required or RFQ is not open", () => {
+    expect(addendumPublishedBranch).toContain(
+      "notification_type := 'addendum'",
+    );
+    expect(addendumPublishedBranch).toContain("'Addendum Published'");
+
+    const fanoutTypeBlock = addendumPublishedBranch.slice(
+      addendumPublishedBranch.indexOf(
+        "if addendum_row.requires_acknowledgement = true",
+      ),
+      addendumPublishedBranch.lastIndexOf("insert into public.notifications ("),
+    );
+    expect(fanoutTypeBlock).toContain(
+      "notification_type := 'addendum_action_required'",
+    );
+    expect(fanoutTypeBlock).toContain("else");
+    expect(fanoutTypeBlock).toContain("notification_type := 'addendum'");
+  });
+
+  it("preserves issuer publish behavior and early ADDENDUM_PUBLISHED idempotency", () => {
+    expect(addendumPublishedBranch).toContain(
+      "audit_action := 'ADDENDUM_PUBLISHED'",
+    );
+    expect(addendumPublishedBranch).toContain(
+      "notification_company_id := issuer_company_id",
+    );
+    expect(addendumPublishedBranch).toContain(
+      "notification_type := 'addendum'",
+    );
+    expect(addendumPublishedBranch).toContain("'idempotent', true");
+    expect(
+      addendumPublishedBranch.indexOf("if existing_audit_id is not null"),
+    ).toBeLessThan(
+      addendumPublishedBranch.indexOf("for respondent_company_id in"),
+    );
+    expect(
+      addendumPublishedBranch.indexOf("insert into public.audit_logs"),
+    ).toBeLessThan(
+      addendumPublishedBranch.indexOf("for respondent_company_id in"),
+    );
+  });
+
+  it("does not add per-recipient audit actions or new activity kinds", () => {
+    expect(fanoutMigration).not.toContain("ADDENDUM_RESPONDENT_NOTIFIED");
+    expect(fanoutFunctionBody).toMatch(
+      /activity_kind not in \(\s*'rfq_created',\s*'quote_submitted',\s*'rfq_invitation_sent',\s*'rfi_submitted',\s*'rfi_responded',\s*'addendum_published',\s*'addendum_acknowledged'\s*\)/,
+    );
+    expect(helper).not.toContain("addendum_action_required");
+    expect(fanoutFunctionBody).not.toMatch(
+      /activity_kind not in \([^)]*'addendum_action_required'/,
+    );
+  });
+
+  it("keeps trusted writer privileges without restoring client INSERT", () => {
+    expect(fanoutFunctionBody).toContain("security definer");
+    expect(fanoutFunctionBody).toContain("set search_path = ''");
+    expect(fanoutFunctionBody).toContain("actor_user_id uuid := auth.uid()");
+    expect(fanoutMigration).toContain(
+      "grant execute\non function public.record_procurement_activity(text, uuid)\nto authenticated;",
+    );
+    expect(fanoutMigration).toContain(
+      "revoke all\non function public.record_procurement_activity(text, uuid)\nfrom anon;",
+    );
+    expect(fanoutMigration).not.toMatch(
+      /grant\s+insert\s+on\s+table\s+public\.(notifications|audit_logs)/i,
+    );
+    expect(fanoutMigration).not.toContain(
+      'create policy "Company members can create company notifications"',
+    );
+    expect(fanoutMigration).not.toContain(
+      'create policy "Company members can create company audit logs"',
+    );
   });
 });
