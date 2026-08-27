@@ -320,3 +320,263 @@ describe("Cursor 05G R-43 addendum respondent activity fanout", () => {
     );
   });
 });
+
+const sidebarStatsRoute = readSource("src/app/api/sidebar-stats/route.ts");
+const sidebarSource = readSource("src/components/sidebar.tsx");
+const applicationNavSource = readSource(
+  "src/lib/navigation/application-nav.ts",
+);
+const dashboardPage = readSource("src/app/dashboard/page.tsx");
+const governanceWorkspace = readSource(
+  "src/components/dashboard/governance-reference-workspace.tsx",
+);
+
+function extractStringSetMembers(source: string, constName: string) {
+  const match = source.match(
+    new RegExp(
+      `const\\s+${constName}\\s*=\\s*new\\s+Set\\(\\[([\\s\\S]*?)\\]\\)`,
+    ),
+  );
+  expect(match).not.toBeNull();
+  const body = match?.[1] ?? "";
+  return [...body.matchAll(/"([^"]+)"/g)].map((entry) => entry[1]);
+}
+
+function extractFunctionBody(source: string, functionName: string) {
+  const start = source.indexOf(`function ${functionName}(`);
+  expect(start).toBeGreaterThanOrEqual(0);
+  const braceStart = source.indexOf("{", start);
+  expect(braceStart).toBeGreaterThan(start);
+
+  let depth = 0;
+  for (let index = braceStart; index < source.length; index += 1) {
+    const char = source[index];
+    if (char === "{") depth += 1;
+    if (char === "}") {
+      depth -= 1;
+      if (depth === 0) {
+        return source.slice(braceStart, index + 1);
+      }
+    }
+  }
+
+  throw new Error(`Unable to extract function body for ${functionName}`);
+}
+
+function assertNoCaseInsensitiveUiTerm(source: string, term: string) {
+  const withoutCompatibilityReadField = source.replace(/\bis_read\b/g, "");
+  expect(withoutCompatibilityReadField).not.toMatch(
+    new RegExp(`\\b${term}\\b`, "i"),
+  );
+}
+
+describe("Phase 6 Activity Center launch information architecture", () => {
+  const attentionTypes = extractStringSetMembers(
+    notificationsPage,
+    "ATTENTION_TYPES",
+  );
+  const updateTypes = extractStringSetMembers(notificationsPage, "UPDATE_TYPES");
+  const classifyBody = extractFunctionBody(
+    notificationsPage,
+    "classifyActivityView",
+  );
+  const resolveViewBody = extractFunctionBody(
+    notificationsPage,
+    "resolveActivityView",
+  );
+  const eventToneBody = extractFunctionBody(notificationsPage, "getEventTone");
+  const enterpriseLabelBody = extractFunctionBody(
+    notificationsPage,
+    "getEnterpriseEventLabel",
+  );
+
+  it("locks the exact Needs Attention taxonomy", () => {
+    expect(attentionTypes).toEqual([
+      "quote",
+      "rfi",
+      "rfi_response",
+      "addendum_action_required",
+    ]);
+
+    for (const forbidden of [
+      "award",
+      "rfq",
+      "invitation",
+      "addendum",
+      "addendum_acknowledgement",
+      "company",
+      "approved_vendor",
+      "supplier_compliance",
+    ]) {
+      expect(attentionTypes).not.toContain(forbidden);
+    }
+  });
+
+  it("locks the exact Updates taxonomy with award included", () => {
+    expect(updateTypes).toEqual([
+      "rfq",
+      "invitation",
+      "addendum",
+      "addendum_acknowledgement",
+      "award",
+      "company",
+      "approved_vendor",
+      "supplier_compliance",
+    ]);
+    expect(updateTypes).toContain("award");
+    expect(updateTypes).not.toContain("addendum_action_required");
+  });
+
+  it("classifies known types and falls unknown types into History", () => {
+    expect(classifyBody).toContain("ATTENTION_TYPES.has(value)");
+    expect(classifyBody).toContain('return "attention"');
+    expect(classifyBody).toContain("UPDATE_TYPES.has(value)");
+    expect(classifyBody).toContain('return "updates"');
+    expect(classifyBody).toContain('return "history"');
+
+    expect(notificationsPage).toContain(
+      'view === "updates"\n        ? updateRows\n        : notificationList',
+    );
+    expect(
+      (notificationsPage.match(/\.from\("notifications"\)/g) || []).length,
+    ).toBe(1);
+  });
+
+  it("keeps view query params presentation-only and company-scoped", () => {
+    expect(resolveViewBody).toContain('if (raw === "updates") return "updates"');
+    expect(resolveViewBody).toContain('if (raw === "history") return "history"');
+    expect(resolveViewBody).toContain('return "attention"');
+
+    expect(notificationsPage).toContain(
+      '.eq("company_id", profile.company_id)',
+    );
+    expect(notificationsPage).toContain(
+      "const view = resolveActivityView(params.view)",
+    );
+
+    for (const forbidden of [
+      "params.company",
+      "params.company_id",
+      "params.companyId",
+      "searchParams.company",
+      "searchParams.company_id",
+      "searchParams.companyId",
+      'params["company"]',
+      'params["company_id"]',
+      'params["companyId"]',
+      'searchParams["company"]',
+      'searchParams["company_id"]',
+      'searchParams["companyId"]',
+    ]) {
+      expect(notificationsPage).not.toContain(forbidden);
+    }
+  });
+
+  it("does not render My Tasks or personal task derivation on Activity Center", () => {
+    expect(notificationsPage).not.toContain("My Tasks");
+    expect(notificationsPage).not.toContain("assigned_to");
+    expect(notificationsPage).not.toContain("recipient_user_id");
+    expect(notificationsPage).not.toContain("due_date");
+    expect(notificationsPage).not.toContain("task_status");
+    expect(notificationsPage).not.toContain("completed_at");
+    expect(notificationsPage).not.toMatch(/\.completed\b/);
+    expect(notificationsPage).not.toMatch(/\bcompleted\s*:/);
+  });
+
+  it("removes user-visible Unread semantics while allowing is_read compatibility select", () => {
+    expect(notificationsPage).toContain(
+      '.select("id, title, message, type, is_read, created_at, company_id")',
+    );
+    expect(notificationsPage).not.toContain("!notification.is_read");
+    expect(notificationsPage).not.toContain("notification.is_read");
+    assertNoCaseInsensitiveUiTerm(notificationsPage, "unread");
+    assertNoCaseInsensitiveUiTerm(notificationsPage, "urgent");
+    assertNoCaseInsensitiveUiTerm(notificationsPage, "overdue");
+  });
+
+  it("keeps launch metrics and removes old Unread/Awards/Invitations KPI cards", () => {
+    expect(notificationsPage).toContain('label="Attention Signals"');
+    expect(notificationsPage).toContain('label="Updates"');
+    expect(notificationsPage).toContain('label="Total Activity"');
+    expect(notificationsPage).not.toContain('title="Unread"');
+    expect(notificationsPage).not.toContain('label="Unread"');
+    expect(notificationsPage).not.toContain('title="Awards"');
+    expect(notificationsPage).not.toContain('label="Awards"');
+    expect(notificationsPage).not.toContain('title="Invitations"');
+    expect(notificationsPage).not.toContain('label="Invitations"');
+    assertNoCaseInsensitiveUiTerm(notificationsPage, "unread");
+  });
+
+  it("presents addendum_action_required as an Attention acknowledgement signal", () => {
+    expect(attentionTypes).toContain("addendum_action_required");
+    expect(enterpriseLabelBody).toContain(
+      'if (value === "addendum_action_required") return "Addendum Acknowledgement Required"',
+    );
+    expect(notificationsPage).toContain(
+      'notification.type === "addendum_action_required"\n                    ? "Acknowledgement Required"',
+    );
+    expect(eventToneBody).toContain("ATTENTION_TYPES.has(value)");
+    expect(eventToneBody).toContain('return "warning"');
+    assertNoCaseInsensitiveUiTerm(notificationsPage, "urgent");
+    assertNoCaseInsensitiveUiTerm(notificationsPage, "overdue");
+  });
+
+  it("keeps award in Updates with success tone only", () => {
+    expect(updateTypes).toContain("award");
+    expect(attentionTypes).not.toContain("award");
+    expect(eventToneBody).toContain('if (value === "award") return "success"');
+  });
+
+  it("keeps one generic Procurement Center destination without notification-derived entity links", () => {
+    expect(notificationsPage).toContain("Open Procurement Center");
+    expect((notificationsPage.match(/href="\/rfq"/g) || []).length).toBe(1);
+    expect(notificationsPage).not.toContain("href={`/rfq/${");
+    expect(notificationsPage).not.toContain('href="/rfq/" +');
+    expect(notificationsPage).not.toMatch(
+      /href=\{[^}]*notification\.(title|message)/,
+    );
+    expect(notificationsPage).not.toMatch(
+      /\/rfq\/\$\{[^}]*notification/,
+    );
+    expect(notificationsPage).toContain("{notification.title}");
+    expect(notificationsPage).toContain("{notification.message}");
+  });
+
+  it("keeps sidebar-stats company-context compatible without notification reads", () => {
+    expect(sidebarStatsRoute).toContain("getProcurementContext");
+    expect(sidebarStatsRoute).not.toContain('.from("notifications")');
+    expect(sidebarStatsRoute).toContain("unreadNotifications: 0");
+    expect(sidebarStatsRoute).not.toContain("searchParams");
+    expect(sidebarStatsRoute).not.toContain("request.url");
+    expect(sidebarStatsRoute).not.toContain("companyId=");
+    expect(sidebarStatsRoute).not.toContain("company_id=");
+  });
+
+  it("removes shell Activity unread badges while keeping unreadNotifications compatibility fields", () => {
+    expect(applicationNavSource).toContain(
+      "unreadNotifications: number;",
+    );
+    expect(applicationNavSource).toContain("unreadNotifications: 0");
+    expect(applicationNavSource).not.toContain(
+      "badge: formatCountBadge(stats.unreadNotifications)",
+    );
+
+    expect(sidebarSource).toContain(
+      "unreadNotifications: Number(data.unreadNotifications || 0)",
+    );
+    expect(sidebarSource).not.toContain("stats.unreadNotifications > 0");
+    expect(sidebarSource).not.toContain("{stats.unreadNotifications}");
+  });
+
+  it("removes dashboard and governance user-facing unread Activity counts", () => {
+    expect(dashboardPage).not.toContain("unreadNotificationCount");
+    expect(governanceWorkspace).not.toContain("unreadNotificationCount");
+    assertNoCaseInsensitiveUiTerm(governanceWorkspace, "unread");
+  });
+
+  it("keeps Activity Center free of Workspace Invitation accept/action wiring", () => {
+    expect(notificationsPage).not.toContain("company-invitations");
+    expect(notificationsPage).not.toContain("accept_organization_invitation");
+    expect(notificationsPage).not.toContain("/api/company-invitations");
+  });
+});
