@@ -410,6 +410,12 @@ const workspaceMembers: WorkspaceMember[] =
   const workspaceRoleLabel =
     getWorkspaceRoleLabel(workspace.workspaceRole);
 
+  const companyStatusLabel =
+    company.status?.trim() || "Status not set";
+  const companyStatusIsVerified = ["verified", "approved"].includes(
+    String(company.status || "").toLowerCase(),
+  );
+
   const currentWorkspaceMember = workspaceMembers.find(
     ({ profile }) => profile.id === workspace.userId,
   );
@@ -450,7 +456,7 @@ const workspaceMembers: WorkspaceMember[] =
               href="/rfq"
               className="rounded-full bg-gradient-to-r from-[#B9902F] via-[#C8A646] to-[#F5D77B] px-5 py-3 text-sm font-black text-slate-950 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C8A646]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#07111F]"
             >
-              Open Marketplace
+              Open Procurement Center
             </Link>
           </div>
         </div>
@@ -478,18 +484,24 @@ const workspaceMembers: WorkspaceMember[] =
                 </p>
 
                 <div className="mt-3 flex flex-wrap items-center gap-3">
-                  <h1 className="text-5xl font-black tracking-[-0.05em] text-white">
-                    {company.name || "Company"}
+                  <h1 className="max-w-4xl break-words text-3xl font-black tracking-[-0.05em] text-white sm:text-4xl lg:text-5xl">
+                    {company.name?.trim() || "Company"}
                   </h1>
 
-                  <span className="rounded-full border border-emerald-300/20 bg-emerald-400/10 px-4 py-1 text-sm font-black capitalize text-emerald-300">
-                    {company.status || "provisional"}
+                  <span
+                    className={`rounded-full border px-4 py-1 text-sm font-black capitalize ${
+                      companyStatusIsVerified
+                        ? "border-emerald-300/20 bg-emerald-400/10 text-emerald-300"
+                        : "border-white/10 bg-white/[0.055] text-slate-300"
+                    }`}
+                  >
+                    {companyStatusLabel}
                   </span>
                 </div>
 
                 <p className="mt-3 text-lg font-semibold text-slate-300">
-                  {company.category || "Enterprise"} ·{" "}
-                  {company.location || "Location N/A"}
+                  {company.category?.trim() || "Not specified"} ·{" "}
+                  {company.location?.trim() || "Location N/A"}
                 </p>
 
                 <AccountIdentityLine
@@ -499,6 +511,13 @@ const workspaceMembers: WorkspaceMember[] =
                   email={workspace.email || currentProfile.email}
                   roleLabel={workspaceRoleLabel}
                 />
+
+                <Link
+                  href="/company/settings#professional-identity"
+                  className={`mt-3 inline-flex text-xs font-bold text-slate-400 underline-offset-4 transition hover:text-slate-200 hover:underline ${EXECUTIVE_FOCUS_CYAN}`}
+                >
+                  Edit Professional Identity
+                </Link>
               </div>
             </div>
 
@@ -530,20 +549,17 @@ const workspaceMembers: WorkspaceMember[] =
           <div className="mt-10 grid gap-6 md:grid-cols-3">
             <InfoCard
               title="Category"
-              value={company.category || "N/A"}
+              value={company.category?.trim() || "Not specified"}
             />
 
             <InfoCard
               title="Location"
-              value={company.location || "N/A"}
+              value={company.location?.trim() || "Location N/A"}
             />
 
             <InfoCard
               title="Network Role"
-              value={
-                company.network_role ||
-                "Enterprise Workspace"
-              }
+              value={company.network_role?.trim() || "Not specified"}
             />
           </div>
         </section>

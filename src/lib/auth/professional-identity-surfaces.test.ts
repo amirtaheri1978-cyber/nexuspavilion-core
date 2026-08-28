@@ -114,8 +114,80 @@ describe("NP-MASTER-22-B04-5 current-user account display", () => {
     expect(accountLine).not.toContain("jobTitle={role");
     expect(displayHelper).not.toContain("profiles.role");
     expect(companyPage).toContain("roleLabel={workspaceRoleLabel}");
-    expect(commandCenter).toContain("roleLabel={userRole}");
+    expect(commandCenter).toContain("roleLabel={workspaceRoleLabel}");
+    expect(commandCenter).toContain("workspaceRoleLabel:");
+    expect(commandCenter).not.toContain("userRole");
     expect(commandCenter).not.toContain("userEmail");
+  });
+});
+
+describe("Phase 7-01 company identity presentation consistency", () => {
+  it("keeps membership-derived workspace role on company and settings", () => {
+    expect(companyPage).toContain("roleLabel={workspaceRoleLabel}");
+    expect(settingsPage).toContain("workspaceRoleLabel={workspaceRoleLabel}");
+    expect(settingsPage).toContain(
+      "getWorkspaceRoleLabel(\n  currentMember?.membership?.workspace_role",
+    );
+    expect(settingsPage).not.toContain(
+      "userRole={getRoleLabel(currentProfile.role)}",
+    );
+    expect(settingsPage).not.toContain(
+      'roleLabel={getRoleLabel(currentProfile.role)}',
+    );
+    expect(commandCenter).toContain("workspaceRoleLabel:");
+    expect(commandCenter).toContain("roleLabel={workspaceRoleLabel}");
+    expect(commandCenter).not.toContain("userRole");
+  });
+
+  it("links professional identity editing to the settings anchor", () => {
+    expect(companyPage).toContain(
+      'href="/company/settings#professional-identity"',
+    );
+    expect(companyPage).toContain("Edit Professional Identity");
+    expect(settingsPage).toContain('id="professional-identity"');
+    expect(settingsPage).toContain("ProfessionalIdentitySettingsForm");
+  });
+
+  it("uses canonical missing company identity copy on touched surfaces", () => {
+    expect(companyPage).toContain('"Not specified"');
+    expect(companyPage).toContain('"Location N/A"');
+    expect(companyPage).toContain('"Status not set"');
+    expect(settingsPage).toContain('"Status not set"');
+    expect(settingsPage).toContain('"Not specified"');
+    expect(settingsPage).toContain('"Location N/A"');
+    expect(commandCenter).toContain("Status not set");
+    expect(publicCompanyPage).toContain('"Not specified"');
+    expect(publicCompanyPage).toContain('"Location N/A"');
+    expect(membersCenter).toContain("public profile visibility");
+  });
+
+  it("does not synthesize misleading missing identity values on touched surfaces", () => {
+    for (const source of [
+      companyPage,
+      settingsPage,
+      commandCenter,
+      publicCompanyPage,
+    ]) {
+      expect(source).not.toContain('"provisional"');
+      expect(source).not.toContain('|| "verified"');
+      expect(source).not.toContain('|| "Enterprise"');
+      expect(source).not.toContain('|| "Enterprise Workspace"');
+    }
+  });
+
+  it("uses Open Procurement Center for touched /rfq identity CTAs", () => {
+    expect(companyPage).toContain("Open Procurement Center");
+    expect(companyPage).toContain('href="/rfq"');
+    expect(companyPage).not.toContain("Open Marketplace");
+    expect(publicCompanyPage).toContain("Open Procurement Center");
+    expect(publicCompanyPage).not.toContain("View Marketplace");
+  });
+
+  it("keeps public profile free of professional identity disclosure", () => {
+    expect(publicCompanyPage).toContain("Public Company Profile");
+    expect(publicCompanyPage).not.toContain("first_name");
+    expect(publicCompanyPage).not.toContain("last_name");
+    expect(publicCompanyPage).not.toContain("formatMemberIdentity");
   });
 });
 

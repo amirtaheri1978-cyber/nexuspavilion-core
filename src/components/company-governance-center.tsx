@@ -88,10 +88,10 @@ status={rfqCount > 0 ? "Active" : "Ready"}
 </section>
 
 <section className="mt-8 grid gap-6 md:grid-cols-4">
-<InfoCard title="Category" value={category || "N/A"} />
-<InfoCard title="Regional Hub" value={location || "N/A"} />
-<InfoCard title="Network Role" value={networkRole || "Enterprise Workspace"} />
-<InfoCard title="Company Status" value={companyStatus || "Verified"} />
+<InfoCard title="Category" value={category || "Not specified"} />
+<InfoCard title="Regional Hub" value={location || "Location N/A"} />
+<InfoCard title="Network Role" value={networkRole || "Not specified"} />
+<InfoCard title="Company Status" value={companyStatus || "Status not set"} />
 </section>
 </>
 );

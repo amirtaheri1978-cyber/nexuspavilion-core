@@ -193,7 +193,7 @@ return (
 <SystemState
 eyebrow="Public Company Profile"
 title="Company profile unavailable."
-description="This company profile does not exist, is not approved for public visibility, or is no longer available in the Nexus Pavilion directory."
+description="This company profile does not exist, is not approved for public visibility, or is no longer available in the NexusPavilion directory."
 primaryHref="/directory"
 primaryLabel="Back to Directory"
 secondaryHref="/"
@@ -398,7 +398,7 @@ Create RFQ
 href="/rfq"
 className="rounded-full bg-gradient-to-r from-[#B9902F] via-[#C8A646] to-[#F5D77B] px-5 py-3 text-sm font-black text-slate-950 transition"
 >
-View Marketplace
+Open Procurement Center
 </Link>
 </div>
 </div>
@@ -422,11 +422,11 @@ className="h-24 w-24 rounded-3xl border border-white/10 bg-white object-contain 
 
 <div>
 <p className="text-xs font-black uppercase tracking-[0.35em] text-[#C8A646]">
-Enterprise Company Profile
+Public Company Profile
 </p>
 
 <div className="mt-3 flex flex-wrap items-center gap-3">
-<h1 className="text-5xl font-black tracking-[-0.05em] text-white">
+<h1 className="max-w-4xl break-words text-3xl font-black tracking-[-0.05em] text-white sm:text-4xl lg:text-5xl">
 {company.name}
 </h1>
 
@@ -434,12 +434,12 @@ Enterprise Company Profile
 </div>
 
 <p className="mt-4 text-lg font-semibold text-slate-300">
-{company.category || "Enterprise"} ·{" "}
-{company.location || "Location N/A"}
+{company.category?.trim() || "Not specified"} ·{" "}
+{company.location?.trim() || "Location N/A"}
 </p>
 
 <p className="mt-2 text-sm font-bold uppercase tracking-[0.2em] text-slate-500">
-{company.network_role || "Enterprise Workspace"}
+{company.network_role?.trim() || "Not specified"}
 </p>
 </div>
 </div>

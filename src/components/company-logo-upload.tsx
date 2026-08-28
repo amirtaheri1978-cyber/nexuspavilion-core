@@ -99,7 +99,7 @@ src={logoUrl}
 alt="Company logo"
 width={112}
 height={112}
-className="h-28 w-28 rounded-2xl border border-slate-200 object-contain p-3"
+className="h-28 w-28 rounded-2xl border border-white/10 bg-[#061426]/80 object-contain p-3"
 />
 </div>
 ) : null}
@@ -110,16 +110,16 @@ type="file"
 accept="image/*"
 onChange={handleUpload}
 disabled={uploading}
-className="w-full rounded-2xl border border-slate-200 p-4"
+className="w-full rounded-2xl border border-white/10 bg-[#061426]/80 p-4 text-sm font-semibold text-slate-300 file:mr-4 file:rounded-xl file:border-0 file:bg-white/10 file:px-4 file:py-2 file:text-sm file:font-black file:text-white focus:border-[#2CC4E8]/40 focus:outline-none focus:ring-4 focus:ring-[#2CC4E8]/15 disabled:cursor-not-allowed disabled:opacity-60"
 />
 </div>
 
 {message ? (
-<p className="mt-4 text-sm font-semibold text-slate-700">{message}</p>
+<p className="mt-4 text-sm font-semibold text-slate-300">{message}</p>
 ) : null}
 
 {uploading ? (
-<p className="mt-4 text-sm text-slate-500">Uploading logo...</p>
+<p className="mt-4 text-sm text-slate-400">Uploading logo...</p>
 ) : null}
 </div>
 );

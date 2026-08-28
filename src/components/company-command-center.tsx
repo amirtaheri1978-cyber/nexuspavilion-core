@@ -16,7 +16,7 @@ userIdentityFirstName?: string | null;
 userIdentityLastName?: string | null;
 userIdentityJobTitle?: string | null;
 userIdentityEmail?: string | null;
-userRole: string;
+workspaceRoleLabel: string;
 readinessScore: number;
 workspaceStage: string;
 workspaceMessage: string;
@@ -36,7 +36,7 @@ userIdentityFirstName,
 userIdentityLastName,
 userIdentityJobTitle,
 userIdentityEmail,
-userRole,
+workspaceRoleLabel,
 readinessScore,
 workspaceStage,
 workspaceMessage,
@@ -47,6 +47,10 @@ hasOwner,
 hasCompanyProfile,
 }: CompanyCommandCenterProps) {
 const companyInitial = companyName.trim().charAt(0) || "C";
+const companyStatusLabel = companyStatus.trim() || "Status not set";
+const companyStatusIsVerified = ["verified", "approved"].includes(
+  companyStatusLabel.toLowerCase(),
+);
 
 return (
 <>
@@ -108,12 +112,18 @@ className="h-24 w-24 rounded-3xl border border-white/10 bg-white object-contain 
 
 <div>
 <div className="flex flex-wrap items-center gap-3">
-<h2 className="break-words text-4xl font-black leading-tight sm:text-5xl">
+<h2 className="max-w-4xl break-words text-3xl font-black leading-tight sm:text-4xl lg:text-5xl">
 {companyName}
 </h2>
 
-<span className="rounded-full bg-green-400/10 px-4 py-2 text-xs font-black uppercase tracking-[0.15em] text-green-300">
-{companyStatus || "verified"}
+<span
+className={`rounded-full px-4 py-2 text-xs font-black uppercase tracking-[0.15em] ${
+  companyStatusIsVerified
+    ? "bg-green-400/10 text-green-300"
+    : "border border-white/10 bg-white/[0.055] text-slate-300"
+}`}
+>
+{companyStatusLabel}
 </span>
 </div>
 
@@ -128,7 +138,7 @@ intelligence.
   lastName={userIdentityLastName}
   jobTitle={userIdentityJobTitle}
   email={userIdentityEmail}
-  roleLabel={userRole}
+  roleLabel={workspaceRoleLabel}
 />
 </div>
 </div>
@@ -209,7 +219,7 @@ href="/rfq/new"
 
 <ActionCard
 title="Supplier Network"
-value="Review supplier visibility and company marketplace readiness."
+value="Review supplier visibility and company directory readiness."
 href="/directory"
 />
 

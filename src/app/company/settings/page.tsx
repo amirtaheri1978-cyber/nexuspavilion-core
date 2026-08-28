@@ -137,13 +137,15 @@ type OwnershipTransfer = {
   completed_at: string | null;
 };
 
-function getRoleLabel(role: string | null) {
-if (role === "owner") return "Owner";
-if (role === "admin") return "Admin";
-if (role === "buyer") return "Buyer";
-if (role === "vendor") return "Vendor";
+function getWorkspaceRoleLabel(
+  role: Membership["workspace_role"] | null | undefined,
+) {
+  if (role === "owner") return "Owner";
+  if (role === "admin") return "Admin";
+  if (role === "member") return "Member";
+  if (role === "viewer") return "Viewer";
 
-return role || "Member";
+  return "Workspace Member";
 }
 
 function canManageWorkspace(role: string | null) {
@@ -439,6 +441,9 @@ const ownIdentity = formatMemberIdentity({
   jobTitle: ownJobTitle,
   email: ownEmail,
 });
+const workspaceRoleLabel = getWorkspaceRoleLabel(
+  currentMember?.membership?.workspace_role,
+);
 
 const readinessScore = getWorkspaceReadiness({
 memberCount: memberList.length,
@@ -468,11 +473,11 @@ return (
 <div className="flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
 <div>
 <p className="text-[11px] font-black uppercase tracking-[0.34em] text-[#C8A646]">
-Enterprise Workspace Settings
+Company Workspace
 </p>
 
 <h1 className="mt-4 text-4xl font-black tracking-[-0.05em] text-white sm:text-5xl">
-Company Command & Governance
+Company Workspace Settings
 </h1>
 
 <p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-300 sm:text-base">
@@ -508,15 +513,15 @@ Executive Analytics
 </section>
 
 <CompanyCommandCenter
-companyName={company.name || "Company Workspace"}
-companyStatus={company.status || "verified"}
+companyName={company.name?.trim() || "Company"}
+companyStatus={company.status?.trim() || "Status not set"}
 companyLogoUrl={company.logo_url}
 companySlug={company.slug}
 userIdentityFirstName={ownNames.firstName}
 userIdentityLastName={ownNames.lastName}
 userIdentityJobTitle={ownIdentity.jobTitle}
 userIdentityEmail={ownEmail}
-userRole={getRoleLabel(currentProfile.role)}
+workspaceRoleLabel={workspaceRoleLabel}
 readinessScore={readinessScore}
 workspaceStage={workspaceStage}
 workspaceMessage={workspaceMessage}
@@ -542,13 +547,14 @@ adminCount={admins.length}
 pendingInviteCount={pendingInvitations.length}
 activityCount={activityList.length}
 rfqCount={rfqCount || 0}
-companyStatus={company.status || "verified"}
-category={company.category || "N/A"}
-location={company.location || "N/A"}
-networkRole={company.network_role || "Enterprise Workspace"}
+companyStatus={company.status?.trim() || "Status not set"}
+category={company.category?.trim() || "Not specified"}
+location={company.location?.trim() || "Location N/A"}
+networkRole={company.network_role?.trim() || "Not specified"}
 />
 
 <ExecutivePanel
+  id="professional-identity"
   variant="operational"
   padding="lg"
   tone="gold"

@@ -382,7 +382,7 @@ const pendingTransferToMember = workspaceMembers.find(
         <ExecutivePanel
           eyebrow="Company Profile"
           title="Company Information"
-          description="Keep company details accurate across procurement workflows, supplier profiles, RFQs, and marketplace visibility."
+          description="Keep company details accurate across procurement workflows, supplier profiles, RFQs, and public profile visibility."
         >
           {canManage ? (
             <CompanySettingsForm
