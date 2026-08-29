@@ -225,16 +225,9 @@ const [
      */
    
 
- supabase.rpc("get_organization_members"),
+    supabase.rpc("get_organization_members"),
 
-    supabase
-      .from("invitations")
-      .select(
-        "id, company_id, email, role, status, token, created_at",
-      )
-      .eq("company_id", companyId)
-      .order("created_at", { ascending: false })
-      .limit(12),
+    supabase.rpc("get_company_workspace_invitations"),
 
     supabase
       .from("audit_logs")
@@ -360,8 +353,9 @@ const workspaceMembers: WorkspaceMember[] =
     },
   }));
 
-  const invitations =
-    (invitationsResult.data ?? []) as Invitation[];
+  const invitations = (
+    (invitationsResult.data ?? []) as Invitation[]
+  ).slice(0, 12);
 
   const activityList =
     (auditResult.data ?? []) as AuditLog[];

@@ -8,6 +8,11 @@ import { ProfessionalIdentitySettingsForm } from "@/components/professional-iden
 import { formatMemberIdentity } from "@/lib/auth/professional-identity-display";
 import { loadCurrentUserProfessionalNames } from "@/lib/auth/professional-names";
 import {
+  getCurrentWorkspaceContext,
+  WorkspaceContextError,
+} from "@/lib/auth/workspace-context";
+import { canInviteWorkspaceMembers } from "@/lib/authorization/workspace-permissions";
+import {
   EXECUTIVE_CTA_PRIMARY,
   EXECUTIVE_CTA_SECONDARY,
   EXECUTIVE_PAGE_CLASS,
@@ -319,11 +324,18 @@ const workspaceMembers: WorkspaceMember[] =
   ({ profile }) => profile,
 );
 
-const { data: invitations } = await supabase
-.from("invitations")
-.select("id, company_id, email, role, status, token, created_at")
-.eq("company_id", companyId)
-.order("created_at", { ascending: false });
+const {
+  data: invitations,
+  error: invitationsError,
+} = await supabase.rpc("get_company_workspace_invitations");
+
+if (invitationsError) {
+  console.error("Company invitations RPC failed.", {
+    companyId,
+    userId: currentProfile.id,
+    error: invitationsError,
+  });
+}
 
 const invitationList = (invitations ?? []) as Invitation[];
 
@@ -432,6 +444,36 @@ const ownNames = await loadCurrentUserProfessionalNames(supabase);
 const currentMember = workspaceMembers.find(
   ({ profile }) => profile.id === currentProfile.id,
 );
+
+let canManageInvitations = false;
+
+try {
+  const workspace = await getCurrentWorkspaceContext(supabase);
+
+  canManageInvitations =
+    workspace.companyId === companyId &&
+    canInviteWorkspaceMembers({
+      workspaceRole: workspace.workspaceRole,
+      membershipStatus: workspace.membershipStatus,
+    });
+} catch (error) {
+  if (
+    !(
+      error instanceof WorkspaceContextError &&
+      error.code === "UNAUTHENTICATED"
+    )
+  ) {
+    console.error(
+      "Workspace context lookup failed for invitation authority.",
+      {
+        companyId,
+        userId: currentProfile.id,
+        error,
+      },
+    );
+  }
+}
+
 const ownJobTitle = currentMember?.membership?.job_title || "";
 const ownEmail =
   currentProfile.email || user.email || "";
@@ -590,6 +632,7 @@ networkRole={company.network_role?.trim() || "Not specified"}
   vendorsCount={vendors.length}
   hasOwner={hasOwner}
   canManage={canManage}
+  canManageInvitations={canManageInvitations}
   canDelete={canDelete}
   workspaceStage={workspaceStage}
   governanceMessage={governanceMessage}

@@ -1,236 +1,265 @@
 import { NextResponse } from "next/server";
 
+import {
+  getCurrentWorkspaceContext,
+  WorkspaceContextError,
+} from "@/lib/auth/workspace-context";
+import { canInviteWorkspaceMembers } from "@/lib/authorization/workspace-permissions";
 import { buildCompanyInvitationEmail } from "@/lib/email/templates/company-invitation-email";
 import { sendEmail } from "@/lib/email/send-email";
 import {
-getPublicSiteUrl,
-PUBLIC_SITE_URL_UNCONFIGURED,
+  getPublicSiteUrl,
+  PUBLIC_SITE_URL_UNCONFIGURED,
 } from "@/lib/ops/public-site-url";
-import { canInviteUsers, type UserRole } from "@/lib/permissions";
 import { createClient } from "@/lib/supabase/server";
 
 type Company = {
-id: string;
-name: string | null;
+  id: string;
+  name: string | null;
 };
 
 type InviteRole = "admin" | "buyer" | "vendor";
 
-function normalizeEmail(email: unknown) {
-return String(email || "").trim().toLowerCase();
-}
+type WorkspaceInvitation = {
+  id: string;
+  company_id: string;
+  email: string;
+  role: string;
+  status: string;
+  token: string;
+  expires_at: string | null;
+  created_at: string;
+};
 
-function isValidEmail(email: string) {
-return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+type CreateInvitationRpcResult = {
+  success?: boolean;
+  error_code?: string;
+  error_message?: string;
+  invitation?: WorkspaceInvitation;
+};
+
+const createInvitationStatusByErrorCode: Record<string, number> = {
+  UNAUTHENTICATED: 401,
+  ACTIVE_MEMBERSHIP_REQUIRED: 403,
+  AMBIGUOUS_WORKSPACE_CONTEXT: 403,
+  FORBIDDEN: 403,
+  INVALID_EMAIL: 400,
+  INVALID_ROLE: 400,
+  ALREADY_MEMBER: 409,
+  INVITATION_ALREADY_PENDING: 409,
+  INVITATION_CREATE_FAILED: 500,
+};
+
+function normalizeEmail(email: unknown) {
+  return String(email || "").trim().toLowerCase();
 }
 
 function normalizeRole(role: unknown): InviteRole {
-const value = String(role || "").trim().toLowerCase();
+  const value = String(role || "").trim().toLowerCase();
 
-if (value === "admin") return "admin";
-if (value === "buyer") return "buyer";
+  if (value === "admin") return "admin";
+  if (value === "buyer") return "buyer";
 
-return "vendor";
+  return "vendor";
 }
 
 export async function POST(request: Request) {
-try {
-const body = await request.json();
+  try {
+    const body = await request.json();
 
-const email = normalizeEmail(body.email);
-const role = normalizeRole(body.role);
+    const email = normalizeEmail(body.email);
+    const role = normalizeRole(body.role);
 
-if (!email) {
-return NextResponse.json(
-{ error: "Email is required." },
-{ status: 400 }
-);
-}
+    if (!email) {
+      return NextResponse.json(
+        { error: "Email is required." },
+        { status: 400 },
+      );
+    }
 
-if (!isValidEmail(email)) {
-return NextResponse.json(
-{ error: "Please enter a valid email address." },
-{ status: 400 }
-);
-}
+    const supabase = await createClient();
 
-const supabase = await createClient();
+    let workspace;
 
-const {
-data: { user },
-error: userError,
-} = await supabase.auth.getUser();
+    try {
+      workspace = await getCurrentWorkspaceContext(supabase);
+    } catch (error) {
+      if (
+        error instanceof WorkspaceContextError &&
+        error.code === "UNAUTHENTICATED"
+      ) {
+        return NextResponse.json(
+          { error: "Unauthorized." },
+          { status: 401 },
+        );
+      }
 
-if (userError || !user) {
-return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
-}
+      console.error(
+        "Company invitation workspace context lookup failed.",
+        error,
+      );
 
-const { data: profile } = await supabase
-.from("profiles")
-.select("id, email, company_id, role")
-.eq("id", user.id)
-.single();
+      return NextResponse.json(
+        { error: "Workspace access could not be verified." },
+        { status: 403 },
+      );
+    }
 
-if (!profile?.company_id) {
-return NextResponse.json(
-{ error: "No company assigned." },
-{ status: 400 }
-);
-}
+    if (!workspace.companyId || !workspace.membership) {
+      return NextResponse.json(
+        { error: "No company assigned." },
+        { status: 400 },
+      );
+    }
 
-if (!canInviteUsers(profile.role as UserRole)) {
-return NextResponse.json(
-{ error: "You do not have permission to invite company users." },
-{ status: 403 }
-);
-}
+    if (
+      !canInviteWorkspaceMembers({
+        workspaceRole: workspace.workspaceRole,
+        membershipStatus: workspace.membershipStatus,
+      })
+    ) {
+      return NextResponse.json(
+        { error: "You do not have permission to invite company users." },
+        { status: 403 },
+      );
+    }
 
-const { data: companyData } = await supabase
-.from("companies")
-.select("id, name")
-.eq("id", profile.company_id)
-.single();
+    const { data: rpcData, error: rpcError } = await supabase.rpc(
+      "create_company_workspace_invitation",
+      {
+        p_email: email,
+        p_role: role,
+      },
+    );
 
-const company = companyData as Company | null;
+    if (rpcError) {
+      console.error(rpcError);
 
-if (!company) {
-return NextResponse.json(
-{ error: "Company workspace not found." },
-{ status: 404 }
-);
-}
+      return NextResponse.json(
+        { error: "Failed to create invitation." },
+        { status: 500 },
+      );
+    }
 
-const { data: existingMember } = await supabase
-.from("profiles")
-.select("id, email, company_id")
-.eq("company_id", profile.company_id)
-.eq("email", email)
-.maybeSingle();
+    const result = rpcData as CreateInvitationRpcResult | null;
 
-if (existingMember) {
-return NextResponse.json(
-{ error: "This user is already a member of your company workspace." },
-{ status: 409 }
-);
-}
+    if (!result?.success) {
+      const errorCode = result?.error_code || "INVITATION_CREATE_FAILED";
 
-const { data: existingInvite } = await supabase
-.from("invitations")
-.select("id")
-.eq("company_id", profile.company_id)
-.eq("email", email)
-.eq("status", "pending")
-.maybeSingle();
+      return NextResponse.json(
+        {
+          error:
+            result?.error_message || "Failed to create invitation.",
+          errorCode,
+        },
+        {
+          status:
+            createInvitationStatusByErrorCode[errorCode] ?? 500,
+        },
+      );
+    }
 
-if (existingInvite) {
-return NextResponse.json(
-{ error: "A pending invitation already exists for this email." },
-{ status: 409 }
-);
-}
+    const invitation = result.invitation;
 
-const { data: invitation, error: invitationError } = await supabase
-.from("invitations")
-.insert({
-company_id: profile.company_id,
-email,
-role,
-invited_by: user.id,
-})
-.select("id, email, role, status, token, company_id")
-.single();
+    if (!invitation?.token) {
+      return NextResponse.json(
+        { error: "Invitation token was not generated." },
+        { status: 500 },
+      );
+    }
 
-if (invitationError || !invitation) {
-console.error(invitationError);
+    const commandCompanyId = invitation.company_id;
 
-return NextResponse.json(
-{ error: "Failed to create invitation." },
-{ status: 500 }
-);
-}
+    const { data: companyData } = await supabase
+      .from("companies")
+      .select("id, name")
+      .eq("id", commandCompanyId)
+      .single();
 
-if (!invitation.token) {
-return NextResponse.json(
-{ error: "Invitation token was not generated." },
-{ status: 500 }
-);
-}
+    const company = companyData as Company | null;
 
-const companyName = company.name || "Your company";
-const publicSiteUrl = getPublicSiteUrl();
-const inviteUrl = publicSiteUrl
-? `${publicSiteUrl}/invite/${invitation.token}`
-: `/invite/${invitation.token}`;
+    if (!company) {
+      return NextResponse.json(
+        { error: "Company workspace not found." },
+        { status: 404 },
+      );
+    }
 
-const invitationEmail = buildCompanyInvitationEmail({
-companyName,
-invitedEmail: email,
-invitedRole: role,
-inviteUrl,
-});
+    const companyName = company.name || "Your company";
+    const publicSiteUrl = getPublicSiteUrl();
+    const inviteUrl = publicSiteUrl
+      ? `${publicSiteUrl}/invite/${invitation.token}`
+      : `/invite/${invitation.token}`;
 
-const emailResult = publicSiteUrl
-? await sendEmail({
-to: email,
-subject: invitationEmail.subject,
-html: invitationEmail.html,
-text: invitationEmail.text,
-})
-: {
-success: false,
-skipped: true,
-id: null,
-error: PUBLIC_SITE_URL_UNCONFIGURED,
-};
+    const invitationEmail = buildCompanyInvitationEmail({
+      companyName,
+      invitedEmail: email,
+      invitedRole: role,
+      inviteUrl,
+    });
 
-await supabase.from("notifications").insert({
-title: "Invitation Created",
-message: `${email} was invited to ${companyName} as ${role}.`,
-type: "invitation",
-is_read: false,
-company_id: profile.company_id,
-});
+    const emailResult = publicSiteUrl
+      ? await sendEmail({
+          to: email,
+          subject: invitationEmail.subject,
+          html: invitationEmail.html,
+          text: invitationEmail.text,
+        })
+      : {
+          success: false,
+          skipped: true,
+          id: null,
+          error: PUBLIC_SITE_URL_UNCONFIGURED,
+        };
 
-await supabase.from("audit_logs").insert({
-action: "INVITATION_CREATED",
-entity_type: "invitation",
-entity_id: invitation.id,
-user_id: user.id,
-company_id: profile.company_id,
-metadata: {
-email,
-role,
-invite_url: inviteUrl,
-email_sent: emailResult.success,
-email_skipped: emailResult.skipped,
-email_id: emailResult.id,
-email_error: emailResult.error,
-invited_by: {
-id: profile.id,
-email: profile.email,
-role: profile.role,
-},
-created_at: new Date().toISOString(),
-},
-});
+    await supabase.from("notifications").insert({
+      title: "Invitation Created",
+      message: `${email} was invited to ${companyName} as ${role}.`,
+      type: "invitation",
+      is_read: false,
+      company_id: commandCompanyId,
+    });
 
-return NextResponse.json({
-success: true,
-invitation,
-inviteUrl,
-email: {
-sent: emailResult.success,
-skipped: emailResult.skipped,
-id: emailResult.id,
-error: emailResult.error,
-},
-});
-} catch (error) {
-console.error(error);
+    await supabase.from("audit_logs").insert({
+      action: "INVITATION_CREATED",
+      entity_type: "invitation",
+      entity_id: invitation.id,
+      user_id: workspace.userId,
+      company_id: commandCompanyId,
+      metadata: {
+        email,
+        role,
+        invite_url: inviteUrl,
+        email_sent: emailResult.success,
+        email_skipped: emailResult.skipped,
+        email_id: emailResult.id,
+        email_error: emailResult.error,
+        invited_by: {
+          id: workspace.userId,
+          email: workspace.email,
+          workspace_role: workspace.workspaceRole,
+        },
+        created_at: new Date().toISOString(),
+      },
+    });
 
-return NextResponse.json(
-{ error: "Internal server error." },
-{ status: 500 }
-);
-}
+    return NextResponse.json({
+      success: true,
+      invitation,
+      inviteUrl,
+      email: {
+        sent: emailResult.success,
+        skipped: emailResult.skipped,
+        id: emailResult.id,
+        error: emailResult.error,
+      },
+    });
+  } catch (error) {
+    console.error(error);
+
+    return NextResponse.json(
+      { error: "Internal server error." },
+      { status: 500 },
+    );
+  }
 }

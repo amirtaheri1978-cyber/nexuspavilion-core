@@ -139,6 +139,16 @@ describe("Phase 7-01 company identity presentation consistency", () => {
     expect(commandCenter).not.toContain("userRole");
   });
 
+  it("renders command metric values without truncate ellipsis", () => {
+    const metricBlock = commandCenter.slice(
+      commandCenter.indexOf("function CommandMetric"),
+      commandCenter.indexOf("function ReadinessItem"),
+    );
+
+    expect(metricBlock).not.toContain("truncate");
+    expect(metricBlock).toContain("break-words");
+  });
+
   it("links professional identity editing to the settings anchor", () => {
     expect(companyPage).toContain(
       'href="/company/settings#professional-identity"',

@@ -105,6 +105,7 @@ type CompanyMembersCenterProps = {
   vendorsCount: number;
   hasOwner: boolean;
   canManage: boolean;
+  canManageInvitations?: boolean;
   canDelete: boolean;
   workspaceStage: string;
   governanceMessage: string;
@@ -314,6 +315,7 @@ export default function CompanyMembersCenter({
   vendorsCount,
   hasOwner,
   canManage,
+  canManageInvitations,
   canDelete,
   workspaceStage,
   governanceMessage,
@@ -322,6 +324,9 @@ export default function CompanyMembersCenter({
   pendingTransferToEmail,
   siteUrl,
 }: CompanyMembersCenterProps) {
+const invitationManagementEnabled =
+  canManageInvitations ?? canManage;
+
 const currentWorkspaceMember =
   workspaceMembers.find(
     ({ profile }) =>
@@ -447,7 +452,7 @@ const pendingTransferToMember = workspaceMembers.find(
 title="Manage Workspace Access"
 description="Manage company membership, workspace roles, and pending access invitations."
       >
-        {canManage ? (
+        {invitationManagementEnabled ? (
           <div className="mt-6">
             <InviteUserForm />
           </div>
@@ -711,14 +716,16 @@ description="Manage company membership, workspace roles, and pending access invi
                       )}
                     </p>
 
-                    <InvitationActions
-                      invitationId={invitation.id}
-                      inviteUrl={getInviteUrl(
-                        invitation,
-                        siteUrl,
-                      )}
-                      status={invitation.status}
-                    />
+                    {invitationManagementEnabled ? (
+                      <InvitationActions
+                        invitationId={invitation.id}
+                        inviteUrl={getInviteUrl(
+                          invitation,
+                          siteUrl,
+                        )}
+                        status={invitation.status}
+                      />
+                    ) : null}
                   </div>
                 ))
             ) : (

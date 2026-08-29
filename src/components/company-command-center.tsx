@@ -246,7 +246,7 @@ return (
 {title}
 </p>
 
-<p className="mt-2 truncate text-2xl font-black text-white">{value}</p>
+<p className="mt-2 break-words text-2xl font-black text-white">{value}</p>
 </div>
 );
 }

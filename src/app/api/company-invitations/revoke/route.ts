@@ -1,116 +1,167 @@
 import { NextResponse } from "next/server";
 
-import { canInviteUsers, type UserRole } from "@/lib/permissions";
+import {
+  getCurrentWorkspaceContext,
+  WorkspaceContextError,
+} from "@/lib/auth/workspace-context";
+import { canInviteWorkspaceMembers } from "@/lib/authorization/workspace-permissions";
 import { createClient } from "@/lib/supabase/server";
 
+type RevokeInvitationRpcResult = {
+  success?: boolean;
+  error_code?: string;
+  error_message?: string;
+  invitation?: {
+    id: string;
+    company_id: string;
+    email: string | null;
+    role: string | null;
+    status: string;
+  };
+};
+
+const revokeInvitationStatusByErrorCode: Record<string, number> = {
+  UNAUTHENTICATED: 401,
+  ACTIVE_MEMBERSHIP_REQUIRED: 403,
+  AMBIGUOUS_WORKSPACE_CONTEXT: 403,
+  FORBIDDEN: 403,
+  INVALID_INVITATION: 400,
+  INVITATION_NOT_FOUND: 404,
+  INVITATION_NOT_PENDING: 400,
+  INVITATION_REVOKE_FAILED: 500,
+};
+
 export async function POST(request: Request) {
-try {
-const body = await request.json();
-const invitationId = String(body.invitationId || "").trim();
+  try {
+    const body = await request.json();
+    const invitationId = String(body.invitationId || "").trim();
 
-if (!invitationId) {
-return NextResponse.json(
-{ error: "Invitation ID is required." },
-{ status: 400 }
-);
-}
+    if (!invitationId) {
+      return NextResponse.json(
+        { error: "Invitation ID is required." },
+        { status: 400 },
+      );
+    }
 
-const supabase = await createClient();
+    const supabase = await createClient();
 
-const {
-data: { user },
-error: userError,
-} = await supabase.auth.getUser();
+    let workspace;
 
-if (userError || !user) {
-return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
-}
+    try {
+      workspace = await getCurrentWorkspaceContext(supabase);
+    } catch (error) {
+      if (
+        error instanceof WorkspaceContextError &&
+        error.code === "UNAUTHENTICATED"
+      ) {
+        return NextResponse.json(
+          { error: "Unauthorized." },
+          { status: 401 },
+        );
+      }
 
-const { data: profile } = await supabase
-.from("profiles")
-.select("id, email, company_id, role")
-.eq("id", user.id)
-.single();
+      console.error(
+        "Company invitation revoke workspace context lookup failed.",
+        error,
+      );
 
-if (!profile?.company_id) {
-return NextResponse.json(
-{ error: "No company assigned." },
-{ status: 400 }
-);
-}
+      return NextResponse.json(
+        { error: "Workspace access could not be verified." },
+        { status: 403 },
+      );
+    }
 
-if (!canInviteUsers(profile.role as UserRole)) {
-return NextResponse.json(
-{ error: "You do not have permission to manage invitations." },
-{ status: 403 }
-);
-}
+    if (!workspace.companyId || !workspace.membership) {
+      return NextResponse.json(
+        { error: "No company assigned." },
+        { status: 400 },
+      );
+    }
 
-const { data: invitation } = await supabase
-.from("invitations")
-.select("id, email, role, status, company_id")
-.eq("id", invitationId)
-.eq("company_id", profile.company_id)
-.single();
+    if (
+      !canInviteWorkspaceMembers({
+        workspaceRole: workspace.workspaceRole,
+        membershipStatus: workspace.membershipStatus,
+      })
+    ) {
+      return NextResponse.json(
+        { error: "You do not have permission to manage invitations." },
+        { status: 403 },
+      );
+    }
 
-if (!invitation) {
-return NextResponse.json(
-{ error: "Invitation not found in your company workspace." },
-{ status: 404 }
-);
-}
+    const { data: rpcData, error: rpcError } = await supabase.rpc(
+      "revoke_company_workspace_invitation",
+      {
+        p_invitation_id: invitationId,
+      },
+    );
 
-if (invitation.status !== "pending") {
-return NextResponse.json(
-{ error: "Only pending invitations can be revoked." },
-{ status: 400 }
-);
-}
+    if (rpcError) {
+      console.error(rpcError);
 
-const { error: updateError } = await supabase
-.from("invitations")
-.update({
-status: "revoked",
-})
-.eq("id", invitation.id)
-.eq("company_id", profile.company_id);
+      return NextResponse.json(
+        { error: "Failed to revoke invitation." },
+        { status: 500 },
+      );
+    }
 
-if (updateError) {
-console.error(updateError);
+    const result = rpcData as RevokeInvitationRpcResult | null;
 
-return NextResponse.json(
-{ error: "Failed to revoke invitation." },
-{ status: 500 }
-);
-}
+    if (!result?.success) {
+      const errorCode = result?.error_code || "INVITATION_REVOKE_FAILED";
 
-await supabase.from("audit_logs").insert({
-action: "INVITATION_REVOKED",
-entity_type: "invitation",
-entity_id: invitation.id,
-user_id: user.id,
-company_id: profile.company_id,
-metadata: {
-email: invitation.email,
-role: invitation.role,
-revoked_by: {
-id: profile.id,
-email: profile.email,
-role: profile.role,
-},
-revoked_at: new Date().toISOString(),
-},
-});
+      return NextResponse.json(
+        {
+          error:
+            result?.error_message || "Failed to revoke invitation.",
+          errorCode,
+        },
+        {
+          status:
+            revokeInvitationStatusByErrorCode[errorCode] ?? 500,
+        },
+      );
+    }
 
-return NextResponse.json({
-success: true,
-});
-} catch (error) {
-console.error(error);
+    const invitation = result.invitation;
 
-return NextResponse.json(
-{ error: "Internal server error." },
-{ status: 500 }
-);
-}
+    if (!invitation) {
+      return NextResponse.json(
+        { error: "Failed to revoke invitation." },
+        { status: 500 },
+      );
+    }
+
+    const commandCompanyId = invitation.company_id;
+
+    await supabase.from("audit_logs").insert({
+      action: "INVITATION_REVOKED",
+      entity_type: "invitation",
+      entity_id: invitation.id,
+      user_id: workspace.userId,
+      company_id: commandCompanyId,
+      metadata: {
+        email: invitation.email,
+        role: invitation.role,
+        revoked_by: {
+          id: workspace.userId,
+          email: workspace.email,
+          workspace_role: workspace.workspaceRole,
+        },
+        revoked_at: new Date().toISOString(),
+      },
+    });
+
+    return NextResponse.json({
+      success: true,
+    });
+  } catch (error) {
+    console.error(error);
+
+    return NextResponse.json(
+      { error: "Internal server error." },
+      { status: 500 },
+    );
+  }
 }

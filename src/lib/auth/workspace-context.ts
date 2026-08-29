@@ -5,6 +5,7 @@ import type {
 
 import {
   getActiveMembershipForUser,
+  getActiveMembershipForUserCompany,
   MembershipLookupError,
   type MembershipStatus,
   type MembershipType,
@@ -128,10 +129,18 @@ export async function getCurrentWorkspaceContext(
   let membership: OrganizationMembership | null = null;
 
   try {
-    membership = await getActiveMembershipForUser(
-      supabase,
-      user.id,
-    );
+    if (profile.company_id) {
+      membership = await getActiveMembershipForUserCompany(
+        supabase,
+        user.id,
+        profile.company_id,
+      );
+    } else {
+      membership = await getActiveMembershipForUser(
+        supabase,
+        user.id,
+      );
+    }
   } catch (error) {
     throw new WorkspaceContextError(
       "Unable to load the current organization membership.",
