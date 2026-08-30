@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { CompanyCapabilitiesEditor } from "@/components/company-capabilities-editor";
+import { CompanyQualificationsEditor } from "@/components/company-qualifications-editor";
 import CompanyCommandCenter from "@/components/company-command-center";
 import CompanyGovernanceCenter from "@/components/company-governance-center";
 import CompanyMembersCenter from "@/components/company-members-center";
@@ -17,6 +18,10 @@ import {
   canManageCompanyWorkspace,
 } from "@/lib/authorization/workspace-permissions";
 import { loadCompanyCapabilities, createEmptyGroupedCapabilities } from "@/lib/company/capabilities";
+import {
+  createEmptyGroupedQualifications,
+  loadCompanyQualifications,
+} from "@/lib/company/qualifications";
 import {
   EXECUTIVE_CTA_PRIMARY,
   EXECUTIVE_CTA_SECONDARY,
@@ -519,11 +524,22 @@ pendingInviteCount: pendingInvitations.length,
 });
 
 let companyCapabilities = createEmptyGroupedCapabilities();
+let companyQualifications = createEmptyGroupedQualifications();
 
 try {
   companyCapabilities = await loadCompanyCapabilities(supabase, companyId);
 } catch (error) {
   console.error("Company capabilities lookup failed.", {
+    companyId,
+    userId: currentProfile.id,
+    error,
+  });
+}
+
+try {
+  companyQualifications = await loadCompanyQualifications(supabase, companyId);
+} catch (error) {
+  console.error("Company qualifications lookup failed.", {
     companyId,
     userId: currentProfile.id,
     error,
@@ -667,6 +683,31 @@ networkRole={company.network_role?.trim() || "Not specified"}
   <CompanyCapabilitiesEditor
     companyId={companyId}
     initialCapabilities={companyCapabilities}
+    canEdit={canManageCapabilities}
+  />
+</ExecutivePanel>
+
+<ExecutivePanel
+  id="company-qualifications"
+  variant="operational"
+  padding="lg"
+  tone="gold"
+  className="mt-8"
+>
+  <p className="text-xs font-black uppercase tracking-[0.3em] text-[#C8A646]">
+    Organization Profile
+  </p>
+  <h2 className="mt-3 text-3xl font-black text-white">
+    Company Qualifications
+  </h2>
+  <p className="mt-3 max-w-3xl text-sm font-semibold leading-7 text-slate-400">
+    Record licenses, certifications, accreditations, and registrations held by
+    your organization. Public visibility is optional; credential identifiers
+    remain workspace-only.
+  </p>
+  <CompanyQualificationsEditor
+    companyId={companyId}
+    initialQualifications={companyQualifications}
     canEdit={canManageCapabilities}
   />
 </ExecutivePanel>

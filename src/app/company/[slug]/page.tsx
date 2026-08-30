@@ -3,11 +3,17 @@ import Link from "next/link";
 
 import StatusBadge from "@/components/ui/StatusBadge";
 import { CompanyCapabilitiesDisplay } from "@/components/company-capabilities-display";
+import { CompanyQualificationsDisplay } from "@/components/company-qualifications-display";
 import {
   createEmptyGroupedCapabilities,
   hasAnyGroupedCapabilities,
   loadCompanyCapabilities,
 } from "@/lib/company/capabilities";
+import {
+  createEmptyGroupedQualifications,
+  hasAnyPublicGroupedQualifications,
+  loadPublicCompanyQualifications,
+} from "@/lib/company/qualifications";
 import { createClient } from "@/lib/supabase/server";
 
 
@@ -209,11 +215,25 @@ secondaryLabel="Home"
 }
 
 let companyCapabilities = createEmptyGroupedCapabilities();
+let companyQualifications = createEmptyGroupedQualifications();
 
 try {
   companyCapabilities = await loadCompanyCapabilities(supabase, company.id);
 } catch (error) {
   console.error("Public company capabilities lookup failed.", {
+    companyId: company.id,
+    slug,
+    error,
+  });
+}
+
+try {
+  companyQualifications = await loadPublicCompanyQualifications(
+    supabase,
+    company.id,
+  );
+} catch (error) {
+  console.error("Public company qualifications lookup failed.", {
     companyId: company.id,
     slug,
     error,
@@ -475,6 +495,15 @@ Public Company Profile
 <section className="mt-8 rounded-[34px] border border-white/10 bg-white/[0.055] p-8 shadow-[0_30px_80px_rgba(0,0,0,0.35)]">
   <CompanyCapabilitiesDisplay
     capabilities={companyCapabilities}
+    variant="public"
+  />
+</section>
+) : null}
+
+{hasAnyPublicGroupedQualifications(companyQualifications) ? (
+<section className="mt-8 rounded-[34px] border border-white/10 bg-white/[0.055] p-8 shadow-[0_30px_80px_rgba(0,0,0,0.35)]">
+  <CompanyQualificationsDisplay
+    qualifications={companyQualifications}
     variant="public"
   />
 </section>

@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import { AccountIdentityLine } from "@/components/account-identity-line";
 import { CompanyCapabilitiesDisplay } from "@/components/company-capabilities-display";
+import { CompanyQualificationsDisplay } from "@/components/company-qualifications-display";
 import CompanyMembersCenter from "@/components/company-members-center";
 import {
   getCurrentWorkspaceContext,
@@ -17,6 +18,10 @@ import {
   createEmptyGroupedCapabilities,
   loadCompanyCapabilities,
 } from "@/lib/company/capabilities";
+import {
+  createEmptyGroupedQualifications,
+  loadCompanyQualifications,
+} from "@/lib/company/qualifications";
 import { createClient } from "@/lib/supabase/server";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "";
@@ -429,11 +434,22 @@ const workspaceMembers: WorkspaceMember[] =
     : "Your workspace membership currently provides read-only access.";
 
   let companyCapabilities = createEmptyGroupedCapabilities();
+  let companyQualifications = createEmptyGroupedQualifications();
 
   try {
     companyCapabilities = await loadCompanyCapabilities(supabase, companyId);
   } catch (error) {
     console.error("Company capabilities lookup failed.", {
+      companyId,
+      userId: workspace.userId,
+      error,
+    });
+  }
+
+  try {
+    companyQualifications = await loadCompanyQualifications(supabase, companyId);
+  } catch (error) {
+    console.error("Company qualifications lookup failed.", {
       companyId,
       userId: workspace.userId,
       error,
@@ -578,6 +594,13 @@ const workspaceMembers: WorkspaceMember[] =
         <section className="rounded-[32px] border border-white/10 bg-white/[0.065] p-7 shadow-[0_36px_120px_rgba(0,0,0,0.52)] backdrop-blur-2xl sm:p-8">
           <CompanyCapabilitiesDisplay
             capabilities={companyCapabilities}
+            variant="internal"
+          />
+        </section>
+
+        <section className="rounded-[32px] border border-white/10 bg-white/[0.065] p-7 shadow-[0_36px_120px_rgba(0,0,0,0.52)] backdrop-blur-2xl sm:p-8">
+          <CompanyQualificationsDisplay
+            qualifications={companyQualifications}
             variant="internal"
           />
         </section>
