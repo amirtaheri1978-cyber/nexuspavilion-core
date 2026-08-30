@@ -2,6 +2,12 @@ import Image from "next/image";
 import Link from "next/link";
 
 import StatusBadge from "@/components/ui/StatusBadge";
+import { CompanyCapabilitiesDisplay } from "@/components/company-capabilities-display";
+import {
+  createEmptyGroupedCapabilities,
+  hasAnyGroupedCapabilities,
+  loadCompanyCapabilities,
+} from "@/lib/company/capabilities";
 import { createClient } from "@/lib/supabase/server";
 
 
@@ -200,6 +206,18 @@ secondaryHref="/"
 secondaryLabel="Home"
 />
 );
+}
+
+let companyCapabilities = createEmptyGroupedCapabilities();
+
+try {
+  companyCapabilities = await loadCompanyCapabilities(supabase, company.id);
+} catch (error) {
+  console.error("Public company capabilities lookup failed.", {
+    companyId: company.id,
+    slug,
+    error,
+  });
 }
 
 const { data: rfqs } = await supabase
@@ -452,6 +470,15 @@ Public Company Profile
 </div>
 </div>
 </section>
+
+{hasAnyGroupedCapabilities(companyCapabilities) ? (
+<section className="mt-8 rounded-[34px] border border-white/10 bg-white/[0.055] p-8 shadow-[0_30px_80px_rgba(0,0,0,0.35)]">
+  <CompanyCapabilitiesDisplay
+    capabilities={companyCapabilities}
+    variant="public"
+  />
+</section>
+) : null}
 
 <section className="mt-8 grid gap-6 md:grid-cols-4">
 <MetricCard

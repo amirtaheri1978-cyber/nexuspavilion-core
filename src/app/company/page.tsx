@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { AccountIdentityLine } from "@/components/account-identity-line";
+import { CompanyCapabilitiesDisplay } from "@/components/company-capabilities-display";
 import CompanyMembersCenter from "@/components/company-members-center";
 import {
   getCurrentWorkspaceContext,
@@ -12,6 +13,10 @@ import {
   canManageCompanyWorkspace,
 } from "@/lib/authorization/workspace-permissions";
 import { EXECUTIVE_FOCUS_CYAN } from "@/lib/design-system/executive-contract";
+import {
+  createEmptyGroupedCapabilities,
+  loadCompanyCapabilities,
+} from "@/lib/company/capabilities";
 import { createClient } from "@/lib/supabase/server";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "";
@@ -423,6 +428,18 @@ const workspaceMembers: WorkspaceMember[] =
     ? "Your active workspace membership allows organization administration."
     : "Your workspace membership currently provides read-only access.";
 
+  let companyCapabilities = createEmptyGroupedCapabilities();
+
+  try {
+    companyCapabilities = await loadCompanyCapabilities(supabase, companyId);
+  } catch (error) {
+    console.error("Company capabilities lookup failed.", {
+      companyId,
+      userId: workspace.userId,
+      error,
+    });
+  }
+
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#061426] px-4 py-6 text-white sm:px-6 lg:px-10">
       <div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(circle_at_top_left,rgba(44,196,232,0.18),transparent_34%),radial-gradient(circle_at_top_right,rgba(200,166,70,0.15),transparent_30%),linear-gradient(180deg,#061426_0%,#07111F_45%,#020617_100%)]" />
@@ -556,6 +573,13 @@ const workspaceMembers: WorkspaceMember[] =
               value={company.network_role?.trim() || "Not specified"}
             />
           </div>
+        </section>
+
+        <section className="rounded-[32px] border border-white/10 bg-white/[0.065] p-7 shadow-[0_36px_120px_rgba(0,0,0,0.52)] backdrop-blur-2xl sm:p-8">
+          <CompanyCapabilitiesDisplay
+            capabilities={companyCapabilities}
+            variant="internal"
+          />
         </section>
 
         <CompanyMembersCenter

@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { CompanyCapabilitiesEditor } from "@/components/company-capabilities-editor";
 import CompanyCommandCenter from "@/components/company-command-center";
 import CompanyGovernanceCenter from "@/components/company-governance-center";
 import CompanyMembersCenter from "@/components/company-members-center";
@@ -11,7 +12,11 @@ import {
   getCurrentWorkspaceContext,
   WorkspaceContextError,
 } from "@/lib/auth/workspace-context";
-import { canInviteWorkspaceMembers } from "@/lib/authorization/workspace-permissions";
+import {
+  canInviteWorkspaceMembers,
+  canManageCompanyWorkspace,
+} from "@/lib/authorization/workspace-permissions";
+import { loadCompanyCapabilities, createEmptyGroupedCapabilities } from "@/lib/company/capabilities";
 import {
   EXECUTIVE_CTA_PRIMARY,
   EXECUTIVE_CTA_SECONDARY,
@@ -446,6 +451,7 @@ const currentMember = workspaceMembers.find(
 );
 
 let canManageInvitations = false;
+let canManageCapabilities = false;
 
 try {
   const workspace = await getCurrentWorkspaceContext(supabase);
@@ -453,6 +459,13 @@ try {
   canManageInvitations =
     workspace.companyId === companyId &&
     canInviteWorkspaceMembers({
+      workspaceRole: workspace.workspaceRole,
+      membershipStatus: workspace.membershipStatus,
+    });
+
+  canManageCapabilities =
+    workspace.companyId === companyId &&
+    canManageCompanyWorkspace({
       workspaceRole: workspace.workspaceRole,
       membershipStatus: workspace.membershipStatus,
     });
@@ -504,6 +517,18 @@ hasOwner,
 adminCount: admins.length,
 pendingInviteCount: pendingInvitations.length,
 });
+
+let companyCapabilities = createEmptyGroupedCapabilities();
+
+try {
+  companyCapabilities = await loadCompanyCapabilities(supabase, companyId);
+} catch (error) {
+  console.error("Company capabilities lookup failed.", {
+    companyId,
+    userId: currentProfile.id,
+    error,
+  });
+}
 
 return (
 <main className="relative min-h-screen overflow-hidden bg-[#07111F] text-white">
@@ -618,6 +643,31 @@ networkRole={company.network_role?.trim() || "Not specified"}
     initialLastName={ownNames.lastName || ""}
     initialJobTitle={ownJobTitle}
     email={ownEmail || "No email"}
+  />
+</ExecutivePanel>
+
+<ExecutivePanel
+  id="company-capabilities"
+  variant="operational"
+  padding="lg"
+  tone="gold"
+  className="mt-8"
+>
+  <p className="text-xs font-black uppercase tracking-[0.3em] text-[#C8A646]">
+    Organization Profile
+  </p>
+  <h2 className="mt-3 text-3xl font-black text-white">
+    Company Capabilities
+  </h2>
+  <p className="mt-3 max-w-3xl text-sm font-semibold leading-7 text-slate-400">
+    Describe what your organization delivers and where it operates.
+    Capabilities appear in your internal workspace and on your public
+    company profile when approved.
+  </p>
+  <CompanyCapabilitiesEditor
+    companyId={companyId}
+    initialCapabilities={companyCapabilities}
+    canEdit={canManageCapabilities}
   />
 </ExecutivePanel>
 
