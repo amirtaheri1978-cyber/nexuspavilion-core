@@ -167,7 +167,7 @@ export async function POST(request: Request) {
     const invitationEmail = buildCompanyInvitationEmail({
       companyName: company.name || "Your company",
       invitedEmail: invitation.email,
-      invitedRole: invitation.role || "vendor",
+      invitedRole: invitation.role || "",
       inviteUrl,
     });
 

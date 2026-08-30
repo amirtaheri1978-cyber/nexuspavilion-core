@@ -23,14 +23,15 @@ export function MemberIdentityDisplay({
   });
 
   return (
-    <div className="min-w-0">
-      <div className="flex flex-wrap items-center gap-2">
+    <div className="min-w-0 max-w-full">
+      <div className="flex min-w-0 max-w-full flex-wrap items-center gap-2">
         <p
-          className="break-words font-black text-white"
+          className="min-w-0 max-w-full break-words [overflow-wrap:anywhere] font-black text-white"
           title={identity.primary}
         >
           {identity.primary}
         </p>
+
         {isCurrentUser ? (
           <span className="rounded-full border border-[#C8A646]/25 bg-[#C8A646]/10 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-[#F5D77B]">
             You
@@ -40,7 +41,7 @@ export function MemberIdentityDisplay({
 
       {identity.jobTitle ? (
         <p
-          className="mt-1 break-words text-sm font-semibold text-slate-300"
+          className="mt-1 max-w-full break-words [overflow-wrap:anywhere] text-sm font-semibold text-slate-300"
           title={identity.jobTitle}
         >
           {identity.jobTitle}
@@ -49,7 +50,7 @@ export function MemberIdentityDisplay({
 
       {identity.email && !identity.emailIsPrimary ? (
         <p
-          className="mt-1 break-words text-xs font-semibold text-slate-400"
+          className="mt-1 max-w-full break-words [overflow-wrap:anywhere] text-xs font-semibold text-slate-400"
           title={identity.email}
         >
           {identity.email}

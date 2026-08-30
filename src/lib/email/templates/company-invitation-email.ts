@@ -6,11 +6,15 @@ inviteUrl: string;
 };
 
 function formatRole(role: string) {
-if (role === "admin") return "Admin";
-if (role === "buyer") return "Buyer";
-if (role === "vendor") return "Vendor";
+  const value = String(role || "").trim().toLowerCase();
 
-return "Workspace Member";
+  if (value === "viewer") return "Read Only";
+  if (value === "member") return "Standard";
+  if (value === "admin") return "Administrator";
+  if (value === "buyer") return "Standard";
+  if (value === "vendor") return "Standard";
+
+  return "Access Level Pending";
 }
 
 function escapeHtml(value: string) {
@@ -40,8 +44,11 @@ const text = `
 You have been invited to join ${companyName} on Nexus Pavilion.
 
 Workspace: ${companyName}
-Role: ${roleLabel}
+Access Level: ${roleLabel}
 Email: ${invitedEmail}
+
+Workspace access is governed by the assigned Access Level.
+RFQ participation and workflow permissions are governed separately.
 
 Nexus Pavilion is a secure enterprise procurement intelligence workspace for RFQs, supplier coordination, quote workflows, governance controls, and company-level collaboration.
 
@@ -102,7 +109,7 @@ Invitation Details
 
 ${emailInfoBlock("Workspace", safeCompanyName)}
 ${emailInfoBlock("Invited Email", safeInvitedEmail)}
-${emailInfoBlock("Workspace Role", safeRoleLabel)}
+${emailInfoBlock("Access Level", safeRoleLabel)}
 </td>
 </tr>
 </table>
@@ -119,10 +126,10 @@ Procurement Governance
 </p>
 
 <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:18px;">
-${governanceRow("Workspace access is controlled by company role and permissions.")}
+${governanceRow("Workspace access is governed by the assigned Access Level.")}
+${governanceRow("RFQ participation and workflow permissions are governed separately.")}
 ${governanceRow("RFQ activity, supplier coordination, and quote workflows are tracked inside Nexus Pavilion.")}
 ${governanceRow("Commercial submissions are handled through secure procurement workflows.")}
-${governanceRow("Buyer and supplier visibility is governed by sourcing method and access rules.")}
 </table>
 </td>
 </tr>
@@ -170,7 +177,7 @@ Security Notice
 </p>
 
 <p style="margin:14px 0 0;color:#cbd5e1;font-size:14px;line-height:1.8;font-weight:600;">
-This invitation may provide access to RFQs, company profile management, supplier activity, quote workflows, and procurement intelligence depending on your assigned role. If you were not expecting this invitation, you can safely ignore this email.
+This invitation grants Company Workspace access according to the assigned Access Level. RFQ participation and workflow permissions are governed separately. If you were not expecting this invitation, you can safely ignore this email.
 </p>
 </td>
 </tr>

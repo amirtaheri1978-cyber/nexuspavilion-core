@@ -44,9 +44,15 @@ type InvitationContext = {
 };
 
 function formatRole(role: string | null | undefined) {
-  if (role === "admin") return "Workspace Administrator";
-  if (role === "buyer") return "Procurement Buyer";
-  return "Authorized Supplier";
+  const value = String(role || "").trim().toLowerCase();
+
+  if (value === "viewer") return "Read Only";
+  if (value === "member") return "Standard";
+  if (value === "admin") return "Administrator";
+  if (value === "buyer") return "Standard";
+  if (value === "vendor") return "Standard";
+
+  return "Access Level Pending";
 }
 
 function getInvitationLoginHref(token: string) {

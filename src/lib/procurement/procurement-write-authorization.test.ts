@@ -66,10 +66,13 @@ describe("procurement write authorization", () => {
     ).toBe(true);
   });
 
-  it("allows quote submit for any active acting-company membership", () => {
+  it("allows quote submit for active non-viewer acting-company membership", () => {
     expect(
       canSubmitCompanyQuote(
-        membership({ procurementFunction: "supplier" }),
+        membership({
+          workspaceRole: "member",
+          procurementFunction: "supplier",
+        }),
         COMPANY_ID,
       ),
     ).toBe(true);
@@ -84,40 +87,108 @@ describe("procurement write authorization", () => {
     ).toBe(true);
     expect(
       canSubmitCompanyQuote(
-        membership({ procurementFunction: "none" }),
+        membership({
+          workspaceRole: "member",
+          procurementFunction: "none",
+        }),
         COMPANY_ID,
       ),
     ).toBe(true);
     expect(
       canSubmitCompanyQuote(
-        membership({ procurementFunction: "consultant" }),
+        membership({
+          workspaceRole: "member",
+          procurementFunction: "consultant",
+        }),
         COMPANY_ID,
       ),
     ).toBe(true);
     expect(
       canSubmitCompanyQuote(
-        membership({ procurementFunction: "buyer" }),
+        membership({
+          workspaceRole: "member",
+          procurementFunction: "buyer",
+        }),
         COMPANY_ID,
       ),
     ).toBe(true);
     expect(
       canCreateCompanyRfq(
-        membership({ procurementFunction: "none" }),
+        membership({
+          workspaceRole: "member",
+          procurementFunction: "none",
+        }),
         COMPANY_ID,
       ),
     ).toBe(false);
     expect(
       canInviteCompanySuppliers(
-        membership({ procurementFunction: "consultant" }),
+        membership({
+          workspaceRole: "member",
+          procurementFunction: "consultant",
+        }),
         COMPANY_ID,
       ),
     ).toBe(false);
     expect(
       canDecideCompanyQuotes(
-        membership({ procurementFunction: "supplier" }),
+        membership({
+          workspaceRole: "member",
+          procurementFunction: "supplier",
+        }),
         COMPANY_ID,
       ),
     ).toBe(false);
+  });
+
+  it("denies Read Only viewers even when procurement_function would otherwise qualify", () => {
+    const viewerBuyer = membership({
+      workspaceRole: "viewer",
+      procurementFunction: "buyer",
+    });
+    const viewerSupplier = membership({
+      workspaceRole: "viewer",
+      procurementFunction: "supplier",
+    });
+    const viewerNone = membership({
+      workspaceRole: "viewer",
+      procurementFunction: "none",
+    });
+    const viewerConsultant = membership({
+      workspaceRole: "viewer",
+      procurementFunction: "consultant",
+    });
+
+    expect(canCreateCompanyRfq(viewerBuyer, COMPANY_ID)).toBe(false);
+    expect(canInviteCompanySuppliers(viewerBuyer, COMPANY_ID)).toBe(false);
+    expect(canSubmitCompanyQuote(viewerSupplier, COMPANY_ID)).toBe(false);
+    expect(canSubmitCompanyQuote(viewerNone, COMPANY_ID)).toBe(false);
+    expect(canSubmitCompanyQuote(viewerConsultant, COMPANY_ID)).toBe(false);
+    expect(canCreateCompanyRfq(viewerSupplier, COMPANY_ID)).toBe(false);
+    expect(canCreateCompanyRfq(viewerNone, COMPANY_ID)).toBe(false);
+    expect(canCreateCompanyRfq(viewerConsultant, COMPANY_ID)).toBe(false);
+    expect(canDecideCompanyQuotes(viewerBuyer, COMPANY_ID)).toBe(false);
+  });
+
+  it("allows member plus buyer procurement_function to create RFQs", () => {
+    expect(
+      canCreateCompanyRfq(
+        membership({
+          workspaceRole: "member",
+          procurementFunction: "buyer",
+        }),
+        COMPANY_ID,
+      ),
+    ).toBe(true);
+    expect(
+      canInviteCompanySuppliers(
+        membership({
+          workspaceRole: "member",
+          procurementFunction: "buyer",
+        }),
+        COMPANY_ID,
+      ),
+    ).toBe(true);
   });
 
   it("denies inactive or revoked memberships for all four write operations", () => {

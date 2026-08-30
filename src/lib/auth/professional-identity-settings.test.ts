@@ -208,12 +208,14 @@ describe("NP-MASTER-22-B04-4 member display", () => {
     expect(membersCenter).not.toContain("profile.role as job");
   });
 
-  it("shows workspace role and procurement function as badges/context", () => {
+  it("shows Access Level badges without Procurement Function in Team & Access", () => {
     expect(membersCenter).toContain("getWorkspaceRoleLabel");
-    expect(membersCenter).toContain("getProcurementFunctionLabel");
     expect(membersCenter).toContain("StatusPill");
-    expect(membersCenter).toContain("Workspace Role");
-    expect(membersCenter).toContain("Procurement Function");
+    expect(membersCenter).toContain("Access Level");
+    expect(membersCenter).not.toContain("getProcurementFunctionLabel");
+    expect(membersCenter).not.toContain("Procurement Function");
+    expect(membersCenter).not.toContain("Workspace Role");
+    expect(membersCenter).toContain("Person");
   });
 
   it("marks the current user without exposing an auth user id", () => {

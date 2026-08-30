@@ -44,15 +44,15 @@ const ROLE_OPTIONS: {
 }[] = [
   {
     value: "admin",
-    label: "Admin",
+    label: "Administrator",
   },
   {
     value: "member",
-    label: "Member",
+    label: "Standard",
   },
   {
     value: "viewer",
-    label: "Viewer",
+    label: "Read Only",
   },
 ];
 
@@ -90,7 +90,7 @@ function getPermissionMessage({
   }
 
   if (!canManageMemberAccess && !canChangeMemberRoles) {
-    return "Your workspace role has read-only access to member management.";
+    return "Your Access Level has read-only access to member management.";
   }
 
   if (!canManageMemberAccess) {
@@ -98,10 +98,10 @@ function getPermissionMessage({
   }
 
   if (!canChangeMemberRoles) {
-    return "You can review this member, but you cannot change workspace roles.";
+    return "You can review this member, but you cannot change Access Levels.";
   }
 
-  return "Member management is restricted for your current workspace role.";
+  return "Member management is restricted for your current Access Level.";
 }
 
 export default function MemberActions({
@@ -151,13 +151,13 @@ export default function MemberActions({
   async function handleUpdateRole() {
     if (!canChangeMemberRoles) {
       setError(
-        "You do not have permission to update workspace roles.",
+        "You do not have permission to update Access Levels.",
       );
       return;
     }
 
     if (!roleHasChanged) {
-      setMessage("No workspace role changes to save.");
+      setMessage("No Access Level changes to save.");
       setError("");
       return;
     }
@@ -187,13 +187,13 @@ export default function MemberActions({
       if (!response.ok) {
         setError(
           data.error ||
-            "Failed to update the workspace role.",
+            "Failed to update the Access Level.",
         );
         return;
       }
 
       setMessage(
-        "Workspace role updated successfully.",
+        "Access level updated successfully.",
       );
 
       router.refresh();
@@ -337,8 +337,9 @@ export default function MemberActions({
       </div>
 
       <p className="mt-3 text-xs font-semibold leading-5 text-slate-400">
-        This control changes workspace authority only.
-        Procurement function remains unchanged.
+        This control changes workspace access only.
+        It does not change Department, Job Title, RFQ
+        relationship, or Procurement capability.
       </p>
 
       {memberMembershipStatus !== "active" ? (

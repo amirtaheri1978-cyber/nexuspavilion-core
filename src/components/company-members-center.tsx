@@ -144,28 +144,11 @@ function getWorkspaceRoleLabel(
   role: Membership["workspace_role"] | null | undefined,
 ) {
   if (role === "owner") return "Owner";
-  if (role === "admin") return "Admin";
-  if (role === "member") return "Member";
-  if (role === "viewer") return "Viewer";
+  if (role === "admin") return "Administrator";
+  if (role === "member") return "Standard";
+  if (role === "viewer") return "Read Only";
 
-  return "Membership Pending";
-}
-
-function getProcurementFunctionLabel(
-  procurementFunction:
-    | Membership["procurement_function"]
-    | null
-    | undefined,
-) {
-  if (procurementFunction === "buyer") return "Buyer";
-  if (procurementFunction === "supplier") {
-    return "Supplier";
-  }
-  if (procurementFunction === "consultant") {
-    return "Consultant";
-  }
-
-  return "No Procurement Function";
+  return "Access Level Pending";
 }
 
 function getRoleClass(
@@ -190,34 +173,16 @@ function getRoleClass(
   return "border-orange-300/20 bg-orange-400/10 text-orange-200";
 }
 
-function getProcurementFunctionClass(
-  procurementFunction:
-    | Membership["procurement_function"]
-    | null
-    | undefined,
-) {
-  if (procurementFunction === "buyer") {
-    return "border-[#2CC4E8]/25 bg-[#2CC4E8]/10 text-[#9BE8F8]";
-  }
+function getInvitationAccessLevelLabel(role: string | null) {
+  const value = String(role || "").trim().toLowerCase();
 
-  if (procurementFunction === "supplier") {
-    return "border-[#C8A646]/25 bg-[#C8A646]/10 text-[#F5D77B]";
-  }
+  if (value === "viewer") return "Read Only";
+  if (value === "member") return "Standard";
+  if (value === "admin") return "Administrator";
+  if (value === "buyer") return "Standard";
+  if (value === "vendor") return "Standard";
 
-  if (procurementFunction === "consultant") {
-    return "border-purple-300/20 bg-purple-400/10 text-purple-200";
-  }
-
-  return "border-white/10 bg-white/[0.055] text-slate-400";
-}
-
-function getLegacyRoleLabel(role: string | null) {
-  if (role === "owner") return "Owner";
-  if (role === "admin") return "Admin";
-  if (role === "buyer") return "Buyer";
-  if (role === "vendor") return "Vendor";
-
-  return role || "Member";
+  return "Access Level Pending";
 }
 
 function getStatusClass(status: string | null) {
@@ -285,7 +250,7 @@ function getActivityLabel(action: string | null) {
   }
 
   if (action === "MEMBER_WORKSPACE_ROLE_UPDATED") {
-    return "Workspace Role Updated";
+    return "Access Level Updated";
   }
 
   if (action === "MEMBER_REMOVED") {
@@ -310,10 +275,6 @@ export default function CompanyMembersCenter({
   workspaceMembers,
   pendingInvitations,
   activityList,
-  adminsCount,
-  buyersCount,
-  vendorsCount,
-  hasOwner,
   canManage,
   canManageInvitations,
   canDelete,
@@ -377,7 +338,21 @@ const pendingTransferFromMember = workspaceMembers.find(
 const pendingTransferToMember = workspaceMembers.find(
   ({ profile }) => profile.id === pendingTransfer?.to_user_id,
 );
-  
+
+const ownerAdministratorCount = workspaceMembers.filter(
+  ({ membership }) =>
+    membership?.workspace_role === "owner" ||
+    membership?.workspace_role === "admin",
+).length;
+
+const standardCount = workspaceMembers.filter(
+  ({ membership }) => membership?.workspace_role === "member",
+).length;
+
+const readOnlyCount = workspaceMembers.filter(
+  ({ membership }) => membership?.workspace_role === "viewer",
+).length;
+
   return (
     <>
       <section
@@ -417,24 +392,22 @@ const pendingTransferToMember = workspaceMembers.find(
           <ExecutivePanel
             eyebrow="Access Summary"
             title="Team Readiness"
-            description="Review workspace authority and procurement-function distribution before scaling activity."
+            description="Review workspace Access Level distribution before scaling activity."
           >
             <div className="mt-6 space-y-4">
               <RoleRow
-                label="Owners / Admins"
-                value={
-                  adminsCount + (hasOwner ? 1 : 0)
-                }
+                label="Owners / Administrators"
+                value={ownerAdministratorCount}
               />
 
               <RoleRow
-                label="Buyer Function"
-                value={buyersCount}
+                label="Standard"
+                value={standardCount}
               />
 
               <RoleRow
-                label="Supplier Function"
-                value={vendorsCount}
+                label="Read Only"
+                value={readOnlyCount}
               />
 
               <RoleRow
@@ -450,7 +423,7 @@ const pendingTransferToMember = workspaceMembers.find(
         id="invite-users"
         eyebrow="Workspace Administration"
 title="Manage Workspace Access"
-description="Manage company membership, workspace roles, and pending access invitations."
+description="Manage company membership, Access Levels, and pending access invitations."
       >
         {invitationManagementEnabled ? (
           <div className="mt-6">
@@ -461,11 +434,12 @@ description="Manage company membership, workspace roles, and pending access invi
         )}
       </ExecutivePanel>
 
-      <section className="mt-8 grid gap-8 lg:grid-cols-[1.4fr_0.8fr]">
+      <section className="mt-8 grid w-full min-w-0 gap-8 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,0.8fr)]">
+        <div className="min-w-0">
         <ExecutivePanel
           eyebrow="People & Access"
           title="Company Members"
-          description="Review workspace authority, procurement functions, and active organization participants."
+          description="Review people, Access Levels, and active organization participants."
           action={
             <span className="rounded-full border border-white/10 bg-white/[0.055] px-5 py-3 text-sm font-black text-white">
               {canManage
@@ -476,19 +450,15 @@ description="Manage company membership, workspace roles, and pending access invi
         >
           <div className="mt-6 overflow-hidden rounded-[26px] border border-white/10 bg-[#061426]/70">
             <div className="hidden overflow-x-auto lg:block">
-              <table className="w-full min-w-[920px] text-left">
+              <table className="w-full min-w-[760px] text-left">
                 <thead className="border-b border-white/10 bg-white/[0.055] text-white">
                   <tr>
                     <th className="px-5 py-4 text-xs font-black uppercase tracking-[0.2em] text-slate-400">
-                      Member
+                      Person
                     </th>
 
                     <th className="px-5 py-4 text-xs font-black uppercase tracking-[0.2em] text-slate-400">
-                      Workspace Role
-                    </th>
-
-                    <th className="px-5 py-4 text-xs font-black uppercase tracking-[0.2em] text-slate-400">
-                      Procurement Function
+                      Access Level
                     </th>
 
                     <th className="px-5 py-4 text-xs font-black uppercase tracking-[0.2em] text-slate-400">
@@ -535,18 +505,6 @@ description="Manage company membership, workspace roles, and pending access invi
 
                           <td className="px-5 py-4 align-top">
                             <StatusPill
-                              className={getProcurementFunctionClass(
-                                membership?.procurement_function,
-                              )}
-                            >
-                              {getProcurementFunctionLabel(
-                                membership?.procurement_function,
-                              )}
-                            </StatusPill>
-                          </td>
-
-                          <td className="px-5 py-4 align-top">
-                            <StatusPill
                               className={
                                 membership?.membership_status ===
                                 "active"
@@ -560,11 +518,6 @@ description="Manage company membership, workspace roles, and pending access invi
                           </td>
 
                           <td className="px-5 py-4 align-top">
-                            {/*
-                             * Temporary compatibility:
-                             * MemberActions still operates on the
-                             * legacy admin/buyer/vendor contract.
-                             */}
                             <MemberActions
   memberId={profile.id}
   memberLabel={formatWorkspaceMemberPersonLabel({
@@ -593,7 +546,7 @@ description="Manage company membership, workspace roles, and pending access invi
                   ) : (
                     <tr>
                       <td
-                        colSpan={5}
+                        colSpan={4}
                         className="px-5 py-10"
                       >
                         <EmptyState message="No members found." />
@@ -624,15 +577,6 @@ description="Manage company membership, workspace roles, and pending access invi
                         className={getRoleClass(membership?.workspace_role)}
                       >
                         {getWorkspaceRoleLabel(membership?.workspace_role)}
-                      </StatusPill>
-                      <StatusPill
-                        className={getProcurementFunctionClass(
-                          membership?.procurement_function,
-                        )}
-                      >
-                        {getProcurementFunctionLabel(
-                          membership?.procurement_function,
-                        )}
                       </StatusPill>
                       <StatusPill
                         className={
@@ -674,7 +618,9 @@ description="Manage company membership, workspace roles, and pending access invi
             </div>
           </div>
         </ExecutivePanel>
+        </div>
 
+        <div className="min-w-0">
         <ExecutivePanel
   eyebrow="Workspace Access"
   title="Workspace Invitations"
@@ -703,7 +649,7 @@ description="Manage company membership, workspace roles, and pending access invi
                       </StatusPill>
 
                       <StatusPill className="border-white/10 bg-white/[0.055] text-slate-300">
-                        {getLegacyRoleLabel(
+                        {getInvitationAccessLevelLabel(
                           invitation.role,
                         )}
                       </StatusPill>
@@ -733,6 +679,7 @@ description="Manage company membership, workspace roles, and pending access invi
             )}
           </div>
         </ExecutivePanel>
+        </div>
       </section>
 
       <section

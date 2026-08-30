@@ -18,7 +18,7 @@ type Company = {
   name: string | null;
 };
 
-type InviteRole = "admin" | "buyer" | "vendor";
+type InviteRole = "viewer" | "member" | "admin";
 
 type WorkspaceInvitation = {
   id: string;
@@ -54,13 +54,20 @@ function normalizeEmail(email: unknown) {
   return String(email || "").trim().toLowerCase();
 }
 
-function normalizeRole(role: unknown): InviteRole {
-  const value = String(role || "").trim().toLowerCase();
+function parseInviteAccessLevel(role: unknown): InviteRole | null {
+  const value = String(role ?? "").trim().toLowerCase();
 
-  if (value === "admin") return "admin";
-  if (value === "buyer") return "buyer";
+  if (value === "viewer" || value === "member" || value === "admin") {
+    return value;
+  }
 
-  return "vendor";
+  return null;
+}
+
+function formatAccessLevelLabel(role: InviteRole) {
+  if (role === "viewer") return "Read Only";
+  if (role === "member") return "Standard";
+  return "Administrator";
 }
 
 export async function POST(request: Request) {
@@ -68,11 +75,18 @@ export async function POST(request: Request) {
     const body = await request.json();
 
     const email = normalizeEmail(body.email);
-    const role = normalizeRole(body.role);
+    const role = parseInviteAccessLevel(body.role);
 
     if (!email) {
       return NextResponse.json(
         { error: "Email is required." },
+        { status: 400 },
+      );
+    }
+
+    if (!role) {
+      return NextResponse.json(
+        { error: "Access Level must be viewer, member, or admin." },
         { status: 400 },
       );
     }
@@ -191,6 +205,8 @@ export async function POST(request: Request) {
       ? `${publicSiteUrl}/invite/${invitation.token}`
       : `/invite/${invitation.token}`;
 
+    const accessLevelLabel = formatAccessLevelLabel(role);
+
     const invitationEmail = buildCompanyInvitationEmail({
       companyName,
       invitedEmail: email,
@@ -214,7 +230,7 @@ export async function POST(request: Request) {
 
     await supabase.from("notifications").insert({
       title: "Invitation Created",
-      message: `${email} was invited to ${companyName} as ${role}.`,
+      message: `${email} was invited to ${companyName} as ${accessLevelLabel}.`,
       type: "invitation",
       is_read: false,
       company_id: commandCompanyId,
@@ -229,6 +245,8 @@ export async function POST(request: Request) {
       metadata: {
         email,
         role,
+        access_level: role,
+        access_level_label: accessLevelLabel,
         invite_url: inviteUrl,
         email_sent: emailResult.success,
         email_skipped: emailResult.skipped,

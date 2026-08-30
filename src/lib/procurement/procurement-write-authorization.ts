@@ -19,12 +19,22 @@ function isActiveMembershipForCompany(
   );
 }
 
-export function canCreateCompanyRfq(
+function canPerformOperationalProcurementWrite(
   membership: OrganizationMembership | null,
   companyId: string,
 ): membership is OrganizationMembership {
   return (
     isActiveMembershipForCompany(membership, companyId) &&
+    membership.workspaceRole !== "viewer"
+  );
+}
+
+export function canCreateCompanyRfq(
+  membership: OrganizationMembership | null,
+  companyId: string,
+): membership is OrganizationMembership {
+  return (
+    canPerformOperationalProcurementWrite(membership, companyId) &&
     (membership.workspaceRole === "owner" ||
       membership.workspaceRole === "admin" ||
       membership.procurementFunction === "buyer")
@@ -42,9 +52,9 @@ export function canSubmitCompanyQuote(
   membership: OrganizationMembership | null,
   companyId: string,
 ): membership is OrganizationMembership {
-  // Layer 2 respondent prerequisite: active acting-company membership.
+  // Layer 2 respondent prerequisite: active non-viewer acting-company membership.
   // procurement_function is not a global RFQ-response permission.
-  return isActiveMembershipForCompany(membership, companyId);
+  return canPerformOperationalProcurementWrite(membership, companyId);
 }
 
 export function canDecideCompanyQuotes(
