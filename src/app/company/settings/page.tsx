@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { CompanyCapabilitiesEditor } from "@/components/company-capabilities-editor";
 import { CompanyComplianceEditor } from "@/components/company-compliance-editor";
+import { CompanyDocumentsEditor } from "@/components/company-documents-editor";
 import { CompanyQualificationsEditor } from "@/components/company-qualifications-editor";
 import CompanyCommandCenter from "@/components/company-command-center";
 import CompanyGovernanceCenter from "@/components/company-governance-center";
@@ -24,6 +25,11 @@ import {
   createEmptyGroupedCompliance,
   loadCompanyCompliance,
 } from "@/lib/company/compliance";
+import {
+  COMPANY_DOCUMENTS_SELF_DECLARED_NOTICE,
+  loadCompanyDocuments,
+  type CompanyDocumentRecord,
+} from "@/lib/company/documents";
 import {
   createEmptyGroupedQualifications,
   loadCompanyQualifications,
@@ -532,6 +538,7 @@ pendingInviteCount: pendingInvitations.length,
 let companyCapabilities = createEmptyGroupedCapabilities();
 let companyQualifications = createEmptyGroupedQualifications();
 let companyCompliance = createEmptyGroupedCompliance();
+let companyDocuments: CompanyDocumentRecord[] = [];
 
 try {
   companyCapabilities = await loadCompanyCapabilities(supabase, companyId);
@@ -560,6 +567,16 @@ try {
     companyId,
     userId: currentProfile.id,
     errorCode: "COMPANY_COMPLIANCE_LOOKUP_FAILED",
+  });
+}
+
+try {
+  companyDocuments = await loadCompanyDocuments(supabase, companyId);
+} catch {
+  console.error("Company documents lookup failed.", {
+    companyId,
+    userId: currentProfile.id,
+    errorCode: "COMPANY_DOCUMENTS_LOOKUP_FAILED",
   });
 }
 
@@ -751,6 +768,32 @@ networkRole={company.network_role?.trim() || "Not specified"}
   <CompanyComplianceEditor
     companyId={companyId}
     initialCompliance={companyCompliance}
+    canEdit={canManageCapabilities}
+  />
+</ExecutivePanel>
+
+<ExecutivePanel
+  id="company-documents"
+  variant="operational"
+  padding="lg"
+  tone="gold"
+  className="mt-8"
+>
+  <p className="text-xs font-black uppercase tracking-[0.3em] text-[#C8A646]">
+    Organization Governance
+  </p>
+  <h2 className="mt-3 text-3xl font-black text-white">
+    Company Documents
+  </h2>
+  <p className="mt-3 max-w-3xl text-sm font-semibold leading-7 text-slate-400">
+    Upload insurance, workers&rsquo; compensation, safety, qualification, and
+    other governance evidence for this workspace. Documents stay inside this
+    workspace and are never published to your public company profile.{" "}
+    {COMPANY_DOCUMENTS_SELF_DECLARED_NOTICE}
+  </p>
+  <CompanyDocumentsEditor
+    companyId={companyId}
+    initialDocuments={companyDocuments}
     canEdit={canManageCapabilities}
   />
 </ExecutivePanel>

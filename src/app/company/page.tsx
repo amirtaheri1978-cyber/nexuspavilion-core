@@ -4,6 +4,7 @@ import Link from "next/link";
 import { AccountIdentityLine } from "@/components/account-identity-line";
 import { CompanyCapabilitiesDisplay } from "@/components/company-capabilities-display";
 import { CompanyComplianceDisplay } from "@/components/company-compliance-display";
+import { CompanyDocumentsDisplay } from "@/components/company-documents-display";
 import { CompanyQualificationsDisplay } from "@/components/company-qualifications-display";
 import CompanyMembersCenter from "@/components/company-members-center";
 import {
@@ -23,6 +24,10 @@ import {
   createEmptyGroupedCompliance,
   loadCompanyCompliance,
 } from "@/lib/company/compliance";
+import {
+  loadCompanyDocuments,
+  type CompanyDocumentRecord,
+} from "@/lib/company/documents";
 import {
   createEmptyGroupedQualifications,
   loadCompanyQualifications,
@@ -441,6 +446,7 @@ const workspaceMembers: WorkspaceMember[] =
   let companyCapabilities = createEmptyGroupedCapabilities();
   let companyQualifications = createEmptyGroupedQualifications();
   let companyCompliance = createEmptyGroupedCompliance();
+  let companyDocuments: CompanyDocumentRecord[] = [];
 
   try {
     companyCapabilities = await loadCompanyCapabilities(supabase, companyId);
@@ -469,6 +475,16 @@ const workspaceMembers: WorkspaceMember[] =
       companyId,
       userId: workspace.userId,
       errorCode: "COMPANY_COMPLIANCE_LOOKUP_FAILED",
+    });
+  }
+
+  try {
+    companyDocuments = await loadCompanyDocuments(supabase, companyId);
+  } catch {
+    console.error("Company documents lookup failed.", {
+      companyId,
+      userId: workspace.userId,
+      errorCode: "COMPANY_DOCUMENTS_LOOKUP_FAILED",
     });
   }
 
@@ -623,6 +639,13 @@ const workspaceMembers: WorkspaceMember[] =
 
         <section className="rounded-[32px] border border-white/10 bg-white/[0.065] p-7 shadow-[0_36px_120px_rgba(0,0,0,0.52)] backdrop-blur-2xl sm:p-8">
           <CompanyComplianceDisplay compliance={companyCompliance} />
+        </section>
+
+        <section className="rounded-[32px] border border-white/10 bg-white/[0.065] p-7 shadow-[0_36px_120px_rgba(0,0,0,0.52)] backdrop-blur-2xl sm:p-8">
+          <CompanyDocumentsDisplay
+            documents={companyDocuments}
+            companyId={companyId}
+          />
         </section>
 
         <CompanyMembersCenter
