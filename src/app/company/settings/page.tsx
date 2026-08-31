@@ -39,10 +39,11 @@ import {
   EXECUTIVE_CTA_SECONDARY,
   EXECUTIVE_PAGE_CLASS,
 } from "@/lib/design-system/executive-contract";
+import { getPublicSiteUrl } from "@/lib/ops/public-site-url";
 import { createClient } from "@/lib/supabase/server";
 
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "";
+const SITE_URL = getPublicSiteUrl() ?? "";
 
 type Profile = {
 id: string;

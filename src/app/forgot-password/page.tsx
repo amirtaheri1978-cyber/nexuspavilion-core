@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 
+import { getPublicSiteUrl } from "@/lib/ops/public-site-url";
 import { createClient } from "@/lib/supabase/client";
 
 const BRAND_LOGO_SRC = "/branding/logo-horizontal-512.png";
@@ -29,8 +30,7 @@ function normalizeEmail(value: string) {
 }
 
 function getRecoverySiteUrl() {
-  const configuredSiteUrl =
-    process.env.NEXT_PUBLIC_SITE_URL?.trim().replace(/\/+$/, "");
+  const configuredSiteUrl = getPublicSiteUrl();
 
   if (configuredSiteUrl) {
     return configuredSiteUrl;

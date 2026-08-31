@@ -78,8 +78,20 @@ const safeCompany = escapeHtml(company);
 const safeInquiryType = escapeHtml(inquiryType);
 const safeMessage = escapeHtml(message).replaceAll("\n", "<br />");
 
-const contactEmail =
-process.env.CONTACT_EMAIL || "a.mirtaheri1978@gmail.com";
+const contactEmail = process.env.CONTACT_EMAIL?.trim();
+
+if (!contactEmail) {
+console.error("Contact email destination is not configured.");
+
+return NextResponse.json(
+{
+success: false,
+message:
+"Contact request received, but email delivery is not configured.",
+},
+{ status: 503 },
+);
+}
 
 const emailResult = await sendEmail({
 to: contactEmail,
@@ -121,10 +133,12 @@ message:
 }
 
 if (!emailResult.success) {
+console.error("Contact email delivery failed.");
+
 return NextResponse.json(
 {
 success: false,
-message: emailResult.error || "Failed to send contact request.",
+message: "Unable to send the contact request.",
 },
 { status: 500 },
 );

@@ -195,7 +195,7 @@ export default function InviteUserForm() {
     }
 
     if (emailResult.error) {
-      return `Email delivery failed: ${emailResult.error}. Use the workspace invitation link as a fallback.`;
+      return "Email delivery failed. Use the workspace invitation link as a fallback.";
     }
 
     return "The workspace invitation link was created. You can copy and share it manually.";
@@ -303,12 +303,6 @@ export default function InviteUserForm() {
               <p className="mt-2 text-sm font-bold leading-6 text-emerald-200/85">
                 {getResultMessage()}
               </p>
-
-              {emailResult?.id ? (
-                <p className="mt-2 text-xs font-bold text-emerald-200/80">
-                  Resend Email ID: {emailResult.id}
-                </p>
-              ) : null}
 
               <p className="mt-4 max-w-3xl break-all rounded-2xl border border-white/10 bg-[#061426]/70 p-4 text-xs font-semibold leading-6 text-emerald-100">
                 {inviteUrl}

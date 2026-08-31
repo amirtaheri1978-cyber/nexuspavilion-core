@@ -32,9 +32,10 @@ import {
   createEmptyGroupedQualifications,
   loadCompanyQualifications,
 } from "@/lib/company/qualifications";
+import { getPublicSiteUrl } from "@/lib/ops/public-site-url";
 import { createClient } from "@/lib/supabase/server";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "";
+const SITE_URL = getPublicSiteUrl() ?? "";
 
 type Company = {
   id: string;
