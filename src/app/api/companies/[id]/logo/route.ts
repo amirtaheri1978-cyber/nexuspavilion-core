@@ -7,6 +7,9 @@ import {
 import { canManageCompanyWorkspace } from "@/lib/authorization/workspace-permissions";
 import { createClient } from "@/lib/supabase/server";
 
+const MANAGED_LOGO_FILE_NAME =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.(jpg|jpeg|png|webp)$/;
+
 type RouteContext = {
   params: Promise<{
     id: string;
@@ -17,7 +20,10 @@ function normalizeLogoUrl(value: unknown) {
   return String(value || "").trim();
 }
 
-function isAllowedLogoUrl(value: string) {
+function isAllowedLogoUrl(
+  value: string,
+  companyId: string,
+) {
   if (!value || value.length > 2048) {
     return false;
   }
@@ -26,18 +32,29 @@ function isAllowedLogoUrl(value: string) {
     const url = new URL(value);
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 
-    if (url.protocol !== "https:" || !supabaseUrl) {
+    if (
+      url.protocol !== "https:" ||
+      !supabaseUrl ||
+      url.search ||
+      url.hash
+    ) {
       return false;
     }
 
     const allowedOrigin = new URL(supabaseUrl).origin;
+    const objectPrefix =
+      `/storage/v1/object/public/Company-logos/${companyId}/branding/`;
 
-    return (
-      url.origin === allowedOrigin &&
-      url.pathname.includes(
-        "/storage/v1/object/public/Company-logos/",
-      )
-    );
+    if (
+      url.origin !== allowedOrigin ||
+      !url.pathname.startsWith(objectPrefix)
+    ) {
+      return false;
+    }
+
+    const fileName = url.pathname.slice(objectPrefix.length);
+
+    return MANAGED_LOGO_FILE_NAME.test(fileName);
   } catch {
     return false;
   }
@@ -65,7 +82,7 @@ export async function PATCH(
 
     const logoUrl = normalizeLogoUrl(body.logoUrl);
 
-    if (!isAllowedLogoUrl(logoUrl)) {
+    if (!isAllowedLogoUrl(logoUrl, id)) {
       return NextResponse.json(
         {
           error:
@@ -92,10 +109,13 @@ export async function PATCH(
         );
       }
 
-      console.error("Company logo workspace context lookup failed.", {
-        companyId: id,
-        error,
-      });
+      console.error(
+        "Company logo workspace context lookup failed.",
+        {
+          companyId: id,
+          error,
+        },
+      );
 
       return NextResponse.json(
         {
@@ -134,7 +154,7 @@ export async function PATCH(
     const { data: company, error: companyError } =
       await supabase
         .from("companies")
-        .select("id, name, logo_url")
+        .select("id")
         .eq("id", id)
         .maybeSingle();
 
@@ -181,34 +201,12 @@ export async function PATCH(
       );
     }
 
-    const { error: auditError } = await supabase
-      .from("audit_logs")
-      .insert({
-        action: "COMPANY_LOGO_UPDATED",
-        entity_type: "company",
-        entity_id: id,
-        user_id: workspace.userId,
-        company_id: id,
-        metadata: {
-          previous_logo_url: company.logo_url,
-          new_logo_url: logoUrl,
-          updated_by: {
-            id: workspace.userId,
-            email: workspace.email,
-            workspace_role: workspace.workspaceRole,
-            membership_type: workspace.membershipType,
-          },
-          updated_at: new Date().toISOString(),
-        },
-      });
-
-    if (auditError) {
-      console.error("Company logo audit failed.", {
-        companyId: id,
-        userId: workspace.userId,
-        error: auditError,
-      });
-    }
+    /*
+     * 7-10D-R47 contract:
+     * immutable COMPANY_LOGO_UPDATED audit evidence is written atomically by
+     * the database company-governance update-integrity trigger. Do not
+     * reintroduce a best-effort direct audit_logs insert here.
+     */
 
     return NextResponse.json({
       success: true,

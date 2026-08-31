@@ -122,6 +122,13 @@ async function loadWorkspaceContext(
   }
 }
 
+/*
+ * 7-10D-DELETE is deliberately outside 7-10D-R47.
+ *
+ * This DELETE implementation is preserved from the published base so the
+ * R-47 patch does not silently change a separate retention/lifecycle domain.
+ * It is not represented as fixed or production-ready by 7-10D.
+ */
 export async function DELETE(
   _request: Request,
   context: RouteContext,
@@ -323,9 +330,7 @@ export async function PATCH(
     const { data: existingCompany, error: companyError } =
       await supabase
         .from("companies")
-        .select(
-          "id, name, category, location, network_role",
-        )
+        .select("id")
         .eq("id", id)
         .maybeSingle();
 
@@ -377,57 +382,15 @@ export async function PATCH(
       );
     }
 
-    const { error: notificationError } = await supabase
-      .from("notifications")
-      .insert({
-        title: "Company Profile Updated",
-        message: `${updatedCompany.name} workspace profile was updated.`,
-        type: "company",
-        is_read: false,
-        company_id: updatedCompany.id,
-      });
-
-    if (notificationError) {
-      console.error("Company update notification failed.", {
-        companyId: id,
-        userId: workspace.userId,
-        error: notificationError,
-      });
-    }
-
-    const { error: auditError } = await supabase
-      .from("audit_logs")
-      .insert({
-        action: "COMPANY_UPDATED",
-        entity_type: "company",
-        entity_id: updatedCompany.id,
-        user_id: workspace.userId,
-        company_id: updatedCompany.id,
-        metadata: {
-          previous: existingCompany,
-          updated: {
-            name: updatedCompany.name,
-            category: updatedCompany.category,
-            location: updatedCompany.location,
-            network_role: updatedCompany.network_role,
-          },
-          updated_by: {
-            id: workspace.userId,
-            email: workspace.email,
-            workspace_role: workspace.workspaceRole,
-            membership_type: workspace.membershipType,
-          },
-          updated_at: new Date().toISOString(),
-        },
-      });
-
-    if (auditError) {
-      console.error("Company update audit failed.", {
-        companyId: id,
-        userId: workspace.userId,
-        error: auditError,
-      });
-    }
+    /*
+     * 7-10D-R47 contract:
+     * COMPANY_UPDATED audit evidence and the Company Profile Updated
+     * notification are written by the database update-integrity trigger in
+     * the same transaction as the protected company profile mutation.
+     *
+     * Do not reintroduce best-effort direct inserts into audit_logs or
+     * notifications here.
+     */
 
     return NextResponse.json({
       success: true,

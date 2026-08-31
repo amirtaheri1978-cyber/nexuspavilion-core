@@ -14,6 +14,10 @@ const logoUpload = readSource("src/components/company-logo-upload.tsx");
 const companyRoute = readSource("src/app/api/companies/[id]/route.ts");
 const logoRoute = readSource("src/app/api/companies/[id]/logo/route.ts");
 
+const companyPatch = companyRoute.slice(
+  companyRoute.indexOf("export async function PATCH("),
+);
+
 describe("company settings governance authorization contract", () => {
   it("derives settings governance from the canonical active workspace membership", () => {
     expect(settingsPage).not.toMatch(/function canManageWorkspace\s*\(/);
@@ -23,9 +27,15 @@ describe("company settings governance authorization contract", () => {
     );
     expect(settingsPage).toContain("getCurrentWorkspaceContext(supabase)");
     expect(settingsPage).toContain("workspace.companyId === companyId");
-    expect(settingsPage).toContain("canManageCompanyWorkspace(permissionContext)");
-    expect(settingsPage).toContain("canDeleteCompanyWorkspace(permissionContext)");
-    expect(settingsPage).toContain("canInviteWorkspaceMembers(permissionContext)");
+    expect(settingsPage).toContain(
+      "canManageCompanyWorkspace(permissionContext)",
+    );
+    expect(settingsPage).toContain(
+      "canDeleteCompanyWorkspace(permissionContext)",
+    );
+    expect(settingsPage).toContain(
+      "canInviteWorkspaceMembers(permissionContext)",
+    );
   });
 
   it("passes explicit management booleans without reconstructing legacy role authority", () => {
@@ -39,7 +49,9 @@ describe("company settings governance authorization contract", () => {
 
   it("blocks unauthorized branding changes before the first Storage operation", () => {
     expect(logoUpload).toContain("canManageBranding: boolean");
-    expect(logoUpload).toContain("disabled={uploading || !canManageBranding}");
+    expect(logoUpload).toContain(
+      "disabled={uploading || !canManageBranding}",
+    );
 
     const guard = logoUpload.indexOf("if (!canManageBranding)");
     const firstStorageOperation = logoUpload.indexOf("supabase.storage");
@@ -47,6 +59,44 @@ describe("company settings governance authorization contract", () => {
     expect(guard).toBeGreaterThan(-1);
     expect(firstStorageOperation).toBeGreaterThan(-1);
     expect(guard).toBeLessThan(firstStorageOperation);
+  });
+
+  it("uses the managed immutable company-logo object contract", () => {
+    expect(logoUpload).toContain(
+      'const LOGO_BUCKET = "Company-logos"',
+    );
+    expect(logoUpload).toContain(
+      "const MAX_LOGO_BYTES = 5 * 1024 * 1024",
+    );
+    expect(logoUpload).toContain('"image/jpeg": "jpg"');
+    expect(logoUpload).toContain('"image/png": "png"');
+    expect(logoUpload).toContain('"image/webp": "webp"');
+    expect(logoUpload).toContain(
+      "`${companyId}/branding/${crypto.randomUUID()}.${extension}`",
+    );
+    expect(logoUpload).toContain("upsert: false");
+    expect(logoUpload).not.toContain("upsert: true");
+    expect(logoUpload).toContain(
+      'accept="image/jpeg,image/png,image/webp"',
+    );
+    expect(logoUpload).not.toContain('accept="image/*"');
+    expect(logoUpload).toContain(".remove([objectPath])");
+  });
+
+  it("validates logo binding against the exact same-company managed path", () => {
+    expect(logoRoute).toContain("isAllowedLogoUrl(logoUrl, id)");
+    expect(logoRoute).toContain(
+      "/storage/v1/object/public/Company-logos/${companyId}/branding/",
+    );
+    expect(logoRoute).toContain("MANAGED_LOGO_FILE_NAME");
+    expect(logoRoute).toContain("url.search");
+    expect(logoRoute).toContain("url.hash");
+  });
+
+  it("keeps immutable profile and logo audit out of best-effort API side effects", () => {
+    expect(companyPatch).not.toContain('.from("notifications")');
+    expect(companyPatch).not.toContain('.from("audit_logs")');
+    expect(logoRoute).not.toContain('.from("audit_logs")');
   });
 
   it("keeps server API authorization and invitation domains intact", () => {
