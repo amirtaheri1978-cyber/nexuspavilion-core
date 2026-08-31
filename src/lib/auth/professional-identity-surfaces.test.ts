@@ -69,7 +69,7 @@ describe("NP-MASTER-22-B04-5 current-user account display", () => {
     expect(companyPage).toContain("AccountIdentityLine");
     expect(companyPage).toContain("currentWorkspaceMember?.profile.first_name");
     expect(commandCenter).toContain("AccountIdentityLine");
-    expect(settingsPage).toContain("userIdentityFirstName={ownNames.firstName}");
+    expect(settingsPage).toContain("initialFirstName={ownNames.firstName || \"\"}");
   });
 
   it("uses email fallback when names are null", () => {
@@ -124,10 +124,8 @@ describe("NP-MASTER-22-B04-5 current-user account display", () => {
 describe("Phase 7-01 company identity presentation consistency", () => {
   it("keeps membership-derived workspace role on company and settings", () => {
     expect(companyPage).toContain("roleLabel={workspaceRoleLabel}");
-    expect(settingsPage).toContain("workspaceRoleLabel={workspaceRoleLabel}");
-    expect(settingsPage).toContain(
-      "getWorkspaceRoleLabel(\n  currentMember?.membership?.workspace_role",
-    );
+    expect(settingsPage).toContain("ProfessionalIdentitySettingsForm");
+    expect(settingsPage).toContain("currentMember?.membership?.job_title");
     expect(settingsPage).not.toContain(
       "userRole={getRoleLabel(currentProfile.role)}",
     );

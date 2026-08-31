@@ -107,8 +107,8 @@ export const ACCOUNT_MENU_LINKS = [
   },
   {
     href: "/company/settings",
-    label: "Company Governance",
-    description: "Profile, team, access, and governance controls.",
+    label: "Workspace Settings",
+    description: "Identity, access, and company configuration",
     icon: "🏢",
   },
 ] as const;
@@ -228,10 +228,10 @@ export function getNavigation(
         title: "Company",
         items: [
           {
-            label: "Company Governance",
+            label: "Workspace Settings",
             href: "/company/settings",
             key: "company",
-            description: "Profile, team, access, governance",
+            description: "Identity, access, and company configuration",
           },
         ],
       },
@@ -279,10 +279,10 @@ export function getNavigation(
         title: "Company",
         items: [
           {
-            label: "Company Governance",
+            label: "Workspace Settings",
             href: "/company/settings",
             key: "company",
-            description: "Profile, team, access, governance",
+            description: "Identity, access, and company configuration",
           },
         ],
       },
@@ -341,10 +341,10 @@ export function getNavigation(
       title: "Company",
       items: [
         {
-          label: "Company Governance",
+          label: "Workspace Settings",
           href: "/company/settings",
           key: "company",
-          description: "Company governance controls",
+          description: "Identity, access, and company configuration",
         },
       ],
     },
@@ -388,7 +388,7 @@ export function getAppSectionTitle(pathname: string) {
   }
 
   if (isActivePath(pathname, "/company")) {
-    return "Company Governance";
+    return "Workspace Settings";
   }
 
   if (isActivePath(pathname, "/vendor-dashboard")) {

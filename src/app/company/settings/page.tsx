@@ -4,12 +4,10 @@ import { CompanyCapabilitiesEditor } from "@/components/company-capabilities-edi
 import { CompanyComplianceEditor } from "@/components/company-compliance-editor";
 import { CompanyDocumentsEditor } from "@/components/company-documents-editor";
 import { CompanyQualificationsEditor } from "@/components/company-qualifications-editor";
-import CompanyCommandCenter from "@/components/company-command-center";
 import CompanyGovernanceCenter from "@/components/company-governance-center";
 import CompanyMembersCenter from "@/components/company-members-center";
 import { ExecutivePanel } from "@/components/executive/executive-panel";
 import { ProfessionalIdentitySettingsForm } from "@/components/professional-identity-settings-form";
-import { formatMemberIdentity } from "@/lib/auth/professional-identity-display";
 import { loadCurrentUserProfessionalNames } from "@/lib/auth/professional-names";
 import {
   getCurrentWorkspaceContext,
@@ -37,6 +35,7 @@ import {
 import {
   EXECUTIVE_CTA_PRIMARY,
   EXECUTIVE_CTA_SECONDARY,
+  EXECUTIVE_FOCUS_CYAN,
   EXECUTIVE_PAGE_CLASS,
 } from "@/lib/design-system/executive-contract";
 import { getPublicSiteUrl } from "@/lib/ops/public-site-url";
@@ -165,17 +164,6 @@ type OwnershipTransfer = {
   completed_at: string | null;
 };
 
-function getWorkspaceRoleLabel(
-  role: Membership["workspace_role"] | null | undefined,
-) {
-  if (role === "owner") return "Owner";
-  if (role === "admin") return "Admin";
-  if (role === "member") return "Member";
-  if (role === "viewer") return "Viewer";
-
-  return "Workspace Member";
-}
-
 function canManageWorkspace(role: string | null) {
 return role === "owner" || role === "admin" || role === "buyer";
 }
@@ -218,22 +206,6 @@ if (score >= 75) return "Healthy";
 if (rfqCount === 0) return "Onboarding";
 
 return "Needs Setup";
-}
-
-function getWorkspaceMessage(stage: string) {
-if (stage === "Launch Ready") {
-return "Workspace foundation is strong and ready for procurement execution.";
-}
-
-if (stage === "Healthy") {
-return "Workspace is active. Complete the remaining setup steps to improve procurement readiness.";
-}
-
-if (stage === "Onboarding") {
-return "Workspace is live. Invite your team, complete the profile, and create the first RFQ to activate procurement intelligence.";
-}
-
-return "Workspace requires setup attention before procurement operations begin.";
 }
 
 function getGovernanceMessage({
@@ -414,23 +386,6 @@ const { count: rfqCount } = await supabase
 .select("id", { count: "exact", head: true })
 .eq("company_id", companyId);
 
-const { count: activeRfqCount } = await supabase
-.from("rfqs")
-.select("id", { count: "exact", head: true })
-.eq("company_id", companyId)
-.eq("status", "open");
-
-const { count: quoteCount } = await supabase
-.from("quotes")
-.select("id", { count: "exact", head: true })
-.eq("company_id", companyId);
-
-const { count: awardedCount } = await supabase
-.from("quotes")
-.select("id", { count: "exact", head: true })
-.eq("company_id", companyId)
-.eq("decision", "awarded");
-
 const admins = workspaceMembers.filter(
   ({ membership }) =>
     membership?.workspace_role === "admin",
@@ -508,15 +463,6 @@ try {
 const ownJobTitle = currentMember?.membership?.job_title || "";
 const ownEmail =
   currentProfile.email || user.email || "";
-const ownIdentity = formatMemberIdentity({
-  firstName: ownNames.firstName,
-  lastName: ownNames.lastName,
-  jobTitle: ownJobTitle,
-  email: ownEmail,
-});
-const workspaceRoleLabel = getWorkspaceRoleLabel(
-  currentMember?.membership?.workspace_role,
-);
 
 const readinessScore = getWorkspaceReadiness({
 memberCount: memberList.length,
@@ -528,7 +474,6 @@ pendingInviteCount: pendingInvitations.length,
 });
 
 const workspaceStage = getWorkspaceStage(readinessScore, rfqCount || 0);
-const workspaceMessage = getWorkspaceMessage(workspaceStage);
 
 const governanceMessage = getGovernanceMessage({
 hasOwner,
@@ -595,13 +540,12 @@ Company Workspace
 </p>
 
 <h1 className="mt-4 text-4xl font-black tracking-[-0.05em] text-white sm:text-5xl">
-Company Workspace Settings
+Workspace Settings
 </h1>
 
 <p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-300 sm:text-base">
-Manage company identity, access governance, team structure,
-invitations, procurement readiness, and workspace launch
-controls from one executive-grade command layer.
+Manage professional identity, company configuration, workspace access,
+governance evidence, documents, and ownership controls.
 </p>
 </div>
 
@@ -612,49 +556,74 @@ className={`${EXECUTIVE_CTA_SECONDARY} min-h-12 px-5`}
 >
 Dashboard
 </Link>
-
-<Link
-href="/rfq/new"
-className={`${EXECUTIVE_CTA_PRIMARY} min-h-12 px-5`}
->
-Create RFQ
-</Link>
-
-<Link
-href="/analytics"
-className={`${EXECUTIVE_CTA_SECONDARY} min-h-12 px-5`}
->
-Executive Analytics
-</Link>
 </div>
 </div>
-</section>
 
-<CompanyCommandCenter
-companyName={company.name?.trim() || "Company"}
-companyStatus={company.status?.trim() || "Status not set"}
-companyLogoUrl={company.logo_url}
-companySlug={company.slug}
-userIdentityFirstName={ownNames.firstName}
-userIdentityLastName={ownNames.lastName}
-userIdentityJobTitle={ownIdentity.jobTitle}
-userIdentityEmail={ownEmail}
-workspaceRoleLabel={workspaceRoleLabel}
-readinessScore={readinessScore}
-workspaceStage={workspaceStage}
-workspaceMessage={workspaceMessage}
-memberCount={memberList.length}
-activeRfqCount={activeRfqCount || 0}
-rfqCount={rfqCount || 0}
-hasOwner={hasOwner}
-hasCompanyProfile={hasCompanyProfile}
-/>
-
-<section className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-<FooterMetric title="Total RFQs" value={rfqCount || 0} />
-<FooterMetric title="Active RFQs" value={activeRfqCount || 0} />
-<FooterMetric title="Quotes" value={quoteCount || 0} />
-<FooterMetric title="Awards" value={awardedCount || 0} />
+<nav
+aria-label="Workspace settings sections"
+className="mt-6 flex flex-wrap gap-2"
+>
+<a
+href="#professional-identity"
+className={`inline-flex min-h-11 items-center rounded-full border border-white/10 bg-white/[0.045] px-4 py-2 text-xs font-black text-slate-200 transition hover:border-[#2CC4E8]/25 hover:bg-white/[0.08] hover:text-white ${EXECUTIVE_FOCUS_CYAN}`}
+>
+Professional Identity
+</a>
+<a
+href="#company-profile"
+className={`inline-flex min-h-11 items-center rounded-full border border-white/10 bg-white/[0.045] px-4 py-2 text-xs font-black text-slate-200 transition hover:border-[#2CC4E8]/25 hover:bg-white/[0.08] hover:text-white ${EXECUTIVE_FOCUS_CYAN}`}
+>
+Company Profile
+</a>
+<a
+href="#invite-users"
+className={`inline-flex min-h-11 items-center rounded-full border border-white/10 bg-white/[0.045] px-4 py-2 text-xs font-black text-slate-200 transition hover:border-[#2CC4E8]/25 hover:bg-white/[0.08] hover:text-white ${EXECUTIVE_FOCUS_CYAN}`}
+>
+Workspace Access
+</a>
+<a
+href="#company-capabilities"
+className={`inline-flex min-h-11 items-center rounded-full border border-white/10 bg-white/[0.045] px-4 py-2 text-xs font-black text-slate-200 transition hover:border-[#2CC4E8]/25 hover:bg-white/[0.08] hover:text-white ${EXECUTIVE_FOCUS_CYAN}`}
+>
+Capabilities
+</a>
+<a
+href="#company-qualifications"
+className={`inline-flex min-h-11 items-center rounded-full border border-white/10 bg-white/[0.045] px-4 py-2 text-xs font-black text-slate-200 transition hover:border-[#2CC4E8]/25 hover:bg-white/[0.08] hover:text-white ${EXECUTIVE_FOCUS_CYAN}`}
+>
+Qualifications
+</a>
+<a
+href="#company-compliance"
+className={`inline-flex min-h-11 items-center rounded-full border border-white/10 bg-white/[0.045] px-4 py-2 text-xs font-black text-slate-200 transition hover:border-[#2CC4E8]/25 hover:bg-white/[0.08] hover:text-white ${EXECUTIVE_FOCUS_CYAN}`}
+>
+Compliance
+</a>
+<a
+href="#company-documents"
+className={`inline-flex min-h-11 items-center rounded-full border border-white/10 bg-white/[0.045] px-4 py-2 text-xs font-black text-slate-200 transition hover:border-[#2CC4E8]/25 hover:bg-white/[0.08] hover:text-white ${EXECUTIVE_FOCUS_CYAN}`}
+>
+Documents
+</a>
+<a
+href="#policies-approval-controls-heading"
+className={`inline-flex min-h-11 items-center rounded-full border border-white/10 bg-white/[0.045] px-4 py-2 text-xs font-black text-slate-200 transition hover:border-[#2CC4E8]/25 hover:bg-white/[0.08] hover:text-white ${EXECUTIVE_FOCUS_CYAN}`}
+>
+Policies
+</a>
+<a
+href="#activity-history"
+className={`inline-flex min-h-11 items-center rounded-full border border-white/10 bg-white/[0.045] px-4 py-2 text-xs font-black text-slate-200 transition hover:border-[#2CC4E8]/25 hover:bg-white/[0.08] hover:text-white ${EXECUTIVE_FOCUS_CYAN}`}
+>
+Activity
+</a>
+<a
+href="#governance"
+className={`inline-flex min-h-11 items-center rounded-full border border-white/10 bg-white/[0.045] px-4 py-2 text-xs font-black text-slate-200 transition hover:border-[#2CC4E8]/25 hover:bg-white/[0.08] hover:text-white ${EXECUTIVE_FOCUS_CYAN}`}
+>
+Ownership
+</a>
+</nav>
 </section>
 
 <CompanyGovernanceCenter
@@ -903,23 +872,5 @@ className={EXECUTIVE_CTA_SECONDARY}
 </div>
 </section>
 </main>
-);
-}
-
-function FooterMetric({
-title,
-value,
-}: {
-title: string;
-value: number | string;
-}) {
-return (
-<div className="rounded-[28px] border border-white/10 bg-white/[0.045] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.26)] backdrop-blur-xl">
-<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
-{title}
-</p>
-
-<p className="mt-3 text-4xl font-black text-white">{value}</p>
-</div>
 );
 }

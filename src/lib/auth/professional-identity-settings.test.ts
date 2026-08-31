@@ -245,7 +245,8 @@ describe("NP-MASTER-22-B04-4 settings golden page and fallback", () => {
     expect(settingsPage).toContain("EXECUTIVE_CTA_PRIMARY");
     expect(settingsPage).toContain("Professional Identity");
     expect(countHeading(settingsPage, "h1")).toBe(2);
-    expect(settingsPage).toContain("Company Workspace Settings");
+    expect(settingsPage).toContain("Workspace Settings");
+    expect(settingsPage).not.toContain("Company Workspace Settings");
     expect(settingsPage).not.toContain("hover:scale");
     expect(identityForm).not.toContain("hover:scale");
     expect(identityForm).toContain("aria-invalid={Boolean(firstNameError)}");
