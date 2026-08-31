@@ -6,10 +6,20 @@ import {
   type WorkspaceContext,
 } from "@/lib/auth/workspace-context";
 import {
-  canDeleteCompanyWorkspace,
+  canArchiveCompanyWorkspace,
   canManageCompanyWorkspace,
+  canReactivateCompanyWorkspace,
 } from "@/lib/authorization/workspace-permissions";
+import {
+  getWorkspaceMembershipForUserCompany,
+  MembershipLookupError,
+} from "@/lib/auth/membership";
 import { createClient } from "@/lib/supabase/server";
+import {
+  archiveCompanyWorkspace,
+  reactivateCompanyWorkspace,
+  WorkspaceCommandError,
+} from "@/lib/workspace/commands";
 
 type RouteContext = {
   params: Promise<{
@@ -122,133 +132,157 @@ async function loadWorkspaceContext(
   }
 }
 
-/*
- * 7-10D-DELETE is deliberately outside 7-10D-R47.
- *
- * This DELETE implementation is preserved from the published base so the
- * R-47 patch does not silently change a separate retention/lifecycle domain.
- * It is not represented as fixed or production-ready by 7-10D.
- */
-export async function DELETE(
-  _request: Request,
+function lifecycleCommandErrorResponse(error: unknown) {
+  if (!(error instanceof WorkspaceCommandError)) {
+    return NextResponse.json(
+      { error: "Internal server error." },
+      { status: 500 },
+    );
+  }
+
+  const status =
+    error.code === "UNAUTHENTICATED"
+      ? 401
+      : error.code === "FORBIDDEN"
+        ? 403
+        : error.code === "WORKSPACE_NOT_FOUND"
+          ? 404
+          : error.code === "INVALID_WORKSPACE_STATE" ||
+              error.code === "OWNERSHIP_TRANSFER_PENDING"
+            ? 409
+            : 500;
+
+  return NextResponse.json(
+    { error: error.message },
+    { status },
+  );
+}
+
+export async function DELETE() {
+  return NextResponse.json(
+    {
+      error:
+        "Physical company deletion is disabled. Archive the workspace instead.",
+    },
+    {
+      status: 405,
+      headers: { Allow: "POST, PATCH" },
+    },
+  );
+}
+
+export async function POST(
+  request: Request,
   context: RouteContext,
 ) {
   try {
     const { id } = await context.params;
     const supabase = await createClient();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
 
-    const contextResult = await loadWorkspaceContext(supabase);
-
-    if (contextResult.response) {
-      return contextResult.response;
-    }
-
-    const workspace = contextResult.workspace;
-
-    if (
-      !workspace.membership ||
-      !canDeleteCompanyWorkspace({
-        workspaceRole: workspace.workspaceRole,
-        membershipStatus: workspace.membershipStatus,
-      })
-    ) {
+    if (authError || !user) {
       return NextResponse.json(
-        {
-          error:
-            "Only active organization owners and administrators can delete a company workspace.",
-        },
-        { status: 403 },
+        { error: "Unauthorized." },
+        { status: 401 },
       );
     }
 
-    if (workspace.companyId !== id) {
-      return NextResponse.json(
-        {
-          error:
-            "You can only delete your own company workspace.",
-        },
-        { status: 403 },
+    let membership;
+
+    try {
+      membership = await getWorkspaceMembershipForUserCompany(
+        supabase,
+        user.id,
+        id,
       );
-    }
-
-    const { data: company, error: companyError } =
-      await supabase
-        .from("companies")
-        .select("id, name")
-        .eq("id", id)
-        .maybeSingle();
-
-    if (companyError) {
-      console.error("Company deletion lookup failed.", {
-        companyId: id,
-        userId: workspace.userId,
-        error: companyError,
-      });
+    } catch (error) {
+      if (error instanceof MembershipLookupError) {
+        console.error("Company lifecycle membership lookup failed.", {
+          companyId: id,
+          userId: user.id,
+          error: error.cause,
+        });
+      }
 
       return NextResponse.json(
-        { error: "We could not verify the company workspace." },
+        { error: "Unable to verify lifecycle authority." },
         { status: 500 },
       );
     }
 
-    if (!company) {
+    if (!membership) {
       return NextResponse.json(
-        { error: "Company not found." },
-        { status: 404 },
+        { error: "Workspace lifecycle authority is not available." },
+        { status: 403 },
       );
     }
 
-    const { error: deleteError } = await supabase
-      .from("companies")
-      .delete()
-      .eq("id", id);
+    let body: { action?: unknown };
 
-    if (deleteError) {
-      console.error("Company deletion failed.", {
-        companyId: id,
-        userId: workspace.userId,
-        error: deleteError,
-      });
-
+    try {
+      body = (await request.json()) as { action?: unknown };
+    } catch {
       return NextResponse.json(
-        { error: "Failed to delete company." },
-        { status: 500 },
+        { error: "A lifecycle action is required." },
+        { status: 400 },
       );
     }
 
-    const { error: auditError } = await supabase
-      .from("audit_logs")
-      .insert({
-        action: "COMPANY_DELETED",
-        entity_type: "company",
-        entity_id: id,
-        user_id: workspace.userId,
-        company_id: id,
-        metadata: {
-          company_name: company.name,
-          deleted_by: {
-            id: workspace.userId,
-            email: workspace.email,
-            workspace_role: workspace.workspaceRole,
-            membership_type: workspace.membershipType,
-          },
-          deleted_at: new Date().toISOString(),
-        },
-      });
+    const action = String(body.action || "").trim().toLowerCase();
+    const permissionContext = {
+      workspaceRole: membership.workspaceRole,
+      membershipStatus: membership.membershipStatus,
+    };
 
-    if (auditError) {
-      console.error("Company deletion audit failed.", {
-        companyId: id,
-        userId: workspace.userId,
-        error: auditError,
+    if (action === "archive") {
+      if (!canArchiveCompanyWorkspace(permissionContext)) {
+        return NextResponse.json(
+          { error: "Only the active workspace owner can archive this workspace." },
+          { status: 403 },
+        );
+      }
+
+      try {
+        await archiveCompanyWorkspace(supabase, { companyId: id });
+      } catch (error) {
+        return lifecycleCommandErrorResponse(error);
+      }
+
+      return NextResponse.json({
+        success: true,
+        workspaceStatus: "archived",
       });
     }
 
-    return NextResponse.json({
-      success: true,
-    });
+    if (action === "reactivate") {
+      if (!canReactivateCompanyWorkspace(permissionContext)) {
+        return NextResponse.json(
+          { error: "Only the archived workspace owner can reactivate this workspace." },
+          { status: 403 },
+        );
+      }
+
+      try {
+        await reactivateCompanyWorkspace(supabase, { companyId: id });
+      } catch (error) {
+        return lifecycleCommandErrorResponse(error);
+      }
+
+      return NextResponse.json({
+        success: true,
+        workspaceStatus: "active",
+      });
+    }
+
+    return NextResponse.json(
+      { error: "Lifecycle action must be archive or reactivate." },
+      { status: 400 },
+    );
   } catch (error) {
-    console.error("Unexpected company deletion failure.", error);
+    console.error("Unexpected company lifecycle failure.", error);
 
     return NextResponse.json(
       { error: "Internal server error." },

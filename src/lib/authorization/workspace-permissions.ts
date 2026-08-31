@@ -67,13 +67,19 @@ export function canChangeWorkspaceRoles(
   ]);
 }
 
-export function canDeleteCompanyWorkspace(
+export function canArchiveCompanyWorkspace(
   context: WorkspacePermissionContext,
 ) {
-  return hasActiveWorkspaceRole(context, [
-    "owner",
-    "admin",
-  ]);
+  return hasActiveWorkspaceRole(context, ["owner"]);
+}
+
+export function canReactivateCompanyWorkspace(
+  context: WorkspacePermissionContext,
+) {
+  return (
+    context.membershipStatus === "archived" &&
+    context.workspaceRole === "owner"
+  );
 }
 
 export function canTransferWorkspaceOwnership(

@@ -13,17 +13,24 @@ const membersCenter = readSource("src/components/company-members-center.tsx");
 const logoUpload = readSource("src/components/company-logo-upload.tsx");
 const companyRoute = readSource("src/app/api/companies/[id]/route.ts");
 const logoRoute = readSource("src/app/api/companies/[id]/logo/route.ts");
+const permissions = readSource(
+  "src/lib/authorization/workspace-permissions.ts",
+);
 
 const companyPatch = companyRoute.slice(
   companyRoute.indexOf("export async function PATCH("),
 );
+const companyPost = companyRoute.slice(
+  companyRoute.indexOf("export async function POST("),
+  companyRoute.indexOf("export async function PATCH("),
+);
 
 describe("company settings governance authorization contract", () => {
-  it("derives settings governance from the canonical active workspace membership", () => {
+  it("derives active settings governance from canonical workspace membership and lifecycle authority from explicit membership state", () => {
     expect(settingsPage).not.toMatch(/function canManageWorkspace\s*\(/);
     expect(settingsPage).not.toMatch(/function canDeleteWorkspace\s*\(/);
     expect(settingsPage).not.toMatch(
-      /can(?:Manage|Delete)\w*\s*=.*currentProfile\.role/,
+      /can(?:Manage|Archive|Reactivate)\w*\s*=.*currentProfile\.role/,
     );
     expect(settingsPage).toContain("getCurrentWorkspaceContext(supabase)");
     expect(settingsPage).toContain("workspace.companyId === companyId");
@@ -31,20 +38,65 @@ describe("company settings governance authorization contract", () => {
       "canManageCompanyWorkspace(permissionContext)",
     );
     expect(settingsPage).toContain(
-      "canDeleteCompanyWorkspace(permissionContext)",
-    );
-    expect(settingsPage).toContain(
       "canInviteWorkspaceMembers(permissionContext)",
     );
+    expect(settingsPage).toContain(
+      "canArchiveCompanyWorkspace(lifecyclePermissionContext)",
+    );
+    expect(settingsPage).toContain(
+      "canReactivateCompanyWorkspace(lifecyclePermissionContext)",
+    );
+    expect(settingsPage).toContain("workspace_status: string;");
+    expect(settingsPage).toContain('company.workspace_status === "archived"');
+    expect(settingsPage).toContain("p_company_id: companyId");
   });
 
-  it("passes explicit management booleans without reconstructing legacy role authority", () => {
+  it("does not invoke active-only invitation or active workspace-context resolution for archived settings", () => {
+    const invitationRpc = settingsPage.indexOf(
+      'supabase.rpc("get_company_workspace_invitations")',
+    );
+    const invitationGuard = settingsPage.lastIndexOf(
+      'if (company.workspace_status !== "archived")',
+      invitationRpc,
+    );
+    const workspaceContextLookup = settingsPage.indexOf(
+      "getCurrentWorkspaceContext(supabase)",
+    );
+    const contextGuard = settingsPage.lastIndexOf(
+      'if (company.workspace_status !== "archived")',
+      workspaceContextLookup,
+    );
+
+    expect(invitationGuard).toBeGreaterThan(-1);
+    expect(invitationGuard).toBeLessThan(invitationRpc);
+    expect(contextGuard).toBeGreaterThan(-1);
+    expect(contextGuard).toBeLessThan(workspaceContextLookup);
+  });
+
+  it("passes explicit management and lifecycle booleans without reconstructing legacy role authority", () => {
     expect(settingsForm).toContain("canUpdateCompany: boolean");
     expect(settingsForm).not.toContain("currentUserRole");
     expect(settingsForm).not.toMatch(/===\s*["'](?:owner|admin|buyer)["']/);
     expect(membersCenter).toContain("canUpdateCompany={canManage}");
     expect(membersCenter).toContain("canManageBranding={canManage}");
+    expect(membersCenter).toContain("canArchive: boolean");
+    expect(membersCenter).toContain("canReactivate: boolean");
+    expect(membersCenter).toContain("workspaceStatus: string");
     expect(membersCenter).not.toContain("currentUserRole=");
+  });
+
+  it("uses owner-only lifecycle permission primitives instead of physical-delete authority", () => {
+    expect(permissions).toContain("canArchiveCompanyWorkspace");
+    expect(permissions).toContain("canReactivateCompanyWorkspace");
+    expect(permissions).not.toContain("canDeleteCompanyWorkspace");
+    expect(permissions).toContain('["owner"]');
+    expect(permissions).toContain('membershipStatus === "archived"');
+
+    expect(companyRoute).toContain("canArchiveCompanyWorkspace");
+    expect(companyRoute).toContain("canReactivateCompanyWorkspace");
+    expect(companyRoute).not.toContain("canDeleteCompanyWorkspace");
+    expect(companyPost).toContain("supabase.auth.getUser()");
+    expect(companyPost).not.toContain("loadWorkspaceContext(");
   });
 
   it("blocks unauthorized branding changes before the first Storage operation", () => {
@@ -62,9 +114,7 @@ describe("company settings governance authorization contract", () => {
   });
 
   it("uses the managed immutable company-logo object contract", () => {
-    expect(logoUpload).toContain(
-      'const LOGO_BUCKET = "Company-logos"',
-    );
+    expect(logoUpload).toContain('const LOGO_BUCKET = "Company-logos"');
     expect(logoUpload).toContain(
       "const MAX_LOGO_BYTES = 5 * 1024 * 1024",
     );
@@ -99,13 +149,13 @@ describe("company settings governance authorization contract", () => {
     expect(logoRoute).not.toContain('.from("audit_logs")');
   });
 
-  it("keeps server API authorization and invitation domains intact", () => {
+  it("keeps workspace invitations and procurement domains distinct while lifecycle remains a workspace concern", () => {
     expect(companyRoute).toContain("canManageCompanyWorkspace");
-    expect(companyRoute).toContain("canDeleteCompanyWorkspace");
     expect(logoRoute).toContain("canManageCompanyWorkspace");
     expect(membersCenter).toContain("Workspace Administration");
     expect(membersCenter).toContain("pending workspace invitations");
     expect(membersCenter).toContain("RFQ_CREATED");
     expect(membersCenter).not.toContain("RFQ Invitation");
+    expect(companyRoute).not.toContain("record_procurement_activity");
   });
 });

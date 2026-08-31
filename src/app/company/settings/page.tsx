@@ -14,9 +14,10 @@ import {
   WorkspaceContextError,
 } from "@/lib/auth/workspace-context";
 import {
-  canDeleteCompanyWorkspace,
+  canArchiveCompanyWorkspace,
   canInviteWorkspaceMembers,
   canManageCompanyWorkspace,
+  canReactivateCompanyWorkspace,
 } from "@/lib/authorization/workspace-permissions";
 import { loadCompanyCapabilities, createEmptyGroupedCapabilities } from "@/lib/company/capabilities";
 import {
@@ -68,6 +69,7 @@ type Membership = {
   membership_status:
     | "pending"
     | "active"
+    | "archived"
     | "suspended"
     | "revoked";
   job_title?: string | null;
@@ -99,6 +101,7 @@ type OrganizationMemberRow = {
   membership_status:
     | "pending"
     | "active"
+    | "archived"
     | "suspended"
     | "revoked";
 
@@ -121,6 +124,7 @@ category: string | null;
 location: string | null;
 network_role: string | null;
 status: string | null;
+workspace_status: string;
 logo_url: string | null;
 user_id: string | null;
 };
@@ -255,7 +259,7 @@ const companyId = currentProfile.company_id;
 const { data: companyData } = await supabase
 .from("companies")
 .select(
-"id, name, slug, category, location, network_role, status, logo_url, user_id"
+"id, name, slug, category, location, network_role, status, workspace_status, logo_url, user_id"
 )
 .eq("id", companyId)
 .single();
@@ -271,6 +275,7 @@ const {
   error: organizationMembersError,
 } = await supabase.rpc(
   "get_organization_members",
+  { p_company_id: companyId },
 );
 
 if (organizationMembersError) {
@@ -312,20 +317,24 @@ const workspaceMembers: WorkspaceMember[] =
   ({ profile }) => profile,
 );
 
-const {
-  data: invitations,
-  error: invitationsError,
-} = await supabase.rpc("get_company_workspace_invitations");
+let invitationList: Invitation[] = [];
 
-if (invitationsError) {
-  console.error("Company invitations RPC failed.", {
-    companyId,
-    userId: currentProfile.id,
+if (company.workspace_status !== "archived") {
+  const {
+    data: invitations,
     error: invitationsError,
-  });
-}
+  } = await supabase.rpc("get_company_workspace_invitations");
 
-const invitationList = (invitations ?? []) as Invitation[];
+  if (invitationsError) {
+    console.error("Company invitations RPC failed.", {
+      companyId,
+      userId: currentProfile.id,
+      error: invitationsError,
+    });
+  }
+
+  invitationList = (invitations ?? []) as Invitation[];
+}
 
 const { data: auditLogs } = await supabase
 .from("audit_logs")
@@ -414,40 +423,52 @@ const currentMember = workspaceMembers.find(
   ({ profile }) => profile.id === currentProfile.id,
 );
 
+const lifecyclePermissionContext = {
+  workspaceRole:
+    currentMember?.membership?.workspace_role ?? null,
+  membershipStatus:
+    currentMember?.membership?.membership_status ?? null,
+};
+
+const canArchive =
+  canArchiveCompanyWorkspace(lifecyclePermissionContext);
+const canReactivate =
+  canReactivateCompanyWorkspace(lifecyclePermissionContext);
+
 let canManage = false;
-let canDelete = false;
 let canManageInvitations = false;
 let canManageCapabilities = false;
 
-try {
-  const workspace = await getCurrentWorkspaceContext(supabase);
+if (company.workspace_status !== "archived") {
+  try {
+    const workspace = await getCurrentWorkspaceContext(supabase);
 
-  if (workspace.companyId === companyId) {
-    const permissionContext = {
-      workspaceRole: workspace.workspaceRole,
-      membershipStatus: workspace.membershipStatus,
-    };
+    if (workspace.companyId === companyId) {
+      const permissionContext = {
+        workspaceRole: workspace.workspaceRole,
+        membershipStatus: workspace.membershipStatus,
+      };
 
-    canManage = canManageCompanyWorkspace(permissionContext);
-    canDelete = canDeleteCompanyWorkspace(permissionContext);
-    canManageInvitations = canInviteWorkspaceMembers(permissionContext);
-    canManageCapabilities = canManageCompanyWorkspace(permissionContext);
-  }
-} catch (error) {
-  if (
-    !(
-      error instanceof WorkspaceContextError &&
-      error.code === "UNAUTHENTICATED"
-    )
-  ) {
-    console.error(
-      "Workspace context lookup failed for invitation authority.",
-      {
-        companyId,
-        userId: currentProfile.id,
-        error,
-      },
-    );
+      canManage = canManageCompanyWorkspace(permissionContext);
+      canManageInvitations = canInviteWorkspaceMembers(permissionContext);
+      canManageCapabilities = canManageCompanyWorkspace(permissionContext);
+    }
+  } catch (error) {
+    if (
+      !(
+        error instanceof WorkspaceContextError &&
+        error.code === "UNAUTHENTICATED"
+      )
+    ) {
+      console.error(
+        "Workspace context lookup failed for invitation authority.",
+        {
+          companyId,
+          userId: currentProfile.id,
+          error,
+        },
+      );
+    }
   }
 }
 
@@ -464,7 +485,10 @@ activityCount: activityList.length,
 pendingInviteCount: pendingInvitations.length,
 });
 
-const workspaceStage = getWorkspaceStage(readinessScore, rfqCount || 0);
+const workspaceStage =
+  company.workspace_status === "archived"
+    ? "Archived"
+    : getWorkspaceStage(readinessScore, rfqCount || 0);
 
 const governanceMessage = getGovernanceMessage({
 hasOwner,
@@ -771,7 +795,9 @@ networkRole={company.network_role?.trim() || "Not specified"}
   hasOwner={hasOwner}
   canManage={canManage}
   canManageInvitations={canManageInvitations}
-  canDelete={canDelete}
+  workspaceStatus={company.workspace_status}
+  canArchive={canArchive}
+  canReactivate={canReactivate}
   workspaceStage={workspaceStage}
   governanceMessage={governanceMessage}
   pendingTransfer={pendingTransfer}

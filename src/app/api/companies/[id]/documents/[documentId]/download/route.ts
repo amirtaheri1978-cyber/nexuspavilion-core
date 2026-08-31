@@ -1,10 +1,8 @@
 import { NextResponse } from "next/server";
 
 import {
-  getCurrentWorkspaceContext,
-  WorkspaceContextError,
-  type WorkspaceContext,
-} from "@/lib/auth/workspace-context";
+  getWorkspaceMembershipForUserCompany,
+} from "@/lib/auth/membership";
 import {
   COMPANY_DOCUMENTS_BUCKET,
   COMPANY_DOCUMENT_SIGNED_DOWNLOAD_TTL_SECONDS,
@@ -21,85 +19,59 @@ type RouteContext = {
   }>;
 };
 
-async function loadWorkspaceContext(
-  supabase: Parameters<typeof getCurrentWorkspaceContext>[0],
-  companyId: string,
-): Promise<
-  | {
-      workspace: WorkspaceContext;
-      response: null;
-    }
-  | {
-      workspace: null;
-      response: NextResponse;
-    }
-> {
-  try {
-    const workspace = await getCurrentWorkspaceContext(supabase);
-
-    return {
-      workspace,
-      response: null,
-    };
-  } catch (error) {
-    if (
-      error instanceof WorkspaceContextError &&
-      error.code === "UNAUTHENTICATED"
-    ) {
-      return {
-        workspace: null,
-        response: NextResponse.json(
-          { error: "Unauthorized." },
-          { status: 401 },
-        ),
-      };
-    }
-
-    console.error("Company document download workspace context lookup failed.", {
-      companyId,
-      errorName: toSafeErrorName(error),
-      errorCode: toSafeErrorCode(error),
-    });
-
-    return {
-      workspace: null,
-      response: NextResponse.json(
-        {
-          error: "Unable to verify your workspace membership.",
-        },
-        { status: 403 },
-      ),
-    };
-  }
-}
-
 export async function GET(_request: Request, context: RouteContext) {
   try {
     const { id, documentId } = await context.params;
     const supabase = await createClient();
-    const contextResult = await loadWorkspaceContext(supabase, id);
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
 
-    if (contextResult.response) {
-      return contextResult.response;
-    }
-
-    const workspace = contextResult.workspace;
-
-    if (!workspace.membership || workspace.membershipStatus !== "active") {
+    if (authError || !user) {
       return NextResponse.json(
-        {
-          error:
-            "An active workspace membership is required to download company documents.",
-        },
-        { status: 403 },
+        { error: "Unauthorized." },
+        { status: 401 },
       );
     }
 
-    if (workspace.companyId !== id) {
+    let lifecycleMembership;
+
+    try {
+      lifecycleMembership =
+        await getWorkspaceMembershipForUserCompany(
+          supabase,
+          user.id,
+          id,
+        );
+    } catch (error) {
+      console.error(
+        "Company document lifecycle membership lookup failed.",
+        {
+          companyId: id,
+          userId: user.id,
+          operation: "download",
+          errorName: toSafeErrorName(error),
+          errorCode: toSafeErrorCode(error),
+        },
+      );
+
+      return NextResponse.json(
+        { error: "Unable to verify document access." },
+        { status: 500 },
+      );
+    }
+
+    if (
+      !lifecycleMembership ||
+      !["active", "archived"].includes(
+        lifecycleMembership.membershipStatus,
+      )
+    ) {
       return NextResponse.json(
         {
           error:
-            "You can only download documents for your own company workspace.",
+            "An active or archived workspace membership is required to download retained company documents.",
         },
         { status: 403 },
       );
@@ -123,7 +95,7 @@ export async function GET(_request: Request, context: RouteContext) {
       console.error("Company document download lookup failed.", {
         companyId: id,
         documentId,
-        userId: workspace.userId,
+        userId: user.id,
         operation: "download",
         errorCode: toSafeErrorCode(lookupError),
       });
@@ -152,7 +124,7 @@ export async function GET(_request: Request, context: RouteContext) {
       console.error("Company document signed download failed.", {
         companyId: id,
         documentId,
-        userId: workspace.userId,
+        userId: user.id,
         operation: "download",
         errorCode: toSafeErrorCode(error),
       });

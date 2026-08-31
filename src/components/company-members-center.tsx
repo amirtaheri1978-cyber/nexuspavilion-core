@@ -1,6 +1,6 @@
 import CompanyLogoUpload from "@/components/company-logo-upload";
 import CompanySettingsForm from "@/components/company-settings-form";
-import DeleteCompanyButton from "@/components/connections/DeleteCompanyButton";
+import WorkspaceLifecycleButton from "@/components/connections/DeleteCompanyButton";
 import InvitationActions from "@/components/invitation-actions";
 import InviteUserForm from "@/components/invite-user-form";
 import { MemberIdentityDisplay } from "@/components/member-identity-display";
@@ -31,6 +31,7 @@ type Membership = {
   membership_status:
     | "pending"
     | "active"
+    | "archived"
     | "suspended"
     | "revoked";
   job_title?: string | null;
@@ -105,7 +106,9 @@ type CompanyMembersCenterProps = {
   hasOwner: boolean;
   canManage: boolean;
   canManageInvitations?: boolean;
-  canDelete: boolean;
+  workspaceStatus: string;
+  canArchive: boolean;
+  canReactivate: boolean;
   workspaceStage: string;
   governanceMessage: string;
   pendingTransfer: OwnershipTransfer | null;
@@ -228,8 +231,16 @@ function getActivityLabel(action: string | null) {
     return "Company Profile Updated";
   }
 
+  if (action === "COMPANY_ARCHIVED") {
+    return "Workspace Archived";
+  }
+
+  if (action === "COMPANY_REACTIVATED") {
+    return "Workspace Reactivated";
+  }
+
   if (action === "COMPANY_DELETED") {
-    return "Workspace Removed";
+    return "Legacy Workspace Removed";
   }
 
   if (action === "INVITATION_CREATED") {
@@ -276,7 +287,9 @@ export default function CompanyMembersCenter({
   activityList,
   canManage,
   canManageInvitations,
-  canDelete,
+  workspaceStatus,
+  canArchive,
+  canReactivate,
   workspaceStage,
   governanceMessage,
   pendingTransfer,
@@ -315,13 +328,14 @@ const transferTargets = workspaceMembers
     last_name: profile.last_name,
     job_title: membership?.job_title ?? null,
     workspace_role: membership!.workspace_role,
-    membership_status: membership!.membership_status,
+    membership_status: "active" as const,
   }));
 
 const currentOwner = workspaceMembers.find(
   ({ membership }) =>
     membership?.workspace_role === "owner" &&
-    membership.membership_status === "active",
+    (membership.membership_status === "active" ||
+      membership.membership_status === "archived"),
 );
 const currentOwnerIdentity = currentOwner
   ? formatMemberIdentity({
@@ -732,7 +746,11 @@ description="Manage company membership, Access Levels, and pending access invita
   currentOwnerLabel={currentOwnerIdentity?.primary ?? null}
   currentOwnerEmail={currentOwnerIdentity?.email ?? null}
   currentUserId={currentProfile.id}
-  currentUserWorkspaceRole={currentUserWorkspaceRole}
+  currentUserWorkspaceRole={
+    workspaceStatus === "archived"
+      ? null
+      : currentUserWorkspaceRole
+  }
   pendingTransfer={pendingTransfer}
   fromUserEmail={formatWorkspaceMemberPersonLabel(
     pendingTransferFromMember,
@@ -771,31 +789,56 @@ description="Manage company membership, Access Levels, and pending access invita
             </div>
           )}
 
-          {canDelete ? (
+          {workspaceStatus === "archived" ? (
+            <div className="mt-6 rounded-[26px] border border-amber-300/20 bg-amber-400/10 p-5">
+              <p className="text-sm font-black text-amber-100">
+                Archived Workspace
+              </p>
+
+              <p className="mt-2 text-sm leading-6 text-amber-100/80">
+                Historical company, governance, document, and procurement records are retained in read-only mode. Public discovery and new operational mutations remain unavailable until the workspace is reactivated.
+              </p>
+
+              {canReactivate ? (
+                <div className="mt-5">
+                  <WorkspaceLifecycleButton
+                    id={company.id}
+                    companyName={company.name || "Company Workspace"}
+                    mode="reactivate"
+                  />
+                </div>
+              ) : (
+                <p className="mt-4 text-sm font-bold text-amber-100/80">
+                  Only the archived workspace owner can reactivate this workspace.
+                </p>
+              )}
+            </div>
+          ) : canArchive ? (
             <div className="mt-6 rounded-[26px] border border-red-300/20 bg-red-400/10 p-5">
               <p className="text-sm font-black text-red-200">
-                Permanent Workspace Removal
+                Archive Workspace
               </p>
 
               <p className="mt-2 text-sm leading-6 text-red-200/80">
-                Removing this workspace permanently
-                deletes the company record. Use this only
-                when the company workspace must be retired
-                from Nexus Pavilion.
+                Archiving retires this workspace from public discovery and blocks new operational mutations. Audit, governance, document, RFQ, quotation, and award history is retained and the workspace can be reactivated by its owner.
               </p>
 
-              <div className="mt-5">
-                <DeleteCompanyButton
-                  id={company.id}
-                  companyName={
-                    company.name ||
-                    "Company Workspace"
-                  }
-                />
-              </div>
+              {pendingTransfer ? (
+                <p className="mt-4 rounded-2xl border border-amber-300/20 bg-amber-400/10 p-4 text-sm font-bold leading-6 text-amber-100">
+                  Resolve the pending ownership transfer before archiving this workspace.
+                </p>
+              ) : (
+                <div className="mt-5">
+                  <WorkspaceLifecycleButton
+                    id={company.id}
+                    companyName={company.name || "Company Workspace"}
+                    mode="archive"
+                  />
+                </div>
+              )}
             </div>
           ) : (
-            <EmptyState message="Only authorized company leaders can manage workspace governance controls." />
+            <EmptyState message="Only the active workspace owner can archive this workspace." />
           )}
         </ExecutivePanel>
       </section>

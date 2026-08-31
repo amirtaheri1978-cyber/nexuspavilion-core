@@ -12,6 +12,9 @@ export type WorkspaceCommandFailureCode =
   | "OWNER_PROTECTED"
   | "LAST_OWNER_PROTECTED"
   | "INVALID_ROLE"
+  | "WORKSPACE_NOT_FOUND"
+  | "INVALID_WORKSPACE_STATE"
+  | "OWNERSHIP_TRANSFER_PENDING"
   | "COMMAND_FAILED";
 
 export class WorkspaceCommandError extends Error {
@@ -40,6 +43,10 @@ type UpdateWorkspaceRoleInput = {
   workspaceRole: Exclude<WorkspaceRole, "owner">;
 };
 
+type WorkspaceLifecycleInput = {
+  companyId: string;
+};
+
 function normalizeUserId(value: string) {
   return value.trim();
 }
@@ -55,6 +62,9 @@ function mapCommandErrorCode(
     case "OWNER_PROTECTED":
     case "LAST_OWNER_PROTECTED":
     case "INVALID_ROLE":
+    case "WORKSPACE_NOT_FOUND":
+    case "INVALID_WORKSPACE_STATE":
+    case "OWNERSHIP_TRANSFER_PENDING":
       return value;
 
     default:
@@ -135,5 +145,55 @@ export async function updateWorkspaceMemberRole(
     data as CommandResponse | null,
     error,
     "Unable to update the workspace member role.",
+  );
+}
+
+export async function archiveCompanyWorkspace(
+  supabase: SupabaseClient,
+  input: WorkspaceLifecycleInput,
+): Promise<void> {
+  const companyId = input.companyId.trim();
+
+  if (!companyId) {
+    throw new WorkspaceCommandError(
+      "A company workspace is required.",
+      "WORKSPACE_NOT_FOUND",
+    );
+  }
+
+  const { data, error } = await supabase.rpc(
+    "archive_company_workspace",
+    { p_company_id: companyId },
+  );
+
+  assertSuccessfulCommand(
+    data as CommandResponse | null,
+    error,
+    "Unable to archive the company workspace.",
+  );
+}
+
+export async function reactivateCompanyWorkspace(
+  supabase: SupabaseClient,
+  input: WorkspaceLifecycleInput,
+): Promise<void> {
+  const companyId = input.companyId.trim();
+
+  if (!companyId) {
+    throw new WorkspaceCommandError(
+      "A company workspace is required.",
+      "WORKSPACE_NOT_FOUND",
+    );
+  }
+
+  const { data, error } = await supabase.rpc(
+    "reactivate_company_workspace",
+    { p_company_id: companyId },
+  );
+
+  assertSuccessfulCommand(
+    data as CommandResponse | null,
+    error,
+    "Unable to reactivate the company workspace.",
   );
 }

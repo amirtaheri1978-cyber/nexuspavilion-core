@@ -12,8 +12,9 @@ import {
   WorkspaceContextError,
 } from "@/lib/auth/workspace-context";
 import {
-  canDeleteCompanyWorkspace,
+  canArchiveCompanyWorkspace,
   canManageCompanyWorkspace,
+  canReactivateCompanyWorkspace,
 } from "@/lib/authorization/workspace-permissions";
 import { EXECUTIVE_FOCUS_CYAN } from "@/lib/design-system/executive-contract";
 import {
@@ -45,6 +46,7 @@ type Company = {
   location: string | null;
   network_role: string | null;
   status: string | null;
+  workspace_status: string;
   logo_url: string | null;
   user_id: string | null;
 };
@@ -223,6 +225,7 @@ const [
           location,
           network_role,
           status,
+          workspace_status,
           logo_url,
           user_id
         `,
@@ -416,8 +419,11 @@ const workspaceMembers: WorkspaceMember[] =
   const canManage =
     canManageCompanyWorkspace(permissionContext);
 
-  const canDelete =
-    canDeleteCompanyWorkspace(permissionContext);
+  const canArchive =
+    canArchiveCompanyWorkspace(permissionContext);
+
+  const canReactivate =
+    canReactivateCompanyWorkspace(permissionContext);
 
   const pendingInvitationCount =
     pendingInvitations.length;
@@ -436,9 +442,11 @@ const workspaceMembers: WorkspaceMember[] =
   );
 
   const workspaceStage =
-    workspace.membershipStatus === "active"
-      ? "Active"
-      : workspace.membershipStatus || "Pending";
+    company.workspace_status === "archived"
+      ? "Archived"
+      : workspace.membershipStatus === "active"
+        ? "Active"
+        : workspace.membershipStatus || "Pending";
 
   const governanceMessage = canManage
     ? "Your active workspace membership allows organization administration."
@@ -660,7 +668,9 @@ const workspaceMembers: WorkspaceMember[] =
           vendorsCount={vendorsCount}
           hasOwner={hasOwner}
           canManage={canManage}
-          canDelete={canDelete}
+          workspaceStatus={company.workspace_status}
+          canArchive={canArchive}
+          canReactivate={canReactivate}
           workspaceStage={workspaceStage}
           governanceMessage={governanceMessage}
                     pendingTransfer={null}
