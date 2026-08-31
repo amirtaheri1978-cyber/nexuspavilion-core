@@ -26,11 +26,10 @@ body: string;
 type BoardReportGeneratorProps = {
 procurementRiskIndex: number;
 procurementMaturityScore: number;
-aiConfidenceScore: string;
+decisionSupportReadinessScore: number;
+dataQualityScore: number;
 supplierDependencyRisk: string;
 concentrationLevel: string;
-awardPredictionConfidence: string;
-predictionAccuracy: number;
 benchmarkReadinessScore: number;
 boardHealthIndex: number;
 enterpriseProcurementScore: number;
@@ -68,7 +67,7 @@ id: "cfo",
 title: "CFO Brief",
 audience: "Chief Financial Officer",
 subtitle:
-"Spend visibility, savings opportunity, awarded volume, forecast confidence, and budget exposure.",
+"Spend visibility, savings opportunity, awarded volume, decision evidence, and budget exposure.",
 status: "coming-soon",
 statusLabel: "Coming Soon",
 primaryRequirement:
@@ -93,7 +92,7 @@ const requiredDataSources = [
 "Submitted quotes",
 "Award decisions",
 "Supplier risk signals",
-"Confidence analytics",
+"Decision-support readiness",
 "Savings or cost-avoidance calculations",
 ];
 
@@ -101,7 +100,7 @@ const operationalNextSteps = [
 "Create live RFQs with real procurement requirements.",
 "Invite suppliers and collect validated quote responses.",
 "Complete award workflows to establish decision history.",
-"Connect risk and confidence engines to the executive reporting layer.",
+"Connect risk and decision-evidence readiness to the executive reporting layer.",
 "Generate executive reports only after sufficient validated data exists.",
 ];
 
@@ -125,7 +124,7 @@ return "border-orange-300/20 bg-orange-400/10 text-orange-300";
 
 function getRiskNarrative(procurementRiskIndex: number) {
 if (procurementRiskIndex >= 70) {
-return "Procurement risk exposure is elevated and should remain visible at the board and executive level until supplier coverage, concentration exposure, and award confidence improve.";
+return "Procurement risk exposure is elevated and should remain visible at the board and executive level until supplier coverage, concentration exposure, and decision evidence improve.";
 }
 
 if (procurementRiskIndex >= 45) {
@@ -140,11 +139,10 @@ report,
 boardReady,
 procurementRiskIndex,
 procurementMaturityScore,
-aiConfidenceScore,
+decisionSupportReadinessScore,
+dataQualityScore,
 supplierDependencyRisk,
 concentrationLevel,
-awardPredictionConfidence,
-predictionAccuracy,
 benchmarkReadinessScore,
 boardHealthIndex,
 enterpriseProcurementScore,
@@ -203,7 +201,7 @@ body: riskNarrative,
 },
 {
 title: "CEO Action",
-body: "Maintain executive visibility over supplier participation, procurement throughput, award confidence, and risk exposure as procurement operations scale.",
+body: "Maintain executive visibility over supplier participation, procurement throughput, award activity, and risk exposure as procurement operations scale.",
 },
 ],
 };
@@ -211,7 +209,7 @@ body: "Maintain executive visibility over supplier participation, procurement th
 
 if (report.id === "procurement") {
 return {
-summary: `Nexus Pavilion is ready to produce a procurement leadership report. Procurement maturity is ${procurementMaturityScore}/100, procurement efficiency is ${procurementEfficiencyScore}/100, and award prediction confidence is ${awardPredictionConfidence}.`,
+summary: `Nexus Pavilion is ready to produce a procurement leadership report. Procurement maturity is ${procurementMaturityScore}/100, procurement efficiency is ${procurementEfficiencyScore}/100, and decision-support readiness is ${decisionSupportReadinessScore}/100.`,
 sections: [
 {
 title: "Procurement Execution",
@@ -222,8 +220,8 @@ title: "Supplier Participation",
 body: `Supplier engagement is ${supplierEngagementScore}/100. Dependency risk is ${supplierDependencyRisk}, while concentration level is ${concentrationLevel}.`,
 },
 {
-title: "Award Intelligence",
-body: `Award prediction confidence is ${awardPredictionConfidence}, with prediction accuracy at ${predictionAccuracy}.`,
+title: "Decision Evidence",
+body: `Decision-support readiness is ${decisionSupportReadinessScore}/100, with data quality at ${dataQualityScore}/100.`,
 },
 {
 title: "Operational Focus",
@@ -233,7 +231,7 @@ body: "Prioritize RFQ completion, supplier response depth, quote coverage, award
 };
 }
 return {
-summary: `Nexus Pavilion is ready to produce a board-grade executive report. Board Health is ${boardHealthIndex}/100, Enterprise Procurement Score is ${enterpriseProcurementScore}/100, Executive Readiness is ${executiveReadinessScore}/100, and AI Confidence is ${aiConfidenceScore}.`,
+summary: `Nexus Pavilion is ready to produce a board-grade executive report. Board Health is ${boardHealthIndex}/100, Enterprise Procurement Score is ${enterpriseProcurementScore}/100, Executive Readiness is ${executiveReadinessScore}/100, and Decision-Support Readiness is ${decisionSupportReadinessScore}/100.`,
 sections: [
 {
 title: "Executive Summary",
@@ -248,8 +246,8 @@ title: "Risk Assessment",
 body: `${riskNarrative} Supplier dependency risk is ${supplierDependencyRisk}, vendor concentration is ${concentrationLevel}, and procurement risk index is ${procurementRiskIndex}/100.`,
 },
 {
-title: "Award Confidence",
-body: `Award prediction confidence is ${awardPredictionConfidence}, with prediction accuracy at ${predictionAccuracy}.`,
+title: "Decision Evidence",
+body: `Decision-support readiness is ${decisionSupportReadinessScore}/100, with data quality at ${dataQualityScore}/100.`,
 },
 {
 title: "Benchmark Position",
@@ -257,7 +255,7 @@ body: `Benchmark readiness is ${benchmarkReadinessScore}/100.`,
 },
 {
 title: "Board Recommendation",
-body: "Continue scaling validated procurement activity while maintaining governance over supplier concentration, decision confidence, and executive reporting quality.",
+body: "Continue scaling validated procurement activity while maintaining governance over supplier concentration, decision evidence, and executive reporting quality.",
 },
 ],
 };
@@ -267,11 +265,10 @@ export default function BoardReportGenerator(props: BoardReportGeneratorProps) {
 const {
 procurementRiskIndex,
 procurementMaturityScore,
-aiConfidenceScore,
+decisionSupportReadinessScore,
+dataQualityScore,
 supplierDependencyRisk,
 concentrationLevel,
-awardPredictionConfidence,
-predictionAccuracy,
 benchmarkReadinessScore,
 boardHealthIndex,
 enterpriseProcurementScore,
@@ -304,7 +301,7 @@ const boardReady =
 procurementMaturityScore >= 50 &&
 benchmarkReadinessScore >= 50 &&
 enterpriseProcurementScore >= 50 &&
-aiConfidenceScore !== "Insufficient Data";
+decisionSupportReadinessScore >= 50;
 
 const reportStatusLabel = boardReady ? "Ready" : "Insufficient Data";
 
@@ -330,11 +327,10 @@ ${activeReportBody.sections
 Executive Metrics:
 - Procurement Risk Index: ${procurementRiskIndex}/100
 - Procurement Maturity Score: ${procurementMaturityScore}/100
-- AI Confidence: ${aiConfidenceScore}
+- Decision-Support Readiness: ${decisionSupportReadinessScore}/100
+- Data Quality: ${dataQualityScore}/100
 - Supplier Dependency Risk: ${supplierDependencyRisk}
 - Vendor Concentration: ${concentrationLevel}
-- Award Prediction Confidence: ${awardPredictionConfidence}
-- Prediction Accuracy: ${predictionAccuracy}
 - Benchmark Readiness Score: ${benchmarkReadinessScore}/100
 - Board Health Index: ${boardHealthIndex}/100
 - Enterprise Procurement Score: ${enterpriseProcurementScore}/100
@@ -351,11 +347,10 @@ activeReportBody,
 reportStatusLabel,
 procurementRiskIndex,
 procurementMaturityScore,
-aiConfidenceScore,
+decisionSupportReadinessScore,
+dataQualityScore,
 supplierDependencyRisk,
 concentrationLevel,
-awardPredictionConfidence,
-predictionAccuracy,
 benchmarkReadinessScore,
 boardHealthIndex,
 enterpriseProcurementScore,
@@ -726,11 +721,11 @@ value={`${procurementMaturityScore}/100`}
 label="Supplier Engagement"
 value={`${supplierEngagementScore}/100`}
 />
-<ReportMetric label="AI Confidence" value={aiConfidenceScore} />
 <ReportMetric
-label="Award Confidence"
-value={awardPredictionConfidence}
+label="Decision-Support Readiness"
+value={`${decisionSupportReadinessScore}/100`}
 />
+<ReportMetric label="Data Quality" value={`${dataQualityScore}/100`} />
 </div>
 </section>
 

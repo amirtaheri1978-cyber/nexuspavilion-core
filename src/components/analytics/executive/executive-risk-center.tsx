@@ -5,7 +5,7 @@ type ExecutiveRiskCenterProps = {
   supplierDependencyRisk: string;
   concentrationLevel: string;
   procurementMaturityScore: number;
-  aiConfidenceScore: string;
+  decisionSupportReadinessScore: number;
 };
 
 type RiskSignalTone = "risk" | "gold" | "cyan" | "confidence";
@@ -15,7 +15,7 @@ export default function ExecutiveRiskCenter({
   supplierDependencyRisk,
   concentrationLevel,
   procurementMaturityScore,
-  aiConfidenceScore,
+  decisionSupportReadinessScore,
 }: ExecutiveRiskCenterProps) {
   return (
     <ExecutivePanel padding="lg">
@@ -48,7 +48,7 @@ export default function ExecutiveRiskCenter({
               <p className="mt-3 max-w-3xl text-sm font-medium leading-7 text-slate-400">
                 Consolidated executive view of procurement exposure, supplier
                 dependency, vendor concentration, organizational maturity, and
-                confidence in the underlying intelligence.
+                readiness of the underlying decision evidence.
               </p>
             </div>
 
@@ -104,7 +104,7 @@ export default function ExecutiveRiskCenter({
                 <p className="mt-3 max-w-2xl text-sm font-medium leading-7 text-slate-400">
                   The procurement risk index represents the consolidated
                   exposure position across supplier dependency, concentration,
-                  operational maturity, and decision-confidence conditions.
+                  operational maturity, and decision-evidence conditions.
                 </p>
 
                 <div className="mt-6 grid gap-3 sm:grid-cols-2">
@@ -141,7 +141,7 @@ export default function ExecutiveRiskCenter({
               </h3>
 
               <p className="mt-3 text-sm font-medium leading-7 text-slate-400">
-                Maturity and intelligence confidence indicate how effectively
+                Maturity and evidence readiness indicate how effectively
                 the organization can interpret exposure and execute an
                 appropriate response.
               </p>
@@ -155,9 +155,9 @@ export default function ExecutiveRiskCenter({
                 />
 
                 <RiskSignal
-                  label="AI Decision Confidence"
-                  value={aiConfidenceScore}
-                  description="Confidence level supporting the current risk interpretation and executive response."
+                  label="Decision Evidence Readiness"
+                  value={`${decisionSupportReadinessScore}/100`}
+                  description="Readiness of the recorded evidence supporting risk interpretation and executive response."
                   tone="confidence"
                 />
               </div>
@@ -182,7 +182,7 @@ export default function ExecutiveRiskCenter({
 
               <p className="mt-2 text-sm font-medium leading-7 text-slate-300">
                 Risk exposure should be assessed alongside supplier dependency,
-                vendor concentration, procurement maturity, and AI confidence.
+                vendor concentration, procurement maturity, and decision-evidence readiness.
                 These signals collectively determine whether the current
                 posture requires monitoring, mitigation, or executive
                 intervention.

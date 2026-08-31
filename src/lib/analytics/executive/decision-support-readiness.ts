@@ -1,6 +1,5 @@
 export type DecisionSupportReadinessDimension =
   | "data-quality"
-  | "prediction-accuracy"
   | "supplier-engagement"
   | "benchmark-readiness";
 
@@ -12,7 +11,6 @@ export type DecisionSupportReadinessStatus =
 
 export type DecisionSupportReadinessInput = {
   dataQualityScore: number;
-  predictionAccuracy: number;
   supplierEngagementScore: number;
   benchmarkReadinessScore: number;
 };
@@ -46,25 +44,19 @@ const READINESS_FACTOR_DEFINITIONS = [
   {
     dimension: "data-quality",
     label: "Data Quality",
-    weight: 0.3,
+    weight: 0.4,
     selectScore: (input) => input.dataQualityScore,
-  },
-  {
-    dimension: "prediction-accuracy",
-    label: "Prediction Accuracy",
-    weight: 0.25,
-    selectScore: (input) => input.predictionAccuracy,
   },
   {
     dimension: "supplier-engagement",
     label: "Supplier Engagement",
-    weight: 0.25,
+    weight: 1 / 3,
     selectScore: (input) => input.supplierEngagementScore,
   },
   {
     dimension: "benchmark-readiness",
     label: "Benchmark Readiness",
-    weight: 0.2,
+    weight: 4 / 15,
     selectScore: (input) => input.benchmarkReadinessScore,
   },
 ] satisfies readonly ReadinessFactorDefinition[];
@@ -145,7 +137,7 @@ function buildGuidance(
       return "Strengthen the limiting readiness factors before relying on the output for material decisions.";
 
     case "limited":
-      return "Prioritize foundational data, prediction, supplier, and benchmark validation before using the output for executive action.";
+      return "Prioritize foundational data, supplier engagement, and internal benchmark validation before using the output for executive action.";
   }
 }
 

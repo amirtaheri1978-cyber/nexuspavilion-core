@@ -3,24 +3,18 @@ import {
 } from "@/lib/executive/executive-scoring";
 
 const EXECUTIVE_READINESS_WEIGHTS = {
-  enterpriseScore: 0.4,
-  predictionAccuracy: 0.3,
-  dataQuality: 0.3,
+  enterpriseScore: 4 / 7,
+  dataQuality: 3 / 7,
 } as const;
 
 export function calculateExecutiveReadiness(
   enterpriseScore: number,
-  predictionAccuracy: number,
   dataQualityScore: number,
 ): number {
   return calculateWeightedScore([
     {
       value: enterpriseScore,
       weight: EXECUTIVE_READINESS_WEIGHTS.enterpriseScore,
-    },
-    {
-      value: predictionAccuracy,
-      weight: EXECUTIVE_READINESS_WEIGHTS.predictionAccuracy,
     },
     {
       value: dataQualityScore,

@@ -202,37 +202,22 @@ export default async function AnalyticsPage() {
     topCategory,
   });
 
-  const awardProbabilityForecast = rfqList
+  const rfqDecisionReadiness = rfqList
     .map((rfq) => {
       const rfqQuotes = quoteList.filter((quote) => quote.rfq_id === rfq.id);
-
-      const lowestBid =
-        rfqQuotes.length > 0
-          ? Math.min(...rfqQuotes.map((quote) => Number(quote.amount || 0)))
-          : 0;
 
       const scope = getProcurementScope(rfq.procurement_scope);
       const sourcing = getSourcingMethod(rfq.sourcing_method);
       const framework = getContractFramework(rfq.contract_framework);
-
-      const classificationBoost =
-        (scope ? 8 : 0) +
-        (sourcing === "sealed_bid" ? 8 : 0) +
-        (framework === "framework" ? 6 : 0);
-
-      const probability = Math.min(
-        95,
-        Math.max(
-          25,
-          Math.round(
-            rfqQuotes.length * 18 +
-              (rfq.status === "awarded" ? 35 : 0) +
-              (lowestBid > 0 ? 15 : 0) +
-              classificationBoost +
-              awardRate * 0.2,
-          ),
-        ),
-      );
+      const status = String(rfq.status || "open").toLowerCase();
+      const evaluationState =
+        status === "awarded"
+          ? "Awarded"
+          : rfqQuotes.length > 0
+            ? "Evaluation Active"
+            : status === "open" || status === "published"
+              ? "Awaiting Quotes"
+              : "No Submission Evidence";
 
       return {
         title: rfq.title || "Untitled RFQ",
@@ -241,7 +226,7 @@ export default async function AnalyticsPage() {
         sourcing: SOURCING_METHOD_LABELS[sourcing],
         framework: CONTRACT_FRAMEWORK_LABELS[framework],
         quotes: rfqQuotes.length,
-        probability,
+        evaluationState,
         status: rfq.status || "open",
       };
     })
@@ -280,15 +265,6 @@ export default async function AnalyticsPage() {
     ),
   );
 
-  const aiConfidenceScore =
-    procurementHealthScore >= 85
-      ? "Very High"
-      : procurementHealthScore >= 70
-        ? "High"
-        : procurementHealthScore >= 55
-          ? "Moderate"
-          : "Low";
-
   const dataQualityScore = Math.min(
     100,
     Math.round(
@@ -300,22 +276,9 @@ export default async function AnalyticsPage() {
     ),
   );
 
-  const predictionAccuracy =
-    procurementHealthScore >= 80
-      ? 92
-      : procurementHealthScore >= 70
-        ? 84
-        : procurementHealthScore >= 55
-          ? 76
-          : 65;
-
-  const awardPredictionConfidence =
-    awardRate >= 50 ? "High" : awardRate >= 25 ? "Moderate" : "Low";
-
   const { score: enterpriseProcurementScore, status: executiveStatus } =
     calculateExecutiveScore(
       procurementHealthScore,
-      predictionAccuracy,
       dataQualityScore,
       procurementRiskIndex,
       constructionClassificationScore,
@@ -343,7 +306,6 @@ export default async function AnalyticsPage() {
 
   const executiveReadinessScore = calculateExecutiveReadiness(
     enterpriseProcurementScore,
-    predictionAccuracy,
     dataQualityScore,
   );
 
@@ -364,13 +326,18 @@ export default async function AnalyticsPage() {
   const benchmarkReadinessScore = Math.min(
     100,
     Math.round(
-      procurementMaturityScore * 0.25 +
-        supplierEngagementScore * 0.2 +
-        executiveReadinessScore * 0.2 +
-        dataQualityScore * 0.2 +
-        predictionAccuracy * 0.15,
+      procurementMaturityScore * (5 / 17) +
+        supplierEngagementScore * (4 / 17) +
+        executiveReadinessScore * (4 / 17) +
+        dataQualityScore * (4 / 17),
     ),
   );
+
+  const decisionSupportReadiness = buildDecisionSupportReadiness({
+    dataQualityScore,
+    supplierEngagementScore,
+    benchmarkReadinessScore,
+  });
 
   const executiveBenchmarkStatus =
     benchmarkReadinessScore >= 85
@@ -588,11 +555,11 @@ remains ${ceoRiskLevel.toLowerCase()}.
     });
   }
 
-  if (predictionAccuracy >= 75) {
+  if (dataQualityScore >= 75) {
     executiveAlerts.push({
       level: "healthy",
-      title: "Forecast Accuracy Above Target",
-      message: "Prediction models are performing above the target threshold.",
+      title: "Data Quality Supports Decision Review",
+      message: "Recorded procurement data meets the current decision-support threshold.",
     });
   }
 
@@ -738,7 +705,7 @@ remains ${ceoRiskLevel.toLowerCase()}.
           ? "Supplier network already operating at scale."
           : "Higher competition and stronger procurement resilience.",
       risk: supplierRanking.length >= 10 ? "Low" : "Moderate",
-      confidence: aiConfidenceScore,
+      confidence: decisionSupportReadiness.label,
     },
     {
       decision: "Reduce Supplier Dependency",
@@ -747,7 +714,7 @@ remains ${ceoRiskLevel.toLowerCase()}.
           ? "Risk exposure already optimized."
           : "Lower concentration risk and stronger executive confidence.",
       risk: procurementRiskIndex <= 35 ? "Low" : "Moderate",
-      confidence: aiConfidenceScore,
+      confidence: decisionSupportReadiness.label,
     },
     {
       decision: "Accelerate Award Decisions",
@@ -756,7 +723,7 @@ remains ${ceoRiskLevel.toLowerCase()}.
           ? "Award process performing efficiently."
           : "Faster procurement execution and operational delivery.",
       risk: awardRate >= 50 ? "Low" : "Moderate",
-      confidence: awardPredictionConfidence,
+      confidence: decisionSupportReadiness.label,
     },
     {
       decision: "Capture Savings Opportunity",
@@ -819,8 +786,8 @@ remains ${ceoRiskLevel.toLowerCase()}.
       value: executiveBenchmarkStatus,
     },
     {
-      title: "Decision Confidence",
-      value: aiConfidenceScore,
+      title: "Decision Evidence",
+      value: decisionSupportReadiness.label,
     },
     {
       title: "Risk Position",
@@ -880,8 +847,8 @@ remains ${ceoRiskLevel.toLowerCase()}.
       value: `${executiveReadinessScore}/100`,
     },
     {
-      title: "Decision Confidence",
-      value: aiConfidenceScore,
+      title: "Decision Evidence",
+      value: `${decisionSupportReadiness.score}/100`,
     },
   ];
   const boardRiskPriorities = [
@@ -1030,10 +997,10 @@ remains ${ceoRiskLevel.toLowerCase()}.
     },
     {
       slide: "05",
-      title: "Decision Confidence",
-      focus: aiConfidenceScore,
+      title: "Decision Evidence",
+      focus: `${decisionSupportReadiness.score}/100`,
       narrative:
-        "Decision confidence reflects AI confidence, benchmark readiness, supplier participation, and procurement signal quality.",
+        "Decision evidence reflects data quality, internal benchmark readiness, supplier participation, and procurement signal quality.",
     },
     {
       slide: "06",
@@ -1150,11 +1117,10 @@ remains ${ceoRiskLevel.toLowerCase()}.
   const industryBenchmarkScore = Math.min(
     100,
     Math.round(
-      procurementHealthScore * 0.35 +
-        supplierReliabilityScore * 0.2 +
-        competitionScore * 0.2 +
-        predictionAccuracy * 0.15 +
-        constructionClassificationScore * 0.1,
+      procurementHealthScore * (7 / 17) +
+        supplierReliabilityScore * (4 / 17) +
+        competitionScore * (4 / 17) +
+        constructionClassificationScore * (2 / 17),
     ),
   );
 
@@ -1235,32 +1201,24 @@ remains ${ceoRiskLevel.toLowerCase()}.
           ? "Strengthen RFQ activity, supplier participation, and procurement data quality before positioning the platform as board-ready."
           : "Focus on foundational procurement data capture before using benchmark output for executive decisions.";
 
-  const decisionSupportReadiness = buildDecisionSupportReadiness({
-    dataQualityScore,
-    predictionAccuracy,
-    supplierEngagementScore,
-    benchmarkReadinessScore,
-  });
-
-  const decisionConfidenceDrivers = [
+  const decisionEvidenceDrivers = [
     `Data Quality: ${dataQualityScore}/100`,
-    `Prediction Accuracy: ${predictionAccuracy}`,
     `Supplier Engagement: ${supplierEngagementScore}/100`,
     `Benchmark Readiness: ${benchmarkReadinessScore}/100`,
   ];
 
-  const decisionConfidenceRisks = [
+  const decisionEvidenceRisks = [
     procurementRiskIndex >= 60
-      ? "Procurement risk exposure may reduce decision confidence."
-      : "Procurement risk is not currently blocking decision confidence.",
+      ? "Procurement risk exposure may limit decision readiness."
+      : "Procurement risk is not currently blocking decision readiness.",
     supplierEngagementScore < 50
       ? "Supplier engagement remains below executive decision threshold."
       : "Supplier engagement supports decision interpretation.",
     dataQualityScore < 60
       ? "Data quality requires improvement before stronger executive reliance."
-      : "Data quality supports executive reporting confidence.",
+      : "Data quality supports executive reporting readiness.",
     benchmarkReadinessScore < 60
-      ? "Benchmark readiness is still below board-grade confidence."
+      ? "Benchmark readiness is still below the board-review threshold."
       : "Benchmark readiness supports executive-level comparison.",
   ];
 
@@ -1744,7 +1702,7 @@ remains ${ceoRiskLevel.toLowerCase()}.
             executiveCommandRecommendation,
             procurementOutlook,
           ]}
-          risks={decisionConfidenceRisks}
+          risks={decisionEvidenceRisks}
           actions={[
             benchmarkBoardRecommendation,
             executiveCommandRecommendation,
@@ -1780,7 +1738,7 @@ remains ${ceoRiskLevel.toLowerCase()}.
             procurementOutlook,
             executiveSummary,
           ]}
-          risks={decisionConfidenceRisks}
+          risks={decisionEvidenceRisks}
           opportunities={topQuarterOpportunities}
           actions={[
             benchmarkBoardRecommendation,
@@ -2143,11 +2101,8 @@ remains ${ceoRiskLevel.toLowerCase()}.
           executiveAlerts={executiveAlerts}
           executiveRecommendations={executiveRecommendations}
           dailyExecutiveBriefing={dailyExecutiveBriefing}
-          aiConfidenceScore={aiConfidenceScore}
-          dataQualityScore={dataQualityScore}
+          decisionSupportReadiness={decisionSupportReadiness}
           supplierReliabilityScore={supplierReliabilityScore}
-          predictionAccuracy={predictionAccuracy}
-          awardPredictionConfidence={awardPredictionConfidence}
         />
 
         <section className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -2185,7 +2140,10 @@ remains ${ceoRiskLevel.toLowerCase()}.
               title="Readiness Level"
               value={decisionSupportReadiness.label}
             />
-            <MetricCard title="AI Confidence" value={aiConfidenceScore} />
+            <MetricCard
+              title="Decision Evidence"
+              value={`${decisionSupportReadiness.score}/100`}
+            />
             <MetricCard
               title="Benchmark Confidence"
               value={benchmarkConfidence}
@@ -2199,7 +2157,7 @@ remains ${ceoRiskLevel.toLowerCase()}.
               </p>
 
               <div className="mt-4 space-y-3">
-                {decisionConfidenceDrivers.map((driver) => (
+                {decisionEvidenceDrivers.map((driver) => (
                   <div
                     key={driver}
                     className="rounded-2xl border border-white/10 bg-[#061426]/70 p-4"
@@ -2233,7 +2191,7 @@ remains ${ceoRiskLevel.toLowerCase()}.
             </p>
 
             <div className="mt-4 grid gap-3 md:grid-cols-2">
-              {decisionConfidenceRisks.map((risk) => (
+              {decisionEvidenceRisks.map((risk) => (
                 <div
                   key={risk}
                   className="rounded-2xl border border-white/10 bg-[#061426]/70 p-4"
@@ -2421,7 +2379,7 @@ remains ${ceoRiskLevel.toLowerCase()}.
             supplierDependencyRisk={supplierDependencyRisk}
             concentrationLevel={concentrationLevel}
             procurementMaturityScore={procurementMaturityScore}
-            aiConfidenceScore={aiConfidenceScore}
+            decisionSupportReadiness={decisionSupportReadiness}
             procurementOutlook={procurementOutlook}
             riskTrajectory={riskTrajectory}
             opportunityTrajectory={opportunityTrajectory}
@@ -2443,10 +2401,7 @@ remains ${ceoRiskLevel.toLowerCase()}.
             benchmarkConfidence={benchmarkConfidence}
             benchmarkNarrative={benchmarkNarrative}
             benchmarkBoardRecommendation={benchmarkBoardRecommendation}
-            dataQualityScore={dataQualityScore}
             supplierReliabilityScore={supplierReliabilityScore}
-            predictionAccuracy={predictionAccuracy}
-            awardPredictionConfidence={awardPredictionConfidence}
           />
         </section>
         <section className="mt-8 rounded-3xl border border-white/10 bg-slate-950 p-5 text-white shadow-executive sm:p-7 lg:p-8">
@@ -2612,7 +2567,7 @@ remains ${ceoRiskLevel.toLowerCase()}.
             executiveCommandRecommendation={executiveCommandRecommendation}
             activityChartData={activityChartData}
             valueChartData={valueChartData}
-            awardProbabilityForecast={awardProbabilityForecast}
+            rfqDecisionReadiness={rfqDecisionReadiness}
             rfqList={rfqList}
             procurementScopeLabels={PROCUREMENT_SCOPE_LABELS}
             sourcingMethodLabels={SOURCING_METHOD_LABELS}
@@ -2882,11 +2837,10 @@ remains ${ceoRiskLevel.toLowerCase()}.
           <BoardReportGenerator
             procurementRiskIndex={procurementRiskIndex}
             procurementMaturityScore={procurementMaturityScore}
-            aiConfidenceScore={aiConfidenceScore}
+            decisionSupportReadinessScore={decisionSupportReadiness.score}
+            dataQualityScore={dataQualityScore}
             supplierDependencyRisk={supplierDependencyRisk}
             concentrationLevel={concentrationLevel}
-            awardPredictionConfidence={awardPredictionConfidence}
-            predictionAccuracy={predictionAccuracy}
             benchmarkReadinessScore={benchmarkReadinessScore}
             boardHealthIndex={boardHealthIndex}
             enterpriseProcurementScore={enterpriseProcurementScore}
@@ -2909,7 +2863,7 @@ remains ${ceoRiskLevel.toLowerCase()}.
             benchmarkReadinessScore={benchmarkReadinessScore}
             boardRecommendation={boardRecommendation}
             procurementMaturityScore={procurementMaturityScore}
-            awardPredictionConfidence={awardPredictionConfidence}
+            awardPredictionConfidence={decisionSupportReadiness.label}
           />
         </section>
 

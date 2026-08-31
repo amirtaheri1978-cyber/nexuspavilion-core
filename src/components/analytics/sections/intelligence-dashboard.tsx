@@ -2,6 +2,7 @@ import AIConfidenceEngine from "@/components/ai-confidence-engine";
 import { ExecutiveAlertsCenter } from "@/components/analytics/executive-alerts-center";
 import ExecutiveRecommendations from "@/components/analytics/executive-recommendations";
 import DailyExecutiveBriefing from "@/components/executive/daily-executive-briefing";
+import type { DecisionSupportReadiness } from "@/lib/analytics/executive/decision-support-readiness";
 
 type ExecutiveAlert = {
   level: "healthy" | "opportunity" | "warning";
@@ -24,22 +25,16 @@ type IntelligenceDashboardProps = {
   executiveRecommendations: ExecutiveRecommendation[];
   dailyExecutiveBriefing: DailyBriefingItem[];
 
-  aiConfidenceScore: string;
-  dataQualityScore: number;
+  decisionSupportReadiness: DecisionSupportReadiness;
   supplierReliabilityScore: number;
-  predictionAccuracy: number;
-  awardPredictionConfidence: string;
 };
 
 export function IntelligenceDashboard({
   executiveAlerts,
   executiveRecommendations,
   dailyExecutiveBriefing,
-  aiConfidenceScore,
-  dataQualityScore,
+  decisionSupportReadiness,
   supplierReliabilityScore,
-  predictionAccuracy,
-  awardPredictionConfidence,
 }: IntelligenceDashboardProps) {
   return (
     <section
@@ -62,7 +57,7 @@ export function IntelligenceDashboard({
 
             <p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-400">
               Leadership signals, accountable directives, daily decision
-              briefings, and evidence-based AI confidence are consolidated into
+              briefings, and decision-evidence readiness are consolidated into
               one executive operating layer.
             </p>
           </div>
@@ -102,11 +97,8 @@ export function IntelligenceDashboard({
       />
 
       <AIConfidenceEngine
-        aiConfidenceScore={aiConfidenceScore}
-        dataQualityScore={dataQualityScore}
+        decisionSupportReadiness={decisionSupportReadiness}
         supplierReliabilityScore={supplierReliabilityScore}
-        predictionAccuracy={predictionAccuracy}
-        awardPredictionConfidence={awardPredictionConfidence}
       />
     </section>
   );

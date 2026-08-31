@@ -1,6 +1,6 @@
 import { ProcurementCommandCenter } from "@/components/analytics/procurement-command-center";
 import { ProcurementPipelineIntelligence } from "@/components/analytics/procurement-pipeline-intelligence";
-import { AwardProbabilityForecast } from "@/components/analytics/award-probability-forecast";
+import { RfqDecisionReadiness } from "@/components/analytics/award-probability-forecast";
 import { CompanyRFQPipeline } from "@/components/analytics/company-rfq-pipeline";
 import CategoryIntelligence from "@/components/analytics/procurement/category-intelligence";
 import { SupplierPortfolioIntelligence } from "@/components/analytics/supplier-portfolio-intelligence";
@@ -21,12 +21,12 @@ name: string;
 value: number;
 };
 
-type AwardForecastItem = {
+type RfqDecisionReadinessItem = {
 title: string;
 scope: string;
 sourcing: string;
 quotes: number;
-probability: number;
+evaluationState: string;
 status: string;
 };
 
@@ -60,7 +60,7 @@ executiveCommandRecommendation: string;
 activityChartData: ChartDataPoint[];
 valueChartData: ChartDataPoint[];
 
-awardProbabilityForecast: AwardForecastItem[];
+rfqDecisionReadiness: RfqDecisionReadinessItem[];
 
 rfqList: RFQ[];
 procurementScopeLabels: Record<string, string>;
@@ -86,7 +86,7 @@ commandCenterStatus,
 executiveCommandRecommendation,
 activityChartData,
 valueChartData,
-awardProbabilityForecast,
+rfqDecisionReadiness,
 rfqList,
 procurementScopeLabels,
 sourcingMethodLabels,
@@ -115,7 +115,7 @@ activityChartData={activityChartData}
 valueChartData={valueChartData}
 />
 
-<AwardProbabilityForecast items={awardProbabilityForecast} />
+<RfqDecisionReadiness items={rfqDecisionReadiness} />
 
 <CompanyRFQPipeline
 rfqList={rfqList}

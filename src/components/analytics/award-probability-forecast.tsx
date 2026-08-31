@@ -1,29 +1,29 @@
 import { ExecutivePanel } from "@/components/executive/executive-panel";
 
-type AwardProbabilityForecastItem = {
+export type RfqDecisionReadinessItem = {
 title: string;
 scope: string;
 sourcing: string;
 quotes: number;
-probability: number;
+evaluationState: string;
 status: string;
 };
 
-type AwardProbabilityForecastProps = {
-items: AwardProbabilityForecastItem[];
+type RfqDecisionReadinessProps = {
+items: RfqDecisionReadinessItem[];
 };
 
-export function AwardProbabilityForecast({
+export function RfqDecisionReadiness({
 items,
-}: AwardProbabilityForecastProps) {
+}: RfqDecisionReadinessProps) {
 return (
 <ExecutivePanel padding="lg">
 <p className="text-xs font-black uppercase tracking-[0.25em] text-nexus-gold">
-Award Probability Forecast
+RFQ Decision Readiness
 </p>
 
 <h2 className="mt-3 text-3xl font-black text-nexus-white">
-RFQ Award Forecast Engine
+RFQ Evaluation Evidence
 </h2>
 
 <div className="mt-6 overflow-x-auto rounded-2xl border border-white/10">
@@ -34,8 +34,8 @@ RFQ Award Forecast Engine
 <th className="px-5 py-4 text-sm">Scope</th>
 <th className="px-5 py-4 text-sm">Sourcing</th>
 <th className="px-5 py-4 text-sm">Quotes</th>
-<th className="px-5 py-4 text-sm">Probability</th>
-<th className="px-5 py-4 text-sm">Status</th>
+<th className="px-5 py-4 text-sm">Evaluation State</th>
+<th className="px-5 py-4 text-sm">RFQ Status</th>
 </tr>
 </thead>
 
@@ -47,7 +47,7 @@ RFQ Award Forecast Engine
 <td className="px-5 py-4 text-slate-300">{rfq.sourcing}</td>
 <td className="px-5 py-4 text-slate-300">{rfq.quotes}</td>
 <td className="px-5 py-4 font-black text-emerald-300">
-{rfq.probability}%
+{rfq.evaluationState}
 </td>
 <td className="px-5 py-4">
 <span className="rounded-full border border-white/10 bg-white/10 px-3 py-1 text-sm font-bold text-slate-200">
@@ -63,7 +63,7 @@ RFQ Award Forecast Engine
 colSpan={6}
 className="px-5 py-10 text-center text-sm font-semibold text-slate-500"
 >
-No RFQ forecast data available.
+No RFQ decision evidence available.
 </td>
 </tr>
 ) : null}

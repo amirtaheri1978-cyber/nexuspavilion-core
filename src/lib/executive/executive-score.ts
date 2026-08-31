@@ -10,11 +10,10 @@ export type ExecutiveScore = {
 };
 
 const EXECUTIVE_SCORE_WEIGHTS = {
-  procurementHealth: 0.2,
-  predictionAccuracy: 0.2,
-  dataQuality: 0.2,
-  controlledRisk: 0.2,
-  classification: 0.2,
+  procurementHealth: 0.25,
+  dataQuality: 0.25,
+  controlledRisk: 0.25,
+  classification: 0.25,
 } as const;
 
 function executiveStatus(score: number): string {
@@ -48,7 +47,6 @@ function executiveStatus(score: number): string {
  */
 export function calculateExecutiveScore(
   procurementHealthScore: number,
-  predictionAccuracy: number,
   dataQualityScore: number,
   procurementRiskIndex: number,
   constructionClassificationScore: number,
@@ -60,10 +58,6 @@ export function calculateExecutiveScore(
     {
       value: procurementHealthScore,
       weight: EXECUTIVE_SCORE_WEIGHTS.procurementHealth,
-    },
-    {
-      value: predictionAccuracy,
-      weight: EXECUTIVE_SCORE_WEIGHTS.predictionAccuracy,
     },
     {
       value: dataQualityScore,

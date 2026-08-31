@@ -6,6 +6,7 @@ import ExecutiveRiskCenter from "@/components/analytics/executive/executive-risk
 import { ExecutiveForecastEngine } from "@/components/analytics/executive-forecast-engine";
 import { ExecutivePresentationCenter } from "@/components/analytics/executive-presentation-center";
 import { ExecutiveScenarioCenter } from "@/components/analytics/executive-scenario-center";
+import type { DecisionSupportReadiness } from "@/lib/analytics/executive/decision-support-readiness";
 
 type BenchmarkMatrixItem = {
 title: string;
@@ -39,7 +40,7 @@ procurementRiskIndex: number;
 supplierDependencyRisk: string;
 concentrationLevel: string;
 procurementMaturityScore: number;
-aiConfidenceScore: string;
+decisionSupportReadiness: DecisionSupportReadiness;
 
 procurementOutlook: string;
 riskTrajectory: string;
@@ -66,10 +67,7 @@ benchmarkConfidence: string;
 benchmarkNarrative: string;
 benchmarkBoardRecommendation: string;
 
-dataQualityScore: number;
 supplierReliabilityScore: number;
-predictionAccuracy: number;
-awardPredictionConfidence: string;
 };
 
 export function ExecutiveDashboard({
@@ -91,7 +89,7 @@ procurementRiskIndex,
 supplierDependencyRisk,
 concentrationLevel,
 procurementMaturityScore,
-aiConfidenceScore,
+decisionSupportReadiness,
 procurementOutlook,
 riskTrajectory,
 opportunityTrajectory,
@@ -113,10 +111,7 @@ benchmarkStatus,
 benchmarkConfidence,
 benchmarkNarrative,
 benchmarkBoardRecommendation,
-dataQualityScore,
 supplierReliabilityScore,
-predictionAccuracy,
-awardPredictionConfidence,
 }: ExecutiveDashboardProps) {
 return (
 <>
@@ -145,7 +140,7 @@ procurementRiskIndex={procurementRiskIndex}
 supplierDependencyRisk={supplierDependencyRisk}
 concentrationLevel={concentrationLevel}
 procurementMaturityScore={procurementMaturityScore}
-aiConfidenceScore={aiConfidenceScore}
+decisionSupportReadinessScore={decisionSupportReadiness.score}
 />
 
 <ExecutiveForecastEngine
@@ -182,11 +177,8 @@ benchmarkBoardRecommendation={benchmarkBoardRecommendation}
 />
 
 <AIConfidenceEngine
-aiConfidenceScore={aiConfidenceScore}
-dataQualityScore={dataQualityScore}
+decisionSupportReadiness={decisionSupportReadiness}
 supplierReliabilityScore={supplierReliabilityScore}
-predictionAccuracy={predictionAccuracy}
-awardPredictionConfidence={awardPredictionConfidence}
 />
 </>
 );
