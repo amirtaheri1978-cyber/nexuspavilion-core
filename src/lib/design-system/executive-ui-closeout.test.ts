@@ -36,7 +36,6 @@ const launchCritical = {
   rfqNew: readSource("src/app/rfq/new/page.tsx"),
   rfqCompare: readSource("src/app/rfq/[slug]/compare/page.tsx"),
   rfqSubmit: readSource("src/components/rfq-workspace/rfq-submit-workspace.tsx"),
-  recover: readSource("src/components/recover-ownership-button.tsx"),
   actionCard: readSource("src/components/executive/executive-action-card.tsx"),
   inviteForm: readSource("src/components/invite-user-form.tsx"),
   settingsForm: readSource("src/components/company-settings-form.tsx"),
@@ -56,16 +55,12 @@ const launchCriticalCtaFiles = [
   launchCritical.rfqNew,
   launchCritical.inviteForm,
   launchCritical.settingsForm,
-  launchCritical.recover,
   launchCritical.actionCard,
   launchCritical.enrollmentState,
 ];
 
 describe("NP-MASTER-22-B05 launch-critical closeout", () => {
   it("removes launch-critical orange CTAs", () => {
-    expect(launchCritical.recover).not.toContain("bg-orange-500");
-    expect(launchCritical.recover).not.toContain("hover:bg-orange-600");
-    expect(launchCritical.recover).toContain("EXECUTIVE_CTA_PRIMARY");
     expect(launchCritical.enrollmentState).not.toContain("#c49a4d");
     expect(launchCritical.command).not.toContain("bg-white p-6");
   });

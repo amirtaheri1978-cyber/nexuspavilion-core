@@ -6,7 +6,6 @@ import InviteUserForm from "@/components/invite-user-form";
 import { MemberIdentityDisplay } from "@/components/member-identity-display";
 import MemberActions from "@/components/member-actions";
 import OwnershipPanel from "@/components/ownership/ownership-panel";
-import RecoverOwnershipButton from "@/components/recover-ownership-button";
 import { formatMemberIdentity } from "@/lib/auth/professional-identity-display";
 
 type Profile = {
@@ -718,7 +717,7 @@ description="Manage company membership, Access Levels, and pending access invita
           id="governance"
           eyebrow="Workspace Governance"
           title="Company Ownership & Controls"
-          description="Manage ownership, recovery, and permanent workspace controls. These actions are restricted to authorized company leaders."
+          description="Manage ownership and permanent workspace controls. These actions are restricted to authorized company leaders."
         >
           <div className="mt-6 rounded-[26px] border border-white/10 bg-[#061426]/70 p-5">
             <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
@@ -752,18 +751,17 @@ description="Manage company membership, Access Levels, and pending access invita
 />
 
           {!company.user_id ? (
-            <div className="mt-6 rounded-[26px] border border-orange-300/20 bg-orange-400/10 p-5">
-              <p className="text-sm font-black text-orange-200">
-                Emergency Ownership Recovery
+            <div className="mt-6 rounded-[26px] border border-white/10 bg-white/[0.045] p-5">
+              <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+                Ownership Recovery Unavailable
               </p>
 
-              <p className="mt-2 text-sm leading-6 text-orange-200/80">
-                If this workspace has no assigned owner,
-                recover ownership for the current
-                authenticated workspace member.
+              <p className="mt-2 text-sm font-semibold leading-6 text-slate-400">
+                No canonical emergency ownership recovery workflow is currently
+                operational for this workspace. Ownership changes must use the
+                approved membership-based ownership transfer controls when an
+                active owner is available.
               </p>
-
-              <RecoverOwnershipButton />
             </div>
           ) : (
             <div className="mt-6 rounded-[26px] border border-emerald-300/20 bg-emerald-400/10 p-5">
