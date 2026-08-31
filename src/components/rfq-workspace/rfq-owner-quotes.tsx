@@ -82,7 +82,6 @@ export function RFQOwnerQuotes({
           performanceScore: quote.performanceScore,
           riskScore: quote.riskScore,
           evaluationScore: quote.totalScore,
-          awardProbability: quote.awardConfidence,
           riskLevel: quote.riskLevel,
           budgetVarianceLabel: formatMoney(quote.budgetVariance),
           lowestBidVarianceLabel: formatMoney(quote.lowestBidVariance),

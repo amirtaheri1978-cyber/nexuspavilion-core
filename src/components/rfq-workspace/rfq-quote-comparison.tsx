@@ -18,7 +18,6 @@ export type RfqQuoteComparisonItem = {
   commercialScore?: number;
   technicalScore?: number;
   evaluationScore: number;
-  awardProbability: number;
   riskLevel: string;
   budgetVarianceLabel: string;
   lowestBidVarianceLabel: string;
@@ -50,8 +49,8 @@ function decisionLabel(decision: string | null) {
 }
 
 function riskTone(riskLevel: string) {
-  if (riskLevel === "Low Risk") return "success" as const;
-  if (riskLevel === "High Risk") return "risk" as const;
+  if (riskLevel === "Low" || riskLevel === "Low Risk") return "success" as const;
+  if (riskLevel === "High" || riskLevel === "High Risk") return "risk" as const;
   return "warning" as const;
 }
 
@@ -198,12 +197,9 @@ export function RfqQuoteComparison({
                       {quote.evaluationScore}/100
                     </p>
                     <p className="np-type-meta mt-1 min-w-0 text-pretty">
-                      C {quote.commercialScore ?? quote.priceScore} · T{" "}
-                      {quote.technicalScore ?? quote.timelineScore} · R{" "}
+                      Price {quote.priceScore} · Timeline {quote.timelineScore} ·{" "}
+                      Performance {quote.performanceScore} · Risk readiness{" "}
                       {quote.riskScore}
-                    </p>
-                    <p className="np-type-meta mt-1 min-w-0 text-pretty">
-                      Award probability {quote.awardProbability}%
                     </p>
                   </td>
                   <td className="min-w-0 px-3 py-4 align-top">
@@ -298,14 +294,8 @@ export function RfqQuoteComparison({
                   value={`${quote.evaluationScore}/100`}
                 />
                 <ComparisonField
-                  label="Commercial / technical / risk"
-                  value={`C ${quote.commercialScore ?? quote.priceScore} · T ${
-                    quote.technicalScore ?? quote.timelineScore
-                  } · R ${quote.riskScore}`}
-                />
-                <ComparisonField
-                  label="Award probability"
-                  value={`${quote.awardProbability}%`}
+                  label="Price / timeline / performance / risk readiness"
+                  value={`P ${quote.priceScore} · T ${quote.timelineScore} · E ${quote.performanceScore} · R ${quote.riskScore}`}
                 />
                 <ComparisonField label="Risk" value={quote.riskLevel} />
                 <ComparisonField

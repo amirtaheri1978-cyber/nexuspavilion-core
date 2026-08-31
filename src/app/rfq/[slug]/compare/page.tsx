@@ -10,6 +10,10 @@ import {
   EXECUTIVE_PAGE_CLASS,
 } from "@/lib/design-system/executive-contract";
 import { formatRfqDeadlineForDisplay as formatDateTime } from "@/lib/datetime/format-rfq-deadline-display";
+import {
+  buildCommercialIntelligence,
+  type Quote,
+} from "@/lib/procurement/rfq-commercial-intelligence";
 import { createClient } from "@/lib/supabase/server";
 import {
   getBlindBiddingMessage,
@@ -34,35 +38,6 @@ company_id: string | null;
 procurement_scope: ProcurementScope | null;
 sourcing_method: SourcingMethod | null;
 contract_framework: ContractFramework | null;
-};
-
-type Quote = {
-id: string;
-rfq_id: string;
-company_id?: string | null;
-amount: number | string | null;
-timeline: string | null;
-message: string | null;
-decision: string | null;
-created_at?: string | null;
-validity_days?: number | null;
-};
-
-type ScoredQuote = Quote & {
-amountNumber: number;
-rank: number;
-priceScore: number;
-timelineScore: number;
-performanceScore: number;
-riskScore: number;
-commercialScore: number;
-technicalScore: number;
-evaluationScore: number;
-totalScore: number;
-awardProbability: number;
-riskLevel: string;
-budgetVariance: number;
-lowestBidVariance: number;
 };
 
 function formatMoney(value: number | string | null | undefined) {
@@ -93,177 +68,6 @@ return 0;
 return Math.trunc(count);
 }
 
-function getTimelineMonths(timeline: string | null) {
-const value = String(timeline || "").toLowerCase();
-const match = value.match(/\d+/);
-const number = match ? Number(match[0]) : null;
-
-if (!number) {
-if (value.includes("q1")) return 3;
-if (value.includes("q2")) return 6;
-if (value.includes("q3")) return 9;
-if (value.includes("q4")) return 12;
-if (value.includes("fast") || value.includes("quick")) return 6;
-return 18;
-}
-
-if (value.includes("week")) {
-return Math.max(1, Math.round(number / 4.345));
-}
-
-return number;
-}
-
-function getTimelineScore(timeline: string | null) {
-const months = getTimelineMonths(timeline);
-
-if (months <= 6) return 100;
-if (months <= 9) return 92;
-if (months <= 12) return 84;
-if (months <= 16) return 74;
-if (months <= 20) return 62;
-if (months <= 24) return 52;
-
-return 40;
-}
-
-function getPerformanceScore(message: string | null) {
-const value = String(message || "").toLowerCase();
-
-let score = 55;
-
-const signals = [
-"healthcare",
-"hospital",
-"infection control",
-"phased",
-"occupied",
-"quality assurance",
-"project management",
-"firestopping",
-"commissioning",
-"warranty",
-"experience",
-"certified",
-"cor",
-"wsib",
-];
-
-signals.forEach((signal) => {
-if (value.includes(signal)) score += 4;
-});
-
-if (value.length > 500) score += 5;
-if (value.length > 900) score += 5;
-
-return Math.min(score, 100);
-}
-
-function getRiskScore({
-amountNumber,
-budget,
-timeline,
-message,
-}: {
-amountNumber: number;
-budget: number;
-timeline: string | null;
-message: string | null;
-}) {
-let score = 85;
-
-const months = getTimelineMonths(timeline);
-const value = String(message || "").toLowerCase();
-
-if (budget > 0 && amountNumber > budget) score -= 18;
-if (budget > 0 && amountNumber < budget * 0.65) score -= 12;
-if (months > 24) score -= 15;
-if (!value.includes("warranty")) score -= 5;
-if (!value.includes("quality")) score -= 5;
-if (!value.includes("project management")) score -= 5;
-
-return Math.max(20, Math.min(score, 100));
-}
-
-function getRiskLevel(score: number) {
-if (score >= 80) return "Low Risk";
-if (score >= 60) return "Medium Risk";
-return "High Risk";
-}
-
-function getValidityScore(validityDays: number) {
-if (validityDays >= 120) return 100;
-if (validityDays >= 90) return 92;
-if (validityDays >= 60) return 84;
-return 72;
-}
-
-function getBudgetDisciplineScore({
-amountNumber,
-budget,
-}: {
-amountNumber: number;
-budget: number;
-}) {
-if (budget <= 0 || amountNumber <= 0) return 70;
-
-const variance = Math.abs(amountNumber - budget) / budget;
-
-if (variance <= 0.05) return 100;
-if (variance <= 0.1) return 92;
-if (variance <= 0.2) return 80;
-if (variance <= 0.35) return 62;
-
-return 45;
-}
-
-function getCommercialScore({
-priceScore,
-validityScore,
-budgetDisciplineScore,
-}: {
-priceScore: number;
-validityScore: number;
-budgetDisciplineScore: number;
-}) {
-return Math.min(
-100,
-Math.round(
-priceScore * 0.6 + validityScore * 0.2 + budgetDisciplineScore * 0.2
-)
-);
-}
-
-function getTechnicalScore({
-timelineScore,
-performanceScore,
-riskScore,
-}: {
-timelineScore: number;
-performanceScore: number;
-riskScore: number;
-}) {
-return Math.min(
-100,
-Math.round(timelineScore * 0.45 + performanceScore * 0.35 + riskScore * 0.2)
-);
-}
-
-function getEvaluationScore({
-commercialScore,
-technicalScore,
-riskScore,
-}: {
-commercialScore: number;
-technicalScore: number;
-riskScore: number;
-}) {
-return Math.min(
-100,
-Math.round(commercialScore * 0.45 + technicalScore * 0.4 + riskScore * 0.15)
-);
-}
-
 function getBidSpreadPercent({
 lowestAmount,
 highestAmount,
@@ -291,43 +95,25 @@ if (recommendedAmount <= budget * 1.1) return "Slightly over budget";
 return "Over budget";
 }
 
-function getBenchmarkPosition({
+function getBidSetPosition({
 recommendedAmount,
 averageBid,
 }: {
 recommendedAmount: number;
 averageBid: number;
 }) {
-if (recommendedAmount <= 0 || averageBid <= 0) return "Benchmark pending";
+if (recommendedAmount <= 0 || averageBid <= 0) return "Bid-set position pending";
 
 const ratio = recommendedAmount / averageBid;
 
-if (ratio <= 0.9) return "Top quartile";
-if (ratio <= 1) return "Competitive";
-if (ratio <= 1.1) return "Above average";
-return "High cost position";
+if (ratio <= 0.9) return "Strong relative bid position";
+if (ratio <= 1) return "Below submitted-bid average";
+if (ratio <= 1.1) return "Above submitted-bid average";
+return "High relative cost position";
 }
 
-function getCompetitivenessIndex({
-recommendedAmount,
-averageBid,
-evaluationScore,
-}: {
-recommendedAmount: number;
-averageBid: number;
-evaluationScore: number;
-}) {
-if (recommendedAmount <= 0 || averageBid <= 0) return evaluationScore;
-
-const pricePosition = Math.max(
-0,
-Math.min(100, Math.round((averageBid / recommendedAmount) * 100))
-);
-
-return Math.min(
-100,
-Math.round(pricePosition * 0.45 + evaluationScore * 0.55)
-);
+function formatRiskLevel(riskLevel: string) {
+return `${riskLevel} Risk`;
 }
 
 export default async function CompareQuotesPage({ params }: PageProps) {
@@ -422,114 +208,21 @@ const supplierNames = new Map(
 );
 const budget = Number(rfq.budget || 0);
 
-const amounts = commercialEvaluationUnlocked
-? quoteList
-.map((quote) => Number(quote.amount))
-.filter((amount) => Number.isFinite(amount))
-: [];
-
-const lowestAmount = amounts.length > 0 ? Math.min(...amounts) : null;
-const highestAmount = amounts.length > 0 ? Math.max(...amounts) : null;
-
-const averageBid =
-amounts.length > 0
-? Math.round(
-amounts.reduce((total, amount) => total + amount, 0) / amounts.length
-)
-: 0;
-
-const scoredQuotesUnranked = commercialEvaluationUnlocked
-? quoteList.map((quote) => {
-const amount = Number(quote.amount);
-const amountNumber = Number.isFinite(amount) ? amount : 0;
-
-const priceScore =
-lowestAmount && amountNumber > 0
-? Math.min(100, Math.round((lowestAmount / amountNumber) * 100))
-: 0;
-
-const timelineScore = getTimelineScore(quote.timeline);
-const performanceScore = getPerformanceScore(quote.message);
-const riskScore = getRiskScore({
-amountNumber,
+const {
+scoredQuotes,
+recommendedQuote,
+awardedQuote,
+lowestAmount,
+highestAmount,
+averageBid,
+potentialSavings,
+} = buildCommercialIntelligence({
+quoteList,
 budget,
-timeline: quote.timeline,
-message: quote.message,
+commercialEvaluationUnlocked,
+isOwner: true,
 });
-
-const validityDays = Number(quote.validity_days || 30);
-const validityScore = getValidityScore(validityDays);
-
-const budgetDisciplineScore = getBudgetDisciplineScore({
-amountNumber,
-budget,
-});
-
-const commercialScore = getCommercialScore({
-priceScore,
-validityScore,
-budgetDisciplineScore,
-});
-
-const technicalScore = getTechnicalScore({
-timelineScore,
-performanceScore,
-riskScore,
-});
-
-const evaluationScore = getEvaluationScore({
-commercialScore,
-technicalScore,
-riskScore,
-});
-
-const totalScore = evaluationScore;
-
-const awardProbability = Math.min(
-99,
-Math.max(
-35,
-totalScore +
-(amountNumber === lowestAmount ? 3 : 0) +
-(timelineScore >= 84 ? 2 : 0) -
-(averageBid > 0 && amountNumber > averageBid ? 4 : 0)
-)
-);
-
-return {
-...quote,
-amountNumber,
-rank: 0,
-priceScore,
-timelineScore,
-performanceScore,
-riskScore,
-commercialScore,
-technicalScore,
-evaluationScore,
-totalScore,
-awardProbability,
-riskLevel: getRiskLevel(riskScore),
-budgetVariance: budget > 0 ? amountNumber - budget : 0,
-lowestBidVariance:
-lowestAmount && amountNumber > 0 ? amountNumber - lowestAmount : 0,
-};
-})
-: [];
-
-const scoredQuotes: ScoredQuote[] = scoredQuotesUnranked
-.sort((a, b) => b.totalScore - a.totalScore)
-.map((quote, index) => ({
-...quote,
-rank: index + 1,
-}));
-
-const recommendedQuote = scoredQuotes[0] || null;
-const awardedQuote = scoredQuotes.find((quote) => quote.decision === "awarded");
 const hasAwardedContract = !!awardedQuote;
-
-const potentialSavings =
-recommendedQuote && averageBid ? averageBid - recommendedQuote.amountNumber : 0;
 
 
 const bidSpreadPercent = getBidSpreadPercent({
@@ -545,59 +238,39 @@ budget,
 })
 : "Locked";
 
-const benchmarkPosition =
+const bidSetPosition =
 recommendedQuote && commercialEvaluationUnlocked
-? getBenchmarkPosition({
+? getBidSetPosition({
 recommendedAmount: recommendedQuote.amountNumber,
 averageBid,
 })
 : "Locked";
 
-const competitivenessIndex =
-recommendedQuote && commercialEvaluationUnlocked
-? getCompetitivenessIndex({
-recommendedAmount: recommendedQuote.amountNumber,
-averageBid,
-evaluationScore: recommendedQuote.evaluationScore,
-})
-: 0;
-
-const confidenceScore = recommendedQuote
-? Math.min(
-99,
-Math.max(
-70,
-recommendedQuote.totalScore +
-(recommendedQuote.amountNumber === lowestAmount ? 3 : 0) +
-(recommendedQuote.riskScore >= 80 ? 2 : 0)
-)
-)
-: 0;
-
 const executiveSummary =
 commercialEvaluationUnlocked && recommendedQuote
 ? `${formatMoney(
 recommendedQuote.amountNumber
-)} is currently the strongest award path with ${confidenceScore}% confidence, ${recommendedQuote.riskLevel.toLowerCase()}, with commercial score of ${recommendedQuote.commercialScore}/100 and technical score of ${recommendedQuote.technicalScore}/100, and final evaluation score of ${recommendedQuote.evaluationScore}/100.`
+)} is the current rank #${recommendedQuote.rank} recommendation with an evaluation score of ${recommendedQuote.totalScore}/100 and ${formatRiskLevel(recommendedQuote.riskLevel).toLowerCase()}. It reflects the highest current weighted evaluation across submitted quotes, not a guaranteed award.`
 : commercialEvaluationUnlocked
 ? "Submit supplier quotes to activate procurement intelligence."
 : "Commercial evaluation is locked until the RFQ deadline. Participation is visible, but pricing, ranking, and award controls remain sealed.";
 
-const aiReasons =
+const decisionDrivers =
 commercialEvaluationUnlocked && recommendedQuote
 ? [
+`Current evaluation rank #${recommendedQuote.rank}`,
 recommendedQuote.amountNumber === lowestAmount
 ? "Lowest submitted bid"
-: "Competitive pricing profile",
+: "Relative submitted-bid price position",
 `Price score ${recommendedQuote.priceScore}/100`,
 `Timeline score ${recommendedQuote.timelineScore}/100`,
 `Performance score ${recommendedQuote.performanceScore}/100`,
-`Risk score ${recommendedQuote.riskScore}/100`,
+`Risk readiness ${recommendedQuote.riskScore}/100 (${formatRiskLevel(recommendedQuote.riskLevel)})`,
 potentialSavings > 0
 ? `${formatMoney(
 Math.max(potentialSavings, 0)
-)} estimated savings versus average bid`
-: "Comparable to average bid",
+)} potential savings versus average submitted bid`
+: "At or above the average submitted bid",
 ]
 : [];
 
@@ -624,11 +297,8 @@ const comparisonQuotes = scoredQuotes.map((quote) => {
     timelineScore: quote.timelineScore,
     performanceScore: quote.performanceScore,
     riskScore: quote.riskScore,
-    commercialScore: quote.commercialScore,
-    technicalScore: quote.technicalScore,
-    evaluationScore: quote.evaluationScore,
-    awardProbability: quote.awardProbability,
-    riskLevel: quote.riskLevel,
+    evaluationScore: quote.totalScore,
+    riskLevel: formatRiskLevel(quote.riskLevel),
     budgetVarianceLabel: formatMoney(quote.budgetVariance),
     lowestBidVarianceLabel: formatMoney(quote.lowestBidVariance),
     isRecommended: recommendedQuote?.id === quote.id,
@@ -701,27 +371,27 @@ return (
             tone="gold"
           />
           <ExecutiveMetricCard
-            label="Award probability"
+            label="Decision basis"
             value={
               commercialEvaluationUnlocked && recommendedQuote
-                ? `${recommendedQuote.awardProbability}%`
+                ? `${recommendedQuote.totalScore}/100`
                 : "Locked"
             }
-            insight="Predicted award strength from recorded scores"
+            insight="Highest current weighted evaluation"
             tone="blue"
           />
           <ExecutiveMetricCard
             label="Risk level"
             value={
               commercialEvaluationUnlocked && recommendedQuote
-                ? recommendedQuote.riskLevel
+                ? formatRiskLevel(recommendedQuote.riskLevel)
                 : "Locked"
             }
             insight="Procurement risk signal"
             tone={
-              recommendedQuote?.riskLevel === "High Risk"
+              recommendedQuote?.riskLevel === "High"
                 ? "risk"
-                : recommendedQuote?.riskLevel === "Low Risk"
+                : recommendedQuote?.riskLevel === "Low"
                   ? "success"
                   : "neutral"
             }
@@ -740,25 +410,27 @@ return (
       </section>
 
       <ExecutivePanel variant="boardroom" padding="lg" className="np-region-major">
-        <p className="np-type-eyebrow">Benchmarks</p>
-        <h2 className="np-type-h2 mt-3">Budget and bid distribution</h2>
+        <p className="np-type-eyebrow">Submitted bid set</p>
+        <h2 className="np-type-h2 mt-3">Budget and submitted-bid distribution</h2>
         <p className="np-type-body mt-3 max-w-4xl">
-          Benchmarks use submitted bid distribution, average bid position, and
-          approved budget. No synthetic market data is used.
+          This position uses only quotes submitted for this RFQ, their average
+          submitted bid, and the approved RFQ budget. No synthetic market or
+          external benchmark data is used.
         </p>
         <div className="mt-5 flex flex-wrap gap-2">
-          <ExecutiveBadge tone="neutral">{benchmarkPosition}</ExecutiveBadge>
+          <ExecutiveBadge tone="neutral">{bidSetPosition}</ExecutiveBadge>
           <ExecutiveBadge tone="neutral">{budgetPosition}</ExecutiveBadge>
           <ExecutiveBadge tone="blue">{bidSpreadPercent}% bid spread</ExecutiveBadge>
         </div>
         <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <ExecutiveMetricCard
-            label="Competitiveness"
+            label="Evaluation position"
             value={
               commercialEvaluationUnlocked && recommendedQuote
-                ? `${competitivenessIndex}/100`
+                ? `${recommendedQuote.totalScore}/100`
                 : "Locked"
             }
+            insight="Canonical evaluation score within this RFQ bid set"
           />
           <ExecutiveMetricCard
             label="Average bid"
@@ -802,10 +474,10 @@ return (
         </div>
         <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <ExecutiveMetricCard
-            label="Confidence"
+            label="Evaluation strength"
             value={
               commercialEvaluationUnlocked && recommendedQuote
-                ? `${confidenceScore}%`
+                ? `${recommendedQuote.totalScore}/100`
                 : "Locked"
             }
           />
@@ -813,7 +485,7 @@ return (
             label="Evaluation"
             value={
               commercialEvaluationUnlocked && recommendedQuote
-                ? `${recommendedQuote.evaluationScore}/100`
+                ? `${recommendedQuote.totalScore}/100`
                 : "Locked"
             }
           />
@@ -830,16 +502,16 @@ return (
             label="Risk"
             value={
               commercialEvaluationUnlocked && recommendedQuote
-                ? recommendedQuote.riskLevel
+                ? formatRiskLevel(recommendedQuote.riskLevel)
                 : "Locked"
             }
           />
         </div>
         <div className="mt-6 rounded-executive border border-white/10 bg-black/20 p-5">
           <p className="np-type-meta">Decision drivers</p>
-          {aiReasons.length > 0 ? (
+          {decisionDrivers.length > 0 ? (
             <ul className="mt-4 space-y-2">
-              {aiReasons.map((reason) => (
+              {decisionDrivers.map((reason) => (
                 <li key={reason} className="np-type-body">
                   {reason}
                 </li>

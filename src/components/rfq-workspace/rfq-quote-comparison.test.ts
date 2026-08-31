@@ -31,7 +31,6 @@ describe("Task 24-RFQ-06 owner quote comparison density", () => {
     expect(comparison).toContain("{quote.supplierLabel}");
     expect(comparison).toContain("{quote.amountLabel}");
     expect(comparison).toContain("{quote.evaluationScore}");
-    expect(comparison).toContain("{quote.awardProbability}");
     expect(comparison).toContain("{quote.riskLevel}");
     expect(comparison).toContain("AwardContractButton");
     expect(comparison).toContain("quoteId={quote.id}");
@@ -47,6 +46,8 @@ describe("Task 24-RFQ-06 owner quote comparison density", () => {
     expect(workspace).toContain('href={`/rfq/${rfqSlug}/submit`}');
     expect(comparison).not.toContain("award_rfq_quote");
     expect(comparison).not.toContain('.from("quotes")');
+    expect(comparison).not.toContain("Award probability");
+    expect(comparison).not.toContain("awardProbability");
   });
 
   it("does not force a seven-column lg table under the authenticated shell width", () => {

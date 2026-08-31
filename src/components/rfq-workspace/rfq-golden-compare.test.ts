@@ -63,10 +63,13 @@ describe("NP-MASTER-22-B03 Golden RFQ compare / submit", () => {
     expect(submit).toContain("message: message.trim()");
   });
 
-  it("preserves compare scoring formulas", () => {
-    expect(compare).toContain("priceScore * 0.6 + validityScore * 0.2 + budgetDisciplineScore * 0.2");
-    expect(compare).toContain("timelineScore * 0.45 + performanceScore * 0.35 + riskScore * 0.2");
-    expect(compare).toContain("commercialScore * 0.45 + technicalScore * 0.4 + riskScore * 0.15");
+  it("reuses the canonical commercial intelligence engine", () => {
+    expect(compare).toContain("buildCommercialIntelligence");
+    expect(compare).toContain("type Quote");
+    expect(compare).toContain("isOwner: true");
+    expect(compare).not.toMatch(/function get(?:Timeline|Performance|Risk|Validity|BudgetDiscipline|Commercial|Technical|Evaluation)Score/);
+    expect(compare).not.toContain("function getTimelineMonths");
+    expect(compare).not.toContain("function getRiskLevel");
     expect(compare).toContain('.from("quotes")');
     expect(compare).toContain('.select("*")');
   });
