@@ -9,7 +9,7 @@ initialName: string;
 initialCategory: string;
 initialLocation: string;
 initialNetworkRole: string;
-currentUserRole: string;
+canUpdateCompany: boolean;
 };
 
 type UpdateCompanyResponse = {
@@ -32,14 +32,9 @@ initialName,
 initialCategory,
 initialLocation,
 initialNetworkRole,
-currentUserRole,
+canUpdateCompany,
 }: CompanySettingsFormProps) {
 const router = useRouter();
-
-const canUpdateCompany =
-currentUserRole === "admin" ||
-currentUserRole === "buyer" ||
-currentUserRole === "owner";
 
 const [name, setName] = useState(initialName);
 const [category, setCategory] = useState(initialCategory);

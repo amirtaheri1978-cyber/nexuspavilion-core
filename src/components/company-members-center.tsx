@@ -363,29 +363,24 @@ const readOnlyCount = workspaceMembers.filter(
           title="Company Information"
           description="Keep company details accurate across procurement workflows, supplier profiles, RFQs, and public profile visibility."
         >
-          {canManage ? (
-            <CompanySettingsForm
-              companyId={company.id}
-              initialName={company.name || ""}
-              initialCategory={company.category || ""}
-              initialLocation={company.location || ""}
-              initialNetworkRole={
-                company.network_role ||
-                "Owner / Developer"
-              }
-              currentUserRole={
-                currentProfile.role || ""
-              }
-            />
-          ) : (
-            <EmptyState message="You have read-only access to company profile settings." />
-          )}
+          <CompanySettingsForm
+            companyId={company.id}
+            initialName={company.name || ""}
+            initialCategory={company.category || ""}
+            initialLocation={company.location || ""}
+            initialNetworkRole={
+              company.network_role ||
+              "Owner / Developer"
+            }
+            canUpdateCompany={canManage}
+          />
         </ExecutivePanel>
 
         <div className="space-y-8">
           <CompanyLogoUpload
             companyId={company.id}
             currentLogoUrl={company.logo_url}
+            canManageBranding={canManage}
           />
 
           <ExecutivePanel

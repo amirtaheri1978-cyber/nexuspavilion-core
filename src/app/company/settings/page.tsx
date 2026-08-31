@@ -14,6 +14,7 @@ import {
   WorkspaceContextError,
 } from "@/lib/auth/workspace-context";
 import {
+  canDeleteCompanyWorkspace,
   canInviteWorkspaceMembers,
   canManageCompanyWorkspace,
 } from "@/lib/authorization/workspace-permissions";
@@ -163,14 +164,6 @@ type OwnershipTransfer = {
   rejected_at: string | null;
   completed_at: string | null;
 };
-
-function canManageWorkspace(role: string | null) {
-return role === "owner" || role === "admin" || role === "buyer";
-}
-
-function canDeleteWorkspace(role: string | null) {
-return role === "owner" || role === "admin";
-}
 
 function getWorkspaceReadiness({
 memberCount,
@@ -416,32 +409,30 @@ const hasCompanyProfile = Boolean(
 company.name && company.category && company.location
 );
 
-const canManage = canManageWorkspace(currentProfile.role);
-const canDelete = canDeleteWorkspace(currentProfile.role);
 const ownNames = await loadCurrentUserProfessionalNames(supabase);
 const currentMember = workspaceMembers.find(
   ({ profile }) => profile.id === currentProfile.id,
 );
 
+let canManage = false;
+let canDelete = false;
 let canManageInvitations = false;
 let canManageCapabilities = false;
 
 try {
   const workspace = await getCurrentWorkspaceContext(supabase);
 
-  canManageInvitations =
-    workspace.companyId === companyId &&
-    canInviteWorkspaceMembers({
+  if (workspace.companyId === companyId) {
+    const permissionContext = {
       workspaceRole: workspace.workspaceRole,
       membershipStatus: workspace.membershipStatus,
-    });
+    };
 
-  canManageCapabilities =
-    workspace.companyId === companyId &&
-    canManageCompanyWorkspace({
-      workspaceRole: workspace.workspaceRole,
-      membershipStatus: workspace.membershipStatus,
-    });
+    canManage = canManageCompanyWorkspace(permissionContext);
+    canDelete = canDeleteCompanyWorkspace(permissionContext);
+    canManageInvitations = canInviteWorkspaceMembers(permissionContext);
+    canManageCapabilities = canManageCompanyWorkspace(permissionContext);
+  }
 } catch (error) {
   if (
     !(

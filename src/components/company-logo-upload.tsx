@@ -8,11 +8,13 @@ import { createClient } from "@/lib/supabase/client";
 type CompanyLogoUploadProps = {
 companyId: string;
 currentLogoUrl?: string | null;
+canManageBranding: boolean;
 };
 
 export default function CompanyLogoUpload({
 companyId,
 currentLogoUrl,
+canManageBranding,
 }: CompanyLogoUploadProps) {
 const supabase = createClient();
 
@@ -21,6 +23,11 @@ const [uploading, setUploading] = useState(false);
 const [message, setMessage] = useState("");
 
 async function handleUpload(event: React.ChangeEvent<HTMLInputElement>) {
+if (!canManageBranding) {
+setMessage("You have read-only access to company branding settings.");
+return;
+}
+
 const file = event.target.files?.[0];
 
 if (!file) return;
@@ -109,10 +116,16 @@ className="h-28 w-28 rounded-2xl border border-white/10 bg-[#061426]/80 object-c
 type="file"
 accept="image/*"
 onChange={handleUpload}
-disabled={uploading}
+disabled={uploading || !canManageBranding}
 className="w-full rounded-2xl border border-white/10 bg-[#061426]/80 p-4 text-sm font-semibold text-slate-300 file:mr-4 file:rounded-xl file:border-0 file:bg-white/10 file:px-4 file:py-2 file:text-sm file:font-black file:text-white focus:border-[#2CC4E8]/40 focus:outline-none focus:ring-4 focus:ring-[#2CC4E8]/15 disabled:cursor-not-allowed disabled:opacity-60"
 />
 </div>
+
+{!canManageBranding ? (
+<p className="mt-4 text-sm font-semibold leading-6 text-orange-200">
+You have read-only access to company branding settings.
+</p>
+) : null}
 
 {message ? (
 <p className="mt-4 text-sm font-semibold text-slate-300">{message}</p>
