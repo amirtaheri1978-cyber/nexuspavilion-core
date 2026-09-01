@@ -17,6 +17,21 @@ const decisionReadiness = readSource(
   "src/components/analytics/award-probability-forecast.tsx",
 );
 const boardReport = readSource("src/components/board-report-generator.tsx");
+const boardNarrative = readSource(
+  "src/components/ai-board-narrative-generator.tsx",
+);
+const visualQa = readSource(
+  "src/app/dev/analytics-decision-evidence-visual-qa/page.tsx",
+);
+const executiveBenchmarkEngine = readSource(
+  "src/components/analytics/Executive-benchmark-engine.tsx",
+);
+const executiveSummaryReport = readSource(
+  "src/components/report-engine/ExecutiveSummary.tsx",
+);
+const boardExecutiveReport = readSource(
+  "src/components/report-engine/BoardExecutiveReport.tsx",
+);
 
 describe("analytics decision-evidence truthfulness", () => {
   it("normalizes the executive operating score across four defensible dimensions", () => {
@@ -81,4 +96,73 @@ describe("analytics decision-evidence truthfulness", () => {
       /AI Confidence|Award Prediction Confidence|Prediction Accuracy/,
     );
   });
+
+  it("keeps board narrative deterministic and evidence-based", () => {
+    expect(boardNarrative).toContain("Board Narrative Generator");
+    expect(boardNarrative).toContain("Decision Evidence Readiness");
+    expect(boardNarrative).toContain("Internal Benchmark Readiness");
+    expect(boardNarrative).toContain("decisionSupportReadinessScore");
+    expect(boardNarrative).toContain("decisionSupportReadinessLabel");
+    expect(boardNarrative).toContain("assembled deterministically");
+    expect(boardNarrative).toContain("normalizeSentenceFragment");
+    expect(boardNarrative).toContain('replace(/[.!?]+$/, "")');
+    expect(boardNarrative).toContain("if (!narrativeReady)");
+    expect(boardNarrative).toContain("disabled={isGenerating || !narrativeReady}");
+    expect(boardNarrative).toContain('"Narrative Locked"');
+    expect(boardNarrative).toContain("narrativeReady && generatedPackage");
+    expect(boardNarrative).not.toContain('title: "Narrative Locked"');
+    expect(boardNarrative).not.toMatch(
+      /AI Board Narrative Generator|AI narrative|Award Decision Confidence|awardPredictionConfidence|Industry Benchmark|industry benchmark|Industry Score|industryBenchmarkScore/,
+    );
+
+    expect(analyticsPage).toContain("<BoardNarrativeGenerator");
+    expect(analyticsPage).toContain(
+      "decisionSupportReadinessScore={decisionSupportReadiness.score}",
+    );
+    expect(analyticsPage).toContain(
+      "decisionSupportReadinessLabel={decisionSupportReadiness.label}",
+    );
+    expect(analyticsPage).not.toContain(
+      "awardPredictionConfidence={decisionSupportReadiness.label}",
+    );
+
+    expect(visualQa).toContain("<BoardNarrativeGenerator");
+    expect(visualQa).toContain("Narrative-ready evidence");
+    expect(visualQa).toContain("Narrative insufficient evidence gating");
+  });
+
+  it("keeps internal performance intelligence distinct from external benchmarking", () => {
+    expect(analyticsPage).toContain("const internalPerformanceIndex");
+    expect(analyticsPage).toContain("Internal Procurement Performance");
+    expect(analyticsPage).toContain("Internal Benchmark Readiness");
+    expect(analyticsPage).toContain("Evidence Signals");
+    expect(analyticsPage).toContain("internal performance position");
+    expect(analyticsPage).toContain("internal performance intelligence");
+    expect(analyticsPage).not.toMatch(
+      /industryBenchmarkScore|Top Quartile|Above Peer Median|Below Peer Benchmark|Peer Position|peer positioning|AI Signals|enterprise benchmark position|benchmark intelligence/i,
+    );
+
+    expect(executiveBenchmarkEngine).toContain("Internal Performance Intelligence");
+    expect(executiveBenchmarkEngine).toContain("Internal performance matrix");
+    expect(executiveBenchmarkEngine).toContain("not an external peer or industry");
+    expect(executiveBenchmarkEngine).not.toMatch(
+      /Industry Benchmark Intelligence|Top Quartile|Above Peer Median|Below Peer Benchmark|peer reference group|prediction confidence|enterprise procurement peer baseline/,
+    );
+  });
+
+  it("removes unsupported AI, model, and peer claims from executive reports", () => {
+    expect(executiveSummaryReport).toContain("evidence-based decision-support");
+    expect(executiveSummaryReport).toContain("Executive Recommendation");
+    expect(executiveSummaryReport).not.toMatch(
+      /AI-supported|AI Executive Recommendation|Decision Confidence/,
+    );
+
+    expect(boardExecutiveReport).toContain("Internal performance position");
+    expect(boardExecutiveReport).toContain("Internal benchmark readiness");
+    expect(boardExecutiveReport).toContain("rule-based executive interpretation");
+    expect(boardExecutiveReport).not.toMatch(
+      /Peer position|model-supported executive interpretation|model-supported scoring/,
+    );
+  });
+
 });

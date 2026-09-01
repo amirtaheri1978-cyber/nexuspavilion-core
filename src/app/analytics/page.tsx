@@ -5,7 +5,7 @@ import { BoardroomSnapshot } from "@/components/analytics/boardroom-snapshot";
 import { CEOActionCenter } from "@/components/analytics/ceo-action-center";
 import { ExecutiveMetricCard } from "@/components/executive/executive-metric-card";
 import BoardReportGenerator from "@/components/board-report-generator";
-import AIBoardNarrativeGenerator from "@/components/ai-board-narrative-generator";
+import BoardNarrativeGenerator from "@/components/ai-board-narrative-generator";
 import ExecutiveRiskIntelligence from "@/components/executive-risk-intelligence";
 import ProcurementCopilotIntelligence from "@/components/procurement-copilot-intelligence";
 import { loadAnalyticsSourceData } from "@/lib/analytics/source-data/load-analytics-source-data";
@@ -780,6 +780,25 @@ remains ${ceoRiskLevel.toLowerCase()}.
     },
   ];
 
+  const internalPerformanceIndex = Math.min(
+    100,
+    Math.round(
+      procurementHealthScore * (7 / 17) +
+        supplierReliabilityScore * (4 / 17) +
+        competitionScore * (4 / 17) +
+        constructionClassificationScore * (2 / 17),
+    ),
+  );
+
+  const internalPerformanceStatus =
+    internalPerformanceIndex >= 85
+      ? "Strong"
+      : internalPerformanceIndex >= 70
+        ? "Established"
+        : internalPerformanceIndex >= 55
+          ? "Developing"
+          : "Early";
+
   const procurementCommandRoom = [
     {
       title: "Board Readiness",
@@ -807,8 +826,8 @@ remains ${ceoRiskLevel.toLowerCase()}.
       value: supplierNetworkBenchmark,
     },
     {
-      title: "Industry Position",
-      value: executiveBenchmarkStatus,
+      title: "Internal Performance",
+      value: internalPerformanceStatus,
     },
   ];
 
@@ -1114,17 +1133,7 @@ remains ${ceoRiskLevel.toLowerCase()}.
           ? "Continue scaling competitive RFQs while maintaining supplier performance, RFQ structure, and forecast confidence."
           : "Improve RFQ participation, supplier coverage, classification maturity, and procurement data quality to strengthen executive confidence.";
 
-  const industryBenchmarkScore = Math.min(
-    100,
-    Math.round(
-      procurementHealthScore * (7 / 17) +
-        supplierReliabilityScore * (4 / 17) +
-        competitionScore * (4 / 17) +
-        constructionClassificationScore * (2 / 17),
-    ),
-  );
-
-  const procurementBenchmarkScore = Math.min(
+  const procurementPerformanceIndex = Math.min(
     100,
     Math.round(
       procurementMaturityScore * 0.45 +
@@ -1134,7 +1143,7 @@ remains ${ceoRiskLevel.toLowerCase()}.
     ),
   );
 
-  const supplierBenchmarkScore = Math.min(
+  const supplierPerformanceIndex = Math.min(
     100,
     Math.round(
       supplierReliabilityScore * 0.5 +
@@ -1143,7 +1152,7 @@ remains ${ceoRiskLevel.toLowerCase()}.
     ),
   );
 
-  const costOptimizationBenchmark = Math.min(
+  const costOpportunityIndex = Math.min(
     100,
     Math.round(
       budgetUtilization * 0.3 +
@@ -1153,53 +1162,44 @@ remains ${ceoRiskLevel.toLowerCase()}.
   );
 
   const benchmarkMatrix = [
-    { title: "Industry", score: industryBenchmarkScore },
-    { title: "Procurement", score: procurementBenchmarkScore },
-    { title: "Supplier", score: supplierBenchmarkScore },
-    { title: "Cost", score: costOptimizationBenchmark },
+    { title: "Operating Health", score: internalPerformanceIndex },
+    { title: "Procurement Maturity", score: procurementPerformanceIndex },
+    { title: "Supplier Strength", score: supplierPerformanceIndex },
+    { title: "Cost Opportunity", score: costOpportunityIndex },
   ];
-  const benchmarkStatus =
-    industryBenchmarkScore >= 85
-      ? "Top Quartile"
-      : industryBenchmarkScore >= 70
-        ? "Above Average"
-        : industryBenchmarkScore >= 55
-          ? "Average"
-          : "Below Benchmark";
+  const internalPerformancePosition =
+    internalPerformanceIndex >= 85
+      ? "Strong Internal Position"
+      : internalPerformanceIndex >= 70
+        ? "Established Internal Position"
+        : internalPerformanceIndex >= 55
+          ? "Developing Internal Position"
+          : "Early Internal Position";
 
-  const benchmarkPeerPosition =
-    industryBenchmarkScore >= 85
-      ? "Top Quartile Performer"
-      : industryBenchmarkScore >= 70
-        ? "Above Peer Median"
-        : industryBenchmarkScore >= 55
-          ? "Median Performer"
-          : "Below Peer Benchmark";
-
-  const benchmarkConfidence =
+  const internalEvidenceReadiness =
     benchmarkReadinessScore >= 80 && dataQualityScore >= 70
-      ? "High Confidence"
+      ? "High Evidence Readiness"
       : benchmarkReadinessScore >= 60 && dataQualityScore >= 50
-        ? "Moderate Confidence"
-        : "Limited Confidence";
+        ? "Moderate Evidence Readiness"
+        : "Limited Evidence Readiness";
 
-  const benchmarkNarrative =
-    industryBenchmarkScore >= 85
-      ? "Nexus Pavilion is benchmarking as a top-quartile procurement intelligence environment, with strong operating maturity, supplier participation, and executive decision readiness."
-      : industryBenchmarkScore >= 70
-        ? "Nexus Pavilion is performing above the peer median, with credible procurement maturity and supplier intelligence signals. Continued improvement should focus on supplier depth, award history, and financial validation."
-        : industryBenchmarkScore >= 55
-          ? "Nexus Pavilion is operating near the peer median. The platform has early executive intelligence, but stronger RFQ volume, supplier coverage, and award validation are required before board-level confidence increases."
-          : "Nexus Pavilion remains below benchmark readiness. Executive benchmarking should stay in a transparent improvement state until validated procurement activity, supplier participation, and decision history improve.";
+  const internalPerformanceNarrative =
+    internalPerformanceIndex >= 85
+      ? "Internal procurement performance signals indicate a strong operating position across health, supplier participation, competition, and classification maturity."
+      : internalPerformanceIndex >= 70
+        ? "Internal procurement performance signals indicate an established operating position. Continued improvement should focus on supplier depth, award history, and financial validation."
+        : internalPerformanceIndex >= 55
+          ? "Internal procurement performance signals indicate a developing operating position. Stronger RFQ volume, supplier coverage, and award validation are required before broader executive reliance."
+          : "Internal procurement performance remains at an early evidence stage. Executive use should stay focused on transparent improvement until procurement activity, supplier participation, and decision history improve.";
 
-  const benchmarkBoardRecommendation =
-    industryBenchmarkScore >= 85
+  const internalPerformanceRecommendation =
+    internalPerformanceIndex >= 85
       ? "Maintain governance discipline while scaling procurement intelligence across additional categories and supplier segments."
-      : industryBenchmarkScore >= 70
-        ? "Prioritize supplier network expansion, award workflow completion, and confidence validation to move toward top-quartile positioning."
-        : industryBenchmarkScore >= 55
+      : internalPerformanceIndex >= 70
+        ? "Prioritize supplier network expansion, award workflow completion, and evidence validation to strengthen internal operating performance."
+        : internalPerformanceIndex >= 55
           ? "Strengthen RFQ activity, supplier participation, and procurement data quality before positioning the platform as board-ready."
-          : "Focus on foundational procurement data capture before using benchmark output for executive decisions.";
+          : "Focus on foundational procurement data capture before using internal performance output for executive decisions.";
 
   const decisionEvidenceDrivers = [
     `Data Quality: ${dataQualityScore}/100`,
@@ -1219,7 +1219,7 @@ remains ${ceoRiskLevel.toLowerCase()}.
       : "Data quality supports executive reporting readiness.",
     benchmarkReadinessScore < 60
       ? "Benchmark readiness is still below the board-review threshold."
-      : "Benchmark readiness supports executive-level comparison.",
+      : "Internal benchmark readiness supports executive review.",
   ];
 
   const executiveDecisionQueue = [
@@ -1696,26 +1696,26 @@ remains ${ceoRiskLevel.toLowerCase()}.
                 ? "Moderate"
                 : "Low"
           }
-          confidence={forecastConfidenceLevel}
+          decisionSupportReadiness={decisionSupportReadiness.label}
           findings={[
-            benchmarkNarrative,
+            internalPerformanceNarrative,
             executiveCommandRecommendation,
             procurementOutlook,
           ]}
           risks={decisionEvidenceRisks}
           actions={[
-            benchmarkBoardRecommendation,
+            internalPerformanceRecommendation,
             executiveCommandRecommendation,
             boardForecastPriority,
           ]}
-          recommendation={benchmarkBoardRecommendation}
+          recommendation={internalPerformanceRecommendation}
         />
 
         <BoardExecutiveReport
           companyName={reportCompanyName}
           generatedAt={reportGeneratedAt}
           decisionStatement={`${executiveNarrative.headline} ${executiveNarrative.summary}`}
-          recommendation={benchmarkBoardRecommendation}
+          recommendation={internalPerformanceRecommendation}
           boardPriority={boardForecastPriority}
           enterpriseScore={enterpriseProcurementScore}
           boardReadiness={boardReadinessScore}
@@ -1731,17 +1731,17 @@ remains ${ceoRiskLevel.toLowerCase()}.
           portfolioHealth={portfolioHealthIndex}
           forecastConfidence={forecastConfidenceLevel}
           forecastNarrative={boardForecastBriefing}
-          benchmarkPosition={benchmarkPeerPosition}
+          benchmarkPosition={internalPerformancePosition}
           benchmarkScore={benchmarkReadinessScore}
           findings={[
-            benchmarkNarrative,
+            internalPerformanceNarrative,
             procurementOutlook,
             executiveSummary,
           ]}
           risks={decisionEvidenceRisks}
           opportunities={topQuarterOpportunities}
           actions={[
-            benchmarkBoardRecommendation,
+            internalPerformanceRecommendation,
             executiveCommandRecommendation,
             boardForecastPriority,
           ]}
@@ -2145,15 +2145,15 @@ remains ${ceoRiskLevel.toLowerCase()}.
               value={`${decisionSupportReadiness.score}/100`}
             />
             <MetricCard
-              title="Benchmark Confidence"
-              value={benchmarkConfidence}
+              title="Evidence Readiness"
+              value={internalEvidenceReadiness}
             />
           </div>
 
           <div className="mt-5 grid gap-5 lg:grid-cols-[0.9fr_1.1fr]">
             <div className="rounded-2xl border border-white/10 bg-white/[0.035] p-5">
               <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">
-                Confidence Drivers
+                Readiness Drivers
               </p>
 
               <div className="mt-4 space-y-3">
@@ -2187,7 +2187,7 @@ remains ${ceoRiskLevel.toLowerCase()}.
 
           <div className="mt-5 rounded-2xl border border-amber-300/15 bg-amber-400/[0.04] p-5">
             <p className="text-xs font-black uppercase tracking-[0.2em] text-amber-300">
-              Confidence Risks
+              Readiness Constraints
             </p>
 
             <div className="mt-4 grid gap-3 md:grid-cols-2">
@@ -2396,11 +2396,11 @@ remains ${ceoRiskLevel.toLowerCase()}.
             executivePresentationExports={executivePresentationExports}
             exportReadinessStatus={exportReadinessStatus}
             benchmarkMatrix={benchmarkMatrix}
-            benchmarkPeerPosition={benchmarkPeerPosition}
-            benchmarkStatus={benchmarkStatus}
-            benchmarkConfidence={benchmarkConfidence}
-            benchmarkNarrative={benchmarkNarrative}
-            benchmarkBoardRecommendation={benchmarkBoardRecommendation}
+            benchmarkPeerPosition={internalPerformancePosition}
+            benchmarkStatus={internalPerformanceStatus}
+            benchmarkConfidence={internalEvidenceReadiness}
+            benchmarkNarrative={internalPerformanceNarrative}
+            benchmarkBoardRecommendation={internalPerformanceRecommendation}
             supplierReliabilityScore={supplierReliabilityScore}
           />
         </section>
@@ -2449,7 +2449,7 @@ remains ${ceoRiskLevel.toLowerCase()}.
         <ReportSectionDivider
           number={3}
           title="Board & Governance"
-          description="Forecast confidence, enterprise benchmark position, governance readiness, and board-level risk priorities."
+          description="Forecast confidence, internal performance position, governance readiness, and board-level risk priorities."
           companyName={reportCompanyName}
           generatedAt={reportGeneratedAt}
         />
@@ -2495,7 +2495,7 @@ remains ${ceoRiskLevel.toLowerCase()}.
 
             <div className="rounded-3xl border border-white/10 bg-white/[0.045] p-6">
               <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">
-                AI Signals
+                Evidence Signals
               </p>
 
               <div className="mt-4 space-y-3">
@@ -2589,51 +2589,55 @@ remains ${ceoRiskLevel.toLowerCase()}.
 
         <section className="mt-8 rounded-3xl border border-white/10 bg-[#061426]/88 p-5 text-white shadow-executive sm:p-7 lg:p-8">
           <p className="text-xs font-black uppercase tracking-[0.25em] text-[#C8A646]">
-            Executive Benchmark Center
+            Executive Internal Performance
           </p>
 
           <h2 className="mt-3 text-3xl font-black text-white">
-            Enterprise Procurement Benchmark
+            Internal Procurement Performance
           </h2>
 
           <p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-400">
-            Benchmark procurement maturity, supplier network strength, award
-            confidence, risk exposure, peer positioning, and board readiness
-            using validated Nexus Pavilion operating data.
+            Assess procurement maturity, supplier network strength, risk
+            exposure, internal operating position, and board readiness using
+            validated Nexus Pavilion operating data. This is not an external
+            peer or industry benchmark.
           </p>
 
           <div className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-5">
             <MetricCard
-              title="Benchmark Score"
+              title="Internal Benchmark Readiness"
               value={`${benchmarkReadinessScore}/100`}
             />
             <MetricCard
-              title="Benchmark Status"
+              title="Readiness Status"
               value={executiveBenchmarkStatus}
             />
-            <MetricCard title="Peer Position" value={benchmarkPeerPosition} />
+            <MetricCard
+              title="Internal Position"
+              value={internalPerformancePosition}
+            />
             <MetricCard
               title="Supplier Network"
               value={supplierNetworkBenchmark}
             />
-            <MetricCard title="Risk Benchmark" value={riskBenchmark} />
+            <MetricCard title="Risk Position" value={riskBenchmark} />
           </div>
 
           <div className="mt-8 rounded-3xl border border-white/10 bg-slate-950 p-6">
             <p className="text-xs font-black uppercase tracking-[0.25em] text-[#C8A646]">
-              Executive Benchmark Interpretation
+              Internal Performance Interpretation
             </p>
 
             <h3 className="mt-4 text-2xl font-black text-white">
-              {benchmarkPeerPosition}
+              {internalPerformancePosition}
             </h3>
 
             <p className="mt-4 text-sm font-semibold leading-7 text-slate-300">
-              {benchmarkNarrative}
+              {internalPerformanceNarrative}
             </p>
 
             <p className="mt-4 text-sm font-semibold leading-7 text-slate-300">
-              {benchmarkBoardRecommendation}
+              {internalPerformanceRecommendation}
             </p>
           </div>
         </section>
@@ -2649,7 +2653,7 @@ remains ${ceoRiskLevel.toLowerCase()}.
 
           <p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-400">
             Executive interpretation layer converting procurement metrics,
-            benchmark intelligence, supplier signals, and risk indicators into
+            internal performance intelligence, supplier signals, and risk indicators into
             board-level actions.
           </p>
           <div className="mt-8 grid gap-6 lg:grid-cols-3">
@@ -2851,9 +2855,8 @@ remains ${ceoRiskLevel.toLowerCase()}.
           />
         </section>
         <section id="board-narrative" className="scroll-mt-6">
-          <AIBoardNarrativeGenerator
+          <BoardNarrativeGenerator
             executiveBenchmarkStatus={executiveBenchmarkStatus}
-            industryBenchmarkScore={industryBenchmarkScore}
             executiveStatus={executiveStatus}
             boardHealthIndex={boardHealthIndex}
             enterpriseProcurementScore={enterpriseProcurementScore}
@@ -2863,7 +2866,8 @@ remains ${ceoRiskLevel.toLowerCase()}.
             benchmarkReadinessScore={benchmarkReadinessScore}
             boardRecommendation={boardRecommendation}
             procurementMaturityScore={procurementMaturityScore}
-            awardPredictionConfidence={decisionSupportReadiness.label}
+            decisionSupportReadinessScore={decisionSupportReadiness.score}
+            decisionSupportReadinessLabel={decisionSupportReadiness.label}
           />
         </section>
 

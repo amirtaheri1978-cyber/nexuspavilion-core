@@ -7,7 +7,7 @@ type ExecutiveSummaryProps = {
   procurementHealth: number;
   opportunityValue: string;
   riskLevel: string;
-  confidence: string;
+  decisionSupportReadiness: string;
   findings: string[];
   risks: string[];
   actions: string[];
@@ -20,7 +20,7 @@ export function ExecutiveSummary({
   procurementHealth,
   opportunityValue,
   riskLevel,
-  confidence,
+  decisionSupportReadiness,
   findings,
   risks,
   actions,
@@ -32,9 +32,7 @@ export function ExecutiveSummary({
         <ReportHeader companyName={companyName} />
 
         <div className="report-page__body">
-          <p className="report-kicker">
-            Executive Summary
-          </p>
+          <p className="report-kicker">Executive Summary</p>
 
           <h1 className="report-page__title">
             Procurement Intelligence Overview
@@ -43,7 +41,8 @@ export function ExecutiveSummary({
           <p className="report-page__lead">
             This summary provides the executive board with a consolidated view
             of procurement performance, commercial opportunity, enterprise
-            risk, supplier resilience, and AI-supported decision readiness.
+            risk, supplier resilience, and evidence-based decision-support
+            readiness.
           </p>
 
           <div className="my-9 h-px bg-slate-200" />
@@ -62,8 +61,8 @@ export function ExecutiveSummary({
             <SummaryMetric label="Enterprise Risk" value={riskLevel} />
 
             <SummaryMetric
-              label="Decision Confidence"
-              value={confidence}
+              label="Decision-Support Readiness"
+              value={decisionSupportReadiness}
             />
           </div>
 
@@ -112,7 +111,7 @@ export function ExecutiveSummary({
 
           <div className="rounded-3xl border border-[#C8A646]/25 bg-[#FFF9E8] p-6">
             <p className="text-xs font-black uppercase tracking-[0.28em] text-[#C8A646]">
-              AI Executive Recommendation
+              Executive Recommendation
             </p>
 
             <p className="mt-4 text-base font-semibold leading-8 text-slate-800">

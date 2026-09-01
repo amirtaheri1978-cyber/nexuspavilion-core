@@ -35,7 +35,6 @@ export function BoardReport({
 }: BoardReportProps) {
   return (
     <main className="bg-white">
-
       <BoardReportCover
         companyName={companyName}
         generatedAt={generatedAt}
@@ -49,7 +48,7 @@ export function BoardReport({
         procurementHealth={procurementHealth}
         opportunityValue={opportunityValue}
         riskLevel={riskLevel}
-        confidence={confidence}
+        decisionSupportReadiness={confidence}
         findings={findings}
         risks={risks}
         actions={actions}
@@ -57,7 +56,6 @@ export function BoardReport({
       />
 
       {children}
-
     </main>
   );
 }

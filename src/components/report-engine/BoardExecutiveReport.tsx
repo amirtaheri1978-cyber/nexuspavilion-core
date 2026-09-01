@@ -83,7 +83,7 @@ export function BoardExecutiveReport(props: BoardExecutiveReportProps) {
         generatedAt={props.generatedAt}
         eyebrow="Enterprise scorecard"
         title="Procurement control and decision readiness"
-        lead="A concise view of enterprise health, governance readiness, decision confidence, and current risk exposure."
+        lead="A concise view of enterprise health, governance readiness, decision readiness, and current risk exposure."
       >
         <MetricGrid
           metrics={[
@@ -102,7 +102,7 @@ export function BoardExecutiveReport(props: BoardExecutiveReportProps) {
             {
               label: "Decision readiness",
               value: `${props.decisionReadiness}/100`,
-              context: "Confidence in executive action",
+              context: "Evidence readiness for executive action",
               tone: "green",
             },
             {
@@ -120,7 +120,7 @@ export function BoardExecutiveReport(props: BoardExecutiveReportProps) {
           label={riskLevel}
         />
 
-        <BoardList title="Confidence constraints" items={props.risks} />
+        <BoardList title="Evidence constraints" items={props.risks} />
       </ReportPage>
 
       <ReportSectionDivider
@@ -183,7 +183,7 @@ export function BoardExecutiveReport(props: BoardExecutiveReportProps) {
       <ReportSectionDivider
         number={3}
         title="Risk & Resilience"
-        description="The material supplier, concentration, data, and execution risks affecting enterprise confidence."
+        description="The material supplier, concentration, data, and execution risks affecting enterprise readiness."
         companyName={props.companyName}
         generatedAt={props.generatedAt}
       />
@@ -259,7 +259,7 @@ export function BoardExecutiveReport(props: BoardExecutiveReportProps) {
       <ReportSectionDivider
         number={4}
         title="Outlook & Governance"
-        description="Forecast confidence, benchmark position, governance readiness, and the forward executive agenda."
+        description="Forward outlook, internal performance position, governance readiness, and the executive agenda."
         companyName={props.companyName}
         generatedAt={props.generatedAt}
         tone="light"
@@ -269,18 +269,18 @@ export function BoardExecutiveReport(props: BoardExecutiveReportProps) {
         companyName={props.companyName}
         generatedAt={props.generatedAt}
         eyebrow="Forward outlook"
-        title="Forecast confidence and strategic posture"
+        title="Procurement outlook and strategic posture"
         lead={props.forecastNarrative}
       >
         <div className="board-two-column board-two-column--hero">
           <ScoreNarrative
-            title="Forecast confidence"
-            body="Current evidence supports scenario planning and monitored executive action."
+            title="Outlook evidence"
+            body="Current evidence supports directional scenario planning and monitored executive action."
             label={props.forecastConfidence}
           />
           <ScoreNarrative
-            title="Peer position"
-            body="Benchmarking is used as directional context, not as a substitute for validated portfolio evidence."
+            title="Internal performance position"
+            body="This position is derived from current validated procurement evidence and is not an external peer or industry benchmark."
             label={props.benchmarkPosition}
           />
         </div>
@@ -288,9 +288,9 @@ export function BoardExecutiveReport(props: BoardExecutiveReportProps) {
         <MetricGrid
           metrics={[
             {
-              label: "Benchmark score",
+              label: "Internal benchmark readiness",
               value: `${props.benchmarkScore}/100`,
-              context: props.benchmarkPosition,
+              context: "Internal evidence and readiness measure",
               tone: "gold",
             },
             {
@@ -326,7 +326,7 @@ export function BoardExecutiveReport(props: BoardExecutiveReportProps) {
           />
           <ScoreNarrative
             title="Governance cadence"
-            body="Monthly management review with quarterly board escalation for material risk, confidence, or value-capture variance."
+            body="Monthly management review with quarterly board escalation for material risk, evidence-readiness, or value-capture variance."
             label="Monthly"
           />
         </div>
@@ -342,7 +342,7 @@ export function BoardExecutiveReport(props: BoardExecutiveReportProps) {
         generatedAt={props.generatedAt}
         eyebrow="Appendix"
         title="Methodology and decision-use statement"
-        lead="This report consolidates validated procurement activity, supplier participation, award outcomes, portfolio classification, benchmark signals, and model-supported executive interpretation."
+        lead="This report consolidates validated procurement activity, supplier participation, award outcomes, portfolio classification, internal performance signals, and rule-based executive interpretation."
       >
         <div className="board-methodology">
           <MethodologyItem
@@ -353,7 +353,7 @@ export function BoardExecutiveReport(props: BoardExecutiveReportProps) {
           <MethodologyItem
             number="02"
             title="Interpretation"
-            body="Rule-based and model-supported scoring converts source evidence into health, risk, readiness, opportunity, and confidence signals."
+            body="Rule-based scoring converts source evidence into health, risk, readiness, opportunity, and internal performance signals."
           />
           <MethodologyItem
             number="03"
@@ -405,11 +405,22 @@ function ReportPage({
   );
 }
 
-function MetricGrid({ metrics, compact = false }: { metrics: Metric[]; compact?: boolean }) {
+function MetricGrid({
+  metrics,
+  compact = false,
+}: {
+  metrics: Metric[];
+  compact?: boolean;
+}) {
   return (
-    <div className={`board-metric-grid ${compact ? "board-metric-grid--compact" : ""}`}>
+    <div
+      className={`board-metric-grid ${compact ? "board-metric-grid--compact" : ""}`}
+    >
       {metrics.map((metric) => (
-        <div key={metric.label} className={`board-metric board-metric--${metric.tone ?? "blue"}`}>
+        <div
+          key={metric.label}
+          className={`board-metric board-metric--${metric.tone ?? "blue"}`}
+        >
           <span>{metric.label}</span>
           <strong>{metric.value}</strong>
           {metric.context ? <p>{metric.context}</p> : null}
@@ -419,8 +430,17 @@ function MetricGrid({ metrics, compact = false }: { metrics: Metric[]; compact?:
   );
 }
 
-function BoardList({ title, items, numbered = false }: { title: string; items: string[]; numbered?: boolean }) {
+function BoardList({
+  title,
+  items,
+  numbered = false,
+}: {
+  title: string;
+  items: string[];
+  numbered?: boolean;
+}) {
   const visibleItems = items.filter(Boolean).slice(0, 4);
+
   return (
     <div className="board-list">
       <h3>{title}</h3>
@@ -436,7 +456,15 @@ function BoardList({ title, items, numbered = false }: { title: string; items: s
   );
 }
 
-function ScoreNarrative({ title, body, label }: { title: string; body: string; label: string }) {
+function ScoreNarrative({
+  title,
+  body,
+  label,
+}: {
+  title: string;
+  body: string;
+  label: string;
+}) {
   return (
     <div className="board-score-narrative">
       <span>{title}</span>
@@ -446,7 +474,15 @@ function ScoreNarrative({ title, body, label }: { title: string; body: string; l
   );
 }
 
-function MethodologyItem({ number, title, body }: { number: string; title: string; body: string }) {
+function MethodologyItem({
+  number,
+  title,
+  body,
+}: {
+  number: string;
+  title: string;
+  body: string;
+}) {
   return (
     <article>
       <span>{number}</span>

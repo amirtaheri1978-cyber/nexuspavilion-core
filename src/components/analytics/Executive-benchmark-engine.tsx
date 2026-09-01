@@ -33,7 +33,7 @@ export function ExecutiveBenchmarkEngine({
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-3">
             <p className="text-[10px] font-black uppercase tracking-[0.28em] text-nexus-gold sm:text-xs">
-              Executive Benchmark Engine
+              Executive Performance Engine
             </p>
 
             <span
@@ -42,7 +42,7 @@ export function ExecutiveBenchmarkEngine({
             />
 
             <p className="text-[10px] font-black uppercase tracking-[0.18em] text-nexus-muted">
-              Enterprise comparative intelligence
+              Internal decision-support intelligence
             </p>
           </div>
 
@@ -50,14 +50,15 @@ export function ExecutiveBenchmarkEngine({
             id="executive-benchmark-engine-heading"
             className="mt-4 max-w-5xl text-3xl font-black leading-[1.08] tracking-tight text-nexus-white sm:text-4xl lg:text-5xl"
           >
-            Industry Benchmark Intelligence
+            Internal Performance Intelligence
           </h2>
 
           <p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-nexus-muted sm:text-base">
-            Nexus Pavilion converts internal procurement signals into an
-            executive benchmark position using procurement health, supplier
-            reliability, competition strength, prediction confidence, and
-            construction classification maturity.
+            Nexus Pavilion converts validated internal procurement signals into
+            an executive operating position using procurement health, supplier
+            reliability, competition strength, classification maturity, and
+            evidence readiness. This is not an external peer or industry
+            benchmark.
           </p>
         </div>
 
@@ -65,7 +66,7 @@ export function ExecutiveBenchmarkEngine({
           <BenchmarkAvailabilityBadge active={hasBenchmarkData} />
 
           <p className="text-[10px] font-black uppercase tracking-[0.16em] text-nexus-muted">
-            {benchmarkMatrix.length} benchmark dimensions
+            {benchmarkMatrix.length} internal dimensions
           </p>
         </div>
       </header>
@@ -77,7 +78,7 @@ export function ExecutiveBenchmarkEngine({
         <div className="grid min-w-0 xl:grid-cols-[340px_minmax(0,1fr)]">
           <div className="border-b border-white/10 p-5 sm:p-6 xl:border-b-0 xl:border-r">
             <p className="text-[10px] font-black uppercase tracking-[0.22em] text-nexus-gold">
-              Benchmark position
+              Internal performance position
             </p>
 
             <h3
@@ -88,34 +89,35 @@ export function ExecutiveBenchmarkEngine({
             </h3>
 
             <p className="mt-3 text-xs font-semibold leading-6 text-nexus-muted">
-              Current comparative position across the defined procurement
-              benchmark dimensions and peer reference group.
+              Current operating position derived from the organization&apos;s
+              validated procurement evidence and internal performance measures.
             </p>
           </div>
 
           <div className="min-w-0 p-5 sm:p-6">
             <p className="text-[10px] font-black uppercase tracking-[0.18em] text-nexus-muted">
-              Benchmark governance
+              Performance governance
             </p>
 
             <h3 className="mt-3 text-xl font-black tracking-tight text-nexus-white sm:text-2xl">
-              Comparative Position and Decision Confidence
+              Operating Position and Evidence Readiness
             </h3>
 
             <p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-nexus-muted">
-              Peer position should be interpreted together with benchmark
-              readiness, confidence, and the underlying performance matrix
-              before board-level conclusions are finalized.
+              The operating position is derived only from current Nexus Pavilion
+              workspace data. It should be interpreted with evidence readiness
+              and the underlying internal performance matrix before board-level
+              conclusions are finalized.
             </p>
 
             <div className="mt-6 grid gap-3 sm:grid-cols-2">
               <BenchmarkSignal
-                label="Benchmark Status"
+                label="Internal Status"
                 value={benchmarkStatus}
               />
 
               <BenchmarkSignal
-                label="Benchmark Confidence"
+                label="Evidence Readiness"
                 value={benchmarkConfidence}
               />
             </div>
@@ -130,20 +132,20 @@ export function ExecutiveBenchmarkEngine({
         <div className="flex flex-col gap-3 border-b border-white/10 pb-5 sm:flex-row sm:items-end sm:justify-between">
           <div className="min-w-0">
             <p className="text-[10px] font-black uppercase tracking-[0.22em] text-nexus-gold">
-              Comparative performance matrix
+              Internal performance matrix
             </p>
 
             <h3
               id="benchmark-matrix-heading"
               className="mt-2 text-lg font-black tracking-tight text-nexus-white sm:text-xl"
             >
-              Enterprise Benchmark Dimensions
+              Internal Performance Dimensions
             </h3>
           </div>
 
           <p className="max-w-xl text-xs font-semibold leading-5 text-nexus-muted sm:text-right">
-            Each benchmark score remains presented on the original 100-point
-            scale and in the exact order supplied by the platform.
+            Each score is an internally derived 100-point indicator calculated
+            from the current organization&apos;s validated procurement signals.
           </p>
         </div>
 
@@ -176,7 +178,7 @@ export function ExecutiveBenchmarkEngine({
               id="benchmark-interpretation-heading"
               className="mt-3 text-xl font-black tracking-tight text-nexus-white sm:text-2xl"
             >
-              Benchmark Narrative
+              Internal Performance Narrative
             </h3>
 
             <p className="mt-4 break-words text-sm font-semibold leading-7 text-nexus-muted [overflow-wrap:anywhere]">
@@ -185,12 +187,12 @@ export function ExecutiveBenchmarkEngine({
 
             <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
               <BenchmarkSignal
-                label="Peer Group Position"
+                label="Internal Position"
                 value={benchmarkPeerPosition}
               />
 
               <BenchmarkSignal
-                label="Confidence Position"
+                label="Evidence Readiness"
                 value={benchmarkConfidence}
               />
             </div>
@@ -217,9 +219,9 @@ export function ExecutiveBenchmarkEngine({
               </p>
 
               <p className="mt-3 text-sm font-semibold leading-7 text-nexus-muted">
-                Board action should remain aligned to the benchmark status,
-                peer position, confidence level, and the underlying comparative
-                performance evidence.
+                Board action should remain aligned to the internal performance
+                status, evidence readiness, and the underlying validated
+                procurement evidence.
               </p>
             </div>
           </div>
@@ -228,6 +230,7 @@ export function ExecutiveBenchmarkEngine({
     </ExecutivePanel>
   );
 }
+
 function BenchmarkDimensionCard({
   item,
   position,
@@ -245,11 +248,11 @@ function BenchmarkDimensionCard({
 
           <div className="min-w-0">
             <p className="text-[10px] font-black uppercase tracking-[0.16em] text-nexus-muted">
-              Benchmark dimension
+              Internal performance dimension
             </p>
 
             <p className="mt-1 break-words text-[10px] font-black uppercase tracking-[0.17em] text-blue-300 [overflow-wrap:anywhere]">
-              Enterprise comparison
+              Workspace-derived indicator
             </p>
           </div>
         </div>
@@ -265,7 +268,7 @@ function BenchmarkDimensionCard({
 
       <div className="mt-5 rounded-2xl border border-white/10 bg-black/10 p-4">
         <p className="text-[10px] font-black uppercase tracking-[0.16em] text-nexus-muted">
-          Benchmark score
+          Internal score
         </p>
 
         <div className="mt-2 flex min-w-0 items-end gap-2">
@@ -280,13 +283,13 @@ function BenchmarkDimensionCard({
       </div>
 
       <p className="mt-4 text-xs font-semibold leading-6 text-nexus-muted">
-        Comparative performance against the defined enterprise procurement peer
-        baseline.
+        Derived from validated internal procurement signals for the current
+        organization workspace.
       </p>
 
       <div className="mt-5 flex items-center justify-between gap-3 border-t border-white/10 pt-4">
         <p className="text-[10px] font-black uppercase tracking-[0.14em] text-nexus-muted">
-          Comparative intelligence
+          Internal intelligence
         </p>
 
         <p className="text-[10px] font-black uppercase tracking-[0.14em] text-blue-300">
@@ -339,13 +342,12 @@ function BenchmarkEmptyState() {
       </p>
 
       <p className="mt-3 text-base font-black text-nexus-white">
-        No benchmark dimensions are available
+        No internal performance dimensions are available
       </p>
 
       <p className="mx-auto mt-2 max-w-xl text-sm font-semibold leading-6 text-nexus-muted">
-        Comparative procurement benchmarks will appear when validated
-        enterprise performance signals and peer-position evidence are
-        available.
+        Internal performance indicators will appear when validated enterprise
+        operating signals are available for the current organization.
       </p>
     </div>
   );

@@ -4,6 +4,7 @@ import AIConfidenceEngine from "@/components/ai-confidence-engine";
 import { RfqDecisionReadiness } from "@/components/analytics/award-probability-forecast";
 import ExecutiveRiskCenter from "@/components/analytics/executive/executive-risk-center";
 import BoardReportGenerator from "@/components/board-report-generator";
+import BoardNarrativeGenerator from "@/components/ai-board-narrative-generator";
 import { EXECUTIVE_PAGE_CLASS } from "@/lib/design-system/executive-contract";
 import { buildDecisionSupportReadiness } from "@/lib/analytics/executive/decision-support-readiness";
 
@@ -127,6 +128,26 @@ export default function AnalyticsDecisionEvidenceVisualQaPage() {
           />
         </section>
 
+        <section aria-labelledby="narrative-ready-heading" className="space-y-5">
+          <h2 id="narrative-ready-heading" className="text-xl font-black text-white">
+            Narrative-ready evidence
+          </h2>
+          <BoardNarrativeGenerator
+            executiveBenchmarkStatus="Executive Ready"
+            executiveStatus="Strong"
+            boardHealthIndex={79}
+            enterpriseProcurementScore={82}
+            executiveReadinessScore={80}
+            procurementRiskIndex={42}
+            supplierEngagementScore={81}
+            benchmarkReadinessScore={76}
+            boardRecommendation="Maintain executive review while strengthening supplier participation and evidence coverage."
+            procurementMaturityScore={74}
+            decisionSupportReadinessScore={strongReadiness.score}
+            decisionSupportReadinessLabel={strongReadiness.label}
+          />
+        </section>
+
         <section aria-labelledby="insufficient-report-heading" className="space-y-5">
           <h2 id="insufficient-report-heading" className="text-xl font-black text-white">
             Insufficient evidence gating
@@ -145,6 +166,26 @@ export default function AnalyticsDecisionEvidenceVisualQaPage() {
             procurementEfficiencyScore={35}
             supplierEngagementScore={28}
             digitalMaturityScore={30}
+          />
+        </section>
+
+        <section aria-labelledby="narrative-limited-heading" className="space-y-5">
+          <h2 id="narrative-limited-heading" className="text-xl font-black text-white">
+            Narrative insufficient evidence gating
+          </h2>
+          <BoardNarrativeGenerator
+            executiveBenchmarkStatus="Insufficient Data"
+            executiveStatus="Developing"
+            boardHealthIndex={36}
+            enterpriseProcurementScore={41}
+            executiveReadinessScore={38}
+            procurementRiskIndex={71}
+            supplierEngagementScore={28}
+            benchmarkReadinessScore={31}
+            boardRecommendation="Strengthen procurement evidence before board-level action."
+            procurementMaturityScore={32}
+            decisionSupportReadinessScore={limitedReadiness.score}
+            decisionSupportReadinessLabel={limitedReadiness.label}
           />
         </section>
       </div>
