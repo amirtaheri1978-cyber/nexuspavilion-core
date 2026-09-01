@@ -51,7 +51,7 @@ body: JSON.stringify({ rfqId }),
 const data = await response.json();
 
 if (!response.ok) {
-setError(data.error || "Failed to generate AI advisor review.");
+setError(data.error || "Failed to generate procurement readiness review.");
 return;
 }
 
@@ -72,7 +72,7 @@ return (
 <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
 <div>
 <p className="text-xs font-black uppercase tracking-[0.3em] text-[#9BE8F8]">
-AI Procurement Advisor
+Procurement Readiness Review
 </p>
 
 <h2 className="mt-3 text-3xl font-black text-white">
@@ -91,7 +91,7 @@ onClick={generateReview}
 disabled={loading}
 className="rounded-full bg-gradient-to-r from-[#B9902F] via-[#C8A646] to-[#F5D77B] px-6 py-3 text-sm font-black text-slate-950 shadow-[0_18px_55px_rgba(200,166,70,0.22)] transition disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C8A646]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#07111F]"
 >
-{loading ? "Analyzing RFQ..." : "Run AI Advisor"}
+{loading ? "Reviewing RFQ..." : "Run Readiness Review"}
 </button>
 </div>
 
@@ -121,7 +121,7 @@ style={{ width: `${score}%` }}
 </div>
 
 <p className="mt-6 text-xs font-black uppercase tracking-[0.22em] text-slate-400">
-Advisor Status
+Review Status
 </p>
 
 <p className="mt-2 text-3xl font-black uppercase text-[#F5D77B]">
@@ -157,11 +157,11 @@ Executive Summary
 ) : (
 <div className="mt-8 rounded-[26px] border border-dashed border-white/10 bg-[#07111F]/70 p-10 text-center">
 <p className="text-xl font-black text-white">
-AI advisor has not reviewed this RFQ yet.
+A procurement readiness review has not been run for this RFQ yet.
 </p>
 
 <p className="mt-3 text-sm font-semibold leading-6 text-slate-400">
-Run the advisor to generate a readiness score, missing items, risk
+Run the review to generate a readiness score, missing items, risk
 level, and procurement recommendations.
 </p>
 </div>

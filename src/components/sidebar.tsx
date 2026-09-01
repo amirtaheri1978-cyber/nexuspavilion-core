@@ -288,18 +288,18 @@ export default function Sidebar() {
             </div>
 
             <p className="text-center text-sm font-black uppercase tracking-[0.08em] text-white">
-              NexusPavilion AI
+              NexusPavilion Intelligence
             </p>
 
             <p className="mt-1 text-center text-xs font-medium text-slate-400">
-              Your AI Procurement Advisor
+              Procurement Decision Support
             </p>
 
             <Link
               href="/analytics"
               className={`mt-4 flex min-h-11 items-center justify-center gap-2 rounded-[14px] border border-white/10 bg-[#07111F]/75 px-4 py-2.5 text-xs font-black text-white transition hover:border-[#2CC4E8]/30 hover:bg-[#2CC4E8]/10 ${EXECUTIVE_FOCUS_CYAN}`}
             >
-              Ask Nexus AI
+              Open Intelligence
               <span aria-hidden="true">→</span>
             </Link>
           </div>
