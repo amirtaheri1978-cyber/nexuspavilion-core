@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState, type ReactNode } from "react";
 import { useRFQDraftAutosave } from "@/hooks/use-rfq-draft-autosave";
+import { evaluateRfqRequirements } from "@/lib/procurement/rfq-requirements-completeness";
 type ProcurementScope =
 | "material"
 | "subcontractor"
@@ -295,34 +296,25 @@ SOURCING_METHODS,
 formData.sourcing_method
 )} · ${getSelectedLabel(CONTRACT_FRAMEWORKS, formData.contract_framework)}`;
 
-const requiredChecklist = [
-{
-label: "Clear RFQ title",
-complete: formData.title.trim().length > 2,
-},
-{
-label: "Scope of work summary",
-complete: formData.description.trim().length > 8,
-},
-{
-label: "Category and location",
-complete:
-formData.category.trim().length > 1 &&
-formData.location.trim().length > 1,
-},
-{
-label: "Submission deadline",
-complete: Boolean(formData.deadline),
-},
-{
-label: "Procurement strategy selected",
-complete: Boolean(
-formData.procurement_scope &&
-formData.sourcing_method &&
-formData.contract_framework
-),
-},
-];
+const rfqRequirements = useMemo(
+() =>
+evaluateRfqRequirements({
+title: formData.title,
+description: formData.description,
+category: formData.category,
+location: formData.location,
+deadline: formData.deadline,
+}),
+[
+formData.title,
+formData.description,
+formData.category,
+formData.location,
+formData.deadline,
+]
+);
+
+const requiredChecklist = rfqRequirements.signals;
 const recommendedChecklist = [
 {
 label: "Budget added",
@@ -348,25 +340,24 @@ Boolean(formData.substantial_completion_date),
 },
 ];
 
-const requiredReady = requiredChecklist.filter((item) => item.complete).length;
 const recommendedReady = recommendedChecklist.filter(
 (item) => item.complete
 ).length;
 
-const requiredScore = Math.round(
-(requiredReady / requiredChecklist.length) * 100
-);
+const requiredScore = rfqRequirements.completionPercent;
 
 const recommendedScore = Math.round(
 (recommendedReady / recommendedChecklist.length) * 100
 );
 
-const isFormReady =
-formData.title.trim().length > 2 &&
-formData.description.trim().length > 8 &&
-formData.category.trim().length > 1 &&
-formData.location.trim().length > 1 &&
-Boolean(formData.deadline);
+const isFormReady = rfqRequirements.status === "ready";
+const scopeSummaryReady =
+rfqRequirements.signals.find((signal) => signal.key === "description")
+?.complete ?? false;
+const submissionDeadlineReady =
+rfqRequirements.signals.find(
+(signal) => signal.key === "submission_deadline"
+)?.complete ?? false;
 
 function updateField(field: keyof RFQFormData, value: string | boolean) {
 setFormData((current) => ({
@@ -1178,9 +1169,11 @@ description="Required readiness controls whether the RFQ can be published."
 <div className="mt-6 space-y-3">
 {requiredChecklist.map((item) => (
 <ChecklistItem
-key={item.label}
+key={item.key}
 label={item.label}
 complete={item.complete}
+source={item.source}
+context={item.context}
 />
 ))}
 </div>
@@ -1235,11 +1228,11 @@ What Suppliers Will See
 <PreviewRow label="RFQ Summary" ready={isFormReady} />
 <PreviewRow
 label="Scope of Work"
-ready={formData.description.length > 8}
+ready={scopeSummaryReady}
 />
 <PreviewRow
 label="Submission Deadline"
-ready={Boolean(formData.deadline)}
+ready={submissionDeadlineReady}
 />
 <PreviewRow label="Procurement Strategy" ready />
 <PreviewRow label="Documents" ready={false} optional />
@@ -1482,16 +1475,34 @@ return (
 function ChecklistItem({
 label,
 complete,
+source,
+context,
 }: {
 label: string;
 complete: boolean;
+source?: string;
+context?: string;
 }) {
 return (
-<div className="flex items-center justify-between gap-4 rounded-[22px] border border-white/10 bg-[#061426]/70 px-4 py-3">
+<div className="flex items-start justify-between gap-4 rounded-[22px] border border-white/10 bg-[#061426]/70 px-4 py-3">
+<div className="min-w-0">
 <span className="text-sm font-bold text-slate-300">{label}</span>
 
+{!complete && source ? (
+<p className="mt-1 text-[10px] font-black uppercase tracking-[0.14em] text-[#9BE8F8]">
+Source: {source}
+</p>
+) : null}
+
+{!complete && context ? (
+<p className="mt-1 text-xs font-semibold leading-5 text-slate-500">
+{context}
+</p>
+) : null}
+</div>
+
 <span
-className={`rounded-full border px-3 py-1 text-xs font-black uppercase tracking-[0.12em] ${
+className={`shrink-0 rounded-full border px-3 py-1 text-xs font-black uppercase tracking-[0.12em] ${
 complete
 ? "border-emerald-300/20 bg-emerald-400/10 text-emerald-300"
 : "border-white/10 bg-white/[0.055] text-slate-400"

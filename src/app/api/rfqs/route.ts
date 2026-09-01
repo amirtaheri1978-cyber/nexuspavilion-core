@@ -6,6 +6,7 @@ import { getActiveMembershipForUserCompany } from "@/lib/auth/membership";
 import { resolveRfqDeadlineForStorage } from "@/lib/datetime/local-date-time-to-utc";
 import { joinPublicSitePath } from "@/lib/ops/public-site-url";
 import { canCreateCompanyRfq } from "@/lib/procurement/procurement-write-authorization";
+import { evaluateRfqRequirements } from "@/lib/procurement/rfq-requirements-completeness";
 import { recordTrustedProcurementActivity } from "@/lib/procurement/record-procurement-activity";
 import { createClient } from "@/lib/supabase/server";
 
@@ -155,9 +156,23 @@ const location = normalizeText(body.location);
 const budget = normalizeText(body.budget);
 const rawDeadline = normalizeText(body.deadline);
 
-if (!rawDeadline) {
+const requirementsCompleteness = evaluateRfqRequirements({
+title,
+description,
+category,
+location,
+deadline: rawDeadline,
+});
+
+if (requirementsCompleteness.status === "incomplete") {
 return NextResponse.json(
-{ error: "Submission closing date and time are required." },
+{
+error: "Required RFQ inputs are incomplete.",
+requirements: {
+status: requirementsCompleteness.status,
+missing: requirementsCompleteness.missingSignals,
+},
+},
 { status: 400 }
 );
 }
@@ -225,13 +240,6 @@ const procurementScope = normalizeProcurementScope(body.procurement_scope);
 const sourcingMethod = normalizeSourcingMethod(body.sourcing_method);
 const contractFramework = normalizeContractFramework(body.contract_framework);
 const bidModel = normalizeBidModel(body.bid_model);
-
-if (!title) {
-return NextResponse.json(
-{ error: "RFQ title is required." },
-{ status: 400 }
-);
-}
 
 const slug = createSlug(title);
 
