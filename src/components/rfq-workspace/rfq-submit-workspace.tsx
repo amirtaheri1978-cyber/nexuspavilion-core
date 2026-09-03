@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 
 import { ExecutiveBadge } from "@/components/executive/executive-badge";
 import { ExecutivePanel } from "@/components/executive/executive-panel";
+import { evaluateQuotationSubmissionCompleteness } from "@/lib/procurement/quotation-submission-completeness";
 import {
   EXECUTIVE_CTA_PRIMARY,
   EXECUTIVE_CTA_SECONDARY,
@@ -157,6 +158,15 @@ export function RfqSubmitWorkspace({ slug }: RfqSubmitWorkspaceProps) {
 
   const amountNumber = getAmountNumber(amount);
   const formattedAmount = formatAmount(amount);
+  const submissionCompleteness = useMemo(
+    () =>
+      evaluateQuotationSubmissionCompleteness({
+        amountNumber,
+        timeline,
+        message,
+      }),
+    [amountNumber, timeline, message],
+  );
 
   const submissionClosed = isSubmissionClosed(rfq);
   const deadlinePassed = hasDeadlinePassed(rfq?.deadline);
@@ -458,6 +468,73 @@ export function RfqSubmitWorkspace({ slug }: RfqSubmitWorkspaceProps) {
                 {error}
               </p>
             ) : null}
+
+            <section
+              className="min-w-0 border-t border-white/10 pt-6"
+              data-rfq-submit-completeness="true"
+              aria-labelledby="rfq-submit-completeness-heading"
+            >
+              <div className="flex min-w-0 flex-col gap-3 @sm:flex-row @sm:items-start @sm:justify-between">
+                <div className="min-w-0">
+                  <h3
+                    id="rfq-submit-completeness-heading"
+                    className="np-type-meta"
+                  >
+                    Submission completeness
+                  </h3>
+                  <p
+                    className="np-type-body mt-2 min-w-0 text-pretty"
+                    aria-live="polite"
+                    aria-atomic="true"
+                  >
+                    {submissionCompleteness.completedCount}/
+                    {submissionCompleteness.totalCount} required inputs complete.
+                  </p>
+                </div>
+                <ExecutiveBadge
+                  tone={
+                    submissionCompleteness.status === "complete"
+                      ? "success"
+                      : "warning"
+                  }
+                >
+                  {submissionCompleteness.status === "complete"
+                    ? "Inputs complete"
+                    : `${submissionCompleteness.missingSignals.length} required`}
+                </ExecutiveBadge>
+              </div>
+
+              <p className="np-type-meta mt-3 max-w-3xl min-w-0 text-pretty">
+                This check covers quotation inputs only. Access, deadline,
+                addenda acknowledgement, and duplicate-submission controls are
+                evaluated separately.
+              </p>
+
+              <ul className="mt-4 grid min-w-0 grid-cols-1 gap-3 @sm:grid-cols-3">
+                {submissionCompleteness.signals.map((signal) => (
+                  <li
+                    key={signal.key}
+                    className="min-w-0 rounded-executive border border-white/10 bg-white/[0.025] p-4"
+                  >
+                    <div className="flex min-w-0 flex-wrap items-start justify-between gap-3">
+                      <span className="min-w-0 text-pretty text-sm font-black text-nexus-white">
+                        {signal.label}
+                      </span>
+                      <ExecutiveBadge
+                        tone={signal.complete ? "success" : "warning"}
+                      >
+                        {signal.complete ? "Complete" : "Required"}
+                      </ExecutiveBadge>
+                    </div>
+                    <p className="np-type-meta mt-3 min-w-0 text-pretty">
+                      {signal.complete
+                        ? "Captured for this quotation."
+                        : signal.context}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            </section>
 
             <div
               className="min-w-0 border-t border-white/10 pt-6"

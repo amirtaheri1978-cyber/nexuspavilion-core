@@ -858,6 +858,54 @@ export default function RfqVisualQaPage() {
                 Preview error placement. Quote amount appears too low. Please
                 enter the full contract value.
               </p>
+              <section
+                className="min-w-0 border-t border-white/10 pt-6"
+                data-rfq-submit-completeness="true"
+                aria-labelledby="qa-submit-completeness-heading"
+              >
+                <div className="flex min-w-0 flex-col gap-3 @sm:flex-row @sm:items-start @sm:justify-between">
+                  <div className="min-w-0">
+                    <h3
+                      id="qa-submit-completeness-heading"
+                      className="np-type-meta"
+                    >
+                      Submission completeness
+                    </h3>
+                    <p className="np-type-body mt-2 min-w-0 text-pretty">
+                      3/3 required inputs complete.
+                    </p>
+                  </div>
+                  <ExecutiveBadge tone="success">Inputs complete</ExecutiveBadge>
+                </div>
+                <p className="np-type-meta mt-3 max-w-3xl min-w-0 text-pretty">
+                  This check covers quotation inputs only. Access, deadline,
+                  addenda acknowledgement, and duplicate-submission controls are
+                  evaluated separately.
+                </p>
+                <ul className="mt-4 grid min-w-0 grid-cols-1 gap-3 @sm:grid-cols-3">
+                  {[
+                    ["Quote amount", "Captured for this quotation."],
+                    ["Delivery timeline", "Captured for this quotation."],
+                    ["Proposal note", "Captured for this quotation."],
+                  ].map(([label, detail]) => (
+                    <li
+                      key={label}
+                      className="min-w-0 rounded-executive border border-white/10 bg-white/[0.025] p-4"
+                    >
+                      <div className="flex min-w-0 flex-wrap items-start justify-between gap-3">
+                        <span className="min-w-0 text-pretty text-sm font-black text-nexus-white">
+                          {label}
+                        </span>
+                        <ExecutiveBadge tone="success">Complete</ExecutiveBadge>
+                      </div>
+                      <p className="np-type-meta mt-3 min-w-0 text-pretty">
+                        {detail}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+
               <div
                 className="min-w-0 border-t border-white/10 pt-6"
                 data-rfq-submit-summary="true"

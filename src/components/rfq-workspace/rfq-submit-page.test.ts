@@ -90,6 +90,27 @@ describe("Task 24-RFQ-11 submit page presentation", () => {
     expect(visualQa).toContain("Preview only. This fixture does not submit.");
   });
 
+  it("surfaces proactive quotation completeness without changing submit governance", () => {
+    expect(submit).toContain(
+      'from "@/lib/procurement/quotation-submission-completeness"',
+    );
+    expect(submit).toContain("evaluateQuotationSubmissionCompleteness");
+    expect(submit).toContain('data-rfq-submit-completeness="true"');
+    expect(submit).toContain("Submission completeness");
+    expect(submit).toContain("required inputs complete.");
+    expect(submit).toContain("Inputs complete");
+    expect(submit).toContain("Required");
+    expect(submit).toContain(
+      "addenda acknowledgement, and duplicate-submission controls are",
+    );
+    expect(submit).toContain(
+      "disabled={loading || submissionClosed || rfqLoading}",
+    );
+    expect(visualQa).toContain('data-rfq-submit-completeness="true"');
+    expect(visualQa).toContain("3/3 required inputs complete.");
+    expect(visualQa).toContain("Inputs complete");
+  });
+
   it("does not alter frozen Task 23 or RFQ-01 through RFQ-10 regions", () => {
     expect(appShell).toContain("lg:ml-[330px]");
     expect(sidebar).toContain("w-[330px]");
