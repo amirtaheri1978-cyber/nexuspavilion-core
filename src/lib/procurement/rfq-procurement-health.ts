@@ -1,3 +1,5 @@
+import type { RfqDeadlineRiskStatus } from "@/lib/datetime/rfq-deadline-risk";
+
 export type RFQProcurementHealthBreakdownItem = {
   label: string;
   score: number;
@@ -35,6 +37,7 @@ type RFQProcurementHealthBreakdownInput = {
 type RFQExecutiveRiskMatrixInput = {
   isOpen: boolean;
   deadlinePassed: boolean;
+  deadlineRiskStatus: RfqDeadlineRiskStatus;
   quoteCount: number;
   documentCount: number;
   addendaCount: number;
@@ -220,6 +223,7 @@ export function getProcurementHealthBreakdown({
 export function getExecutiveRiskMatrix({
   isOpen,
   deadlinePassed,
+  deadlineRiskStatus,
   quoteCount,
   documentCount,
   addendaCount,
@@ -228,14 +232,28 @@ export function getExecutiveRiskMatrix({
   return [
     {
       label: "Schedule",
-      level: deadlinePassed
-        ? "Closed"
-        : isOpen
-          ? "Controlled"
-          : "Watch",
-      detail: deadlinePassed
-        ? "Submission window has closed"
-        : "Deadline is active and trackable",
+      level:
+        deadlinePassed || deadlineRiskStatus === "expired"
+          ? "High"
+          : deadlineRiskStatus === "urgent"
+            ? "High"
+            : deadlineRiskStatus === "approaching"
+              ? "Medium"
+              : !isOpen || deadlineRiskStatus === "unavailable"
+                ? "Medium"
+                : "Low",
+      detail:
+        deadlinePassed || deadlineRiskStatus === "expired"
+          ? "Submission window has closed"
+          : deadlineRiskStatus === "urgent"
+            ? "Submission deadline is within 72 hours"
+            : deadlineRiskStatus === "approaching"
+              ? "Submission deadline is within 7 days"
+              : deadlineRiskStatus === "unavailable"
+                ? "Submission deadline risk cannot be resolved"
+                : !isOpen
+                  ? "RFQ is not open for submissions"
+                  : "More than 7 days remain before submission closes",
     },
     {
       label: "Competition",

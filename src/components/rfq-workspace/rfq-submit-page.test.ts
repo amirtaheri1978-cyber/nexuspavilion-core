@@ -90,6 +90,31 @@ describe("Task 24-RFQ-11 submit page presentation", () => {
     expect(visualQa).toContain("Preview only. This fixture does not submit.");
   });
 
+  it("surfaces reactive RFQ deadline risk without changing submission enforcement", () => {
+    expect(submit).toContain(
+      'from "@/lib/datetime/format-rfq-deadline-display"',
+    );
+    expect(submit).toContain(
+      'from "@/lib/datetime/rfq-deadline-risk"',
+    );
+    expect(submit).toContain("deadline_timezone");
+    expect(submit).toContain("getRfqDeadlineRisk");
+    expect(submit).toContain(
+      "RFQ_DEADLINE_RISK_REFRESH_INTERVAL_MS = 60_000",
+    );
+    expect(submit).toContain(
+      'data-rfq-submit-deadline-risk={deadlineRisk.status}',
+    );
+    expect(submit).toContain("Deadline approaching");
+    expect(submit).toContain("Deadline urgent");
+    expect(submit).toContain("72 hours or less remain");
+    expect(submit).toContain(
+      "disabled={loading || submissionClosed || rfqLoading}",
+    );
+    expect(visualQa).toContain('data-rfq-submit-deadline-risk="urgent"');
+    expect(visualQa).toContain("Deadline urgent");
+  });
+
   it("surfaces proactive quotation completeness without changing submit governance", () => {
     expect(submit).toContain(
       'from "@/lib/procurement/quotation-submission-completeness"',

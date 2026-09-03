@@ -5,6 +5,11 @@ import { useRouter } from "next/navigation";
 
 import { ExecutiveBadge } from "@/components/executive/executive-badge";
 import { ExecutivePanel } from "@/components/executive/executive-panel";
+import { formatRfqDeadlineForDisplay } from "@/lib/datetime/format-rfq-deadline-display";
+import {
+  getRfqDeadlineRisk,
+  type RfqDeadlineRiskStatus,
+} from "@/lib/datetime/rfq-deadline-risk";
 import { evaluateQuotationSubmissionCompleteness } from "@/lib/procurement/quotation-submission-completeness";
 import {
   EXECUTIVE_CTA_PRIMARY,
@@ -17,6 +22,7 @@ import { createClient } from "@/lib/supabase/client";
 type RfqStatus = {
   title: string | null;
   deadline: string | null;
+  deadline_timezone: string | null;
   status: string | null;
   awarded_quote_id: string | null;
   awarded_at: string | null;
@@ -88,22 +94,57 @@ function hasDeadlinePassed(deadline: string | null | undefined) {
   return new Date().getTime() > deadlineDate.getTime();
 }
 
-function formatDeadline(deadline: string | null | undefined) {
-  if (!deadline) return "Not specified";
+type RfqDeadlineRiskPresentation = {
+  label: string;
+  detail: string;
+  tone: "success" | "warning" | "risk" | "neutral";
+};
 
-  const deadlineDate = new Date(deadline);
-
-  if (Number.isNaN(deadlineDate.getTime())) {
-    return deadline;
+function getDeadlineRiskPresentation(
+  status: RfqDeadlineRiskStatus,
+): RfqDeadlineRiskPresentation {
+  if (status === "expired") {
+    return {
+      label: "Deadline expired",
+      detail:
+        "The RFQ submission deadline has passed. Late quotations are rejected.",
+      tone: "risk",
+    };
   }
 
-  return deadlineDate.toLocaleString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  if (status === "urgent") {
+    return {
+      label: "Deadline urgent",
+      detail:
+        "72 hours or less remain before the RFQ submission deadline. Complete final commercial and governance checks now.",
+      tone: "risk",
+    };
+  }
+
+  if (status === "approaching") {
+    return {
+      label: "Deadline approaching",
+      detail:
+        "Seven days or less remain before the RFQ submission deadline. Confirm pricing, scope, addenda, and approval readiness.",
+      tone: "warning",
+    };
+  }
+
+  if (status === "open") {
+    return {
+      label: "Deadline risk low",
+      detail:
+        "More than seven days remain before the RFQ submission deadline.",
+      tone: "success",
+    };
+  }
+
+  return {
+    label: "Deadline risk unavailable",
+    detail:
+      "The RFQ deadline could not be resolved. Submission eligibility is still governed by the existing RFQ controls.",
+    tone: "neutral",
+  };
 }
 
 function isSubmissionClosed(rfq: RfqStatus | null) {
@@ -134,6 +175,8 @@ function toWorkspaceError(message: string) {
 const fieldClassName =
   "mt-3 min-h-14 min-w-0 w-full rounded-executive border border-white/10 bg-black/20 px-5 py-4 text-sm font-semibold text-white outline-none transition placeholder:text-nexus-text-muted focus-visible:ring-2 focus-visible:ring-[#2CC4E8]/40 focus-visible:ring-offset-2 focus-visible:ring-offset-[#07111F] disabled:cursor-not-allowed disabled:opacity-60";
 
+const RFQ_DEADLINE_RISK_REFRESH_INTERVAL_MS = 60_000;
+
 type RfqSubmitWorkspaceProps = {
   slug: string;
 };
@@ -155,6 +198,7 @@ export function RfqSubmitWorkspace({ slug }: RfqSubmitWorkspaceProps) {
   const submitLock = useRef(false);
   const [error, setError] = useState("");
   const [errorField, setErrorField] = useState<FieldKey | null>(null);
+  const [deadlineNow, setDeadlineNow] = useState(() => Date.now());
 
   const amountNumber = getAmountNumber(amount);
   const formattedAmount = formatAmount(amount);
@@ -170,6 +214,13 @@ export function RfqSubmitWorkspace({ slug }: RfqSubmitWorkspaceProps) {
 
   const submissionClosed = isSubmissionClosed(rfq);
   const deadlinePassed = hasDeadlinePassed(rfq?.deadline);
+  const deadlineRisk = useMemo(
+    () => getRfqDeadlineRisk(rfq?.deadline, deadlineNow),
+    [rfq?.deadline, deadlineNow],
+  );
+  const deadlineRiskPresentation = getDeadlineRiskPresentation(
+    deadlineRisk.status,
+  );
 
   const amountPreview =
     amountNumber > 0
@@ -181,12 +232,24 @@ export function RfqSubmitWorkspace({ slug }: RfqSubmitWorkspaceProps) {
       : `${currency} 0`;
 
   useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      setDeadlineNow(Date.now());
+    }, RFQ_DEADLINE_RISK_REFRESH_INTERVAL_MS);
+
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, []);
+
+  useEffect(() => {
     async function loadRfqStatus() {
       setRfqLoading(true);
 
       const { data } = await supabase
         .from("rfqs")
-        .select("title, deadline, status, awarded_quote_id, awarded_at")
+        .select(
+          "title, deadline, deadline_timezone, status, awarded_quote_id, awarded_at",
+        )
         .eq("slug", slug)
         .maybeSingle();
 
@@ -343,7 +406,10 @@ export function RfqSubmitWorkspace({ slug }: RfqSubmitWorkspaceProps) {
             <div className="min-w-0">
               <dt className="np-type-meta">Deadline</dt>
               <dd className="mt-2 min-w-0 text-pretty text-lg font-black text-nexus-white">
-                {formatDeadline(rfq?.deadline)}
+                {formatRfqDeadlineForDisplay(
+                  rfq?.deadline,
+                  rfq?.deadline_timezone,
+                )}
               </dd>
             </div>
             <div className="min-w-0">
@@ -353,6 +419,22 @@ export function RfqSubmitWorkspace({ slug }: RfqSubmitWorkspaceProps) {
               </dd>
             </div>
           </dl>
+
+          {!rfqLoading ? (
+            <div
+              className="mt-5 min-w-0 rounded-executive border border-white/10 bg-white/[0.025] p-5"
+              data-rfq-submit-deadline-risk={deadlineRisk.status}
+              role="status"
+              aria-live="polite"
+            >
+              <ExecutiveBadge tone={deadlineRiskPresentation.tone}>
+                {deadlineRiskPresentation.label}
+              </ExecutiveBadge>
+              <p className="np-type-body mt-3 min-w-0 max-w-3xl text-pretty">
+                {deadlineRiskPresentation.detail}
+              </p>
+            </div>
+          ) : null}
 
           {submissionClosed ? (
             <div className="mt-8 min-w-0 rounded-executive border border-red-400/20 bg-red-500/10 p-5">

@@ -22,6 +22,10 @@ const ranking = readSource(
   "src/components/executive/executive-opportunity-ranking.tsx",
 );
 const visualQa = readSource("src/app/dev/rfq-visual-qa/page.tsx");
+const procurementHealth = readSource(
+  "src/lib/procurement/rfq-procurement-health.ts",
+);
+const deadlineRisk = readSource("src/lib/datetime/rfq-deadline-risk.ts");
 
 describe("Task 24-RFQ-05 command center density closeout", () => {
   it("keeps command-center copy, destinations, and award distinction intact", () => {
@@ -44,6 +48,33 @@ describe("Task 24-RFQ-05 command center density closeout", () => {
     expect(detail).toContain("<RFQCommandCenter");
     expect(detail).toContain("getExecutiveBrief({");
     expect(detail).toContain("getNextBestAction({");
+  });
+
+  it("surfaces shared RFQ deadline risk without duplicating command-center architecture", () => {
+    expect(detail).toContain(
+      'from "@/lib/datetime/rfq-deadline-risk"',
+    );
+    expect(detail).toContain("getCurrentRfqDeadlineRisk(rfq.deadline)");
+
+    expect(detail).toContain("getRfqDeadlineRisk(deadline, new Date())");
+    expect(detail).toContain("deadlineRiskStatus: deadlineRisk.status");
+    expect(detail).toContain("value: deadlineMetric.value");
+    expect(detail).toContain(
+      "accentClassName: deadlineMetric.accentClassName",
+    );
+    expect(procurementHealth).toContain(
+      "Submission deadline is within 72 hours",
+    );
+    expect(procurementHealth).toContain(
+      "Submission deadline is within 7 days",
+    );
+    expect(deadlineRisk).toContain(
+      "RFQ_DEADLINE_APPROACHING_WINDOW_HOURS = 168",
+    );
+    expect(deadlineRisk).toContain(
+      "RFQ_DEADLINE_URGENT_WINDOW_HOURS = 72",
+    );
+    expect(visualQa).toContain("4 Days / Approaching");
   });
 
   it("does not force a two-column command center under the authenticated shell width", () => {

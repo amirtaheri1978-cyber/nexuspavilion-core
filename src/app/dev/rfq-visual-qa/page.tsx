@@ -266,9 +266,9 @@ export default function RfqVisualQaPage() {
             },
             {
               title: "Deadline",
-              value: "4 Days",
-              detail: "Closes Friday 18:00",
-              accentClassName: "text-nexus-cyan-bright",
+              value: "4 Days / Approaching",
+              detail: "September 7, 2026 at 06:00 PM America/Toronto",
+              accentClassName: "text-orange-300",
             },
             {
               title: "Commercial Status",
@@ -784,7 +784,7 @@ export default function RfqVisualQaPage() {
               <div className="min-w-0">
                 <dt className="np-type-meta">Deadline</dt>
                 <dd className="mt-2 min-w-0 text-pretty text-lg font-black text-nexus-white">
-                  August 21, 2026, 06:00 PM
+                  September 5, 2026 at 06:00 PM America/Toronto
                 </dd>
               </div>
               <div className="min-w-0">
@@ -794,6 +794,16 @@ export default function RfqVisualQaPage() {
                 </dd>
               </div>
             </dl>
+            <div
+              className="mt-5 min-w-0 rounded-executive border border-white/10 bg-white/[0.025] p-5"
+              data-rfq-submit-deadline-risk="urgent"
+            >
+              <ExecutiveBadge tone="risk">Deadline urgent</ExecutiveBadge>
+              <p className="np-type-body mt-3 min-w-0 max-w-3xl text-pretty">
+                72 hours or less remain before the RFQ submission deadline.
+                Complete final commercial and governance checks now.
+              </p>
+            </div>
             <div className="mt-8 min-w-0 rounded-executive border border-nexus-gold/20 bg-nexus-gold/[0.08] p-5">
               <ExecutiveBadge tone="warning">Confidential submission</ExecutiveBadge>
               <p className="np-type-body mt-3 min-w-0 text-pretty">

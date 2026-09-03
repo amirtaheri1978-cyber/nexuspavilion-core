@@ -30,6 +30,10 @@ import {
 } from "@/lib/procurement/rfq-procurement-health";
 import { evaluateRfqScopeReview } from "@/lib/procurement/rfq-scope-review";
 import { formatRfqDeadlineForDisplay as formatDateTime } from "@/lib/datetime/format-rfq-deadline-display";
+import {
+  getRfqDeadlineRisk,
+  type RfqDeadlineRiskStatus,
+} from "@/lib/datetime/rfq-deadline-risk";
 
 import {
   getCopilotSuggestions,
@@ -157,6 +161,56 @@ return Math.ceil(
 );
 }
 
+function getCurrentRfqDeadlineRisk(
+  deadline: string | null | undefined,
+) {
+  return getRfqDeadlineRisk(deadline, new Date());
+}
+function getDeadlineMetricPresentation(
+  status: RfqDeadlineRiskStatus,
+  daysUntilDeadline: number | null,
+) {
+  if (status === "unavailable") {
+    return {
+      value: "N/A",
+      accentClassName: "text-slate-300",
+    };
+  }
+
+  if (status === "expired") {
+    return {
+      value: "Closed",
+      accentClassName: "text-red-300",
+    };
+  }
+
+  const dayLabel =
+    daysUntilDeadline === null
+      ? "Open"
+      : daysUntilDeadline <= 0
+        ? "Due Today"
+        : `${daysUntilDeadline} Day${daysUntilDeadline === 1 ? "" : "s"}`;
+
+  if (status === "urgent") {
+    return {
+      value: `${dayLabel} / Urgent`,
+      accentClassName: "text-red-300",
+    };
+  }
+
+  if (status === "approaching") {
+    return {
+      value: `${dayLabel} / Approaching`,
+      accentClassName: "text-orange-300",
+    };
+  }
+
+  return {
+    value: dayLabel,
+    accentClassName: "text-cyan-300",
+  };
+}
+
 export default async function RFQDetailPage({ params }: PageProps) {
 const { slug } = await params;
 const supabase = await createClient();
@@ -212,6 +266,11 @@ const isOwner = participantRole === "issuer";
 const rfqStatus = String(rfq.status || "open");
 const deadlinePassed = hasDeadlinePassed(rfq.deadline);
 const daysUntilDeadline = getDaysUntilDeadline(rfq.deadline);
+const deadlineRisk = getCurrentRfqDeadlineRisk(rfq.deadline);
+const deadlineMetric = getDeadlineMetricPresentation(
+  deadlineRisk.status,
+  daysUntilDeadline,
+);
 const blindBiddingEnabled = shouldEnforceBlindBidding(rfq);
 const commercialEvaluationUnlocked =
 !blindBiddingEnabled || deadlinePassed;
@@ -468,6 +527,7 @@ if (canViewBuyerExecutiveIntelligence) {
   executiveRiskMatrix = getExecutiveRiskMatrix({
     isOpen,
     deadlinePassed,
+    deadlineRiskStatus: deadlineRisk.status,
     quoteCount,
     documentCount: rfqAttachments.length,
     addendaCount: rfqAddenda.length,
@@ -590,15 +650,9 @@ return (
     sharedMetrics: [
       {
         title: "Deadline",
-        value: deadlinePassed
-          ? "Closed"
-          : daysUntilDeadline === null
-            ? "N/A"
-            : daysUntilDeadline <= 0
-              ? "Due Today"
-              : `${daysUntilDeadline} Days`,
+        value: deadlineMetric.value,
         detail: formatDateTime(rfq.deadline, rfq.deadline_timezone),
-        accentClassName: "text-cyan-300",
+        accentClassName: deadlineMetric.accentClassName,
       },
       {
         title: isOwner ? "Commercial Status" : "Participation Status",
