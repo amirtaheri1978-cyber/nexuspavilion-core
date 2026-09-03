@@ -3,6 +3,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { formatRfqDeadlineForDisplay } from "@/lib/datetime/format-rfq-deadline-display";
+import {
+  getRfiDeadlineAwareness,
+  type RfiDeadlineAwareness,
+} from "@/lib/datetime/rfi-deadline-awareness";
 
 type PrivateRfi = {
   id: string;
@@ -32,11 +36,42 @@ function formatTimestamp(value: string | null) {
   }).format(new Date(value));
 }
 
-function isDeadlinePassed(deadline: string | null | undefined) {
-  if (!deadline) return true;
-  const parsed = new Date(deadline);
-  if (Number.isNaN(parsed.getTime())) return true;
-  return Date.now() > parsed.getTime();
+const RFI_DEADLINE_AWARENESS_REFRESH_INTERVAL_MS = 60_000;
+
+function getCurrentRfiDeadlineAwareness(
+  deadline: string | null | undefined,
+  now: number,
+) {
+  return getRfiDeadlineAwareness(deadline, now);
+}
+
+function getDeadlineAwarenessPresentation(
+  awareness: RfiDeadlineAwareness,
+) {
+  switch (awareness.status) {
+    case "approaching":
+      return {
+        label: "RFI window closes within 72 hours",
+        className:
+          "border-amber-300/25 bg-amber-400/10 text-amber-100",
+      };
+    case "expired":
+      return {
+        label: "RFI window closed",
+        className: "border-red-300/20 bg-red-400/10 text-red-200",
+      };
+    case "open":
+      return {
+        label: "RFI window open",
+        className:
+          "border-nexus-cyan/25 bg-nexus-cyan/10 text-nexus-cyan-bright",
+      };
+    default:
+      return {
+        label: "RFI deadline unavailable",
+        className: "border-white/10 bg-white/[0.055] text-nexus-muted",
+      };
+  }
 }
 
 export function RFQRfiWorkspace({
@@ -55,16 +90,30 @@ export function RFQRfiWorkspace({
   const [answeringId, setAnsweringId] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [deadlineNow, setDeadlineNow] = useState(() => Date.now());
 
-  const deadlineClosed = useMemo(
-    () => isDeadlinePassed(rfiDeadline),
-    [rfiDeadline],
+  const deadlineAwareness = useMemo(
+    () => getCurrentRfiDeadlineAwareness(rfiDeadline, deadlineNow),
+    [rfiDeadline, deadlineNow],
   );
+  const deadlineClosed = deadlineAwareness.isClosed;
+  const deadlinePresentation =
+    getDeadlineAwarenessPresentation(deadlineAwareness);
 
   const deadlineLabel = useMemo(
     () => formatRfqDeadlineForDisplay(rfiDeadline, rfiDeadlineTimezone),
     [rfiDeadline, rfiDeadlineTimezone],
   );
+
+  useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      setDeadlineNow(Date.now());
+    }, RFI_DEADLINE_AWARENESS_REFRESH_INTERVAL_MS);
+
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, []);
 
   const loadRfis = useCallback(async (options?: { showLoading?: boolean }) => {
     if (options?.showLoading) {
@@ -245,6 +294,14 @@ export function RFQRfiWorkspace({
           <p className="w-fit rounded-full border border-white/10 bg-white/[0.055] px-4 py-2 text-xs font-black text-nexus-muted">
             Deadline: {deadlineLabel}
           </p>
+          <p
+            className={`w-fit rounded-full border px-4 py-2 text-xs font-black ${deadlinePresentation.className}`}
+            data-rfq-rfi-deadline-status={deadlineAwareness.status}
+            role="status"
+            aria-live="polite"
+          >
+            {deadlinePresentation.label}
+          </p>
           <button
             type="button"
             onClick={() => void loadRfis({ showLoading: true })}
@@ -292,8 +349,9 @@ export function RFQRfiWorkspace({
 
           {deadlineClosed ? (
             <p className="mt-4 rounded-executive border border-amber-300/20 bg-amber-400/10 px-4 py-3 text-sm font-bold text-amber-100">
-              The RFI deadline has passed. New private inquiries cannot be
-              submitted.
+              {deadlineAwareness.status === "expired"
+                ? "The RFI deadline has passed. New private inquiries cannot be submitted."
+                : "The RFI deadline cannot be resolved. New private inquiries cannot be submitted."}
             </p>
           ) : (
             <>
