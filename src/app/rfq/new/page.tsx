@@ -4,8 +4,10 @@ import DeadlineField from "@/components/deadline-field";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState, type ReactNode } from "react";
+import { RFQScopeReview } from "@/components/rfq-workspace/rfq-scope-review";
 import { useRFQDraftAutosave } from "@/hooks/use-rfq-draft-autosave";
 import { evaluateRfqRequirements } from "@/lib/procurement/rfq-requirements-completeness";
+import { evaluateRfqScopeReview } from "@/lib/procurement/rfq-scope-review";
 type ProcurementScope =
 | "material"
 | "subcontractor"
@@ -311,6 +313,20 @@ formData.description,
 formData.category,
 formData.location,
 formData.deadline,
+]
+);
+
+const scopeReview = useMemo(
+() =>
+evaluateRfqScopeReview({
+description: formData.description,
+mobilizationDate: formData.mobilization_date,
+substantialCompletionDate: formData.substantial_completion_date,
+}),
+[
+formData.description,
+formData.mobilization_date,
+formData.substantial_completion_date,
 ]
 );
 
@@ -1178,6 +1194,8 @@ context={item.context}
 ))}
 </div>
 </ExecutivePanel>
+
+<RFQScopeReview review={scopeReview} />
 
 <ExecutivePanel
 eyebrow="Recommended Strength"

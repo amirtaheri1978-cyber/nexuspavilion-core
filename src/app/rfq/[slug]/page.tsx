@@ -28,6 +28,7 @@ import {
   getHealthTone,
   getProcurementHealthBreakdown,
 } from "@/lib/procurement/rfq-procurement-health";
+import { evaluateRfqScopeReview } from "@/lib/procurement/rfq-scope-review";
 import { formatRfqDeadlineForDisplay as formatDateTime } from "@/lib/datetime/format-rfq-deadline-display";
 
 import {
@@ -73,6 +74,7 @@ import { RFQExecutiveRiskMatrix } from "@/components/rfq-workspace/rfq-executive
 import { RFQExecutiveGuidance } from "@/components/rfq-workspace/rfq-executive-guidance";
 import { RFQExecutiveActions } from "@/components/rfq-workspace/rfq-executive-actions";
 import { RFQProcurementContext } from "@/components/rfq-workspace/rfq-procurement-context";
+import { RFQScopeReview } from "@/components/rfq-workspace/rfq-scope-review";
 import { RFQDocumentWorkspace } from "@/components/rfq-workspace/rfq-document-workspace";
 import { RFQQuoteWorkspace } from "@/components/rfq-workspace/rfq-quote-workspace";
 import { RFQRecommendedAwardPath } from "@/components/rfq-workspace/rfq-recommended-award-path";
@@ -102,6 +104,8 @@ deadline: string | null;
 deadline_timezone?: string | null;
 rfi_deadline?: string | null;
 rfi_deadline_timezone?: string | null;
+mobilization_date?: string | null;
+substantial_completion_date?: string | null;
 status: string | null;
 company_id: string | null;
 procurement_scope: ProcurementScope | null;
@@ -410,6 +414,18 @@ const canViewBuyerExecutiveIntelligence =
   canExposeRfqBuyerExecutiveIntelligence(capabilities);
 
 const canSubmitQuote = capabilities.canSubmitQuote;
+const scopeReview = canViewBuyerExecutiveIntelligence
+  ? evaluateRfqScopeReview({
+      description: rfq.description,
+      attachmentTypes: rfqAttachments.map((attachment) =>
+        typeof attachment?.attachment_type === "string"
+          ? attachment.attachment_type
+          : "",
+      ),
+      mobilizationDate: rfq.mobilization_date,
+      substantialCompletionDate: rfq.substantial_completion_date,
+    })
+  : null;
 
 let healthScore = 0;
 let healthBreakdown: ReturnType<typeof getProcurementHealthBreakdown> | null =
@@ -679,6 +695,12 @@ copilotSuggestions ? (
     blindBiddingEnabled={blindBiddingEnabled}
   />
 </div>
+
+{canViewBuyerExecutiveIntelligence && scopeReview ? (
+  <div className="np-region-major min-w-0">
+    <RFQScopeReview review={scopeReview} />
+  </div>
+) : null}
 
 {canViewBuyerExecutiveIntelligence &&
 executiveOpportunities &&
