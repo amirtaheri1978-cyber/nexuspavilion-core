@@ -8,6 +8,12 @@ import {
   EXECUTIVE_FOCUS_CYAN,
   EXECUTIVE_PAGE_CLASS,
 } from "@/lib/design-system/executive-contract";
+import {
+  classifyActivityView,
+  prioritizeAttentionRows,
+  resolveRfqSourceHref,
+  type ActivityView,
+} from "@/lib/procurement/activity-center-prioritization";
 import { createClient } from "@/lib/supabase/server";
 
 type Notification = {
@@ -18,30 +24,20 @@ type Notification = {
   is_read: boolean | null;
   created_at: string | null;
   company_id?: string | null;
+  source_rfq_id?: string | null;
 };
 
-type ActivityView = "attention" | "updates" | "history";
-
-const ATTENTION_TYPES = new Set([
-  "quote",
-  "rfi",
-  "rfi_response",
-  "addendum_action_required",
-]);
-
-const UPDATE_TYPES = new Set([
-  "rfq",
-  "invitation",
-  "addendum",
-  "addendum_acknowledgement",
-  "award",
-  "company",
-  "approved_vendor",
-  "supplier_compliance",
-]);
+type SourceRfq = {
+  id: string;
+  slug: string | null;
+};
 
 const VIEW_ITEMS: Array<{ id: ActivityView; label: string; href: string }> = [
-  { id: "attention", label: "Needs Attention", href: "/notifications?view=attention" },
+  {
+    id: "attention",
+    label: "Needs Attention",
+    href: "/notifications?view=attention",
+  },
   { id: "updates", label: "Updates", href: "/notifications?view=updates" },
   { id: "history", label: "History", href: "/notifications?view=history" },
 ];
@@ -51,25 +47,24 @@ function isInvitationNotification(type: string | null) {
   return value.includes("invite") || value.includes("invitation");
 }
 
-function resolveActivityView(value: string | string[] | undefined): ActivityView {
+function resolveActivityView(
+  value: string | string[] | undefined,
+): ActivityView {
   const raw = Array.isArray(value) ? value[0] : value;
   if (raw === "updates") return "updates";
   if (raw === "history") return "history";
   return "attention";
 }
 
-function classifyActivityView(type: string | null): ActivityView {
-  const value = String(type || "");
-  if (ATTENTION_TYPES.has(value)) return "attention";
-  if (UPDATE_TYPES.has(value)) return "updates";
-  return "history";
-}
-
 function getEnterpriseEventLabel(type: string | null) {
   const value = String(type || "");
-  if (value === "addendum_action_required") return "Addendum Acknowledgement Required";
+  if (value === "addendum_action_required") {
+    return "Addendum Acknowledgement Required";
+  }
   if (value === "rfi_response") return "RFI Response";
-  if (value === "addendum_acknowledgement") return "Addendum Acknowledgement";
+  if (value === "addendum_acknowledgement") {
+    return "Addendum Acknowledgement";
+  }
   if (value === "approved_vendor") return "Approved Vendor";
   if (value === "supplier_compliance") return "Supplier Compliance";
   if (value === "quote") return "Quote";
@@ -85,10 +80,12 @@ function getEnterpriseEventLabel(type: string | null) {
 function getEventTone(
   type: string | null,
 ): "warning" | "success" | "blue" | "neutral" {
+  const view = classifyActivityView(type);
   const value = String(type || "");
-  if (ATTENTION_TYPES.has(value)) return "warning";
+
+  if (view === "attention") return "warning";
   if (value === "award") return "success";
-  if (UPDATE_TYPES.has(value)) return "blue";
+  if (view === "updates") return "blue";
   return "neutral";
 }
 
@@ -137,13 +134,45 @@ export default async function NotificationsPage({
 
   const { data: notifications } = await supabase
     .from("notifications")
-    .select("id, title, message, type, is_read, created_at, company_id")
+    .select(
+      "id, title, message, type, is_read, created_at, company_id, source_rfq_id",
+    )
     .eq("company_id", profile.company_id)
     .order("created_at", { ascending: false });
 
   const notificationList = (notifications ?? []) as Notification[];
-  const attentionRows = notificationList.filter(
-    (notification) => classifyActivityView(notification.type) === "attention",
+
+  const sourceRfqIds = Array.from(
+    new Set(
+      notificationList
+        .map((notification) => notification.source_rfq_id)
+        .filter((sourceRfqId): sourceRfqId is string => Boolean(sourceRfqId)),
+    ),
+  );
+
+  const sourceRfqSlugById = new Map<string, string>();
+
+  if (sourceRfqIds.length > 0) {
+    const { data: sourceRfqs, error: sourceRfqError } = await supabase
+      .from("rfqs")
+      .select("id, slug")
+      .in("id", sourceRfqIds);
+
+    if (sourceRfqError) {
+      console.error("Activity Center RFQ source resolution failed:", sourceRfqError);
+    } else {
+      for (const sourceRfq of (sourceRfqs ?? []) as SourceRfq[]) {
+        if (sourceRfq.id && sourceRfq.slug) {
+          sourceRfqSlugById.set(sourceRfq.id, sourceRfq.slug);
+        }
+      }
+    }
+  }
+
+  const attentionRows = prioritizeAttentionRows(
+    notificationList.filter(
+      (notification) => classifyActivityView(notification.type) === "attention",
+    ),
   );
   const updateRows = notificationList.filter(
     (notification) => classifyActivityView(notification.type) === "updates",
@@ -222,7 +251,10 @@ export default async function NotificationsPage({
           </div>
         </ExecutivePanel>
 
-        <nav aria-label="Activity Center views" className="mt-6 flex flex-wrap gap-2">
+        <nav
+          aria-label="Activity Center views"
+          className="mt-6 flex flex-wrap gap-2"
+        >
           {VIEW_ITEMS.map((item) => {
             const selected = view === item.id;
             return (
@@ -242,7 +274,19 @@ export default async function NotificationsPage({
           })}
         </nav>
 
-        <ExecutivePanel className="mt-4 overflow-hidden" padding="none" variant="operational">
+        {view === "attention" ? (
+          <p className="mt-3 max-w-4xl text-xs font-semibold leading-6 text-slate-400">
+            Needs Attention is ordered by action obligation first and recency
+            second. RFQ source links appear only when the source can be resolved
+            through your current authorized RFQ access.
+          </p>
+        ) : null}
+
+        <ExecutivePanel
+          className="mt-4 overflow-hidden"
+          padding="none"
+          variant="operational"
+        >
           {visibleRows.length === 0 ? (
             <div className="px-6 py-12 sm:px-8">
               <p className="text-xs font-black uppercase tracking-[0.3em] text-[#C8A646]">
@@ -252,7 +296,9 @@ export default async function NotificationsPage({
                     ? "Updates"
                     : "History"}
               </p>
-              <p className="mt-4 text-2xl font-black text-white">{emptyCopy.title}</p>
+              <p className="mt-4 text-2xl font-black text-white">
+                {emptyCopy.title}
+              </p>
               <p className="mt-3 max-w-2xl text-sm font-semibold leading-7 text-slate-400">
                 {emptyCopy.body}
               </p>
@@ -270,6 +316,13 @@ export default async function NotificationsPage({
                   notification.type === "addendum_action_required"
                     ? "Acknowledgement Required"
                     : label;
+                const sourceHref = resolveRfqSourceHref(
+                  notification.source_rfq_id,
+                  sourceRfqSlugById,
+                );
+                const hasDeclaredRfqSource = Boolean(
+                  notification.source_rfq_id,
+                );
 
                 return (
                   <li key={notification.id} className="px-5 py-4 sm:px-6">
@@ -284,6 +337,23 @@ export default async function NotificationsPage({
                         <p className="mt-2 max-w-4xl text-sm font-semibold leading-6 text-slate-400">
                           {notification.message}
                         </p>
+
+                        {sourceHref ? (
+                          <div className="mt-3">
+                            <Link
+                              href={sourceHref}
+                              className={`inline-flex min-h-10 items-center rounded-xl border border-cyan-300/20 bg-cyan-300/[0.06] px-3 text-xs font-black text-cyan-100 transition-colors hover:bg-cyan-300/[0.1] ${EXECUTIVE_FOCUS_CYAN}`}
+                            >
+                              Source Â· Open RFQ Workspace
+                            </Link>
+                          </div>
+                        ) : hasDeclaredRfqSource ? (
+                          <p className="mt-3 text-xs font-bold text-slate-500">
+                            RFQ source is not available under the current
+                            workspace access.
+                          </p>
+                        ) : null}
+
                         <p className="mt-3 text-xs font-bold uppercase tracking-[0.16em] text-slate-400">
                           {formatNotificationDate(notification.created_at)}
                         </p>
