@@ -233,6 +233,23 @@ const visualQaDocuments = [
   },
 ];
 
+const visualQaDocumentRequirements = [
+  {
+    id: "req-drawing",
+    rfq_id: "visual-qa-rfq",
+    attachment_type: "drawing",
+    created_by: "visual-qa-buyer",
+    created_at: "2026-07-25T12:00:00.000Z",
+  },
+  {
+    id: "req-boq",
+    rfq_id: "visual-qa-rfq",
+    attachment_type: "boq",
+    created_by: "visual-qa-buyer",
+    created_at: "2026-07-25T12:00:00.000Z",
+  },
+];
+
 const opportunityIntelligence = buildRfqExecutiveOpportunityIntelligence({
   isOwner: true,
   potentialSavings: 40000,
@@ -665,6 +682,7 @@ export default function RfqVisualQaPage() {
             companyId="visual-qa-company"
             isOwner
             documents={visualQaDocuments}
+            documentRequirements={visualQaDocumentRequirements}
             addenda={visualQaAddenda}
             acknowledgements={[]}
           />
@@ -693,6 +711,7 @@ export default function RfqVisualQaPage() {
             companyId="visual-qa-company"
             isOwner={false}
             documents={visualQaDocuments}
+            documentRequirements={visualQaDocumentRequirements}
             addenda={visualQaAddenda}
             acknowledgements={visualQaAcknowledgements}
           />

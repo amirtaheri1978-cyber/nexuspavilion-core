@@ -7,7 +7,15 @@ import RFQAddendaManager from "@/components/rfq-addenda-manager";
 import RFQAddendumAcknowledgementCenter from "@/components/rfq-addendum-acknowledgement-center";
 import RFQDocumentLibrary from "@/components/rfq-document-library";
 import RFQDocumentUpload from "@/components/rfq-document-upload";
+import {
+  RFQDocumentRequirements,
+} from "@/components/rfq-workspace/rfq-document-requirements";
 import { RFQRfiWorkspace } from "@/components/rfq-workspace/rfq-rfi-workspace";
+import type { RfqAttachmentType } from "@/lib/procurement/rfq-attachment-types";
+import type {
+  RfqDocumentCoverageUnavailableReason,
+  RfqDocumentRequirementRecord,
+} from "@/lib/procurement/rfq-document-requirements";
 
 type RFQDocumentLibraryProps = ComponentProps<typeof RFQDocumentLibrary>;
 type RFQAddendaManagerProps = ComponentProps<typeof RFQAddendaManager>;
@@ -22,6 +30,8 @@ type RFQDocumentWorkspaceProps = {
   rfiDeadline?: string | null;
   rfiDeadlineTimezone?: string | null;
   documents: NonNullable<RFQDocumentLibraryProps["initialDocuments"]>;
+  documentRequirements?: RfqDocumentRequirementRecord[];
+  documentCoverageUnavailableReason?: RfqDocumentCoverageUnavailableReason | null;
   addenda: NonNullable<RFQAddendaManagerProps["initialAddenda"]>;
   acknowledgements: NonNullable<
     RFQAddendumAcknowledgementCenterProps["initialAcknowledgements"]
@@ -35,12 +45,26 @@ export function RFQDocumentWorkspace({
   rfiDeadline = null,
   rfiDeadlineTimezone = null,
   documents,
+  documentRequirements = [],
+  documentCoverageUnavailableReason = null,
   addenda,
   acknowledgements,
 }: RFQDocumentWorkspaceProps) {
   const participantRoleLabel = isOwner
     ? "Issuing Organization"
     : "Responding Organization";
+
+  function getInitialRequirementState(attachmentType: RfqAttachmentType) {
+    if (documentCoverageUnavailableReason === "requirements_query_failed") {
+      return "unavailable" as const;
+    }
+
+    return documentRequirements.some(
+      (requirement) => requirement.attachment_type === attachmentType,
+    )
+      ? ("required" as const)
+      : ("not_declared" as const);
+  }
 
   return (
     <ExecutivePanel
@@ -96,6 +120,14 @@ export function RFQDocumentWorkspace({
           </div>
         </div>
 
+        <RFQDocumentRequirements
+          rfqId={rfqId}
+          canManage={isOwner}
+          initialRequirements={documentRequirements}
+          initialDocuments={documents}
+          initialUnavailableReason={documentCoverageUnavailableReason}
+        />
+
         {isOwner && companyId ? (
           <section
             className="mt-8 min-w-0 border-t border-white/10 pt-8"
@@ -130,6 +162,7 @@ export function RFQDocumentWorkspace({
                 attachmentType="drawing"
                 title="Upload Drawings"
                 description="Architectural, engineering, shop drawing, or PDF drawing packages."
+                initialRequirementState={getInitialRequirementState("drawing")}
               />
 
               <RFQDocumentUpload
@@ -138,6 +171,9 @@ export function RFQDocumentWorkspace({
                 attachmentType="specification"
                 title="Upload Specifications"
                 description="Technical specifications, MasterFormat sections, product requirements, or scope documents."
+                initialRequirementState={getInitialRequirementState(
+                  "specification",
+                )}
               />
 
               <RFQDocumentUpload
@@ -146,6 +182,7 @@ export function RFQDocumentWorkspace({
                 attachmentType="boq"
                 title="Upload BOQ"
                 description="Bills of quantities, bid forms, Excel pricing schedules, or quantity takeoff documents."
+                initialRequirementState={getInitialRequirementState("boq")}
               />
 
               <RFQDocumentUpload
@@ -154,6 +191,7 @@ export function RFQDocumentWorkspace({
                 attachmentType="photo"
                 title="Upload Photos"
                 description="Site photographs, existing conditions, reference images, or project context records."
+                initialRequirementState={getInitialRequirementState("photo")}
               />
 
               <RFQDocumentUpload
@@ -162,6 +200,7 @@ export function RFQDocumentWorkspace({
                 attachmentType="addenda"
                 title="Upload Addenda"
                 description="Clarifications, revisions, bulletins, updated instructions, or formal addendum files."
+                initialRequirementState={getInitialRequirementState("addenda")}
               />
 
               <RFQDocumentUpload
@@ -170,6 +209,9 @@ export function RFQDocumentWorkspace({
                 attachmentType="supporting"
                 title="Upload Supporting Documents"
                 description="Schedules, reports, forms, calculations, compliance records, or other supporting files."
+                initialRequirementState={getInitialRequirementState(
+                  "supporting",
+                )}
               />
             </div>
           </section>

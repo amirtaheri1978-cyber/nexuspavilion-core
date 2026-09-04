@@ -1,17 +1,9 @@
 import { NextResponse } from "next/server";
 
 import { getActiveMembershipForUserCompany } from "@/lib/auth/membership";
+import { isRfqAttachmentType } from "@/lib/procurement/rfq-attachment-types";
 import { canCreateCompanyRfq } from "@/lib/procurement/procurement-write-authorization";
 import { createClient } from "@/lib/supabase/server";
-
-const VALID_ATTACHMENT_TYPES = [
-  "drawing",
-  "specification",
-  "boq",
-  "photo",
-  "addenda",
-  "supporting",
-];
 
 function normalizeText(value: unknown) {
   return String(value || "").trim();
@@ -20,11 +12,7 @@ function normalizeText(value: unknown) {
 function normalizeAttachmentType(value: unknown) {
   const normalized = normalizeText(value);
 
-  if (VALID_ATTACHMENT_TYPES.includes(normalized)) {
-    return normalized;
-  }
-
-  return "supporting";
+  return isRfqAttachmentType(normalized) ? normalized : "supporting";
 }
 
 export async function GET(request: Request) {

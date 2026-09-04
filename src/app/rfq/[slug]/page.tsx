@@ -284,6 +284,7 @@ const [
 quotesResult,
 issuerSubmissionCountResult,
 attachmentResult,
+documentRequirementResult,
 addendaResult,
 acknowledgementResult,
 aiReviewResult,
@@ -310,6 +311,11 @@ supabase
 .select("*")
 .eq("rfq_id", rfq.id)
 .order("created_at", { ascending: false }),
+supabase
+.from("rfq_document_requirements")
+.select("id, rfq_id, attachment_type, created_by, created_at")
+.eq("rfq_id", rfq.id)
+.order("created_at", { ascending: true }),
 supabase
 .from("rfq_addenda")
 .select("*")
@@ -340,6 +346,12 @@ const quoteCount = loadIssuerQuoteCount
   ? readQuoteSubmissionCount(issuerSubmissionCountResult.data)
   : quoteList.length;
 const rfqAttachments = attachmentResult.data ?? [];
+const rfqDocumentRequirements = documentRequirementResult.data ?? [];
+const documentCoverageUnavailableReason = documentRequirementResult.error
+  ? "requirements_query_failed"
+  : attachmentResult.error
+    ? "attachments_query_failed"
+    : null;
 const rfqAddenda = addendaResult.data ?? [];
 const rfqAcknowledgements = acknowledgementResult.data ?? [];
 const latestAiReview = aiReviewResult.data ?? null;
@@ -933,6 +945,8 @@ governance workflow.
   rfiDeadline={effectiveRfiDeadline}
   rfiDeadlineTimezone={effectiveRfiDeadlineTimezone}
   documents={rfqAttachments}
+  documentRequirements={rfqDocumentRequirements}
+  documentCoverageUnavailableReason={documentCoverageUnavailableReason}
   addenda={rfqAddenda}
   acknowledgements={rfqAcknowledgements}
 />

@@ -2,6 +2,12 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 
+import {
+  RFQ_ATTACHMENT_TYPE_FOLDER_LABELS,
+  RFQ_ATTACHMENT_TYPE_LABELS,
+  RFQ_ATTACHMENT_TYPES,
+  isRfqAttachmentType,
+} from "@/lib/procurement/rfq-attachment-types";
 import { createClient } from "@/lib/supabase/client";
 
 export type RFQAttachment = {
@@ -20,14 +26,10 @@ type RFQDocumentLibraryProps = {
   canManage?: boolean;
 };
 
-const DOCUMENT_FOLDERS = [
-  { key: "drawing", title: "Drawings" },
-  { key: "specification", title: "Specifications" },
-  { key: "boq", title: "BOQ / Bid Forms" },
-  { key: "photo", title: "Photos" },
-  { key: "addenda", title: "Addenda" },
-  { key: "supporting", title: "Supporting Documents" },
-];
+const DOCUMENT_FOLDERS = RFQ_ATTACHMENT_TYPES.map((key) => ({
+  key,
+  title: RFQ_ATTACHMENT_TYPE_FOLDER_LABELS[key],
+}));
 
 const SIGNED_URL_TTL_SECONDS = 60 * 5;
 
@@ -69,12 +71,9 @@ function getFileIcon(fileName: string) {
 }
 
 function getAttachmentLabel(type: string) {
-  if (type === "drawing") return "Drawing";
-  if (type === "specification") return "Specification";
-  if (type === "boq") return "BOQ";
-  if (type === "photo") return "Photo";
-  if (type === "addenda") return "Addenda";
-  return "Supporting";
+  return isRfqAttachmentType(type)
+    ? RFQ_ATTACHMENT_TYPE_LABELS[type]
+    : "Supporting";
 }
 
 export default function RFQDocumentLibrary({
@@ -217,6 +216,7 @@ export default function RFQDocumentLibrary({
         current.filter((item) => item.id !== document.id),
       );
       setDeletingId("");
+      window.dispatchEvent(new CustomEvent("rfq-documents-updated"));
     },
     [canManage, supabase],
   );

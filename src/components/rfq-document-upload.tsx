@@ -1,23 +1,26 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
+import { RFQ_DOCUMENT_REQUIREMENTS_UPDATED_EVENT } from "@/components/rfq-workspace/rfq-document-requirements";
+import type { RfqAttachmentType } from "@/lib/procurement/rfq-attachment-types";
 import { createClient } from "@/lib/supabase/client";
 
-type AttachmentType =
-  | "drawing"
-  | "specification"
-  | "boq"
-  | "photo"
-  | "addenda"
-  | "supporting";
+type RequirementDeclarationState = "required" | "not_declared" | "unavailable";
 
 type RFQDocumentUploadProps = {
   rfqId: string;
   companyId: string;
-  attachmentType: AttachmentType;
+  attachmentType: RfqAttachmentType;
   title: string;
   description: string;
+  initialRequirementState?: RequirementDeclarationState;
+};
+
+type RequirementUpdatedEventDetail = {
+  rfqId?: string;
+  attachmentType?: string;
+  required?: boolean;
 };
 
 function formatFileSize(bytes: number) {
@@ -26,12 +29,36 @@ function formatFileSize(bytes: number) {
   return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
 }
 
+function getRequirementBadgePresentation(
+  state: RequirementDeclarationState,
+) {
+  if (state === "required") {
+    return {
+      label: "Required",
+      className: "border-[#C8A646]/25 bg-[#C8A646]/10 text-[#F5D77B]",
+    };
+  }
+
+  if (state === "unavailable") {
+    return {
+      label: "Requirement Status Unavailable",
+      className: "border-amber-300/20 bg-amber-400/10 text-amber-200",
+    };
+  }
+
+  return {
+    label: "Not Declared as Required",
+    className: "border-white/10 bg-white/[0.055] text-slate-400",
+  };
+}
+
 export default function RFQDocumentUpload({
   rfqId,
   companyId,
   attachmentType,
   title,
   description,
+  initialRequirementState = "not_declared",
 }: RFQDocumentUploadProps) {
   const supabase = createClient();
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -42,6 +69,36 @@ export default function RFQDocumentUpload({
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [requirementState, setRequirementState] =
+    useState<RequirementDeclarationState>(initialRequirementState);
+
+  useEffect(() => {
+    function handleRequirementUpdated(event: Event) {
+      const detail = (event as CustomEvent<RequirementUpdatedEventDetail>).detail;
+
+      if (
+        detail?.rfqId !== rfqId ||
+        detail?.attachmentType !== attachmentType ||
+        typeof detail.required !== "boolean"
+      ) {
+        return;
+      }
+
+      setRequirementState(detail.required ? "required" : "not_declared");
+    }
+
+    window.addEventListener(
+      RFQ_DOCUMENT_REQUIREMENTS_UPDATED_EVENT,
+      handleRequirementUpdated,
+    );
+
+    return () => {
+      window.removeEventListener(
+        RFQ_DOCUMENT_REQUIREMENTS_UPDATED_EVENT,
+        handleRequirementUpdated,
+      );
+    };
+  }, [attachmentType, rfqId]);
 
   function updateSelectedFiles(files: FileList | null) {
     if (!files || files.length === 0) return;
@@ -143,6 +200,8 @@ export default function RFQDocumentUpload({
     }
   }
 
+  const requirementBadge = getRequirementBadgePresentation(requirementState);
+
   return (
     <div className="min-w-0 @container rounded-executive border border-white/10 bg-black/20 p-5">
       <div className="flex min-w-0 flex-col gap-3 @sm:flex-row @sm:items-start @sm:justify-between">
@@ -156,8 +215,10 @@ export default function RFQDocumentUpload({
           </p>
         </div>
 
-        <span className="w-fit shrink-0 rounded-full border border-[#2CC4E8]/25 bg-[#2CC4E8]/10 px-3 py-1 text-xs font-black uppercase tracking-[0.14em] text-[#9BE8F8]">
-          Optional
+        <span
+          className={`w-fit shrink-0 rounded-full border px-3 py-1 text-xs font-black uppercase tracking-[0.12em] ${requirementBadge.className}`}
+        >
+          {requirementBadge.label}
         </span>
       </div>
 
