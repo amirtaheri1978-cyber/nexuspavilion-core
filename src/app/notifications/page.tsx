@@ -344,7 +344,7 @@ export default async function NotificationsPage({
                               href={sourceHref}
                               className={`inline-flex min-h-10 items-center rounded-xl border border-cyan-300/20 bg-cyan-300/[0.06] px-3 text-xs font-black text-cyan-100 transition-colors hover:bg-cyan-300/[0.1] ${EXECUTIVE_FOCUS_CYAN}`}
                             >
-                              Source Â· Open RFQ Workspace
+                              Source &middot; Open RFQ Workspace
                             </Link>
                           </div>
                         ) : hasDeclaredRfqSource ? (
