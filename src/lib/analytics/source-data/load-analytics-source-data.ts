@@ -1,3 +1,4 @@
+import { getActiveMembershipForUserCompany } from "@/lib/auth/membership";
 import { createClient } from "@/lib/supabase/server";
 import type { AnalyticsRFQ } from "@/lib/analytics/procurement-utils";
 
@@ -34,7 +35,16 @@ export async function loadAnalyticsSourceData(): Promise<AnalyticsSourceData> {
     .eq("id", user?.id)
     .single();
 
-  const companyId = profile?.company_id ?? null;
+  const activeMembership =
+    user && profile?.company_id
+      ? await getActiveMembershipForUserCompany(
+          supabase,
+          user.id,
+          profile.company_id,
+        )
+      : null;
+
+  const companyId = activeMembership?.companyId ?? null;
 
   const { data: rfqs } = companyId
     ? await supabase

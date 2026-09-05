@@ -3,6 +3,7 @@ import { SupplierCommandCenter } from "@/components/vendor-workspace/supplier-co
 import { SupplierDecisionSidebar } from "@/components/vendor-workspace/supplier-decision-sidebar";
 import { SupplierOpportunityPipeline } from "@/components/vendor-workspace/supplier-opportunity-pipeline";
 import { SupplierScorecard } from "@/components/vendor-workspace/supplier-scorecard";
+import { getActiveMembershipForUserCompany } from "@/lib/auth/membership";
 import { createClient } from "@/lib/supabase/server";
 
 type RFQ = {
@@ -83,7 +84,16 @@ const { data: profile } = user
 .single()
 : { data: null };
 
-const companyId = profile?.company_id;
+const activeMembership =
+  user && profile?.company_id
+    ? await getActiveMembershipForUserCompany(
+        supabase,
+        user.id,
+        profile.company_id,
+      )
+    : null;
+
+const companyId = activeMembership?.companyId ?? null;
 
 const { data: quotes } = companyId
   ? await supabase

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
+import { getActiveMembershipForUserCompany } from "@/lib/auth/membership";
 import { createClient } from "@/lib/supabase/server";
 import {
   APPROVED_VENDOR_DOMAIN_AVAILABLE,
@@ -88,6 +89,18 @@ if (!profile?.company_id) {
 redirect("/create-company");
 }
 
+const activeMembership = await getActiveMembershipForUserCompany(
+supabase,
+user.id,
+profile.company_id,
+);
+
+if (!activeMembership) {
+redirect("/analytics");
+}
+
+const companyId = activeMembership.companyId;
+
 const { data: approvedVendorsData } = APPROVED_VENDOR_DOMAIN_AVAILABLE
 ? await supabase
 .from("approved_vendors")
@@ -109,7 +122,7 @@ status
 )
 `
 )
-.eq("buyer_company_id", profile.company_id)
+.eq("buyer_company_id", companyId)
 .order("created_at", { ascending: false })
 : { data: [] as ApprovedVendor[] };
 
@@ -119,7 +132,7 @@ const { data: complianceData } = SUPPLIER_COMPLIANCE_DOMAIN_AVAILABLE
 .select(
 "id, vendor_company_id, insurance_status, insurance_expiry, certificate_status, certificate_expiry, license_status, license_expiry, tax_status, compliance_score, overall_status"
 )
-.eq("buyer_company_id", profile.company_id)
+.eq("buyer_company_id", companyId)
 : { data: [] as Compliance[] };
 
 const vendorCompanyIds = approvedVendorsData
