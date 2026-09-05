@@ -8,10 +8,6 @@ export type SupplierQuotePerformance = {
   awarded_at: string | null;
 };
 
-export type SupplierComplianceSignal = {
-  compliance_score: number | null;
-};
-
 export type SupplierHistorySnapshot = {
   supplierCompanyId: string;
   submittedQuoteCount: number;
@@ -81,61 +77,10 @@ export function getWinRate(
   );
 }
 
-export function getSupplierIntelligenceScore({
-  compliance,
-  quotes,
-}: {
-  compliance: SupplierComplianceSignal | null;
-  quotes: SupplierQuotePerformance[];
-}) {
-  const complianceScore = clampScore(
-    toFiniteNumber(compliance?.compliance_score),
-  );
-
-  const quoteCount = quotes.length;
-  const awardCount = getAwardedQuotes(quotes).length;
-
-  const participationScore = Math.min(
-    100,
-    quoteCount * 12,
-  );
-
-  const winRateScore =
-    quoteCount > 0
-      ? (awardCount / quoteCount) * 100
-      : 0;
-
-  return clampScore(
-    complianceScore * 0.45 +
-      participationScore * 0.25 +
-      winRateScore * 0.3,
-  );
-}
-
-export function getSupplierIntelligenceRank(
-  score: number,
-) {
-  const normalizedScore = clampScore(score);
-
-  if (normalizedScore >= 90) {
-    return "Strategic Supplier";
-  }
-
-  if (normalizedScore >= 75) {
-    return "Preferred Supplier";
-  }
-
-  if (normalizedScore >= 60) {
-    return "Qualified Supplier";
-  }
-
-  if (normalizedScore >= 35) {
-    return "Developing Supplier";
-  }
-
-  return "Unqualified / Review Required";
-}
-
+/**
+ * Buyer-scoped historical participation evidence used by RFQ recommendation
+ * inputs. Not a universal supplier trust classification.
+ */
 export function getPerformanceScore(
   quotes: SupplierQuotePerformance[],
 ) {
@@ -150,28 +95,6 @@ export function getPerformanceScore(
       winRate * 0.2 +
       Math.min(revenue / 50000, 15),
   );
-}
-
-export function getPerformanceRank(score: number) {
-  const normalizedScore = clampScore(score);
-
-  if (normalizedScore >= 85) {
-    return "Excellent";
-  }
-
-  if (normalizedScore >= 70) {
-    return "Strong";
-  }
-
-  if (normalizedScore >= 50) {
-    return "Reliable";
-  }
-
-  if (normalizedScore >= 30) {
-    return "Developing";
-  }
-
-  return "Limited Data";
 }
 
 export function buildSupplierHistorySnapshots(
@@ -211,8 +134,7 @@ export function buildSupplierHistorySnapshots(
         totalAwardedValue:
           getAwardedRevenue(supplierQuotes),
         winRate: getWinRate(supplierQuotes),
-        performanceScore:
-          getPerformanceScore(supplierQuotes),
+        performanceScore: getPerformanceScore(supplierQuotes),
       };
     },
   );

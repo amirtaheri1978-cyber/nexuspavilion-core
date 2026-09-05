@@ -88,8 +88,6 @@ describe("supplier intelligence history", () => {
       totalAwardedValue: 120_000,
       winRate: 50,
     });
-
-    expect(supplierOne?.performanceScore).toBeGreaterThan(0);
   });
 
   it("ignores quote rows without verified supplier company identity", () => {

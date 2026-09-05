@@ -70,9 +70,9 @@ contractFrameworkLabels: Record<string, string>;
 categoryIntelligence: CategoryIntelligenceItem[];
 
 portfolioHealthIndex: number;
-strategicSuppliers: number;
-preferredSuppliers: number;
-highRiskSuppliers: number;
+suppliersWithAwardHistory: number;
+suppliersWithMultipleAwards: number;
+suppliersWithLimitedQuoteHistory: number;
 supplierDiversificationScore: number;
 portfolioStatus: string;
 portfolioRecommendations: string[];
@@ -93,9 +93,9 @@ sourcingMethodLabels,
 contractFrameworkLabels,
 categoryIntelligence,
 portfolioHealthIndex,
-strategicSuppliers,
-preferredSuppliers,
-highRiskSuppliers,
+suppliersWithAwardHistory,
+suppliersWithMultipleAwards,
+suppliersWithLimitedQuoteHistory,
 supplierDiversificationScore,
 portfolioStatus,
 portfolioRecommendations,
@@ -128,9 +128,9 @@ contractFrameworkLabels={contractFrameworkLabels}
 
 <SupplierPortfolioIntelligence
 portfolioHealthIndex={portfolioHealthIndex}
-strategicSuppliers={strategicSuppliers}
-preferredSuppliers={preferredSuppliers}
-highRiskSuppliers={highRiskSuppliers}
+suppliersWithAwardHistory={suppliersWithAwardHistory}
+suppliersWithMultipleAwards={suppliersWithMultipleAwards}
+suppliersWithLimitedQuoteHistory={suppliersWithLimitedQuoteHistory}
 supplierDiversificationScore={supplierDiversificationScore}
 portfolioStatus={portfolioStatus}
 portfolioRecommendations={portfolioRecommendations}

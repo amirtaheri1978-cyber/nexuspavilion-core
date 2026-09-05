@@ -3,9 +3,9 @@ import { ExecutivePanel } from "@/components/executive/executive-panel";
 
 type SupplierPortfolioIntelligenceProps = {
   portfolioHealthIndex: number;
-  strategicSuppliers: number;
-  preferredSuppliers: number;
-  highRiskSuppliers: number;
+  suppliersWithAwardHistory: number;
+  suppliersWithMultipleAwards: number;
+  suppliersWithLimitedQuoteHistory: number;
   supplierDiversificationScore: number;
   portfolioStatus: string;
   portfolioRecommendations: string[];
@@ -13,9 +13,9 @@ type SupplierPortfolioIntelligenceProps = {
 
 export function SupplierPortfolioIntelligence({
   portfolioHealthIndex,
-  strategicSuppliers,
-  preferredSuppliers,
-  highRiskSuppliers,
+  suppliersWithAwardHistory,
+  suppliersWithMultipleAwards,
+  suppliersWithLimitedQuoteHistory,
   supplierDiversificationScore,
   portfolioStatus,
   portfolioRecommendations,
@@ -31,7 +31,7 @@ export function SupplierPortfolioIntelligence({
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-3">
             <p className="text-[10px] font-black uppercase tracking-[0.28em] text-nexus-gold sm:text-xs">
-              Supplier Portfolio Intelligence
+              Supplier Portfolio Evidence
             </p>
 
             <span
@@ -40,7 +40,7 @@ export function SupplierPortfolioIntelligence({
             />
 
             <p className="text-[10px] font-black uppercase tracking-[0.18em] text-nexus-muted">
-              Supply base resilience
+              Supply-base coverage
             </p>
           </div>
 
@@ -48,20 +48,20 @@ export function SupplierPortfolioIntelligence({
             id="supplier-portfolio-intelligence-heading"
             className="mt-4 max-w-4xl text-3xl font-black leading-[1.08] tracking-tight text-nexus-white sm:text-4xl lg:text-5xl"
           >
-            Supplier Portfolio Health
+            Supplier Portfolio Coverage
           </h2>
 
           <p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-nexus-muted sm:text-base">
-            Executive assessment of supplier coverage, preferred-source depth,
-            portfolio risk exposure, and diversification strength across the
-            active procurement network.
+            Factual assessment of supplier participation, award-history depth,
+            limited-history concentration, and diversification coverage across
+            the active procurement network. Coverage is not a trust score.
           </p>
         </div>
 
         <div className="flex min-w-[190px] items-center justify-between gap-5 rounded-2xl border border-nexus-gold/15 bg-nexus-gold/[0.045] px-5 py-4 xl:flex-col xl:items-end xl:gap-1">
           <div className="min-w-0">
             <p className="text-[10px] font-black uppercase tracking-[0.18em] text-nexus-muted xl:text-right">
-              Portfolio health index
+              Portfolio coverage index
             </p>
 
             <p className="mt-1 text-xs font-semibold text-nexus-muted xl:text-right">
@@ -82,61 +82,61 @@ export function SupplierPortfolioIntelligence({
         <div className="flex flex-col gap-3 border-b border-white/10 pb-5 sm:flex-row sm:items-end sm:justify-between">
           <div className="min-w-0">
             <p className="text-[10px] font-black uppercase tracking-[0.22em] text-nexus-gold">
-              Portfolio control signals
+              Portfolio evidence signals
             </p>
 
             <h3
               id="supplier-portfolio-signals-heading"
               className="mt-2 text-lg font-black tracking-tight text-nexus-white sm:text-xl"
             >
-              Coverage, Risk, and Diversification
+              Coverage, History Depth, and Diversification
             </h3>
           </div>
 
           <p className="max-w-xl text-xs font-semibold leading-5 text-nexus-muted sm:text-right">
-            Current supplier-base indicators supporting executive assessment
-            of resilience, concentration, and sourcing continuity.
+            Supplier-base indicators supporting executive review of
+            participation breadth and award-history depth.
           </p>
         </div>
 
         <div className="mt-5 grid min-w-0 gap-4 sm:grid-cols-2 xl:grid-cols-5">
           <ExecutiveMetricCard
-            label="Portfolio Health"
+            label="Portfolio Coverage"
             value={`${portfolioHealthIndex}/100`}
-            insight="Composite internal assessment of supplier-base strength and resilience."
-            impact="Internal portfolio health signal"
+            insight="Internal coverage signal from participation depth and recorded commercial history."
+            impact="Supply-base coverage signal"
             tone="blue"
           />
 
           <ExecutiveMetricCard
-            label="Strategic Suppliers"
-            value={strategicSuppliers.toString()}
-            insight="Suppliers identified as strategically important to procurement continuity."
-            impact="Strategic supply coverage"
+            label="Award History"
+            value={suppliersWithAwardHistory.toString()}
+            insight="Suppliers with at least one recorded award in the current portfolio."
+            impact="Award-history coverage"
             tone="gold"
           />
 
           <ExecutiveMetricCard
-            label="Preferred Suppliers"
-            value={preferredSuppliers.toString()}
-            insight="Suppliers currently positioned within the preferred sourcing base."
-            impact="Preferred-source depth"
+            label="Multiple Awards"
+            value={suppliersWithMultipleAwards.toString()}
+            insight="Suppliers with more than one recorded award across the portfolio."
+            impact="Repeat award depth"
             tone="blue"
           />
 
           <ExecutiveMetricCard
-            label="High-Risk Suppliers"
-            value={highRiskSuppliers.toString()}
-            insight="Suppliers currently identified with elevated portfolio risk exposure."
-            impact="Executive risk attention"
+            label="Limited Quote History"
+            value={suppliersWithLimitedQuoteHistory.toString()}
+            insight="Suppliers with fewer than three recorded quotations."
+            impact="History-depth attention"
             tone="gold"
           />
 
           <ExecutiveMetricCard
             label="Diversification"
             value={`${supplierDiversificationScore}/100`}
-            insight="Assessment of supplier distribution and concentration across the portfolio."
-            impact="Supply-base resilience signal"
+            insight="Supply-base participation coverage across the active supplier set. Not a trustworthiness score."
+            impact="Participation coverage signal"
             tone="blue"
           />
         </div>
@@ -160,8 +160,8 @@ export function SupplierPortfolioIntelligence({
             </h3>
 
             <p className="mt-3 text-xs font-semibold leading-5 text-nexus-muted">
-              Consolidated interpretation of supplier coverage, concentration,
-              risk exposure, and diversification quality.
+              Consolidated interpretation of supplier participation,
+              award-history depth, and diversification coverage.
             </p>
           </div>
 
@@ -177,27 +177,27 @@ export function SupplierPortfolioIntelligence({
 
           <div className="mt-5 grid min-w-0 gap-3">
             <PortfolioAssessmentSignal
-              label="Strategic coverage"
-              value={strategicSuppliers.toString()}
-              description="Suppliers positioned as strategically important to procurement continuity."
+              label="Award-history coverage"
+              value={suppliersWithAwardHistory.toString()}
+              description="Suppliers with recorded award history in the current portfolio."
             />
 
             <PortfolioAssessmentSignal
-              label="Preferred-source depth"
-              value={preferredSuppliers.toString()}
-              description="Suppliers currently included within the preferred sourcing base."
+              label="Repeat award depth"
+              value={suppliersWithMultipleAwards.toString()}
+              description="Suppliers with multiple recorded awards."
             />
 
             <PortfolioAssessmentSignal
-              label="Elevated supplier risk"
-              value={highRiskSuppliers.toString()}
-              description="Suppliers requiring heightened monitoring or executive attention."
+              label="Limited quote history"
+              value={suppliersWithLimitedQuoteHistory.toString()}
+              description="Suppliers with limited quotation participation."
             />
 
             <PortfolioAssessmentSignal
-              label="Diversification strength"
+              label="Diversification coverage"
               value={`${supplierDiversificationScore}/100`}
-              description="Current indication of supplier concentration and portfolio resilience."
+              description="Current indication of supplier participation breadth across the portfolio."
             />
           </div>
         </section>

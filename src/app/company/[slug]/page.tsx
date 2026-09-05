@@ -133,6 +133,41 @@ if (action === "MEMBER_REMOVED") return "🗑️";
 return "⚡";
 }
 
+function getCommercialHistoryStatus(
+submittedQuotes: number,
+awardedQuotes: number,
+): { label: string; detail: string } {
+if (submittedQuotes === 0) {
+return {
+label: "Insufficient Data",
+detail:
+"No submitted quotes have been recorded for this supplier yet.",
+};
+}
+
+if (submittedQuotes < 3) {
+return {
+label: "Limited History",
+detail:
+"Quote volume is limited. Commercial history reflects early participation only.",
+};
+}
+
+if (awardedQuotes === 0) {
+return {
+label: "No Award History",
+detail:
+"Quotes have been submitted, but no contracts have been awarded yet.",
+};
+}
+
+return {
+label: "Recorded Activity",
+detail:
+"Commercial history is based on submitted quotes and awarded contracts recorded in the network.",
+};
+}
+
 function getActivityDetail(log: ActivityLog) {
 const metadata = log.metadata || {};
 
@@ -328,88 +363,10 @@ const isVendorProfile =
 String(company.network_role || "").toLowerCase().includes("vendor") ||
 String(company.network_role || "").toLowerCase().includes("supplier");
 
-const supplierParticipationScore = Math.min(100, vendorSubmittedQuotes * 8);
-const supplierRevenueScore = Math.min(100, vendorAwardedRevenue / 5000);
-
-const supplierFinancialRisk = Math.max(
-5,
-Math.round(100 - vendorAwardedRevenue / 5000)
+const commercialHistoryStatus = getCommercialHistoryStatus(
+vendorSubmittedQuotes,
+vendorAwardedQuotes.length,
 );
-
-const supplierPerformanceRisk = Math.max(5, Math.round(100 - vendorWinRate));
-
-const supplierDependencyRisk = vendorAwardedRevenue > 100000 ? 35 : 70;
-
-const supplierFinancialScore = Math.max(0, 100 - supplierFinancialRisk);
-const supplierPerformanceScore = Math.max(0, 100 - supplierPerformanceRisk);
-const supplierDependencyScore = Math.max(0, 100 - supplierDependencyRisk);
-
-const supplierIntelligenceScore = Math.min(
-100,
-Math.round(
-supplierFinancialScore * 0.15 +
-supplierPerformanceScore * 0.25 +
-supplierDependencyScore * 0.15 +
-vendorWinRate * 0.25 +
-supplierParticipationScore * 0.1 +
-supplierRevenueScore * 0.1
-)
-);
-
-const supplierTier =
-supplierIntelligenceScore >= 90
-? "Platinum Supplier"
-: supplierIntelligenceScore >= 80
-? "Gold Supplier"
-: supplierIntelligenceScore >= 65
-? "Silver Supplier"
-: "Developing Supplier";
-
-const supplierRecommendation =
-supplierIntelligenceScore >= 90
-? "Preferred Supplier"
-: supplierIntelligenceScore >= 80
-? "Strategic Supplier"
-: supplierIntelligenceScore >= 65
-? "Approved Supplier"
-: "Monitor Supplier";
-
-const supplierRiskLevel =
-supplierIntelligenceScore >= 80
-? "Low Risk"
-: supplierIntelligenceScore >= 60
-? "Medium Risk"
-: "High Risk";
-
-const procurementFitScore = Math.min(
-100,
-Math.round(
-supplierIntelligenceScore * 0.5 +
-vendorWinRate * 0.25 +
-supplierParticipationScore * 0.25
-)
-);
-
-const supplierExecutiveAction =
-supplierIntelligenceScore >= 80
-? "Increase RFQ allocation and consider this company for preferred supplier workflows."
-: supplierIntelligenceScore >= 65
-? "Continue inviting this supplier while monitoring pricing, delivery consistency, and quote activity."
-: "Monitor this supplier closely and improve quote volume, win rate, and award performance before increasing dependency.";
-
-const supplierStrength =
-vendorWinRate >= 50
-? "Strong award conversion"
-: vendorSubmittedQuotes >= 3
-? "Active procurement participation"
-: "Early supplier engagement";
-
-const supplierWeakness =
-vendorSubmittedQuotes <= 1
-? "Limited quote history"
-: vendorWinRate < 25
-? "Low award conversion"
-: "Dependency and capacity should continue to be monitored.";
 
 return (
 <main className="relative min-h-screen overflow-hidden bg-[#061426] px-4 py-6 text-white sm:px-6 lg:px-10">
@@ -684,67 +641,49 @@ Awarded
 {isVendorProfile ? (
 <section className="mt-8 rounded-[36px] border border-[#2CC4E8]/15 bg-gradient-to-br from-[#0B3D91]/30 via-[#07111F] to-[#061426] p-8 shadow-[0_0_80px_rgba(44,196,232,0.12)]">
 <p className="text-xs font-black uppercase tracking-[0.30em] text-[#C8A646]">
-AI Supplier Intelligence
+Supplier Performance Evidence
 </p>
 
 <div className="mt-6 grid gap-8 xl:grid-cols-[1fr_0.95fr]">
 <div>
 <h2 className="text-4xl font-black text-white">
-Executive Supplier Assessment
+Commercial History
 </h2>
 
 <p className="mt-5 max-w-3xl text-sm leading-8 text-slate-300">
-{supplierExecutiveAction}
+{commercialHistoryStatus.detail}
 </p>
+
+<span className="mt-5 inline-flex rounded-full border border-white/10 bg-white/[0.055] px-4 py-2 text-xs font-black uppercase tracking-[0.18em] text-[#F5D77B]">
+{commercialHistoryStatus.label}
+</span>
 </div>
 
 <div className="grid gap-4 sm:grid-cols-2">
 <MetricCard
-title="Supplier Score"
-value={`${supplierIntelligenceScore}/100`}
-detail="Executive AI rating"
+title="Submitted Quotes"
+value={String(vendorSubmittedQuotes)}
+detail="Recorded bid submissions"
 />
 
 <MetricCard
-title="Supplier Tier"
-value={supplierTier}
-detail="Current performance band"
+title="Awards"
+value={String(vendorAwardedQuotes.length)}
+detail="Contracts won"
 />
 
 <MetricCard
-title="Procurement Fit"
-value={`${procurementFitScore}/100`}
-detail="Buyer suitability"
-/>
-
-<MetricCard
-title="Recommendation"
-value={supplierRecommendation}
-detail="Executive recommendation"
-/>
-</div>
-</div>
-
-<div className="mt-8 grid gap-4 md:grid-cols-4">
-<SignalCard
-title="Risk Level"
-value={supplierRiskLevel}
-/>
-
-<SignalCard
-title="Primary Strength"
-value={supplierStrength}
-/>
-
-<SignalCard
-title="Watch Item"
-value={supplierWeakness}
-/>
-
-<SignalCard
-title="Win Probability"
+title="Win Rate"
 value={`${vendorWinRate}%`}
+detail="Awards vs submitted quotes"
 />
+
+<MetricCard
+title="Awarded Revenue"
+value={formatMoney(vendorAwardedRevenue)}
+detail="Total won contract value"
+/>
+</div>
 </div>
 </section>
 ) : null}
@@ -822,13 +761,13 @@ Vendor Performance
 </p>
 
 <h2 className="mt-3 text-3xl font-black text-white">
-Supplier Scorecard
+Bid History
 </h2>
 
 <p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-400">
-Performance summary based on submitted quotes, awarded contracts,
-win rate, awarded revenue, and average bid value across the Nexus
-Pavilion procurement network.
+Factual bid and award activity recorded across the Nexus Pavilion
+procurement network, including submitted quotes, win rate, awarded
+revenue, and average bid value.
 </p>
 
 <div className="mt-8 grid gap-6 md:grid-cols-3 xl:grid-cols-6">
@@ -869,32 +808,6 @@ detail="Total quoted value"
 />
 </div>
 
-<div className="mt-8 rounded-[28px] border border-white/10 bg-[#07111F]/80 p-6">
-<div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-<div>
-<p className="text-xs font-black uppercase tracking-[0.25em] text-slate-500">
-Vendor Ranking Signal
-</p>
-
-<h3 className="mt-2 text-2xl font-black text-white">
-{vendorWinRate >= 50
-? "Preferred Vendor"
-: vendorWinRate >= 25
-? "Qualified Vendor"
-: "Emerging Vendor"}
-</h3>
-
-<p className="mt-2 max-w-2xl text-sm font-semibold leading-6 text-slate-400">
-This scorecard helps buyers evaluate supplier reliability,
-pricing activity, and historical award performance.
-</p>
-</div>
-
-<span className="rounded-full border border-[#C8A646]/25 bg-[#C8A646]/10 px-5 py-3 text-sm font-black text-[#F5D77B]">
-{vendorWinRate}% Win Rate
-</span>
-</div>
-</div>
 </section>
 ) : null}
 
@@ -990,20 +903,6 @@ return (
 <span className="rounded-full border border-white/10 bg-white/[0.055] px-3 py-1 text-xs font-black text-slate-300">
 {children}
 </span>
-);
-}
-
-function SignalCard({ title, value }: { title: string; value: string }) {
-return (
-<div className="rounded-3xl border border-white/10 bg-white/[0.045] p-5">
-<p className="text-xs font-black uppercase tracking-[0.2em] text-[#C8A646]">
-{title}
-</p>
-
-<p className="mt-3 text-sm font-semibold leading-6 text-slate-300">
-{value}
-</p>
-</div>
 );
 }
 

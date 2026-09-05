@@ -10,10 +10,6 @@ import {
 import {
   getAwardedQuotes,
   getAwardedRevenue,
-  getPerformanceRank,
-  getPerformanceScore,
-  getSupplierIntelligenceRank,
-  getSupplierIntelligenceScore,
   getWinRate,
 } from "@/lib/procurement/supplier-intelligence";
 
@@ -75,21 +71,8 @@ export function VendorDecisionWorkspace({
 }: VendorDecisionWorkspaceProps) {
   const vendor = approvedVendor.vendor;
   const awardedVendorQuotes = getAwardedQuotes(vendorQuotes);
-
-  const supplierIntelligenceScore = getSupplierIntelligenceScore({
-    compliance,
-    quotes: vendorQuotes,
-  });
-
-  const supplierIntelligenceRank = getSupplierIntelligenceRank(
-    supplierIntelligenceScore
-  );
-
   const vendorWinRate = getWinRate(vendorQuotes);
   const awardedRevenue = getAwardedRevenue(vendorQuotes);
-  const performanceScore = getPerformanceScore(vendorQuotes);
-  const performanceRank = getPerformanceRank(performanceScore);
-  const complianceScore = Number(compliance?.compliance_score || 0);
   const riskLevel = getVendorRiskLevel(compliance);
   const eligibilityStatus =
     compliance?.overall_status === "valid" ? "Eligible" : "Review Required";
@@ -193,24 +176,24 @@ export function VendorDecisionWorkspace({
 
           <div className="p-5 sm:p-6">
             <p className="text-[10px] font-black uppercase tracking-[0.22em] text-orange-400">
-              Decision Intelligence
+              Supplier Evidence
             </p>
 
             <div className="mt-4 grid grid-cols-3 gap-3">
               <ExecutiveMetricCard
-                label="Compliance"
-                value={complianceScore > 0 ? `${complianceScore}` : "—"}
-                trend={complianceScore > 0 ? "of 100" : "Setup"}
+                label="Supplier History"
+                value={String(vendorQuotes.length)}
+                trend="Submitted quotes"
               />
               <ExecutiveMetricCard
-                label="Intelligence"
-                value={String(supplierIntelligenceScore)}
-                trend={supplierIntelligenceRank}
+                label="Award Conversion"
+                value={`${vendorWinRate}%`}
+                trend={`${awardedVendorQuotes.length} awards`}
               />
               <ExecutiveMetricCard
-                label="Performance"
-                value={String(performanceScore)}
-                trend={performanceRank}
+                label="Awarded Revenue"
+                value={formatMoney(awardedRevenue)}
+                trend="Buyer-scoped"
               />
             </div>
 

@@ -82,10 +82,9 @@ export default async function AnalyticsPage() {
   const {
     vendorLeaderboard,
     supplierRanking,
-    supplierRiskRadar,
-    strategicSuppliers,
-    preferredSuppliers,
-    highRiskSuppliers,
+    suppliersWithAwardHistory,
+    suppliersWithMultipleAwards,
+    suppliersWithLimitedQuoteHistory,
     supplierDiversificationScore,
     supplierReliabilityScore,
   } = buildSupplierIntelligence({
@@ -1331,25 +1330,33 @@ remains ${ceoRiskLevel.toLowerCase()}.
 
   const portfolioRecommendations: string[] = [];
 
-  if (highRiskSuppliers > 0) {
-    portfolioRecommendations.push("Reduce exposure to high-risk suppliers.");
+  if (suppliersWithLimitedQuoteHistory > 0) {
+    portfolioRecommendations.push(
+      "Increase supplier history depth for suppliers with limited quotation participation.",
+    );
   }
 
   if (supplierDiversificationScore < 60) {
     portfolioRecommendations.push(
-      "Expand supplier network to improve diversification.",
+      "Expand supplier participation to improve supply-base coverage.",
     );
   }
 
-  if (strategicSuppliers < 3) {
+  if (suppliersWithAwardHistory < 3) {
     portfolioRecommendations.push(
-      "Develop additional strategic supplier relationships.",
+      "Gather more award history across the active supplier set.",
+    );
+  }
+
+  if (vendorConcentrationRisk >= 70) {
+    portfolioRecommendations.push(
+      "Reduce vendor concentration in awarded revenue.",
     );
   }
 
   if (portfolioRecommendations.length === 0) {
     portfolioRecommendations.push(
-      "Supplier portfolio is performing within target range.",
+      "Maintain quotation discipline and continue recording commercial evidence.",
     );
   }
 
@@ -2576,9 +2583,11 @@ remains ${ceoRiskLevel.toLowerCase()}.
             contractFrameworkLabels={CONTRACT_FRAMEWORK_LABELS}
             categoryIntelligence={categoryIntelligence}
             portfolioHealthIndex={portfolioHealthIndex}
-            strategicSuppliers={strategicSuppliers}
-            preferredSuppliers={preferredSuppliers}
-            highRiskSuppliers={highRiskSuppliers}
+            suppliersWithAwardHistory={suppliersWithAwardHistory}
+            suppliersWithMultipleAwards={suppliersWithMultipleAwards}
+            suppliersWithLimitedQuoteHistory={
+              suppliersWithLimitedQuoteHistory
+            }
             supplierDiversificationScore={supplierDiversificationScore}
             portfolioStatus={portfolioStatus}
             portfolioRecommendations={portfolioRecommendations}
@@ -2791,7 +2800,6 @@ remains ${ceoRiskLevel.toLowerCase()}.
 
         <section id="risk-intelligence" className="scroll-mt-6">
           <ExecutiveRiskIntelligence
-            supplierRiskRadar={supplierRiskRadar}
             supplierRanking={supplierRanking}
           />
         </section>

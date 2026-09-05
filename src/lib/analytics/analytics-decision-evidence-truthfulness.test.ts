@@ -269,4 +269,83 @@ describe("analytics decision-evidence truthfulness", () => {
     expect(evidenceEngine).toContain('href="#rfq-evaluation-evidence"');
   });
 
+  it("blocks reintroduction of universal supplier/AI trust scoring", () => {
+    const analyticsSupplierIntelligence = readSource(
+      "src/lib/analytics/supplier-intelligence.ts",
+    );
+    const executiveRiskIntelligence = readSource(
+      "src/components/executive-risk-intelligence.tsx",
+    );
+    const supplierPortfolio = readSource(
+      "src/components/analytics/supplier-portfolio-intelligence.tsx",
+    );
+    const companyProfile = readSource("src/app/company/[slug]/page.tsx");
+    const vendorDashboard = readSource("src/app/vendor-dashboard/page.tsx");
+    const supplierCommandCenter = readSource(
+      "src/components/vendor-workspace/supplier-command-center.tsx",
+    );
+    const supplierScorecard = readSource(
+      "src/components/vendor-workspace/supplier-scorecard.tsx",
+    );
+    const vendorDecisionWorkspace = readSource(
+      "src/components/vendor-intelligence/vendor-decision-workspace.tsx",
+    );
+    const procurementSupplierIntelligence = readSource(
+      "src/lib/procurement/supplier-intelligence.ts",
+    );
+
+    expect(analyticsSupplierIntelligence).not.toContain("aiScore");
+    expect(analyticsSupplierIntelligence).not.toContain("financialRisk");
+    expect(analyticsSupplierIntelligence).not.toContain("overallRisk");
+    expect(analyticsSupplierIntelligence).not.toContain("Preferred Supplier");
+    expect(analyticsSupplierIntelligence).toContain("compareSupplierEvidence");
+    expect(analyticsSupplierIntelligence).toContain("suppliersWithAwardHistory");
+
+    expect(executiveRiskIntelligence).not.toContain("AI Supplier Ranking Engine");
+    expect(executiveRiskIntelligence).not.toContain("AI Score");
+    expect(executiveRiskIntelligence).not.toContain("Supplier Risk Radar");
+    expect(executiveRiskIntelligence).toContain("Supplier Performance Evidence");
+    expect(executiveRiskIntelligence).toContain("Insufficient Data");
+
+    expect(supplierPortfolio).not.toContain("Strategic Suppliers");
+    expect(supplierPortfolio).not.toContain("Preferred Suppliers");
+    expect(supplierPortfolio).not.toContain("High-Risk Suppliers");
+    expect(supplierPortfolio).toContain("Award History");
+    expect(supplierPortfolio).toContain("Limited Quote History");
+    expect(supplierPortfolio).toContain("Not a trustworthiness score");
+
+    expect(companyProfile).not.toContain("AI Supplier Intelligence");
+    expect(companyProfile).not.toContain("supplierIntelligenceScore");
+    expect(companyProfile).not.toContain("Procurement Fit");
+    expect(companyProfile).not.toContain("Buyer suitability");
+    expect(companyProfile).toContain("Supplier Performance Evidence");
+
+    expect(vendorDashboard).not.toContain("supplierScore");
+    expect(vendorDashboard).not.toContain("awardProbability");
+    expect(vendorDashboard).not.toContain("Preferred Strategic Partner");
+    expect(supplierCommandCenter).not.toContain("Supplier Score");
+    expect(supplierCommandCenter).not.toContain("Award Probability");
+    expect(supplierScorecard).not.toContain("commercialScore");
+    expect(supplierScorecard).not.toContain("Award Probability");
+
+    expect(vendorDecisionWorkspace).not.toContain("Intelligence Score");
+    expect(vendorDecisionWorkspace).not.toContain("Performance Rank");
+    expect(vendorDecisionWorkspace).not.toContain("getSupplierIntelligenceScore");
+    expect(vendorDecisionWorkspace).not.toContain("getSupplierIntelligenceRank");
+    expect(procurementSupplierIntelligence).not.toContain(
+      "getSupplierIntelligenceScore",
+    );
+    expect(procurementSupplierIntelligence).not.toContain(
+      "getSupplierIntelligenceRank",
+    );
+    expect(procurementSupplierIntelligence).not.toContain("getPerformanceRank");
+
+    expect(analyticsPage).not.toContain("strategicSuppliers");
+    expect(analyticsPage).not.toContain("preferredSuppliers");
+    expect(analyticsPage).not.toContain("highRiskSuppliers");
+    expect(analyticsPage).not.toContain("supplierRiskRadar");
+    expect(analyticsPage).toContain("suppliersWithAwardHistory");
+    expect(analyticsPage).toContain("suppliersWithLimitedQuoteHistory");
+  });
+
 });

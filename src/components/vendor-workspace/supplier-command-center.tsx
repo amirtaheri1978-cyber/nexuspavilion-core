@@ -17,12 +17,10 @@ type SupplierCommandStripItem = {
 };
 
 type SupplierCommandCenterProps = {
-  supplierTier: string;
-  supplierHealth: string;
-  supplierRisk: string;
-  supplierRecommendation: string;
-  supplierScore: number;
-  awardProbability: number;
+  historyStatus: string;
+  submittedQuotes: number;
+  awardedQuotes: number;
+  pendingDecisions: number;
   winRate: number;
   executiveBrief: string;
   nextBestAction: string;
@@ -30,45 +28,29 @@ type SupplierCommandCenterProps = {
   stripItems: SupplierCommandStripItem[];
 };
 
-function getHealthTone(
-  health: string,
+function getHistoryTone(
+  status: string,
 ): "success" | "blue" | "gold" | "warning" {
-  if (health === "Excellent" || health === "Strong") {
+  if (status === "Established Quote History") {
     return "success";
   }
 
-  if (health === "Healthy") {
+  if (status === "Limited Quote History") {
     return "blue";
   }
 
-  if (health === "Developing") {
+  if (status === "No Award History") {
     return "gold";
   }
 
   return "warning";
 }
 
-function getRiskTone(
-  risk: string,
-): "success" | "warning" | "risk" {
-  if (risk === "Low Risk") {
-    return "success";
-  }
-
-  if (risk === "Medium Risk") {
-    return "warning";
-  }
-
-  return "risk";
-}
-
 export function SupplierCommandCenter({
-  supplierTier,
-  supplierHealth,
-  supplierRisk,
-  supplierRecommendation,
-  supplierScore,
-  awardProbability,
+  historyStatus,
+  submittedQuotes,
+  awardedQuotes,
+  pendingDecisions,
   winRate,
   executiveBrief,
   nextBestAction,
@@ -88,22 +70,19 @@ export function SupplierCommandCenter({
             </p>
 
             <div className="mt-4 flex flex-wrap items-center gap-3">
-              <ExecutiveBadge tone="gold" size="md">
-                {supplierTier}
+              <ExecutiveBadge tone={getHistoryTone(historyStatus)} size="md">
+                {historyStatus}
+              </ExecutiveBadge>
+
+              <ExecutiveBadge tone="blue" size="md">
+                {submittedQuotes} Submitted
               </ExecutiveBadge>
 
               <ExecutiveBadge
-                tone={getHealthTone(supplierHealth)}
+                tone={awardedQuotes > 0 ? "success" : "warning"}
                 size="md"
               >
-                {supplierHealth}
-              </ExecutiveBadge>
-
-              <ExecutiveBadge
-                tone={getRiskTone(supplierRisk)}
-                size="md"
-              >
-                {supplierRisk}
+                {awardedQuotes} Awarded
               </ExecutiveBadge>
             </div>
 
@@ -112,9 +91,9 @@ export function SupplierCommandCenter({
             </h1>
 
             <p className="mt-5 max-w-4xl text-sm font-semibold leading-7 text-nexus-muted">
-              Monitor supplier performance, commercial participation,
-              award conversion, opportunity coverage, procurement risk,
-              and executive readiness from one controlled workspace.
+              Monitor quotation activity, award outcomes, pending decisions,
+              open RFQ coverage, and commercial participation from one
+              controlled workspace.
             </p>
 
             <div className="mt-8 grid gap-4 md:grid-cols-3">
@@ -152,7 +131,7 @@ export function SupplierCommandCenter({
             </p>
 
             <h2 className="mt-4 text-2xl font-black text-nexus-white">
-              Current Supplier Performance Summary
+              Quotation Activity Summary
             </h2>
 
             <p className="mt-4 text-sm font-semibold leading-7 text-nexus-muted">
@@ -171,28 +150,32 @@ export function SupplierCommandCenter({
 
             <div className="mt-4 grid gap-3 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
               <SupplierSignal
-                label="Supplier Score"
-                value={`${supplierScore}/100`}
+                label="Submitted Quotes"
+                value={String(submittedQuotes)}
               />
 
               <SupplierSignal
-                label="Award Probability"
-                value={`${awardProbability}%`}
+                label="Awarded Quotes"
+                value={String(awardedQuotes)}
               />
 
               <SupplierSignal
                 label="Win Rate"
-                value={`${winRate}%`}
+                value={submittedQuotes > 0 ? `${winRate}%` : "—"}
               />
             </div>
 
             <div className="mt-4 rounded-3xl border border-white/10 bg-white/[0.045] p-5">
               <p className="text-xs font-black uppercase tracking-[0.24em] text-nexus-muted">
-                Supplier Classification
+                Workflow Status
               </p>
 
               <p className="mt-2 break-words text-sm font-black leading-6 text-nexus-white">
-                {supplierRecommendation}
+                {pendingDecisions > 0
+                  ? `${pendingDecisions} open RFQ${pendingDecisions === 1 ? "" : "s"} with quotations awaiting buyer decision.`
+                  : submittedQuotes === 0
+                    ? "No quotations submitted. Explore open RFQ opportunities to begin participation."
+                    : "No pending buyer decisions on submitted quotations."}
               </p>
             </div>
           </div>

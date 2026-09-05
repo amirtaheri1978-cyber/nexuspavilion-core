@@ -1,113 +1,105 @@
 import { ExecutivePanel } from "@/components/executive/executive-panel";
-import { ExecutiveProgress } from "@/components/executive/executive-progress";
 
 type SupplierScorecardProps = {
-  commercialScore: number;
-  deliveryScore: number;
-  qualityScore: number;
-  riskScore: number;
-  supplierTier: string;
-  supplierRecommendation: string;
-  supplierRisk: string;
-  supplierHealth: string;
-  awardProbability: number;
+  historyStatus: string;
+  submittedQuotes: number;
+  awardedQuotes: number;
+  unsuccessfulQuotes: number;
+  pendingDecisions: number;
+  openRfqs: number;
+  winRate: number;
   totalBidVolume: string;
   awardedRevenue: string;
-  submittedQuotes: number;
+  averageBid: string;
+  averageAward: string;
 };
 
 export function SupplierScorecard({
-  commercialScore,
-  deliveryScore,
-  qualityScore,
-  riskScore,
-  supplierTier,
-  supplierRecommendation,
-  supplierRisk,
-  supplierHealth,
-  awardProbability,
+  historyStatus,
+  submittedQuotes,
+  awardedQuotes,
+  unsuccessfulQuotes,
+  pendingDecisions,
+  openRfqs,
+  winRate,
   totalBidVolume,
   awardedRevenue,
-  submittedQuotes,
+  averageBid,
+  averageAward,
 }: SupplierScorecardProps) {
   return (
     <ExecutivePanel className="mt-8" padding="lg" tone="gold">
       <div className="grid gap-8 lg:grid-cols-[1.2fr_0.8fr]">
         <div className="min-w-0">
           <p className="text-xs font-black uppercase tracking-[0.3em] text-nexus-gold">
-            Supplier Performance Scorecard
+            Supplier Quotation Record
           </p>
 
           <h2 className="mt-3 text-3xl font-black text-nexus-white">
-            Performance and Commercial Readiness
+            Quotation Activity and Commercial Outcomes
           </h2>
 
           <p className="mt-3 max-w-3xl text-sm font-semibold leading-7 text-nexus-muted">
-            Nexus Pavilion evaluates supplier performance using commercial
-            results, delivery reliability, quality signals, quotation
-            participation, award conversion, and procurement risk exposure.
+            This record reflects observable quotation activity: submissions,
+            awards, unsuccessful outcomes, pending decisions, and commercial
+            volume derived directly from quote history.
           </p>
 
           <div className="mt-8 grid gap-4 md:grid-cols-2">
-            <SupplierScoreBar
-              title="Commercial Performance"
-              value={commercialScore}
+            <SupplierEvidenceCard
+              title="Submitted Quotes"
+              value={String(submittedQuotes)}
+              detail="Total quotations submitted"
             />
 
-            <SupplierScoreBar
-              title="Delivery Reliability"
-              value={deliveryScore}
+            <SupplierEvidenceCard
+              title="Awarded Quotes"
+              value={String(awardedQuotes)}
+              detail={
+                awardedQuotes > 0
+                  ? `${awardedRevenue} in awarded revenue`
+                  : "No awards recorded"
+              }
             />
 
-            <SupplierScoreBar
-              title="Quality Performance"
-              value={qualityScore}
+            <SupplierEvidenceCard
+              title="Unsuccessful Quotes"
+              value={String(unsuccessfulQuotes)}
+              detail="Rejected or non-awarded quotations"
             />
 
-            <SupplierScoreBar
-              title="Risk Resilience"
-              value={riskScore}
+            <SupplierEvidenceCard
+              title="Pending Decisions"
+              value={String(pendingDecisions)}
+              detail="Quotations awaiting buyer review"
             />
           </div>
         </div>
 
         <div className="min-w-0 rounded-[32px] border border-white/10 bg-white/[0.045] p-6">
           <p className="text-xs font-black uppercase tracking-[0.25em] text-cyan-300">
-            Supplier Classification
+            Commercial Evidence
           </p>
 
           <h3 className="mt-3 text-2xl font-black text-nexus-white">
-            Commercial Profile and Market Position
+            Record Status and Volume
           </h3>
 
           <div className="mt-6 grid gap-3">
+            <SupplierSignalRow label="Record Status" value={historyStatus} />
+
             <SupplierSignalRow
-              label="Supplier Tier"
-              value={supplierTier}
+              label="Win Rate"
+              value={submittedQuotes > 0 ? `${winRate}%` : "Insufficient Data"}
             />
 
             <SupplierSignalRow
-              label="Strategic Recommendation"
-              value={supplierRecommendation}
+              label="Open RFQs"
+              value={String(openRfqs)}
             />
 
             <SupplierSignalRow
-              label="Risk Profile"
-              value={supplierRisk}
-            />
-
-            <SupplierSignalRow
-              label="Supplier Health"
-              value={supplierHealth}
-            />
-
-            <SupplierSignalRow
-              label="Award Probability"
-              value={`${awardProbability}%`}
-            />
-
-            <SupplierSignalRow
-              label="Total Quotation Volume"
+              label="Total Bid Volume"
               value={totalBidVolume}
             />
 
@@ -117,8 +109,13 @@ export function SupplierScorecard({
             />
 
             <SupplierSignalRow
-              label="Quotation Volume"
-              value={String(submittedQuotes)}
+              label="Average Bid"
+              value={averageBid}
+            />
+
+            <SupplierSignalRow
+              label="Average Award"
+              value={averageAward}
             />
           </div>
         </div>
@@ -127,31 +124,24 @@ export function SupplierScorecard({
   );
 }
 
-function SupplierScoreBar({
+function SupplierEvidenceCard({
   title,
   value,
+  detail,
 }: {
   title: string;
-  value: number;
+  value: string;
+  detail: string;
 }) {
-  const normalizedValue = Math.min(100, Math.max(0, value));
-
   return (
     <div className="min-w-0 rounded-3xl border border-white/10 bg-white/[0.045] p-5">
-      <div className="flex items-start justify-between gap-4">
-        <p className="text-sm font-black text-nexus-white">
-          {title}
-        </p>
+      <p className="text-sm font-black text-nexus-white">{title}</p>
 
-        <p className="shrink-0 text-sm font-black text-nexus-gold">
-          {normalizedValue}/100
-        </p>
-      </div>
+      <p className="mt-3 text-3xl font-black text-nexus-gold">{value}</p>
 
-      <ExecutiveProgress
-        value={normalizedValue}
-        className="mt-4 bg-white/10"
-      />
+      <p className="mt-2 text-xs font-semibold leading-5 text-nexus-muted">
+        {detail}
+      </p>
     </div>
   );
 }
