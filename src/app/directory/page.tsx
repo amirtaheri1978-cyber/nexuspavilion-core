@@ -289,6 +289,7 @@ const suspendedCount = approvedVendors.filter(
 ).length;
 
 return {
+companies: rankedCompanies.length,
 suppliers: supplierCompanies.length,
 totalAwards,
 totalRevenue,
@@ -297,7 +298,7 @@ approvedCount,
 conditionalCount,
 suspendedCount,
 };
-}, [supplierCompanies, approvedVendors]);
+}, [rankedCompanies, supplierCompanies, approvedVendors]);
 
 const filteredCompanies = useMemo(() => {
 const query = search.toLowerCase().trim();
@@ -306,15 +307,20 @@ if (!query) return rankedCompanies;
 
 return rankedCompanies.filter((company) => {
 const avlStatus = approvedVendorMap.get(company.id)?.status || "";
+const supplierScopedMatch =
+isSupplierCompany(company) &&
+(
+company.supplierRank.toLowerCase().includes(query) ||
+company.reliabilitySignal.toLowerCase().includes(query) ||
+avlStatus.toLowerCase().includes(query)
+);
 
 return (
 company.name.toLowerCase().includes(query) ||
 company.category.toLowerCase().includes(query) ||
 company.location.toLowerCase().includes(query) ||
 company.network_role.toLowerCase().includes(query) ||
-company.supplierRank.toLowerCase().includes(query) ||
-company.reliabilitySignal.toLowerCase().includes(query) ||
-avlStatus.toLowerCase().includes(query)
+supplierScopedMatch
 );
 });
 }, [rankedCompanies, search, approvedVendorMap]);
@@ -379,28 +385,28 @@ return (
 <div className="flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
 <div>
 <p className="text-xs font-black uppercase tracking-[0.35em] text-[#C8A646]">
-Supplier Network
+Company Network
 </p>
 
 <h1 className="mt-4 max-w-4xl text-5xl font-black leading-tight tracking-[-0.05em] text-white">
-Construction Supplier Network
+Construction Company Network
 </h1>
 
 <p className="mt-4 max-w-3xl text-sm font-semibold leading-7 text-slate-300">
-Discover verified construction companies, suppliers,
-contractors, manufacturers, consultants, architects, and
-engineers with procurement activity, award history, supplier
-intelligence, and award history.
+Discover verified construction companies across contractors,
+manufacturers, suppliers, consultants, architects, engineers,
+and other industry roles. Review company profiles and
+supplier-specific procurement intelligence where supported.
 </p>
 </div>
 
 <div className="flex w-full flex-col gap-3 lg:w-auto lg:min-w-[380px]">
 <input
 type="text"
-placeholder="Search companies, categories, regions, or ranks..."
+placeholder="Search companies, categories, regions, or roles..."
 value={search}
 onChange={(event) => setSearch(event.target.value)}
-aria-label="Search supplier network"
+aria-label="Search company network"
 className="h-[58px] w-full rounded-2xl border border-white/10 bg-[#07111F] px-5 text-sm font-semibold text-white outline-none transition placeholder:text-slate-400 focus:border-[#C8A646] focus:bg-[#081827] focus-visible:ring-2 focus-visible:ring-[#C8A646]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#07111F]"
 />
 
@@ -431,9 +437,9 @@ Join Network
 
 <section className="mt-8 grid gap-6 md:grid-cols-4">
 <MetricCard
-title="Verified Suppliers"
-value={String(networkStats.suppliers)}
-detail="Ranked supplier companies"
+title="Verified Companies"
+value={String(networkStats.companies)}
+detail="Approved and verified network companies"
 />
 
 <MetricCard
@@ -443,9 +449,9 @@ detail="Awarded contracts tracked"
 />
 
 <MetricCard
-title="Awarded Revenue"
+title="Supplier Awarded Value"
 value={formatMoney(networkStats.totalRevenue)}
-detail="Network supplier value"
+detail="Award value tracked for suppliers"
 />
 
 <MetricCard
@@ -496,7 +502,7 @@ signals.
 
 {loading ? (
 <div className="mt-12 rounded-3xl border border-white/10 bg-white/[0.045] p-10 text-center text-sm font-bold text-slate-500">
-Loading supplier network...
+Loading company network...
 </div>
 ) : filteredCompanies.length === 0 ? (
 <div className="mt-12 rounded-3xl border border-dashed border-white/15 bg-white/[0.035] p-10 text-center">
@@ -513,11 +519,12 @@ Try another search term or check back as the network grows.
 {filteredCompanies.map((company) => {
 const avlRecord = approvedVendorMap.get(company.id);
 const isSelfCompany = profile?.company_id === company.id;
+const isSupplierScopedCompany = isSupplierCompany(company);
 const canShowAvlActions =
 APPROVED_VENDOR_DOMAIN_AVAILABLE &&
 canManageApprovedVendors &&
 !isSelfCompany &&
-isSupplierCompany(company);
+isSupplierScopedCompany;
 
 return (
 <div
@@ -555,11 +562,18 @@ className="h-14 w-14 rounded-2xl border border-white/10 bg-white object-contain"
 <StatusPill tone="success">{company.status}</StatusPill>
 </div>
 
-<div className="mt-6 grid gap-3 md:grid-cols-2">
+<div
+className={`mt-6 grid gap-3 ${
+isSupplierScopedCompany ? "md:grid-cols-2" : ""
+}`}
+>
 <InfoBox title="Network Role" value={company.network_role} />
+{isSupplierScopedCompany ? (
 <InfoBox title="Supplier Rank" value={company.supplierRank} />
+) : null}
 </div>
 </Link>
+{isSupplierScopedCompany ? (
 <div className="mt-5 grid gap-3 md:grid-cols-3">
 <SmallMetric
 title="Score"
@@ -576,7 +590,9 @@ title="Awards"
 value={String(company.awardsWon)}
 />
 </div>
+) : null}
 
+{isSupplierScopedCompany ? (
 <div className="mt-5 flex flex-wrap gap-2">
 <StatusPill tone={getRankTone(company.supplierRank)}>
 {company.supplierRank}
@@ -598,6 +614,7 @@ value={String(company.awardsWon)}
 </StatusPill>
 )}
 </div>
+) : null}
 
 {canShowAvlActions ? (
 <div className="mt-6 rounded-3xl border border-white/10 bg-[#07111F] p-4">

@@ -101,8 +101,8 @@ export const ACCOUNT_MENU_LINKS = [
   },
   {
     href: "/directory",
-    label: "Supplier Intelligence",
-    description: "Approved vendors, partners, and network records.",
+    label: "Company Network",
+    description: "Verified construction companies and network records.",
     icon: "🤝",
   },
   {
@@ -329,10 +329,10 @@ export function getNavigation(
           badge: formatCountBadge(stats.activeRfqs),
         },
         {
-          label: "Supplier Intelligence",
+          label: "Company Network",
           href: "/directory",
           key: "directory",
-          description: "AVL, suppliers, partners",
+          description: "Verified construction companies and network records.",
         },
       ],
     },
@@ -400,7 +400,7 @@ export function getAppSectionTitle(pathname: string) {
   }
 
   if (isActivePath(pathname, "/directory")) {
-    return "Supplier Intelligence";
+    return "Company Network";
   }
 
   if (isActivePath(pathname, "/notifications")) {

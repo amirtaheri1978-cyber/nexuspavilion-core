@@ -143,6 +143,34 @@ describe("Task 23 application navigation contract", () => {
     expect(getAppSectionTitle("/rfq/new")).toBe("Procurement Center");
   });
 
+  it("uses company-neutral terminology for the canonical network destination", () => {
+    const ownerDirectory = flattenNavigation("owner").find(
+      (item) => item.href === "/directory",
+    );
+    const accountDirectory = ACCOUNT_MENU_LINKS.find(
+      (item) => item.href === "/directory",
+    );
+    const sidebarDirectory = getAppSidebarSections()
+      .flatMap((section) => section.items)
+      .find((item) => item.href === "/directory");
+
+    expect(ownerDirectory).toMatchObject({
+      label: "Company Network",
+      description: "Verified construction companies and network records.",
+    });
+    expect(accountDirectory).toMatchObject({
+      label: "Company Network",
+      description: "Verified construction companies and network records.",
+    });
+    expect(sidebarDirectory).toEqual({
+      href: "/directory",
+      label: "Company Network",
+    });
+    expect(getAppSectionTitle("/directory")).toBe("Company Network");
+    expect(ownerDirectory?.label).not.toBe("Supplier Intelligence");
+    expect(accountDirectory?.label).not.toBe("Supplier Intelligence");
+  });
+
   it("keeps the unused AppSidebar primitive on the same owner destinations", () => {
     const hrefs = getAppSidebarSections().flatMap((section) =>
       section.items.map((item) => item.href),
