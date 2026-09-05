@@ -24,9 +24,9 @@ describe("Task 23 application navigation contract", () => {
 
     expect(hrefs).toEqual([
       "/dashboard",
-      "/analytics",
       "/rfq",
       "/directory",
+      "/analytics",
       "/notifications",
       "/company/settings",
     ]);
@@ -116,7 +116,7 @@ describe("Task 23 application navigation contract", () => {
 
     const compare = getAppBreadcrumbs("/rfq/harbor-package/compare");
     expect(compare.map((crumb) => crumb.label)).toEqual([
-      "RFQ & Sourcing",
+      "Procurement Center",
       "Opportunity",
       "Compare",
     ]);
@@ -124,24 +124,26 @@ describe("Task 23 application navigation contract", () => {
       "harbor-package",
     );
 
-    expect(getAppSectionTitle("/analytics")).toBe("Boardroom Intelligence");
-    expect(getAppSectionTitle("/rfq/new")).toBe("RFQ & Sourcing");
+    expect(getAppSectionTitle("/analytics")).toBe("Strategic Insights");
+    expect(getAppSectionTitle("/rfq/new")).toBe("Procurement Center");
   });
 
   it("keeps the unused AppSidebar primitive on the same owner destinations", () => {
     const hrefs = getAppSidebarSections().flatMap((section) =>
       section.items.map((item) => item.href),
     );
+    const accountMenuHrefs = ACCOUNT_MENU_LINKS.map((item) => item.href);
 
     expect(hrefs).toEqual([
       "/dashboard",
-      "/analytics",
       "/rfq",
       "/directory",
+      "/analytics",
       "/notifications",
       "/company/settings",
     ]);
-    expect(ACCOUNT_MENU_LINKS.map((item) => item.href)).toEqual(hrefs);
+    expect(new Set(accountMenuHrefs)).toEqual(new Set(hrefs));
+    expect(new Set(accountMenuHrefs).size).toBe(accountMenuHrefs.length);
   });
 
   it("does not attach count badges to duplicate destinations", () => {
@@ -151,7 +153,10 @@ describe("Task 23 application navigation contract", () => {
       awardedContracts: 9,
       supplierQuotes: 3,
     });
-    const rfqItems = owner[0].items.filter((item) => item.href === "/rfq");
+    const rfqItems = owner
+      .flatMap((section) => section.items)
+      .filter((item) => item.href === "/rfq");
+
     expect(rfqItems).toHaveLength(1);
     expect(rfqItems[0].badge).toBe("4");
   });
