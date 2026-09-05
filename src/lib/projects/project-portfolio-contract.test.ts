@@ -1,0 +1,196 @@
+import fs from "node:fs";
+import path from "node:path";
+
+import { describe, expect, it } from "vitest";
+
+import { canManageWorkspace } from "@/lib/auth/membership";
+import {
+  parseProjectCreateInput,
+  PROJECT_CODE_MAX_LENGTH,
+  PROJECT_NAME_MAX_LENGTH,
+} from "@/lib/projects/project-contract";
+import {
+  ACCOUNT_MENU_LINKS,
+  flattenNavigation,
+  getAppSectionTitle,
+  getAppSidebarSections,
+} from "@/lib/navigation/application-nav";
+
+const apiSource = fs.readFileSync(
+  path.join(process.cwd(), "src/app/api/projects/route.ts"),
+  "utf8",
+);
+
+const repositorySource = fs.readFileSync(
+  path.join(process.cwd(), "src/lib/projects/project-repository.ts"),
+  "utf8",
+);
+
+const migrationSource = fs.readFileSync(
+  path.join(
+    process.cwd(),
+    "supabase/migrations/20260905093000_project_portfolio_foundation.sql",
+  ),
+  "utf8",
+);
+
+const portfolioListSource = fs.readFileSync(
+  path.join(
+    process.cwd(),
+    "src/components/projects/project-portfolio-list.tsx",
+  ),
+  "utf8",
+);
+
+describe("9-01 Project Portfolio contract", () => {
+  it("normalizes independent Project input without accepting company identity", () => {
+    const parsed = parseProjectCreateInput({
+      name: "  Riverside   Health Centre  ",
+      project_code: "  RH-204  ",
+      owner_client: "  City   Health  ",
+      location: "  Toronto, ON  ",
+      company_id: "untrusted-company",
+      rfq_id: "untrusted-rfq",
+    });
+
+    expect(parsed).toEqual({
+      ok: true,
+      value: {
+        name: "Riverside Health Centre",
+        projectCode: "RH-204",
+        ownerClient: "City Health",
+        location: "Toronto, ON",
+      },
+    });
+  });
+
+  it("enforces bounded Project name and code inputs", () => {
+    expect(
+      parseProjectCreateInput({
+        name: "x".repeat(PROJECT_NAME_MAX_LENGTH + 1),
+      }).ok,
+    ).toBe(false);
+
+    expect(
+      parseProjectCreateInput({
+        name: "Valid Project",
+        project_code: "x".repeat(PROJECT_CODE_MAX_LENGTH + 1),
+      }).ok,
+    ).toBe(false);
+  });
+
+  it("derives create company scope from verified workspace context", () => {
+    expect(apiSource).toContain("getCurrentWorkspaceContext");
+    expect(apiSource).toContain("context.membership.companyId");
+    expect(apiSource).toContain("canManageWorkspace(context.membership)");
+    expect(apiSource).not.toContain("body.company_id");
+    expect(apiSource).not.toContain("payload.company_id");
+  });
+
+  it("scopes Project reads to the supplied exact company boundary", () => {
+    expect(repositorySource).toContain('.from("projects")');
+    expect(repositorySource).toContain('.eq("company_id", normalizedCompanyId)');
+    expect(repositorySource).not.toContain('.from("rfqs")');
+    expect(repositorySource).not.toContain('.from("quotes")');
+  });
+
+  it("keeps database Project visibility company-scoped and manager creation explicit", () => {
+    expect(migrationSource).toContain(
+      "projects_select_active_company_member",
+    );
+    expect(migrationSource).toContain(
+      "om.company_id = projects.company_id",
+    );
+    expect(migrationSource).toContain(
+      "om.membership_status = 'active'",
+    );
+    expect(migrationSource).toContain(
+      "projects_insert_company_manager",
+    );
+    expect(migrationSource).toContain(
+      "om.workspace_role in ('owner', 'admin')",
+    );
+    expect(migrationSource).toContain("created_by = auth.uid()");
+  });
+
+  it("backfills only strong company plus internal-project evidence without linking RFQs", () => {
+    expect(migrationSource).toContain("r.project_name");
+    expect(migrationSource).toContain("r.internal_project_id");
+    expect(migrationSource).toContain("row_number() over");
+    expect(migrationSource).toContain("source.source_rank = 1");
+    expect(migrationSource).not.toMatch(
+      /alter\s+table\s+public\.rfqs[\s\S]*project_id/i,
+    );
+    expect(migrationSource).not.toMatch(
+      /add\s+column\s+project_id/i,
+    );
+  });
+
+  it("exposes one canonical Project Portfolio destination for every company experience", () => {
+    for (const experience of ["owner", "vendor", "consultant"] as const) {
+      const hrefs = flattenNavigation(experience).map((item) => item.href);
+      expect(hrefs.filter((href) => href === "/projects")).toHaveLength(1);
+    }
+
+    expect(getAppSectionTitle("/projects")).toBe("Project Portfolio");
+    expect(getAppSectionTitle("/projects/new")).toBe("Project Portfolio");
+
+    expect(
+      ACCOUNT_MENU_LINKS.filter((item) => item.href === "/projects"),
+    ).toHaveLength(1);
+
+    expect(
+      getAppSidebarSections()
+        .flatMap((section) => section.items)
+        .filter((item) => item.href === "/projects"),
+    ).toHaveLength(1);
+  });
+
+  it("keeps Project card headers readable on narrow mobile widths", () => {
+    expect(portfolioListSource).toContain(
+      'className="flex flex-col items-start gap-4 sm:flex-row sm:justify-between"',
+    );
+    expect(portfolioListSource).toContain(
+      'className="min-w-0 w-full sm:flex-1"',
+    );
+    expect(portfolioListSource).toContain(
+      'className="shrink-0 self-start"',
+    );
+  });
+
+  it("reuses the existing owner/admin workspace management contract", () => {
+    const baseMembership = {
+      id: "membership-1",
+      userId: "user-1",
+      companyId: "company-1",
+      procurementFunction: "buyer" as const,
+      membershipType: "employee" as const,
+      membershipStatus: "active" as const,
+      jobTitle: null,
+      jobFunction: null,
+      invitedBy: null,
+      joinedAt: null,
+    };
+
+    expect(
+      canManageWorkspace({
+        ...baseMembership,
+        workspaceRole: "owner",
+      }),
+    ).toBe(true);
+
+    expect(
+      canManageWorkspace({
+        ...baseMembership,
+        workspaceRole: "admin",
+      }),
+    ).toBe(true);
+
+    expect(
+      canManageWorkspace({
+        ...baseMembership,
+        workspaceRole: "member",
+      }),
+    ).toBe(false);
+  });
+});

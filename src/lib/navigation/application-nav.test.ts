@@ -24,6 +24,7 @@ describe("Task 23 application navigation contract", () => {
 
     expect(hrefs).toEqual([
       "/dashboard",
+      "/projects",
       "/rfq",
       "/directory",
       "/analytics",
@@ -38,6 +39,7 @@ describe("Task 23 application navigation contract", () => {
 
     expect(hrefs).toEqual([
       "/dashboard",
+      "/projects",
       "/rfq",
       "/vendor-dashboard",
       "/notifications",
@@ -52,11 +54,13 @@ describe("Task 23 application navigation contract", () => {
 
     expect(hrefs).toEqual([
       "/dashboard",
+      "/projects",
       "/rfq",
       "/notifications",
       "/company/settings",
     ]);
     expect(hrefs).not.toContain("/pricing");
+    expect(new Set(hrefs).size).toBe(hrefs.length);
   });
 
   it("reuses the existing role/network_role experience rules only", () => {
@@ -88,9 +92,10 @@ describe("Task 23 application navigation contract", () => {
     ).toBe("consultant");
   });
 
-  it("treats dashboard as exact-match and nested RFQ routes as prefix-active", () => {
+  it("treats dashboard as exact-match and nested application routes as prefix-active", () => {
     expect(isActivePath("/dashboard", "/dashboard")).toBe(true);
     expect(isActivePath("/dashboard/settings", "/dashboard")).toBe(false);
+    expect(isActivePath("/projects/new", "/projects")).toBe(true);
     expect(isActivePath("/rfq/new", "/rfq")).toBe(true);
     expect(isActivePath("/analytics/vendors", "/analytics")).toBe(true);
   });
@@ -104,6 +109,8 @@ describe("Task 23 application navigation contract", () => {
     expect(getAppShellKind("/dev/rfq-visual-qa")).toBe("chromeless");
     expect(getAppShellKind("/rfq/invite/token-value")).toBe("chromeless");
     expect(getAppShellKind("/dashboard")).toBe("application");
+    expect(getAppShellKind("/projects")).toBe("application");
+    expect(getAppShellKind("/projects/new")).toBe("application");
     expect(getAppShellKind("/company/settings")).toBe("application");
     expect(getAppShellKind("/company/harbor-steel")).toBe("application");
     expect(getAppShellKind("/connections")).toBe("application");
@@ -111,8 +118,14 @@ describe("Task 23 application navigation contract", () => {
 
   it("adds breadcrumbs only where hierarchy is nested and never renders slugs as labels", () => {
     expect(getAppBreadcrumbs("/dashboard")).toEqual([]);
+    expect(getAppBreadcrumbs("/projects")).toEqual([]);
     expect(getAppBreadcrumbs("/rfq")).toEqual([]);
     expect(getAppBreadcrumbs("/company/settings")).toEqual([]);
+
+    expect(getAppBreadcrumbs("/projects/new")).toEqual([
+      { href: "/projects", label: "Project Portfolio" },
+      { href: "/projects/new", label: "New Project" },
+    ]);
 
     const compare = getAppBreadcrumbs("/rfq/harbor-package/compare");
     expect(compare.map((crumb) => crumb.label)).toEqual([
@@ -124,6 +137,8 @@ describe("Task 23 application navigation contract", () => {
       "harbor-package",
     );
 
+    expect(getAppSectionTitle("/projects")).toBe("Project Portfolio");
+    expect(getAppSectionTitle("/projects/new")).toBe("Project Portfolio");
     expect(getAppSectionTitle("/analytics")).toBe("Strategic Insights");
     expect(getAppSectionTitle("/rfq/new")).toBe("Procurement Center");
   });
@@ -136,6 +151,7 @@ describe("Task 23 application navigation contract", () => {
 
     expect(hrefs).toEqual([
       "/dashboard",
+      "/projects",
       "/rfq",
       "/directory",
       "/analytics",

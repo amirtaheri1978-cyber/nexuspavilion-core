@@ -82,6 +82,12 @@ export const ACCOUNT_MENU_LINKS = [
     icon: "📊",
   },
   {
+    href: "/projects",
+    label: "Project Portfolio",
+    description: "Company-level Project records and portfolio context.",
+    icon: "🏗️",
+  },
+  {
     href: "/analytics",
     label: "Strategic Insights",
     description: "Risk, board reporting, and executive decisions.",
@@ -176,6 +182,13 @@ function formatCountBadge(value: number) {
   return String(value);
 }
 
+const PROJECT_PORTFOLIO_ITEM: ApplicationNavItem = {
+  label: "Project Portfolio",
+  href: "/projects",
+  key: "projects",
+  description: "Company Project records",
+};
+
 export function getNavigation(
   experience: ApplicationExperience,
   stats: ApplicationNavStats,
@@ -197,6 +210,7 @@ export function getNavigation(
       {
         title: "Company Operations",
         items: [
+          PROJECT_PORTFOLIO_ITEM,
           {
             label: "Procurement Center",
             href: "/rfq",
@@ -255,6 +269,7 @@ export function getNavigation(
       {
         title: "Company Operations",
         items: [
+          PROJECT_PORTFOLIO_ITEM,
           {
             label: "Procurement Center",
             href: "/rfq",
@@ -305,6 +320,7 @@ export function getNavigation(
     {
       title: "Company Operations",
       items: [
+        PROJECT_PORTFOLIO_ITEM,
         {
           label: "Procurement Center",
           href: "/rfq",
@@ -329,12 +345,12 @@ export function getNavigation(
           key: "analytics",
           description: "Risk, board reporting, actions",
         },
-          {
-            label: "Activity Center",
-            href: "/notifications",
-            key: "notifications",
-            description: "Alerts and workflow signals",
-          },
+        {
+          label: "Activity Center",
+          href: "/notifications",
+          key: "notifications",
+          description: "Alerts and workflow signals",
+        },
       ],
     },
     {
@@ -367,6 +383,10 @@ export function isActivePath(pathname: string, href: string) {
 }
 
 export function getAppSectionTitle(pathname: string) {
+  if (isActivePath(pathname, "/projects")) {
+    return "Project Portfolio";
+  }
+
   if (isActivePath(pathname, "/analytics")) {
     return BOARDROOM_INTELLIGENCE_TITLE;
   }
@@ -400,6 +420,21 @@ export function getAppSectionTitle(pathname: string) {
 
 export function getAppBreadcrumbs(pathname: string): ApplicationBreadcrumb[] {
   const segments = pathname.split("/").filter(Boolean);
+
+  if (segments[0] === "projects") {
+    if (segments.length === 1) {
+      return [];
+    }
+
+    if (segments[1] === "new") {
+      return [
+        { href: "/projects", label: "Project Portfolio" },
+        { href: "/projects/new", label: "New Project" },
+      ];
+    }
+
+    return [{ href: "/projects", label: "Project Portfolio" }];
+  }
 
   if (segments[0] === "rfq") {
     if (segments.length === 1 || segments[1] === "invite") {
@@ -468,7 +503,7 @@ export function getAppSidebarSections(): Array<{
     },
     {
       label: "Company Operations",
-      items: [pick("/rfq"), pick("/directory")].filter(
+      items: [pick("/projects"), pick("/rfq"), pick("/directory")].filter(
         (item): item is { href: string; label: string } => Boolean(item),
       ),
     },
