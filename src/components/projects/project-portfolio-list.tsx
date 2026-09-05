@@ -5,7 +5,10 @@ import {
   EXECUTIVE_CTA_PRIMARY,
   EXECUTIVE_CTA_SECONDARY,
 } from "@/lib/design-system/executive-contract";
-import type { ProjectRecord } from "@/lib/projects/project-contract";
+import type {
+  ProjectProcurementAssociation,
+  ProjectRecord,
+} from "@/lib/projects/project-contract";
 
 function formatDate(value: string) {
   const date = new Date(value);
@@ -24,6 +27,60 @@ function formatDate(value: string) {
 function displayValue(value: string | null, fallback: string) {
   const normalized = String(value ?? "").trim();
   return normalized || fallback;
+}
+
+function formatRfqStatus(value: string) {
+  const normalized = value.trim().toLowerCase();
+
+  if (!normalized) {
+    return "Status unavailable";
+  }
+
+  const statusLabels: Record<string, string> = {
+    draft: "Draft",
+    open: "Open",
+    awarded: "Awarded",
+    closed: "Closed",
+    cancelled: "Cancelled",
+    canceled: "Cancelled",
+  };
+
+  if (statusLabels[normalized]) {
+    return statusLabels[normalized];
+  }
+
+  return normalized
+    .split(/[_-]+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
+function getRfqStatusTone(
+  value: string,
+): "blue" | "success" | "warning" | "neutral" {
+  const normalized = value.trim().toLowerCase();
+
+  if (normalized === "awarded") {
+    return "success";
+  }
+
+  if (normalized === "draft") {
+    return "warning";
+  }
+
+  if (!normalized || normalized === "closed" || normalized === "cancelled") {
+    return "neutral";
+  }
+
+  return "blue";
+}
+
+function hasVerifiedAward(association: ProjectProcurementAssociation) {
+  return (
+    association.status.trim().toLowerCase() === "awarded" &&
+    Boolean(association.awardedAt)
+  );
 }
 
 export function ProjectPortfolioList({
@@ -46,8 +103,8 @@ export function ProjectPortfolioList({
           </h2>
 
           <p className="mt-3 max-w-3xl text-sm font-semibold leading-7 text-slate-400">
-            First-class project records for the company workspace. Procurement
-            events are intentionally not used as the Project source of truth.
+            First-class Project records remain the company source of truth while
+            verified RFQ and contract-award context is surfaced alongside them.
           </p>
         </div>
 
@@ -76,8 +133,8 @@ export function ProjectPortfolioList({
 
           <p className="mt-3 max-w-2xl text-sm font-semibold leading-7 text-slate-400">
             Projects are maintained independently from RFQs. Create the company
-            Project record first; procurement context will be linked in a later
-            Project Portfolio phase when supported by verified data.
+            Project record first; verified procurement associations appear when
+            matching company Project identifiers are available.
           </p>
 
           {canCreateProject ? (
@@ -129,6 +186,10 @@ export function ProjectPortfolioList({
                   value={formatDate(project.updatedAt)}
                 />
               </dl>
+
+              <ProjectProcurementContext
+                associations={project.procurementAssociations}
+              />
             </article>
           ))}
         </div>
@@ -142,6 +203,83 @@ export function ProjectPortfolioList({
           Workspace Settings
         </Link>
       </div>
+    </section>
+  );
+}
+
+function ProjectProcurementContext({
+  associations,
+}: {
+  associations: ProjectProcurementAssociation[];
+}) {
+  return (
+    <section className="mt-6 border-t border-white/10 pt-6">
+      <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[#9BE8F8]">
+            Procurement Context
+          </p>
+          <p className="mt-2 text-xs font-semibold leading-5 text-slate-400">
+            Verified same-company RFQ and award records associated with this
+            Project.
+          </p>
+        </div>
+
+        <ExecutiveBadge tone={associations.length > 0 ? "blue" : "neutral"}>
+          {associations.length} {associations.length === 1 ? "Linked RFQ" : "Linked RFQs"}
+        </ExecutiveBadge>
+      </div>
+
+      {associations.length === 0 ? (
+        <div className="mt-4 rounded-[18px] border border-dashed border-white/10 bg-white/[0.025] p-4">
+          <p className="text-sm font-semibold leading-6 text-slate-400">
+            No verified procurement associations are linked to this Project
+            record.
+          </p>
+        </div>
+      ) : (
+        <div className="mt-4 space-y-3">
+          {associations.map((association) => {
+            const verifiedAward = hasVerifiedAward(association);
+
+            return (
+              <div
+                key={association.id}
+                className="min-w-0 rounded-[18px] border border-white/10 bg-white/[0.035] p-4"
+              >
+                <div className="flex flex-col gap-3">
+                  <div className="min-w-0 w-full">
+                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
+                      Linked RFQ
+                    </p>
+                    <Link
+                      href={`/rfq/${association.slug}`}
+                      className="mt-2 block break-words text-sm font-black leading-6 text-white transition-colors hover:text-[#9BE8F8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#9BE8F8]/70"
+                    >
+                      {association.title}
+                    </Link>
+                  </div>
+
+                  <div className="flex w-full flex-wrap gap-2">
+                    <ExecutiveBadge tone={getRfqStatusTone(association.status)}>
+                      {formatRfqStatus(association.status)}
+                    </ExecutiveBadge>
+                    {verifiedAward ? (
+                      <ExecutiveBadge tone="awarded">Contract Awarded</ExecutiveBadge>
+                    ) : null}
+                  </div>
+                </div>
+
+                {verifiedAward && association.awardedAt ? (
+                  <p className="mt-3 text-xs font-semibold leading-5 text-slate-400">
+                    Award recorded {formatDate(association.awardedAt)}.
+                  </p>
+                ) : null}
+              </div>
+            );
+          })}
+        </div>
+      )}
     </section>
   );
 }

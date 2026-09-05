@@ -2,6 +2,14 @@ export const PROJECT_NAME_MAX_LENGTH = 180;
 export const PROJECT_CODE_MAX_LENGTH = 80;
 export const PROJECT_TEXT_MAX_LENGTH = 180;
 
+export type ProjectProcurementAssociation = {
+  id: string;
+  slug: string;
+  title: string;
+  status: string;
+  awardedAt: string | null;
+};
+
 export type ProjectRecord = {
   id: string;
   companyId: string;
@@ -12,6 +20,7 @@ export type ProjectRecord = {
   location: string | null;
   createdAt: string;
   updatedAt: string;
+  procurementAssociations: ProjectProcurementAssociation[];
 };
 
 export type ProjectCreateInput = {
@@ -127,5 +136,6 @@ export function mapProjectRow(row: ProjectRow): ProjectRecord {
     location: row.location,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+    procurementAssociations: [],
   };
 }

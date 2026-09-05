@@ -86,7 +86,7 @@ export default async function ProjectsPage() {
       <ProjectSystemState
         eyebrow="Project Portfolio"
         title="Project Portfolio is temporarily unavailable."
-        description="The company Project records could not be loaded. No RFQ-derived fallback was used because RFQs are not the Project source of truth."
+        description="The company Project records or their verified procurement associations could not be loaded. No cross-company or inferred fallback was used."
         primaryHref="/dashboard"
         primaryLabel="Executive Overview"
         secondaryHref="/company/settings"
@@ -107,9 +107,9 @@ export default async function ProjectsPage() {
         </h1>
 
         <p className="mt-5 max-w-4xl text-sm font-semibold leading-7 text-slate-300 sm:text-base">
-          Maintain company-level Project context independently from RFQ
-          containers. Procurement relationships and supported Project signals
-          are introduced only in their dedicated roadmap stages.
+          Maintain first-class company Project records while surfacing only
+          verified company-scoped RFQ and contract-award context. Project
+          identity remains independent from procurement events.
         </p>
       </section>
 

@@ -21,6 +21,11 @@ const apiSource = fs.readFileSync(
   "utf8",
 );
 
+const projectsPageSource = fs.readFileSync(
+  path.join(process.cwd(), "src/app/projects/page.tsx"),
+  "utf8",
+);
+
 const repositorySource = fs.readFileSync(
   path.join(process.cwd(), "src/lib/projects/project-repository.ts"),
   "utf8",
@@ -42,7 +47,7 @@ const portfolioListSource = fs.readFileSync(
   "utf8",
 );
 
-describe("9-01 Project Portfolio contract", () => {
+describe("Project Portfolio contract", () => {
   it("normalizes independent Project input without accepting company identity", () => {
     const parsed = parseProjectCreateInput({
       name: "  Riverside   Health Centre  ",
@@ -87,11 +92,35 @@ describe("9-01 Project Portfolio contract", () => {
     expect(apiSource).not.toContain("payload.company_id");
   });
 
-  it("scopes Project reads to the supplied exact company boundary", () => {
+  it("keeps Project and procurement-context reads inside the exact company boundary", () => {
     expect(repositorySource).toContain('.from("projects")');
-    expect(repositorySource).toContain('.eq("company_id", normalizedCompanyId)');
-    expect(repositorySource).not.toContain('.from("rfqs")');
+    expect(repositorySource).toContain('.from("rfqs")');
+    expect(
+      repositorySource.match(/\.eq\("company_id", normalizedCompanyId\)/g),
+    ).toHaveLength(2);
+    expect(repositorySource).toContain("normalizeProjectAssociationKey");
+    expect(repositorySource).toContain("internal_project_id");
+    expect(repositorySource).toContain("awarded_at");
+    expect(repositorySource).not.toContain("awarded_quote_id");
     expect(repositorySource).not.toContain('.from("quotes")');
+  });
+
+  it("surfaces verified RFQ and award context without changing Project identity", () => {
+    expect(portfolioListSource).toContain("Procurement Context");
+    expect(portfolioListSource).toContain(
+      "No verified procurement associations are linked to this Project",
+    );
+    expect(portfolioListSource).toContain(
+      'association.status.trim().toLowerCase() === "awarded"',
+    );
+    expect(portfolioListSource).toContain("association.awardedAt");
+    expect(portfolioListSource).toContain("`/rfq/${association.slug}`");
+    expect(projectsPageSource).toContain(
+      "verified company-scoped RFQ and contract-award context",
+    );
+    expect(projectsPageSource).not.toContain(
+      "introduced only in their dedicated roadmap stages",
+    );
   });
 
   it("keeps database Project visibility company-scoped and manager creation explicit", () => {
@@ -155,6 +184,21 @@ describe("9-01 Project Portfolio contract", () => {
     );
     expect(portfolioListSource).toContain(
       'className="shrink-0 self-start"',
+    );
+  });
+
+  it("keeps linked RFQ associations readable inside narrow Project cards", () => {
+    expect(portfolioListSource).toContain(
+      'className="flex flex-col gap-3"',
+    );
+    expect(portfolioListSource).toContain(
+      'className="min-w-0 w-full"',
+    );
+    expect(portfolioListSource).toContain(
+      'className="flex w-full flex-wrap gap-2"',
+    );
+    expect(portfolioListSource).not.toContain(
+      'className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between"',
     );
   });
 

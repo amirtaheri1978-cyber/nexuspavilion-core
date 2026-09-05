@@ -3,6 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   mapProjectRow,
   type ProjectCreateInput,
+  type ProjectProcurementAssociation,
   type ProjectRecord,
 } from "@/lib/projects/project-contract";
 
@@ -18,7 +19,25 @@ const PROJECT_SELECT = `
   updated_at
 `;
 
+const RFQ_CONTEXT_SELECT = `
+  id,
+  slug,
+  title,
+  internal_project_id,
+  status,
+  awarded_at
+`;
+
 type ProjectRow = Parameters<typeof mapProjectRow>[0];
+
+type ProjectRfqContextRow = {
+  id: string;
+  slug: string;
+  title: string;
+  internal_project_id: string | null;
+  status: string;
+  awarded_at: string | null;
+};
 
 export class ProjectRepositoryError extends Error {
   constructor(
@@ -39,6 +58,25 @@ export class ProjectCodeConflictError extends Error {
 
 function normalizeRequiredIdentifier(value: string) {
   return value.trim();
+}
+
+function normalizeProjectAssociationKey(value: string | null) {
+  return String(value ?? "")
+    .trim()
+    .replace(/\s+/g, " ")
+    .toLowerCase();
+}
+
+function mapProjectRfqContextRow(
+  row: ProjectRfqContextRow,
+): ProjectProcurementAssociation {
+  return {
+    id: row.id,
+    slug: row.slug,
+    title: row.title,
+    status: row.status,
+    awardedAt: row.awarded_at,
+  };
 }
 
 export async function loadCompanyProjects(
@@ -65,7 +103,65 @@ export async function loadCompanyProjects(
     );
   }
 
-  return ((data ?? []) as ProjectRow[]).map(mapProjectRow);
+  const projects = ((data ?? []) as ProjectRow[]).map(mapProjectRow);
+  const projectAssociationKeys = new Set(
+    projects
+      .map((project) => normalizeProjectAssociationKey(project.projectCode))
+      .filter(Boolean),
+  );
+
+  if (projectAssociationKeys.size === 0) {
+    return projects;
+  }
+
+  const { data: rfqData, error: rfqError } = await supabase
+    .from("rfqs")
+    .select(RFQ_CONTEXT_SELECT)
+    .eq("company_id", normalizedCompanyId)
+    .not("internal_project_id", "is", null);
+
+  if (rfqError) {
+    throw new ProjectRepositoryError(
+      "Unable to load verified Project procurement context.",
+      rfqError,
+    );
+  }
+
+  const associationsByProjectKey = new Map<
+    string,
+    ProjectProcurementAssociation[]
+  >();
+
+  for (const row of (rfqData ?? []) as ProjectRfqContextRow[]) {
+    const associationKey = normalizeProjectAssociationKey(
+      row.internal_project_id,
+    );
+
+    if (!associationKey || !projectAssociationKeys.has(associationKey)) {
+      continue;
+    }
+
+    const associations = associationsByProjectKey.get(associationKey) ?? [];
+    associations.push(mapProjectRfqContextRow(row));
+    associationsByProjectKey.set(associationKey, associations);
+  }
+
+  for (const associations of associationsByProjectKey.values()) {
+    associations.sort(
+      (left, right) =>
+        left.title.localeCompare(right.title) || left.id.localeCompare(right.id),
+    );
+  }
+
+  return projects.map((project) => {
+    const associationKey = normalizeProjectAssociationKey(project.projectCode);
+
+    return {
+      ...project,
+      procurementAssociations:
+        associationsByProjectKey.get(associationKey) ?? [],
+    };
+  });
 }
 
 export async function createCompanyProject(
