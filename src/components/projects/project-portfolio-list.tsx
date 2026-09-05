@@ -83,6 +83,10 @@ function hasVerifiedAward(association: ProjectProcurementAssociation) {
   );
 }
 
+function hasOpenProcurement(association: ProjectProcurementAssociation) {
+  return association.status.trim().toLowerCase() === "open";
+}
+
 export function ProjectPortfolioList({
   projects,
   canCreateProject,
@@ -187,6 +191,10 @@ export function ProjectPortfolioList({
                 />
               </dl>
 
+              <ProjectSignals
+                associations={project.procurementAssociations}
+              />
+
               <ProjectProcurementContext
                 associations={project.procurementAssociations}
               />
@@ -203,6 +211,51 @@ export function ProjectPortfolioList({
           Workspace Settings
         </Link>
       </div>
+    </section>
+  );
+}
+
+function ProjectSignals({
+  associations,
+}: {
+  associations: ProjectProcurementAssociation[];
+}) {
+  const hasActiveProcurement = associations.some(hasOpenProcurement);
+  const hasAwardedContract = associations.some(hasVerifiedAward);
+  const hasSupportedSignal = hasActiveProcurement || hasAwardedContract;
+
+  return (
+    <section className="mt-6 border-t border-white/10 pt-6">
+      <div>
+        <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[#C8A646]">
+          Project Signals
+        </p>
+        <p className="mt-2 text-xs font-semibold leading-5 text-slate-400">
+          Evidence-backed signals are limited to verified linked procurement
+          records. Project risk is not inferred from procurement activity.
+        </p>
+      </div>
+
+      <div className="mt-4 flex w-full flex-wrap gap-2">
+        {hasActiveProcurement ? (
+          <ExecutiveBadge tone="blue">Procurement Active</ExecutiveBadge>
+        ) : null}
+
+        {hasAwardedContract ? (
+          <ExecutiveBadge tone="awarded">Contract Awarded</ExecutiveBadge>
+        ) : null}
+
+        {!hasSupportedSignal ? (
+          <ExecutiveBadge tone="neutral">No Supported Signal</ExecutiveBadge>
+        ) : null}
+      </div>
+
+      {!hasSupportedSignal ? (
+        <p className="mt-3 text-xs font-semibold leading-5 text-slate-400">
+          No supported Project status or risk signal is available from current
+          verified data.
+        </p>
+      ) : null}
     </section>
   );
 }
@@ -226,7 +279,8 @@ function ProjectProcurementContext({
         </div>
 
         <ExecutiveBadge tone={associations.length > 0 ? "blue" : "neutral"}>
-          {associations.length} {associations.length === 1 ? "Linked RFQ" : "Linked RFQs"}
+          {associations.length}{" "}
+          {associations.length === 1 ? "Linked RFQ" : "Linked RFQs"}
         </ExecutiveBadge>
       </div>
 
@@ -265,7 +319,9 @@ function ProjectProcurementContext({
                       {formatRfqStatus(association.status)}
                     </ExecutiveBadge>
                     {verifiedAward ? (
-                      <ExecutiveBadge tone="awarded">Contract Awarded</ExecutiveBadge>
+                      <ExecutiveBadge tone="awarded">
+                        Contract Awarded
+                      </ExecutiveBadge>
                     ) : null}
                   </div>
                 </div>

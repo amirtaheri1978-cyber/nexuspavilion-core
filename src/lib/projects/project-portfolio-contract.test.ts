@@ -123,6 +123,40 @@ describe("Project Portfolio contract", () => {
     );
   });
 
+  it("surfaces only evidence-backed procurement-scoped Project signals", () => {
+    expect(portfolioListSource).toContain("Project Signals");
+    expect(portfolioListSource).toContain(
+      "Project risk is not inferred from procurement activity.",
+    );
+    expect(portfolioListSource).toContain(
+      'association.status.trim().toLowerCase() === "open"',
+    );
+    expect(portfolioListSource).toContain("Procurement Active");
+    expect(portfolioListSource).toContain("Contract Awarded");
+    expect(portfolioListSource).toContain("No Supported Signal");
+    expect(portfolioListSource).toContain(
+      "No supported Project status or risk signal is available",
+    );
+  });
+
+  it("does not manufacture unsupported Project status or risk semantics", () => {
+    for (const unsupportedLabel of [
+      "On Track",
+      "At Risk",
+      "Critical",
+      "Risk Score",
+      "Health Score",
+      "Schedule Risk",
+      "Budget Risk",
+    ]) {
+      expect(portfolioListSource).not.toContain(unsupportedLabel);
+    }
+
+    expect(repositorySource).not.toContain("rfq_ai_reviews");
+    expect(repositorySource).not.toContain("readiness_score");
+    expect(repositorySource).not.toContain("risk_level");
+  });
+
   it("keeps database Project visibility company-scoped and manager creation explicit", () => {
     expect(migrationSource).toContain(
       "projects_select_active_company_member",
