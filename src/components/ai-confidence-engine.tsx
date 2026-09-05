@@ -122,6 +122,40 @@ export default function AIConfidenceEngine({
           />
         </div>
       </section>
+
+      {decisionSupportReadiness.limitingFactors.length > 0 ? (
+        <section
+          className="mt-7 min-w-0 rounded-3xl border border-white/10 bg-white/[0.035] p-5 sm:p-6"
+          aria-labelledby="evidence-limitations-heading"
+        >
+          <h3
+            id="evidence-limitations-heading"
+            className="text-[10px] font-black uppercase tracking-[0.22em] text-nexus-gold sm:text-xs"
+          >
+            Evidence Limitations
+          </h3>
+          <p className="mt-3 max-w-4xl text-sm font-semibold leading-7 text-nexus-muted">
+            The listed evidence factors currently constrain decision-support
+            readiness and should be strengthened before material executive
+            reliance.
+          </p>
+          <ul className="mt-5 grid min-w-0 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            {decisionSupportReadiness.limitingFactors.map((factor) => (
+              <li
+                key={factor.dimension}
+                className="min-w-0 rounded-2xl border border-white/10 bg-black/20 px-4 py-4"
+              >
+                <p className="text-xs font-black uppercase tracking-[0.16em] text-nexus-muted">
+                  {factor.label}
+                </p>
+                <p className="mt-2 text-lg font-black text-nexus-white">
+                  {factor.score} / 100
+                </p>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
     </ExecutivePanel>
   );
 }

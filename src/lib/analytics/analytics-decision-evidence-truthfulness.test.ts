@@ -200,4 +200,73 @@ describe("analytics decision-evidence truthfulness", () => {
     );
   });
 
+  it("lists only below-threshold readiness factors, weakest first", () => {
+    const result = buildDecisionSupportReadiness({
+      dataQualityScore: 42,
+      supplierEngagementScore: 61,
+      benchmarkReadinessScore: 88,
+    });
+
+    expect(result.limitingFactors.map((factor) => factor.dimension)).toEqual([
+      "data-quality",
+      "supplier-engagement",
+    ]);
+    expect(result.limitingFactors.every((factor) => factor.score < 70)).toBe(
+      true,
+    );
+    expect(result.limitingFactors.map((factor) => factor.score)).toEqual([
+      42, 61,
+    ]);
+    expect(result.limitingFactors.map((factor) => factor.label)).toEqual([
+      "Data Quality",
+      "Supplier Engagement",
+    ]);
+    expect(result.factors.map((factor) => factor.dimension)).toEqual([
+      "data-quality",
+      "supplier-engagement",
+      "benchmark-readiness",
+    ]);
+    expect(result.factors.map((factor) => factor.label)).toEqual([
+      "Data Quality",
+      "Supplier Engagement",
+      "Benchmark Readiness",
+    ]);
+    expect(result.factors.map((factor) => factor.score)).toEqual([42, 61, 88]);
+  });
+
+  it("returns no limiting factors when every readiness score is at least 70", () => {
+    const result = buildDecisionSupportReadiness({
+      dataQualityScore: 70,
+      supplierEngagementScore: 81,
+      benchmarkReadinessScore: 94,
+    });
+
+    expect(result.limitingFactors).toEqual([]);
+  });
+
+  it("renders evidence limitations only when limiting factors exist", () => {
+    expect(evidenceEngine).toContain("decisionSupportReadiness.limitingFactors");
+    expect(evidenceEngine).toContain("Evidence Limitations");
+    expect(evidenceEngine).toContain("{factor.label}");
+    expect(evidenceEngine).toContain("{factor.score}");
+    expect(evidenceEngine).toContain(
+      "decisionSupportReadiness.limitingFactors.length > 0",
+    );
+    expect(evidenceEngine).toContain("key={factor.dimension}");
+    expect(evidenceEngine).toContain('id="evidence-limitations-heading"');
+    expect(evidenceEngine).toContain(
+      'aria-labelledby="evidence-limitations-heading"',
+    );
+    expect(evidenceEngine).not.toContain('role="alert"');
+  });
+
+  it("does not introduce predictive confidence claims in evidence limitations", () => {
+    expect(evidenceEngine).not.toContain("AI Confidence");
+    expect(evidenceEngine).not.toContain("Prediction Confidence");
+    expect(evidenceEngine).not.toContain("Award Probability");
+    expect(evidenceEngine).not.toContain("model confidence");
+    expect(evidenceEngine).toContain("Trace to RFQ Evidence");
+    expect(evidenceEngine).toContain('href="#rfq-evaluation-evidence"');
+  });
+
 });
