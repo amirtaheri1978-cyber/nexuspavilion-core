@@ -19,6 +19,7 @@ export type ContractFramework =
 
 export type AnalyticsRFQ = {
   id: string;
+  slug: string | null;
   title: string | null;
   category: string | null;
   location: string | null;
@@ -28,6 +29,22 @@ export type AnalyticsRFQ = {
   sourcing_method: SourcingMethod | null;
   contract_framework: ContractFramework | null;
 };
+
+export function buildAnalyticsRfqSourceHref(
+  slug: string | null | undefined,
+): string | null {
+  if (slug == null) {
+    return null;
+  }
+
+  const trimmedSlug = slug.trim();
+
+  if (!trimmedSlug) {
+    return null;
+  }
+
+  return `/rfq/${encodeURIComponent(trimmedSlug)}`;
+}
 
 export type AnalyticsClassificationCoverage = {
   totalRfqs: number;

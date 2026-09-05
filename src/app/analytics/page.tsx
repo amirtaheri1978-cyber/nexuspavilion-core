@@ -21,6 +21,7 @@ import {
   CONTRACT_FRAMEWORK_LABELS,
   PROCUREMENT_SCOPE_LABELS,
   SOURCING_METHOD_LABELS,
+  buildAnalyticsRfqSourceHref,
   countByFramework,
   countByScope,
   countBySourcing,
@@ -228,6 +229,7 @@ export default async function AnalyticsPage() {
         quotes: rfqQuotes.length,
         evaluationState,
         status: rfq.status || "open",
+        sourceHref: buildAnalyticsRfqSourceHref(rfq.slug),
       };
     })
     .slice(0, 10);

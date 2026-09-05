@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { ExecutivePanel } from "@/components/executive/executive-panel";
 import type { DecisionSupportReadiness } from "@/lib/analytics/executive/decision-support-readiness";
 
@@ -75,6 +77,12 @@ export default function AIConfidenceEngine({
             procurement evidence. It supports executive review without
             implying probability or statistical certainty.
           </p>
+          <Link
+            href="#rfq-evaluation-evidence"
+            className="mt-4 inline-flex text-sm font-black text-nexus-gold underline-offset-4 transition hover:underline"
+          >
+            Trace to RFQ Evidence
+          </Link>
         </div>
         <span className="inline-flex rounded-full border border-nexus-gold/25 bg-nexus-gold/10 px-4 py-2 text-xs font-black uppercase tracking-[0.16em] text-nexus-gold">
           {decisionSupportReadiness.label}

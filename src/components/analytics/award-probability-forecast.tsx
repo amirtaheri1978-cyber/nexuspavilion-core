@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { ExecutivePanel } from "@/components/executive/executive-panel";
 
 export type RfqDecisionReadinessItem = {
@@ -7,6 +9,7 @@ sourcing: string;
 quotes: number;
 evaluationState: string;
 status: string;
+sourceHref?: string | null;
 };
 
 type RfqDecisionReadinessProps = {
@@ -17,7 +20,7 @@ export function RfqDecisionReadiness({
 items,
 }: RfqDecisionReadinessProps) {
 return (
-<ExecutivePanel padding="lg">
+<ExecutivePanel id="rfq-evaluation-evidence" padding="lg">
 <p className="text-xs font-black uppercase tracking-[0.25em] text-nexus-gold">
 RFQ Decision Readiness
 </p>
@@ -42,7 +45,15 @@ RFQ Evaluation Evidence
 <tbody className="bg-[#061426]/70">
 {items.map((rfq) => (
 <tr key={rfq.title} className="border-t border-white/10">
-<td className="px-5 py-4 font-bold text-white">{rfq.title}</td>
+<td className="px-5 py-4 font-bold text-white">
+{rfq.sourceHref ? (
+<Link href={rfq.sourceHref} className="text-white underline-offset-4 hover:underline">
+{rfq.title}
+</Link>
+) : (
+rfq.title
+)}
+</td>
 <td className="px-5 py-4 text-slate-300">{rfq.scope}</td>
 <td className="px-5 py-4 text-slate-300">{rfq.sourcing}</td>
 <td className="px-5 py-4 text-slate-300">{rfq.quotes}</td>

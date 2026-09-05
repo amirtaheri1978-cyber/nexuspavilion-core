@@ -3,6 +3,7 @@ import path from "node:path";
 
 import { describe, expect, it } from "vitest";
 
+import { buildAnalyticsRfqSourceHref } from "@/lib/analytics/procurement-utils";
 import { buildDecisionSupportReadiness } from "@/lib/analytics/executive/decision-support-readiness";
 import { calculateExecutiveReadiness } from "@/lib/executive/executive-readiness-score";
 import { calculateExecutiveScore } from "@/lib/executive/executive-score";
@@ -162,6 +163,40 @@ describe("analytics decision-evidence truthfulness", () => {
     expect(boardExecutiveReport).toContain("rule-based executive interpretation");
     expect(boardExecutiveReport).not.toMatch(
       /Peer position|model-supported executive interpretation|model-supported scoring/,
+    );
+  });
+
+  it("builds fail-closed canonical RFQ source hrefs from slug only", () => {
+    expect(buildAnalyticsRfqSourceHref("central-plant-upgrade")).toBe(
+      "/rfq/central-plant-upgrade",
+    );
+    expect(buildAnalyticsRfqSourceHref("  central-plant-upgrade  ")).toBe(
+      "/rfq/central-plant-upgrade",
+    );
+    expect(buildAnalyticsRfqSourceHref("plant/upgrade?x=1")).toBe(
+      "/rfq/plant%2Fupgrade%3Fx%3D1",
+    );
+    expect(buildAnalyticsRfqSourceHref(null)).toBeNull();
+    expect(buildAnalyticsRfqSourceHref(undefined)).toBeNull();
+    expect(buildAnalyticsRfqSourceHref("")).toBeNull();
+    expect(buildAnalyticsRfqSourceHref("   ")).toBeNull();
+  });
+
+  it("traces executive decision evidence to RFQ evaluation evidence by slug", () => {
+    expect(analyticsPage).toContain(
+      "sourceHref: buildAnalyticsRfqSourceHref(rfq.slug)",
+    );
+    expect(decisionReadiness).toContain("rfq-evaluation-evidence");
+    expect(decisionReadiness).toContain("rfq.sourceHref");
+    expect(decisionReadiness).toContain("href={rfq.sourceHref}");
+    expect(evidenceEngine).toContain("Trace to RFQ Evidence");
+    expect(evidenceEngine).toContain('href="#rfq-evaluation-evidence"');
+    expect(decisionReadiness).not.toContain("rfq.id");
+    expect(analyticsPage).not.toContain("source_rfq_id");
+    expect(decisionReadiness).not.toContain("source_rfq_id");
+    expect(evidenceEngine).not.toContain("source_rfq_id");
+    expect(decisionReadiness).not.toMatch(
+      /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i,
     );
   });
 
