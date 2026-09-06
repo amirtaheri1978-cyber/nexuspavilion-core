@@ -746,7 +746,7 @@ className="inline-flex max-w-full flex-wrap items-center rounded-full border bor
 </span>
 {item.name}
 {item.issuer ? (
-<span className="ml-1 text-slate-500">Â· {item.issuer}</span>
+<span className="ml-1 text-slate-500">· {item.issuer}</span>
 ) : null}
 </span>
 ))}
