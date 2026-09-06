@@ -137,7 +137,7 @@ export function BoardExecutiveReport(props: BoardExecutiveReportProps) {
         generatedAt={props.generatedAt}
         eyebrow="Commercial intelligence"
         title="Value capture and procurement leverage"
-        lead="Commercial opportunity is framed against current portfolio scale, awarded value, and procurement conversion."
+        lead="Commercial opportunity is framed against current portfolio scale, awarded value, and recorded quotation award outcomes."
       >
         <MetricGrid
           metrics={[
@@ -160,9 +160,9 @@ export function BoardExecutiveReport(props: BoardExecutiveReportProps) {
               tone: "green",
             },
             {
-              label: "Award rate",
+              label: "Quotation award rate",
               value: props.awardRate,
-              context: "Portfolio conversion",
+              context: "Awarded quotations / submitted quotations",
               tone: "blue",
             },
           ]}
@@ -226,19 +226,19 @@ export function BoardExecutiveReport(props: BoardExecutiveReportProps) {
             {
               label: "Supplier network",
               value: String(props.supplierCount),
-              context: "Ranked suppliers in the portfolio",
+              context: "Suppliers with recorded quotation history",
               tone: "blue",
             },
             {
               label: "Supplier engagement",
               value: `${props.supplierEngagement}/100`,
-              context: "Participation and response strength",
+              context: "Internal composite engagement score",
               tone: "green",
             },
             {
-              label: "Diversification",
+              label: "Internal diversification score",
               value: `${props.supplierDiversification}/100`,
-              context: "Protection from concentration",
+              context: "Participation-breadth threshold score",
               tone: "gold",
             },
             {

@@ -81,19 +81,19 @@ export function buildSupplierIntelligence({
   const vendorLeaderboard = supplierEvidence.slice(0, 10);
   const supplierRanking = supplierEvidence.slice(0, 20);
 
-  const suppliersWithAwardHistory = supplierRanking.filter(
+  const suppliersWithAwardHistory = supplierEvidence.filter(
     (supplier) => supplier.awards > 0,
   ).length;
 
-  const suppliersWithMultipleAwards = supplierRanking.filter(
+  const suppliersWithMultipleAwards = supplierEvidence.filter(
     (supplier) => supplier.awards > 1,
   ).length;
 
-  const suppliersWithLimitedQuoteHistory = supplierRanking.filter(
+  const suppliersWithLimitedQuoteHistory = supplierEvidence.filter(
     (supplier) => supplier.quotes < 3,
   ).length;
 
-  const supplierParticipationCount = supplierRanking.length;
+  const supplierParticipationCount = supplierEvidence.length;
 
   const supplierDiversificationScore =
     supplierParticipationCount >= 10
@@ -108,10 +108,10 @@ export function buildSupplierIntelligence({
       : 0;
 
   const supplierReliabilityScore =
-    supplierRanking.length > 0
+    supplierEvidence.length > 0
       ? Math.round(
-          supplierRanking.reduce((sum, vendor) => sum + vendor.winRate, 0) /
-            supplierRanking.length,
+          supplierEvidence.reduce((sum, vendor) => sum + vendor.winRate, 0) /
+            supplierEvidence.length,
         )
       : 0;
 

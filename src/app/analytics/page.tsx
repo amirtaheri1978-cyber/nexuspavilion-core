@@ -88,7 +88,9 @@ export default async function AnalyticsPage() {
     suppliersWithAwardHistory,
     suppliersWithMultipleAwards,
     suppliersWithLimitedQuoteHistory,
+    supplierParticipationCount,
     supplierDiversificationScore,
+    awardHistoryCoverage,
     supplierReliabilityScore,
   } = buildSupplierIntelligence({
     quoteList,
@@ -111,9 +113,11 @@ export default async function AnalyticsPage() {
     budgetUtilization,
     categoryCounts,
     topCategory,
+    procurementInsights,
   } = buildPortfolioIntelligence({
     rfqList,
     quoteList,
+    asOf: analyticsAsOf,
   });
 
   const historicalPatterns = buildExecutiveHistoricalPatterns({
@@ -359,11 +363,11 @@ export default async function AnalyticsPage() {
           : "Insufficient Data";
 
   const supplierNetworkBenchmark =
-    supplierRanking.length >= 10
+    supplierParticipationCount >= 10
       ? "Scaled"
-      : supplierRanking.length >= 5
+      : supplierParticipationCount >= 5
         ? "Developing"
-        : supplierRanking.length > 0
+        : supplierParticipationCount > 0
           ? "Early"
           : "Insufficient Data";
 
@@ -581,7 +585,7 @@ remains ${ceoRiskLevel.toLowerCase()}.
     });
   }
 
-  if (supplierRanking.length <= 3) {
+  if (supplierParticipationCount <= 3) {
     executiveAlerts.push({
       level: "warning",
       title: "Limited Supplier Participation",
@@ -607,7 +611,7 @@ remains ${ceoRiskLevel.toLowerCase()}.
     {
       role: "Procurement Director",
       action:
-        supplierRanking.length <= 3
+        supplierParticipationCount <= 3
           ? "Expand supplier participation to reduce vendor dependency risk."
           : `Continue strengthening supplier performance, ${dominantSourcing.toLowerCase()} workflows, and category coverage.`,
     },
@@ -792,31 +796,31 @@ remains ${ceoRiskLevel.toLowerCase()}.
     },
     {
       title:
-        supplierRanking.length <= 3
+        supplierParticipationCount <= 3
           ? "Limited Supplier Competition"
           : "Supplier Competition Health",
       priority:
-        supplierRanking.length <= 3
+        supplierParticipationCount <= 3
           ? "Critical"
-          : supplierRanking.length <= 6
+          : supplierParticipationCount <= 6
             ? "Moderate"
             : "Monitor",
       impact:
-        supplierRanking.length <= 3
+        supplierParticipationCount <= 3
           ? "High"
-          : supplierRanking.length <= 6
+          : supplierParticipationCount <= 6
             ? "Medium"
             : "Low",
       attention:
-        supplierRanking.length <= 3
+        supplierParticipationCount <= 3
           ? "Immediate"
-          : supplierRanking.length <= 6
+          : supplierParticipationCount <= 6
             ? "90 Days"
             : "Ongoing",
       summary:
-        supplierRanking.length <= 3
+        supplierParticipationCount <= 3
           ? "Limited supplier participation may reduce quote quality, competitive leverage, and decision confidence."
-          : supplierRanking.length <= 6
+          : supplierParticipationCount <= 6
             ? "Supplier participation is developing and should be expanded to improve competitive coverage."
             : "Supplier participation supports healthy procurement competition.",
     },
@@ -850,7 +854,7 @@ remains ${ceoRiskLevel.toLowerCase()}.
     },
     {
       title:
-        awardRate < 25 ? "Award Execution Risk" : "Award Conversion Health",
+        awardRate < 25 ? "Award Execution Risk" : "Quotation Award Outcome Health",
       priority:
         awardRate < 25 ? "Critical" : awardRate < 45 ? "Moderate" : "Monitor",
       impact: awardRate < 25 ? "High" : awardRate < 45 ? "Medium" : "Low",
@@ -1126,8 +1130,8 @@ remains ${ceoRiskLevel.toLowerCase()}.
       ? "Improve construction RFQ classification maturity."
       : "Maintain RFQ classification discipline.",
     awardRate < 25
-      ? "Improve RFQ conversion and award execution."
-      : "Maintain award conversion performance.",
+      ? "Improve quotation decision follow-through and award execution."
+      : "Maintain quotation award follow-through.",
   ];
   const ceoActionCenter = [
     {
@@ -1255,7 +1259,7 @@ remains ${ceoRiskLevel.toLowerCase()}.
   const topRisk =
     vendorConcentrationRisk >= 70
       ? "Vendor concentration exceeds recommended threshold."
-      : supplierRanking.length <= 3
+      : supplierParticipationCount <= 3
         ? "Supplier participation remains limited."
         : procurementRiskIndex >= 50
           ? "Procurement risk level is elevated."
@@ -1481,7 +1485,7 @@ remains ${ceoRiskLevel.toLowerCase()}.
 
   const topQuarterRisks = [
     procurementRiskIndex >= 50 ? "Supplier dependency" : "Low risk exposure",
-    supplierRanking.length <= 3
+    supplierParticipationCount <= 3
       ? "Limited supplier competition"
       : "Healthy supplier participation",
     constructionClassificationScore < 60
@@ -1494,13 +1498,13 @@ remains ${ceoRiskLevel.toLowerCase()}.
       topCategory,
       potentialSavings,
       avgQuotesPerRfq,
-      supplierCount: supplierRanking.length,
+      supplierCount: supplierParticipationCount,
     },
     executiveRecommendation: executiveCommandRecommendation,
     decisionSupportReadinessScore: decisionSupportReadiness.score,
     topRisk,
     procurementRiskIndex,
-    supplierCount: supplierRanking.length,
+    supplierCount: supplierParticipationCount,
     avgQuotesPerRfq,
     classificationScore: constructionClassificationScore,
   });
@@ -1560,7 +1564,7 @@ remains ${ceoRiskLevel.toLowerCase()}.
           procurementVolume={`$${procurementVolume.toLocaleString()}`}
           awardedVolume={`$${awardedVolume.toLocaleString()}`}
           awardRate={`${awardRate}%`}
-          supplierCount={supplierRanking.length}
+          supplierCount={supplierParticipationCount}
           supplierEngagement={supplierEngagementScore}
           supplierDiversification={supplierDiversificationScore}
           portfolioHealth={portfolioHealthIndex}
@@ -2204,7 +2208,7 @@ remains ${ceoRiskLevel.toLowerCase()}.
                   value={`${competitionScore}/100`}
                 />
                 <SignalRow
-                  label="Award Conversion"
+                  label="Quotation Award Signal"
                   value={`${awardScore}/100`}
                 />
                 <SignalRow
@@ -2276,6 +2280,9 @@ remains ${ceoRiskLevel.toLowerCase()}.
               suppliersWithLimitedQuoteHistory
             }
             supplierDiversificationScore={supplierDiversificationScore}
+            supplierParticipationCount={supplierParticipationCount}
+            awardHistoryCoverage={awardHistoryCoverage}
+            procurementInsights={procurementInsights}
             portfolioStatus={portfolioStatus}
             portfolioRecommendations={portfolioRecommendations}
           />

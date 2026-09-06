@@ -160,10 +160,16 @@ describe("settings utility navigation", () => {
   });
 
   it("does not change reserved 7-10 authorization sources", () => {
-    expect(settingsPage).toContain(
+    expect(settingsPage).toContain("getCurrentWorkspaceContext");
+    expect(settingsPage).toContain("canManageCompanyWorkspace");
+    expect(settingsPage).toContain("canInviteWorkspaceMembers");
+    expect(settingsPage).not.toContain(
       'return role === "owner" || role === "admin" || role === "buyer";',
     );
-    expect(settingsForm).toContain('currentUserRole === "buyer"');
+    expect(settingsForm).toContain("canUpdateCompany: boolean;");
+    expect(settingsForm).toContain("if (!canUpdateCompany)");
+    expect(settingsForm).toContain("disabled={!canUpdateCompany || loading}");
+    expect(settingsForm).not.toContain('currentUserRole === "buyer"');
     expect(logoUpload).not.toContain("canEdit");
     expect(companyPage).toContain("canManageCompanyWorkspace");
     expect(membersCenter).toContain("CompanyLogoUpload");

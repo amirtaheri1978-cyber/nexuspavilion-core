@@ -3,6 +3,8 @@ import { ExecutivePanel } from "@/components/executive/executive-panel";
 
 type SupplierPortfolioIntelligenceProps = {
   portfolioHealthIndex: number;
+  supplierParticipationCount: number;
+  awardHistoryCoverage: number;
   suppliersWithAwardHistory: number;
   suppliersWithMultipleAwards: number;
   suppliersWithLimitedQuoteHistory: number;
@@ -13,6 +15,8 @@ type SupplierPortfolioIntelligenceProps = {
 
 export function SupplierPortfolioIntelligence({
   portfolioHealthIndex,
+  supplierParticipationCount,
+  awardHistoryCoverage,
   suppliersWithAwardHistory,
   suppliersWithMultipleAwards,
   suppliersWithLimitedQuoteHistory,
@@ -53,19 +57,20 @@ export function SupplierPortfolioIntelligence({
 
           <p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-nexus-muted sm:text-base">
             Factual assessment of supplier participation, award-history depth,
-            limited-history concentration, and diversification coverage across
-            the active procurement network. Coverage is not a trust score.
+            limited-history concentration, and internal diversification signals
+            across suppliers with recorded quotation history. Coverage is not a
+            trust score, approval status, or authorization signal.
           </p>
         </div>
 
         <div className="flex min-w-[190px] items-center justify-between gap-5 rounded-2xl border border-nexus-gold/15 bg-nexus-gold/[0.045] px-5 py-4 xl:flex-col xl:items-end xl:gap-1">
           <div className="min-w-0">
             <p className="text-[10px] font-black uppercase tracking-[0.18em] text-nexus-muted xl:text-right">
-              Portfolio coverage index
+              Internal portfolio coverage index
             </p>
 
             <p className="mt-1 text-xs font-semibold text-nexus-muted xl:text-right">
-              Current supplier-base position
+              Composite internal coverage signal
             </p>
           </div>
 
@@ -89,30 +94,31 @@ export function SupplierPortfolioIntelligence({
               id="supplier-portfolio-signals-heading"
               className="mt-2 text-lg font-black tracking-tight text-nexus-white sm:text-xl"
             >
-              Coverage, History Depth, and Diversification
+              Participation Population, History Depth, and Diversification
             </h3>
           </div>
 
           <p className="max-w-xl text-xs font-semibold leading-5 text-nexus-muted sm:text-right">
-            Supplier-base indicators supporting executive review of
-            participation breadth and award-history depth.
+            Counts and coverage ratios use the full supplier population with
+            recorded quotation history. Ranking limits do not cap these
+            denominators.
           </p>
         </div>
 
-        <div className="mt-5 grid min-w-0 gap-4 sm:grid-cols-2 xl:grid-cols-5">
+        <div className="mt-5 grid min-w-0 gap-4 md:grid-cols-2 xl:grid-cols-3">
           <ExecutiveMetricCard
-            label="Portfolio Coverage"
-            value={`${portfolioHealthIndex}/100`}
-            insight="Internal coverage signal from participation depth and recorded commercial history."
-            impact="Supply-base coverage signal"
+            label="Participating Suppliers"
+            value={supplierParticipationCount.toString()}
+            insight="Full supplier population with recorded quotation history in the scoped portfolio."
+            impact="Participation denominator"
             tone="blue"
           />
 
           <ExecutiveMetricCard
-            label="Award History"
-            value={suppliersWithAwardHistory.toString()}
-            insight="Suppliers with at least one recorded award in the current portfolio."
-            impact="Award-history coverage"
+            label="Award-History Coverage"
+            value={`${awardHistoryCoverage}%`}
+            insight={`${suppliersWithAwardHistory} of ${supplierParticipationCount} participating suppliers have at least one recorded award.`}
+            impact="Defined supplier denominator"
             tone="gold"
           />
 
@@ -127,17 +133,25 @@ export function SupplierPortfolioIntelligence({
           <ExecutiveMetricCard
             label="Limited Quote History"
             value={suppliersWithLimitedQuoteHistory.toString()}
-            insight="Suppliers with fewer than three recorded quotations."
+            insight="Participating suppliers with fewer than three recorded quotations."
             impact="History-depth attention"
             tone="gold"
           />
 
           <ExecutiveMetricCard
-            label="Diversification"
+            label="Internal Diversification Score"
             value={`${supplierDiversificationScore}/100`}
-            insight="Supply-base participation coverage across the active supplier set. Not a trustworthiness score."
-            impact="Participation coverage signal"
+            insight="Participation-breadth threshold score based on participating supplier count; not a participation percentage."
+            impact="Internal breadth signal"
             tone="blue"
+          />
+
+          <ExecutiveMetricCard
+            label="Portfolio Coverage Index"
+            value={`${portfolioHealthIndex}/100`}
+            insight="Composite internal signal from participation breadth and recorded commercial history."
+            impact="Internal coverage signal"
+            tone="gold"
           />
         </div>
       </section>
@@ -161,7 +175,7 @@ export function SupplierPortfolioIntelligence({
 
             <p className="mt-3 text-xs font-semibold leading-5 text-nexus-muted">
               Consolidated interpretation of supplier participation,
-              award-history depth, and diversification coverage.
+              award-history depth, and internal diversification evidence.
             </p>
           </div>
 
@@ -177,9 +191,15 @@ export function SupplierPortfolioIntelligence({
 
           <div className="mt-5 grid min-w-0 gap-3">
             <PortfolioAssessmentSignal
+              label="Participation population"
+              value={supplierParticipationCount.toString()}
+              description="Full supplier population with recorded quotation history."
+            />
+
+            <PortfolioAssessmentSignal
               label="Award-history coverage"
-              value={suppliersWithAwardHistory.toString()}
-              description="Suppliers with recorded award history in the current portfolio."
+              value={`${awardHistoryCoverage}%`}
+              description={`${suppliersWithAwardHistory} of ${supplierParticipationCount} participating suppliers have recorded award history.`}
             />
 
             <PortfolioAssessmentSignal
@@ -191,13 +211,13 @@ export function SupplierPortfolioIntelligence({
             <PortfolioAssessmentSignal
               label="Limited quote history"
               value={suppliersWithLimitedQuoteHistory.toString()}
-              description="Suppliers with limited quotation participation."
+              description="Participating suppliers with fewer than three recorded quotations."
             />
 
             <PortfolioAssessmentSignal
-              label="Diversification coverage"
+              label="Internal diversification score"
               value={`${supplierDiversificationScore}/100`}
-              description="Current indication of supplier participation breadth across the portfolio."
+              description="Participation-breadth threshold score; not a participation percentage."
             />
           </div>
         </section>

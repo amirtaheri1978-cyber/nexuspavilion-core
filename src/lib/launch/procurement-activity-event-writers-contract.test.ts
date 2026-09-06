@@ -27,6 +27,9 @@ const acknowledgementRoute = readSource(
 const quotesRoute = readSource("src/app/api/quotes/route.ts");
 const awardRoute = readSource("src/app/api/award-contract/route.ts");
 const notificationsPage = readSource("src/app/notifications/page.tsx");
+const activityPrioritization = readSource(
+  "src/lib/procurement/activity-center-prioritization.ts",
+);
 const companyInvitationsRoute = readSource(
   "src/app/api/company-invitations/route.ts",
 );
@@ -372,12 +375,15 @@ function assertNoCaseInsensitiveUiTerm(source: string, term: string) {
 
 describe("Phase 6 Activity Center launch information architecture", () => {
   const attentionTypes = extractStringSetMembers(
-    notificationsPage,
+    activityPrioritization,
     "ATTENTION_TYPES",
   );
-  const updateTypes = extractStringSetMembers(notificationsPage, "UPDATE_TYPES");
+  const updateTypes = extractStringSetMembers(
+    activityPrioritization,
+    "UPDATE_TYPES",
+  );
   const classifyBody = extractFunctionBody(
-    notificationsPage,
+    activityPrioritization,
     "classifyActivityView",
   );
   const resolveViewBody = extractFunctionBody(
@@ -435,7 +441,10 @@ describe("Phase 6 Activity Center launch information architecture", () => {
     expect(classifyBody).toContain('return "history"');
 
     expect(notificationsPage).toContain(
-      'view === "updates"\n        ? updateRows\n        : notificationList',
+      'view === "attention"\n      ? attentionRows',
+    );
+    expect(notificationsPage).toContain(
+      ': view === "updates"\n        ? updateRows\n        : notificationList',
     );
     expect(
       (notificationsPage.match(/\.from\("notifications"\)/g) || []).length,
@@ -485,7 +494,7 @@ describe("Phase 6 Activity Center launch information architecture", () => {
 
   it("removes user-visible Unread semantics while allowing is_read compatibility select", () => {
     expect(notificationsPage).toContain(
-      '.select("id, title, message, type, is_read, created_at, company_id")',
+      '"id, title, message, type, is_read, created_at, company_id, source_rfq_id"',
     );
     expect(notificationsPage).not.toContain("!notification.is_read");
     expect(notificationsPage).not.toContain("notification.is_read");
@@ -510,13 +519,16 @@ describe("Phase 6 Activity Center launch information architecture", () => {
   it("presents addendum_action_required as an Attention acknowledgement signal", () => {
     expect(attentionTypes).toContain("addendum_action_required");
     expect(enterpriseLabelBody).toContain(
-      'if (value === "addendum_action_required") return "Addendum Acknowledgement Required"',
+      'if (value === "addendum_action_required")',
+    );
+    expect(enterpriseLabelBody).toContain(
+      'return "Addendum Acknowledgement Required"',
     );
     expect(notificationsPage).toContain(
       'notification.type === "addendum_action_required"\n                    ? "Acknowledgement Required"',
     );
-    expect(eventToneBody).toContain("ATTENTION_TYPES.has(value)");
-    expect(eventToneBody).toContain('return "warning"');
+    expect(eventToneBody).toContain("classifyActivityView(type)");
+    expect(eventToneBody).toContain('if (view === "attention") return "warning"');
     assertNoCaseInsensitiveUiTerm(notificationsPage, "urgent");
     assertNoCaseInsensitiveUiTerm(notificationsPage, "overdue");
   });

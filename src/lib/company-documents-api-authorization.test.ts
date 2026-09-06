@@ -23,6 +23,16 @@ vi.mock("@/lib/auth/workspace-context", async (importOriginal) => {
   };
 });
 
+vi.mock("@/lib/auth/membership", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@/lib/auth/membership")>();
+
+  return {
+    ...actual,
+    getWorkspaceMembershipForUserCompany: vi.fn(),
+  };
+});
+
 import { GET as GET_COLLECTION, POST as POST_COLLECTION } from "@/app/api/companies/[id]/documents/route";
 import { POST as POST_UPLOAD } from "@/app/api/companies/[id]/documents/upload/route";
 import {
@@ -30,6 +40,7 @@ import {
   PATCH as PATCH_ITEM,
 } from "@/app/api/companies/[id]/documents/[documentId]/route";
 import { GET as GET_DOWNLOAD } from "@/app/api/companies/[id]/documents/[documentId]/download/route";
+import { getWorkspaceMembershipForUserCompany } from "@/lib/auth/membership";
 import {
   getCurrentWorkspaceContext,
   WorkspaceContextError,
@@ -45,6 +56,9 @@ const FILE_PATH = `${COMPANY_ID}/${DOCUMENT_ID}/${OBJECT_ID}.pdf`;
 
 const createClientMock = vi.mocked(createClient);
 const workspaceContextMock = vi.mocked(getCurrentWorkspaceContext);
+const workspaceMembershipMock = vi.mocked(
+  getWorkspaceMembershipForUserCompany,
+);
 
 const validCreatePayload = {
   id: DOCUMENT_ID,
@@ -144,6 +158,7 @@ function mockSupabaseForDocuments({
   rpcResult,
   rpcError = null,
   selectData = [],
+  authUser = { id: USER_ID },
   documentRow = {
     id: DOCUMENT_ID,
     company_id: COMPANY_ID,
@@ -153,6 +168,7 @@ function mockSupabaseForDocuments({
   rpcResult?: Record<string, unknown>;
   rpcError?: { code?: string; message?: string } | null;
   selectData?: Array<Record<string, unknown>>;
+  authUser?: { id: string } | null;
   documentRow?: Record<string, unknown> | null;
 } = {}): SupabaseHarness {
   const harness: SupabaseHarness = {
@@ -165,6 +181,12 @@ function mockSupabaseForDocuments({
   };
 
   createClientMock.mockResolvedValue({
+    auth: {
+      getUser: async () => ({
+        data: { user: authUser },
+        error: null,
+      }),
+    },
     from(table: string) {
       harness.tablesTouched.push(table);
 
@@ -241,6 +263,7 @@ describe("company documents API authorization", () => {
   beforeEach(() => {
     createClientMock.mockReset();
     workspaceContextMock.mockReset();
+    workspaceMembershipMock.mockReset();
   });
 
   it("returns 401 for a signed-out create even when the payload is invalid", async () => {
@@ -455,6 +478,7 @@ describe("company documents API authorization", () => {
   it("allows active members and viewers to read metadata and download", async () => {
     for (const role of ["member", "viewer"] as const) {
       workspaceContextMock.mockResolvedValue(withRole(role));
+      workspaceMembershipMock.mockResolvedValue(withRole(role).membership!);
       const harness = mockSupabaseForDocuments({
         selectData: [validCreatePayload],
       });
@@ -481,6 +505,9 @@ describe("company documents API authorization", () => {
 
   it("returns 404 for a missing download target", async () => {
     workspaceContextMock.mockResolvedValue(withRole("member"));
+    workspaceMembershipMock.mockResolvedValue(
+      withRole("member").membership!,
+    );
     mockSupabaseForDocuments({ documentRow: null });
 
     const response = await GET_DOWNLOAD(
@@ -495,7 +522,7 @@ describe("company documents API authorization", () => {
     workspaceContextMock.mockRejectedValue(
       new WorkspaceContextError("Unauthorized.", "UNAUTHENTICATED"),
     );
-    mockSupabaseForDocuments();
+    mockSupabaseForDocuments({ authUser: null });
 
     const list = await GET_COLLECTION(
       new Request("http://localhost/api/companies/1/documents"),
@@ -525,6 +552,7 @@ describe("company documents API authorization", () => {
     );
 
     workspaceContextMock.mockResolvedValue(workspaceContext());
+    workspaceMembershipMock.mockResolvedValue(null);
     const cross = await GET_DOWNLOAD(
       new Request("http://localhost/api/companies/1/documents/1/download"),
       routeContext(OTHER_COMPANY_ID),

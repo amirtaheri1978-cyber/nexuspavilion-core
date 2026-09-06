@@ -19,6 +19,8 @@ const submitQuoteFormPath = "src/components/submit-quote-form.tsx";
 const quoteWorkspacePath =
   "src/components/rfq-workspace/rfq-quote-workspace.tsx";
 const metadataPath = "src/lib/procurement/rfq-metadata.ts";
+const commercialIntelligencePath =
+  "src/lib/procurement/rfq-commercial-intelligence.ts";
 
 const sql = readFileSync(resolve(process.cwd(), migrationPath), "utf8").replace(
   /\r\n/g,
@@ -74,6 +76,10 @@ const metadata = readFileSync(
   resolve(process.cwd(), metadataPath),
   "utf8",
 ).replace(/\r\n/g, "\n");
+const commercialIntelligence = readFileSync(
+  resolve(process.cwd(), commercialIntelligencePath),
+  "utf8",
+).replace(/\\r\\n/g, "\\n");
 
 function policyBlock(source: string, policyName: string) {
   const lowerSql = source.toLowerCase();
@@ -338,7 +344,8 @@ describe("issuer quote SELECT commercial unlock migration", () => {
     expect(quoteWorkspace).toContain("commercialEvaluationUnlocked");
     expect(detail).toContain("buildCommercialIntelligence({");
     expect(detail).toContain("quoteList,");
-    expect(compare).toContain(
+    expect(compare).toContain("buildCommercialIntelligence({");
+    expect(commercialIntelligence).toContain(
       "const scoredQuotesUnranked = commercialEvaluationUnlocked",
     );
     expect(compare.indexOf("supplierCompanyIds")).toBeGreaterThan(
@@ -351,8 +358,12 @@ describe("issuer quote SELECT commercial unlock migration", () => {
     expect(detail).toContain('.order("amount", { ascending: true })');
     expect(detail).toContain("buildCommercialIntelligence({");
     expect(compare).toContain('.order("amount", { ascending: true })');
-    expect(compare).toContain(
-      "priceScore * 0.6 + validityScore * 0.2 + budgetDisciplineScore * 0.2",
+    expect(compare).toContain("buildCommercialIntelligence({");
+    expect(commercialIntelligence).toContain(
+      "getSupplierEvaluationScore({",
+    );
+    expect(commercialIntelligence).toContain(
+      "rankScoredQuotes(scoredQuotesUnranked)",
     );
     expect(compare).toContain("<RfqQuoteComparison");
   });

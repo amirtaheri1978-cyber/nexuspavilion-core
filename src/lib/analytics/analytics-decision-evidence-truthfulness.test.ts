@@ -439,9 +439,11 @@ describe("analytics decision-evidence truthfulness", () => {
     expect(supplierPortfolio).not.toContain("Strategic Suppliers");
     expect(supplierPortfolio).not.toContain("Preferred Suppliers");
     expect(supplierPortfolio).not.toContain("High-Risk Suppliers");
-    expect(supplierPortfolio).toContain("Award History");
+    expect(supplierPortfolio).toContain("Award-History Coverage");
     expect(supplierPortfolio).toContain("Limited Quote History");
-    expect(supplierPortfolio).toContain("Not a trustworthiness score");
+    expect(supplierPortfolio).toMatch(
+      /Coverage is not a\s+trust score, approval status, or authorization signal\./,
+    );
 
     expect(companyProfile).not.toContain("AI Supplier Intelligence");
     expect(companyProfile).not.toContain("supplierIntelligenceScore");
@@ -477,4 +479,105 @@ describe("analytics decision-evidence truthfulness", () => {
     expect(analyticsPage).toContain("suppliersWithLimitedQuoteHistory");
   });
 
+});
+describe("analytics procurement insight denominator truthfulness", () => {
+  const portfolioSource = readSource(
+    "src/lib/analytics/portfolio/portfolio-intelligence.ts",
+  );
+  const supplierSource = readSource(
+    "src/lib/analytics/supplier-intelligence.ts",
+  );
+  const procurementInsightSurface = readSource(
+    "src/components/analytics/procurement/procurement-insight-metrics.tsx",
+  );
+  const supplierPortfolioSurface = readSource(
+    "src/components/analytics/supplier-portfolio-intelligence.tsx",
+  );
+  const rfqDecisionSurface = readSource(
+    "src/components/analytics/award-probability-forecast.tsx",
+  );
+  const boardExecutiveSurface = readSource(
+    "src/components/report-engine/BoardExecutiveReport.tsx",
+  );
+  const analyticsPage10_03 = readSource("src/app/analytics/page.tsx");
+
+  it("defines cycle, participation, and decision ratios with explicit evidence populations", () => {
+    expect(portfolioSource).toContain("rfqSubmissionCoverage");
+    expect(portfolioSource).toContain("quotationDecisionCoverage");
+    expect(portfolioSource).toContain("quotationAwardRate");
+    expect(portfolioSource).toContain("averageQuotationsPerRfq");
+    expect(portfolioSource).toContain("averageActiveRfqAge");
+    expect(portfolioSource).toContain(
+      "No trusted terminal RFQ timestamp is available for completed-cycle duration.",
+    );
+
+    expect(procurementInsightSurface).toContain("Average Active RFQ Age");
+    expect(procurementInsightSurface).toContain("RFQ Submission Coverage");
+    expect(procurementInsightSurface).toContain("Quotation Decision Coverage");
+    expect(procurementInsightSurface).toContain("Quotation Award Rate");
+    expect(procurementInsightSurface).toContain("Average Quotations per RFQ");
+    expect(procurementInsightSurface).toContain(
+      "RFQs with submissions /",
+    );
+    expect(procurementInsightSurface).toContain(
+      "quotations with decisions /",
+    );
+    expect(procurementInsightSurface).toContain(
+      "awarded quotations /",
+    );
+    expect(procurementInsightSurface).not.toContain("Invitation Response Rate");
+  });
+
+  it("keeps supplier aggregates on the full observed supplier population instead of the top-20 display ranking", () => {
+    expect(supplierSource).toContain(
+      "const supplierParticipationCount = supplierEvidence.length",
+    );
+    expect(supplierSource).toContain("supplierEvidence.filter(");
+    expect(supplierSource).toContain(
+      "supplierEvidence.reduce((sum, vendor) => sum + vendor.winRate, 0)",
+    );
+    expect(supplierSource).not.toContain(
+      "const supplierParticipationCount = supplierRanking.length",
+    );
+
+    expect(supplierPortfolioSurface).toContain("Participating Suppliers");
+    expect(supplierPortfolioSurface).toContain("Award-History Coverage");
+    expect(supplierPortfolioSurface).toContain(
+      "Internal Diversification Score",
+    );
+    expect(supplierPortfolioSurface).toContain(
+      "not a participation percentage",
+    );
+  });
+
+  it("keeps RFQ evaluation state categorical and board reporting denominator-safe", () => {
+    expect(rfqDecisionSurface).toMatch(
+      /Quotation presence\s+does not indicate completed evaluation/,
+    );
+    expect(rfqDecisionSurface).toMatch(
+      /does not present\s+an evaluation-completion percentage/,
+    );
+
+    expect(boardExecutiveSurface).toContain("Quotation award rate");
+    expect(boardExecutiveSurface).toContain(
+      "Awarded quotations / submitted quotations",
+    );
+    expect(boardExecutiveSurface).toContain(
+      "Suppliers with recorded quotation history",
+    );
+    expect(boardExecutiveSurface).toContain(
+      "Internal diversification score",
+    );
+
+    expect(analyticsPage10_03).toContain(
+      "supplierParticipationCount={supplierParticipationCount}",
+    );
+    expect(analyticsPage10_03).toContain(
+      "procurementInsights={procurementInsights}",
+    );
+    expect(analyticsPage10_03).not.toContain(
+      "Improve RFQ conversion and award execution.",
+    );
+    expect(analyticsPage10_03).not.toContain('label="Award Conversion"');
+  });
 });
