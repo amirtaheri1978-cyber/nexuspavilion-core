@@ -16,6 +16,7 @@ import { ProcurementDashboard } from "@/components/analytics/sections/procuremen
 import { buildAnalyticsNarrative } from "@/lib/analytics/narrative/analytics-narrative";
 import { buildPortfolioIntelligence } from "@/lib/analytics/portfolio/portfolio-intelligence";
 import { buildExecutiveBrief } from "@/lib/analytics/executive/executive-brief";
+import { buildExecutiveHistoricalPatterns } from "@/lib/analytics/executive/executive-trend";
 import { IntelligenceDashboard } from "@/components/analytics/sections/intelligence-dashboard";
 import {
   CONTRACT_FRAMEWORK_LABELS,
@@ -67,6 +68,8 @@ export default async function AnalyticsPage() {
     companyList,
   } = await loadAnalyticsSourceData();
 
+  const analyticsAsOf = new Date();
+
   const currentCompany =
     companyList.find((company) => company.id === companyId) ?? null;
 
@@ -77,7 +80,7 @@ export default async function AnalyticsPage() {
     year: "numeric",
     month: "long",
     day: "numeric",
-  }).format(new Date());
+  }).format(analyticsAsOf);
 
   const {
     vendorLeaderboard,
@@ -111,6 +114,13 @@ export default async function AnalyticsPage() {
   } = buildPortfolioIntelligence({
     rfqList,
     quoteList,
+  });
+
+  const historicalPatterns = buildExecutiveHistoricalPatterns({
+    rfqs: rfqList,
+    quotes: quoteList,
+    asOf: analyticsAsOf,
+    periodDays: 30,
   });
 
   const materialRfqs = countByScope(rfqList, "material");
@@ -169,7 +179,6 @@ export default async function AnalyticsPage() {
       awardRate * 0.4 + budgetUtilization * 0.3 + avgQuotesPerRfq * 10,
     ),
   );
-  const forecastSavings = Math.round(potentialSavings * 1.2);
   const dominantScope =
     [
       { label: "Material", value: materialRfqs },
@@ -496,12 +505,12 @@ remains ${ceoRiskLevel.toLowerCase()}.
 
   const savingsOpportunityLevel =
     potentialSavings > 50000
-      ? "Major Savings"
+      ? "Major"
       : potentialSavings > 10000
-        ? "Strong Savings"
+        ? "Strong"
         : potentialSavings > 0
-          ? "Moderate Savings"
-          : "Low Savings";
+          ? "Moderate"
+          : "Low";
 
   const executiveCommandRecommendation =
     boardHealthIndex >= 85 &&
@@ -591,8 +600,8 @@ remains ${ceoRiskLevel.toLowerCase()}.
     {
       role: "CFO Action",
       action:
-        forecastSavings > 0
-          ? `Review ${forecastSavings.toLocaleString()} dollars in forecast savings opportunity.`
+        potentialSavings > 0
+          ? `Review the current estimated savings opportunity of ${potentialSavings.toLocaleString()} dollars before financial validation.`
           : "Monitor spend performance and improve budget-to-award visibility.",
     },
     {
@@ -659,127 +668,6 @@ remains ${ceoRiskLevel.toLowerCase()}.
     })
     .sort((a, b) => b.opportunityScore - a.opportunityScore)
     .slice(0, 5);
-
-  const executiveScenarios = [
-    {
-      scenario: "Supplier Expansion",
-      outcome:
-        supplierRanking.length >= 10
-          ? "Already achieved"
-          : "Increase supplier participation to improve competition and pricing.",
-      impact: "+ Procurement resilience",
-      confidence: "High",
-    },
-    {
-      scenario: "Risk Reduction",
-      outcome:
-        procurementRiskIndex <= 35
-          ? "Risk profile already optimized"
-          : "Reduce supplier dependency and concentration exposure.",
-      impact: "+ Executive confidence",
-      confidence: "High",
-    },
-    {
-      scenario: "Award Optimization",
-      outcome:
-        awardRate >= 50
-          ? "Award execution performing well"
-          : "Improve RFQ-to-award conversion performance.",
-      impact: "+ Procurement velocity",
-      confidence: "Medium",
-    },
-    {
-      scenario: "Savings Capture",
-      outcome:
-        potentialSavings > 10000
-          ? `Capture approximately $${potentialSavings.toLocaleString()} in value.`
-          : "Increase procurement competition to unlock savings.",
-      impact: "+ Financial performance",
-      confidence: "Medium",
-    },
-  ];
-  const executiveDecisionSimulator = [
-    {
-      decision: "Expand Supplier Network",
-      expectedImpact:
-        supplierRanking.length >= 10
-          ? "Supplier network already operating at scale."
-          : "Higher competition and stronger procurement resilience.",
-      risk: supplierRanking.length >= 10 ? "Low" : "Moderate",
-      confidence: decisionSupportReadiness.label,
-    },
-    {
-      decision: "Reduce Supplier Dependency",
-      expectedImpact:
-        procurementRiskIndex <= 35
-          ? "Risk exposure already optimized."
-          : "Lower concentration risk and stronger executive confidence.",
-      risk: procurementRiskIndex <= 35 ? "Low" : "Moderate",
-      confidence: decisionSupportReadiness.label,
-    },
-    {
-      decision: "Accelerate Award Decisions",
-      expectedImpact:
-        awardRate >= 50
-          ? "Award process performing efficiently."
-          : "Faster procurement execution and operational delivery.",
-      risk: awardRate >= 50 ? "Low" : "Moderate",
-      confidence: decisionSupportReadiness.label,
-    },
-    {
-      decision: "Capture Savings Opportunity",
-      expectedImpact:
-        potentialSavings > 10000
-          ? `Potential value of $${potentialSavings.toLocaleString()}.`
-          : "Limited savings opportunity currently available.",
-      risk: "Low",
-      confidence:
-        procurementOpportunityScore >= 80
-          ? "High"
-          : procurementOpportunityScore >= 60
-            ? "Medium"
-            : "Low",
-    },
-  ];
-
-  const executiveForecastCenter = [
-    {
-      title: "Procurement Outlook",
-      forecast:
-        procurementHealthScore >= 80
-          ? "Positive"
-          : procurementHealthScore >= 60
-            ? "Stable"
-            : "Improvement Required",
-    },
-    {
-      title: "Supplier Outlook",
-      forecast:
-        supplierEngagementScore >= 80
-          ? "Expanding"
-          : supplierEngagementScore >= 60
-            ? "Stable"
-            : "At Risk",
-    },
-    {
-      title: "Risk Outlook",
-      forecast:
-        procurementRiskIndex <= 35
-          ? "Controlled"
-          : procurementRiskIndex <= 60
-            ? "Monitor"
-            : "Elevated",
-    },
-    {
-      title: "Executive Outlook",
-      forecast:
-        executiveReadinessScore >= 80
-          ? "Decision Ready"
-          : executiveReadinessScore >= 60
-            ? "Developing"
-            : "Limited Visibility",
-    },
-  ];
 
   const internalPerformanceIndex = Math.min(
     100,
@@ -856,7 +744,7 @@ remains ${ceoRiskLevel.toLowerCase()}.
   const boardPresentationMetrics = [
     {
       title: "Board Readiness",
-      value: `${benchmarkReadinessScore}/100`,
+      value: `${boardReadinessScore}/100`,
     },
     {
       title: "Board Health",
@@ -1051,6 +939,7 @@ remains ${ceoRiskLevel.toLowerCase()}.
           : procurementOpportunityScore >= 60
             ? "Medium"
             : "Long-Term",
+      valueLabel: "Opportunity Score",
       value: `${procurementOpportunityScore}/100`,
       summary: `Expand procurement activity within ${bestProcurementCategory} to increase sourcing coverage and operational leverage.`,
     },
@@ -1068,6 +957,7 @@ remains ${ceoRiskLevel.toLowerCase()}.
           : potentialSavings >= 5000
             ? "Medium"
             : "Long-Term",
+      valueLabel: "Estimated Savings Opportunity",
       value: `$${potentialSavings.toLocaleString()}`,
       summary: `Current procurement intelligence indicates a ${savingsOpportunityLevel.toLowerCase()} savings opportunity.`,
     },
@@ -1080,6 +970,7 @@ remains ${ceoRiskLevel.toLowerCase()}.
             ? "90 Days"
             : "Strategic",
       impact: supplierEngagementScore < 60 ? "High" : "Medium",
+      valueLabel: "Supplier Engagement",
       value: `${supplierEngagementScore}/100`,
       summary:
         "Expand supplier participation to improve competition, quote coverage, and decision confidence.",
@@ -1088,6 +979,7 @@ remains ${ceoRiskLevel.toLowerCase()}.
       title: `${dominantScope} RFQ Growth`,
       priority: "Strategic",
       impact: "Medium",
+      valueLabel: "Dominant Procurement Scope",
       value: dominantScope,
       summary:
         "Increase RFQ volume within the dominant procurement scope to strengthen market intelligence.",
@@ -1131,7 +1023,7 @@ remains ${ceoRiskLevel.toLowerCase()}.
       : procurementOpportunityScore >= 80
         ? "Prioritize high-opportunity procurement categories and expand supplier participation to capture savings."
         : enterpriseProcurementScore >= 75
-          ? "Continue scaling competitive RFQs while maintaining supplier performance, RFQ structure, and forecast confidence."
+          ? "Continue scaling competitive RFQs while maintaining supplier performance, RFQ structure, and decision evidence readiness."
           : "Improve RFQ participation, supplier coverage, classification maturity, and procurement data quality to strengthen executive confidence.";
 
   const procurementPerformanceIndex = Math.min(
@@ -1382,8 +1274,8 @@ remains ${ceoRiskLevel.toLowerCase()}.
       : "Improve procurement growth initiatives.";
 
   const cfoPriority =
-    forecastSavings > 0
-      ? `Capture forecast savings of ${forecastSavings.toLocaleString()} dollars.`
+    potentialSavings > 0
+      ? `Review the current estimated savings opportunity of ${potentialSavings.toLocaleString()} dollars and validate it against finance-controlled evidence.`
       : "Increase budget visibility and spend optimization.";
 
   const procurementPriority =
@@ -1419,99 +1311,33 @@ remains ${ceoRiskLevel.toLowerCase()}.
     { name: "Service", value: serviceRfqs },
   ];
 
-  const procurementOutlook =
-    enterpriseProcurementScore >= 85
-      ? "Strong Growth Outlook"
-      : enterpriseProcurementScore >= 70
-        ? "Positive Outlook"
-        : enterpriseProcurementScore >= 55
-          ? "Stable Outlook"
-          : "Improvement Required";
+  const procurementOutlook = historicalPatterns.narrative;
 
-  const forecast30Days =
-    procurementRiskIndex >= 60
-      ? "Risk stabilization required."
-      : "Operational procurement growth expected.";
+  const forecast30Days = historicalPatterns.rfqCreation.summary;
+  const forecast60Days = historicalPatterns.quoteSubmission.summary;
+  const forecast90Days = historicalPatterns.supplierParticipation.summary;
 
-  const forecast60Days =
-    supplierEngagementScore >= 70
-      ? "Supplier participation expansion expected."
-      : "Supplier engagement initiatives recommended.";
-
-  const forecast90Days =
-    benchmarkReadinessScore >= 80
-      ? "Board-ready procurement intelligence expected."
-      : "Benchmark maturity improvements recommended.";
-
-  const riskTrajectory =
-    procurementRiskIndex >= 60
-      ? "Elevated"
-      : procurementRiskIndex >= 40
-        ? "Moderate"
-        : "Controlled";
-
+  const riskTrajectory = historicalPatterns.rfqCreation.directionLabel;
   const opportunityTrajectory =
-    procurementOpportunityScore >= 80
-      ? "Accelerating"
-      : procurementOpportunityScore >= 60
-        ? "Growing"
-        : "Emerging";
+    historicalPatterns.submittedQuoteValue.directionLabel;
 
-  const executiveForecastStatus =
-    enterpriseProcurementScore >= 80 && executiveReadinessScore >= 80
-      ? "Forecast Confidence High"
-      : enterpriseProcurementScore >= 65
-        ? "Forecast Confidence Moderate"
-        : "Forecast Confidence Developing";
+  const executiveForecastStatus = historicalPatterns.statusLabel;
+  const boardForecastNarrative = historicalPatterns.narrative;
 
-  const boardForecastNarrative =
-    enterpriseProcurementScore >= 80
-      ? "Enterprise procurement performance supports a positive executive forecast with opportunities for scale, efficiency, and supplier expansion."
-      : enterpriseProcurementScore >= 65
-        ? "Procurement operations are improving and forecast indicators remain positive with moderate executive confidence."
-        : "Forecast indicators suggest capability development should remain a strategic priority before major procurement expansion.";
-
-  const bestCaseScenario =
-    procurementOpportunityScore >= 80
-      ? "Accelerated procurement growth with expanded supplier participation and higher savings realization."
-      : "Improved procurement performance with stronger supplier engagement.";
-
+  const bestCaseScenario = historicalPatterns.rfqCreation.summary;
   const expectedCaseScenario =
-    enterpriseProcurementScore >= 70
-      ? "Stable procurement growth with moderate opportunity capture and controlled risk."
-      : "Gradual procurement improvement with ongoing capability development.";
+    historicalPatterns.supplierParticipation.summary;
+  const riskCaseScenario = historicalPatterns.submittedQuoteValue.summary;
 
-  const riskCaseScenario =
-    procurementRiskIndex >= 60
-      ? "Supplier dependency and execution risk may reduce forecast confidence and delay strategic objectives."
-      : "Risk exposure remains manageable but should be monitored.";
-
-  const forecastConfidenceLevel =
-    enterpriseProcurementScore >= 80 && benchmarkReadinessScore >= 80
-      ? "High"
-      : enterpriseProcurementScore >= 65
-        ? "Moderate"
-        : "Developing";
-
-  const executiveScenarioStatus =
-    forecastConfidenceLevel === "High"
-      ? "Decision Ready"
-      : forecastConfidenceLevel === "Moderate"
-        ? "Review Required"
-        : "Validation Required";
-
-  const boardForecastBriefing =
-    forecastConfidenceLevel === "High"
-      ? "Forecast indicators support executive confidence. Procurement performance, supplier engagement, and benchmark readiness suggest favorable operating conditions for board-level planning."
-      : forecastConfidenceLevel === "Moderate"
-        ? "Forecast indicators remain positive but require continued monitoring of supplier participation, risk exposure, and procurement execution."
-        : "Forecast indicators suggest additional validation and capability development before major strategic decisions are recommended.";
+  const forecastConfidenceLevel = decisionSupportReadiness.label;
+  const executiveScenarioStatus = historicalPatterns.statusLabel;
+  const boardForecastBriefing = historicalPatterns.narrative;
 
   const boardForecastPriority =
     procurementRiskIndex >= 60
       ? "Risk Stabilization"
       : procurementOpportunityScore >= 80
-        ? "Growth Acceleration"
+        ? "Opportunity Review"
         : "Operational Improvement";
   const executivePresentationExports = [
     {
@@ -1900,7 +1726,7 @@ remains ${ceoRiskLevel.toLowerCase()}.
           <BoardroomSnapshot
             executiveBrief={executiveBrief}
             quotedPortfolioValue={procurementVolume}
-            estimatedSavingsOpportunity={forecastSavings}
+            estimatedSavingsOpportunity={potentialSavings}
             enterpriseProcurementScore={enterpriseProcurementScore}
             constructionClassificationScore={constructionClassificationScore}
             executiveNarrative={executiveNarrative}
@@ -2219,145 +2045,6 @@ remains ${ceoRiskLevel.toLowerCase()}.
           />
         </div>
 
-        <section className="mt-6 rounded-3xl border border-white/10 bg-[#061426]/82 p-5 text-white sm:p-6 lg:p-7">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">
-            Scenario Intelligence
-          </p>
-
-          <h2 className="mt-2 text-2xl font-semibold tracking-tight text-white">
-            Strategic Scenario Modeling
-          </h2>
-
-          <p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-400">
-            Executive scenario modeling evaluates potential procurement
-            outcomes, operational impact, and strategic decision consequences
-            before action is taken.
-          </p>
-
-          <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-            {executiveScenarios.map((scenario) => (
-              <div
-                key={scenario.scenario}
-                className="rounded-2xl border border-[#2CC4E8]/15 bg-[#2CC4E8]/[0.04] p-5"
-              >
-                <p className="text-xs font-black uppercase tracking-[0.2em] text-[#9BE8F8]">
-                  {scenario.scenario}
-                </p>
-
-                <p className="mt-4 text-sm font-semibold leading-7 text-slate-300">
-                  {scenario.outcome}
-                </p>
-
-                <div className="mt-5 rounded-2xl border border-white/10 bg-[#061426]/70 p-4">
-                  <p className="text-xs font-black uppercase tracking-[0.15em] text-slate-500">
-                    Impact
-                  </p>
-
-                  <p className="mt-2 font-black text-white">
-                    {scenario.impact}
-                  </p>
-                </div>
-
-                <div className="mt-4 rounded-2xl border border-white/10 bg-[#061426]/70 p-4">
-                  <p className="text-xs font-black uppercase tracking-[0.15em] text-slate-500">
-                    Confidence
-                  </p>
-
-                  <p className="mt-2 font-black text-white">
-                    {scenario.confidence}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-        <section className="mt-6 rounded-3xl border border-white/10 bg-[#061426]/82 p-5 text-white sm:p-6 lg:p-7">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">
-            Decision Simulation
-          </p>
-
-          <h2 className="mt-2 text-2xl font-semibold tracking-tight text-white">
-            Decision Outcome Modeling
-          </h2>
-
-          <p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-400">
-            Simulate executive procurement decisions and evaluate expected
-            operational impact, confidence level, and implementation risk.
-          </p>
-
-          <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-            {executiveDecisionSimulator.map((item) => (
-              <div
-                key={item.decision}
-                className="rounded-2xl border border-purple-300/15 bg-purple-400/[0.04] p-5"
-              >
-                <p className="text-xs font-black uppercase tracking-[0.2em] text-purple-300">
-                  Decision
-                </p>
-
-                <h3 className="mt-4 text-xl font-black text-white">
-                  {item.decision}
-                </h3>
-
-                <p className="mt-4 text-sm font-semibold leading-7 text-slate-300">
-                  {item.expectedImpact}
-                </p>
-
-                <div className="mt-5 rounded-2xl border border-white/10 bg-[#061426]/70 p-4">
-                  <p className="text-xs font-black uppercase tracking-[0.15em] text-slate-500">
-                    Risk
-                  </p>
-
-                  <p className="mt-2 font-black text-white">{item.risk}</p>
-                </div>
-
-                <div className="mt-4 rounded-2xl border border-white/10 bg-[#061426]/70 p-4">
-                  <p className="text-xs font-black uppercase tracking-[0.15em] text-slate-500">
-                    Confidence
-                  </p>
-
-                  <p className="mt-2 font-black text-white">
-                    {item.confidence}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section className="mt-8 rounded-3xl border border-white/10 bg-[#061426]/88 p-5 text-white shadow-executive sm:p-7 lg:p-8">
-          <p className="text-xs font-black uppercase tracking-[0.25em] text-[#C8A646]">
-            Executive Forecast Center
-          </p>
-
-          <h2 className="mt-3 text-3xl font-black text-white">
-            Forward-Looking Intelligence
-          </h2>
-
-          <p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-400">
-            Forecast procurement readiness, supplier health, executive
-            visibility, and enterprise risk trajectory using current operating
-            signals.
-          </p>
-
-          <div className="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-            {executiveForecastCenter.map((forecast) => (
-              <div
-                key={forecast.title}
-                className="rounded-3xl border border-[#2CC4E8]/15 bg-[#2CC4E8]/[0.055] p-6"
-              >
-                <p className="text-xs font-black uppercase tracking-[0.2em] text-[#9BE8F8]">
-                  {forecast.title}
-                </p>
-
-                <h3 className="mt-4 text-2xl font-black text-white">
-                  {forecast.forecast}
-                </h3>
-              </div>
-            ))}
-          </div>
-        </section>
-
         <div id="decision-command-center" className="scroll-mt-6 mt-8">
           <CEOActionCenter
             ceoOperatingStatus={ceoOperatingStatus}
@@ -2415,11 +2102,11 @@ remains ${ceoRiskLevel.toLowerCase()}.
         </section>
         <section className="mt-8 rounded-3xl border border-white/10 bg-slate-950 p-5 text-white shadow-executive sm:p-7 lg:p-8">
           <p className="text-xs font-black uppercase tracking-[0.25em] text-[#C8A646]">
-            Board Forecast Briefing
+            Board Historical Pattern Briefing
           </p>
 
           <h2 className="mt-3 text-4xl font-black">
-            Executive Forecast Narrative
+            Executive Historical Pattern Narrative
           </h2>
 
           <div className="mt-8 grid gap-4 md:grid-cols-2">
@@ -2435,7 +2122,7 @@ remains ${ceoRiskLevel.toLowerCase()}.
 
             <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
               <p className="text-xs font-black uppercase tracking-[0.2em] text-[#C8A646]">
-                Forecast Confidence
+                Decision Evidence Readiness
               </p>
 
               <h3 className="mt-3 text-2xl font-black">
@@ -2458,7 +2145,7 @@ remains ${ceoRiskLevel.toLowerCase()}.
         <ReportSectionDivider
           number={3}
           title="Board & Governance"
-          description="Forecast confidence, internal performance position, governance readiness, and board-level risk priorities."
+          description="Historical pattern evidence, internal performance position, governance readiness, and board-level risk priorities."
           companyName={reportCompanyName}
           generatedAt={reportGeneratedAt}
         />

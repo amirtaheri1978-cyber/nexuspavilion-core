@@ -8,23 +8,28 @@ type ExecutiveScenarioCenterProps = {
   executiveScenarioStatus: string;
 };
 
+/**
+ * Legacy prop names are retained to avoid widening the analytics composition
+ * contract. The supplied values now represent observed historical evidence and
+ * decision-evidence readiness, not modeled future scenarios.
+ */
 export function ExecutiveScenarioCenter({
-  bestCaseScenario,
-  expectedCaseScenario,
-  riskCaseScenario,
-  forecastConfidenceLevel,
-  executiveScenarioStatus,
+  bestCaseScenario: rfqCreationContext,
+  expectedCaseScenario: supplierParticipationContext,
+  riskCaseScenario: submittedQuoteValueContext,
+  forecastConfidenceLevel: decisionEvidenceReadiness,
+  executiveScenarioStatus: historicalEvidenceStatus,
 }: ExecutiveScenarioCenterProps) {
   return (
     <ExecutivePanel
-      aria-labelledby="executive-scenario-center-heading"
+      aria-labelledby="executive-historical-context-heading"
       padding="lg"
     >
       <header className="grid min-w-0 gap-6 border-b border-white/10 pb-7 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-end">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-3">
             <p className="text-[10px] font-black uppercase tracking-[0.28em] text-nexus-gold sm:text-xs">
-              Executive Scenario Center
+              Historical Evidence Context
             </p>
 
             <span
@@ -33,92 +38,92 @@ export function ExecutiveScenarioCenter({
             />
 
             <p className="text-[10px] font-black uppercase tracking-[0.18em] text-nexus-muted">
-              Strategic decision simulation
+              Cross-domain pattern interpretation
             </p>
           </div>
 
           <h2
-            id="executive-scenario-center-heading"
+            id="executive-historical-context-heading"
             className="mt-4 max-w-5xl text-3xl font-black leading-[1.08] tracking-tight text-nexus-white sm:text-4xl lg:text-5xl"
           >
-            Strategic Scenario Modeling
+            Observed Procurement Pattern Context
           </h2>
 
           <p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-nexus-muted sm:text-base">
-            Comparative modeling of upside opportunity, expected operating
-            performance, and downside procurement exposure to support executive
-            planning and board-level decision review.
+            Recorded sourcing, supplier-participation, and commercial activity
+            are presented as historical evidence for executive interpretation.
+            This section does not model future outcomes or outcome probability.
           </p>
         </div>
 
         <div className="flex min-w-[220px] items-center justify-between gap-5 rounded-2xl border border-white/10 bg-white/[0.035] px-5 py-4 xl:flex-col xl:items-end xl:gap-1">
           <div className="min-w-0">
             <p className="text-[10px] font-black uppercase tracking-[0.18em] text-nexus-gold xl:text-right">
-              Scenario status
+              Historical evidence status
             </p>
 
             <p className="mt-1 text-xs font-semibold text-nexus-muted xl:text-right">
-              Current modeling position
+              Recorded comparison availability
             </p>
           </div>
 
           <p className="max-w-[180px] shrink-0 break-words text-right text-lg font-black leading-6 text-nexus-white [overflow-wrap:anywhere]">
-            {executiveScenarioStatus}
+            {historicalEvidenceStatus}
           </p>
         </div>
       </header>
 
       <section
-        aria-labelledby="expected-scenario-position-heading"
+        aria-labelledby="rfq-historical-context-heading"
         className="mt-7 overflow-hidden rounded-3xl border border-blue-500/20 bg-blue-500/[0.045]"
       >
         <div className="grid min-w-0 xl:grid-cols-[300px_minmax(0,1fr)]">
           <div className="border-b border-white/10 p-5 sm:p-6 xl:border-b-0 xl:border-r">
             <p className="text-[10px] font-black uppercase tracking-[0.22em] text-blue-300">
-              Primary planning case
+              Recorded sourcing activity
             </p>
 
             <h3
-              id="expected-scenario-position-heading"
+              id="rfq-historical-context-heading"
               className="mt-3 text-xl font-black tracking-tight text-nexus-white sm:text-2xl"
             >
-              Expected Operating Position
+              RFQ Creation Pattern
             </h3>
 
             <p className="mt-3 text-xs font-semibold leading-6 text-nexus-muted">
-              Central scenario used as the principal basis for executive
-              planning and board discussion.
+              Observed RFQ creation volume in the current comparison window
+              relative to the immediately preceding window.
             </p>
 
             <div className="mt-6 rounded-2xl border border-white/10 bg-black/10 p-4">
               <p className="text-[10px] font-black uppercase tracking-[0.17em] text-nexus-muted">
-                Forecast confidence
+                Decision evidence readiness
               </p>
 
               <p className="mt-2 break-words text-sm font-black leading-6 text-nexus-white [overflow-wrap:anywhere]">
-                {forecastConfidenceLevel}
+                {decisionEvidenceReadiness}
               </p>
             </div>
           </div>
 
           <div className="min-w-0 p-5 sm:p-6">
             <p className="text-[10px] font-black uppercase tracking-[0.18em] text-nexus-muted">
-              Expected-case scenario
+              RFQ activity evidence
             </p>
 
             <p className="mt-4 break-words text-lg font-bold leading-8 text-nexus-white [overflow-wrap:anywhere] sm:text-xl sm:leading-9">
-              {expectedCaseScenario}
+              {rfqCreationContext}
             </p>
 
             <div className="mt-6 grid gap-3 sm:grid-cols-2">
-              <ScenarioSignal
-                label="Modeling Status"
-                value={executiveScenarioStatus}
+              <EvidenceSignal
+                label="Evidence Status"
+                value={historicalEvidenceStatus}
               />
 
-              <ScenarioSignal
-                label="Decision Confidence"
-                value={forecastConfidenceLevel}
+              <EvidenceSignal
+                label="Decision Readiness"
+                value={decisionEvidenceReadiness}
               />
             </div>
           </div>
@@ -126,92 +131,91 @@ export function ExecutiveScenarioCenter({
       </section>
 
       <section
-        aria-labelledby="scenario-comparison-heading"
+        aria-labelledby="historical-comparison-heading"
         className="mt-7 min-w-0"
       >
         <div className="flex flex-col gap-3 border-b border-white/10 pb-5 sm:flex-row sm:items-end sm:justify-between">
           <div className="min-w-0">
             <p className="text-[10px] font-black uppercase tracking-[0.22em] text-nexus-gold">
-              Scenario comparison
+              Historical comparison
             </p>
 
             <h3
-              id="scenario-comparison-heading"
+              id="historical-comparison-heading"
               className="mt-2 text-lg font-black tracking-tight text-nexus-white sm:text-xl"
             >
-              Executive Planning Range
+              Cross-Domain Recorded Patterns
             </h3>
           </div>
 
           <p className="max-w-xl text-xs font-semibold leading-5 text-nexus-muted sm:text-right">
-            Scenario ordering remains fixed as upside, expected operating case,
-            and downside risk for direct executive comparison.
+            The comparison remains descriptive: it shows recorded changes and
+            does not infer future performance.
           </p>
         </div>
 
         <div className="mt-5 grid min-w-0 gap-5 md:grid-cols-3">
-          <ScenarioCard
+          <HistoricalEvidenceCard
             position="01"
-            title="Best Case"
-            subtitle="Upside opportunity"
-            value={bestCaseScenario}
-            tone="success"
-          />
-
-          <ScenarioCard
-            position="02"
-            title="Expected Case"
-            subtitle="Planning baseline"
-            value={expectedCaseScenario}
+            title="RFQ Creation"
+            subtitle="Sourcing activity"
+            value={rfqCreationContext}
             tone="info"
-            primary
           />
 
-          <ScenarioCard
+          <HistoricalEvidenceCard
+            position="02"
+            title="Supplier Participation"
+            subtitle="Distinct submitting companies"
+            value={supplierParticipationContext}
+            tone="neutral"
+          />
+
+          <HistoricalEvidenceCard
             position="03"
-            title="Risk Case"
-            subtitle="Downside exposure"
-            value={riskCaseScenario}
-            tone="risk"
+            title="Submitted Quote Value"
+            subtitle="Recorded commercial activity"
+            value={submittedQuoteValueContext}
+            tone="neutral"
           />
         </div>
       </section>
 
       <section
-        aria-labelledby="forecast-confidence-heading"
+        aria-labelledby="historical-evidence-governance-heading"
         className="mt-7 min-w-0 rounded-3xl border border-white/10 bg-white/[0.025] p-5 sm:p-6"
       >
         <div className="flex flex-col gap-3 border-b border-white/10 pb-5 sm:flex-row sm:items-end sm:justify-between">
           <div className="min-w-0">
             <p className="text-[10px] font-black uppercase tracking-[0.22em] text-nexus-gold">
-              Decision assurance
+              Decision governance
             </p>
 
             <h3
-              id="forecast-confidence-heading"
+              id="historical-evidence-governance-heading"
               className="mt-2 text-lg font-black tracking-tight text-nexus-white sm:text-xl"
             >
-              Forecast Confidence Matrix
+              Evidence Readiness Context
             </h3>
           </div>
 
           <p className="max-w-xl text-xs font-semibold leading-5 text-nexus-muted sm:text-right">
-            Confidence and scenario status should be reviewed together before
-            executive or board-level decisions are finalized.
+            Historical movement and decision-evidence readiness should be
+            reviewed together before executive or board action is finalized.
           </p>
         </div>
 
         <div className="mt-5 grid min-w-0 gap-4 md:grid-cols-2">
-          <ConfidenceBlock
-            label="Forecast Confidence"
-            value={forecastConfidenceLevel}
-            description="Current confidence level supporting the scenario range and expected planning case."
+          <ContextBlock
+            label="Decision Evidence Readiness"
+            value={decisionEvidenceReadiness}
+            description="Current readiness of the evidence base supporting executive interpretation."
           />
 
-          <ConfidenceBlock
-            label="Scenario Status"
-            value={executiveScenarioStatus}
-            description="Current readiness and governance position of the executive scenario model."
+          <ContextBlock
+            label="Historical Evidence Status"
+            value={historicalEvidenceStatus}
+            description="Availability of observed activity across the comparison windows."
           />
         </div>
 
@@ -221,9 +225,9 @@ export function ExecutiveScenarioCenter({
           </p>
 
           <p className="mt-3 text-sm font-semibold leading-7 text-nexus-muted">
-            Scenario intelligence compares upside opportunity, expected
-            operating performance, and downside risk before executive and
-            board-level decisions are made.
+            Use historical patterns to understand recorded movement, then apply
+            delegated authority, financial validation, supplier due diligence,
+            and contractual review before material decisions are made.
           </p>
         </div>
       </section>
@@ -231,41 +235,33 @@ export function ExecutiveScenarioCenter({
   );
 }
 
-type ScenarioTone = "success" | "info" | "risk";
+type EvidenceTone = "info" | "neutral";
 
-function ScenarioCard({
+function HistoricalEvidenceCard({
   position,
   title,
   subtitle,
   value,
   tone,
-  primary = false,
 }: {
   position: string;
   title: string;
   subtitle: string;
   value: string;
-  tone: ScenarioTone;
-  primary?: boolean;
+  tone: EvidenceTone;
 }) {
   const styles = {
-    success: {
-      border: "border-emerald-500/25",
-      bg: "bg-emerald-500/[0.045]",
-      text: "text-emerald-300",
-      badge: "border-emerald-500/25 bg-emerald-500/10 text-emerald-300",
-    },
     info: {
       border: "border-blue-500/25",
       bg: "bg-blue-500/[0.045]",
       text: "text-blue-300",
       badge: "border-blue-500/25 bg-blue-500/10 text-blue-300",
     },
-    risk: {
-      border: "border-red-500/25",
-      bg: "bg-red-500/[0.045]",
-      text: "text-red-300",
-      badge: "border-red-500/25 bg-red-500/10 text-red-300",
+    neutral: {
+      border: "border-white/10",
+      bg: "bg-white/[0.035]",
+      text: "text-nexus-gold",
+      badge: "border-nexus-gold/20 bg-nexus-gold/[0.07] text-nexus-gold",
     },
   };
 
@@ -273,58 +269,42 @@ function ScenarioCard({
 
   return (
     <article
-      className={`flex min-w-0 flex-col rounded-3xl border p-5 sm:p-6 ${
-        style.border
-      } ${style.bg} ${primary ? "ring-1 ring-blue-300/10" : ""}`}
+      className={`flex min-w-0 flex-col rounded-3xl border p-5 sm:p-6 ${style.border} ${style.bg}`}
     >
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex min-w-0 items-center gap-3">
-          <span
-            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full border text-[10px] font-black ${style.badge}`}
+      <div className="flex min-w-0 items-center gap-3">
+        <span
+          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full border text-[10px] font-black ${style.badge}`}
+        >
+          {position}
+        </span>
+
+        <div className="min-w-0">
+          <p
+            className={`text-[10px] font-black uppercase tracking-[0.17em] ${style.text}`}
           >
-            {position}
-          </span>
+            {title}
+          </p>
 
-          <div className="min-w-0">
-            <p
-              className={`text-[10px] font-black uppercase tracking-[0.17em] ${style.text}`}
-            >
-              {title}
-            </p>
-
-            <p className="mt-1 text-[10px] font-black uppercase tracking-[0.14em] text-nexus-muted">
-              {subtitle}
-            </p>
-          </div>
+          <p className="mt-1 text-[10px] font-black uppercase tracking-[0.14em] text-nexus-muted">
+            {subtitle}
+          </p>
         </div>
-
-        {primary ? (
-          <span className="shrink-0 rounded-full border border-blue-300/15 bg-blue-300/[0.07] px-3 py-1 text-[9px] font-black uppercase tracking-[0.14em] text-blue-200">
-            Baseline
-          </span>
-        ) : null}
       </div>
 
       <p className="mt-5 flex-1 break-words text-sm font-semibold leading-7 text-nexus-muted [overflow-wrap:anywhere]">
         {value}
       </p>
 
-      <div className="mt-5 flex items-center justify-between gap-3 border-t border-white/10 pt-4">
+      <div className="mt-5 border-t border-white/10 pt-4">
         <p className="text-[10px] font-black uppercase tracking-[0.14em] text-nexus-muted">
-          Strategic scenario
-        </p>
-
-        <p
-          className={`text-[10px] font-black uppercase tracking-[0.14em] ${style.text}`}
-        >
-          Executive review
+          Recorded evidence
         </p>
       </div>
     </article>
   );
 }
 
-function ScenarioSignal({
+function EvidenceSignal({
   label,
   value,
 }: {
@@ -344,7 +324,7 @@ function ScenarioSignal({
   );
 }
 
-function ConfidenceBlock({
+function ContextBlock({
   label,
   value,
   description,

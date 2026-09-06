@@ -16,6 +16,7 @@ data: {
 name: string;
 value: number;
 }[];
+valueFormat?: "number" | "currency";
 };
 
 const BAR_COLORS = [
@@ -29,8 +30,25 @@ const BAR_COLORS = [
 "#EAB308",
 ];
 
+function formatCompactCurrency(value: number) {
+const absoluteValue = Math.abs(value);
+
+if (absoluteValue >= 1000000) {
+const scaledValue = value / 1000000;
+return `$${Number.isInteger(scaledValue) ? scaledValue.toFixed(0) : scaledValue.toFixed(1)}M`;
+}
+
+if (absoluteValue >= 1000) {
+const scaledValue = value / 1000;
+return `$${Number.isInteger(scaledValue) ? scaledValue.toFixed(0) : scaledValue.toFixed(1)}K`;
+}
+
+return `$${Math.round(value).toLocaleString("en-US")}`;
+}
+
 export default function AnalyticsChart({
 data,
+valueFormat = "number",
 }: AnalyticsChartProps) {
 const safeData = data.map((item) => ({
 name: item.name,
@@ -61,7 +79,7 @@ data={safeData}
 margin={{
 top: 20,
 right: 10,
-left: -20,
+left: valueFormat === "currency" ? 8 : -20,
 bottom: 10,
 }}
 >
@@ -84,6 +102,10 @@ axisLine={false}
 
 <YAxis
 allowDecimals={false}
+width={valueFormat === "currency" ? 64 : 40}
+tickFormatter={
+valueFormat === "currency" ? formatCompactCurrency : undefined
+}
 tick={{
 fill: "#94A3B8",
 fontSize: 12,

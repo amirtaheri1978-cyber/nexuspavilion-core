@@ -11,28 +11,33 @@ type ExecutiveForecastEngineProps = {
   boardForecastNarrative: string;
 };
 
-type OutlookSignalTone = "risk" | "opportunity" | "status";
+type PatternSignalTone = "activity" | "commercial" | "status";
 
+/**
+ * Legacy prop names are retained to avoid widening the analytics composition
+ * contract. The supplied values are now observed historical-pattern evidence,
+ * not predictive forecasts.
+ */
 export function ExecutiveForecastEngine({
-  procurementOutlook,
-  riskTrajectory,
-  opportunityTrajectory,
-  executiveForecastStatus,
-  forecast30Days,
-  forecast60Days,
-  forecast90Days,
-  boardForecastNarrative,
+  procurementOutlook: historicalPatternNarrative,
+  riskTrajectory: rfqActivityDirection,
+  opportunityTrajectory: submittedQuoteValueDirection,
+  executiveForecastStatus: historicalEvidenceStatus,
+  forecast30Days: rfqCreationPattern,
+  forecast60Days: quoteSubmissionPattern,
+  forecast90Days: supplierParticipationPattern,
+  boardForecastNarrative: boardHistoricalPatternNarrative,
 }: ExecutiveForecastEngineProps) {
   return (
     <ExecutivePanel
-      aria-labelledby="executive-forecast-engine-heading"
+      aria-labelledby="executive-historical-patterns-heading"
       padding="lg"
     >
       <header className="grid min-w-0 gap-6 border-b border-white/10 pb-7 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-end">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-3">
             <p className="text-[10px] font-black uppercase tracking-[0.28em] text-nexus-gold sm:text-xs">
-              Executive Forecast Engine
+              Executive Historical Patterns
             </p>
 
             <span
@@ -41,86 +46,91 @@ export function ExecutiveForecastEngine({
             />
 
             <p className="text-[10px] font-black uppercase tracking-[0.18em] text-nexus-muted">
-              Forward procurement intelligence
+              Recorded procurement evidence
             </p>
           </div>
 
           <h2
-            id="executive-forecast-engine-heading"
+            id="executive-historical-patterns-heading"
             className="mt-4 max-w-5xl text-3xl font-black leading-[1.08] tracking-tight text-nexus-white sm:text-4xl lg:text-5xl"
           >
-            30 / 60 / 90 Day Procurement Forecast
+            Current vs Prior 30-Day Activity
           </h2>
 
           <p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-nexus-muted sm:text-base">
-            Forward-looking executive intelligence projecting procurement
-            outlook, supplier participation, risk trajectory, opportunity
-            momentum, and board readiness over the next operating cycle.
+            Observed RFQ creation, quotation activity, supplier participation,
+            and submitted quotation value are compared across adjacent recorded
+            periods. This evidence is descriptive and does not predict future
+            outcomes.
           </p>
         </div>
 
         <div className="min-w-[230px] rounded-2xl border border-nexus-gold/20 bg-nexus-gold/[0.045] px-5 py-4">
           <p className="text-[10px] font-black uppercase tracking-[0.18em] text-nexus-gold xl:text-right">
-            Forecast status
+            Historical evidence status
           </p>
 
           <p className="mt-2 max-w-[220px] break-words text-lg font-black leading-6 text-nexus-white [overflow-wrap:anywhere] xl:text-right">
-            {executiveForecastStatus}
+            {historicalEvidenceStatus}
           </p>
         </div>
       </header>
 
       <section
-        aria-labelledby="primary-procurement-outlook-heading"
+        aria-labelledby="historical-pattern-narrative-heading"
         className="mt-7 overflow-hidden rounded-3xl border border-blue-500/20 bg-blue-500/[0.045]"
       >
         <div className="grid min-w-0 xl:grid-cols-[320px_minmax(0,1fr)]">
           <div className="border-b border-white/10 p-5 sm:p-6 xl:border-b-0 xl:border-r">
             <p className="text-[10px] font-black uppercase tracking-[0.22em] text-blue-300">
-              Primary forecast position
+              Cross-domain comparison
             </p>
 
             <h3
-              id="primary-procurement-outlook-heading"
+              id="historical-pattern-narrative-heading"
               className="mt-3 text-xl font-black tracking-tight text-nexus-white sm:text-2xl"
             >
-              Procurement Outlook
+              Observed Portfolio Movement
             </h3>
 
             <p className="mt-3 text-xs font-semibold leading-6 text-nexus-muted">
-              Principal forward-looking position informing executive planning
-              across the next operating horizon.
+              Current and preceding 30-day windows are compared using persisted
+              RFQ and quotation timestamps.
             </p>
 
             <div className="mt-6 rounded-2xl border border-white/10 bg-black/10 p-4">
               <p className="text-[10px] font-black uppercase tracking-[0.16em] text-nexus-muted">
-                Current status
+                Evidence status
               </p>
 
               <p className="mt-2 break-words text-sm font-black leading-6 text-nexus-white [overflow-wrap:anywhere]">
-                {executiveForecastStatus}
+                {historicalEvidenceStatus}
               </p>
             </div>
           </div>
 
           <div className="min-w-0 p-5 sm:p-6">
             <p className="text-[10px] font-black uppercase tracking-[0.18em] text-nexus-muted">
-              Executive outlook
+              Historical pattern narrative
             </p>
 
-            <p className="mt-4 break-words text-xl font-black leading-8 text-nexus-white [overflow-wrap:anywhere] sm:text-2xl sm:leading-9">
-              {procurementOutlook}
+            <p className="mt-4 break-words text-lg font-bold leading-8 text-nexus-white [overflow-wrap:anywhere] sm:text-xl sm:leading-9">
+              {historicalPatternNarrative}
             </p>
 
             <div className="mt-6 grid gap-3 sm:grid-cols-2">
-              <ForecastSignal
-                label="Risk Direction"
-                value={riskTrajectory}
+              <PatternSignal
+                label="RFQ Activity Direction"
+                value={rfqActivityDirection}
+                description="Observed direction of RFQ creation activity across the comparison windows."
+                tone="activity"
               />
 
-              <ForecastSignal
-                label="Opportunity Direction"
-                value={opportunityTrajectory}
+              <PatternSignal
+                label="Submitted Quote Value Direction"
+                value={submittedQuoteValueDirection}
+                description="Observed direction of submitted quotation value across the comparison windows."
+                tone="commercial"
               />
             </div>
           </div>
@@ -128,160 +138,98 @@ export function ExecutiveForecastEngine({
       </section>
 
       <section
-        aria-labelledby="forecast-horizon-heading"
+        aria-labelledby="historical-pattern-detail-heading"
         className="mt-7 min-w-0"
       >
         <div className="flex flex-col gap-3 border-b border-white/10 pb-5 sm:flex-row sm:items-end sm:justify-between">
           <div className="min-w-0">
             <p className="text-[10px] font-black uppercase tracking-[0.22em] text-nexus-gold">
-              Operating horizon
+              Recorded activity detail
             </p>
 
             <h3
-              id="forecast-horizon-heading"
+              id="historical-pattern-detail-heading"
               className="mt-2 text-lg font-black tracking-tight text-nexus-white sm:text-xl"
             >
-              30 / 60 / 90 Day Forecast
+              Cross-Domain Historical Evidence
             </h3>
           </div>
 
           <p className="max-w-xl text-xs font-semibold leading-5 text-nexus-muted sm:text-right">
-            The forecast sequence remains fixed from immediate operating
-            priorities through medium-term procurement exposure.
+            Each pattern compares the current 30-day window with the directly
+            preceding 30-day window; no future values are generated.
           </p>
         </div>
 
         <div className="mt-5 grid min-w-0 gap-5 md:grid-cols-3">
-          <ForecastWindow
+          <HistoricalPatternCard
             position="01"
-            title="30 Days"
-            subtitle="Immediate operating horizon"
-            value={forecast30Days}
-            emphasis="Current"
+            title="RFQ Creation Activity"
+            subtitle="Recorded sourcing events"
+            value={rfqCreationPattern}
           />
 
-          <ForecastWindow
+          <HistoricalPatternCard
             position="02"
-            title="60 Days"
-            subtitle="Near-term planning horizon"
-            value={forecast60Days}
-            emphasis="Emerging"
+            title="Quote Submission Activity"
+            subtitle="Recorded quotation events"
+            value={quoteSubmissionPattern}
           />
 
-          <ForecastWindow
+          <HistoricalPatternCard
             position="03"
-            title="90 Days"
-            subtitle="Forward operating horizon"
-            value={forecast90Days}
-            emphasis="Strategic"
+            title="Supplier Participation"
+            subtitle="Distinct submitting companies"
+            value={supplierParticipationPattern}
           />
         </div>
       </section>
 
       <section
-        aria-labelledby="executive-outlook-summary-heading"
-        className="mt-7 overflow-hidden rounded-3xl border border-white/10 bg-white/[0.025]"
-      >
-        <div className="grid min-w-0 xl:grid-cols-[minmax(0,1.2fr)_minmax(300px,0.8fr)]">
-          <div className="min-w-0 border-b border-white/10 p-5 sm:p-6 xl:border-b-0 xl:border-r">
-            <p className="text-[10px] font-black uppercase tracking-[0.22em] text-nexus-gold">
-              Executive outlook summary
-            </p>
-
-            <h3
-              id="executive-outlook-summary-heading"
-              className="mt-3 text-xl font-black tracking-tight text-nexus-white sm:text-2xl"
-            >
-              Forward Operating Position
-            </h3>
-
-            <p className="mt-4 break-words text-base font-semibold leading-7 text-nexus-white [overflow-wrap:anywhere] sm:text-lg sm:leading-8">
-              {procurementOutlook}
-            </p>
-
-            <p className="mt-4 max-w-3xl text-xs font-semibold leading-6 text-nexus-muted">
-              The current procurement outlook should be interpreted alongside
-              directional risk, opportunity momentum, and the overall forecast
-              status before executive action is finalized.
-            </p>
-          </div>
-
-          <div className="min-w-0 p-5 sm:p-6">
-            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-nexus-muted">
-              Directional intelligence
-            </p>
-
-            <div className="mt-4 space-y-3">
-              <OutlookSignal
-                label="Risk Direction"
-                value={riskTrajectory}
-                description="Expected movement in enterprise procurement exposure."
-                tone="risk"
-              />
-
-              <OutlookSignal
-                label="Opportunity Direction"
-                value={opportunityTrajectory}
-                description="Expected movement in commercial and strategic opportunity."
-                tone="opportunity"
-              />
-
-              <OutlookSignal
-                label="Forecast Status"
-                value={executiveForecastStatus}
-                description="Consolidated status governing the current planning posture."
-                tone="status"
-              />
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section
-        aria-labelledby="board-forecast-narrative-heading"
+        aria-labelledby="board-historical-narrative-heading"
         className="mt-7 overflow-hidden rounded-3xl border border-nexus-gold/20 bg-nexus-gold/[0.04]"
       >
         <div className="grid min-w-0 xl:grid-cols-[300px_minmax(0,1fr)]">
           <div className="border-b border-white/10 p-5 sm:p-6 xl:border-b-0 xl:border-r">
             <p className="text-[10px] font-black uppercase tracking-[0.22em] text-nexus-gold">
-              Board decision narrative
+              Board evidence narrative
             </p>
 
             <h3
-              id="board-forecast-narrative-heading"
+              id="board-historical-narrative-heading"
               className="mt-3 text-xl font-black tracking-tight text-nexus-white sm:text-2xl"
             >
-              Board Forecast Narrative
+              Historical Pattern Summary
             </h3>
 
             <p className="mt-3 text-xs font-semibold leading-6 text-nexus-muted">
-              Consolidated forward-looking position prepared for executive and
-              board-level procurement review.
+              Consolidated recorded-activity context prepared for executive and
+              board review.
             </p>
           </div>
 
           <div className="min-w-0 p-5 sm:p-6">
             <p className="text-[10px] font-black uppercase tracking-[0.18em] text-nexus-muted">
-              Forecast position
+              Evidence position
             </p>
 
             <h4 className="mt-3 break-words text-2xl font-black leading-8 text-nexus-white [overflow-wrap:anywhere]">
-              {executiveForecastStatus}
+              {historicalEvidenceStatus}
             </h4>
 
             <p className="mt-4 break-words text-sm font-semibold leading-7 text-nexus-muted [overflow-wrap:anywhere]">
-              {boardForecastNarrative}
+              {boardHistoricalPatternNarrative}
             </p>
 
             <div className="mt-6 grid gap-3 sm:grid-cols-2">
-              <ForecastSignal
-                label="Planning Outlook"
-                value={procurementOutlook}
+              <EvidenceSignal
+                label="Evidence Basis"
+                value="Persisted RFQ and quotation timestamps"
               />
 
-              <ForecastSignal
-                label="Review Horizon"
-                value="30 / 60 / 90 Days"
+              <EvidenceSignal
+                label="Comparison Method"
+                value="Current vs preceding 30-day windows"
               />
             </div>
           </div>
@@ -290,61 +238,50 @@ export function ExecutiveForecastEngine({
     </ExecutivePanel>
   );
 }
-function ForecastWindow({
+
+function HistoricalPatternCard({
   position,
   title,
   subtitle,
   value,
-  emphasis,
 }: {
   position: string;
   title: string;
   subtitle: string;
   value: string;
-  emphasis: string;
 }) {
   return (
     <article className="flex min-w-0 flex-col rounded-3xl border border-white/10 bg-white/[0.035] p-5 sm:p-6">
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex min-w-0 items-center gap-3">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-nexus-gold/20 bg-nexus-gold/[0.07] text-[10px] font-black text-nexus-gold">
-            {position}
-          </span>
-
-          <div className="min-w-0">
-            <p className="text-[10px] font-black uppercase tracking-[0.17em] text-nexus-gold">
-              {title}
-            </p>
-
-            <p className="mt-1 text-[10px] font-black uppercase tracking-[0.14em] text-nexus-muted">
-              {subtitle}
-            </p>
-          </div>
-        </div>
-
-        <span className="shrink-0 rounded-full border border-white/10 bg-white/[0.05] px-3 py-1 text-[9px] font-black uppercase tracking-[0.14em] text-nexus-muted">
-          {emphasis}
+      <div className="flex min-w-0 items-center gap-3">
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-nexus-gold/20 bg-nexus-gold/[0.07] text-[10px] font-black text-nexus-gold">
+          {position}
         </span>
+
+        <div className="min-w-0">
+          <p className="text-[10px] font-black uppercase tracking-[0.17em] text-nexus-gold">
+            {title}
+          </p>
+
+          <p className="mt-1 text-[10px] font-black uppercase tracking-[0.14em] text-nexus-muted">
+            {subtitle}
+          </p>
+        </div>
       </div>
 
       <p className="mt-5 flex-1 break-words text-sm font-semibold leading-7 text-nexus-muted [overflow-wrap:anywhere]">
         {value}
       </p>
 
-      <div className="mt-5 flex items-center justify-between gap-3 border-t border-white/10 pt-4">
+      <div className="mt-5 border-t border-white/10 pt-4">
         <p className="text-[10px] font-black uppercase tracking-[0.14em] text-nexus-muted">
-          Forecast window
-        </p>
-
-        <p className="text-[10px] font-black uppercase tracking-[0.14em] text-nexus-gold">
-          Executive review
+          Observed historical evidence
         </p>
       </div>
     </article>
   );
 }
 
-function ForecastSignal({
+function EvidenceSignal({
   label,
   value,
 }: {
@@ -364,7 +301,7 @@ function ForecastSignal({
   );
 }
 
-function OutlookSignal({
+function PatternSignal({
   label,
   value,
   description,
@@ -373,10 +310,10 @@ function OutlookSignal({
   label: string;
   value: string;
   description: string;
-  tone: OutlookSignalTone;
+  tone: PatternSignalTone;
 }) {
   const toneClasses: Record<
-    OutlookSignalTone,
+    PatternSignalTone,
     {
       border: string;
       background: string;
@@ -384,17 +321,17 @@ function OutlookSignal({
       indicator: string;
     }
   > = {
-    risk: {
-      border: "border-rose-300/15",
-      background: "bg-rose-400/[0.035]",
-      label: "text-rose-200",
-      indicator: "bg-rose-300",
+    activity: {
+      border: "border-blue-300/15",
+      background: "bg-blue-400/[0.035]",
+      label: "text-blue-200",
+      indicator: "bg-blue-300",
     },
-    opportunity: {
-      border: "border-emerald-300/15",
-      background: "bg-emerald-400/[0.035]",
-      label: "text-emerald-200",
-      indicator: "bg-emerald-300",
+    commercial: {
+      border: "border-nexus-gold/20",
+      background: "bg-nexus-gold/[0.04]",
+      label: "text-nexus-gold",
+      indicator: "bg-nexus-gold",
     },
     status: {
       border: "border-nexus-gold/20",

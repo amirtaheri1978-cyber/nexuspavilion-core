@@ -258,8 +258,8 @@ export function BoardExecutiveReport(props: BoardExecutiveReportProps) {
 
       <ReportSectionDivider
         number={4}
-        title="Outlook & Governance"
-        description="Forward outlook, internal performance position, governance readiness, and the executive agenda."
+        title="Historical Patterns & Governance"
+        description="Observed procurement movement, internal performance position, governance readiness, and the executive agenda."
         companyName={props.companyName}
         generatedAt={props.generatedAt}
         tone="light"
@@ -268,14 +268,14 @@ export function BoardExecutiveReport(props: BoardExecutiveReportProps) {
       <ReportPage
         companyName={props.companyName}
         generatedAt={props.generatedAt}
-        eyebrow="Forward outlook"
-        title="Procurement outlook and strategic posture"
+        eyebrow="Historical pattern evidence"
+        title="Observed procurement movement and strategic posture"
         lead={props.forecastNarrative}
       >
         <div className="board-two-column board-two-column--hero">
           <ScoreNarrative
-            title="Outlook evidence"
-            body="Current evidence supports directional scenario planning and monitored executive action."
+            title="Decision evidence readiness"
+            body="Current and preceding 30-day windows are compared using persisted RFQ and quotation timestamps. This is descriptive historical evidence, not a forecast."
             label={props.forecastConfidence}
           />
           <ScoreNarrative

@@ -33,6 +33,31 @@ const executiveSummaryReport = readSource(
 const boardExecutiveReport = readSource(
   "src/components/report-engine/BoardExecutiveReport.tsx",
 );
+const executiveHistoricalPatternSurface = readSource(
+  "src/components/analytics/executive-forecast-engine.tsx",
+);
+const executiveHistoricalContextSurface = readSource(
+  "src/components/analytics/executive-scenario-center.tsx",
+);
+const executiveTrendSource = readSource(
+  "src/lib/analytics/executive/executive-trend.ts",
+);
+const analyticsProcurementUtils = readSource(
+  "src/lib/analytics/procurement-utils.ts",
+);
+const analyticsSourceLoader = readSource(
+  "src/lib/analytics/source-data/load-analytics-source-data.ts",
+);
+const executiveOpportunityRankingSurface = readSource(
+  "src/components/executive/executive-opportunity-ranking.tsx",
+);
+const executiveRiskCenterSurface = readSource(
+  "src/components/analytics/executive/executive-risk-center.tsx",
+);
+const analyticsChartSurface = readSource("src/components/analytics-chart.tsx");
+const procurementPipelineSurface = readSource(
+  "src/components/analytics/procurement-pipeline-intelligence.tsx",
+);
 
 describe("analytics decision-evidence truthfulness", () => {
   it("normalizes the executive operating score across four defensible dimensions", () => {
@@ -76,6 +101,110 @@ describe("analytics decision-evidence truthfulness", () => {
     expect(analyticsPage).not.toContain(
       "Prediction models are performing above the target threshold.",
     );
+  });
+
+  it("grounds cross-domain executive patterns in recorded historical activity", () => {
+    expect(analyticsPage).toContain("buildExecutiveHistoricalPatterns");
+    expect(analyticsPage).toContain("historicalPatterns.rfqCreation.summary");
+    expect(analyticsPage).toContain("historicalPatterns.quoteSubmission.summary");
+    expect(analyticsPage).toContain(
+      "historicalPatterns.supplierParticipation.summary",
+    );
+    expect(analyticsPage).toContain(
+      "historicalPatterns.submittedQuoteValue.summary",
+    );
+    expect(analyticsPage).not.toContain("forecastSavings");
+    expect(analyticsPage).not.toContain("potentialSavings * 1.2");
+    expect(analyticsPage).not.toContain(
+      "Operational procurement growth expected.",
+    );
+    expect(analyticsPage).not.toContain(
+      "Supplier participation expansion expected.",
+    );
+    expect(analyticsPage).not.toContain(
+      "Board-ready procurement intelligence expected.",
+    );
+    expect(analyticsPage).not.toContain("const executiveScenarios");
+    expect(analyticsPage).not.toContain("const executiveDecisionSimulator");
+    expect(analyticsPage).not.toContain("const executiveForecastCenter");
+    expect(analyticsPage).not.toContain("Scenario Intelligence");
+    expect(analyticsPage).not.toContain("Decision Outcome Modeling");
+    expect(analyticsPage).not.toContain("Forward-Looking Intelligence");
+
+    expect(analyticsProcurementUtils).toContain("created_at?: string | null");
+    expect(analyticsSourceLoader).toContain("created_at?: string | null");
+    expect(analyticsSourceLoader).toContain('.order("created_at", { ascending: false })');
+
+    expect(executiveTrendSource).toContain("buildExecutiveHistoricalPatterns");
+    expect(executiveTrendSource).toContain("currentPeriodLabel");
+    expect(executiveTrendSource).toContain("previousPeriodLabel");
+    expect(executiveTrendSource).toContain(
+      "not forecasts or outcome probabilities",
+    );
+
+    expect(executiveHistoricalPatternSurface).toContain(
+      "Current vs Prior 30-Day Activity",
+    );
+    expect(executiveHistoricalPatternSurface).toContain(
+      "Recorded procurement evidence",
+    );
+    expect(executiveHistoricalPatternSurface).not.toMatch(
+      /30 \/ 60 \/ 90 Day Procurement Forecast|Forward-looking executive intelligence|projecting procurement outlook|Forecast status/i,
+    );
+
+    expect(executiveHistoricalContextSurface).toContain(
+      "Observed Procurement Pattern Context",
+    );
+    expect(executiveHistoricalContextSurface).toContain(
+      "does not model future outcomes",
+    );
+    expect(executiveHistoricalContextSurface).not.toMatch(
+      /Strategic decision simulation|Strategic Scenario Modeling|Forecast Confidence Matrix|Best Case|Expected Case|Risk Case/,
+    );
+
+    expect(boardExecutiveReport).toContain(
+      "Historical Patterns & Governance",
+    );
+    expect(boardExecutiveReport).toContain(
+      "descriptive historical evidence, not a forecast",
+    );
+    expect(boardExecutiveReport).not.toContain('eyebrow="Forward outlook"');
+  });
+
+  it("keeps executive visual semantics aligned with the underlying evidence", () => {
+    expect(analyticsPage).not.toMatch(/savings\s+savings/i);
+    expect(analyticsPage).toContain('valueLabel: "Opportunity Score"');
+    expect(analyticsPage).toContain(
+      'valueLabel: "Estimated Savings Opportunity"',
+    );
+    expect(analyticsPage).toContain('valueLabel: "Supplier Engagement"');
+    expect(analyticsPage).toContain(
+      'valueLabel: "Dominant Procurement Scope"',
+    );
+    expect(analyticsPage).toContain(
+      'title: "Board Readiness",\n      value: `${boardReadinessScore}/100`,',
+    );
+
+    expect(executiveOpportunityRankingSurface).toContain(
+      "valueLabel?: string",
+    );
+    expect(executiveOpportunityRankingSurface).toContain(
+      '{opportunity.valueLabel || "Opportunity Value"}',
+    );
+
+    expect(executiveRiskCenterSurface).toContain(
+      "const primaryRiskPosition =",
+    );
+    expect(executiveRiskCenterSurface).toContain(
+      '"Moderate enterprise exposure"',
+    );
+    expect(executiveRiskCenterSurface).toContain("{primaryRiskPosition}");
+
+    expect(analyticsChartSurface).toContain(
+      'valueFormat?: "number" | "currency"',
+    );
+    expect(analyticsChartSurface).toContain("formatCompactCurrency");
+    expect(procurementPipelineSurface).toContain('valueFormat="currency"');
   });
 
   it("presents canonical evidence readiness and categorical RFQ state", () => {

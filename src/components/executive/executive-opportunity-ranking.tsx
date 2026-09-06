@@ -3,6 +3,7 @@ type ExecutiveOpportunity = {
   priority: string;
   impact: string;
   value: string;
+  valueLabel?: string;
   summary: string;
 };
 
@@ -148,7 +149,7 @@ export function ExecutiveOpportunityRanking({
 
             <div className="min-w-0">
               <dt className="text-[10px] font-black uppercase tracking-[0.16em] text-[#C8A646]">
-                Value Potential
+                {topOpportunity?.valueLabel || "Value Potential"}
               </dt>
               <dd className="mt-1.5 text-sm font-black leading-5 text-white">
                 {topOpportunity?.value || "Pending"}
@@ -345,7 +346,7 @@ function OpportunityCard({
 
         <div className="min-w-0">
           <dt className="text-[10px] font-black uppercase tracking-[0.16em] text-[#C8A646]">
-            Opportunity Value
+            {opportunity.valueLabel || "Opportunity Value"}
           </dt>
           <dd className="mt-1.5 text-sm font-black leading-5 text-white">
             {opportunity.value}

@@ -25,6 +25,7 @@ export type AnalyticsRFQ = {
   location: string | null;
   budget: number | string | null;
   status: string | null;
+  created_at?: string | null;
   procurement_scope: ProcurementScope | null;
   sourcing_method: SourcingMethod | null;
   contract_framework: ContractFramework | null;

@@ -17,6 +17,15 @@ export default function ExecutiveRiskCenter({
   procurementMaturityScore,
   decisionSupportReadinessScore,
 }: ExecutiveRiskCenterProps) {
+  const primaryRiskPosition =
+    procurementRiskIndex <= 25
+      ? "Controlled enterprise exposure"
+      : procurementRiskIndex <= 50
+        ? "Moderate enterprise exposure"
+        : procurementRiskIndex <= 75
+          ? "Elevated enterprise exposure"
+          : "Critical enterprise exposure";
+
   return (
     <ExecutivePanel padding="lg">
       <section aria-labelledby="enterprise-risk-center-title">
@@ -98,7 +107,7 @@ export default function ExecutiveRiskCenter({
                   id="critical-exposure-title"
                   className="mt-2 text-xl font-semibold tracking-tight text-white"
                 >
-                  Critical enterprise exposure
+                  {primaryRiskPosition}
                 </h3>
 
                 <p className="mt-3 max-w-2xl text-sm font-medium leading-7 text-slate-400">

@@ -41,7 +41,7 @@ Procurement Value
 </h2>
 
 <div className="mt-6">
-<AnalyticsChart data={valueChartData} />
+<AnalyticsChart data={valueChartData} valueFormat="currency" />
 </div>
 </ExecutivePanel>
 </section>

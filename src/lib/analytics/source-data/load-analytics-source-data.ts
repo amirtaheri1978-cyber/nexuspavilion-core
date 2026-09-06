@@ -8,6 +8,7 @@ export type AnalyticsQuote = {
   company_id: string | null;
   amount: number | string | null;
   decision: string | null;
+  created_at?: string | null;
 };
 
 export type AnalyticsCompany = {
