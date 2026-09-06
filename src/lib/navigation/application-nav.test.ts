@@ -1,3 +1,6 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+
 import { describe, expect, it } from "vitest";
 
 import {
@@ -17,6 +20,17 @@ function hrefsFor(
 ) {
   return flattenNavigation(experience).map((item) => item.href);
 }
+
+function readSource(relativePath: string) {
+  return readFileSync(resolve(process.cwd(), relativePath), "utf8").replace(
+    /\r\n/g,
+    "\n",
+  );
+}
+
+const companyNetworkPage = readSource("src/app/directory/page.tsx");
+const rfqMarketplacePage = readSource("src/app/rfq/page.tsx");
+const rfqDetailPage = readSource("src/app/rfq/[slug]/page.tsx");
 
 describe("Task 23 application navigation contract", () => {
   it("keeps one canonical href per executive destination", () => {
@@ -169,6 +183,56 @@ describe("Task 23 application navigation contract", () => {
     expect(getAppSectionTitle("/directory")).toBe("Company Network");
     expect(ownerDirectory?.label).not.toBe("Supplier Intelligence");
     expect(accountDirectory?.label).not.toBe("Supplier Intelligence");
+  });
+
+  it("protects the Company Network RFQ invitation handoff and canonical sourcing gate", () => {
+    expect(companyNetworkPage).toContain(
+      'import { canInviteCompanySuppliers } from "@/lib/procurement/procurement-write-authorization";',
+    );
+    expect(companyNetworkPage).toContain(
+      "const canInviteNetworkSuppliers = canInviteCompanySuppliers(",
+    );
+    expect(companyNetworkPage).toContain(
+      'data-company-network-rfq-invite="true"',
+    );
+    expect(companyNetworkPage).toContain(
+      "href={`/rfq?inviteCompanyId=${encodeURIComponent(company.id)}`}",
+    );
+    expect(companyNetworkPage).toContain(
+      "The supplier contact email is confirmed in the secure invitation step.",
+    );
+    expect(companyNetworkPage).not.toContain('fetch("/api/invites"');
+
+    expect(rfqMarketplacePage).toContain(
+      "inviteCompanyId?: string | string[];",
+    );
+    expect(rfqMarketplacePage).toContain(
+      "const canRouteNetworkInvitation = canInviteCompanySuppliers(",
+    );
+    expect(rfqMarketplacePage).toContain('.from("company_directory")');
+    expect(rfqMarketplacePage).toContain(
+      '.in("status", ["approved", "verified"])',
+    );
+    expect(rfqMarketplacePage).toContain(
+      "invitationTargetData.id !== context.identity.companyId",
+    );
+    expect(rfqMarketplacePage).toContain(
+      "No invitation is sent from Company Network.",
+    );
+    expect(rfqMarketplacePage).toContain(
+      "? `/rfq/${rfq.slug}#supplier-invitations`",
+    );
+    expect(rfqMarketplacePage).not.toContain('fetch("/api/invites"');
+
+    expect(rfqDetailPage).toContain("const canInviteSuppliers =");
+    expect(rfqDetailPage).toContain("capabilities.canInviteSuppliers &&");
+    expect(rfqDetailPage).toContain(
+      'canInviteCompanySuppliers(sourcingMembership, rfq.company_id ?? "");',
+    );
+    expect(rfqDetailPage).toContain('id="supplier-invitations"');
+    expect(rfqDetailPage).toContain(
+      'className="mt-8 min-w-0 scroll-mt-24 @container lg:scroll-mt-0"',
+    );
   });
 
   it("keeps the unused AppSidebar primitive on the same owner destinations", () => {

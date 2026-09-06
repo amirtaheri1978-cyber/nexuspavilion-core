@@ -45,9 +45,11 @@ describe("Task 24-RFQ-09 supplier invitation density", () => {
     expect(detail).toContain('id="supplier-invitations"');
     expect(detail).toContain('data-rfq-supplier-invitations="true"');
     expect(detail).toContain('id="rfq-supplier-invitation-heading"');
-    expect(detail).toContain("Supplier Invitation");
+    expect(detail).toContain("Respondent invitation");
     expect(detail).toContain("<InviteVendorForm embedded rfqId={rfq.id} />");
-    expect(detail).toContain("min-w-0 @container");
+    expect(detail).toContain(
+      "min-w-0 scroll-mt-24 @container lg:scroll-mt-0",
+    );
     expect(invite).toContain("embedded?: boolean");
     expect(invite).toContain("embedded = false");
     expect(invite).toContain('data-rfq-invite-vendor-form="true"');

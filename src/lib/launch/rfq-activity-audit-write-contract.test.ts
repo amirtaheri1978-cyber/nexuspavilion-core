@@ -168,7 +168,10 @@ describe("RFQ create activity and audit write contract", () => {
     const response = await postRfqs(
       jsonRequest({
         title: "Harbor Package",
-        deadline: "2026-09-01T12:00:00.000Z",
+        description: "Supply and deliver the Harbor Package procurement scope.",
+        category: "Materials",
+        location: "Toronto",
+        deadline: "2099-09-01T12:00",
         procurement_scope: "material",
       }),
     );
@@ -197,7 +200,10 @@ describe("RFQ create activity and audit write contract", () => {
     const response = await postRfqs(
       jsonRequest({
         title: "Harbor Package",
-        deadline: "2026-09-01T12:00:00.000Z",
+        description: "Supply and deliver the Harbor Package procurement scope.",
+        category: "Materials",
+        location: "Toronto",
+        deadline: "2099-09-01T12:00",
       }),
     );
     const body = (await response.json()) as { success?: boolean };

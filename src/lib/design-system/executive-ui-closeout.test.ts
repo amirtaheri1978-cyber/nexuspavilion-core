@@ -82,7 +82,7 @@ describe("NP-MASTER-22-B05 launch-critical closeout", () => {
     expect(launchCritical.topbar).toContain("EXECUTIVE_FOCUS_GOLD");
     expect(launchCritical.inviteForm).toContain("focus-visible:ring-2");
     expect(launchCritical.rfqNew).toContain('aria-current={activeStep === index ? "step" : undefined}');
-    expect(launchCritical.directory).toContain('aria-label="Search supplier network"');
+    expect(launchCritical.directory).toContain('aria-label="Search company network"');
   });
 
   it("keeps one page h1 on key launch surfaces", () => {
@@ -125,8 +125,11 @@ describe("NP-MASTER-22-B05 launch-critical closeout", () => {
     expect(launchCritical.directory).not.toContain("first_name");
   });
 
-  it("does not change RFQ scoring or wrap tablet grids into five squeezed columns", () => {
+  it("keeps canonical RFQ scoring delegation and avoids squeezed tablet grids", () => {
     expect(launchCritical.rfqCompare).toContain(
+      "buildCommercialIntelligence({",
+    );
+    expect(launchCritical.rfqCompare).not.toContain(
       "priceScore * 0.6 + validityScore * 0.2 + budgetDisciplineScore * 0.2",
     );
     expect(launchCritical.governance).not.toContain("md:grid-cols-5");

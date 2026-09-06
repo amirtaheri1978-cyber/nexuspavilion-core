@@ -289,7 +289,7 @@ describe("Task 33C RFQ buyer executive intelligence isolation", () => {
     expect(detailPage).toContain("{executive ? (");
     expect(quoteWorkspace).toContain("<RFQSupplierQuotes");
     expect(quoteWorkspace).toContain('id="quote-intelligence"');
-    expect(quoteWorkspace).toContain("Your Organization’s Commercial Submission");
+    expect(quoteWorkspace).toContain("Your organization\u2019s quote submission");
     expect(supplierQuotes).toContain('data-rfq-supplier-quotes="true"');
     expect(documents).toContain('id="document-center"');
     expect(detailPage).toContain("<RFQDocumentWorkspace");

@@ -57,7 +57,8 @@ describe("Task 23 enterprise application shell", () => {
 
   it("keeps AppTopbar as context, not a page h1, with frozen action placement", () => {
     expect(topbar).not.toMatch(/<h1[\s>]/);
-    expect(topbar).toContain("Boardroom Intelligence");
+    expect(topbar).toContain("BOARDROOM_INTELLIGENCE_TITLE");
+    expect(topbar).toContain("getAppSectionTitle");
     expect(topbar).toContain('href="/notifications"');
     expect(topbar).toContain('href="/analytics"');
     expect(topbar).toContain("hidden h-[76px]");

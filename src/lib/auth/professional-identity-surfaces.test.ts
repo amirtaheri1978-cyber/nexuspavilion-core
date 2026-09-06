@@ -260,7 +260,7 @@ describe("NP-MASTER-22-B04-5 notifications and governance", () => {
       '.select("id, company_id, role, email")',
     );
     expect(notificationsPage).toContain(
-      '.select("id, title, message, type, is_read, created_at, company_id")',
+      '"id, title, message, type, is_read, created_at, company_id, source_rfq_id"',
     );
     expect(notificationsPage).not.toContain("first_name");
     expect(notificationsPage).not.toContain("last_name");

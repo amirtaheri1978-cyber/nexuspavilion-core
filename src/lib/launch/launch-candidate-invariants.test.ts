@@ -77,7 +77,7 @@ describe("Task 25 launch-candidate cross-feature invariants", () => {
 
     const submit = getAppBreadcrumbs("/rfq/harbor-package/submit");
     expect(submit.map((crumb) => crumb.label)).toEqual([
-      "RFQ & Sourcing",
+      "Procurement Center",
       "Opportunity",
       "Submit Quote",
     ]);

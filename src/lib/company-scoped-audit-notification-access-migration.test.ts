@@ -198,7 +198,7 @@ describe("company-scoped audit and notification access migration", () => {
   it("keeps Activity Center and Recent Workspace Activity company scoped", () => {
     expect(notificationsPage).toContain('.from("notifications")');
     expect(notificationsPage).toContain(
-      '.select("id, title, message, type, is_read, created_at, company_id")',
+      '"id, title, message, type, is_read, created_at, company_id, source_rfq_id"',
     );
     expect(notificationsPage).toContain('.eq("company_id", profile.company_id)');
     expect(companySettings).toContain('.from("audit_logs")');

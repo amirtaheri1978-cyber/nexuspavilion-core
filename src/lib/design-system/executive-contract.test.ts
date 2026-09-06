@@ -133,7 +133,8 @@ describe("NP-MASTER-22-B01 executive design contract", () => {
 
   it("stops AppTopbar from emitting a page h1", () => {
     expect(topbar).not.toMatch(/<h1[\s>]/);
-    expect(topbar).toContain("Boardroom Intelligence");
+    expect(topbar).toContain("BOARDROOM_INTELLIGENCE_TITLE");
+    expect(topbar).toContain("getAppSectionTitle");
     expect(topbar).toMatch(/<p className="mt-1 truncate text-lg font-black text-white">/);
   });
 

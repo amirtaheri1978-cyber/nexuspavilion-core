@@ -39,7 +39,7 @@ describe("Task 24-RFQ-04 RFQ detail structural composition", () => {
   it("renders ranking as a sibling region instead of nesting it in Priority Actions", () => {
     expect(actions).not.toContain("ExecutiveOpportunityRanking");
     expect(actions).not.toContain("opportunities");
-    expect(actions).not.toContain("intelligence");
+    expect(actions).not.toContain("executiveOpportunityIntelligence");
     expect(actions).toContain('data-rfq-priority-actions="true"');
     expect(actions).toContain("Priority actions");
     expect(actions).toContain("Submit quote");
