@@ -4,6 +4,13 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
 import { createClient } from "@/lib/supabase/client";
+import {
+  COMPANY_CAPABILITY_TYPES,
+  COMPANY_CAPABILITY_TYPE_LABELS,
+  groupCompanyCapabilities,
+  type CompanyCapabilityRecord,
+  type GroupedCompanyCapabilities,
+} from "@/lib/company/capabilities";
 import Image from "next/image";
 import { EXECUTIVE_FOCUS_CYAN, EXECUTIVE_PAGE_CLASS } from "@/lib/design-system/executive-contract";
 import {
@@ -168,6 +175,7 @@ const supabase = useMemo(() => createClient(), []);
 
 const [companies, setCompanies] = useState<Company[]>([]);
 const [quotes, setQuotes] = useState<Quote[]>([]);
+const [capabilityRows, setCapabilityRows] = useState<CompanyCapabilityRecord[]>([]);
 const [approvedVendors, setApprovedVendors] = useState<ApprovedVendor[]>([]);
 const [profile, setProfile] = useState<Profile | null>(null);
 
@@ -197,6 +205,7 @@ setProfile(currentProfile);
 
 const [
 { data: companiesData, error: companiesError },
+{ data: capabilityData, error: capabilityError },
 { data: quotesData },
 { data: approvedVendorData },
 ] = await Promise.all([
@@ -205,6 +214,12 @@ supabase
 .select("id, name, slug, category, location, network_role, status, logo_url, created_at")
 .in("status", ["approved", "verified"])
 .order("created_at", { ascending: false }),
+
+supabase
+.from("company_capabilities")
+.select("id, company_id, capability_type, label, sort_order")
+.order("sort_order", { ascending: true })
+.order("label", { ascending: true }),
 
 supabase.from("quotes").select("id, company_id, amount, decision"),
 
@@ -217,6 +232,12 @@ APPROVED_VENDOR_DOMAIN_AVAILABLE && currentProfile?.company_id
 
 if (!companiesError && companiesData) {
 setCompanies(companiesData as Company[]);
+}
+
+if (capabilityError) {
+console.error("Company network capability lookup failed.", capabilityError);
+} else if (capabilityData) {
+setCapabilityRows(capabilityData as CompanyCapabilityRecord[]);
 }
 
 if (quotesData) {
@@ -242,6 +263,24 @@ map.set(vendor.vendor_company_id, vendor);
 
 return map;
 }, [approvedVendors]);
+
+const capabilitiesByCompany = useMemo(() => {
+const rowsByCompany = new Map<string, CompanyCapabilityRecord[]>();
+
+capabilityRows.forEach((capability) => {
+const existing = rowsByCompany.get(capability.company_id) || [];
+existing.push(capability);
+rowsByCompany.set(capability.company_id, existing);
+});
+
+const groupedByCompany = new Map<string, GroupedCompanyCapabilities>();
+
+rowsByCompany.forEach((rows, companyId) => {
+groupedByCompany.set(companyId, groupCompanyCapabilities(rows));
+});
+
+return groupedByCompany;
+}, [capabilityRows]);
 
 const rankedCompanies = useMemo(() => {
 return buildRankedCompanies(companies, quotes);
@@ -307,6 +346,14 @@ if (!query) return rankedCompanies;
 
 return rankedCompanies.filter((company) => {
 const avlStatus = approvedVendorMap.get(company.id)?.status || "";
+const capabilityContext = capabilitiesByCompany.get(company.id);
+const capabilityMatch = capabilityContext
+? COMPANY_CAPABILITY_TYPES.some((capabilityType) =>
+capabilityContext[capabilityType].some((label) =>
+label.toLowerCase().includes(query)
+)
+)
+: false;
 const supplierScopedMatch =
 isSupplierCompany(company) &&
 (
@@ -320,10 +367,11 @@ company.name.toLowerCase().includes(query) ||
 company.category.toLowerCase().includes(query) ||
 company.location.toLowerCase().includes(query) ||
 company.network_role.toLowerCase().includes(query) ||
+capabilityMatch ||
 supplierScopedMatch
 );
 });
-}, [rankedCompanies, search, approvedVendorMap]);
+}, [rankedCompanies, search, approvedVendorMap, capabilitiesByCompany]);
 
 async function updateApprovedVendor(
 vendorCompanyId: string,
@@ -403,7 +451,7 @@ supplier-specific procurement intelligence where supported.
 <div className="flex w-full flex-col gap-3 lg:w-auto lg:min-w-[380px]">
 <input
 type="text"
-placeholder="Search companies, categories, regions, or roles..."
+placeholder="Search companies, categories, regions, roles, or capabilities..."
 value={search}
 onChange={(event) => setSearch(event.target.value)}
 aria-label="Search company network"
@@ -520,6 +568,15 @@ Try another search term or check back as the network grows.
 const avlRecord = approvedVendorMap.get(company.id);
 const isSelfCompany = profile?.company_id === company.id;
 const isSupplierScopedCompany = isSupplierCompany(company);
+const capabilityContext = capabilitiesByCompany.get(company.id);
+const capabilityPreview = capabilityContext
+? COMPANY_CAPABILITY_TYPES.flatMap((capabilityType) =>
+capabilityContext[capabilityType].map((label) => ({
+capabilityType,
+label,
+}))
+)
+: [];
 const canShowAvlActions =
 APPROVED_VENDOR_DOMAIN_AVAILABLE &&
 canManageApprovedVendors &&
@@ -573,6 +630,35 @@ isSupplierScopedCompany ? "md:grid-cols-2" : ""
 ) : null}
 </div>
 </Link>
+
+{capabilityPreview.length > 0 ? (
+<div className="mt-5 rounded-3xl border border-white/10 bg-[#07111F]/70 p-4">
+<p className="text-[10px] font-black uppercase tracking-[0.22em] text-slate-500">
+Company Capabilities
+</p>
+
+<div className="mt-3 flex flex-wrap gap-2">
+{capabilityPreview.slice(0, 6).map((item) => (
+<span
+key={`${item.capabilityType}-${item.label}`}
+className="inline-flex max-w-full items-center rounded-full border border-white/10 bg-white/[0.055] px-3 py-1.5 text-[11px] font-bold leading-5 text-slate-200 break-words"
+>
+<span className="mr-1 text-slate-500">
+{COMPANY_CAPABILITY_TYPE_LABELS[item.capabilityType]}:
+</span>
+{item.label}
+</span>
+))}
+
+{capabilityPreview.length > 6 ? (
+<span className="inline-flex items-center rounded-full border border-white/10 bg-white/[0.035] px-3 py-1.5 text-[11px] font-black leading-5 text-slate-400">
++{capabilityPreview.length - 6} more
+</span>
+) : null}
+</div>
+</div>
+) : null}
+
 {isSupplierScopedCompany ? (
 <div className="mt-5 grid gap-3 md:grid-cols-3">
 <SmallMetric
