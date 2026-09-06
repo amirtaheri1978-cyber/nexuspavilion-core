@@ -11,6 +11,13 @@ import {
   type CompanyCapabilityRecord,
   type GroupedCompanyCapabilities,
 } from "@/lib/company/capabilities";
+import {
+  COMPANY_QUALIFICATION_TYPES,
+  COMPANY_QUALIFICATION_TYPE_LABELS,
+  groupPublicCompanyQualifications,
+  type GroupedCompanyQualifications,
+  type PublicCompanyQualificationRecord,
+} from "@/lib/company/qualifications";
 import Image from "next/image";
 import { EXECUTIVE_FOCUS_CYAN, EXECUTIVE_PAGE_CLASS } from "@/lib/design-system/executive-contract";
 import {
@@ -176,6 +183,7 @@ const supabase = useMemo(() => createClient(), []);
 const [companies, setCompanies] = useState<Company[]>([]);
 const [quotes, setQuotes] = useState<Quote[]>([]);
 const [capabilityRows, setCapabilityRows] = useState<CompanyCapabilityRecord[]>([]);
+const [qualificationRows, setQualificationRows] = useState<PublicCompanyQualificationRecord[]>([]);
 const [approvedVendors, setApprovedVendors] = useState<ApprovedVendor[]>([]);
 const [profile, setProfile] = useState<Profile | null>(null);
 
@@ -206,6 +214,7 @@ setProfile(currentProfile);
 const [
 { data: companiesData, error: companiesError },
 { data: capabilityData, error: capabilityError },
+{ data: qualificationData, error: qualificationError },
 { data: quotesData },
 { data: approvedVendorData },
 ] = await Promise.all([
@@ -220,6 +229,12 @@ supabase
 .select("id, company_id, capability_type, label, sort_order")
 .order("sort_order", { ascending: true })
 .order("label", { ascending: true }),
+
+supabase
+.from("company_qualifications_public")
+.select("id, company_id, qualification_type, name, issuer, issued_on, expires_on, sort_order")
+.order("sort_order", { ascending: true })
+.order("name", { ascending: true }),
 
 supabase.from("quotes").select("id, company_id, amount, decision"),
 
@@ -238,6 +253,12 @@ if (capabilityError) {
 console.error("Company network capability lookup failed.", capabilityError);
 } else if (capabilityData) {
 setCapabilityRows(capabilityData as CompanyCapabilityRecord[]);
+}
+
+if (qualificationError) {
+console.error("Company network qualification lookup failed.", qualificationError);
+} else if (qualificationData) {
+setQualificationRows(qualificationData as PublicCompanyQualificationRecord[]);
 }
 
 if (quotesData) {
@@ -281,6 +302,24 @@ groupedByCompany.set(companyId, groupCompanyCapabilities(rows));
 
 return groupedByCompany;
 }, [capabilityRows]);
+
+const qualificationsByCompany = useMemo(() => {
+const rowsByCompany = new Map<string, PublicCompanyQualificationRecord[]>();
+
+qualificationRows.forEach((qualification) => {
+const existing = rowsByCompany.get(qualification.company_id) || [];
+existing.push(qualification);
+rowsByCompany.set(qualification.company_id, existing);
+});
+
+const groupedByCompany = new Map<string, GroupedCompanyQualifications>();
+
+rowsByCompany.forEach((rows, companyId) => {
+groupedByCompany.set(companyId, groupPublicCompanyQualifications(rows));
+});
+
+return groupedByCompany;
+}, [qualificationRows]);
 
 const rankedCompanies = useMemo(() => {
 return buildRankedCompanies(companies, quotes);
@@ -354,6 +393,16 @@ label.toLowerCase().includes(query)
 )
 )
 : false;
+const qualificationContext = qualificationsByCompany.get(company.id);
+const qualificationMatch = qualificationContext
+? COMPANY_QUALIFICATION_TYPES.some((qualificationType) =>
+qualificationContext[qualificationType].some(
+(item) =>
+item.name.toLowerCase().includes(query) ||
+(item.issuer || "").toLowerCase().includes(query)
+)
+)
+: false;
 const supplierScopedMatch =
 isSupplierCompany(company) &&
 (
@@ -368,10 +417,17 @@ company.category.toLowerCase().includes(query) ||
 company.location.toLowerCase().includes(query) ||
 company.network_role.toLowerCase().includes(query) ||
 capabilityMatch ||
+qualificationMatch ||
 supplierScopedMatch
 );
 });
-}, [rankedCompanies, search, approvedVendorMap, capabilitiesByCompany]);
+}, [
+rankedCompanies,
+search,
+approvedVendorMap,
+capabilitiesByCompany,
+qualificationsByCompany,
+]);
 
 async function updateApprovedVendor(
 vendorCompanyId: string,
@@ -451,7 +507,7 @@ supplier-specific procurement intelligence where supported.
 <div className="flex w-full flex-col gap-3 lg:w-auto lg:min-w-[380px]">
 <input
 type="text"
-placeholder="Search companies, categories, regions, roles, or capabilities..."
+placeholder="Search companies, categories, regions, roles, capabilities, or qualifications..."
 value={search}
 onChange={(event) => setSearch(event.target.value)}
 aria-label="Search company network"
@@ -577,6 +633,16 @@ label,
 }))
 )
 : [];
+const qualificationContext = qualificationsByCompany.get(company.id);
+const qualificationPreview = qualificationContext
+? COMPANY_QUALIFICATION_TYPES.flatMap((qualificationType) =>
+qualificationContext[qualificationType].map((item) => ({
+qualificationType,
+name: item.name,
+issuer: item.issuer,
+}))
+)
+: [];
 const canShowAvlActions =
 APPROVED_VENDOR_DOMAIN_AVAILABLE &&
 canManageApprovedVendors &&
@@ -653,6 +719,41 @@ className="inline-flex max-w-full items-center rounded-full border border-white/
 {capabilityPreview.length > 6 ? (
 <span className="inline-flex items-center rounded-full border border-white/10 bg-white/[0.035] px-3 py-1.5 text-[11px] font-black leading-5 text-slate-400">
 +{capabilityPreview.length - 6} more
+</span>
+) : null}
+</div>
+</div>
+) : null}
+
+{qualificationPreview.length > 0 ? (
+<div className="mt-5 rounded-3xl border border-white/10 bg-[#07111F]/70 p-4">
+<p className="text-[10px] font-black uppercase tracking-[0.22em] text-slate-500">
+Published Qualifications
+</p>
+
+<p className="mt-2 text-[11px] font-semibold leading-5 text-slate-500">
+Organization-published profile details; not a Nexus Pavilion authorization or eligibility signal.
+</p>
+
+<div className="mt-3 flex flex-wrap gap-2">
+{qualificationPreview.slice(0, 4).map((item) => (
+<span
+key={`${item.qualificationType}-${item.name}-${item.issuer || "unissued"}`}
+className="inline-flex max-w-full flex-wrap items-center rounded-full border border-white/10 bg-white/[0.055] px-3 py-1.5 text-[11px] font-bold leading-5 text-slate-200 break-words"
+>
+<span className="mr-1 text-slate-500">
+{COMPANY_QUALIFICATION_TYPE_LABELS[item.qualificationType]}:
+</span>
+{item.name}
+{item.issuer ? (
+<span className="ml-1 text-slate-500">Â· {item.issuer}</span>
+) : null}
+</span>
+))}
+
+{qualificationPreview.length > 4 ? (
+<span className="inline-flex items-center rounded-full border border-white/10 bg-white/[0.035] px-3 py-1.5 text-[11px] font-black leading-5 text-slate-400">
++{qualificationPreview.length - 4} more
 </span>
 ) : null}
 </div>
