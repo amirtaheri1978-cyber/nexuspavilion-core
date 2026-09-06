@@ -4,6 +4,10 @@ import type { ReactNode } from "react";
 
 import { ExecutiveBadge } from "@/components/executive/executive-badge";
 import { getSafeNextPath } from "@/lib/auth/login-continuation";
+import {
+  getActiveMembershipForUserCompany,
+  type OrganizationMembership,
+} from "@/lib/auth/membership";
 import type {
   ProcurementContractFramework,
   ProcurementRfq,
@@ -11,11 +15,28 @@ import type {
   RfqAccessReason,
 } from "@/lib/procurement/rfq-access-contract";
 import { getProcurementContext } from "@/lib/procurement/procurement-context-repository";
+import { canInviteCompanySuppliers } from "@/lib/procurement/procurement-write-authorization";
 import { createClient } from "@/lib/supabase/server";
 import {
   buildProcurementMarketplaceViewModel,
   type MarketplaceRecord,
 } from "@/lib/procurement/marketplace-view-model";
+
+type PageProps = {
+  searchParams: Promise<{
+    inviteCompanyId?: string | string[];
+  }>;
+};
+
+type InvitationTargetCompany = {
+  id: string;
+  name: string;
+  network_role: string | null;
+};
+
+function readSingleSearchParam(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] ?? "" : value ?? "";
+}
 
 type ProcurementScope =
   | "material"
@@ -182,7 +203,11 @@ function getParticipantRoleTone(
     : "blue";
 }
 
-export default async function RFQMarketplacePage() {
+export default async function RFQMarketplacePage({
+  searchParams,
+}: PageProps) {
+  const { inviteCompanyId: inviteCompanyIdParam } = await searchParams;
+  const inviteCompanyId = readSingleSearchParam(inviteCompanyIdParam).trim();
   const supabase = await createClient();
   const {
     data: { user },
@@ -196,6 +221,62 @@ export default async function RFQMarketplacePage() {
 
   const marketplace =
     buildProcurementMarketplaceViewModel(context);
+
+  let sourcingMembership: OrganizationMembership | null = null;
+
+  if (context.identity.companyId) {
+    try {
+      sourcingMembership = await getActiveMembershipForUserCompany(
+        supabase,
+        user.id,
+        context.identity.companyId,
+      );
+    } catch (membershipError) {
+      console.error("RFQ invitation routing membership lookup failed.", {
+        userId: user.id,
+        companyId: context.identity.companyId,
+        error: membershipError,
+      });
+    }
+  }
+
+  const canRouteNetworkInvitation = canInviteCompanySuppliers(
+    sourcingMembership,
+    context.identity.companyId ?? "",
+  );
+  const networkInvitationRequested = Boolean(inviteCompanyId);
+  let invitationTarget: InvitationTargetCompany | null = null;
+
+  if (networkInvitationRequested && canRouteNetworkInvitation) {
+    const { data: invitationTargetData, error: invitationTargetError } =
+      await supabase
+        .from("company_directory")
+        .select("id, name, network_role")
+        .eq("id", inviteCompanyId)
+        .in("status", ["approved", "verified"])
+        .limit(1)
+        .maybeSingle();
+
+    if (invitationTargetError) {
+      console.error("Network invitation target lookup failed.", {
+        inviteCompanyId,
+        error: invitationTargetError,
+      });
+    } else if (
+      invitationTargetData &&
+      invitationTargetData.id !== context.identity.companyId
+    ) {
+      invitationTarget = invitationTargetData as InvitationTargetCompany;
+    }
+  }
+
+  const invitationRoutingStatus = !networkInvitationRequested
+    ? null
+    : !canRouteNetworkInvitation
+      ? "unauthorized"
+      : invitationTarget
+        ? "ready"
+        : "unavailable";
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#061426] px-4 py-6 text-white sm:px-6 lg:px-10">
@@ -288,6 +369,68 @@ export default async function RFQMarketplacePage() {
           </div>
         </section>
 
+        {invitationRoutingStatus ? (
+          <section
+            id="network-invitation-routing"
+            className="mt-8 rounded-[30px] border border-[#2CC4E8]/20 bg-[#2CC4E8]/[0.06] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.24)] sm:p-8"
+            data-network-invitation-routing={invitationRoutingStatus}
+          >
+            <p className="text-xs font-black uppercase tracking-[0.3em] text-[#C8A646]">
+              Network Invitation Handoff
+            </p>
+
+            {invitationRoutingStatus === "ready" && invitationTarget ? (
+              <>
+                <div className="mt-3 flex flex-wrap items-center gap-3">
+                  <h2 className="text-2xl font-black text-white sm:text-3xl">
+                    Select a company-managed RFQ for {invitationTarget.name}
+                  </h2>
+                  <ExecutiveBadge tone="blue">
+                    {invitationTarget.network_role || "Network Company"}
+                  </ExecutiveBadge>
+                </div>
+
+                <p className="mt-3 max-w-4xl text-sm font-semibold leading-7 text-slate-300">
+                  Choose a company-managed RFQ below. Selecting an RFQ opens
+                  its workspace; the existing secure email invitation form is
+                  shown only while the RFQ remains open under its deadline and
+                  governance controls. No invitation is sent from Company Network.
+                </p>
+
+                <div className="mt-4 flex flex-wrap gap-3">
+                  <ExecutiveBadge tone="success">
+                    {context.buyer.openOwnedRfqs.length} Open-Status Company RFQs
+                  </ExecutiveBadge>
+                  <ExecutiveBadge tone="neutral">
+                    Existing Invitation Flow
+                  </ExecutiveBadge>
+                </div>
+              </>
+            ) : invitationRoutingStatus === "unauthorized" ? (
+              <>
+                <h2 className="mt-3 text-2xl font-black text-white sm:text-3xl">
+                  Sourcing authorization required
+                </h2>
+                <p className="mt-3 max-w-4xl text-sm font-semibold leading-7 text-slate-300">
+                  Supplier invitations are available only to active organization
+                  owners, administrators, or non-viewer users assigned the buyer
+                  procurement function.
+                </p>
+              </>
+            ) : (
+              <>
+                <h2 className="mt-3 text-2xl font-black text-white sm:text-3xl">
+                  Invitation target unavailable
+                </h2>
+                <p className="mt-3 max-w-4xl text-sm font-semibold leading-7 text-slate-300">
+                  The selected network company is unavailable for this handoff.
+                  Return to Company Network and select another relevant company.
+                </p>
+              </>
+            )}
+          </section>
+        ) : null}
+
         <MetricGrid metrics={marketplace.statusMetrics} />
 
         <MetricGrid
@@ -328,6 +471,11 @@ export default async function RFQMarketplacePage() {
                   key={record.rfq.id}
                   record={record}
                   mode={marketplace.mode}
+                  invitationTarget={
+                    invitationRoutingStatus === "ready"
+                      ? invitationTarget
+                      : null
+                  }
                 />
               ))
             ) : (
@@ -351,15 +499,25 @@ export default async function RFQMarketplacePage() {
 function MarketplaceCard({
   record,
   mode,
+  invitationTarget,
 }: {
   record: MarketplaceRecord;
   mode: "buyer" | "supplier";
+  invitationTarget: InvitationTargetCompany | null;
 }) {
   const { rfq } = record;
+  const normalizedStatus = normalize(rfq.status);
+  const canSelectForInvitation =
+    Boolean(invitationTarget) &&
+    record.participantRole === "issuer" &&
+    (normalizedStatus === "" || normalizedStatus === "open");
+  const href = canSelectForInvitation
+    ? `/rfq/${rfq.slug}#supplier-invitations`
+    : `/rfq/${rfq.slug}`;
 
   return (
     <Link
-      href={`/rfq/${rfq.slug}`}
+      href={href}
       className={`group min-w-0 rounded-[30px] border border-white/10 bg-[#061426]/72 p-6 shadow-[0_22px_70px_rgba(0,0,0,0.22)] transition hover:border-[#2CC4E8]/25 hover:bg-[#07111F] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2CC4E8]/40 focus-visible:ring-offset-2 focus-visible:ring-offset-[#07111F]`}
     >
       <div className="flex items-start justify-between gap-4">
@@ -426,7 +584,9 @@ function MarketplaceCard({
 
       <div className="mt-6 flex items-center justify-end">
         <span className="text-sm font-black text-[#9BE8F8] transition group-hover:translate-x-1">
-          {getActionLabel(rfq.status)}
+          {canSelectForInvitation
+            ? "Open RFQ workspace →"
+            : getActionLabel(rfq.status)}
         </span>
       </div>
     </Link>

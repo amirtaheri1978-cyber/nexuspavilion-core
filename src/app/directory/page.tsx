@@ -3,7 +3,12 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
+import {
+  getActiveMembershipForUserCompany,
+  type OrganizationMembership,
+} from "@/lib/auth/membership";
 import { createClient } from "@/lib/supabase/client";
+import { canInviteCompanySuppliers } from "@/lib/procurement/procurement-write-authorization";
 import {
   COMPANY_CAPABILITY_TYPES,
   COMPANY_CAPABILITY_TYPE_LABELS,
@@ -186,6 +191,7 @@ const [capabilityRows, setCapabilityRows] = useState<CompanyCapabilityRecord[]>(
 const [qualificationRows, setQualificationRows] = useState<PublicCompanyQualificationRecord[]>([]);
 const [approvedVendors, setApprovedVendors] = useState<ApprovedVendor[]>([]);
 const [profile, setProfile] = useState<Profile | null>(null);
+const [membership, setMembership] = useState<OrganizationMembership | null>(null);
 
 const [search, setSearch] = useState("");
 const [loading, setLoading] = useState(true);
@@ -210,6 +216,26 @@ const { data: profileData } = user
 
 const currentProfile = (profileData || null) as Profile | null;
 setProfile(currentProfile);
+
+let currentMembership: OrganizationMembership | null = null;
+
+if (user && currentProfile?.company_id) {
+try {
+currentMembership = await getActiveMembershipForUserCompany(
+supabase,
+user.id,
+currentProfile.company_id
+);
+} catch (membershipError) {
+console.error("Company Network sourcing membership lookup failed.", {
+userId: user.id,
+companyId: currentProfile.company_id,
+error: membershipError,
+});
+}
+}
+
+setMembership(currentMembership);
 
 const [
 { data: companiesData, error: companiesError },
@@ -480,6 +506,11 @@ setSavingVendorId(null);
 }
 
 const canManageApprovedVendors = canManageAvl(profile?.role);
+const canInviteNetworkSuppliers = canInviteCompanySuppliers(
+membership,
+profile?.company_id ?? ""
+);
+
 return (
 <main className="relative min-h-screen overflow-hidden bg-[#061426] text-white">
 <div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(circle_at_top_left,rgba(44,196,232,0.18),transparent_34%),radial-gradient(circle_at_top_right,rgba(200,166,70,0.15),transparent_30%),linear-gradient(180deg,#061426_0%,#07111F_45%,#020617_100%)]" />
@@ -696,6 +727,31 @@ isSupplierScopedCompany ? "md:grid-cols-2" : ""
 ) : null}
 </div>
 </Link>
+
+{canInviteNetworkSuppliers &&
+!isSelfCompany &&
+isSupplierScopedCompany ? (
+<div
+className="mt-5 rounded-3xl border border-[#2CC4E8]/20 bg-[#2CC4E8]/[0.06] p-4"
+data-company-network-rfq-invite="true"
+>
+<p className="text-[10px] font-black uppercase tracking-[0.22em] text-[#9BE8F8]">
+RFQ Invitation Route
+</p>
+
+<p className="mt-2 text-xs font-semibold leading-5 text-slate-400">
+Route this company into one of your existing company-managed RFQs.
+The supplier contact email is confirmed in the secure invitation step.
+</p>
+
+<Link
+href={`/rfq?inviteCompanyId=${encodeURIComponent(company.id)}`}
+className={`mt-4 inline-flex min-h-11 w-full items-center justify-center rounded-2xl border border-[#2CC4E8]/25 bg-[#2CC4E8]/10 px-4 py-3 text-center text-sm font-black text-[#9BE8F8] transition hover:border-[#2CC4E8]/40 hover:bg-[#2CC4E8]/15 hover:text-white ${EXECUTIVE_FOCUS_CYAN}`}
+>
+Select RFQ to Invite →
+</Link>
+</div>
+) : null}
 
 {capabilityPreview.length > 0 ? (
 <div className="mt-5 rounded-3xl border border-white/10 bg-[#07111F]/70 p-4">

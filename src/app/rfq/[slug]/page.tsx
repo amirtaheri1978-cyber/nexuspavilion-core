@@ -2,6 +2,10 @@ import Link from "next/link";
 
 import InviteVendorForm from "@/components/invite-vendor-form";
 import RFQAIAdvisor from "@/components/rfq-ai-advisor";
+import {
+  getActiveMembershipForUserCompany,
+  type OrganizationMembership,
+} from "@/lib/auth/membership";
 import { createClient } from "@/lib/supabase/server";
 import { ExecutiveDecisionCenter } from "@/components/rfq-workspace/executive-decision-center";
 import { ExecutiveActionQueue } from "@/components/rfq-workspace/executive-action-queue";
@@ -21,6 +25,7 @@ import {
   canExposeRfqBuyerExecutiveIntelligence,
   selectRfqDetailCommandMetrics,
 } from "@/lib/procurement/rfq-detail-intelligence-boundary";
+import { canInviteCompanySuppliers } from "@/lib/procurement/procurement-write-authorization";
 import {
   getExecutiveRiskMatrix,
   getHealthLabel,
@@ -263,6 +268,25 @@ rfqCompanyId: rfq.company_id,
 
 const isOwner = participantRole === "issuer";
 
+let sourcingMembership: OrganizationMembership | null = null;
+
+if (isOwner && user && profile?.company_id) {
+  try {
+    sourcingMembership = await getActiveMembershipForUserCompany(
+      supabase,
+      user.id,
+      profile.company_id,
+    );
+  } catch (membershipError) {
+    console.error("RFQ supplier invitation membership lookup failed.", {
+      userId: user.id,
+      companyId: profile.company_id,
+      rfqId: rfq.id,
+      error: membershipError,
+    });
+  }
+}
+
 const rfqStatus = String(rfq.status || "open");
 const deadlinePassed = hasDeadlinePassed(rfq.deadline);
 const daysUntilDeadline = getDaysUntilDeadline(rfq.deadline);
@@ -480,6 +504,10 @@ commercialEvaluationUnlocked,
 hasMyQuote,
 hasRecommendedQuote: Boolean(recommendedQuote),
 });
+
+const canInviteSuppliers =
+capabilities.canInviteSuppliers &&
+canInviteCompanySuppliers(sourcingMembership, rfq.company_id ?? "");
 
 const canViewBuyerExecutiveIntelligence =
   canExposeRfqBuyerExecutiveIntelligence(capabilities);
@@ -908,10 +936,10 @@ recommendedQuote={recommendedQuote}
   />
 ) : null}
 
-{capabilities.canInviteSuppliers ? (
+{canInviteSuppliers ? (
 <ExecutivePanel
 id="supplier-invitations"
-className="mt-8 min-w-0 @container"
+className="mt-8 min-w-0 scroll-mt-24 @container lg:scroll-mt-0"
 padding="lg"
 tone="blue"
 data-rfq-supplier-invitations="true"
