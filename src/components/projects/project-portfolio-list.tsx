@@ -9,6 +9,12 @@ import type {
   ProjectProcurementAssociation,
   ProjectRecord,
 } from "@/lib/projects/project-contract";
+import {
+  buildProjectInsights,
+  type ProjectInsightAvailability,
+  type ProjectInsightRatio,
+  type ProjectInsights,
+} from "@/lib/projects/project-insights";
 
 function formatDate(value: string) {
   const date = new Date(value);
@@ -87,6 +93,27 @@ function hasOpenProcurement(association: ProjectProcurementAssociation) {
   return association.status.trim().toLowerCase() === "open";
 }
 
+function getAvailabilityLabel(value: ProjectInsightAvailability) {
+  if (value === "available") return "Available";
+  if (value === "limited") return "Limited Evidence";
+  return "Insufficient Data";
+}
+
+function getAvailabilityTone(
+  value: ProjectInsightAvailability,
+): "success" | "warning" | "neutral" {
+  if (value === "available") return "success";
+  if (value === "limited") return "warning";
+  return "neutral";
+}
+
+function formatRatioValue(ratio: ProjectInsightRatio) {
+  if (ratio.percentage === null) return "Insufficient Data";
+  return `${ratio.percentage.toLocaleString("en-CA", {
+    maximumFractionDigits: 1,
+  })}%`;
+}
+
 export function ProjectPortfolioList({
   projects,
   canCreateProject,
@@ -94,6 +121,8 @@ export function ProjectPortfolioList({
   projects: ProjectRecord[];
   canCreateProject: boolean;
 }) {
+  const projectInsights = buildProjectInsights(projects);
+
   return (
     <section className="mt-8 rounded-[34px] border border-white/10 bg-white/[0.045] p-6 shadow-[0_28px_90px_rgba(0,0,0,0.28)] sm:p-8">
       <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
@@ -124,6 +153,8 @@ export function ProjectPortfolioList({
           ) : null}
         </div>
       </div>
+
+      <ProjectInsightsPanel insights={projectInsights} />
 
       {projects.length === 0 ? (
         <div className="mt-8 rounded-[28px] border border-dashed border-white/15 bg-[#061426]/62 p-7 sm:p-9">
@@ -212,6 +243,142 @@ export function ProjectPortfolioList({
         </Link>
       </div>
     </section>
+  );
+}
+
+function ProjectInsightsPanel({ insights }: { insights: ProjectInsights }) {
+  const linkedEvidenceAvailable =
+    insights.linkedProcurementAvailability !== "insufficient_data";
+
+  return (
+    <section className="mt-8 rounded-[28px] border border-[#2CC4E8]/15 bg-[#061426]/64 p-5 sm:p-6">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div className="max-w-3xl">
+          <p className="text-[10px] font-black uppercase tracking-[0.24em] text-[#9BE8F8]">
+            Project Insights
+          </p>
+          <h3 className="mt-2 text-2xl font-black tracking-[-0.02em] text-white">
+            Project Association Evidence
+          </h3>
+          <p className="mt-2 text-sm font-semibold leading-6 text-slate-400">
+            Descriptive company-scoped evidence from existing Project records
+            and verified RFQ associations. No Project spend, schedule,
+            performance, health, or risk is inferred.
+          </p>
+        </div>
+
+        <ExecutiveBadge tone={getAvailabilityTone(insights.availability)}>
+          {getAvailabilityLabel(insights.availability)}
+        </ExecutiveBadge>
+      </div>
+
+      <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <ProjectInsightMetric
+          label="Total Projects"
+          value={
+            insights.totalProjects > 0
+              ? insights.totalProjects.toLocaleString("en-CA")
+              : "Insufficient Data"
+          }
+          detail="Current company Project records."
+        />
+        <ProjectInsightMetric
+          label="Identifier Coverage"
+          value={formatRatioValue(insights.identifierCoverage)}
+          detail={
+            insights.identifierCoverage.denominator > 0
+              ? `${insights.identifierCoverage.numerator.toLocaleString("en-CA")} / ${insights.identifierCoverage.denominator.toLocaleString("en-CA")} Projects`
+              : insights.identifierCoverage.definition
+          }
+        />
+        <ProjectInsightMetric
+          label="Linked Project Coverage"
+          value={formatRatioValue(insights.associationCoverage)}
+          detail={
+            insights.associationCoverage.denominator > 0
+              ? `${insights.associationCoverage.numerator.toLocaleString("en-CA")} / ${insights.associationCoverage.denominator.toLocaleString("en-CA")} identifiable Projects`
+              : insights.associationCoverage.definition
+          }
+        />
+        <ProjectInsightMetric
+          label="Linked RFQs"
+          value={
+            linkedEvidenceAvailable
+              ? insights.linkedRfqCount.toLocaleString("en-CA")
+              : "Insufficient Data"
+          }
+          detail="Verified RFQ associations in the current Project payload."
+        />
+      </div>
+
+      <div className="mt-4 grid gap-4 sm:grid-cols-3">
+        <ProjectInsightMetric
+          label="Open Linked RFQs"
+          value={
+            linkedEvidenceAvailable
+              ? insights.openLinkedRfqCount.toLocaleString("en-CA")
+              : "Insufficient Data"
+          }
+          detail="Current linked RFQs with open status."
+        />
+        <ProjectInsightMetric
+          label="Verified Awarded RFQs"
+          value={
+            linkedEvidenceAvailable
+              ? insights.verifiedAwardedRfqCount.toLocaleString("en-CA")
+              : "Insufficient Data"
+          }
+          detail="Awarded status with a recorded award timestamp."
+        />
+        <ProjectInsightMetric
+          label="Identifier Gaps"
+          value={
+            insights.totalProjects > 0
+              ? insights.identifierGapCount.toLocaleString("en-CA")
+              : "Insufficient Data"
+          }
+          detail="Project records without a nonblank Project Code."
+        />
+      </div>
+
+      <div className="mt-5 rounded-[20px] border border-white/10 bg-white/[0.03] p-4">
+        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
+          Evidence Basis & Limitations
+        </p>
+        <ul className="mt-3 space-y-2 text-xs font-semibold leading-5 text-slate-400">
+          {insights.limitations.map((limitation) => (
+            <li key={limitation} className="flex gap-2">
+              <span aria-hidden="true" className="text-[#C8A646]">
+                •
+              </span>
+              <span>{limitation}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
+  );
+}
+
+function ProjectInsightMetric({
+  label,
+  value,
+  detail,
+}: {
+  label: string;
+  value: string;
+  detail: string;
+}) {
+  return (
+    <div className="min-w-0 rounded-[20px] border border-white/10 bg-white/[0.035] p-4">
+      <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">
+        {label}
+      </p>
+      <p className="mt-2 break-words text-xl font-black text-white">{value}</p>
+      <p className="mt-2 text-xs font-semibold leading-5 text-slate-400">
+        {detail}
+      </p>
+    </div>
   );
 }
 

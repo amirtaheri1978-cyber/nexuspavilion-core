@@ -47,6 +47,11 @@ const portfolioListSource = fs.readFileSync(
   "utf8",
 );
 
+const projectInsightsSource = fs.readFileSync(
+  path.join(process.cwd(), "src/lib/projects/project-insights.ts"),
+  "utf8",
+);
+
 describe("Project Portfolio contract", () => {
   it("normalizes independent Project input without accepting company identity", () => {
     const parsed = parseProjectCreateInput({
@@ -137,6 +142,43 @@ describe("Project Portfolio contract", () => {
     expect(portfolioListSource).toContain(
       "No supported Project status or risk signal is available",
     );
+  });
+
+  it("adds bounded Project Insights from the existing ProjectRecord payload only", () => {
+    expect(portfolioListSource).toContain("buildProjectInsights(projects)");
+    expect(portfolioListSource).toContain("Project Insights");
+    expect(portfolioListSource).toContain("Project Association Evidence");
+    expect(portfolioListSource).toContain("Identifier Coverage");
+    expect(portfolioListSource).toContain("Linked Project Coverage");
+    expect(portfolioListSource).toContain("Verified Awarded RFQs");
+    expect(portfolioListSource).toContain("Insufficient Data");
+    expect(portfolioListSource).toContain("Limited Evidence");
+
+    expect(projectInsightsSource).toContain("ProjectRecord[]");
+    expect(projectInsightsSource).toContain("identifierCoverage");
+    expect(projectInsightsSource).toContain("associationCoverage");
+    expect(projectInsightsSource).toContain("verifiedAwardedRfqCount");
+    expect(projectInsightsSource).toContain("internal_project_id");
+    expect(projectInsightsSource).not.toContain("createClient");
+    expect(projectInsightsSource).not.toContain("fetch(");
+    expect(projectInsightsSource).not.toContain('.from("');
+  });
+
+  it("keeps Project Insights descriptive and excludes unsupported project analytics claims", () => {
+    for (const unsupportedLabel of [
+      "Project Spend",
+      "Project Savings",
+      "Budget Variance",
+      "Schedule Performance",
+      "Completion Forecast",
+      "Project Health Score",
+      "Project Risk Score",
+      "Market Benchmark",
+      "Industry Benchmark",
+    ]) {
+      expect(portfolioListSource).not.toContain(unsupportedLabel);
+      expect(projectInsightsSource).not.toContain(unsupportedLabel);
+    }
   });
 
   it("does not manufacture unsupported Project status or risk semantics", () => {
