@@ -1,4 +1,7 @@
-import { getActiveMembershipForUserCompany } from "@/lib/auth/membership";
+import {
+  getActiveMembershipForUserCompany,
+  type OrganizationMembership,
+} from "@/lib/auth/membership";
 import { createClient } from "@/lib/supabase/server";
 import type { AnalyticsRFQ } from "@/lib/analytics/procurement-utils";
 
@@ -16,12 +19,33 @@ export type AnalyticsCompany = {
   name: string | null;
 };
 
+export type AnalyticsCommercialAccess = {
+  canViewIssuerCommercialAnalytics: boolean;
+};
+
 export type AnalyticsSourceData = {
   companyId: string | null;
+  commercialAccess: AnalyticsCommercialAccess;
   rfqList: AnalyticsRFQ[];
   quoteList: AnalyticsQuote[];
   companyList: AnalyticsCompany[];
 };
+
+export function canViewIssuerCommercialAnalytics(
+  membership:
+    | Pick<
+        OrganizationMembership,
+        "membershipStatus" | "workspaceRole" | "procurementFunction"
+      >
+    | null,
+): boolean {
+  return Boolean(
+    membership?.membershipStatus === "active" &&
+      (membership.workspaceRole === "owner" ||
+        membership.workspaceRole === "admin" ||
+        membership.procurementFunction === "buyer"),
+  );
+}
 
 export async function loadAnalyticsSourceData(): Promise<AnalyticsSourceData> {
   const supabase = await createClient();
@@ -46,6 +70,10 @@ export async function loadAnalyticsSourceData(): Promise<AnalyticsSourceData> {
       : null;
 
   const companyId = activeMembership?.companyId ?? null;
+  const commercialAccess: AnalyticsCommercialAccess = {
+    canViewIssuerCommercialAnalytics:
+      canViewIssuerCommercialAnalytics(activeMembership),
+  };
 
   const { data: rfqs } = companyId
     ? await supabase
@@ -59,6 +87,7 @@ export async function loadAnalyticsSourceData(): Promise<AnalyticsSourceData> {
   const rfqIds = rfqList.map((rfq) => rfq.id);
 
   const { data: quotes } =
+    commercialAccess.canViewIssuerCommercialAnalytics &&
     rfqIds.length > 0
       ? await supabase
           .from("quotes")
@@ -73,6 +102,7 @@ export async function loadAnalyticsSourceData(): Promise<AnalyticsSourceData> {
 
   return {
     companyId,
+    commercialAccess,
     rfqList,
     quoteList: (quotes ?? []) as AnalyticsQuote[],
     companyList: (companies ?? []) as AnalyticsCompany[],

@@ -3,8 +3,10 @@ import { ProcurementPipelineIntelligence } from "@/components/analytics/procurem
 import { RfqDecisionReadiness } from "@/components/analytics/award-probability-forecast";
 import { CompanyRFQPipeline } from "@/components/analytics/company-rfq-pipeline";
 import CategoryIntelligence from "@/components/analytics/procurement/category-intelligence";
+import { CommercialInsightsPanel } from "@/components/analytics/commercial/commercial-insights-panel";
 import { ProcurementInsightMetrics } from "@/components/analytics/procurement/procurement-insight-metrics";
 import { SupplierPortfolioIntelligence } from "@/components/analytics/supplier-portfolio-intelligence";
+import type { CommercialInsights } from "@/lib/analytics/commercial/commercial-insights";
 import type { ProcurementInsightMetrics as ProcurementInsightMetricsModel } from "@/lib/analytics/portfolio/portfolio-intelligence";
 
 type CommandRoomItem = {
@@ -63,6 +65,7 @@ type ProcurementDashboardProps = {
   activityChartData: ChartDataPoint[];
   valueChartData: ChartDataPoint[];
 
+  commercialInsights: CommercialInsights;
   procurementInsights: ProcurementInsightMetricsModel;
   rfqDecisionReadiness: RfqDecisionReadinessItem[];
 
@@ -92,6 +95,7 @@ export function ProcurementDashboard({
   executiveCommandRecommendation,
   activityChartData,
   valueChartData,
+  commercialInsights,
   procurementInsights,
   rfqDecisionReadiness,
   rfqList,
@@ -120,6 +124,8 @@ export function ProcurementDashboard({
       />
 
       <ProcurementInsightMetrics metrics={procurementInsights} />
+
+      <CommercialInsightsPanel insights={commercialInsights} />
 
       <ProcurementPipelineIntelligence
         activityChartData={activityChartData}

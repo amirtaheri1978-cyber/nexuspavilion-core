@@ -144,7 +144,7 @@ export function BoardExecutiveReport(props: BoardExecutiveReportProps) {
             {
               label: "Identified opportunity",
               value: props.opportunityValue,
-              context: "Potential savings opportunity",
+              context: "Within-RFQ quotation estimate; not realized savings",
               tone: "gold",
             },
             {

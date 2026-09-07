@@ -58,6 +58,24 @@ const analyticsChartSurface = readSource("src/components/analytics-chart.tsx");
 const procurementPipelineSurface = readSource(
   "src/components/analytics/procurement-pipeline-intelligence.tsx",
 );
+const commercialInsightsSource = readSource(
+  "src/lib/analytics/commercial/commercial-insights.ts",
+);
+const commercialInsightsPanel = readSource(
+  "src/components/analytics/commercial/commercial-insights-panel.tsx",
+);
+const portfolioIntelligenceSource = readSource(
+  "src/lib/analytics/portfolio/portfolio-intelligence.ts",
+);
+const analyticsNarrativeSource = readSource(
+  "src/lib/analytics/narrative/analytics-narrative.ts",
+);
+const opportunityIntelligenceSource = readSource(
+  "src/lib/analytics/executive/opportunity-intelligence.ts",
+);
+const boardroomSnapshotSurface = readSource(
+  "src/components/analytics/boardroom-snapshot.tsx",
+);
 
 describe("analytics decision-evidence truthfulness", () => {
   it("normalizes the executive operating score across four defensible dimensions", () => {
@@ -175,7 +193,7 @@ describe("analytics decision-evidence truthfulness", () => {
     expect(analyticsPage).not.toMatch(/savings\s+savings/i);
     expect(analyticsPage).toContain('valueLabel: "Opportunity Score"');
     expect(analyticsPage).toContain(
-      'valueLabel: "Estimated Savings Opportunity"',
+      'valueLabel: "Observed Quotation Opportunity"',
     );
     expect(analyticsPage).toContain('valueLabel: "Supplier Engagement"');
     expect(analyticsPage).toContain(
@@ -205,6 +223,89 @@ describe("analytics decision-evidence truthfulness", () => {
     );
     expect(analyticsChartSurface).toContain("formatCompactCurrency");
     expect(procurementPipelineSurface).toContain('valueFormat="currency"');
+  });
+
+  it("keeps commercial analytics permission-safe, within-RFQ, and explicit about evidence limits", () => {
+    expect(analyticsSourceLoader).toContain(
+      "canViewIssuerCommercialAnalytics",
+    );
+    expect(analyticsSourceLoader).toContain(
+      "commercialAccess.canViewIssuerCommercialAnalytics &&",
+    );
+
+    expect(commercialInsightsSource).toContain(
+      'state: "access-restricted"',
+    );
+    expect(commercialInsightsSource).toContain(
+      'state: "policy-locked"',
+    );
+    expect(commercialInsightsSource).toContain(
+      "calculateObservedQuotationOpportunity",
+    );
+    expect(commercialInsightsSource).toContain(
+      "HIGH_DEVIATION_REVIEW_THRESHOLD_PERCENTAGE = 20",
+    );
+    expect(commercialInsightsSource).toContain(
+      "positive visible quotations within the same RFQ",
+    );
+    expect(commercialInsightsSource).toContain(
+      "not realized savings or an external market benchmark",
+    );
+    expect(commercialInsightsSource).not.toMatch(
+      /AI anomaly|industry benchmark|statistical significance/i,
+    );
+
+    expect(portfolioIntelligenceSource).toContain(
+      "calculateObservedQuotationOpportunity",
+    );
+    expect(portfolioIntelligenceSource).not.toContain(
+      "averageQuote > lowestQuote ? averageQuote - lowestQuote : 0",
+    );
+
+    expect(analyticsPage).toContain("buildCommercialInsights");
+    expect(analyticsPage).toContain("commercialOpportunityDisplay");
+    expect(analyticsPage).toContain(
+      "commercialInsights={commercialInsights}",
+    );
+    expect(analyticsPage.match(/\bpotentialSavings\b/g)).toHaveLength(1);
+    expect(analyticsPage).toContain(
+      "potentialSavings: observedCommercialOpportunity",
+    );
+    expect(analyticsPage).not.toContain(
+      'name: "Savings", value:',
+    );
+
+    expect(commercialInsightsPanel).toContain(
+      "Permission-Safe Commercial Intelligence",
+    );
+    expect(commercialInsightsPanel).toContain(
+      "Internal review threshold",
+    );
+    expect(commercialInsightsPanel).toContain(
+      "not a statistical outlier classification",
+    );
+    expect(commercialInsightsPanel).toContain(
+      "supplier approval, award recommendation, or realized",
+    );
+    expect(commercialInsightsPanel).not.toMatch(
+      /approved supplier|recommended supplier|award recommendation:/i,
+    );
+
+    expect(opportunityIntelligenceSource).toContain(
+      "commercialEvidenceState",
+    );
+    expect(opportunityIntelligenceSource).toContain(
+      "authorized commercial review context",
+    );
+    expect(boardroomSnapshotSurface).toContain(
+      "Observed Quotation Opportunity",
+    );
+    expect(analyticsNarrativeSource).toContain(
+      "quotation award rate",
+    );
+    expect(boardExecutiveReport).toContain(
+      "Within-RFQ quotation estimate; not realized savings",
+    );
   });
 
   it("presents canonical evidence readiness and categorical RFQ state", () => {

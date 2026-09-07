@@ -1,3 +1,4 @@
+import type { CommercialEvidenceState } from "@/lib/analytics/commercial/commercial-insights";
 import type { ExecutiveInsightBundle } from "@/lib/analytics/executive/executive-insight-bundle";
 
 import {
@@ -13,6 +14,7 @@ export type OpportunityIntelligenceInput = {
   potentialSavings: number;
   avgQuotesPerRfq: number;
   supplierCount: number;
+  commercialEvidenceState?: CommercialEvidenceState;
 };
 
 function normalizeAmount(value: number): number {
@@ -35,14 +37,19 @@ function getConfidence({
   potentialSavings,
   avgQuotesPerRfq,
   supplierCount,
+  commercialEvidenceState,
 }: {
   potentialSavings: number;
   avgQuotesPerRfq: number;
   supplierCount: number;
+  commercialEvidenceState: CommercialEvidenceState;
 }): number {
-  let score = 40;
+  let score = commercialEvidenceState === "available" ? 40 : 30;
 
-  if (potentialSavings > 0) {
+  if (
+    commercialEvidenceState === "available" &&
+    potentialSavings > 0
+  ) {
     score += 20;
   }
 
@@ -58,7 +65,10 @@ function getConfidence({
     score += 10;
   }
 
-  return Math.min(100, score);
+  return Math.min(
+    commercialEvidenceState === "available" ? 100 : 65,
+    score,
+  );
 }
 
 export function buildTopOpportunityInsight({
@@ -66,6 +76,7 @@ export function buildTopOpportunityInsight({
   potentialSavings,
   avgQuotesPerRfq,
   supplierCount,
+  commercialEvidenceState = "available",
 }: OpportunityIntelligenceInput): ExecutiveInsightBundle {
   const normalizedSavings = normalizeAmount(potentialSavings);
 
@@ -84,33 +95,63 @@ export function buildTopOpportunityInsight({
       ? topCategory
       : "Current portfolio";
 
-  const summary = hasSavingsOpportunity
-    ? `${category} contains an estimated ${normalizedSavings.toLocaleString()} dollars in commercial opportunity.`
-    : `${category} currently shows limited measurable savings opportunity.`;
+  const summary =
+    commercialEvidenceState === "access-restricted"
+      ? "Commercial opportunity evidence is access restricted for the current workspace membership."
+      : commercialEvidenceState === "policy-locked"
+        ? "Commercial pricing evidence remains policy locked under the current RFQ controls."
+        : commercialEvidenceState === "insufficient-data"
+          ? `${category} does not yet have enough comparable within-RFQ quotation evidence for a commercial opportunity estimate.`
+          : hasSavingsOpportunity
+            ? `${category} contains an estimated ${normalizedSavings.toLocaleString()} dollars in within-RFQ quotation opportunity.`
+            : `${category} has comparable quotation evidence but no positive estimated within-RFQ opportunity.`;
 
-  const reason = hasSavingsOpportunity
-    ? hasHealthyCompetition
-      ? "Recorded quotation data shows measurable bid dispersion with sufficient supplier participation to support commercial review."
-      : "Recorded quotation data shows measurable bid dispersion, but competitive coverage remains limited."
-    : "Current quotation history does not yet show a material difference between average and lowest recorded pricing.";
+  const reason =
+    commercialEvidenceState === "access-restricted"
+      ? "The current membership is not authorized for issuer commercial analytics. Commercial values must remain unavailable."
+      : commercialEvidenceState === "policy-locked"
+        ? "Applicable RFQ sourcing or deadline controls have not yet unlocked commercial pricing evidence."
+        : commercialEvidenceState === "insufficient-data"
+          ? "At least two positive visible quotations within the same unlocked RFQ are required for a comparable commercial estimate."
+          : hasSavingsOpportunity
+            ? hasHealthyCompetition
+              ? "Visible within-RFQ quotation evidence shows measurable bid dispersion with sufficient supplier participation to support commercial review."
+              : "Visible within-RFQ quotation evidence shows measurable bid dispersion, but competitive coverage remains limited."
+            : "Comparable visible quotations currently show no positive difference between average and lowest pricing within the same RFQ.";
 
-  const recommendation = hasSavingsOpportunity
-    ? hasHealthyCompetition
-      ? "Validate scope alignment and supplier suitability, then use the available competitive tension in commercial negotiations."
-      : "Increase qualified supplier participation before relying on the current savings estimate for award or negotiation decisions."
-    : "Expand competitive participation and quotation coverage before expecting a reliable savings signal.";
+  const recommendation =
+    commercialEvidenceState === "access-restricted"
+      ? "Use an authorized commercial review context before requesting or interpreting issuer-side pricing intelligence."
+      : commercialEvidenceState === "policy-locked"
+        ? "Wait for the applicable RFQ commercial unlock before interpreting supplier pricing."
+        : commercialEvidenceState === "insufficient-data"
+          ? "Increase comparable quotation coverage within individual RFQs before relying on commercial opportunity signals."
+          : hasSavingsOpportunity
+            ? hasHealthyCompetition
+              ? "Validate scope alignment and supplier suitability, then use the observed competitive tension in commercial negotiations."
+              : "Increase qualified supplier participation before relying on the current quotation opportunity for award or negotiation decisions."
+            : "Maintain competitive quotation coverage and continue monitoring within-RFQ price dispersion.";
 
-  const severity = hasSavingsOpportunity
-    ? "high"
-    : normalizedAverageQuotes < 2
-      ? "medium"
-      : "low";
+  const severity =
+    commercialEvidenceState === "available"
+      ? hasSavingsOpportunity
+        ? "high"
+        : normalizedAverageQuotes < 2
+          ? "medium"
+          : "low"
+      : commercialEvidenceState === "insufficient-data"
+        ? "low"
+        : "medium";
 
   const signals = [
-    createSavingsOpportunitySignal(
-      normalizedSavings,
-      100,
-    ),
+    ...(commercialEvidenceState === "available"
+      ? [
+          createSavingsOpportunitySignal(
+            normalizedSavings,
+            100,
+          ),
+        ]
+      : []),
     createAverageQuotesSignal(
       normalizedAverageQuotes,
       85,
@@ -131,6 +172,7 @@ export function buildTopOpportunityInsight({
       potentialSavings: normalizedSavings,
       avgQuotesPerRfq: normalizedAverageQuotes,
       supplierCount: normalizedSupplierCount,
+      commercialEvidenceState,
     }),
     signals,
     fallbackReason: reason,

@@ -223,6 +223,12 @@ describe("analytics permission inheritance", () => {
     expect(analyticsSourceLoader).not.toContain(
       "getActiveMembershipForUser(",
     );
+    expect(analyticsSourceLoader).toContain(
+      "canViewIssuerCommercialAnalytics",
+    );
+    expect(analyticsSourceLoader).toContain(
+      "commercialAccess.canViewIssuerCommercialAnalytics &&",
+    );
   });
 
   it("fails closed for vendor intelligence without exact active membership", () => {
@@ -329,6 +335,9 @@ describe("analytics permission inheritance behavior", () => {
     const result = await loadAnalyticsSourceData();
 
     expect(result.companyId).toBeNull();
+    expect(result.commercialAccess).toEqual({
+      canViewIssuerCommercialAnalytics: false,
+    });
     expect(result.rfqList).toEqual([]);
     expect(result.quoteList).toEqual([]);
     expect(getTrace(harness.traces, "rfqs")).toBeUndefined();
@@ -368,6 +377,9 @@ describe("analytics permission inheritance behavior", () => {
     const quoteTrace = getTrace(harness.traces, "quotes");
 
     expect(result.companyId).toBe("company-1");
+    expect(result.commercialAccess).toEqual({
+      canViewIssuerCommercialAnalytics: true,
+    });
     expect(rfqTrace?.equals).toContainEqual(["company_id", "company-1"]);
     expect(quoteTrace?.inclusions).toEqual([
       ["rfq_id", ["rfq-1", "rfq-2"]],
@@ -380,6 +392,38 @@ describe("analytics permission inheritance behavior", () => {
       "quote-1",
       "quote-2",
     ]);
+  });
+
+  it("keeps issuer commercial quote rows unavailable for active members without owner, admin, or buyer access", async () => {
+    const harness = createSupabaseHarness({
+      membershipRow: {
+        ...defaultMembershipRow,
+        workspace_role: "member",
+        procurement_function: "supplier",
+      },
+      rfqs: [{ id: "rfq-1", company_id: "company-1" }],
+      quotes: [
+        {
+          id: "quote-1",
+          rfq_id: "rfq-1",
+          company_id: "supplier-1",
+          amount: 1000,
+          decision: null,
+        },
+      ],
+    });
+
+    vi.mocked(createClient).mockResolvedValue(harness.supabase as never);
+
+    const result = await loadAnalyticsSourceData();
+
+    expect(result.companyId).toBe("company-1");
+    expect(result.commercialAccess).toEqual({
+      canViewIssuerCommercialAnalytics: false,
+    });
+    expect(result.rfqList.map((rfq) => rfq.id)).toEqual(["rfq-1"]);
+    expect(result.quoteList).toEqual([]);
+    expect(getTrace(harness.traces, "quotes")).toBeUndefined();
   });
 
   it("does not read quotes when the scoped company has no RFQ ids", async () => {

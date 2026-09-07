@@ -1,3 +1,4 @@
+import { calculateObservedQuotationOpportunity } from "@/lib/analytics/commercial/commercial-insights";
 import type { AnalyticsRFQ } from "@/lib/analytics/procurement-utils";
 import type { AnalyticsQuote } from "@/lib/analytics/source-data/load-analytics-source-data";
 
@@ -262,8 +263,10 @@ export function buildPortfolioIntelligence({
   const lowestQuote =
     quoteAmounts.length > 0 ? Math.min(...quoteAmounts) : 0;
 
-  const potentialSavings =
-    averageQuote > lowestQuote ? averageQuote - lowestQuote : 0;
+  const potentialSavings = calculateObservedQuotationOpportunity({
+    rfqList,
+    quoteList,
+  }).amount;
 
   const quotationAwardRate = buildRatioEvidence(
     awardedContracts,

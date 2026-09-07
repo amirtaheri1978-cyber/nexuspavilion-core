@@ -1,3 +1,5 @@
+import type { CommercialInsights } from "@/lib/analytics/commercial/commercial-insights";
+
 export type AnalyticsNarrativeInput = {
   totalRfqs: number;
   procurementHealth: string;
@@ -6,7 +8,7 @@ export type AnalyticsNarrativeInput = {
   dominantSourcing: string;
   awardRate: number;
   supplierQuotes: number;
-  potentialSavings: number;
+  commercialInsights: CommercialInsights;
   constructionClassificationScore: number;
   avgQuotesPerRfq: number;
   sealedBidRfqs: number;
@@ -52,7 +54,7 @@ export function buildAnalyticsNarrative({
   dominantSourcing,
   awardRate,
   supplierQuotes,
-  potentialSavings,
+  commercialInsights,
   constructionClassificationScore,
   avgQuotesPerRfq,
   sealedBidRfqs,
@@ -76,13 +78,23 @@ export function buildAnalyticsNarrative({
     ? Math.max(0, avgQuotesPerRfq)
     : 0;
 
-  const normalizedPotentialSavings =
-    normalizeAmount(potentialSavings);
+  const normalizedCommercialOpportunity = normalizeAmount(
+    commercialInsights.estimatedOpportunity ?? 0,
+  );
+
+  const commercialSummary =
+    commercialInsights.state === "available"
+      ? `Commercial evidence identifies ${normalizedCommercialOpportunity.toLocaleString()} dollars in estimated within-RFQ quotation opportunity across ${commercialInsights.comparableRfqCount} comparable RFQ${commercialInsights.comparableRfqCount === 1 ? "" : "s"}.`
+      : commercialInsights.state === "access-restricted"
+        ? "Commercial opportunity evidence is access restricted for the current workspace membership."
+        : commercialInsights.state === "policy-locked"
+          ? "Commercial pricing remains policy locked under the current RFQ sourcing and deadline controls."
+          : "Commercial opportunity is Insufficient Data because comparable within-RFQ quotation evidence is not yet available.";
 
   const executiveSummary =
     normalizedTotalRfqs === 0
       ? "No RFQ activity has been created yet. Publish the first construction procurement opportunity to activate portfolio intelligence."
-      : `${procurementHealth} procurement health. ${competitionIndex}. Dominant RFQ scope is ${dominantScope}, dominant sourcing method is ${dominantSourcing}, award conversion is ${normalizedAwardRate}%, with ${normalizedSupplierQuotes} supplier quotes and ${normalizedPotentialSavings.toLocaleString()} dollars in estimated savings opportunity.`;
+      : `${procurementHealth} procurement health. ${competitionIndex}. Dominant RFQ scope is ${dominantScope}, dominant sourcing method is ${dominantSourcing}, quotation award rate is ${normalizedAwardRate}%, with ${normalizedSupplierQuotes} supplier quotes. ${commercialSummary}`;
 
   const strategicRecommendations: string[] = [];
 
@@ -122,15 +134,33 @@ export function buildAnalyticsNarrative({
     );
   }
 
-  if (normalizedPotentialSavings > 10_000) {
+  if (
+    commercialInsights.state === "available" &&
+    normalizedCommercialOpportunity > 10_000
+  ) {
     strategicRecommendations.push(
-      "Validate the estimated savings opportunity against scope alignment, commercial assumptions, and supplier suitability.",
+      "Validate the estimated within-RFQ quotation opportunity against scope alignment, commercial assumptions, and supplier suitability before financial treatment.",
+    );
+  } else if (commercialInsights.state === "policy-locked") {
+    strategicRecommendations.push(
+      "Wait for the applicable RFQ commercial unlock before interpreting supplier pricing.",
+    );
+  } else if (commercialInsights.state === "access-restricted") {
+    strategicRecommendations.push(
+      "Use an authorized owner, administrator, or buyer context when commercial analytics access is required.",
+    );
+  } else if (
+    commercialInsights.state === "insufficient-data" &&
+    normalizedTotalRfqs > 0
+  ) {
+    strategicRecommendations.push(
+      "Increase comparable quotation coverage within individual RFQs before interpreting commercial opportunity.",
     );
   }
 
   if (normalizedAwardRate < 30) {
     strategicRecommendations.push(
-      "Review RFQ quality, supplier targeting, and award workflow completion to improve conversion.",
+      "Review RFQ quality, supplier targeting, and quotation decision follow-through to improve award execution.",
     );
   }
 

@@ -33,12 +33,13 @@ function quote(
   id: string,
   rfqId: string,
   decision: string | null,
+  amount = 100,
 ): AnalyticsQuote {
   return {
     id,
     rfq_id: rfqId,
     company_id: `supplier-${id}`,
-    amount: 100,
+    amount,
     decision,
     created_at: "2026-01-15T00:00:00.000Z",
   };
@@ -135,6 +136,20 @@ describe("portfolio procurement insight denominators", () => {
     expect(result.procurementInsights.quotationAwardRate.percentage).toBeNull();
     expect(result.procurementInsights.averageQuotationsPerRfq.value).toBeNull();
     expect(result.procurementInsights.averageActiveRfqAge.value).toBeNull();
+  });
+
+  it("calculates portfolio opportunity only from comparable quotations within the same RFQ", () => {
+    const result = buildPortfolioIntelligence({
+      rfqList: [rfq("rfq-1"), rfq("rfq-2")],
+      quoteList: [
+        quote("quote-1", "rfq-1", null, 100),
+        quote("quote-2", "rfq-1", null, 200),
+        quote("quote-3", "rfq-2", null, 1000),
+      ],
+      asOf: new Date("2026-01-31T00:00:00.000Z"),
+    });
+
+    expect(result.potentialSavings).toBe(50);
   });
 
   it("does not infer completed procurement cycle duration from mutable RFQ status", () => {

@@ -10,7 +10,8 @@ export type BoardroomSnapshotProps = {
   executiveBrief: ExecutiveBrief;
   executiveNarrative: ExecutiveNarrative;
   quotedPortfolioValue: number;
-  estimatedSavingsOpportunity: number;
+  commercialOpportunityValue: string;
+  commercialOpportunityContext: string;
   enterpriseProcurementScore: number;
   constructionClassificationScore: number;
 };
@@ -37,7 +38,8 @@ export function BoardroomSnapshot({
   executiveBrief,
   executiveNarrative,
   quotedPortfolioValue,
-  estimatedSavingsOpportunity,
+  commercialOpportunityValue,
+  commercialOpportunityContext,
   enterpriseProcurementScore,
   constructionClassificationScore,
 }: BoardroomSnapshotProps) {
@@ -150,7 +152,8 @@ export function BoardroomSnapshot({
 
           <PortfolioEvidenceSummary
             quotedPortfolioValue={quotedPortfolioValue}
-            estimatedSavingsOpportunity={estimatedSavingsOpportunity}
+            commercialOpportunityValue={commercialOpportunityValue}
+            commercialOpportunityContext={commercialOpportunityContext}
             enterpriseProcurementScore={enterpriseProcurementScore}
             constructionClassificationScore={
               constructionClassificationScore
@@ -188,12 +191,14 @@ export function BoardroomSnapshot({
 
 function PortfolioEvidenceSummary({
   quotedPortfolioValue,
-  estimatedSavingsOpportunity,
+  commercialOpportunityValue,
+  commercialOpportunityContext,
   enterpriseProcurementScore,
   constructionClassificationScore,
 }: {
   quotedPortfolioValue: number;
-  estimatedSavingsOpportunity: number;
+  commercialOpportunityValue: string;
+  commercialOpportunityContext: string;
   enterpriseProcurementScore: number;
   constructionClassificationScore: number;
 }) {
@@ -232,10 +237,10 @@ function PortfolioEvidenceSummary({
         />
 
         <ExecutiveMetricCard
-          label="Estimated Savings Opportunity"
-          value={`$${estimatedSavingsOpportunity.toLocaleString()}`}
-          insight="Estimated difference between the current average and lowest recorded quotation."
-          impact="Estimated — not realized"
+          label="Observed Quotation Opportunity"
+          value={commercialOpportunityValue}
+          insight={commercialOpportunityContext}
+          impact="Visible within-RFQ quotation evidence"
           tone="success"
         />
 

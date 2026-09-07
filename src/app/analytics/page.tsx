@@ -14,6 +14,7 @@ import { ExecutiveDashboard } from "@/components/analytics/sections/executive-da
 import { BoardDashboard } from "@/components/analytics/sections/board-dashboard";
 import { ProcurementDashboard } from "@/components/analytics/sections/procurement-dashboard";
 import { buildAnalyticsNarrative } from "@/lib/analytics/narrative/analytics-narrative";
+import { buildCommercialInsights } from "@/lib/analytics/commercial/commercial-insights";
 import { buildPortfolioIntelligence } from "@/lib/analytics/portfolio/portfolio-intelligence";
 import { buildExecutiveBrief } from "@/lib/analytics/executive/executive-brief";
 import { buildExecutiveHistoricalPatterns } from "@/lib/analytics/executive/executive-trend";
@@ -63,6 +64,7 @@ type ExecutiveAlert = {
 export default async function AnalyticsPage() {
   const {
     companyId,
+    commercialAccess,
     rfqList,
     quoteList,
     companyList,
@@ -105,8 +107,6 @@ export default async function AnalyticsPage() {
     procurementVolume,
     awardedVolume,
     averageQuote,
-
-    potentialSavings,
     awardRate,
     avgQuotesPerRfq,
     budgetTotal,
@@ -119,6 +119,43 @@ export default async function AnalyticsPage() {
     quoteList,
     asOf: analyticsAsOf,
   });
+
+  const commercialInsights = buildCommercialInsights({
+    rfqList,
+    quoteList,
+    canViewIssuerCommercialAnalytics:
+      commercialAccess.canViewIssuerCommercialAnalytics,
+    asOf: analyticsAsOf,
+  });
+
+  const observedCommercialOpportunity =
+    commercialInsights.state === "available"
+      ? commercialInsights.estimatedOpportunity ?? 0
+      : 0;
+
+  const hasCommercialOpportunity =
+    commercialInsights.state === "available" &&
+    observedCommercialOpportunity > 0;
+
+  const commercialOpportunityDisplay =
+    commercialInsights.state === "available"
+      ? `$${observedCommercialOpportunity.toLocaleString()}`
+      : commercialInsights.state === "access-restricted"
+        ? "Access Restricted"
+        : commercialInsights.state === "policy-locked"
+          ? "Policy Locked"
+          : "Insufficient Data";
+
+  const commercialOpportunityAction =
+    commercialInsights.state === "available"
+      ? hasCommercialOpportunity
+        ? `Review the current estimated within-RFQ quotation opportunity of ${observedCommercialOpportunity.toLocaleString()} dollars before financial treatment.`
+        : "Comparable visible quotations currently show no positive within-RFQ opportunity."
+      : commercialInsights.state === "access-restricted"
+        ? "Commercial opportunity evidence is access restricted for the current workspace membership."
+        : commercialInsights.state === "policy-locked"
+          ? "Commercial pricing remains policy locked until the applicable RFQ controls unlock it."
+          : "Increase comparable quotation coverage within individual RFQs before interpreting commercial opportunity.";
 
   const historicalPatterns = buildExecutiveHistoricalPatterns({
     rfqs: rfqList,
@@ -165,13 +202,18 @@ export default async function AnalyticsPage() {
   const supplierActivityScore = Math.min(100, supplierQuotes * 12);
   const competitionScore = Math.min(100, avgQuotesPerRfq * 25);
   const awardScore = Math.min(100, Math.round(awardRate * 1.5));
-  const savingsScore = potentialSavings > 0 ? 85 : 55;
+  const commercialOpportunityEvidenceScore =
+    commercialInsights.state === "available"
+      ? observedCommercialOpportunity > 0
+        ? 85
+        : 55
+      : 55;
 
   const procurementHealthScore = Math.round(
     supplierActivityScore * 0.25 +
       competitionScore * 0.25 +
       awardScore * 0.25 +
-      savingsScore * 0.25,
+      commercialOpportunityEvidenceScore * 0.25,
   );
 
   const procurementHealth = getHealthLabel(procurementHealthScore);
@@ -206,7 +248,7 @@ export default async function AnalyticsPage() {
     dominantSourcing,
     awardRate,
     supplierQuotes,
-    potentialSavings,
+    commercialInsights,
     constructionClassificationScore,
     avgQuotesPerRfq,
     sealedBidRfqs,
@@ -383,7 +425,7 @@ export default async function AnalyticsPage() {
   const procurementOpportunityScore = Math.min(
     100,
     Math.round(
-      potentialSavings / 1000 +
+      observedCommercialOpportunity / 1000 +
         avgQuotesPerRfq * 15 +
         awardRate * 0.3 +
         budgetUtilization * 0.2 +
@@ -507,14 +549,16 @@ remains ${ceoRiskLevel.toLowerCase()}.
 
   const bestProcurementCategory = topCategory;
 
-  const savingsOpportunityLevel =
-    potentialSavings > 50000
-      ? "Major"
-      : potentialSavings > 10000
-        ? "Strong"
-        : potentialSavings > 0
-          ? "Moderate"
-          : "Low";
+  const commercialOpportunityLevel =
+    commercialInsights.state !== "available"
+      ? "Evidence Limited"
+      : observedCommercialOpportunity > 50000
+        ? "Major"
+        : observedCommercialOpportunity > 10000
+          ? "Strong"
+          : observedCommercialOpportunity > 0
+            ? "Moderate"
+            : "Low";
 
   const executiveCommandRecommendation =
     boardHealthIndex >= 85 &&
@@ -560,12 +604,14 @@ remains ${ceoRiskLevel.toLowerCase()}.
     });
   }
 
-  if (procurementOpportunityScore >= 80) {
+  if (
+    hasCommercialOpportunity &&
+    observedCommercialOpportunity >= 50_000
+  ) {
     executiveAlerts.push({
       level: "opportunity",
-      title: "Major Savings Opportunity",
-      message:
-        "Category and RFQ mix analysis indicates significant procurement savings potential.",
+      title: "Material Commercial Opportunity",
+      message: `Visible within-RFQ quotation evidence identifies ${observedCommercialOpportunity.toLocaleString()} dollars in estimated commercial opportunity across ${commercialInsights.comparableRfqCount} comparable RFQs.`,
     });
   }
 
@@ -598,15 +644,12 @@ remains ${ceoRiskLevel.toLowerCase()}.
       role: "CEO Action",
       action:
         procurementOpportunityScore >= 80
-          ? `Prioritize ${bestProcurementCategory} and ${dominantScope} procurement as strategic growth and savings areas.`
+          ? `Prioritize ${bestProcurementCategory} and ${dominantScope} procurement as strategic growth and commercial-leverage areas.`
           : "Maintain procurement discipline while scaling executive visibility and classified RFQ activity.",
     },
     {
       role: "CFO Action",
-      action:
-        potentialSavings > 0
-          ? `Review the current estimated savings opportunity of ${potentialSavings.toLocaleString()} dollars before financial validation.`
-          : "Monitor spend performance and improve budget-to-award visibility.",
+      action: commercialOpportunityAction,
     },
     {
       role: "Procurement Director",
@@ -742,7 +785,7 @@ remains ${ceoRiskLevel.toLowerCase()}.
     procurementRiskIndex >= 60
       ? "Board attention should focus on supplier dependency, concentration risk, and procurement resilience."
       : procurementOpportunityScore >= 80
-        ? "Board attention should focus on growth opportunities, savings capture, and supplier expansion."
+        ? "Board attention should focus on growth opportunities, validated commercial evidence, and supplier expansion."
         : "Board attention should focus on maintaining procurement performance and strengthening executive readiness.";
 
   const boardPresentationMetrics = [
@@ -924,7 +967,9 @@ remains ${ceoRiskLevel.toLowerCase()}.
 
   const topQuarterOpportunities = [
     `${bestProcurementCategory} category expansion`,
-    `${savingsOpportunityLevel} savings capture`,
+    commercialInsights.state === "available"
+      ? `${commercialOpportunityLevel} observed quotation opportunity`
+      : `Commercial evidence — ${commercialOpportunityDisplay}`,
     `${dominantScope} RFQ mix growth`,
     "Supplier network growth",
   ];
@@ -948,22 +993,31 @@ remains ${ceoRiskLevel.toLowerCase()}.
       summary: `Expand procurement activity within ${bestProcurementCategory} to increase sourcing coverage and operational leverage.`,
     },
     {
-      title: "Savings Capture",
+      title: "Quotation Opportunity",
       priority:
-        potentialSavings >= 10000
+        commercialInsights.state === "available" &&
+        observedCommercialOpportunity >= 10000
           ? "Immediate"
-          : potentialSavings >= 5000
+          : commercialInsights.state === "available" &&
+              observedCommercialOpportunity >= 5000
             ? "90 Days"
             : "Strategic",
       impact:
-        potentialSavings >= 10000
+        commercialInsights.state === "available" &&
+        observedCommercialOpportunity >= 10000
           ? "High"
-          : potentialSavings >= 5000
+          : commercialInsights.state === "available" &&
+              observedCommercialOpportunity >= 5000
             ? "Medium"
-            : "Long-Term",
-      valueLabel: "Estimated Savings Opportunity",
-      value: `$${potentialSavings.toLocaleString()}`,
-      summary: `Current procurement intelligence indicates a ${savingsOpportunityLevel.toLowerCase()} savings opportunity.`,
+            : commercialInsights.state === "available"
+              ? "Long-Term"
+              : "Medium",
+      valueLabel: "Observed Quotation Opportunity",
+      value: commercialOpportunityDisplay,
+      summary:
+        commercialInsights.state === "available"
+          ? `Visible within-RFQ quotation evidence indicates a ${commercialOpportunityLevel.toLowerCase()} estimated opportunity.`
+          : commercialInsights.limitation,
     },
     {
       title: "Supplier Network Growth",
@@ -1025,7 +1079,7 @@ remains ${ceoRiskLevel.toLowerCase()}.
     procurementRiskIndex >= 60
       ? "Reduce supplier dependency and review award concentration before scaling procurement volume."
       : procurementOpportunityScore >= 80
-        ? "Prioritize high-opportunity procurement categories and expand supplier participation to capture savings."
+        ? "Prioritize high-opportunity procurement categories and expand supplier participation; validate commercial evidence before value-capture decisions."
         : enterpriseProcurementScore >= 75
           ? "Continue scaling competitive RFQs while maintaining supplier performance, RFQ structure, and decision evidence readiness."
           : "Improve RFQ participation, supplier coverage, classification maturity, and procurement data quality to strengthen executive confidence.";
@@ -1054,7 +1108,7 @@ remains ${ceoRiskLevel.toLowerCase()}.
     Math.round(
       budgetUtilization * 0.3 +
         procurementOpportunityScore * 0.4 +
-        savingsScore * 0.3,
+        commercialOpportunityEvidenceScore * 0.3,
     ),
   );
 
@@ -1123,9 +1177,10 @@ remains ${ceoRiskLevel.toLowerCase()}.
     procurementRiskIndex >= 50
       ? "Review supplier concentration risk."
       : "Maintain supplier diversification strategy.",
-    potentialSavings > 10000
-      ? `Capture $${potentialSavings.toLocaleString()} savings opportunity.`
-      : "Monitor category savings performance.",
+    hasCommercialOpportunity &&
+    observedCommercialOpportunity > 10000
+      ? `Validate $${observedCommercialOpportunity.toLocaleString()} in observed within-RFQ quotation opportunity.`
+      : commercialOpportunityAction,
     constructionClassificationScore < 60
       ? "Improve construction RFQ classification maturity."
       : "Maintain RFQ classification discipline.",
@@ -1268,19 +1323,18 @@ remains ${ceoRiskLevel.toLowerCase()}.
             : "No major enterprise procurement risks detected.";
 
   const topOpportunity =
-    potentialSavings > 0
-      ? `${bestProcurementCategory} category contains ${potentialSavings.toLocaleString()} dollars in savings opportunity.`
-      : `${dominantScope} procurement mix can be expanded to uncover additional savings opportunities.`;
+    commercialInsights.state === "available"
+      ? hasCommercialOpportunity
+        ? `Current visible portfolio evidence contains ${observedCommercialOpportunity.toLocaleString()} dollars in estimated within-RFQ quotation opportunity across ${commercialInsights.comparableRfqCount} comparable RFQs.`
+        : "Comparable visible RFQ pricing currently shows no positive estimated within-RFQ quotation opportunity."
+      : commercialInsights.limitation;
 
   const ceoPriority =
     procurementOpportunityScore >= 70
       ? "Scale supplier network, category expansion, and RFQ intelligence maturity."
       : "Improve procurement growth initiatives.";
 
-  const cfoPriority =
-    potentialSavings > 0
-      ? `Review the current estimated savings opportunity of ${potentialSavings.toLocaleString()} dollars and validate it against finance-controlled evidence.`
-      : "Increase budget visibility and spend optimization.";
+  const cfoPriority = commercialOpportunityAction;
 
   const procurementPriority =
     avgQuotesPerRfq < 2
@@ -1305,7 +1359,14 @@ remains ${ceoRiskLevel.toLowerCase()}.
     { name: "Volume", value: procurementVolume },
     { name: "Awarded", value: awardedVolume },
     { name: "Avg Quote", value: averageQuote },
-    { name: "Savings", value: potentialSavings },
+    ...(commercialInsights.state === "available"
+      ? [
+          {
+            name: "Observed Opportunity",
+            value: observedCommercialOpportunity,
+          },
+        ]
+      : []),
   ];
 
   const rfqMixChartData = [
@@ -1496,9 +1557,10 @@ remains ${ceoRiskLevel.toLowerCase()}.
   const executiveBrief = buildExecutiveBrief({
     opportunity: {
       topCategory,
-      potentialSavings,
+      potentialSavings: observedCommercialOpportunity,
       avgQuotesPerRfq,
       supplierCount: supplierParticipationCount,
+      commercialEvidenceState: commercialInsights.state,
     },
     executiveRecommendation: executiveCommandRecommendation,
     decisionSupportReadinessScore: decisionSupportReadiness.score,
@@ -1527,7 +1589,7 @@ remains ${ceoRiskLevel.toLowerCase()}.
           companyName={reportCompanyName}
           generatedAt={reportGeneratedAt}
           procurementHealth={enterpriseProcurementScore}
-          opportunityValue={`$${potentialSavings.toLocaleString()}`}
+          opportunityValue={commercialOpportunityDisplay}
           riskLevel={
             procurementRiskIndex >= 70
               ? "High"
@@ -1560,7 +1622,7 @@ remains ${ceoRiskLevel.toLowerCase()}.
           boardReadiness={boardReadinessScore}
           decisionReadiness={decisionSupportReadiness.score}
           riskIndex={procurementRiskIndex}
-          opportunityValue={`$${potentialSavings.toLocaleString()}`}
+          opportunityValue={commercialOpportunityDisplay}
           procurementVolume={`$${procurementVolume.toLocaleString()}`}
           awardedVolume={`$${awardedVolume.toLocaleString()}`}
           awardRate={`${awardRate}%`}
@@ -1730,7 +1792,8 @@ remains ${ceoRiskLevel.toLowerCase()}.
           <BoardroomSnapshot
             executiveBrief={executiveBrief}
             quotedPortfolioValue={procurementVolume}
-            estimatedSavingsOpportunity={potentialSavings}
+            commercialOpportunityValue={commercialOpportunityDisplay}
+            commercialOpportunityContext={commercialInsights.limitation}
             enterpriseProcurementScore={enterpriseProcurementScore}
             constructionClassificationScore={constructionClassificationScore}
             executiveNarrative={executiveNarrative}
@@ -2282,6 +2345,7 @@ remains ${ceoRiskLevel.toLowerCase()}.
             supplierDiversificationScore={supplierDiversificationScore}
             supplierParticipationCount={supplierParticipationCount}
             awardHistoryCoverage={awardHistoryCoverage}
+            commercialInsights={commercialInsights}
             procurementInsights={procurementInsights}
             portfolioStatus={portfolioStatus}
             portfolioRecommendations={portfolioRecommendations}

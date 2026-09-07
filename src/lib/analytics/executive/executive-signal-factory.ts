@@ -124,7 +124,7 @@ export function createSavingsOpportunitySignal(
   return createExecutiveSignal({
     id: "estimated-savings-opportunity",
     category: "commercial",
-    label: "Estimated savings opportunity",
+    label: "Observed quotation opportunity",
     value: `$${estimatedSavings.toLocaleString()}`,
     status:
       estimatedSavings >= 50_000
@@ -136,6 +136,6 @@ export function createSavingsOpportunitySignal(
             : "limited",
     importance,
     description:
-      "Estimated difference between the current average and lowest recorded quotation.",
+      "Estimated sum of within-RFQ differences between average and lowest positive visible quotations. Not realized savings.",
   });
 }
