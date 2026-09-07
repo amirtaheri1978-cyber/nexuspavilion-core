@@ -1658,7 +1658,7 @@ remains ${ceoRiskLevel.toLowerCase()}.
             Back to Dashboard
           </Link>
 
-          <p className="hidden text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500 sm:block">
+          <p className="np-type-meta hidden sm:block">
             Boardroom intelligence workspace
           </p>
         </div>
@@ -1677,20 +1677,20 @@ remains ${ceoRiskLevel.toLowerCase()}.
             <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(520px,0.82fr)] xl:items-center">
               <div className="min-w-0 max-w-4xl">
                 <div className="flex flex-wrap items-center gap-3">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-[#E4C768]">
+                  <p className="np-type-eyebrow">
                     Nexus Pavilion Executive Intelligence
                   </p>
                   <span className="hidden h-1 w-1 rounded-full bg-white/20 sm:block" />
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                  <p className="np-type-meta">
                     Current operating posture
                   </p>
                 </div>
 
-                <h1 className="mt-2.5 max-w-4xl text-2xl font-semibold leading-tight tracking-tight text-white sm:text-3xl lg:text-[2.25rem]">
+                <h1 className="np-type-h1 mt-2.5 max-w-4xl">
                   Executive Procurement Operating System
                 </h1>
 
-                <p className="mt-2.5 max-w-3xl text-sm font-medium leading-6 text-slate-400 sm:text-[15px]">
+                <p className="np-type-body mt-2.5 max-w-3xl">
                   A decision-first command environment for procurement
                   performance, risk exposure, supplier resilience, opportunity
                   capture, and board-level readiness.
@@ -1702,10 +1702,10 @@ remains ${ceoRiskLevel.toLowerCase()}.
                 className="min-w-0"
               >
                 <div className="mb-2.5 flex items-center justify-between gap-4">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                  <p className="np-type-meta">
                     Operating posture
                   </p>
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#9BE8F8]">
+                  <p className="np-type-meta text-[#9BE8F8]!">
                     Validated intelligence
                   </p>
                 </div>
@@ -1728,10 +1728,10 @@ remains ${ceoRiskLevel.toLowerCase()}.
                         index > 0 ? "sm:border-l sm:border-white/10" : ""
                       }`}
                     >
-                      <p className="truncate text-[9px] font-semibold uppercase tracking-[0.12em] text-slate-500">
+                      <p className="np-type-meta truncate">
                         {label}
                       </p>
-                      <p className="mt-1.5 text-lg font-semibold tabular-nums tracking-tight text-white">
+                      <p className="np-type-kpi mt-1.5 text-lg tabular-nums">
                         {value}
                       </p>
                     </div>
@@ -1756,7 +1756,7 @@ remains ${ceoRiskLevel.toLowerCase()}.
                 <a
                   key={href}
                   href={href}
-                  className="inline-flex min-h-8 items-center rounded-lg border border-transparent px-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400 transition-colors hover:border-white/10 hover:bg-white/[0.045] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C8A646]/70"
+                  className="np-type-meta inline-flex min-h-8 items-center rounded-lg border border-transparent px-3 text-slate-400 transition-colors hover:border-white/10 hover:bg-white/[0.045] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C8A646]/70"
                 >
                   {label}
                 </a>
@@ -1796,30 +1796,30 @@ remains ${ceoRiskLevel.toLowerCase()}.
           <div className="border-b border-white/10 px-5 py-5 sm:px-6 lg:px-7">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
               <div>
-                <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#E4C768]">
+                <p className="np-type-eyebrow">
                   Portfolio Intelligence
                 </p>
 
-                <h2 className="mt-2 text-2xl font-semibold tracking-tight text-white sm:text-[1.75rem]">
+                <h2 className="np-type-h2 mt-2">
                   Procurement Structure & Classification
                 </h2>
 
-                <p className="mt-2.5 max-w-3xl text-sm font-medium leading-6 text-slate-400">
+                <p className="np-type-body mt-2.5 max-w-3xl">
                   {executiveCommandRecommendation}
                 </p>
               </div>
 
               <div className="flex w-fit items-center gap-4 rounded-2xl border border-white/10 bg-white/[0.035] px-4 py-3">
                 <div>
-                  <p className="text-[9px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+                  <p className="np-type-meta">
                     Classification maturity
                   </p>
-                  <p className="mt-1 text-xl font-semibold tabular-nums text-white">
+                  <p className="np-type-kpi mt-1 text-xl tabular-nums">
                     {constructionClassificationScore}/100
                   </p>
                 </div>
                 <span className="h-9 w-px bg-white/10" />
-                <p className="max-w-40 text-xs font-medium leading-5 text-slate-300">
+                <p className="np-type-meta max-w-40">
                   {procurementMixStatus}
                 </p>
               </div>
@@ -1829,15 +1829,15 @@ remains ${ceoRiskLevel.toLowerCase()}.
           <div className="p-5 sm:p-6 lg:p-7">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
               <div className="max-w-4xl">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                <p className="np-type-meta">
                   RFQ classification profile
                 </p>
 
-                <h3 className="mt-2 text-xl font-semibold text-white sm:text-2xl">
+                <h3 className="np-type-h3 mt-2">
                   Construction Procurement Mix
                 </h3>
 
-                <p className="mt-2.5 text-sm font-medium leading-6 text-slate-400">
+                <p className="np-type-body mt-2.5">
                   A consolidated view of procurement scope, sourcing method, and
                   contract structure used to strengthen supplier matching, quote
                   comparison, risk scoring, and executive interpretation.
@@ -1846,15 +1846,15 @@ remains ${ceoRiskLevel.toLowerCase()}.
 
               <div className="inline-flex w-fit items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.035] px-4 py-3">
                 <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                  <p className="np-type-meta">
                     Classification Maturity
                   </p>
-                  <p className="mt-1 text-xl font-semibold text-white">
+                  <p className="np-type-kpi mt-1 text-xl tabular-nums">
                     {constructionClassificationScore}/100
                   </p>
                 </div>
                 <span className="h-9 w-px bg-white/10" />
-                <p className="max-w-36 text-xs font-medium leading-5 text-slate-300">
+                <p className="np-type-meta max-w-36">
                   {procurementMixStatus}
                 </p>
               </div>
@@ -1864,14 +1864,14 @@ remains ${ceoRiskLevel.toLowerCase()}.
               <div className="rounded-3xl border border-white/10 bg-black/15 p-4 sm:p-5">
                 <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                   <div>
-                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
+                    <p className="np-type-meta">
                       Procurement Scope Distribution
                     </p>
-                    <p className="mt-1 text-sm font-bold text-slate-300">
+                    <p className="np-type-body mt-1">
                       Dominant scope: {dominantScope}
                     </p>
                   </div>
-                  <span className="rounded-full border border-white/10 bg-white/[0.045] px-3 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-slate-300">
+                  <span className="np-type-meta rounded-full border border-white/10 bg-white/[0.045] px-3 py-1">
                     {totalRfqs} classified RFQs
                   </span>
                 </div>
@@ -1889,10 +1889,10 @@ remains ${ceoRiskLevel.toLowerCase()}.
                       key={label}
                       className="rounded-2xl border border-white/10 bg-white/[0.035] px-4 py-3"
                     >
-                      <p className="text-[10px] font-black uppercase tracking-[0.16em] text-slate-500">
+                      <p className="np-type-meta">
                         {label}
                       </p>
-                      <p className="mt-2 text-2xl font-black text-white">
+                      <p className="np-type-kpi mt-2 text-2xl tabular-nums">
                         {value}
                       </p>
                     </div>
@@ -1904,14 +1904,14 @@ remains ${ceoRiskLevel.toLowerCase()}.
                 <div className="rounded-3xl border border-white/10 bg-white/[0.045] p-5 sm:p-6">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
-                      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
+                      <p className="np-type-meta">
                         Sourcing Profile
                       </p>
-                      <h4 className="mt-2 text-xl font-black text-white">
+                      <h4 className="np-type-h3 mt-2">
                         {dominantSourcing} Led
                       </h4>
                     </div>
-                    <span className="rounded-full border border-[#2CC4E8]/20 bg-[#2CC4E8]/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-[#9BE8F8]">
+                    <span className="np-type-meta rounded-full border border-[#2CC4E8]/20 bg-[#2CC4E8]/10 px-3 py-1 text-[#9BE8F8]!">
                       {openMarketRfqs + invitedRfqs + sealedBidRfqs} workflows
                     </span>
                   </div>
@@ -1926,34 +1926,34 @@ remains ${ceoRiskLevel.toLowerCase()}.
                         key={label}
                         className="flex items-center justify-between rounded-2xl border border-white/10 bg-[#061426]/70 px-4 py-3"
                       >
-                        <p className="text-sm font-bold text-slate-300">
+                        <p className="np-type-meta">
                           {label}
                         </p>
-                        <p className="text-lg font-black text-white">{value}</p>
+                        <p className="np-type-kpi text-lg tabular-nums">{value}</p>
                       </div>
                     ))}
                   </div>
                 </div>
 
                 <div className="rounded-3xl border border-white/10 bg-white/[0.045] p-5 sm:p-6">
-                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
+                  <p className="np-type-meta">
                     Contract Structure
                   </p>
 
                   <div className="mt-4 grid grid-cols-2 gap-3">
                     <div className="rounded-2xl border border-white/10 bg-[#061426]/70 p-4">
-                      <p className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-500">
+                      <p className="np-type-meta">
                         Project Specific
                       </p>
-                      <p className="mt-2 text-2xl font-black text-white">
+                      <p className="np-type-kpi mt-2 text-2xl tabular-nums">
                         {projectSpecificRfqs}
                       </p>
                     </div>
                     <div className="rounded-2xl border border-white/10 bg-[#061426]/70 p-4">
-                      <p className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-500">
+                      <p className="np-type-meta">
                         Framework
                       </p>
-                      <p className="mt-2 text-2xl font-black text-white">
+                      <p className="np-type-kpi mt-2 text-2xl tabular-nums">
                         {frameworkRfqs}
                       </p>
                     </div>
@@ -1961,10 +1961,10 @@ remains ${ceoRiskLevel.toLowerCase()}.
                 </div>
 
                 <div className="rounded-2xl border border-amber-300/15 bg-amber-400/[0.04] p-4 sm:p-5">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-amber-300">
+                  <p className="np-type-eyebrow text-amber-300!">
                     Executive Interpretation
                   </p>
-                  <p className="mt-2.5 text-sm font-medium leading-6 text-slate-300">
+                  <p className="np-type-body mt-2.5">
                     The portfolio is currently led by{" "}
                     {dominantScope.toLowerCase()} procurement and{" "}
                     {dominantSourcing.toLowerCase()} sourcing. Classification
@@ -2001,14 +2001,14 @@ remains ${ceoRiskLevel.toLowerCase()}.
           />
         </section>
         <section className="mt-6 rounded-3xl border border-white/10 bg-[#061426]/82 p-5 text-white sm:p-6 lg:p-7">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#E4C768]">
+          <p className="np-type-eyebrow">
             Decision Intelligence
           </p>
 
-          <h2 className="mt-2 text-2xl font-semibold tracking-tight text-white">
+          <h2 className="np-type-h2 mt-2">
             Executive Decision Support Readiness
           </h2>
-          <p className="mt-2.5 max-w-4xl text-sm font-medium leading-6 text-slate-400">
+          <p className="np-type-body mt-2.5 max-w-4xl">
             Nexus Pavilion evaluates whether procurement intelligence is
             reliable enough to support executive interpretation, board
             reporting, and strategic decision guidance.
@@ -2035,7 +2035,7 @@ remains ${ceoRiskLevel.toLowerCase()}.
 
           <div className="mt-5 grid gap-5 lg:grid-cols-[0.9fr_1.1fr]">
             <div className="rounded-2xl border border-white/10 bg-white/[0.035] p-5">
-              <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">
+              <p className="np-type-meta">
                 Readiness Drivers
               </p>
 
@@ -2045,7 +2045,7 @@ remains ${ceoRiskLevel.toLowerCase()}.
                     key={driver}
                     className="rounded-2xl border border-white/10 bg-[#061426]/70 p-4"
                   >
-                    <p className="text-sm font-semibold text-slate-300">
+                    <p className="np-type-body">
                       {driver}
                     </p>
                   </div>
@@ -2054,22 +2054,22 @@ remains ${ceoRiskLevel.toLowerCase()}.
             </div>
 
             <div className="rounded-2xl border border-[#2CC4E8]/15 bg-[#2CC4E8]/[0.045] p-5 text-white">
-              <p className="text-xs font-black uppercase tracking-[0.25em] text-[#C8A646]">
+              <p className="np-type-eyebrow">
                 Executive Guidance
               </p>
 
-              <h3 className="mt-4 text-2xl font-black">
+              <h3 className="np-type-h3 mt-4">
                 {decisionSupportReadiness.label}
               </h3>
 
-              <p className="mt-4 text-sm font-semibold leading-7 text-slate-300">
+              <p className="np-type-body mt-4">
                 {decisionSupportReadiness.guidance}
               </p>
             </div>
           </div>
 
           <div className="mt-5 rounded-2xl border border-amber-300/15 bg-amber-400/[0.04] p-5">
-            <p className="text-xs font-black uppercase tracking-[0.2em] text-amber-300">
+            <p className="np-type-eyebrow text-amber-300!">
               Readiness Constraints
             </p>
 
@@ -2079,7 +2079,7 @@ remains ${ceoRiskLevel.toLowerCase()}.
                   key={risk}
                   className="rounded-2xl border border-white/10 bg-[#061426]/70 p-4"
                 >
-                  <p className="text-sm font-semibold text-slate-300">{risk}</p>
+                  <p className="np-type-body">{risk}</p>
                 </div>
               ))}
             </div>
@@ -2147,42 +2147,42 @@ remains ${ceoRiskLevel.toLowerCase()}.
           />
         </section>
         <section className="mt-8 rounded-3xl border border-white/10 bg-slate-950 p-5 text-white shadow-executive sm:p-7 lg:p-8">
-          <p className="text-xs font-black uppercase tracking-[0.25em] text-[#C8A646]">
+          <p className="np-type-eyebrow">
             Board Historical Pattern Briefing
           </p>
 
-          <h2 className="mt-3 text-4xl font-black">
+          <h2 className="np-type-h2 mt-3">
             Executive Historical Pattern Narrative
           </h2>
 
           <div className="mt-8 grid gap-4 md:grid-cols-2">
             <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
-              <p className="text-xs font-black uppercase tracking-[0.2em] text-[#C8A646]">
+              <p className="np-type-eyebrow">
                 Board Priority
               </p>
 
-              <h3 className="mt-3 text-2xl font-black">
+              <h3 className="np-type-h3 mt-3">
                 {boardForecastPriority}
               </h3>
             </div>
 
             <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
-              <p className="text-xs font-black uppercase tracking-[0.2em] text-[#C8A646]">
+              <p className="np-type-eyebrow">
                 Decision Evidence Readiness
               </p>
 
-              <h3 className="mt-3 text-2xl font-black">
+              <h3 className="np-type-h3 mt-3">
                 {forecastConfidenceLevel}
               </h3>
             </div>
           </div>
 
           <div className="mt-8 rounded-3xl border border-white/10 bg-white/5 p-6">
-            <p className="text-xs font-black uppercase tracking-[0.25em] text-[#C8A646]">
+            <p className="np-type-eyebrow">
               Board Narrative
             </p>
 
-            <p className="mt-4 text-sm font-semibold leading-7 text-slate-300">
+            <p className="np-type-body mt-4">
               {boardForecastBriefing}
             </p>
           </div>
@@ -2220,23 +2220,23 @@ remains ${ceoRiskLevel.toLowerCase()}.
         </section>
 
         <section className="mt-8 rounded-3xl border border-white/10 bg-[#061426]/88 p-5 text-white shadow-executive sm:p-7 lg:p-8">
-          <p className="text-xs font-black uppercase tracking-[0.25em] text-[#C8A646]">
+          <p className="np-type-eyebrow">
             Executive Procurement Intelligence
           </p>
 
           <div className="mt-4 grid gap-6 lg:grid-cols-[1.3fr_0.7fr]">
             <div>
-              <h2 className="text-3xl font-black text-white">
+              <h2 className="np-type-h2">
                 Procurement Health Summary
               </h2>
 
-              <p className="mt-3 max-w-4xl text-sm leading-7 text-slate-400">
+              <p className="np-type-body mt-3 max-w-4xl">
                 {executiveSummary}
               </p>
             </div>
 
             <div className="rounded-3xl border border-white/10 bg-white/[0.045] p-6">
-              <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">
+              <p className="np-type-meta">
                 Evidence Signals
               </p>
 
@@ -2336,15 +2336,15 @@ remains ${ceoRiskLevel.toLowerCase()}.
         </section>
 
         <section className="mt-8 rounded-3xl border border-white/10 bg-[#061426]/88 p-5 text-white shadow-executive sm:p-7 lg:p-8">
-          <p className="text-xs font-black uppercase tracking-[0.25em] text-[#C8A646]">
+          <p className="np-type-eyebrow">
             Executive Internal Performance
           </p>
 
-          <h2 className="mt-3 text-3xl font-black text-white">
+          <h2 className="np-type-h2 mt-3">
             Internal Procurement Performance
           </h2>
 
-          <p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-400">
+          <p className="np-type-body mt-4 max-w-4xl">
             Assess procurement maturity, supplier network strength, risk
             exposure, internal operating position, and board readiness using
             validated Nexus Pavilion operating data. This is not an external
@@ -2372,41 +2372,41 @@ remains ${ceoRiskLevel.toLowerCase()}.
           </div>
 
           <div className="mt-8 rounded-3xl border border-white/10 bg-slate-950 p-6">
-            <p className="text-xs font-black uppercase tracking-[0.25em] text-[#C8A646]">
+            <p className="np-type-eyebrow">
               Internal Performance Interpretation
             </p>
 
-            <h3 className="mt-4 text-2xl font-black text-white">
+            <h3 className="np-type-h3 mt-4">
               {internalPerformancePosition}
             </h3>
 
-            <p className="mt-4 text-sm font-semibold leading-7 text-slate-300">
+            <p className="np-type-body mt-4">
               {internalPerformanceNarrative}
             </p>
 
-            <p className="mt-4 text-sm font-semibold leading-7 text-slate-300">
+            <p className="np-type-body mt-4">
               {internalPerformanceRecommendation}
             </p>
           </div>
         </section>
 
         <section className="mt-8 rounded-3xl border border-white/10 bg-[#061426]/88 p-5 text-white shadow-executive sm:p-7 lg:p-8">
-          <p className="text-xs font-black uppercase tracking-[0.25em] text-[#C8A646]">
+          <p className="np-type-eyebrow">
             Executive Procurement Intelligence
           </p>
 
-          <h2 className="mt-3 text-3xl font-black text-white">
+          <h2 className="np-type-h2 mt-3">
             Board Decision Intelligence
           </h2>
 
-          <p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-400">
+          <p className="np-type-body mt-4 max-w-4xl">
             Executive interpretation layer converting procurement metrics,
             internal performance intelligence, supplier signals, and risk indicators into
             board-level actions.
           </p>
           <div className="mt-8 grid gap-6 lg:grid-cols-3">
             <div className="rounded-3xl border border-red-300/20 bg-red-400/10 p-6">
-              <p className="text-xs font-black uppercase tracking-[0.2em] text-red-300">
+              <p className="np-type-meta text-red-300!">
                 Board Risks
               </p>
 
@@ -2416,7 +2416,7 @@ remains ${ceoRiskLevel.toLowerCase()}.
                     key={risk}
                     className="rounded-2xl border border-white/10 bg-[#061426]/70 p-4"
                   >
-                    <p className="text-sm font-semibold text-slate-300">
+                    <p className="np-type-body">
                       {risk}
                     </p>
                   </div>
@@ -2425,7 +2425,7 @@ remains ${ceoRiskLevel.toLowerCase()}.
             </div>
 
             <div className="rounded-3xl border border-emerald-300/20 bg-emerald-400/10 p-6">
-              <p className="text-xs font-black uppercase tracking-[0.2em] text-emerald-300">
+              <p className="np-type-meta text-emerald-300!">
                 Board Opportunities
               </p>
 
@@ -2435,7 +2435,7 @@ remains ${ceoRiskLevel.toLowerCase()}.
                     key={opportunity}
                     className="rounded-2xl border border-white/10 bg-[#061426]/70 p-4"
                   >
-                    <p className="text-sm font-semibold text-slate-300">
+                    <p className="np-type-body">
                       {opportunity}
                     </p>
                   </div>
@@ -2444,37 +2444,37 @@ remains ${ceoRiskLevel.toLowerCase()}.
             </div>
 
             <div className="rounded-3xl border border-[#2CC4E8]/20 bg-[#2CC4E8]/10 p-6">
-              <p className="text-xs font-black uppercase tracking-[0.2em] text-[#9BE8F8]">
+              <p className="np-type-meta text-[#9BE8F8]!">
                 Executive Actions
               </p>
 
               <div className="mt-4 space-y-4">
                 <div className="rounded-2xl border border-white/10 bg-[#061426]/70 p-4">
-                  <p className="text-xs font-black uppercase tracking-[0.15em] text-[#9BE8F8]">
+                  <p className="np-type-meta text-[#9BE8F8]!">
                     Immediate
                   </p>
 
-                  <p className="mt-2 text-sm font-semibold text-slate-300">
+                  <p className="np-type-body mt-2">
                     {boardRecommendation}
                   </p>
                 </div>
 
                 <div className="rounded-2xl border border-white/10 bg-[#061426]/70 p-4">
-                  <p className="text-xs font-black uppercase tracking-[0.15em] text-[#9BE8F8]">
+                  <p className="np-type-meta text-[#9BE8F8]!">
                     90 Days
                   </p>
 
-                  <p className="mt-2 text-sm font-semibold text-slate-300">
+                  <p className="np-type-body mt-2">
                     {executiveCommandRecommendation}
                   </p>
                 </div>
 
                 <div className="rounded-2xl border border-white/10 bg-[#061426]/70 p-4">
-                  <p className="text-xs font-black uppercase tracking-[0.15em] text-[#9BE8F8]">
+                  <p className="np-type-meta text-[#9BE8F8]!">
                     Strategic Position
                   </p>
 
-                  <p className="mt-2 text-sm font-semibold text-slate-300">
+                  <p className="np-type-body mt-2">
                     {executiveBenchmarkStatus}
                   </p>
                 </div>
@@ -2486,15 +2486,15 @@ remains ${ceoRiskLevel.toLowerCase()}.
         
 
         <section className="mt-8 rounded-3xl border border-white/10 bg-[#061426]/88 p-5 text-white shadow-executive sm:p-7 lg:p-8">
-          <p className="text-xs font-black uppercase tracking-[0.25em] text-[#C8A646]">
+          <p className="np-type-eyebrow">
             Board Presentation Layer
           </p>
 
-          <h2 className="mt-3 text-3xl font-black text-white">
+          <h2 className="np-type-h2 mt-3">
             Board Executive Summary
           </h2>
 
-          <p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-400">
+          <p className="np-type-body mt-4 max-w-4xl">
             Board-facing procurement summary consolidating readiness, enterprise
             status, risk position, and strategic direction from validated
             executive intelligence.
@@ -2517,11 +2517,11 @@ remains ${ceoRiskLevel.toLowerCase()}.
           </div>
 
           <div className="mt-8 rounded-3xl border border-white/10 bg-white/[0.045] p-6">
-            <p className="text-xs font-black uppercase tracking-[0.25em] text-slate-500">
+            <p className="np-type-meta">
               Board Summary
             </p>
 
-            <p className="mt-4 text-sm font-semibold leading-7 text-slate-300">
+            <p className="np-type-body mt-4">
               {executiveCommandRecommendation}
             </p>
           </div>
@@ -2542,13 +2542,13 @@ remains ${ceoRiskLevel.toLowerCase()}.
         </section>
 
         <section className="mt-8 rounded-3xl border border-white/10 bg-slate-950 p-5 text-white shadow-executive sm:p-7 lg:p-8">
-          <p className="text-xs font-black uppercase tracking-[0.25em] text-[#C8A646]">
+          <p className="np-type-eyebrow">
             Executive Operating System
           </p>
 
-          <h2 className="mt-3 text-4xl font-black">Enterprise Command Layer</h2>
+          <h2 className="np-type-h2 mt-3">Enterprise Command Layer</h2>
 
-          <p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-300">
+          <p className="np-type-body mt-4 max-w-4xl">
             Unified executive operating view across procurement performance,
             benchmark readiness, board health, enterprise risk, supplier
             engagement, and opportunity intelligence.
@@ -2569,11 +2569,11 @@ remains ${ceoRiskLevel.toLowerCase()}.
           </div>
 
           <div className="mt-6 rounded-3xl border border-white/10 bg-white/5 p-6">
-            <p className="text-xs font-black uppercase tracking-[0.25em] text-[#C8A646]">
+            <p className="np-type-eyebrow">
               Executive Recommendation
             </p>
 
-            <p className="mt-4 text-sm leading-7 text-slate-300">
+            <p className="np-type-body mt-4">
               {executiveCommandRecommendation}
             </p>
           </div>
@@ -2635,8 +2635,8 @@ function DarkMetric({ title, value }: { title: string; value: string }) {
 function SignalRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex min-w-0 items-center justify-between gap-4 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3">
-      <p className="min-w-0 text-sm font-medium text-slate-400">{label}</p>
-      <p className="shrink-0 text-sm font-semibold tabular-nums text-white">
+      <p className="np-type-meta min-w-0">{label}</p>
+      <p className="np-type-kpi shrink-0 text-sm tabular-nums">
         {value}
       </p>
     </div>

@@ -65,7 +65,7 @@ export function SupplierCommandCenter({
 
         <div className="relative grid gap-10 lg:grid-cols-[1.25fr_0.75fr]">
           <div className="min-w-0">
-            <p className="text-xs font-black uppercase tracking-[0.35em] text-nexus-gold">
+            <p className="np-type-eyebrow text-nexus-gold">
               Supplier Command Center
             </p>
 
@@ -86,11 +86,11 @@ export function SupplierCommandCenter({
               </ExecutiveBadge>
             </div>
 
-            <h1 className="mt-6 text-4xl font-black leading-tight text-nexus-white sm:text-5xl lg:text-6xl">
+            <h1 className="np-type-h1 mt-6 text-nexus-white">
               Supplier Performance Workspace
             </h1>
 
-            <p className="mt-5 max-w-4xl text-sm font-semibold leading-7 text-nexus-muted">
+            <p className="np-type-body mt-5 max-w-4xl text-nexus-muted">
               Monitor quotation activity, award outcomes, pending decisions,
               open RFQ coverage, and commercial participation from one
               controlled workspace.
@@ -126,24 +126,24 @@ export function SupplierCommandCenter({
           </div>
 
           <div className="relative min-w-0 rounded-[32px] border border-white/10 bg-white/10 p-6 backdrop-blur">
-            <p className="text-xs font-black uppercase tracking-[0.3em] text-cyan-300">
+            <p className="np-type-meta text-cyan-300!">
               Executive Supplier Brief
             </p>
 
-            <h2 className="mt-4 text-2xl font-black text-nexus-white">
+            <h2 className="np-type-h2 mt-4 text-nexus-white">
               Quotation Activity Summary
             </h2>
 
-            <p className="mt-4 text-sm font-semibold leading-7 text-nexus-muted">
+            <p className="np-type-body mt-4 text-nexus-muted">
               {executiveBrief}
             </p>
 
             <div className="mt-6 rounded-3xl border border-white/10 bg-slate-950/60 p-5">
-              <p className="text-xs font-black uppercase tracking-[0.25em] text-nexus-gold">
+              <p className="np-type-meta text-nexus-gold!">
                 Recommended Executive Action
               </p>
 
-              <p className="mt-3 text-sm font-bold leading-6 text-nexus-white">
+              <p className="np-type-body mt-3 text-nexus-white!">
                 {nextBestAction}
               </p>
             </div>
@@ -166,11 +166,11 @@ export function SupplierCommandCenter({
             </div>
 
             <div className="mt-4 rounded-3xl border border-white/10 bg-white/[0.045] p-5">
-              <p className="text-xs font-black uppercase tracking-[0.24em] text-nexus-muted">
+              <p className="np-type-meta text-nexus-muted">
                 Workflow Status
               </p>
 
-              <p className="mt-2 break-words text-sm font-black leading-6 text-nexus-white">
+              <p className="np-type-body mt-2 break-words text-nexus-white!">
                 {pendingDecisions > 0
                   ? `${pendingDecisions} open RFQ${pendingDecisions === 1 ? "" : "s"} with quotations awaiting buyer decision.`
                   : submittedQuotes === 0
@@ -204,11 +204,11 @@ function SupplierSignal({
 }) {
   return (
     <div className="min-w-0 rounded-2xl border border-white/10 bg-white/[0.045] p-4">
-      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-nexus-muted">
+      <p className="np-type-meta text-nexus-muted">
         {label}
       </p>
 
-      <p className="mt-2 break-words text-lg font-black text-nexus-white">
+      <p className="np-type-kpi mt-2 break-words text-lg text-nexus-white!">
         {value}
       </p>
     </div>

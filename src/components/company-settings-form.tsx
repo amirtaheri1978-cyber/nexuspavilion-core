@@ -173,7 +173,7 @@ className="rounded-full bg-gradient-to-r from-[#B9902F] via-[#C8A646] to-[#F5D77
 
 function FormLabel({ children }: { children: React.ReactNode }) {
 return (
-<span className="mb-2 block text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+<span className="np-type-meta mb-2 block text-slate-400">
 {children}
 </span>
 );

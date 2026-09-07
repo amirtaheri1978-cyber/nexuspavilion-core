@@ -287,15 +287,15 @@ export default async function RFQMarketplacePage({
         <section className="rounded-[32px] border border-white/10 bg-white/[0.045] p-6 shadow-[0_32px_110px_rgba(0,0,0,0.42)] backdrop-blur-2xl sm:p-8 lg:p-10">
           <div className="flex flex-col gap-8 xl:flex-row xl:items-start xl:justify-between">
             <div className="min-w-0">
-              <p className="text-xs font-black uppercase tracking-[0.34em] text-[#C8A646]">
+              <p className="np-type-eyebrow text-[#C8A646]">
                 Procurement Center
               </p>
 
-              <h1 className="mt-4 max-w-5xl text-4xl font-black tracking-[-0.05em] text-white sm:text-5xl xl:text-[64px] xl:leading-[0.98]">
+              <h1 className="np-type-h1 mt-4 max-w-5xl">
                 {marketplace.title}
               </h1>
 
-              <p className="mt-5 max-w-4xl text-sm font-semibold leading-7 text-slate-300 sm:text-base">
+              <p className="np-type-body mt-5 max-w-4xl">
                 {marketplace.description}
               </p>
 
@@ -375,14 +375,14 @@ export default async function RFQMarketplacePage({
             className="mt-8 rounded-[30px] border border-[#2CC4E8]/20 bg-[#2CC4E8]/[0.06] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.24)] sm:p-8"
             data-network-invitation-routing={invitationRoutingStatus}
           >
-            <p className="text-xs font-black uppercase tracking-[0.3em] text-[#C8A646]">
+            <p className="np-type-eyebrow text-[#C8A646]">
               Network Invitation Handoff
             </p>
 
             {invitationRoutingStatus === "ready" && invitationTarget ? (
               <>
                 <div className="mt-3 flex flex-wrap items-center gap-3">
-                  <h2 className="text-2xl font-black text-white sm:text-3xl">
+                  <h2 className="np-type-h2">
                     Select a company-managed RFQ for {invitationTarget.name}
                   </h2>
                   <ExecutiveBadge tone="blue">
@@ -390,7 +390,7 @@ export default async function RFQMarketplacePage({
                   </ExecutiveBadge>
                 </div>
 
-                <p className="mt-3 max-w-4xl text-sm font-semibold leading-7 text-slate-300">
+                <p className="np-type-body mt-3 max-w-4xl">
                   Choose a company-managed RFQ below. Selecting an RFQ opens
                   its workspace; the existing secure email invitation form is
                   shown only while the RFQ remains open under its deadline and
@@ -408,10 +408,10 @@ export default async function RFQMarketplacePage({
               </>
             ) : invitationRoutingStatus === "unauthorized" ? (
               <>
-                <h2 className="mt-3 text-2xl font-black text-white sm:text-3xl">
+                <h2 className="np-type-h2 mt-3">
                   Sourcing authorization required
                 </h2>
-                <p className="mt-3 max-w-4xl text-sm font-semibold leading-7 text-slate-300">
+                <p className="np-type-body mt-3 max-w-4xl">
                   Supplier invitations are available only to active organization
                   owners, administrators, or non-viewer users assigned the buyer
                   procurement function.
@@ -419,10 +419,10 @@ export default async function RFQMarketplacePage({
               </>
             ) : (
               <>
-                <h2 className="mt-3 text-2xl font-black text-white sm:text-3xl">
+                <h2 className="np-type-h2 mt-3">
                   Invitation target unavailable
                 </h2>
-                <p className="mt-3 max-w-4xl text-sm font-semibold leading-7 text-slate-300">
+                <p className="np-type-body mt-3 max-w-4xl">
                   The selected network company is unavailable for this handoff.
                   Return to Company Network and select another relevant company.
                 </p>
@@ -446,15 +446,15 @@ export default async function RFQMarketplacePage({
         <section className="mt-10 rounded-[36px] border border-white/10 bg-white/[0.045] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.28)] backdrop-blur-xl sm:p-8">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div className="min-w-0">
-              <p className="text-xs font-black uppercase tracking-[0.3em] text-[#C8A646]">
+              <p className="np-type-eyebrow text-[#C8A646]">
                 Procurement Pipeline
               </p>
 
-              <h2 className="mt-3 text-3xl font-black text-white">
+              <h2 className="np-type-h2 mt-3">
                 {marketplace.pipelineTitle}
               </h2>
 
-              <p className="mt-3 max-w-3xl text-sm font-semibold leading-7 text-slate-400">
+              <p className="np-type-body mt-3 max-w-3xl">
                 {marketplace.pipelineDescription}
               </p>
             </div>
@@ -521,7 +521,7 @@ function MarketplaceCard({
       className={`group min-w-0 rounded-[30px] border border-white/10 bg-[#061426]/72 p-6 shadow-[0_22px_70px_rgba(0,0,0,0.22)] transition hover:border-[#2CC4E8]/25 hover:bg-[#07111F] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2CC4E8]/40 focus-visible:ring-offset-2 focus-visible:ring-offset-[#07111F]`}
     >
       <div className="flex items-start justify-between gap-4">
-        <p className="min-w-0 break-words text-xs font-black uppercase tracking-[0.25em] text-[#C8A646]">
+        <p className="np-type-meta min-w-0 break-words text-[#C8A646]!">
           {rfq.category || "Procurement"}
         </p>
 
@@ -532,7 +532,7 @@ function MarketplaceCard({
         </div>
       </div>
 
-      <h2 className="mt-4 break-words text-2xl font-black leading-tight text-white">
+      <h2 className="np-type-h3 mt-4 break-words">
         {rfq.title || "Untitled RFQ"}
       </h2>
 
@@ -548,7 +548,7 @@ function MarketplaceCard({
         </Badge>
       </div>
 
-      <p className="mt-4 line-clamp-3 text-sm font-semibold leading-7 text-slate-400">
+      <p className="np-type-body mt-4 line-clamp-3">
         {rfq.description || "No description provided."}
       </p>
 
@@ -629,11 +629,11 @@ function HeroMetric({
 }) {
   return (
     <div className="rounded-[26px] border border-white/10 bg-[#061426]/75 p-5">
-      <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+      <p className="np-type-meta">
         {title}
       </p>
 
-      <p className="mt-2 break-words text-2xl font-black text-white">
+      <p className="np-type-kpi mt-2 break-words text-2xl">
         {value}
       </p>
     </div>
@@ -649,11 +649,11 @@ function StatusCard({
 }) {
   return (
     <div className="rounded-[28px] border border-white/10 bg-white/[0.045] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.26)] backdrop-blur-xl">
-      <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+      <p className="np-type-meta">
         {title}
       </p>
 
-      <p className="mt-3 text-4xl font-black text-white">
+      <p className="np-type-kpi mt-3 text-4xl">
         {value}
       </p>
     </div>
@@ -677,11 +677,11 @@ function SignalBlock({
 }) {
   return (
     <div className="min-w-0 rounded-[22px] border border-white/10 bg-white/[0.035] p-4">
-      <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-400">
+      <p className="np-type-meta">
         {label}
       </p>
 
-      <p className="mt-2 break-words text-sm font-black text-white">
+      <p className="np-type-kpi mt-2 break-words text-sm">
         {value}
       </p>
     </div>
@@ -699,15 +699,15 @@ function EmptyState({
 }) {
   return (
     <div className="rounded-[30px] border border-dashed border-white/15 bg-white/[0.035] p-10 text-center">
-      <p className="text-xs font-black uppercase tracking-[0.3em] text-[#C8A646]">
+      <p className="np-type-eyebrow text-[#C8A646]">
         Procurement Pipeline
       </p>
 
-      <h2 className="mt-4 text-3xl font-black text-white">
+      <h2 className="np-type-h2 mt-4">
         {title}
       </h2>
 
-      <p className="mx-auto mt-3 max-w-2xl text-sm font-semibold leading-7 text-slate-400">
+      <p className="np-type-body mx-auto mt-3 max-w-2xl">
         {description}
       </p>
 

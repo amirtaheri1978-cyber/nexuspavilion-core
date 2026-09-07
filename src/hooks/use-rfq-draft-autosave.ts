@@ -41,13 +41,17 @@ delay = 900,
 }: UseRFQDraftAutosaveOptions<T>) {
 const [status, setStatus] = useState<DraftStatus>("idle");
 const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
-const [hasStoredDraft, setHasStoredDraft] = useState(() =>
-readHasStoredDraft(storageKey)
-);
+const [hasStoredDraft, setHasStoredDraft] = useState(false);
 
 const hasMountedRef = useRef(false);
 const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 const statusTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+useEffect(() => {
+// Hydration-safe: detect stored draft only after mount (server + first client render stay false).
+// eslint-disable-next-line react-hooks/set-state-in-effect -- intentional post-mount localStorage sync
+setHasStoredDraft(readHasStoredDraft(storageKey));
+}, [storageKey]);
 
 useEffect(() => {
 if (!enabled) return;

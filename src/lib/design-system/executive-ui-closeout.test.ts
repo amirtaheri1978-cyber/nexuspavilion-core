@@ -32,10 +32,18 @@ const launchCritical = {
   appSidebar: readSource("src/components/common/AppSidebar.tsx"),
   directory: readSource("src/app/directory/page.tsx"),
   notifications: readSource("src/app/notifications/page.tsx"),
+  analytics: readSource("src/app/analytics/page.tsx"),
   rfqList: readSource("src/app/rfq/page.tsx"),
   rfqNew: readSource("src/app/rfq/new/page.tsx"),
+  rfqDraftAutosave: readSource("src/hooks/use-rfq-draft-autosave.ts"),
   rfqCompare: readSource("src/app/rfq/[slug]/compare/page.tsx"),
   rfqSubmit: readSource("src/components/rfq-workspace/rfq-submit-workspace.tsx"),
+  supplierCommand: readSource(
+    "src/components/vendor-workspace/supplier-command-center.tsx",
+  ),
+  supplierPipeline: readSource(
+    "src/components/vendor-workspace/supplier-opportunity-pipeline.tsx",
+  ),
   actionCard: readSource("src/components/executive/executive-action-card.tsx"),
   inviteForm: readSource("src/components/invite-user-form.tsx"),
   settingsForm: readSource("src/components/company-settings-form.tsx"),
@@ -136,5 +144,97 @@ describe("NP-MASTER-22-B05 launch-critical closeout", () => {
     expect(launchCritical.governance).toContain("sm:grid-cols-2 xl:grid-cols-5");
     expect(launchCritical.pipeline).not.toContain("min-w-[640px]");
     expect(launchCritical.rfqNew).toContain("sm:grid-cols-2 xl:grid-cols-5");
+  });
+
+  it("keeps frozen launch-critical typography hierarchy on Task 13-01 surfaces", () => {
+    expect(launchCritical.analytics).toContain("np-type-eyebrow");
+    expect(launchCritical.analytics).toContain("np-type-h1");
+    expect(launchCritical.analytics).toContain("np-type-h2");
+    expect(launchCritical.analytics).toContain("np-type-body");
+    expect(launchCritical.analytics).toContain("np-type-meta");
+    expect(launchCritical.analytics).toContain("np-type-kpi");
+
+    expect(launchCritical.company).toContain("np-type-eyebrow");
+    expect(launchCritical.company).toContain("np-type-h1");
+    expect(launchCritical.company).toContain("np-type-body");
+    expect(launchCritical.company).toContain("np-type-meta");
+    expect(launchCritical.company).toContain("np-type-kpi");
+
+    expect(launchCritical.rfqList).toContain("np-type-eyebrow");
+    expect(launchCritical.rfqList).toContain("np-type-h1");
+    expect(launchCritical.rfqList).toContain("np-type-h2");
+    expect(launchCritical.rfqList).toContain("np-type-h3");
+    expect(launchCritical.rfqList).toContain("np-type-body");
+    expect(launchCritical.rfqList).toContain("np-type-meta");
+    expect(launchCritical.rfqList).toContain("np-type-kpi");
+
+    expect(launchCritical.rfqNew).toContain("np-type-eyebrow");
+    expect(launchCritical.rfqNew).toContain("np-type-h1");
+    expect(launchCritical.rfqNew).toContain("np-type-h2");
+    expect(launchCritical.rfqNew).toContain("np-type-h3");
+    expect(launchCritical.rfqNew).toContain("np-type-body");
+    expect(launchCritical.rfqNew).toContain("np-type-meta");
+    expect(launchCritical.rfqNew).toContain("np-type-kpi");
+
+    expect(launchCritical.supplierCommand).toContain("np-type-eyebrow");
+    expect(launchCritical.supplierCommand).toContain("np-type-h1");
+    expect(launchCritical.supplierCommand).toContain("np-type-h2");
+    expect(launchCritical.supplierCommand).toContain("np-type-body");
+    expect(launchCritical.supplierCommand).toContain("np-type-meta");
+    expect(launchCritical.supplierCommand).toContain("np-type-kpi");
+
+    expect(launchCritical.supplierPipeline).toContain("np-type-h2");
+    expect(launchCritical.supplierPipeline).toContain("np-type-h3");
+    expect(launchCritical.supplierPipeline).toContain("np-type-body");
+    expect(launchCritical.supplierPipeline).toContain("np-type-meta");
+    expect(launchCritical.supplierPipeline).toContain("np-type-kpi");
+
+    expect(launchCritical.settingsForm).toContain("np-type-meta");
+
+    expect(launchCritical.rfqList).not.toContain("xl:text-[64px]");
+    expect(launchCritical.rfqNew).not.toContain("xl:text-[64px]");
+    expect(launchCritical.supplierCommand).not.toContain("lg:text-6xl");
+  });
+
+  it("keeps Task 13-01 semantic accent colors authoritative over np-type-* defaults", () => {
+    expect(launchCritical.analytics).toContain("text-red-300!");
+    expect(launchCritical.analytics).toContain("text-emerald-300!");
+    expect(launchCritical.analytics).toContain("text-[#9BE8F8]!");
+    expect(launchCritical.analytics).toContain("text-amber-300!");
+
+    expect(launchCritical.rfqNew).toContain("text-[#F5D77B]!");
+    expect(launchCritical.rfqNew).toContain(
+      'np-type-h3 text-center text-white!',
+    );
+
+    expect(launchCritical.supplierCommand).toContain("text-cyan-300!");
+    expect(launchCritical.supplierCommand).toContain("text-nexus-gold!");
+    expect(launchCritical.supplierCommand).toContain("text-nexus-white!");
+
+    expect(launchCritical.supplierPipeline).toContain("text-cyan-300!");
+    expect(launchCritical.supplierPipeline).toContain("text-nexus-gold!");
+    expect(launchCritical.supplierPipeline).toContain("text-emerald-300!");
+  });
+
+  it("keeps RFQ draft autosave hydration-safe and draftValue memoized", () => {
+    expect(launchCritical.rfqDraftAutosave).toContain(
+      "const [hasStoredDraft, setHasStoredDraft] = useState(false);",
+    );
+    expect(launchCritical.rfqDraftAutosave).toContain(
+      "setHasStoredDraft(readHasStoredDraft(storageKey));",
+    );
+    expect(launchCritical.rfqDraftAutosave).toMatch(/useEffect\(\(\) => \{/);
+    expect(launchCritical.rfqDraftAutosave).toContain("}, [storageKey]);");
+    expect(launchCritical.rfqDraftAutosave).not.toMatch(
+      /useState\(\(\)\s*=>\s*readHasStoredDraft\(storageKey\)/,
+    );
+    expect(launchCritical.rfqDraftAutosave).not.toContain(
+      "useState(() =>\nreadHasStoredDraft(storageKey)",
+    );
+
+    expect(launchCritical.rfqNew).toContain("const draftValue = useMemo(");
+    expect(launchCritical.rfqNew).toContain("[activeStep, formData],");
+    expect(launchCritical.rfqNew).toContain("value: draftValue,");
+    expect(launchCritical.rfqNew).not.toContain("value: {\nactiveStep,\nformData,\n},");
   });
 });

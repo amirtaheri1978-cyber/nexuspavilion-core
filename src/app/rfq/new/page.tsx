@@ -241,12 +241,17 @@ title: string;
 const [error, setError] = useState("");
 const [formData, setFormData] = useState<RFQFormData>(initialFormData);
 
-const draftAutosave = useRFQDraftAutosave({
-storageKey: "nexus-pavilion:new-rfq-draft",
-value: {
+const draftValue = useMemo(
+() => ({
 activeStep,
 formData,
-},
+}),
+[activeStep, formData],
+);
+
+const draftAutosave = useRFQDraftAutosave({
+storageKey: "nexus-pavilion:new-rfq-draft",
+value: draftValue,
 enabled: !loading,
 delay: 900,
 });
@@ -513,15 +518,15 @@ className="inline-flex rounded-full border border-white/10 bg-white/[0.045] px-5
 <section className="mt-6 rounded-[38px] border border-white/10 bg-white/[0.045] p-6 shadow-[0_32px_110px_rgba(0,0,0,0.42)] backdrop-blur-2xl sm:p-8 lg:p-10">
 <div className="flex flex-col gap-8 xl:flex-row xl:items-start xl:justify-between">
 <div>
-<p className="text-xs font-black uppercase tracking-[0.35em] text-[#C8A646]">
+<p className="np-type-eyebrow text-[#C8A646]">
 Buyer Procurement Portal
 </p>
 
-<h1 className="mt-4 max-w-4xl text-4xl font-black tracking-[-0.05em] text-white sm:text-5xl xl:text-[64px] xl:leading-[0.98]">
+<h1 className="np-type-h1 mt-4 max-w-4xl text-white">
 Create Construction RFQ
 </h1>
 
-<p className="mt-5 max-w-4xl text-sm font-semibold leading-7 text-slate-300 sm:text-base">
+<p className="np-type-body mt-5 max-w-4xl text-slate-300">
 Move through a guided RFQ workflow. Small projects can publish
 quickly with required fields only, while larger tenders can add
 optional documents, controls, and enterprise requirements.
@@ -598,15 +603,15 @@ value={selectedScope?.label || "Pending"}
 
 <div>
 
-<p className="text-xs font-black uppercase tracking-[0.25em] text-[#F5D77B]">
+<p className="np-type-eyebrow text-[#F5D77B]!">
 Draft Recovery
 </p>
 
-<h3 className="mt-2 text-2xl font-black text-white">
+<h3 className="np-type-h3 mt-2 text-white">
 Continue your previous RFQ draft?
 </h3>
 
-<p className="mt-2 max-w-2xl text-sm font-semibold leading-6 text-slate-300">
+<p className="np-type-body mt-2 max-w-2xl text-slate-300">
 A previously saved draft was found on this device.
 You can continue where you left off or discard it and
 start a new RFQ.
@@ -1234,11 +1239,11 @@ value={formData.category || "Pending"}
 </ExecutivePanel>
 
 <section className="rounded-[32px] border border-[#2CC4E8]/15 bg-[#2CC4E8]/[0.055] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.28)] backdrop-blur-xl sm:p-8">
-<p className="text-xs font-black uppercase tracking-[0.3em] text-[#9BE8F8]">
+<p className="np-type-eyebrow text-[#9BE8F8]!">
 Supplier Experience Preview
 </p>
 
-<h2 className="mt-3 text-3xl font-black text-white">
+<h2 className="np-type-h2 mt-3 text-white">
 What Suppliers Will See
 </h2>
 
@@ -1299,26 +1304,26 @@ d="M5 13l4 4L19 7"
 
 </div>
 
-<h2 className="mt-8 text-center text-3xl font-black text-white">
+<h2 className="np-type-h2 mt-8 text-center text-white">
 {publishSuccess ? "RFQ Published Successfully" : "Publishing RFQ"}
 </h2>
 
-<p className="mt-4 text-center text-sm font-semibold leading-7 text-slate-400">
+<p className="np-type-body mt-4 text-center text-slate-400">
 {publishStage}
 </p>
 {publishSuccess && createdRFQ ? (
-<p className="mt-3 text-center text-sm font-black text-[#F5D77B]">
+<p className="np-type-body mt-3 text-center text-[#F5D77B]!">
 {createdRFQ.title}
 </p>
 ) : null}
 {publishSuccess && (
 <div className="mt-8 rounded-[24px] border border-emerald-300/20 bg-emerald-400/5 p-5">
 
-<p className="text-center text-sm font-black text-white">
+<p className="np-type-h3 text-center text-white!">
 Workspace Created Successfully
 </p>
 
-<p className="mt-2 text-center text-sm leading-6 text-slate-400">
+<p className="np-type-body mt-2 text-center text-slate-400">
 Executive procurement intelligence has been initialized.
 </p>
 
@@ -1341,7 +1346,7 @@ Opening RFQ Workspace
 <div className="mt-3 flex items-center justify-center gap-3">
 <div className="h-2 w-2 animate-pulse rounded-full bg-emerald-400" />
 
-<p className="text-3xl font-black text-[#F5D77B]">
+<p className="np-type-kpi text-[#F5D77B]!">
 {redirectCountdown}
 </p>
 
@@ -1367,7 +1372,7 @@ Opening RFQ Workspace
 
 <div className="h-2 w-2 animate-pulse rounded-full bg-emerald-400" />
 
-<p className="text-3xl font-black text-[#F5D77B]">
+<p className="np-type-kpi text-[#F5D77B]!">
 {redirectCountdown}
 </p>
 
@@ -1378,7 +1383,7 @@ Opening RFQ Workspace
 
 </div>
 
-<p className="mt-3 text-center text-sm font-semibold text-slate-400">
+<p className="np-type-body mt-3 text-center text-slate-400">
 Redirecting to your executive procurement workspace...
 </p>
 
@@ -1428,14 +1433,14 @@ children: ReactNode;
 }) {
 return (
 <section className="rounded-[32px] border border-white/10 bg-white/[0.045] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.28)] backdrop-blur-xl sm:p-8">
-<p className="text-xs font-black uppercase tracking-[0.3em] text-[#C8A646]">
+<p className="np-type-eyebrow text-[#C8A646]">
 {eyebrow}
 </p>
 
-<h2 className="mt-3 text-3xl font-black text-white">{title}</h2>
+<h2 className="np-type-h2 mt-3 text-white">{title}</h2>
 
 {description ? (
-<p className="mt-3 max-w-3xl text-sm font-semibold leading-7 text-slate-400">
+<p className="np-type-body mt-3 max-w-3xl text-slate-400">
 {description}
 </p>
 ) : null}
@@ -1456,7 +1461,7 @@ children: ReactNode;
 }) {
 return (
 <label className="block">
-<span className="mb-2 block text-xs font-black uppercase tracking-[0.2em] text-slate-500">
+<span className="np-type-meta mb-2 block text-slate-500">
 {label}
 {required ? <span className="text-[#F5D77B]"> *</span> : null}
 </span>
@@ -1469,11 +1474,11 @@ return (
 function MiniMetric({ title, value }: { title: string; value: string }) {
 return (
 <div className="rounded-[26px] border border-white/10 bg-[#061426]/75 p-5">
-<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">
+<p className="np-type-meta text-slate-500">
 {title}
 </p>
 
-<p className="mt-2 truncate text-xl font-black text-white">{value}</p>
+<p className="np-type-kpi mt-2 truncate text-xl text-white">{value}</p>
 </div>
 );
 }
@@ -1481,11 +1486,11 @@ return (
 function SummaryRow({ title, value }: { title: string; value: string }) {
 return (
 <div className="rounded-[22px] border border-white/10 bg-[#061426]/70 p-4">
-<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">
+<p className="np-type-meta text-slate-500">
 {title}
 </p>
 
-<p className="mt-2 text-sm font-black leading-6 text-white">{value}</p>
+<p className="np-type-body mt-2 text-white">{value}</p>
 </div>
 );
 }
@@ -1570,9 +1575,9 @@ return (
 📎
 </div>
 
-<p className="mt-5 text-lg font-black text-white">{title}</p>
+<p className="np-type-h3 mt-5 text-white">{title}</p>
 
-<p className="mt-2 text-sm font-semibold leading-6 text-slate-400">
+<p className="np-type-body mt-2 text-slate-400">
 {value}
 </p>
 
@@ -1612,9 +1617,9 @@ checked
 >
 <div className="flex items-start justify-between gap-4">
 <div>
-<p className="text-lg font-black text-white">{title}</p>
+<p className="np-type-h3 text-white">{title}</p>
 
-<p className="mt-2 text-sm font-semibold leading-6 text-slate-400">
+<p className="np-type-body mt-2 text-slate-400">
 {description}
 </p>
 </div>

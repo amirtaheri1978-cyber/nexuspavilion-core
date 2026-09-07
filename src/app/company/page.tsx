@@ -547,12 +547,12 @@ const workspaceMembers: WorkspaceMember[] =
               )}
 
               <div>
-                <p className="text-xs font-black uppercase tracking-[0.35em] text-[#C8A646]">
+                <p className="np-type-eyebrow text-[#C8A646]">
                   Company Command Center
                 </p>
 
                 <div className="mt-3 flex flex-wrap items-center gap-3">
-                  <h1 className="max-w-4xl break-words text-3xl font-black tracking-[-0.05em] text-white sm:text-4xl lg:text-5xl">
+                  <h1 className="np-type-h1 max-w-4xl break-words text-white">
                     {company.name?.trim() || "Company"}
                   </h1>
 
@@ -567,7 +567,7 @@ const workspaceMembers: WorkspaceMember[] =
                   </span>
                 </div>
 
-                <p className="mt-3 text-lg font-semibold text-slate-300">
+                <p className="np-type-body mt-3 text-slate-300">
                   {company.category?.trim() || "Not specified"} ·{" "}
                   {company.location?.trim() || "Location N/A"}
                 </p>
@@ -705,15 +705,15 @@ function SystemState({
       <div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(circle_at_top_left,rgba(44,196,232,0.18),transparent_34%),radial-gradient(circle_at_top_right,rgba(200,166,70,0.15),transparent_30%),linear-gradient(180deg,#061426_0%,#07111F_45%,#020617_100%)]" />
 
       <section className="w-full max-w-2xl rounded-[32px] border border-white/10 bg-white/[0.065] p-8 text-center shadow-[0_36px_120px_rgba(0,0,0,0.52)] backdrop-blur-2xl sm:p-10">
-        <p className="text-xs font-black uppercase tracking-[0.34em] text-[#C8A646]">
+        <p className="np-type-eyebrow text-[#C8A646]">
           {eyebrow}
         </p>
 
-        <h1 className="mt-4 text-4xl font-black tracking-[-0.05em] text-white sm:text-5xl">
+        <h1 className="np-type-h1 mt-4 text-white">
           {title}
         </h1>
 
-        <p className="mt-5 text-base font-semibold leading-8 text-slate-300">
+        <p className="np-type-body mt-5 text-slate-300">
           {description}
         </p>
 
@@ -746,11 +746,11 @@ function MiniMetric({
 }) {
   return (
     <div className="rounded-3xl border border-white/10 bg-white/[0.045] p-5">
-      <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+      <p className="np-type-meta text-slate-400">
         {title}
       </p>
 
-      <p className="mt-2 truncate text-2xl font-black text-white">
+      <p className="np-type-kpi mt-2 truncate text-2xl text-white">
         {value}
       </p>
     </div>
@@ -766,11 +766,11 @@ function InfoCard({
 }) {
   return (
     <div className="rounded-3xl border border-white/10 bg-[#07111F]/75 p-6">
-      <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+      <p className="np-type-meta text-slate-400">
         {title}
       </p>
 
-      <p className="mt-2 text-xl font-black text-white">
+      <p className="np-type-kpi mt-2 text-xl text-white">
         {value}
       </p>
     </div>

@@ -77,15 +77,15 @@ export function SupplierOpportunityPipeline({
     <ExecutivePanel padding="lg" tone="blue">
       <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <p className="text-xs font-black uppercase tracking-[0.3em] text-cyan-300">
+          <p className="np-type-eyebrow text-cyan-300!">
             Supplier Opportunity Pipeline
           </p>
 
-          <h2 className="mt-3 text-3xl font-black text-nexus-white">
+          <h2 className="np-type-h2 mt-3 text-nexus-white">
             Active RFQ Opportunities
           </h2>
 
-          <p className="mt-3 max-w-3xl text-sm font-semibold leading-7 text-nexus-muted">
+          <p className="np-type-body mt-3 max-w-3xl text-nexus-muted">
             Review active procurement opportunities, quotation activity,
             commercial position, award status, and supplier participation
             across the current RFQ portfolio.
@@ -117,7 +117,7 @@ export function SupplierOpportunityPipeline({
                 <div className="flex flex-col gap-6 xl:flex-row xl:items-start xl:justify-between">
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-3">
-                      <p className="text-xs font-black uppercase tracking-[0.25em] text-nexus-gold">
+                      <p className="np-type-meta text-nexus-gold!">
                         {rfq.category || "Procurement"}
                       </p>
 
@@ -132,11 +132,11 @@ export function SupplierOpportunityPipeline({
                       ) : null}
                     </div>
 
-                    <h3 className="mt-3 break-words text-2xl font-black text-nexus-white">
+                    <h3 className="np-type-h3 mt-3 break-words text-nexus-white">
                       {rfq.title || "Untitled RFQ"}
                     </h3>
 
-                    <p className="mt-3 max-w-3xl text-sm font-semibold leading-7 text-nexus-muted">
+                    <p className="np-type-body mt-3 max-w-3xl text-nexus-muted">
                       {rfq.description ||
                         "No procurement opportunity description is currently available."}
                     </p>
@@ -188,7 +188,7 @@ export function SupplierOpportunityPipeline({
           )
         ) : (
           <div className="rounded-[28px] border border-dashed border-white/15 bg-white/[0.035] p-8 text-center">
-            <p className="text-sm font-bold leading-6 text-nexus-muted">
+            <p className="np-type-body text-nexus-muted">
               No active RFQ opportunities are currently connected to this
               supplier workspace.
             </p>
@@ -224,14 +224,14 @@ function PipelineSignal({
           : "border-white/10 bg-slate-950/40",
       ].join(" ")}
     >
-      <p className="text-[10px] font-black uppercase tracking-[0.18em] text-nexus-muted">
+      <p className="np-type-meta text-nexus-muted">
         {label}
       </p>
 
       <p
         className={[
-          "mt-1 break-words text-sm font-black",
-          tone === "success" ? "text-emerald-300" : "text-nexus-white",
+          "np-type-kpi mt-1 break-words text-sm",
+          tone === "success" ? "text-emerald-300!" : "text-nexus-white!",
         ].join(" ")}
       >
         {value}
