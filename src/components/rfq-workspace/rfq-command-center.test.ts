@@ -74,6 +74,36 @@ describe("Task 24-RFQ-05 command center density closeout", () => {
     expect(command).toContain("text-pretty");
   });
 
+  it("keeps the awarded command-center summary in a post-award commercial handoff state", () => {
+    expect(detail).toContain(
+      'const awardRecorded = isOwner && rfqStatus === "awarded";',
+    );
+    expect(detail).toContain('awardRecorded\n            ? "Award Recorded"');
+    expect(detail).toContain(
+      '"Commercial decision recorded for downstream handoff"',
+    );
+    expect(detail).toContain("awardRecorded,");
+    expect(detail).toContain(
+      'rfqStatus === "awarded"\n      ? getRFQStatusLabel(rfq.status)',
+    );
+    expect(visualQa).toContain('value: "Award Recorded"');
+    expect(visualQa).toContain(
+      "Commercial decision recorded for downstream handoff",
+    );
+    expect(visualQa).toContain(
+      "The commercial decision is complete in Nexus Pavilion",
+    );
+    expect(visualQa).toContain(
+      "Proceed with downstream commercial handoff using the recorded award outcome.",
+    );
+    expect(visualQa).not.toContain(
+      "board brief still needs a final award confirmation before supplier notification",
+    );
+    expect(visualQa).not.toContain(
+      "confirm the Harbor Steel award if the commercial evidence remains acceptable for this refrigerated campus replacement program",
+    );
+  });
+
   it("surfaces shared RFQ deadline risk without duplicating command-center architecture", () => {
     expect(detail).toContain(
       'from "@/lib/datetime/rfq-deadline-risk"',

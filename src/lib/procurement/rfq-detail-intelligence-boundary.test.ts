@@ -13,8 +13,10 @@ import {
   serializeRfqBuyerExecutiveIntelligenceForViewer,
 } from "@/lib/procurement/rfq-detail-intelligence-boundary";
 import {
+  getCopilotSuggestions,
   getExecutiveBrief,
   getNextBestAction,
+  getPredictedTimeline,
 } from "@/lib/procurement/rfq-executive-guidance";
 
 function readSource(relativePath: string) {
@@ -186,8 +188,70 @@ describe("Task 33C RFQ buyer executive intelligence isolation", () => {
     expect(JSON.stringify(issuerPayload)).toContain("awardReadiness");
   });
 
+  it("switches issuer guidance to a truthful post-award commercial handoff state", () => {
+    const executiveBrief = getExecutiveBrief({
+      awardRecorded: true,
+      isOwner: true,
+      isOpen: false,
+      deadlinePassed: true,
+      blindBiddingEnabled: true,
+      commercialEvaluationUnlocked: true,
+      quoteCount: 3,
+      documentCount: 4,
+      addendaCount: 1,
+      healthScore: 82,
+      recommendedQuote: { rank: 1, awardConfidence: 91 },
+    });
+    const nextBestAction = getNextBestAction({
+      awardRecorded: true,
+      isOwner: true,
+      isOpen: false,
+      canSubmitQuote: false,
+      quoteCount: 3,
+      documentCount: 4,
+      addendaCount: 1,
+      commercialEvaluationUnlocked: true,
+      recommendedQuote: { rank: 1, awardConfidence: 91 },
+    });
+    const timeline = getPredictedTimeline({
+      awardRecorded: true,
+      deadlinePassed: true,
+      daysUntilDeadline: 0,
+      commercialEvaluationUnlocked: true,
+      recommendedQuote: { rank: 1, awardConfidence: 91 },
+    });
+    const recommendations = getCopilotSuggestions({
+      awardRecorded: true,
+      isOwner: true,
+      isOpen: false,
+      quoteCount: 3,
+      documentCount: 4,
+      addendaCount: 1,
+      commercialEvaluationUnlocked: true,
+      recommendedQuote: { rank: 1, awardConfidence: 91 },
+      potentialSavings: 40000,
+    });
+
+    expect(executiveBrief).toContain("recorded award");
+    expect(executiveBrief).toContain("downstream commercial handoff");
+    expect(executiveBrief).toContain("are not tracked by this RFQ workspace");
+    expect(executiveBrief).not.toContain("ready for executive review");
+    expect(nextBestAction).toBe(
+      "Proceed with downstream commercial handoff using the recorded award outcome.",
+    );
+    expect(timeline).toEqual([
+      { label: "Commercial Opening", value: "Complete" },
+      { label: "Executive Review", value: "Complete" },
+      { label: "Award Path", value: "Award Recorded" },
+    ]);
+    expect(recommendations.join(" ")).toContain("recorded award outcome");
+    expect(recommendations.join(" ")).toContain("systems responsible for those records");
+    expect(recommendations.join(" ")).not.toContain("before final award");
+  });
+
   it("keeps supplier-safe briefs free of buyer award intelligence", () => {
     const supplierBrief = getExecutiveBrief({
+      awardRecorded: true,
       isOwner: false,
       isOpen: true,
       deadlinePassed: false,
@@ -200,6 +264,7 @@ describe("Task 33C RFQ buyer executive intelligence isolation", () => {
       recommendedQuote: { rank: 1, awardConfidence: 91 },
     });
     const supplierAction = getNextBestAction({
+      awardRecorded: true,
       isOwner: false,
       isOpen: true,
       canSubmitQuote: false,

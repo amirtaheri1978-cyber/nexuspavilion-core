@@ -467,6 +467,8 @@ const awardedSupplierLabel = awardedQuote
     })
   : null;
 
+const awardRecorded = isOwner && rfqStatus === "awarded";
+
 const priorBuyerRfqData = priorBuyerRfqResult.data;
 
 const priorBuyerRfqIds = (priorBuyerRfqData ?? [])
@@ -590,6 +592,7 @@ if (canViewBuyerExecutiveIntelligence) {
   });
 
   predictedTimeline = getPredictedTimeline({
+    awardRecorded,
     deadlinePassed,
     daysUntilDeadline,
     commercialEvaluationUnlocked,
@@ -597,6 +600,7 @@ if (canViewBuyerExecutiveIntelligence) {
   });
 
   copilotSuggestions = getCopilotSuggestions({
+    awardRecorded,
     isOwner,
     isOpen,
     quoteCount,
@@ -642,6 +646,7 @@ if (canViewBuyerExecutiveIntelligence) {
 }
 
 const executiveBrief = getExecutiveBrief({
+awardRecorded,
 isOwner,
 isOpen,
 deadlinePassed,
@@ -655,6 +660,7 @@ recommendedQuote,
 });
 
 const nextBestAction = getNextBestAction({
+awardRecorded,
 isOwner,
 isOpen,
 canSubmitQuote,
@@ -673,9 +679,11 @@ return (
 <div className={`${EXECUTIVE_PAGE_CLASS} min-w-0`}>
 <RFQCommandCenter
   statusLabel={
-    deadlinePassed
-      ? "Submission Closed"
-      : getRFQStatusLabel(rfq.status)
+    rfqStatus === "awarded"
+      ? getRFQStatusLabel(rfq.status)
+      : deadlinePassed
+        ? "Submission Closed"
+        : getRFQStatusLabel(rfq.status)
   }
   statusTone={
     rfqStatus === "awarded"
@@ -712,18 +720,22 @@ return (
       {
         title: isOwner ? "Commercial Status" : "Participation Status",
         value: isOwner
-          ? commercialEvaluationUnlocked
-            ? "Commercial Evaluation"
-            : "Commercially Locked"
+          ? awardRecorded
+            ? "Award Recorded"
+            : commercialEvaluationUnlocked
+              ? "Commercial Evaluation"
+              : "Commercially Locked"
           : hasMyQuote
             ? "Quote Submitted"
             : canSubmitQuote
               ? "Ready for Submission"
               : "Awaiting Submission",
         detail: isOwner
-          ? commercialEvaluationUnlocked
-            ? "Comparative evaluation available"
-            : "Commercial submissions protected"
+          ? awardRecorded
+            ? "Commercial decision recorded for downstream handoff"
+            : commercialEvaluationUnlocked
+              ? "Comparative evaluation available"
+              : "Commercial submissions protected"
           : "Organization-level confidential access",
         accentClassName: "text-[#C8A646]",
       },

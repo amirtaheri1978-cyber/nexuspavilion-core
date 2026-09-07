@@ -4,6 +4,7 @@ export type RFQRecommendedQuoteSummary = {
 };
 
 type RFQPredictedTimelineInput = {
+  awardRecorded?: boolean;
   deadlinePassed: boolean;
   daysUntilDeadline: number | null;
   commercialEvaluationUnlocked: boolean;
@@ -11,6 +12,7 @@ type RFQPredictedTimelineInput = {
 };
 
 type RFQCopilotSuggestionsInput = {
+  awardRecorded?: boolean;
   isOwner: boolean;
   isOpen: boolean;
   quoteCount: number;
@@ -22,6 +24,7 @@ type RFQCopilotSuggestionsInput = {
 };
 
 type RFQExecutiveBriefInput = {
+  awardRecorded?: boolean;
   isOwner: boolean;
   isOpen: boolean;
   deadlinePassed: boolean;
@@ -35,6 +38,7 @@ type RFQExecutiveBriefInput = {
 };
 
 type RFQNextBestActionInput = {
+  awardRecorded?: boolean;
   isOwner: boolean;
   isOpen: boolean;
   canSubmitQuote: boolean;
@@ -56,11 +60,20 @@ function formatMoney(value: number | string | null | undefined) {
 }
 
 export function getPredictedTimeline({
+  awardRecorded = false,
   deadlinePassed,
   daysUntilDeadline,
   commercialEvaluationUnlocked,
   recommendedQuote,
 }: RFQPredictedTimelineInput) {
+  if (awardRecorded) {
+    return [
+      { label: "Commercial Opening", value: "Complete" },
+      { label: "Executive Review", value: "Complete" },
+      { label: "Award Path", value: "Award Recorded" },
+    ];
+  }
+
   if (deadlinePassed || commercialEvaluationUnlocked) {
     return [
       { label: "Commercial Opening", value: "Available Now" },
@@ -94,6 +107,7 @@ export function getPredictedTimeline({
 }
 
 export function getCopilotSuggestions({
+  awardRecorded = false,
   isOwner,
   isOpen,
   quoteCount,
@@ -108,6 +122,13 @@ export function getCopilotSuggestions({
       "Review all active RFQ documents before submitting or revising internal pricing.",
       "Confirm whether issued addenda require acknowledgement before the deadline.",
       "Keep your commercial proposal aligned with timeline, validity, and scope requirements.",
+    ];
+  }
+
+  if (awardRecorded) {
+    return [
+      "Use the recorded award outcome as the commercial handoff reference for downstream procurement administration.",
+      "Complete contract execution, signatures, purchase-order, and external-system steps in the systems responsible for those records.",
     ];
   }
 
@@ -161,6 +182,7 @@ export function getCopilotSuggestions({
 }
 
 export function getExecutiveBrief({
+  awardRecorded = false,
   isOwner,
   isOpen,
   deadlinePassed,
@@ -178,6 +200,10 @@ export function getExecutiveBrief({
     }
 
     return "This supplier workspace provides controlled access to the RFQ package, addenda, acknowledgement requirements, and your company's confidential submission status.";
+  }
+
+  if (awardRecorded) {
+    return "This RFQ has a recorded award. The commercial decision is complete in Nexus Pavilion and can now support downstream commercial handoff. Contract execution, signatures, purchase-order status, and external-system completion are not tracked by this RFQ workspace.";
   }
 
   if (blindBiddingEnabled && !commercialEvaluationUnlocked) {
@@ -202,6 +228,7 @@ export function getExecutiveBrief({
 }
 
 export function getNextBestAction({
+  awardRecorded = false,
   isOwner,
   isOpen,
   canSubmitQuote,
@@ -217,6 +244,10 @@ export function getNextBestAction({
     }
 
     return "Review the active RFQ package and monitor addenda acknowledgements.";
+  }
+
+  if (awardRecorded) {
+    return "Proceed with downstream commercial handoff using the recorded award outcome.";
   }
 
   if (documentCount === 0) {

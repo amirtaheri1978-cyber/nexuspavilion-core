@@ -343,13 +343,13 @@ export default function RfqVisualQaPage() {
             },
             {
               title: "Commercial Status",
-              value: "Commercial Evaluation",
-              detail: "Comparative evaluation available",
+              value: "Award Recorded",
+              detail: "Commercial decision recorded for downstream handoff",
               accentClassName: "text-nexus-gold-bright",
             },
           ]}
-          executiveBrief="Harbor Steel holds the strongest evaluation score with a low-risk commercial profile, and the board brief still needs a final award confirmation before supplier notification."
-          nextBestAction="Open comparison and confirm the Harbor Steel award if the commercial evidence remains acceptable for this refrigerated campus replacement program."
+          executiveBrief="This RFQ has a recorded award. The commercial decision is complete in Nexus Pavilion and can now support downstream commercial handoff. Contract execution, signatures, purchase-order status, and external-system completion are not tracked by this RFQ workspace."
+          nextBestAction="Proceed with downstream commercial handoff using the recorded award outcome."
           award={{
             label: "Award Complete",
             value:
