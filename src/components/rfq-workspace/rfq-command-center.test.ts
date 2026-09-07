@@ -104,6 +104,54 @@ describe("Task 24-RFQ-05 command center density closeout", () => {
     );
   });
 
+  it("surfaces a distinct post-award commercial handoff indicator after Award Complete", () => {
+    expect(command).toContain("handoff = null");
+    expect(command).toContain("handoff?:");
+    expect(command).toContain('data-rfq-command-handoff="true"');
+    expect(command).toContain("Downstream commercial handoff");
+    expect(command).toContain("{handoff.label}");
+    expect(command).toContain("{handoff.value}");
+    expect(command).toContain("{handoff.detail}");
+    expect(command).toContain('data-rfq-command-award="true"');
+    expect(command).toContain("{award.label}");
+    expect(command).toContain("{award.value}");
+    expect(command.match(/<ExecutivePanel/g) ?? []).toHaveLength(1);
+    expect(command).not.toContain("rounded-executive border border-white/10 bg-white/[0.04] p-6");
+
+    expect(detail).toContain("handoff={commercialHandoff}");
+    expect(detail).toContain(
+      'rfq.contract_framework === "project_specific"',
+    );
+    expect(detail).toContain('rfq.contract_framework === "framework"');
+    expect(detail).toContain("Project-specific commercial administration");
+    expect(detail).toContain("Framework commercial administration");
+    expect(detail).toContain(
+      "Use the recorded award outcome as the commercial handoff reference. Contract execution, signatures, purchase-order status, and external-system completion remain outside this RFQ workspace.",
+    );
+    expect(detail).not.toContain("getContractFramework(rfq.contract_framework)");
+
+    expect(visualQa).toContain("Project-specific commercial administration");
+    expect(visualQa).toContain(
+      "Use the recorded award outcome as the commercial handoff reference. Contract execution, signatures, purchase-order status, and external-system completion remain outside this RFQ workspace.",
+    );
+    expect(visualQa).toContain(
+      "Awarded to Harbor Steel Co. North American Refrigeration Division at $1,240,000",
+    );
+    expect(visualQa).toContain('label: "Award Complete"');
+    expect(visualQa).toContain('label: "Next Commercial Step"');
+
+    const openFixtureStart = visualQa.indexOf('statusLabel="Open"');
+    const awardedFixtureStart = visualQa.indexOf('statusLabel="Awarded"');
+    const openFixture = visualQa.slice(openFixtureStart, awardedFixtureStart);
+    expect(openFixtureStart).toBeGreaterThan(-1);
+    expect(awardedFixtureStart).toBeGreaterThan(openFixtureStart);
+    expect(openFixture).not.toContain("Next Commercial Step");
+    expect(openFixture).not.toContain(
+      "Project-specific commercial administration",
+    );
+    expect(openFixture).not.toContain("handoff={{");
+  });
+
   it("surfaces shared RFQ deadline risk without duplicating command-center architecture", () => {
     expect(detail).toContain(
       'from "@/lib/datetime/rfq-deadline-risk"',

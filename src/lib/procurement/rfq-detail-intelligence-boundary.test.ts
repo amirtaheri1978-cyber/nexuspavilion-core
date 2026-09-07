@@ -249,6 +249,37 @@ describe("Task 33C RFQ buyer executive intelligence isolation", () => {
     expect(recommendations.join(" ")).not.toContain("before final award");
   });
 
+  it("gates the post-award commercial handoff indicator to issuer authorization truth", () => {
+    expect(detailPage).toContain(
+      'const awardRecorded = isOwner && rfqStatus === "awarded";',
+    );
+    expect(detailPage).toContain("commercialEvaluationUnlocked");
+    expect(detailPage).toContain("awardedQuote");
+    expect(detailPage).toContain("awardedSupplierLabel");
+    expect(detailPage).toContain("handoff={commercialHandoff}");
+    expect(detailPage).toContain(
+      'rfq.contract_framework === "project_specific"',
+    );
+    expect(detailPage).toContain('rfq.contract_framework === "framework"');
+    expect(detailPage).toContain("Project-specific commercial administration");
+    expect(detailPage).toContain("Framework commercial administration");
+
+    const handoffDerivation = detailPage.indexOf("const commercialHandoff =");
+    const handoffProp = detailPage.indexOf("handoff={commercialHandoff}");
+    const isOwnerGate = detailPage.indexOf(
+      "isOwner &&\n  awardRecorded &&\n  commercialEvaluationUnlocked &&\n  awardedQuote &&\n  awardedSupplierLabel &&\n  commercialHandoffPath",
+    );
+
+    expect(handoffDerivation).toBeGreaterThan(-1);
+    expect(isOwnerGate).toBeGreaterThan(handoffDerivation);
+    expect(handoffProp).toBeGreaterThan(isOwnerGate);
+
+    // Supplier path must not receive a buyer handoff payload outside issuer gates.
+    expect(detailPage).toMatch(
+      /isOwner &&\s*awardRecorded &&\s*commercialEvaluationUnlocked &&\s*awardedQuote &&\s*awardedSupplierLabel &&\s*commercialHandoffPath/,
+    );
+  });
+
   it("keeps supplier-safe briefs free of buyer award intelligence", () => {
     const supplierBrief = getExecutiveBrief({
       awardRecorded: true,

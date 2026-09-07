@@ -24,6 +24,12 @@ type RFQCommandCenterAward = {
   value: string;
 };
 
+type RFQCommandCenterHandoff = {
+  label: string;
+  value: string;
+  detail: string;
+};
+
 type RFQCommandCenterProps = {
   backHref?: string;
   statusLabel: string;
@@ -36,6 +42,7 @@ type RFQCommandCenterProps = {
   executiveBrief: string;
   nextBestAction: string;
   award?: RFQCommandCenterAward | null;
+  handoff?: RFQCommandCenterHandoff | null;
   stripItems: RFQCommandStripItem[];
 };
 
@@ -50,6 +57,7 @@ export function RFQCommandCenter({
   executiveBrief,
   nextBestAction,
   award = null,
+  handoff = null,
   stripItems,
 }: RFQCommandCenterProps) {
   return (
@@ -147,6 +155,25 @@ export function RFQCommandCenter({
                 <ExecutiveBadge tone="awarded">{award.label}</ExecutiveBadge>
                 <p className="np-type-body mt-3 min-w-0 text-pretty text-white">
                   {award.value}
+                </p>
+              </div>
+            ) : null}
+            {handoff ? (
+              <div
+                className="mt-5 min-w-0 border-t border-white/10 pt-5"
+                data-rfq-command-handoff="true"
+              >
+                <p className="np-type-meta text-nexus-cyan-bright">
+                  Downstream commercial handoff
+                </p>
+                <h3 className="np-type-meta mt-3 text-nexus-gold-bright">
+                  {handoff.label}
+                </h3>
+                <p className="np-type-kpi mt-2 min-w-0 text-pretty text-lg text-white">
+                  {handoff.value}
+                </p>
+                <p className="np-type-body mt-3 min-w-0 text-pretty">
+                  {handoff.detail}
                 </p>
               </div>
             ) : null}

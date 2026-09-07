@@ -469,6 +469,28 @@ const awardedSupplierLabel = awardedQuote
 
 const awardRecorded = isOwner && rfqStatus === "awarded";
 
+const commercialHandoffPath =
+  rfq.contract_framework === "project_specific"
+    ? "Project-specific commercial administration"
+    : rfq.contract_framework === "framework"
+      ? "Framework commercial administration"
+      : null;
+
+const commercialHandoff =
+  isOwner &&
+  awardRecorded &&
+  commercialEvaluationUnlocked &&
+  awardedQuote &&
+  awardedSupplierLabel &&
+  commercialHandoffPath
+    ? {
+        label: "Next Commercial Step",
+        value: commercialHandoffPath,
+        detail:
+          "Use the recorded award outcome as the commercial handoff reference. Contract execution, signatures, purchase-order status, and external-system completion remain outside this RFQ workspace.",
+      }
+    : null;
+
 const priorBuyerRfqData = priorBuyerRfqResult.data;
 
 const priorBuyerRfqIds = (priorBuyerRfqData ?? [])
@@ -757,6 +779,7 @@ return (
         }
       : null
   }
+  handoff={commercialHandoff}
   stripItems={[
     {
       title: "Category",

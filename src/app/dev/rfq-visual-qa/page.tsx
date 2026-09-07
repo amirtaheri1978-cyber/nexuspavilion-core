@@ -355,6 +355,12 @@ export default function RfqVisualQaPage() {
             value:
               "Awarded to Harbor Steel Co. North American Refrigeration Division at $1,240,000",
           }}
+          handoff={{
+            label: "Next Commercial Step",
+            value: "Project-specific commercial administration",
+            detail:
+              "Use the recorded award outcome as the commercial handoff reference. Contract execution, signatures, purchase-order status, and external-system completion remain outside this RFQ workspace.",
+          }}
           stripItems={[
             { title: "Category", value: "Industrial refrigeration" },
             { title: "Location", value: "North Harbor, Dubai Logistics Corridor" },
