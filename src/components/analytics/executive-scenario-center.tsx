@@ -50,8 +50,10 @@ export function ExecutiveScenarioCenter({
           </h2>
 
           <p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-nexus-muted sm:text-base">
-            Recorded sourcing, supplier-participation, and commercial activity
-            are presented as historical evidence for executive interpretation.
+            Recorded sourcing activity is presented from scoped RFQ evidence.
+            Quotation-derived supplier participation is included only where the
+            current membership can access it. Historical quotation value remains
+            unavailable as a currency comparison without currency provenance.
             This section does not model future outcomes or outcome probability.
           </p>
         </div>
@@ -173,8 +175,8 @@ export function ExecutiveScenarioCenter({
 
           <HistoricalEvidenceCard
             position="03"
-            title="Submitted Quote Value"
-            subtitle="Recorded commercial activity"
+            title="Quotation Value Evidence"
+            subtitle="Currency provenance required"
             value={submittedQuoteValueContext}
             tone="neutral"
           />

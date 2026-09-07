@@ -160,6 +160,7 @@ export default async function AnalyticsPage() {
   const historicalPatterns = buildExecutiveHistoricalPatterns({
     rfqs: rfqList,
     quotes: quoteList,
+    canViewQuoteHistory: commercialAccess.canViewIssuerCommercialAnalytics,
     asOf: analyticsAsOf,
     periodDays: 30,
   });

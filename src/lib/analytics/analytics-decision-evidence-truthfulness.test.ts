@@ -156,6 +156,14 @@ describe("analytics decision-evidence truthfulness", () => {
     expect(executiveTrendSource).toContain("buildExecutiveHistoricalPatterns");
     expect(executiveTrendSource).toContain("currentPeriodLabel");
     expect(executiveTrendSource).toContain("previousPeriodLabel");
+    expect(executiveTrendSource).toContain("canViewQuoteHistory");
+    expect(executiveTrendSource).toContain('"access-restricted"');
+    expect(executiveTrendSource).toContain('"Limited Evidence"');
+    expect(executiveTrendSource).toContain("currency provenance");
+    expect(executiveTrendSource).not.toContain('currency: "USD"');
+    expect(analyticsPage).toContain(
+      "canViewQuoteHistory: commercialAccess.canViewIssuerCommercialAnalytics",
+    );
     expect(executiveTrendSource).toContain(
       "not forecasts or outcome probabilities",
     );
@@ -166,6 +174,10 @@ describe("analytics decision-evidence truthfulness", () => {
     expect(executiveHistoricalPatternSurface).toContain(
       "Recorded procurement evidence",
     );
+    expect(executiveHistoricalPatternSurface).toContain(
+      "current membership access",
+    );
+    expect(executiveHistoricalPatternSurface).toContain("currency provenance");
     expect(executiveHistoricalPatternSurface).not.toMatch(
       /30 \/ 60 \/ 90 Day Procurement Forecast|Forward-looking executive intelligence|projecting procurement outlook|Forecast status/i,
     );
@@ -175,6 +187,9 @@ describe("analytics decision-evidence truthfulness", () => {
     );
     expect(executiveHistoricalContextSurface).toContain(
       "does not model future outcomes",
+    );
+    expect(executiveHistoricalContextSurface).toContain(
+      "Currency provenance required",
     );
     expect(executiveHistoricalContextSurface).not.toMatch(
       /Strategic decision simulation|Strategic Scenario Modeling|Forecast Confidence Matrix|Best Case|Expected Case|Risk Case/,
@@ -186,6 +201,10 @@ describe("analytics decision-evidence truthfulness", () => {
     expect(boardExecutiveReport).toContain(
       "descriptive historical evidence, not a forecast",
     );
+    expect(boardExecutiveReport).toContain(
+      "current membership access permits",
+    );
+    expect(boardExecutiveReport).toContain("currency provenance");
     expect(boardExecutiveReport).not.toContain('eyebrow="Forward outlook"');
   });
 

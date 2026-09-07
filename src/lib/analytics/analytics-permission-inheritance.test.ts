@@ -23,6 +23,7 @@ const membership = readSource("src/lib/auth/membership.ts");
 const analyticsSourceLoader = readSource(
   "src/lib/analytics/source-data/load-analytics-source-data.ts",
 );
+const analyticsPage = readSource("src/app/analytics/page.tsx");
 const analyticsVendors = readSource("src/app/analytics/vendors/page.tsx");
 const vendorDashboard = readSource("src/app/vendor-dashboard/page.tsx");
 
@@ -228,6 +229,10 @@ describe("analytics permission inheritance", () => {
     );
     expect(analyticsSourceLoader).toContain(
       "commercialAccess.canViewIssuerCommercialAnalytics &&",
+    );
+    expect(analyticsPage).toContain("buildExecutiveHistoricalPatterns");
+    expect(analyticsPage).toContain(
+      "canViewQuoteHistory: commercialAccess.canViewIssuerCommercialAnalytics",
     );
   });
 

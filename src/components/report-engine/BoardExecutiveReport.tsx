@@ -275,7 +275,7 @@ export function BoardExecutiveReport(props: BoardExecutiveReportProps) {
         <div className="board-two-column board-two-column--hero">
           <ScoreNarrative
             title="Decision evidence readiness"
-            body="Current and preceding 30-day windows are compared using persisted RFQ and quotation timestamps. This is descriptive historical evidence, not a forecast."
+            body="Current and preceding 30-day windows are compared using persisted RFQ timestamps and quotation timestamps only where current membership access permits. Historical quotation value is withheld as a currency trend without currency provenance. This is descriptive historical evidence, not a forecast."
             label={props.forecastConfidence}
           />
           <ScoreNarrative

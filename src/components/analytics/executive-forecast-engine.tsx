@@ -58,10 +58,12 @@ export function ExecutiveForecastEngine({
           </h2>
 
           <p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-nexus-muted sm:text-base">
-            Observed RFQ creation, quotation activity, supplier participation,
-            and submitted quotation value are compared across adjacent recorded
-            periods. This evidence is descriptive and does not predict future
-            outcomes.
+            Scoped RFQ creation is compared across adjacent recorded periods.
+            Quotation-derived activity and supplier participation are included
+            only where current membership access and qualifying evidence permit.
+            Historical quotation value is not treated as a currency trend
+            without currency provenance. This evidence is descriptive and does
+            not predict future outcomes.
           </p>
         </div>
 
@@ -94,8 +96,9 @@ export function ExecutiveForecastEngine({
             </h3>
 
             <p className="mt-3 text-xs font-semibold leading-6 text-nexus-muted">
-              Current and preceding 30-day windows are compared using persisted
-              RFQ and quotation timestamps.
+              Current and preceding 30-day windows use persisted RFQ timestamps.
+              Quotation-derived measures are included only where current
+              membership access permits.
             </p>
 
             <div className="mt-6 rounded-2xl border border-white/10 bg-black/10 p-4">
@@ -127,9 +130,9 @@ export function ExecutiveForecastEngine({
               />
 
               <PatternSignal
-                label="Submitted Quote Value Direction"
+                label="Quotation Value Evidence"
                 value={submittedQuoteValueDirection}
-                description="Observed direction of submitted quotation value across the comparison windows."
+                description="Historical monetary comparison is shown only when the evidence carries sufficient currency provenance."
                 tone="commercial"
               />
             </div>
@@ -224,7 +227,7 @@ export function ExecutiveForecastEngine({
             <div className="mt-6 grid gap-3 sm:grid-cols-2">
               <EvidenceSignal
                 label="Evidence Basis"
-                value="Persisted RFQ and quotation timestamps"
+                value="Scoped RFQ timestamps; quotation history where authorized"
               />
 
               <EvidenceSignal
