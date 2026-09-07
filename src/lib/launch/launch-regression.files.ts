@@ -73,6 +73,7 @@ export const LAUNCH_REGRESSION_TEST_FILES = [
   "src/lib/procurement/award-rfq-quote-integrity-migration.test.ts",
   "src/lib/procurement/procurement-write-api-authorization.test.ts",
   "src/lib/procurement/procurement-write-authorization.test.ts",
+  "src/lib/procurement/security-regression-matrix.test.ts",
   "src/lib/procurement/rfq-commercial-intelligence.test.ts",
   "src/lib/procurement/rfq-commercial-scoring.test.ts",
   "src/lib/procurement/rfq-detail-intelligence-boundary.test.ts",

@@ -36,6 +36,9 @@ describe("Task 25 launch-regression catalog", () => {
       "src/lib/procurement/procurement-write-authorization.test.ts",
     );
     expect(LAUNCH_REGRESSION_TEST_FILES).toContain(
+      "src/lib/procurement/security-regression-matrix.test.ts",
+    );
+    expect(LAUNCH_REGRESSION_TEST_FILES).toContain(
       "src/components/rfq-workspace/rfq-invite-quote-submission.test.ts",
     );
     expect(LAUNCH_REGRESSION_TEST_FILES).toContain(
