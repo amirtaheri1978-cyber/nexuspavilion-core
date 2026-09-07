@@ -2,6 +2,11 @@ import {
   getActiveMembershipForUserCompany,
   type OrganizationMembership,
 } from "@/lib/auth/membership";
+import {
+  createEmptyGroupedCompliance,
+  loadCompanyCompliance,
+  type GroupedCompanyCompliance,
+} from "@/lib/company/compliance";
 import { createClient } from "@/lib/supabase/server";
 import type { AnalyticsRFQ } from "@/lib/analytics/procurement-utils";
 
@@ -26,6 +31,7 @@ export type AnalyticsCommercialAccess = {
 export type AnalyticsSourceData = {
   companyId: string | null;
   commercialAccess: AnalyticsCommercialAccess;
+  companyCompliance: GroupedCompanyCompliance;
   rfqList: AnalyticsRFQ[];
   quoteList: AnalyticsQuote[];
   companyList: AnalyticsCompany[];
@@ -75,6 +81,10 @@ export async function loadAnalyticsSourceData(): Promise<AnalyticsSourceData> {
       canViewIssuerCommercialAnalytics(activeMembership),
   };
 
+  const companyCompliance = companyId
+    ? await loadCompanyCompliance(supabase, companyId)
+    : createEmptyGroupedCompliance();
+
   const { data: rfqs } = companyId
     ? await supabase
         .from("rfqs")
@@ -103,6 +113,7 @@ export async function loadAnalyticsSourceData(): Promise<AnalyticsSourceData> {
   return {
     companyId,
     commercialAccess,
+    companyCompliance,
     rfqList,
     quoteList: (quotes ?? []) as AnalyticsQuote[],
     companyList: (companies ?? []) as AnalyticsCompany[],

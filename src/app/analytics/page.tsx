@@ -17,6 +17,7 @@ import { buildAnalyticsNarrative } from "@/lib/analytics/narrative/analytics-nar
 import { buildCommercialInsights } from "@/lib/analytics/commercial/commercial-insights";
 import { buildPortfolioIntelligence } from "@/lib/analytics/portfolio/portfolio-intelligence";
 import { buildExecutiveBrief } from "@/lib/analytics/executive/executive-brief";
+import { buildRiskComplianceEvidence } from "@/lib/analytics/executive/risk-intelligence";
 import { buildExecutiveHistoricalPatterns } from "@/lib/analytics/executive/executive-trend";
 import { IntelligenceDashboard } from "@/components/analytics/sections/intelligence-dashboard";
 import {
@@ -65,6 +66,7 @@ export default async function AnalyticsPage() {
   const {
     companyId,
     commercialAccess,
+    companyCompliance,
     rfqList,
     quoteList,
     companyList,
@@ -163,6 +165,14 @@ export default async function AnalyticsPage() {
     canViewQuoteHistory: commercialAccess.canViewIssuerCommercialAnalytics,
     asOf: analyticsAsOf,
     periodDays: 30,
+  });
+
+  const riskComplianceEvidence = buildRiskComplianceEvidence({
+    rfqs: rfqList,
+    quotes: quoteList,
+    compliance: companyCompliance,
+    canViewQuoteHistory: commercialAccess.canViewIssuerCommercialAnalytics,
+    asOf: analyticsAsOf,
   });
 
   const materialRfqs = countByScope(rfqList, "material");
@@ -436,14 +446,7 @@ export default async function AnalyticsPage() {
 
   const enterpriseCommandStatus = commandStatus(enterpriseProcurementScore);
 
-  const riskCommandStatus =
-    procurementRiskIndex <= 25
-      ? "Controlled"
-      : procurementRiskIndex <= 50
-        ? "Managed"
-        : procurementRiskIndex <= 75
-          ? "Elevated"
-          : "Critical";
+  const riskCommandStatus = riskComplianceEvidence.stateLabel;
 
   const opportunityCommandStatus =
     procurementOpportunityScore >= 80
@@ -468,12 +471,7 @@ export default async function AnalyticsPage() {
         ? "Moderate"
         : "Limited";
 
-  const riskVisibility =
-    procurementRiskIndex <= 25
-      ? "Controlled"
-      : procurementRiskIndex <= 50
-        ? "Monitored"
-        : "Escalated";
+  const riskVisibility = riskComplianceEvidence.stateLabel;
 
   const boardReadinessScore = Math.min(
     100,
@@ -506,12 +504,7 @@ export default async function AnalyticsPage() {
           ? "Operational Stabilization"
           : "Immediate Leadership Attention";
 
-  const ceoRiskLevel =
-    procurementRiskIndex <= 25
-      ? "Low"
-      : procurementRiskIndex <= 50
-        ? "Moderate"
-        : "High";
+  const ceoRiskLevel = riskComplianceEvidence.stateLabel;
 
   const ceoOpportunityLevel =
     procurementOpportunityScore >= 80
@@ -527,11 +520,10 @@ export default async function AnalyticsPage() {
     `Benchmark Status: ${executiveBenchmarkStatus}`,
   ];
 
-  const ceoCriticalRisks = [
-    `Risk Exposure: ${procurementRiskIndex}/100`,
-    `Supplier Dependency: ${supplierDependencyRisk}`,
-    `Vendor Concentration: ${concentrationLevel}`,
-  ];
+  const ceoCriticalRisks =
+    riskComplianceEvidence.indicators.length > 0
+      ? riskComplianceEvidence.indicators.slice(0, 3)
+      : [riskComplianceEvidence.narrative];
 
   const ceoStrategicOpportunities = [
     `Supplier Engagement: ${supplierEngagementScore}/100`,
@@ -581,12 +573,7 @@ remains ${ceoRiskLevel.toLowerCase()}.
         ? "Executive Review Required"
         : "Operational Improvement Required";
 
-  const boardRiskPosition =
-    procurementRiskIndex <= 25
-      ? "Low Risk"
-      : procurementRiskIndex <= 50
-        ? "Moderate Risk"
-        : "Elevated Risk";
+  const boardRiskPosition = riskComplianceEvidence.stateLabel;
 
   const boardStrategicPosition =
     procurementOpportunityScore >= 70
@@ -1313,15 +1300,7 @@ remains ${ceoRiskLevel.toLowerCase()}.
   }
 
   const topRisk =
-    vendorConcentrationRisk >= 70
-      ? "Vendor concentration exceeds recommended threshold."
-      : supplierParticipationCount <= 3
-        ? "Supplier participation remains limited."
-        : procurementRiskIndex >= 50
-          ? "Procurement risk level is elevated."
-          : constructionClassificationScore < 60
-            ? "RFQ classification maturity remains under target."
-            : "No major enterprise procurement risks detected.";
+    riskComplianceEvidence.indicators[0] ?? riskComplianceEvidence.narrative;
 
   const topOpportunity =
     commercialInsights.state === "available"
@@ -1623,6 +1602,7 @@ remains ${ceoRiskLevel.toLowerCase()}.
           boardReadiness={boardReadinessScore}
           decisionReadiness={decisionSupportReadiness.score}
           riskIndex={procurementRiskIndex}
+          riskComplianceEvidence={riskComplianceEvidence}
           opportunityValue={commercialOpportunityDisplay}
           procurementVolume={`$${procurementVolume.toLocaleString()}`}
           awardedVolume={`$${awardedVolume.toLocaleString()}`}
@@ -2139,9 +2119,7 @@ remains ${ceoRiskLevel.toLowerCase()}.
             riskCommandStatus={riskCommandStatus}
             opportunityCommandStatus={opportunityCommandStatus}
             executiveCommandRecommendation={executiveCommandRecommendation}
-            procurementRiskIndex={procurementRiskIndex}
-            supplierDependencyRisk={supplierDependencyRisk}
-            concentrationLevel={concentrationLevel}
+            riskComplianceEvidence={riskComplianceEvidence}
             procurementMaturityScore={procurementMaturityScore}
             decisionSupportReadiness={decisionSupportReadiness}
             procurementOutlook={procurementOutlook}

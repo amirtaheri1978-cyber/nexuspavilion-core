@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest";
 
 import { buildAnalyticsRfqSourceHref } from "@/lib/analytics/procurement-utils";
 import { buildDecisionSupportReadiness } from "@/lib/analytics/executive/decision-support-readiness";
+import { buildRiskComplianceEvidence } from "@/lib/analytics/executive/risk-intelligence";
 import { calculateExecutiveReadiness } from "@/lib/executive/executive-readiness-score";
 import { calculateExecutiveScore } from "@/lib/executive/executive-score";
 
@@ -208,7 +209,88 @@ describe("analytics decision-evidence truthfulness", () => {
     expect(boardExecutiveReport).not.toContain('eyebrow="Forward outlook"');
   });
 
-  it("keeps executive visual semantics aligned with the underlying evidence", () => {
+  it("keeps risk and compliance insight evidence explainable, company-scoped, and self-declared", () => {
+  const evidence = buildRiskComplianceEvidence({
+    rfqs: [
+      {
+        id: "rfq-1",
+        slug: "rfq-1",
+        title: "Selective RFQ",
+        category: "Material",
+        location: null,
+        budget: null,
+        status: "open",
+        created_at: "2026-08-20T00:00:00.000Z",
+        deadline: "2026-09-01T00:00:00.000Z",
+        procurement_scope: null,
+        sourcing_method: "invited",
+        contract_framework: "project_specific",
+      },
+    ],
+    quotes: [],
+    compliance: {
+      insurance: [
+        {
+          name: "General Liability",
+          provider: "Carrier",
+          effective_on: "2026-01-01",
+          expires_on: "2026-09-01",
+        },
+      ],
+      workers_compensation: [],
+      safety: [],
+    },
+    canViewQuoteHistory: true,
+    asOf: new Date("2026-09-07T12:00:00.000Z"),
+  });
+
+  expect(evidence.compliance.evidenceLabel).toBe("Self-Declared");
+  expect(evidence.compliance.expiredCount).toBe(1);
+  expect(evidence.rfq.incompleteClassificationRfqs).toBe(1);
+  expect(evidence.rfq.overdueOpenRfqs).toBe(1);
+  expect(evidence.supplier.activeRfqsWithoutQuoteEvidence).toBe(1);
+  expect(evidence.narrative).toContain("not a universal risk rating");
+  expect(evidence.compliance.notice).toContain("not been independently verified");
+
+  const restrictedEvidence = buildRiskComplianceEvidence({
+    rfqs: [],
+    quotes: [],
+    compliance: {
+      insurance: [],
+      workers_compensation: [],
+      safety: [],
+    },
+    canViewQuoteHistory: false,
+    asOf: new Date("2026-09-07T12:00:00.000Z"),
+  });
+
+  expect(restrictedEvidence.supplier.evidenceState).toBe("access-restricted");
+  expect(restrictedEvidence.state).toBe("insufficient-data");
+
+  const riskCenter = readSource(
+    "src/components/analytics/executive/executive-risk-center.tsx",
+  );
+  const riskIntelligence = readSource(
+    "src/lib/analytics/executive/risk-intelligence.ts",
+  );
+
+  expect(analyticsSourceLoader).toContain("companyCompliance");
+  expect(analyticsSourceLoader).toContain("loadCompanyCompliance");
+  expect(analyticsPage).toContain("buildRiskComplianceEvidence");
+  expect(analyticsPage).toContain("riskComplianceEvidence={riskComplianceEvidence}");
+  expect(riskCenter).toContain("Risk &amp; Compliance Evidence");
+  expect(riskCenter).toContain("Self-Declared Compliance Standing");
+  expect(riskCenter).toContain("Company compliance records remain self-declared");
+  expect(riskCenter).toContain("produce a universal enterprise risk rating");
+  expect(riskIntelligence).toContain("COMPANY_COMPLIANCE_SELF_DECLARED_NOTICE");
+  expect(boardExecutiveReport).toContain("Risk & compliance evidence");
+  expect(boardExecutiveReport).toContain("not a universal risk rating");
+  expect(boardReport).toContain("Internal Risk Signal Score");
+  expect(boardReport).toContain("not a verified enterprise risk rating");
+  expect(boardReport).not.toContain("- Procurement Risk Index:");
+});
+
+it("keeps executive visual semantics aligned with the underlying evidence", () => {
     expect(analyticsPage).not.toMatch(/savings\s+savings/i);
     expect(analyticsPage).toContain('valueLabel: "Opportunity Score"');
     expect(analyticsPage).toContain(
@@ -230,12 +312,23 @@ describe("analytics decision-evidence truthfulness", () => {
     );
 
     expect(executiveRiskCenterSurface).toContain(
-      "const primaryRiskPosition =",
+      "Risk &amp; Compliance Evidence",
     );
     expect(executiveRiskCenterSurface).toContain(
+      "Self-Declared Compliance Standing",
+    );
+    expect(executiveRiskCenterSurface).toContain(
+      "Observed RFQ Review Indicators",
+    );
+    expect(executiveRiskCenterSurface).toContain(
+      "riskComplianceEvidence.stateLabel",
+    );
+    expect(executiveRiskCenterSurface).not.toContain(
       '"Moderate enterprise exposure"',
     );
-    expect(executiveRiskCenterSurface).toContain("{primaryRiskPosition}");
+    expect(executiveRiskCenterSurface).not.toContain(
+      "Procurement Risk Index",
+    );
 
     expect(analyticsChartSurface).toContain(
       'valueFormat?: "number" | "currency"',

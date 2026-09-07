@@ -1,3 +1,4 @@
+import type { RiskComplianceEvidence } from "@/lib/analytics/executive/risk-intelligence";
 import { ReportFooter } from "./ReportFooter";
 import { ReportHeader } from "./ReportHeader";
 import { ReportSectionDivider } from "./ReportSectionDivider";
@@ -19,6 +20,7 @@ type BoardExecutiveReportProps = {
   boardReadiness: number;
   decisionReadiness: number;
   riskIndex: number;
+  riskComplianceEvidence: RiskComplianceEvidence;
   opportunityValue: string;
   procurementVolume: string;
   awardedVolume: string;
@@ -38,12 +40,11 @@ type BoardExecutiveReportProps = {
 };
 
 export function BoardExecutiveReport(props: BoardExecutiveReportProps) {
-  const riskLevel =
-    props.riskIndex >= 70
-      ? "High"
-      : props.riskIndex >= 40
-        ? "Moderate"
-        : "Low";
+  const riskEvidenceLabel = props.riskComplianceEvidence.stateLabel;
+  const riskIndicators =
+    props.riskComplianceEvidence.indicators.length > 0
+      ? props.riskComplianceEvidence.indicators
+      : [props.riskComplianceEvidence.narrative];
 
   return (
     <div className="board-executive-report">
@@ -106,9 +107,9 @@ export function BoardExecutiveReport(props: BoardExecutiveReportProps) {
               tone: "green",
             },
             {
-              label: "Risk exposure",
-              value: `${props.riskIndex}/100`,
-              context: `${riskLevel} current exposure`,
+              label: "Risk & compliance evidence",
+              value: riskEvidenceLabel,
+              context: "Observed company/RFQ evidence; not a universal risk rating",
               tone: "red",
             },
           ]}
@@ -117,7 +118,7 @@ export function BoardExecutiveReport(props: BoardExecutiveReportProps) {
         <ScoreNarrative
           title="Board interpretation"
           body={props.decisionStatement}
-          label={riskLevel}
+          label={riskEvidenceLabel}
         />
 
         <BoardList title="Evidence constraints" items={props.risks} />
@@ -191,22 +192,22 @@ export function BoardExecutiveReport(props: BoardExecutiveReportProps) {
       <ReportPage
         companyName={props.companyName}
         generatedAt={props.generatedAt}
-        eyebrow="Enterprise risk"
-        title="Exposure requiring active governance"
-        lead="Risk is presented as a decision constraint: what may affect commercial outcomes, continuity, or confidence in the evidence base."
+        eyebrow="Risk & compliance evidence"
+        title="Observed evidence requiring active governance"
+        lead="Risk and compliance are presented from explainable company-scoped evidence. Company compliance records are self-declared, and the resulting indicators are not a universal enterprise risk rating, probability, regulatory determination, or third-party verification."
       >
         <div className="board-risk-hero">
           <div>
-            <span>Risk index</span>
-            <strong>{props.riskIndex}/100</strong>
+            <span>Evidence state</span>
+            <strong>{riskEvidenceLabel}</strong>
           </div>
           <div>
-            <span>Current posture</span>
-            <strong>{riskLevel}</strong>
+            <span>Compliance standing</span>
+            <strong>{props.riskComplianceEvidence.compliance.evidenceLabel}</strong>
           </div>
         </div>
 
-        <BoardList title="Material risk register" items={props.risks} numbered />
+        <BoardList title="Observed review indicators" items={riskIndicators} numbered />
 
         <div className="board-decision-strip">
           <span>Required response</span>
@@ -348,7 +349,7 @@ export function BoardExecutiveReport(props: BoardExecutiveReportProps) {
           <MethodologyItem
             number="01"
             title="Evidence"
-            body="Operational RFQ, quote, supplier, award, and classification data available to the current organization workspace."
+            body="Operational RFQ, quote, supplier, award, and classification data available to the current organization workspace, plus self-declared company compliance records when present."
           />
           <MethodologyItem
             number="02"
@@ -358,7 +359,7 @@ export function BoardExecutiveReport(props: BoardExecutiveReportProps) {
           <MethodologyItem
             number="03"
             title="Decision use"
-            body="Outputs support executive judgment. They do not replace financial validation, supplier due diligence, contractual review, or delegated authority."
+            body="Outputs support executive judgment. They do not replace financial validation, supplier due diligence, contractual review, delegated authority, regulatory determination, or independent compliance verification."
           />
           <MethodologyItem
             number="04"

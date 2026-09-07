@@ -30,7 +30,7 @@ export function createProcurementRiskSignal(
   return createExecutiveSignal({
     id: "procurement-risk-index",
     category: "risk",
-    label: "Procurement risk index",
+    label: "Internal risk signal score",
     value: `${riskIndex}/100`,
     status:
       riskIndex >= 70
@@ -40,7 +40,7 @@ export function createProcurementRiskSignal(
           : "healthy",
     importance,
     description:
-      "Lower values indicate a more controlled procurement risk position.",
+      "Internal heuristic inverse of the current procurement-health composite. Higher values flag conditions for review; this is not a verified enterprise risk rating, probability, or compliance status.",
   });
 }
 

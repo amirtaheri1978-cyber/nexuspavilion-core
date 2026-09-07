@@ -45,11 +45,11 @@ id: "board",
 title: "Board Report",
 audience: "Board Members",
 subtitle:
-"Enterprise procurement performance, governance exposure, risk posture, and strategic decision readiness.",
+"Enterprise procurement performance, governance evidence, internal risk signals, and strategic decision readiness.",
 status: "insufficient-data",
 statusLabel: "Insufficient Data",
 primaryRequirement:
-"Requires validated RFQ, supplier, quote, award, risk, and financial impact data.",
+"Requires validated RFQ, supplier, quote, award, explainable risk evidence, and financial impact data.",
 },
 {
 id: "ceo",
@@ -91,7 +91,7 @@ const requiredDataSources = [
 "Supplier participation",
 "Submitted quotes",
 "Award decisions",
-"Supplier risk signals",
+"Supplier risk evidence",
 "Decision-support readiness",
 "Savings or cost-avoidance calculations",
 ];
@@ -123,15 +123,14 @@ return "border-orange-300/20 bg-orange-400/10 text-orange-300";
 }
 
 function getRiskNarrative(procurementRiskIndex: number) {
-if (procurementRiskIndex >= 70) {
-return "Procurement risk exposure is elevated and should remain visible at the board and executive level until supplier coverage, concentration exposure, and decision evidence improve.";
-}
+const signalBand =
+procurementRiskIndex >= 70
+? "elevated"
+: procurementRiskIndex >= 45
+? "moderate"
+: "lower";
 
-if (procurementRiskIndex >= 45) {
-return "Procurement risk exposure is moderate. Leadership should continue monitoring supplier dependency, concentration level, and procurement decision quality.";
-}
-
-return "Procurement risk exposure is currently controlled. Continued monitoring is still required as procurement activity, supplier participation, and award workflows scale.";
+return `The internal risk signal score is ${procurementRiskIndex}/100 (${signalBand} heuristic band). It is derived from current procurement-health inputs and is not a verified enterprise risk rating, probability, regulatory determination, or compliance status. Leadership should review the underlying supplier, concentration, RFQ, and decision-evidence conditions before escalation.`;
 }
 
 function generateReportBody({
@@ -193,7 +192,7 @@ body: `Procurement performance shows an enterprise score of ${enterpriseProcurem
 },
 {
 title: "Supplier Network Health",
-body: `Supplier engagement is currently ${supplierEngagementScore}/100. Supplier dependency risk is classified as ${supplierDependencyRisk}, with vendor concentration marked as ${concentrationLevel}.`,
+body: `Supplier engagement is currently ${supplierEngagementScore}/100. The supplier dependency signal is ${supplierDependencyRisk}, with vendor concentration marked as ${concentrationLevel}.`,
 },
 {
 title: "Risk Visibility",
@@ -201,7 +200,7 @@ body: riskNarrative,
 },
 {
 title: "CEO Action",
-body: "Maintain executive visibility over supplier participation, procurement throughput, award activity, and risk exposure as procurement operations scale.",
+body: "Maintain executive visibility over supplier participation, procurement throughput, award activity, explainable risk evidence, and compliance evidence as procurement operations scale.",
 },
 ],
 };
@@ -217,7 +216,7 @@ body: `Procurement maturity is ${procurementMaturityScore}/100 and efficiency is
 },
 {
 title: "Supplier Participation",
-body: `Supplier engagement is ${supplierEngagementScore}/100. Dependency risk is ${supplierDependencyRisk}, while concentration level is ${concentrationLevel}.`,
+body: `Supplier engagement is ${supplierEngagementScore}/100. The supplier dependency signal is ${supplierDependencyRisk}, while concentration level is ${concentrationLevel}.`,
 },
 {
 title: "Decision Evidence",
@@ -243,7 +242,7 @@ body: `Procurement maturity is ${procurementMaturityScore}/100, procurement effi
 },
 {
 title: "Risk Assessment",
-body: `${riskNarrative} Supplier dependency risk is ${supplierDependencyRisk}, vendor concentration is ${concentrationLevel}, and procurement risk index is ${procurementRiskIndex}/100.`,
+body: `${riskNarrative} The supplier dependency signal is ${supplierDependencyRisk} and vendor concentration is ${concentrationLevel}.`,
 },
 {
 title: "Decision Evidence",
@@ -325,11 +324,11 @@ ${activeReportBody.sections
 .join("\n\n")}
 
 Executive Metrics:
-- Procurement Risk Index: ${procurementRiskIndex}/100
+- Internal Risk Signal Score: ${procurementRiskIndex}/100
 - Procurement Maturity Score: ${procurementMaturityScore}/100
 - Decision-Support Readiness: ${decisionSupportReadinessScore}/100
 - Data Quality: ${dataQualityScore}/100
-- Supplier Dependency Risk: ${supplierDependencyRisk}
+- Supplier Dependency Signal: ${supplierDependencyRisk}
 - Vendor Concentration: ${concentrationLevel}
 - Benchmark Readiness Score: ${benchmarkReadinessScore}/100
 - Board Health Index: ${boardHealthIndex}/100

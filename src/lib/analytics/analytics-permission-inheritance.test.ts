@@ -65,6 +65,7 @@ type SupabaseHarnessOptions = {
   rfqs?: Array<Record<string, unknown>>;
   quotes?: Array<Record<string, unknown>>;
   companies?: Array<Record<string, unknown>>;
+  compliance?: Array<Record<string, unknown>>;
 };
 
 const defaultMembershipRow = {
@@ -96,6 +97,7 @@ function createSupabaseHarness(options: SupabaseHarnessOptions = {}) {
   const rfqs = options.rfqs ?? [];
   const quotes = options.quotes ?? [];
   const companies = options.companies ?? [];
+  const compliance = options.compliance ?? [];
 
   function resolveResult(table: string): QueryResult {
     if (table === "profiles") {
@@ -122,6 +124,10 @@ function createSupabaseHarness(options: SupabaseHarnessOptions = {}) {
 
     if (table === "company_directory") {
       return { data: companies, error: null };
+    }
+
+    if (table === "company_compliance") {
+      return { data: compliance, error: null };
     }
 
     return { data: [], error: null };
@@ -230,6 +236,8 @@ describe("analytics permission inheritance", () => {
     expect(analyticsSourceLoader).toContain(
       "commercialAccess.canViewIssuerCommercialAnalytics &&",
     );
+    expect(analyticsSourceLoader).toContain("loadCompanyCompliance");
+    expect(analyticsSourceLoader).toContain("companyCompliance");
     expect(analyticsPage).toContain("buildExecutiveHistoricalPatterns");
     expect(analyticsPage).toContain(
       "canViewQuoteHistory: commercialAccess.canViewIssuerCommercialAnalytics",
@@ -345,8 +353,14 @@ describe("analytics permission inheritance behavior", () => {
     });
     expect(result.rfqList).toEqual([]);
     expect(result.quoteList).toEqual([]);
+    expect(result.companyCompliance).toEqual({
+      insurance: [],
+      workers_compensation: [],
+      safety: [],
+    });
     expect(getTrace(harness.traces, "rfqs")).toBeUndefined();
     expect(getTrace(harness.traces, "quotes")).toBeUndefined();
+    expect(getTrace(harness.traces, "company_compliance")).toBeUndefined();
     expect(getTrace(harness.traces, "company_directory")).toBeDefined();
   });
 
@@ -431,7 +445,43 @@ describe("analytics permission inheritance behavior", () => {
     expect(getTrace(harness.traces, "quotes")).toBeUndefined();
   });
 
-  it("does not read quotes when the scoped company has no RFQ ids", async () => {
+  it("scopes self-declared company compliance to the exact active membership company", async () => {
+  const harness = createSupabaseHarness({
+    compliance: [
+      {
+        id: "compliance-1",
+        company_id: "company-1",
+        compliance_type: "insurance",
+        name: "General Liability",
+        provider: "Carrier",
+        effective_on: "2026-01-01",
+        expires_on: "2026-12-31",
+        sort_order: 0,
+        created_at: "2026-01-01T00:00:00.000Z",
+        updated_at: "2026-01-01T00:00:00.000Z",
+      },
+    ],
+  });
+
+  vi.mocked(createClient).mockResolvedValue(harness.supabase as never);
+
+  const result = await loadAnalyticsSourceData();
+  const complianceTrace = getTrace(harness.traces, "company_compliance");
+
+  expect(complianceTrace?.equals).toContainEqual(["company_id", "company-1"]);
+  expect(result.companyCompliance.insurance).toEqual([
+    {
+      name: "General Liability",
+      provider: "Carrier",
+      effective_on: "2026-01-01",
+      expires_on: "2026-12-31",
+    },
+  ]);
+  expect(result.companyCompliance.workers_compensation).toEqual([]);
+  expect(result.companyCompliance.safety).toEqual([]);
+});
+
+it("does not read quotes when the scoped company has no RFQ ids", async () => {
     const harness = createSupabaseHarness({ rfqs: [] });
 
     vi.mocked(createClient).mockResolvedValue(harness.supabase as never);

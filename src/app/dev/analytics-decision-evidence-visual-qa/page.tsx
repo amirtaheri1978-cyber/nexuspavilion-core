@@ -5,8 +5,9 @@ import { RfqDecisionReadiness } from "@/components/analytics/award-probability-f
 import ExecutiveRiskCenter from "@/components/analytics/executive/executive-risk-center";
 import BoardReportGenerator from "@/components/board-report-generator";
 import BoardNarrativeGenerator from "@/components/ai-board-narrative-generator";
-import { EXECUTIVE_PAGE_CLASS } from "@/lib/design-system/executive-contract";
+import type { RiskComplianceEvidence } from "@/lib/analytics/executive/risk-intelligence";
 import { buildDecisionSupportReadiness } from "@/lib/analytics/executive/decision-support-readiness";
+import { EXECUTIVE_PAGE_CLASS } from "@/lib/design-system/executive-contract";
 
 const strongReadiness = buildDecisionSupportReadiness({
   dataQualityScore: 88,
@@ -19,6 +20,56 @@ const limitedReadiness = buildDecisionSupportReadiness({
   supplierEngagementScore: 28,
   benchmarkReadinessScore: 31,
 });
+
+const visualQaRiskComplianceEvidence: RiskComplianceEvidence = {
+  state: "limited",
+  stateLabel: "Limited Evidence",
+  narrative:
+    "Static company-scoped evidence contains explainable compliance, RFQ, and supplier-response review indicators. These fixtures are for visual QA only and do not represent a universal enterprise risk rating, probability, regulatory determination, or third-party compliance verification.",
+  indicators: [
+    "1 self-declared compliance record is within the existing 30-day expiring-soon window.",
+    "1 RFQ is missing one or more procurement classification fields.",
+    "1 active RFQ has no submitted quotation evidence in the authorized analytics fixture.",
+  ],
+  limitations: [
+    "Compliance information is maintained by this organization and has not been independently verified by Nexus Pavilion.",
+    "Static development fixtures are deterministic visual-review evidence and are not production observations.",
+  ],
+  compliance: {
+    evidenceState: "available",
+    evidenceLabel: "Self-Declared",
+    recordCount: 3,
+    currentCount: 2,
+    expiringSoonCount: 1,
+    expiredCount: 0,
+    notYetEffectiveCount: 0,
+    noExpiryCount: 0,
+    notice:
+      "Compliance information is maintained by this organization and has not been independently verified by Nexus Pavilion.",
+    summary:
+      "3 self-declared compliance records are represented for visual QA: 2 current and 1 expiring soon.",
+  },
+  rfq: {
+    evidenceState: "available",
+    evidenceLabel: "Available",
+    totalRfqs: 4,
+    activeRfqs: 2,
+    fullyClassifiedRfqs: 3,
+    incompleteClassificationRfqs: 1,
+    overdueOpenRfqs: 0,
+    summary:
+      "4 company-scoped RFQ fixtures are represented; 1 has incomplete classification evidence and none of the active fixtures is past its recorded deadline.",
+  },
+  supplier: {
+    evidenceState: "limited",
+    evidenceLabel: "Limited Evidence",
+    distinctSuppliers: 3,
+    rfqsWithQuoteEvidence: 2,
+    activeRfqsWithoutQuoteEvidence: 1,
+    summary:
+      "3 distinct supplier fixtures appear in authorized quotation evidence; 2 RFQs have quote evidence and 1 active RFQ does not.",
+  },
+};
 
 const rfqDecisionItems = [
   {
@@ -72,8 +123,8 @@ export default function AnalyticsDecisionEvidenceVisualQaPage() {
           </h1>
           <p className="mt-4 max-w-3xl text-sm font-semibold leading-7 text-slate-400 sm:text-base">
             Static deterministic fixtures for reviewing decision-support
-            readiness, procurement risk, RFQ evaluation evidence, and truthful
-            report gating.
+            readiness, risk and compliance evidence, RFQ evaluation evidence,
+            and truthful report gating.
           </p>
         </header>
 
@@ -98,9 +149,7 @@ export default function AnalyticsDecisionEvidenceVisualQaPage() {
         </section>
 
         <ExecutiveRiskCenter
-          procurementRiskIndex={68}
-          supplierDependencyRisk="Elevated"
-          concentrationLevel="High"
+          riskComplianceEvidence={visualQaRiskComplianceEvidence}
           procurementMaturityScore={62}
           decisionSupportReadinessScore={strongReadiness.score}
         />
