@@ -636,7 +636,12 @@ signals.
 ) : null}
 
 {loading ? (
-<div className="mt-12 rounded-3xl border border-white/10 bg-white/[0.045] p-10 text-center text-sm font-bold text-slate-500">
+<div
+className="mt-12 rounded-3xl border border-white/10 bg-white/[0.045] p-10 text-center text-sm font-bold text-slate-500"
+role="status"
+aria-live="polite"
+aria-busy="true"
+>
 Loading company network...
 </div>
 ) : filteredCompanies.length === 0 ? (
