@@ -52,6 +52,10 @@ import {
   type Quote,
 } from "@/lib/procurement/rfq-commercial-intelligence";
 import {
+  buildRfqOwnerSupplierNameById,
+  resolveRfqOwnerSupplierLabel,
+} from "@/lib/procurement/rfq-owner-supplier-identity";
+import {
   buildRfqSupplierRecommendationInput,
   getRfqSupplierCompanyIds,
   type RfqSupplierCompany,
@@ -452,6 +456,17 @@ const [supplierCompanyResult, priorBuyerRfqResult] = await Promise.all([
 const supplierCompanies =
   (supplierCompanyResult.data ?? []) as RfqSupplierCompany[];
 
+const supplierNameById =
+  buildRfqOwnerSupplierNameById(supplierCompanies);
+
+const awardedSupplierLabel = awardedQuote
+  ? resolveRfqOwnerSupplierLabel({
+      companyId: awardedQuote.company_id,
+      rank: awardedQuote.rank,
+      supplierNameById,
+    })
+  : null;
+
 const priorBuyerRfqData = priorBuyerRfqResult.data;
 
 const priorBuyerRfqIds = (priorBuyerRfqData ?? [])
@@ -720,10 +735,11 @@ return (
     isOwner &&
     rfqStatus === "awarded" &&
     awardedQuote &&
+    awardedSupplierLabel &&
     commercialEvaluationUnlocked
       ? {
           label: "Award Complete",
-          value: `Awarded at ${formatMoney(
+          value: `Awarded to ${awardedSupplierLabel} at ${formatMoney(
             awardedQuote.amountNumber
           )}`,
         }

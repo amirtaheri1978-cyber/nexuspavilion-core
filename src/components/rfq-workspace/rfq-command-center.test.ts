@@ -50,6 +50,30 @@ describe("Task 24-RFQ-05 command center density closeout", () => {
     expect(detail).toContain("getNextBestAction({");
   });
 
+  it("surfaces the awarded respondent in the authorized command-center outcome", () => {
+    expect(detail).toContain(
+      'from "@/lib/procurement/rfq-owner-supplier-identity"',
+    );
+    expect(detail).toContain(
+      "buildRfqOwnerSupplierNameById(supplierCompanies)",
+    );
+    expect(detail).toContain("resolveRfqOwnerSupplierLabel({");
+    expect(detail).toContain("companyId: awardedQuote.company_id");
+    expect(detail).toContain("rank: awardedQuote.rank");
+    expect(detail).toContain("supplierNameById");
+    expect(detail).toContain("awardedSupplierLabel &&");
+    expect(detail).toContain("Awarded to ");
+    expect(detail).toContain("awardedQuote.amountNumber");
+    expect(visualQa).toContain(
+      "Awarded to Harbor Steel Co. North American Refrigeration Division at $1,240,000",
+    );
+    expect(visualQa.match(/rfqId="00000000-0000-4000-8000-000000000011"/g) ?? []).toHaveLength(2);
+    expect(visualQa).toContain('embedded rfqId="visual-qa-rfq"');
+    expect(detail.match(/\.from\("company_directory"\)/g) ?? []).toHaveLength(1);
+    expect(command).toContain("{award.value}");
+    expect(command).toContain("text-pretty");
+  });
+
   it("surfaces shared RFQ deadline risk without duplicating command-center architecture", () => {
     expect(detail).toContain(
       'from "@/lib/datetime/rfq-deadline-risk"',

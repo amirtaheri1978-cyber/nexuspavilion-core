@@ -352,7 +352,8 @@ export default function RfqVisualQaPage() {
           nextBestAction="Open comparison and confirm the Harbor Steel award if the commercial evidence remains acceptable for this refrigerated campus replacement program."
           award={{
             label: "Award Complete",
-            value: "Awarded at $1,240,000",
+            value:
+              "Awarded to Harbor Steel Co. North American Refrigeration Division at $1,240,000",
           }}
           stripItems={[
             { title: "Category", value: "Industrial refrigeration" },
@@ -678,7 +679,7 @@ export default function RfqVisualQaPage() {
           data-rfq-document-shell-width="1110"
         >
           <RFQDocumentWorkspace
-            rfqId="visual-qa-rfq"
+            rfqId="00000000-0000-4000-8000-000000000011"
             companyId="visual-qa-company"
             isOwner
             documents={visualQaDocuments}
@@ -707,7 +708,7 @@ export default function RfqVisualQaPage() {
           data-rfq-addenda-shell-width="1110"
         >
           <RFQDocumentWorkspace
-            rfqId="visual-qa-rfq"
+            rfqId="00000000-0000-4000-8000-000000000011"
             companyId="visual-qa-company"
             isOwner={false}
             documents={visualQaDocuments}
