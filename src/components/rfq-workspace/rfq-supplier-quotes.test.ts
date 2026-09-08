@@ -37,7 +37,9 @@ describe("Task 24-RFQ-07 respondent supplier quote density", () => {
     expect(supplierQuotes).toContain("{quote.timeline || \"Not specified\"}");
     expect(supplierQuotes).toContain("{quote.message || \"No supplier message provided.\"}");
     expect(supplierQuotes).toContain("quote.validity_days");
-    expect(supplierQuotes).toContain("quote.decision || \"Submitted\"");
+    expect(supplierQuotes).toContain(
+      "const decisionLabel = formatSupplierDecisionLabel(quote.decision);",
+    );
     expect(supplierQuotes).toContain("normalizedDecision === \"awarded\"");
     expect(supplierQuotes).toContain("normalizedDecision === \"accepted\"");
     expect(supplierQuotes).toContain("normalizedDecision === \"under review\"");
@@ -119,5 +121,67 @@ describe("Task 24-RFQ-07 respondent supplier quote density", () => {
     expect(comparison).toContain("AwardContractButton");
     expect(ownerQuotes).toContain("embedded");
     expect(ownerQuotes).toContain("recommendedQuoteId === quote.id");
+  });
+
+  it("normalizes supplier decision display labels without changing decision tone semantics", () => {
+    const formatterStart = supplierQuotes.indexOf(
+      "function formatSupplierDecisionLabel(",
+    );
+    const toneStart = supplierQuotes.indexOf(
+      "function getDecisionTone(",
+      formatterStart,
+    );
+
+    expect(formatterStart).toBeGreaterThan(-1);
+    expect(toneStart).toBeGreaterThan(formatterStart);
+
+    const formatter = supplierQuotes.slice(formatterStart, toneStart);
+
+    expect(formatter).toContain(
+      'const normalizedDecision = decision?.trim().toLowerCase() ?? "";',
+    );
+
+    expect(formatter).toContain('case "":');
+    expect(formatter).toContain('case "pending":');
+    expect(formatter).toContain('return "Submitted";');
+    expect(formatter).toContain('case "approved":');
+    expect(formatter).toContain('return "Approved";');
+    expect(formatter).toContain('case "rejected":');
+    expect(formatter).toContain('return "Rejected";');
+    expect(formatter).toContain('case "awarded":');
+    expect(formatter).toContain('return "Awarded";');
+    expect(formatter).toContain(".split(/[_\\s]+/)");
+    expect(formatter).toContain("word.charAt(0).toUpperCase()");
+    expect(formatter).toContain("word.slice(1)");
+    expect(formatter).toContain('.join(" ")');
+
+    const futureDecision = "under_review";
+    expect(
+      futureDecision
+        .split(/[_\s]+/)
+        .map((word) => `${word.charAt(0).toUpperCase()}${word.slice(1)}`)
+        .join(" "),
+    ).toBe("Under Review");
+
+    const displayBindings =
+      supplierQuotes.match(
+        /const decisionLabel = formatSupplierDecisionLabel\(quote\.decision\);/g,
+      ) ?? [];
+    expect(displayBindings).toHaveLength(2);
+
+    const visibleStatusBindings =
+      supplierQuotes.match(
+        /<ExecutiveBadge tone=\{getDecisionTone\(quote\.decision\)\}>\s*\{decisionLabel\}\s*<\/ExecutiveBadge>/g,
+      ) ?? [];
+    expect(visibleStatusBindings).toHaveLength(2);
+    expect(supplierQuotes).toContain("status ${decisionLabel}");
+
+    const toneBindings =
+      supplierQuotes.match(/getDecisionTone\(quote\.decision\)/g) ?? [];
+    expect(toneBindings).toHaveLength(2);
+
+    expect(supplierQuotes).not.toContain('quote.decision || "Submitted"');
+    expect(supplierQuotes).not.toContain("{quote.decision}");
+    expect(supplierQuotes).not.toMatch(/quote\.decision\s*=/);
   });
 });

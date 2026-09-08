@@ -98,4 +98,27 @@ describe("Task 24-RFQ-04 RFQ detail structural composition", () => {
     expect(actions).not.toContain("hover:scale");
     expect(detail).not.toContain("hover:scale");
   });
+
+  it("keeps respondent Participation Status terminology aligned to submission availability", () => {
+    const participationStatusStart = detail.indexOf(
+      'title: isOwner ? "Commercial Status" : "Participation Status",',
+    );
+    const participationStatusEnd = detail.indexOf(
+      "detail: isOwner",
+      participationStatusStart,
+    );
+
+    expect(participationStatusStart).toBeGreaterThan(-1);
+    expect(participationStatusEnd).toBeGreaterThan(participationStatusStart);
+
+    const participationStatus = detail.slice(
+      participationStatusStart,
+      participationStatusEnd,
+    );
+
+    expect(participationStatus).toContain('"Quote Submitted"');
+    expect(participationStatus).toContain('"Ready for Submission"');
+    expect(participationStatus).toContain('"Submission Closed"');
+    expect(participationStatus).not.toContain('"Awaiting Submission"');
+  });
 });

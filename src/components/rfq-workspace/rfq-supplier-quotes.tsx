@@ -81,7 +81,7 @@ export function RFQSupplierQuotes({
                 </thead>
                 <tbody>
                   {quotes.map((quote) => {
-                    const decisionLabel = quote.decision || "Submitted";
+                    const decisionLabel = formatSupplierDecisionLabel(quote.decision);
 
                     return (
                       <tr key={quote.id} className="border-t border-white/10">
@@ -131,7 +131,7 @@ export function RFQSupplierQuotes({
             data-rfq-supplier-quotes-cards="true"
           >
             {quotes.map((quote) => {
-              const decisionLabel = quote.decision || "Submitted";
+              const decisionLabel = formatSupplierDecisionLabel(quote.decision);
 
               return (
                 <article
@@ -244,6 +244,31 @@ function formatMoney(value: number | string | null) {
   }
 
   return `$${Math.round(amount).toLocaleString()}`;
+}
+
+function formatSupplierDecisionLabel(decision: string | null) {
+  const normalizedDecision = decision?.trim().toLowerCase() ?? "";
+
+  switch (normalizedDecision) {
+    case "":
+    case "pending":
+      return "Submitted";
+    case "approved":
+      return "Approved";
+    case "rejected":
+      return "Rejected";
+    case "awarded":
+      return "Awarded";
+    default: {
+      const humanizedDecision = normalizedDecision
+        .split(/[_\s]+/)
+        .filter(Boolean)
+        .map((word) => `${word.charAt(0).toUpperCase()}${word.slice(1)}`)
+        .join(" ");
+
+      return humanizedDecision || "Submitted";
+    }
+  }
 }
 
 function getDecisionTone(

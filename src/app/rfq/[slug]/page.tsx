@@ -751,7 +751,7 @@ return (
             ? "Quote Submitted"
             : canSubmitQuote
               ? "Ready for Submission"
-              : "Awaiting Submission",
+              : "Submission Closed",
         detail: isOwner
           ? awardRecorded
             ? "Commercial decision recorded for downstream handoff"
