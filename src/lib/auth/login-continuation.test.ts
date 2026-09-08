@@ -29,6 +29,21 @@ const middleware = readFileSync(
   "utf8",
 );
 
+const activeMiddleware = readFileSync(
+  resolve(process.cwd(), "middleware.ts"),
+  "utf8",
+);
+
+const rfqInvitePage = readFileSync(
+  resolve(process.cwd(), "src/app/rfq/invite/[token]/page.tsx"),
+  "utf8",
+);
+
+const rfqSubmitPage = readFileSync(
+  resolve(process.cwd(), "src/app/rfq/[slug]/submit/page.tsx"),
+  "utf8",
+);
+
 const SESSION_EXPIRED_MESSAGE =
   "Your secure workspace session has expired. Please sign in again to continue.";
 const MISSING_AUTH_CODE_MESSAGE =
@@ -280,5 +295,51 @@ describe("RFQ submit continuation path detection", () => {
       isRfqSubmitContinuationPath("/rfq/harbor-point/submit/extra"),
     ).toBe(false);
     expect(isRfqSubmitContinuationPath("/rfq//submit")).toBe(false);
+  });
+});
+
+describe("active runtime RFQ invitation and submit continuation architecture", () => {
+  it("keeps active root middleware outside the /rfq tree", () => {
+    const matcherStart = activeMiddleware.indexOf("matcher: [");
+    const matcherEnd = activeMiddleware.indexOf("],", matcherStart) + 2;
+    const matcherBlock = activeMiddleware.slice(matcherStart, matcherEnd);
+
+    expect(matcherBlock).not.toContain('"/rfq"');
+    expect(matcherBlock).not.toContain('"/rfq/:path*"');
+    expect(matcherBlock).not.toContain('"/rfq/invite"');
+    expect(activeMiddleware).not.toContain('"/rfq"');
+  });
+
+  it("keeps the RFQ invite token landing directly renderable before authentication", () => {
+    expect(rfqInvitePage).toContain(
+      '.rpc("get_rfq_invitation_context", { p_token: cleanToken })',
+    );
+    expect(rfqInvitePage).toContain("RfqInviteQuoteUnavailable");
+    expect(rfqInvitePage).not.toContain("getUser()");
+    expect(rfqInvitePage).not.toContain("redirect(");
+    expect(rfqInvitePage).not.toContain("/login?next=");
+  });
+
+  it("owns RFQ submit login and no-company continuation on the submit page", () => {
+    expect(rfqSubmitPage).toContain(
+      "const submitPath = getSafeNextPath(`/rfq/${slug}/submit`);",
+    );
+    expect(rfqSubmitPage).toContain(
+      "redirect(`/login?next=${encodeURIComponent(submitPath)}`)",
+    );
+    expect(rfqSubmitPage).toContain(
+      "redirect(getCompanyOnboardingPath(submitPath))",
+    );
+    expect(rfqSubmitPage).toContain("getCompanyOnboardingPath");
+    expect(rfqSubmitPage).toContain("getSafeNextPath");
+    expect(isRfqSubmitContinuationPath("/rfq/routing-check/submit")).toBe(
+      true,
+    );
+    expect(getSafeNextPath("/rfq/routing-check/submit")).toBe(
+      "/rfq/routing-check/submit",
+    );
+    expect(getCompanyOnboardingPath("/rfq/routing-check/submit")).toBe(
+      "/create-company?next=%2Frfq%2Frouting-check%2Fsubmit",
+    );
   });
 });

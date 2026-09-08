@@ -344,7 +344,40 @@ describe("RFQ invitation email delivery", () => {
       id: null,
       error: "Public site URL is not configured.",
     });
-    expect(body.absoluteInviteUrl).toMatch(/^\/rfq\/invite\//);
+    expect(body.inviteUrl).toMatch(/^\/rfq\/invite\//);
+    expect(body.absoluteInviteUrl).toBeNull();
+  });
+
+  it("treats an invalid public site URL like an unavailable configuration", async () => {
+    process.env.NEXT_PUBLIC_SITE_URL =
+      "https://user:pass@launch.nexuspavilion.com/path?q=1#hash";
+    mockClient();
+    sendEmailMock.mockResolvedValue({
+      success: true,
+      skipped: false,
+      id: "should-not-send",
+      error: null,
+    });
+
+    const response = await postInvites(
+      jsonRequest({
+        rfqId: RFQ_ID,
+        email: SUPPLIER_EMAIL,
+      }),
+    );
+    const body = (await response.json()) as InviteJson;
+
+    expect(response.status).toBe(200);
+    expect(body.success).toBe(true);
+    expect(sendEmailMock).not.toHaveBeenCalled();
+    expect(body.email).toEqual({
+      sent: false,
+      skipped: true,
+      id: null,
+      error: "Public site URL is not configured.",
+    });
+    expect(body.inviteUrl).toMatch(/^\/rfq\/invite\//);
+    expect(body.absoluteInviteUrl).toBeNull();
   });
 
   it("returns invitation success with email.sent false when the provider rejects the message", async () => {
@@ -410,12 +443,18 @@ describe("RFQ invitation email delivery", () => {
     );
 
     expect(invitesRoute).toContain('`${publicSiteUrl}/rfq/invite/${token}`');
+    expect(invitesRoute).toContain("absoluteInviteUrl");
     expect(invitesRoute).not.toContain("console.log(token");
     expect(invitesRoute).not.toContain("console.error(token");
     expect(invitesRoute).not.toContain("console.warn(token");
     expect(invitePage).toContain('rpc("get_rfq_invitation_context"');
     expect(invitePage).not.toContain('fetch("/api/quotes"');
     expect(inviteForm).toContain("setEmailResult(data.email || null)");
+    expect(inviteForm).toContain("absoluteInviteUrl");
+    expect(inviteForm).toContain(
+      "const copyTarget = absoluteInviteUrl || inviteUrl;",
+    );
+    expect(inviteForm).not.toContain("window.location.origin");
     expect(result).toContain("Invitation Email Sent");
     expect(result).toContain("Invitation Created, Email Failed");
     expect(companyInvites).toContain("await sendEmail({");

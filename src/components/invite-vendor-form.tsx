@@ -30,6 +30,7 @@ type InviteEmailResult = {
 
 type InviteResponse = {
   inviteUrl?: string;
+  absoluteInviteUrl?: string | null;
   message?: string;
   error?: string;
   email?: InviteEmailResult;
@@ -44,6 +45,9 @@ export default function InviteVendorForm({
   const vendors: SupplierAvlVendorOption[] = [];
 
   const [inviteUrl, setInviteUrl] = useState("");
+  const [absoluteInviteUrl, setAbsoluteInviteUrl] = useState<string | null>(
+    null,
+  );
   const [successMessage, setSuccessMessage] = useState("");
   const [emailResult, setEmailResult] = useState<InviteEmailResult | null>(
     null,
@@ -69,6 +73,7 @@ export default function InviteVendorForm({
     setLoading(true);
     setError("");
     setInviteUrl("");
+    setAbsoluteInviteUrl(null);
     setSuccessMessage("");
     setEmailResult(null);
     setCopyMessage("");
@@ -93,6 +98,11 @@ export default function InviteVendorForm({
       }
 
       setInviteUrl(data.inviteUrl || "");
+      setAbsoluteInviteUrl(
+        typeof data.absoluteInviteUrl === "string" && data.absoluteInviteUrl
+          ? data.absoluteInviteUrl
+          : null,
+      );
       setEmailResult(data.email || null);
       setSuccessMessage(
         data.message || "Supplier invitation record created.",
@@ -110,12 +120,11 @@ export default function InviteVendorForm({
   }
 
   async function copyInviteLink() {
-    if (!inviteUrl) return;
-
-    const absoluteUrl = `${window.location.origin}${inviteUrl}`;
+    const copyTarget = absoluteInviteUrl || inviteUrl;
+    if (!copyTarget) return;
 
     try {
-      await navigator.clipboard.writeText(absoluteUrl);
+      await navigator.clipboard.writeText(copyTarget);
       setCopyMessage("Secure invite link copied.");
     } catch {
       setCopyMessage(

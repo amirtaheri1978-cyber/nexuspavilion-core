@@ -27,9 +27,15 @@ afterEach(() => {
 });
 
 describe("public site URL", () => {
-  it("returns a trimmed http(s) origin and rejects empty values", () => {
+  it("returns a canonical http(s) origin and rejects empty values", () => {
     expect(getPublicSiteUrl(" https://pavilion.example/ ")).toBe(
       "https://pavilion.example",
+    );
+    expect(getPublicSiteUrl("https://launch.nexuspavilion.com")).toBe(
+      "https://launch.nexuspavilion.com",
+    );
+    expect(getPublicSiteUrl("http://localhost:3000")).toBe(
+      "http://localhost:3000",
     );
     expect(getPublicSiteUrl("")).toBeNull();
     expect(getPublicSiteUrl("   ")).toBeNull();
@@ -37,11 +43,32 @@ describe("public site URL", () => {
     expect(getPublicSiteUrl("not-a-url")).toBeNull();
   });
 
+  it("canonicalizes one normal root trailing slash", () => {
+    expect(getPublicSiteUrl("https://launch.nexuspavilion.com/")).toBe(
+      "https://launch.nexuspavilion.com",
+    );
+  });
+
   it("never accepts leftover Codespace github.dev hosts", () => {
     expect(
       getPublicSiteUrl(
         "https://scaling-invention-5g7q4p5rwrwj3vwq7-3000.app.github.dev",
       ),
+    ).toBeNull();
+  });
+
+  it("rejects credential-bearing, path-bearing, query, and hash URLs", () => {
+    expect(
+      getPublicSiteUrl("https://user:secret@launch.nexuspavilion.com"),
+    ).toBeNull();
+    expect(
+      getPublicSiteUrl("https://launch.nexuspavilion.com/rfq/invite/token"),
+    ).toBeNull();
+    expect(
+      getPublicSiteUrl("https://launch.nexuspavilion.com?utm=1"),
+    ).toBeNull();
+    expect(
+      getPublicSiteUrl("https://launch.nexuspavilion.com#section"),
     ).toBeNull();
   });
 

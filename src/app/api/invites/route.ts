@@ -359,12 +359,13 @@ export async function POST(request: Request) {
     const publicSiteUrl = getPublicSiteUrl();
 
     if (existingInvite) {
-      const existingInviteUrl = publicSiteUrl
+      const inviteUrl = `/rfq/invite/${existingInvite.token}`;
+      const absoluteInviteUrl = publicSiteUrl
         ? `${publicSiteUrl}/rfq/invite/${existingInvite.token}`
-        : `/rfq/invite/${existingInvite.token}`;
+        : null;
       const existingInvitation = buildInvitationEmailPayload(
         rfq,
-        existingInviteUrl,
+        absoluteInviteUrl ?? inviteUrl,
       );
       const emailResult = await deliverRfqInvitationEmail({
         publicSiteUrl,
@@ -375,8 +376,8 @@ export async function POST(request: Request) {
       return NextResponse.json({
         success: true,
         invite: existingInvite,
-        inviteUrl: `/rfq/invite/${existingInvite.token}`,
-        absoluteInviteUrl: existingInviteUrl,
+        inviteUrl,
+        absoluteInviteUrl,
         message: "Supplier has already been invited to this RFQ.",
         email: {
           sent: emailResult.success,
@@ -388,9 +389,10 @@ export async function POST(request: Request) {
     }
 
     const token = generateToken();
+    const inviteUrl = `/rfq/invite/${token}`;
     const absoluteInviteUrl = publicSiteUrl
       ? `${publicSiteUrl}/rfq/invite/${token}`
-      : `/rfq/invite/${token}`;
+      : null;
 
     const { data: invite, error: inviteError } = await supabase
       .from("rfq_invites")
@@ -414,7 +416,7 @@ export async function POST(request: Request) {
 
     const { email: invitationEmail } = buildInvitationEmailPayload(
       rfq,
-      absoluteInviteUrl,
+      absoluteInviteUrl ?? inviteUrl,
     );
 
     const emailResult = await deliverRfqInvitationEmail({
@@ -436,7 +438,7 @@ export async function POST(request: Request) {
     return NextResponse.json({
       success: true,
       invite,
-      inviteUrl: `/rfq/invite/${token}`,
+      inviteUrl,
       absoluteInviteUrl,
       vendorCompanyId: APPROVED_VENDOR_DOMAIN_AVAILABLE
         ? vendorCompanyId

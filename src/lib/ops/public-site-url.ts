@@ -11,9 +11,7 @@ export const PUBLIC_SITE_URL_UNCONFIGURED =
 export function getPublicSiteUrl(
   value: string | undefined | null = process.env.NEXT_PUBLIC_SITE_URL,
 ): string | null {
-  const trimmed = String(value ?? "")
-    .trim()
-    .replace(/\/+$/, "");
+  const trimmed = String(value ?? "").trim();
 
   if (!trimmed) {
     return null;
@@ -30,7 +28,19 @@ export function getPublicSiteUrl(
       return null;
     }
 
-    return trimmed;
+    if (parsed.username || parsed.password) {
+      return null;
+    }
+
+    if (parsed.pathname && parsed.pathname !== "/") {
+      return null;
+    }
+
+    if (parsed.search || parsed.hash) {
+      return null;
+    }
+
+    return parsed.origin;
   } catch {
     return null;
   }
