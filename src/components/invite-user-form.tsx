@@ -99,17 +99,22 @@ export default function InviteUserForm() {
         data = rawText ? JSON.parse(rawText) : {};
       } catch {
         setError(
-          `API returned non-JSON response. Status: ${
-            response.status
-          }. Response: ${rawText.slice(0, 250)}`,
+          "We couldn't send the workspace invitation. Please try again.",
         );
         return;
       }
 
       if (!response.ok) {
+        const apiError =
+          typeof data.error === "string" ? data.error.trim() : "";
         setError(
-          data.error ||
-            `Failed to create workspace invitation. Status: ${response.status}`,
+          apiError &&
+            apiError.length < 200 &&
+            !/postgres|supabase|permission denied|stack|undefined/i.test(
+              apiError,
+            )
+            ? apiError
+            : "We couldn't send the workspace invitation. Please try again.",
         );
         return;
       }
@@ -129,9 +134,7 @@ export default function InviteUserForm() {
       console.error(requestError);
 
       setError(
-        requestError instanceof Error
-          ? `Request failed: ${requestError.message}`
-          : "Request failed. Please try again.",
+        "We couldn't send the workspace invitation. Please try again.",
       );
     } finally {
       setLoading(false);

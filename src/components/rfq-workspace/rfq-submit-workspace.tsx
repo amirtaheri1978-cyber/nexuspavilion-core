@@ -189,6 +189,7 @@ export function RfqSubmitWorkspace({ slug }: RfqSubmitWorkspaceProps) {
 
   const [rfq, setRfq] = useState<RfqStatus | null>(null);
   const [rfqLoading, setRfqLoading] = useState(true);
+  const [rfqStatusError, setRfqStatusError] = useState(false);
 
   const [amount, setAmount] = useState("");
   const [timeline, setTimeline] = useState("");
@@ -212,7 +213,7 @@ export function RfqSubmitWorkspace({ slug }: RfqSubmitWorkspaceProps) {
     [amountNumber, timeline, message],
   );
 
-  const submissionClosed = isSubmissionClosed(rfq);
+  const submissionClosed = rfqStatusError || isSubmissionClosed(rfq);
   const deadlinePassed = hasDeadlinePassed(rfq?.deadline);
   const deadlineRisk = useMemo(
     () => getRfqDeadlineRisk(rfq?.deadline, deadlineNow),
@@ -244,8 +245,9 @@ export function RfqSubmitWorkspace({ slug }: RfqSubmitWorkspaceProps) {
   useEffect(() => {
     async function loadRfqStatus() {
       setRfqLoading(true);
+      setRfqStatusError(false);
 
-      const { data } = await supabase
+      const { data, error: statusError } = await supabase
         .from("rfqs")
         .select(
           "title, deadline, deadline_timezone, status, awarded_quote_id, awarded_at",
@@ -253,7 +255,23 @@ export function RfqSubmitWorkspace({ slug }: RfqSubmitWorkspaceProps) {
         .eq("slug", slug)
         .maybeSingle();
 
-      setRfq((data || null) as RfqStatus | null);
+      if (statusError || !data) {
+        if (statusError) {
+          console.error("RFQ status verification failed:", statusError);
+        } else {
+          console.error("RFQ status verification failed: RFQ row missing.");
+        }
+        setRfq(null);
+        setRfqStatusError(true);
+        setErrorField("form");
+        setError(
+          "We couldn't verify this RFQ status. Please reload the page and try again.",
+        );
+      } else {
+        setRfq(data as RfqStatus);
+        setRfqStatusError(false);
+      }
+
       setRfqLoading(false);
     }
 
@@ -272,7 +290,9 @@ export function RfqSubmitWorkspace({ slug }: RfqSubmitWorkspaceProps) {
     if (submissionClosed) {
       setErrorField("form");
       setError(
-        deadlinePassed
+        rfqStatusError
+          ? "We couldn't verify this RFQ status. Please reload the page and try again."
+          : deadlinePassed
           ? "Submission closed. The RFQ deadline has passed and late bids are not accepted."
           : "Submission closed. This RFQ is no longer accepting quotes.",
       );
@@ -360,12 +380,16 @@ export function RfqSubmitWorkspace({ slug }: RfqSubmitWorkspaceProps) {
 
   const rfqStatusLabel = rfqLoading
     ? "Checking..."
-    : submissionClosed
-      ? "Submission closed"
-      : "Open for quotes";
-  const governanceLabel = deadlinePassed
-    ? "Hard lock active"
-    : "Deadline enforced";
+    : rfqStatusError
+      ? "Status unavailable"
+      : submissionClosed
+        ? "Submission closed"
+        : "Open for quotes";
+  const governanceLabel = rfqStatusError
+    ? "Verification required"
+    : deadlinePassed
+      ? "Hard lock active"
+      : "Deadline enforced";
 
   return (
     <div className="min-h-full bg-nexus-navy text-white">
@@ -436,7 +460,23 @@ export function RfqSubmitWorkspace({ slug }: RfqSubmitWorkspaceProps) {
             </div>
           ) : null}
 
-          {submissionClosed ? (
+          {rfqStatusError ? (
+            <div className="mt-8 min-w-0 rounded-executive border border-red-400/20 bg-red-500/10 p-5">
+              <ExecutiveBadge tone="risk">Status verification failed</ExecutiveBadge>
+              <p className="np-type-body mt-3 min-w-0 text-pretty">
+                We couldn&apos;t verify whether this RFQ is open for quotation
+                submission. Quotation remains disabled until RFQ status can be
+                confirmed. Please reload the page and try again.
+              </p>
+              <button
+                type="button"
+                onClick={() => window.location.reload()}
+                className={`${EXECUTIVE_CTA_SECONDARY} mt-5`}
+              >
+                Reload page
+              </button>
+            </div>
+          ) : submissionClosed ? (
             <div className="mt-8 min-w-0 rounded-executive border border-red-400/20 bg-red-500/10 p-5">
               <ExecutiveBadge tone="risk">Submission closed</ExecutiveBadge>
               <p className="np-type-body mt-3 min-w-0 text-pretty">
@@ -651,7 +691,9 @@ export function RfqSubmitWorkspace({ slug }: RfqSubmitWorkspaceProps) {
                 disabled={loading || submissionClosed || rfqLoading}
                 className={`${EXECUTIVE_CTA_PRIMARY} w-full @sm:w-auto`}
               >
-                {submissionClosed
+                {rfqStatusError
+                  ? "Status unavailable"
+                  : submissionClosed
                   ? "Submission closed"
                   : loading
                     ? "Submitting quote..."

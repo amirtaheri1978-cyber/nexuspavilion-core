@@ -187,23 +187,33 @@ export default async function DashboardPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const { data: profile } = user
+  const { data: profile, error: profileError } = user
     ? await supabase
         .from("profiles")
         .select("id, email, company_id")
         .eq("id", user.id)
         .single()
-    : { data: null };
+    : { data: null, error: null };
+
+  if (profileError) {
+    console.error("Dashboard profile load failed:", profileError);
+    throw new Error("Unable to load executive dashboard profile.");
+  }
 
   if (!profile?.company_id) {
     redirect("/create-company");
   }
 
-  const { data: company } = await supabase
+  const { data: company, error: companyError } = await supabase
     .from("companies")
     .select("id, name, slug, category, location, network_role, status, logo_url")
     .eq("id", profile.company_id)
     .single();
+
+  if (companyError) {
+    console.error("Dashboard company load failed:", companyError);
+    throw new Error("Unable to load executive dashboard company context.");
+  }
 
   const currentCompany = company as Company | null;
 
@@ -221,17 +231,27 @@ export default async function DashboardPage() {
       .limit(8),
   ]);
 
+  if (rfqResult.error) {
+    console.error("Dashboard RFQ load failed:", rfqResult.error);
+    throw new Error("Unable to load company procurement portfolio.");
+  }
+
   const rfqList = (rfqResult.data ?? []) as RFQ[];
   const rfqIds = rfqList.map((rfq) => rfq.id);
 
-  const { data: quotes } =
+  const { data: quotes, error: quotesError } =
     rfqIds.length > 0
       ? await supabase
           .from("quotes")
           .select("*")
           .in("rfq_id", rfqIds)
           .order("created_at", { ascending: false })
-      : { data: [] };
+      : { data: [] as Quote[], error: null };
+
+  if (quotesError) {
+    console.error("Dashboard quote load failed:", quotesError);
+    throw new Error("Unable to load company quotation evidence.");
+  }
 
   const quoteList = (quotes ?? []) as Quote[];
 

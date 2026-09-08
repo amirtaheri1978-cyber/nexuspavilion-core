@@ -195,12 +195,14 @@ const [membership, setMembership] = useState<OrganizationMembership | null>(null
 
 const [search, setSearch] = useState("");
 const [loading, setLoading] = useState(true);
+const [loadError, setLoadError] = useState("");
 const [savingVendorId, setSavingVendorId] = useState<string | null>(null);
 const [actionMessage, setActionMessage] = useState("");
 
 useEffect(() => {
 async function loadDirectoryData() {
 setLoading(true);
+setLoadError("");
 
 const {
 data: { user },
@@ -237,12 +239,16 @@ error: membershipError,
 
 setMembership(currentMembership);
 
+const approvedVendorQueryRequired = Boolean(
+APPROVED_VENDOR_DOMAIN_AVAILABLE && currentProfile?.company_id,
+);
+
 const [
 { data: companiesData, error: companiesError },
 { data: capabilityData, error: capabilityError },
 { data: qualificationData, error: qualificationError },
-{ data: quotesData },
-{ data: approvedVendorData },
+{ data: quotesData, error: quotesError },
+{ data: approvedVendorData, error: approvedVendorError },
 ] = await Promise.all([
 supabase
 .from("company_directory")
@@ -264,15 +270,42 @@ supabase
 
 supabase.from("quotes").select("id, company_id, amount, decision"),
 
-APPROVED_VENDOR_DOMAIN_AVAILABLE && currentProfile?.company_id
+approvedVendorQueryRequired
 ? supabase
 .from("approved_vendors")
 .select("vendor_company_id, status, rating")
-: Promise.resolve({ data: [] as ApprovedVendor[] }),
+: Promise.resolve({ data: [] as ApprovedVendor[], error: null }),
 ]);
 
-if (!companiesError && companiesData) {
-setCompanies(companiesData as Company[]);
+const directoryLoadMessage =
+"We couldn't load the company network. Please try again.";
+
+if (companiesError) {
+console.error("Company Network directory load failed.", companiesError);
+setCompanies([]);
+setQuotes([]);
+setApprovedVendors([]);
+setLoadError(directoryLoadMessage);
+} else if (quotesError) {
+console.error("Company Network ranking quote load failed.", quotesError);
+setCompanies([]);
+setQuotes([]);
+setApprovedVendors([]);
+setLoadError(directoryLoadMessage);
+} else if (approvedVendorQueryRequired && approvedVendorError) {
+console.error(
+"Company Network approved vendor load failed.",
+approvedVendorError,
+);
+setCompanies([]);
+setQuotes([]);
+setApprovedVendors([]);
+setLoadError(directoryLoadMessage);
+} else {
+setCompanies((companiesData ?? []) as Company[]);
+setQuotes((quotesData ?? []) as Quote[]);
+setApprovedVendors((approvedVendorData ?? []) as ApprovedVendor[]);
+setLoadError("");
 }
 
 if (capabilityError) {
@@ -285,14 +318,6 @@ if (qualificationError) {
 console.error("Company network qualification lookup failed.", qualificationError);
 } else if (qualificationData) {
 setQualificationRows(qualificationData as PublicCompanyQualificationRecord[]);
-}
-
-if (quotesData) {
-setQuotes(quotesData as Quote[]);
-}
-
-if (approvedVendorData) {
-setApprovedVendors(approvedVendorData as ApprovedVendor[]);
 }
 
 setLoading(false);
@@ -570,6 +595,7 @@ Join Network
 </div>
 ) : null}
 
+{!loading && !loadError ? (
 <section className="mt-8 grid gap-6 md:grid-cols-4">
 <MetricCard
 title="Verified Companies"
@@ -595,6 +621,7 @@ value={`${networkStats.averageScore}/100`}
 detail="Supplier intelligence average"
 />
 </section>
+) : null}
 
 <section className="mt-6 rounded-[28px] border border-white/10 bg-white/[0.055] p-6">
 <p className="text-[10px] font-black uppercase tracking-[0.22em] text-slate-500">
@@ -643,6 +670,28 @@ aria-live="polite"
 aria-busy="true"
 >
 Loading company network...
+</div>
+) : loadError ? (
+<div
+className="mt-12 rounded-3xl border border-red-300/20 bg-red-400/10 p-10 text-center"
+role="alert"
+aria-live="assertive"
+>
+<h2 className="text-xl font-black text-white">
+Company network unavailable
+</h2>
+
+<p className="mt-3 text-sm font-semibold text-slate-300">
+{loadError}
+</p>
+
+<button
+type="button"
+onClick={() => window.location.reload()}
+className="mt-6 inline-flex min-h-11 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.045] px-5 text-sm font-black text-white transition hover:bg-white/[0.08]"
+>
+Try again
+</button>
 </div>
 ) : filteredCompanies.length === 0 ? (
 <div className="mt-12 rounded-3xl border border-dashed border-white/15 bg-white/[0.035] p-10 text-center">

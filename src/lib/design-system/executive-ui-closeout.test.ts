@@ -33,6 +33,10 @@ const launchCritical = {
   directory: readSource("src/app/directory/page.tsx"),
   notifications: readSource("src/app/notifications/page.tsx"),
   analytics: readSource("src/app/analytics/page.tsx"),
+  analyticsSource: readSource(
+    "src/lib/analytics/source-data/load-analytics-source-data.ts",
+  ),
+  vendorDashboard: readSource("src/app/vendor-dashboard/page.tsx"),
   rfqList: readSource("src/app/rfq/page.tsx"),
   rfqNew: readSource("src/app/rfq/new/page.tsx"),
   rfqDraftAutosave: readSource("src/hooks/use-rfq-draft-autosave.ts"),
@@ -262,6 +266,101 @@ describe("NP-MASTER-22-B05 launch-critical closeout", () => {
     );
     expect(launchCritical.rfqQuoteWorkspace).toContain(
       "receivedSubmissionCount > 0",
+    );
+  });
+
+  it("keeps P0 fail-closed error states for critical decision and membership surfaces", () => {
+    expect(launchCritical.dashboard).toContain("rfqResult.error");
+    expect(launchCritical.dashboard).toContain("quotesError");
+    expect(launchCritical.dashboard).toContain(
+      'throw new Error("Unable to load company procurement portfolio.")',
+    );
+
+    expect(launchCritical.analyticsSource).toContain("rfqError");
+    expect(launchCritical.analyticsSource).toContain("quotesError");
+    expect(launchCritical.analyticsSource).toContain("companiesError");
+    expect(launchCritical.analyticsSource).toContain(
+      'throw new Error("Unable to load analytics RFQ source data.")',
+    );
+
+    expect(launchCritical.vendorDashboard).toContain("profileError");
+    expect(launchCritical.vendorDashboard).toContain(
+      'throw new Error("Unable to load supplier workspace profile.")',
+    );
+    expect(launchCritical.vendorDashboard).toContain("quotesError");
+    expect(launchCritical.vendorDashboard).toContain("rfqsError");
+    expect(launchCritical.vendorDashboard).toContain(
+      'throw new Error("Unable to load supplier quotation history.")',
+    );
+
+    expect(launchCritical.notifications).toContain("authError");
+    expect(launchCritical.notifications).toContain(
+      'throw new Error("Unable to verify Activity Center identity.")',
+    );
+    expect(launchCritical.notifications).toMatch(
+      /if \(authError\)[\s\S]*throw new Error\("Unable to verify Activity Center identity\."\)[\s\S]*if \(!user\)[\s\S]*redirect\("\/login"\)/,
+    );
+    expect(launchCritical.notifications).toContain("profileError");
+    expect(launchCritical.notifications).toContain(
+      'throw new Error("Unable to load company activity profile.")',
+    );
+    expect(launchCritical.notifications).toContain("notificationsError");
+    expect(launchCritical.notifications).toContain(
+      'throw new Error("Unable to load company activity.")',
+    );
+    expect(launchCritical.notifications).toMatch(
+      /if \(profileError\)[\s\S]*throw new Error\("Unable to load company activity profile\."\)[\s\S]*if \(!profile\?\.company_id\)[\s\S]*redirect\("\/create-company"\)/,
+    );
+
+    expect(launchCritical.directory).toContain("loadError");
+    expect(launchCritical.directory).toContain("quotesError");
+    expect(launchCritical.directory).toContain("approvedVendorError");
+    expect(launchCritical.directory).toContain(
+      "Company Network ranking quote load failed.",
+    );
+    expect(launchCritical.directory).toContain(
+      "Company Network approved vendor load failed.",
+    );
+    expect(launchCritical.directory).toContain("Company network unavailable");
+    expect(launchCritical.directory).toContain(
+      "We couldn't load the company network. Please try again.",
+    );
+    expect(launchCritical.directory).toContain("!loading && !loadError");
+    expect(launchCritical.directory).toContain(
+      "else if (quotesError)",
+    );
+    expect(launchCritical.directory).toContain(
+      "approvedVendorQueryRequired && approvedVendorError",
+    );
+
+    expect(launchCritical.rfqSubmit).toContain("rfqStatusError");
+    expect(launchCritical.rfqSubmit).toContain("Status unavailable");
+    expect(launchCritical.rfqSubmit).toContain("statusError || !data");
+    expect(launchCritical.rfqSubmit).toContain("setRfqStatusError(true)");
+    expect(launchCritical.rfqSubmit).toContain("setRfqStatusError(false)");
+    expect(launchCritical.rfqSubmit).toContain(
+      "rfqStatusError || isSubmissionClosed(rfq)",
+    );
+    expect(launchCritical.rfqSubmit).toContain(
+      'rfqStatusError\n      ? "Status unavailable"\n      : submissionClosed\n        ? "Submission closed"\n        : "Open for quotes"',
+    );
+    expect(launchCritical.rfqSubmit).toContain(
+      "disabled={loading || submissionClosed || rfqLoading}",
+    );
+    expect(launchCritical.rfqSubmit).toMatch(
+      /if \(statusError \|\| !data\)[\s\S]*setRfqStatusError\(true\)[\s\S]*else \{[\s\S]*setRfq\(data as RfqStatus\)[\s\S]*setRfqStatusError\(false\)/,
+    );
+
+    expect(launchCritical.inviteForm).toContain(
+      "We couldn't send the workspace invitation. Please try again.",
+    );
+    expect(launchCritical.inviteForm).not.toContain(
+      "Request failed: ${requestError.message}",
+    );
+    expect(launchCritical.inviteForm).not.toContain("rawText.slice");
+    expect(launchCritical.inviteForm).toContain("workspace invitation");
+    expect(launchCritical.inviteForm).toContain(
+      "Workspace membership is separate from RFQ invitations",
     );
   });
 });

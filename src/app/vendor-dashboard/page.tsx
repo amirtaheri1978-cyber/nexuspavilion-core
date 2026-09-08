@@ -112,13 +112,18 @@ export default async function VendorDashboardPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const { data: profile } = user
+  const { data: profile, error: profileError } = user
     ? await supabase
         .from("profiles")
         .select("company_id, role, email")
         .eq("id", user.id)
         .single()
-    : { data: null };
+    : { data: null, error: null };
+
+  if (profileError) {
+    console.error("Vendor dashboard profile load failed:", profileError);
+    throw new Error("Unable to load supplier workspace profile.");
+  }
 
   const activeMembership =
     user && profile?.company_id
@@ -131,26 +136,36 @@ export default async function VendorDashboardPage() {
 
   const companyId = activeMembership?.companyId ?? null;
 
-  const { data: quotes } = companyId
+  const { data: quotes, error: quotesError } = companyId
     ? await supabase
         .from("quotes")
         .select("*")
         .eq("company_id", companyId)
         .order("created_at", { ascending: false })
-    : { data: [] };
+    : { data: [] as Quote[], error: null };
+
+  if (quotesError) {
+    console.error("Vendor dashboard quote load failed:", quotesError);
+    throw new Error("Unable to load supplier quotation history.");
+  }
 
   const quoteList = (quotes ?? []) as Quote[];
 
   const rfqIds = [...new Set(quoteList.map((quote) => quote.rfq_id))];
 
-  const { data: rfqs } =
+  const { data: rfqs, error: rfqsError } =
     rfqIds.length > 0
       ? await supabase
           .from("rfqs")
           .select("*")
           .in("id", rfqIds)
           .order("created_at", { ascending: false })
-      : { data: [] };
+      : { data: [] as RFQ[], error: null };
+
+  if (rfqsError) {
+    console.error("Vendor dashboard RFQ load failed:", rfqsError);
+    throw new Error("Unable to load supplier RFQ history.");
+  }
 
   const rfqList = (rfqs ?? []) as RFQ[];
 

@@ -116,29 +116,45 @@ export default async function NotificationsPage({
 
   const {
     data: { user },
+    error: authError,
   } = await supabase.auth.getUser();
+
+  if (authError) {
+    console.error("Activity Center auth identity load failed:", authError);
+    throw new Error("Unable to verify Activity Center identity.");
+  }
 
   if (!user) {
     redirect("/login");
   }
 
-  const { data: profile } = await supabase
+  const { data: profile, error: profileError } = await supabase
     .from("profiles")
     .select("id, company_id, role, email")
     .eq("id", user.id)
     .single();
 
+  if (profileError) {
+    console.error("Activity Center profile load failed:", profileError);
+    throw new Error("Unable to load company activity profile.");
+  }
+
   if (!profile?.company_id) {
     redirect("/create-company");
   }
 
-  const { data: notifications } = await supabase
+  const { data: notifications, error: notificationsError } = await supabase
     .from("notifications")
     .select(
       "id, title, message, type, is_read, created_at, company_id, source_rfq_id",
     )
     .eq("company_id", profile.company_id)
     .order("created_at", { ascending: false });
+
+  if (notificationsError) {
+    console.error("Activity Center notifications load failed:", notificationsError);
+    throw new Error("Unable to load company activity.");
+  }
 
   const notificationList = (notifications ?? []) as Notification[];
 

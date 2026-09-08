@@ -85,18 +85,23 @@ export async function loadAnalyticsSourceData(): Promise<AnalyticsSourceData> {
     ? await loadCompanyCompliance(supabase, companyId)
     : createEmptyGroupedCompliance();
 
-  const { data: rfqs } = companyId
+  const { data: rfqs, error: rfqError } = companyId
     ? await supabase
         .from("rfqs")
         .select("*")
         .eq("company_id", companyId)
         .order("created_at", { ascending: false })
-    : { data: [] };
+    : { data: [] as AnalyticsRFQ[], error: null };
+
+  if (rfqError) {
+    console.error("Analytics RFQ source load failed:", rfqError);
+    throw new Error("Unable to load analytics RFQ source data.");
+  }
 
   const rfqList = (rfqs ?? []) as AnalyticsRFQ[];
   const rfqIds = rfqList.map((rfq) => rfq.id);
 
-  const { data: quotes } =
+  const { data: quotes, error: quotesError } =
     commercialAccess.canViewIssuerCommercialAnalytics &&
     rfqIds.length > 0
       ? await supabase
@@ -104,11 +109,21 @@ export async function loadAnalyticsSourceData(): Promise<AnalyticsSourceData> {
           .select("*")
           .in("rfq_id", rfqIds)
           .order("created_at", { ascending: false })
-      : { data: [] };
+      : { data: [] as AnalyticsQuote[], error: null };
 
-  const { data: companies } = await supabase
+  if (quotesError) {
+    console.error("Analytics quote source load failed:", quotesError);
+    throw new Error("Unable to load analytics quotation source data.");
+  }
+
+  const { data: companies, error: companiesError } = await supabase
     .from("company_directory")
     .select("id,name");
+
+  if (companiesError) {
+    console.error("Analytics company directory load failed:", companiesError);
+    throw new Error("Unable to load analytics company source data.");
+  }
 
   return {
     companyId,
