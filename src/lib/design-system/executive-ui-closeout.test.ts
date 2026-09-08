@@ -454,4 +454,37 @@ describe("NP-MASTER-22-B05 launch-critical closeout", () => {
       "Workspace membership is separate from RFQ invitations",
     );
   });
+
+  it("keeps Task 13-05 public Procurement Portfolio responsive containment", () => {
+    const source = launchCritical.publicCompany;
+
+    expect(source).toContain(
+      'className="flex flex-col items-start gap-6 sm:flex-row sm:justify-between"',
+    );
+    expect(source).not.toContain(
+      'className="flex items-start justify-between gap-6"',
+    );
+    expect(source).toContain('className="min-w-0 flex-1"');
+    expect(source).toContain(
+      'className="mt-3 break-words text-2xl font-black text-white"',
+    );
+
+    expect(source).toContain(
+      'className="max-w-full break-words rounded-full border border-white/10 bg-white/[0.055] px-3 py-1 text-xs font-black text-slate-300"',
+    );
+    expect(source).not.toContain("whitespace-nowrap");
+
+    expect(source).toContain(
+      'className="flex flex-col items-start gap-5 sm:flex-row sm:justify-between"',
+    );
+    expect(source).not.toContain(
+      'className="flex items-start justify-between gap-5"',
+    );
+    expect(source).toContain('className="min-w-0"');
+    expect(source).toContain(
+      'className="break-words text-lg font-black text-white"',
+    );
+
+    expect(source).toContain("CompanyQualificationsDisplay");
+  });
 });

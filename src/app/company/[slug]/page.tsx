@@ -534,13 +534,13 @@ key={rfq.id}
 href={rfq.slug ? `/rfq/${rfq.slug}` : "/rfq"}
 className="group block rounded-[28px] border border-white/10 bg-[#07111F]/80 p-6 transition hover:-translate-y-1 hover:border-[#2CC4E8]/25 hover:bg-[#081827]"
 >
-<div className="flex items-start justify-between gap-6">
+<div className="flex flex-col items-start gap-6 sm:flex-row sm:justify-between">
 <div className="min-w-0 flex-1">
 <p className="text-xs font-black uppercase tracking-[0.22em] text-[#C8A646]">
 {rfq.category || "Procurement"}
 </p>
 
-<h3 className="mt-3 text-2xl font-black text-white">
+<h3 className="mt-3 break-words text-2xl font-black text-white">
 {rfq.title || "Untitled RFQ"}
 </h3>
 
@@ -605,9 +605,9 @@ return (
 key={quote.id}
 className="rounded-[28px] border border-white/10 bg-[#07111F]/80 p-6"
 >
-<div className="flex items-start justify-between gap-5">
-<div>
-<p className="text-lg font-black text-white">
+<div className="flex flex-col items-start gap-5 sm:flex-row sm:justify-between">
+<div className="min-w-0">
+<p className="break-words text-lg font-black text-white">
 {relatedRfq?.title || "Awarded RFQ"}
 </p>
 
@@ -900,7 +900,7 @@ className={`shrink-0 rounded-full border px-3 py-1 text-xs font-black uppercase 
 
 function InfoPill({ children }: { children: React.ReactNode }) {
 return (
-<span className="rounded-full border border-white/10 bg-white/[0.055] px-3 py-1 text-xs font-black text-slate-300">
+<span className="max-w-full break-words rounded-full border border-white/10 bg-white/[0.055] px-3 py-1 text-xs font-black text-slate-300">
 {children}
 </span>
 );
