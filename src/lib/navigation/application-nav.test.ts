@@ -140,6 +140,14 @@ describe("Task 23 application navigation contract", () => {
       { href: "/projects", label: "Project Portfolio" },
       { href: "/projects/new", label: "New Project" },
     ]);
+    const companyProfile = getAppBreadcrumbs("/company/harbor-steel");
+    expect(companyProfile).toEqual([
+      { href: "/directory", label: "Company Network" },
+      { href: "/company/harbor-steel", label: "Company Profile" },
+    ]);
+    expect(companyProfile.map((crumb) => crumb.label).join(" ")).not.toContain(
+      "harbor-steel",
+    );
 
     const compare = getAppBreadcrumbs("/rfq/harbor-package/compare");
     expect(compare.map((crumb) => crumb.label)).toEqual([
@@ -155,6 +163,12 @@ describe("Task 23 application navigation contract", () => {
     expect(getAppSectionTitle("/projects/new")).toBe("Project Portfolio");
     expect(getAppSectionTitle("/analytics")).toBe("Strategic Insights");
     expect(getAppSectionTitle("/rfq/new")).toBe("Procurement Center");
+    expect(getAppSectionTitle("/company/harbor-steel")).toBe(
+      "Company Network",
+    );
+    expect(getAppSectionTitle("/company/settings")).toBe(
+      "Workspace Settings",
+    );
   });
 
   it("uses company-neutral terminology for the canonical network destination", () => {

@@ -383,6 +383,16 @@ export function isActivePath(pathname: string, href: string) {
 }
 
 export function getAppSectionTitle(pathname: string) {
+  const sectionSegments = pathname.split("/").filter(Boolean);
+
+  if (
+    sectionSegments[0] === "company" &&
+    sectionSegments.length === 2 &&
+    sectionSegments[1] !== "settings"
+  ) {
+    return "Company Network";
+  }
+
   if (isActivePath(pathname, "/projects")) {
     return "Project Portfolio";
   }
@@ -470,6 +480,17 @@ export function getAppBreadcrumbs(pathname: string): ApplicationBreadcrumb[] {
     }
 
     return [rfqRoot, opportunity];
+  }
+
+  if (
+    segments[0] === "company" &&
+    segments.length === 2 &&
+    segments[1] !== "settings"
+  ) {
+    return [
+      { href: "/directory", label: "Company Network" },
+      { href: `/company/${segments[1]}`, label: "Company Profile" },
+    ];
   }
 
   if (segments[0] === "analytics" && segments[1] === "vendors") {
