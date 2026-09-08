@@ -138,7 +138,7 @@ export function RfqQuoteComparison({
                   Commercial offer
                 </th>
                 <th scope="col" className="np-type-meta px-3 py-3">
-                  Timeline / validity
+                  Timeline / quote validity
                 </th>
                 <th scope="col" className="np-type-meta px-3 py-3">
                   Evaluation
@@ -180,7 +180,7 @@ export function RfqQuoteComparison({
                     </p>
                     {quote.isLowest ? (
                       <div className="mt-2">
-                        <ExecutiveBadge tone="success">Lowest bid</ExecutiveBadge>
+                        <ExecutiveBadge tone="success">Lowest quote</ExecutiveBadge>
                       </div>
                     ) : null}
                   </td>
@@ -210,7 +210,7 @@ export function RfqQuoteComparison({
                       Budget {quote.budgetVarianceLabel}
                     </p>
                     <p className="np-type-meta mt-1 min-w-0 text-pretty">
-                      Lowest {quote.lowestBidVarianceLabel}
+                      Vs lowest quote {quote.lowestBidVarianceLabel}
                     </p>
                     <ExceptionBadges quote={quote} />
                   </td>
@@ -260,7 +260,7 @@ export function RfqQuoteComparison({
                   </ExecutiveBadge>
                 )}
                 {quote.isLowest ? (
-                  <ExecutiveBadge tone="success">Lowest bid</ExecutiveBadge>
+                  <ExecutiveBadge tone="success">Lowest quote</ExecutiveBadge>
                 ) : null}
               </div>
             </header>
@@ -275,7 +275,7 @@ export function RfqQuoteComparison({
                   value={quote.timeline || "Not specified"}
                 />
                 <ComparisonField
-                  label="Validity"
+                  label="Quote validity"
                   value={`${quote.validityDays} days`}
                 />
               </dl>
@@ -303,7 +303,7 @@ export function RfqQuoteComparison({
                   value={quote.budgetVarianceLabel}
                 />
                 <ComparisonField
-                  label="Variance vs lowest bid"
+                  label="Variance vs lowest quote"
                   value={quote.lowestBidVarianceLabel}
                 />
               </dl>
@@ -375,7 +375,7 @@ function ExceptionBadges({ quote }: { quote: RfqQuoteComparisonItem }) {
         <ExecutiveBadge tone="success">Strong timeline</ExecutiveBadge>
       ) : null}
       {quote.isHighest ? (
-        <ExecutiveBadge tone="warning">Highest bid</ExecutiveBadge>
+        <ExecutiveBadge tone="warning">Highest quote</ExecutiveBadge>
       ) : null}
     </div>
   );

@@ -64,6 +64,7 @@ describe("RFQ invitation email family", () => {
     expect(email.html).toContain("Nexus Pavilion");
     expect(email.html).toContain("Enterprise Procurement Intelligence");
     expect(email.html).toContain("Open Secure RFQ Invitation");
+    expect(email.html).toContain("An issuing organization has invited you");
     expect(email.html).toContain(`href="${inviteUrl}"`);
     expect(email.html).toContain("/rfq/invite/");
     expect(email.html).not.toContain("/submit");
@@ -76,7 +77,7 @@ describe("RFQ invitation email family", () => {
     expect(email.html).toContain("$1,280,000");
     expect(email.html).toContain("September 15, 2026");
     expect(email.html).toContain(
-      "Supplier submissions are confidential and not visible to competing vendors.",
+      "Supplier submissions are confidential and not visible to competing suppliers.",
     );
     expect(email.html).toContain(
       "The Buyer reserves the right to accept or reject any or all submissions",

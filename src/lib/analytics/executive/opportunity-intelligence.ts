@@ -115,8 +115,8 @@ export function buildTopOpportunityInsight({
           ? "At least two positive visible quotations within the same unlocked RFQ are required for a comparable commercial estimate."
           : hasSavingsOpportunity
             ? hasHealthyCompetition
-              ? "Visible within-RFQ quotation evidence shows measurable bid dispersion with sufficient supplier participation to support commercial review."
-              : "Visible within-RFQ quotation evidence shows measurable bid dispersion, but competitive coverage remains limited."
+              ? "Visible within-RFQ quotation evidence shows measurable quote dispersion with sufficient supplier participation to support commercial review."
+              : "Visible within-RFQ quotation evidence shows measurable quote dispersion, but competitive coverage remains limited."
             : "Comparable visible quotations currently show no positive difference between average and lowest pricing within the same RFQ.";
 
   const recommendation =

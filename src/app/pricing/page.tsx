@@ -40,7 +40,7 @@ description: "For small teams starting structured procurement workflows.",
 features: [
 "Company workspace",
 "RFQ creation",
-"Vendor invitations",
+"Supplier invitations",
 "Quote submission",
 "Basic analytics",
 ],
@@ -94,7 +94,7 @@ Procurement intelligence plans for every team.
 </h1>
 
 <p className="mt-5 max-w-3xl text-sm font-semibold leading-7 text-slate-300">
-Start with structured RFQs, vendor invitations, quote workflows,
+Start with structured RFQs, supplier invitations, quote workflows,
 and executive analytics. Upgrade as your procurement operations
 grow.
 </p>

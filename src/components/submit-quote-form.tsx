@@ -152,13 +152,13 @@ export default function SubmitQuoteForm({
 
         <div className="min-w-0">
           <label htmlFor="invite-quote-message" className="np-type-meta">
-            Message / proposal notes
+            Commercial Note
           </label>
           <textarea
             id="invite-quote-message"
             value={message}
             onChange={(event) => setMessage(event.target.value)}
-            placeholder="Message / proposal notes"
+            placeholder="Commercial Note"
             required
             rows={5}
             disabled={submitting}

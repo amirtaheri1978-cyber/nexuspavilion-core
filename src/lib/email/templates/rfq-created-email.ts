@@ -122,7 +122,7 @@ Recommended Next Steps
 
 <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:18px;">
 ${nextStepRow("Review RFQ scope and procurement classification.")}
-${nextStepRow("Invite qualified suppliers, vendors, or contractors.")}
+${nextStepRow("Invite qualified suppliers and contractors.")}
 ${nextStepRow("Monitor quotes, pricing signals, procurement risk, and award readiness.")}
 ${nextStepRow("Use Nexus Pavilion intelligence to compare supplier responses.")}
 </table>

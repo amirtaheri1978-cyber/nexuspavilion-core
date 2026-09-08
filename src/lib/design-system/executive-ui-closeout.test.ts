@@ -37,12 +37,24 @@ const launchCritical = {
     "src/lib/analytics/source-data/load-analytics-source-data.ts",
   ),
   vendorDashboard: readSource("src/app/vendor-dashboard/page.tsx"),
+  marketplaceViewModel: readSource(
+    "src/lib/procurement/marketplace-view-model.ts",
+  ),
+  supplierScorecard: readSource(
+    "src/components/vendor-workspace/supplier-scorecard.tsx",
+  ),
   rfqList: readSource("src/app/rfq/page.tsx"),
   rfqNew: readSource("src/app/rfq/new/page.tsx"),
   rfqDraftAutosave: readSource("src/hooks/use-rfq-draft-autosave.ts"),
   rfqCompare: readSource("src/app/rfq/[slug]/compare/page.tsx"),
   rfqQuoteWorkspace: readSource(
     "src/components/rfq-workspace/rfq-quote-workspace.tsx",
+  ),
+  rfqSupplierQuotes: readSource(
+    "src/components/rfq-workspace/rfq-supplier-quotes.tsx",
+  ),
+  rfqQuoteComparison: readSource(
+    "src/components/rfq-workspace/rfq-quote-comparison.tsx",
   ),
   rfqSubmit: readSource("src/components/rfq-workspace/rfq-submit-workspace.tsx"),
   supplierCommand: readSource(
@@ -169,6 +181,27 @@ describe("NP-MASTER-22-B05 launch-critical closeout", () => {
     expect(launchCritical.rfqNew).toContain("sm:grid-cols-2 xl:grid-cols-5");
   });
 
+  it("keeps canonical supplier and generic quote terminology on launch-critical surfaces", () => {
+    expect(launchCritical.marketplaceViewModel).toContain("Open Opportunities");
+    expect(launchCritical.marketplaceViewModel).toContain("My Quotes");
+    expect(launchCritical.vendorDashboard).toContain("Submitted Quote Value");
+    expect(launchCritical.vendorDashboard).toContain("Average Submitted Quote");
+    expect(launchCritical.rfqNew).toContain("Evaluation Model");
+    expect(launchCritical.rfqNew).not.toContain("Bidding Model");
+    expect(launchCritical.supplierScorecard).toContain("Open Opportunities");
+    expect(launchCritical.supplierScorecard).toContain("Submitted Quote Value");
+    expect(launchCritical.rfqSubmit).toContain("Commercial note");
+    expect(launchCritical.rfqSubmit).not.toContain("Proposal note");
+    expect(launchCritical.rfqSupplierQuotes).toContain("Quote validity");
+    expect(launchCritical.rfqSupplierQuotes).toContain("Commercial note");
+    expect(launchCritical.rfqQuoteComparison).toContain("Lowest quote");
+    expect(launchCritical.rfqQuoteComparison).toContain("Highest quote");
+    expect(launchCritical.rfqQuoteComparison).not.toContain("Lowest bid");
+    expect(launchCritical.rfqCompare).toContain("Submitted quote set");
+    expect(launchCritical.rfqCompare).toContain("Blind bidding active");
+    expect(launchCritical.rfqCompare).not.toContain('label="Recommended bid"');
+  });
+
   it("keeps frozen launch-critical typography hierarchy on Task 13-01 surfaces", () => {
     expect(launchCritical.analytics).toContain("np-type-eyebrow");
     expect(launchCritical.analytics).toContain("np-type-h1");
@@ -266,7 +299,7 @@ describe("NP-MASTER-22-B05 launch-critical closeout", () => {
       "Submit supplier quotes to activate procurement intelligence.",
     );
     expect(launchCritical.rfqCompare).toContain("Insufficient Data");
-    expect(launchCritical.rfqCompare).toContain("No bids");
+    expect(launchCritical.rfqCompare).toContain("No quotes");
     expect(launchCritical.rfqCompare).toContain(
       "No supplier quotations are available for comparison yet. Review RFQ participation and sourcing status.",
     );
@@ -275,10 +308,10 @@ describe("NP-MASTER-22-B05 launch-critical closeout", () => {
     );
 
     expect(launchCritical.rfqQuoteWorkspace).toContain(
-      "No supplier submissions have been received yet. Commercial pricing and ranking will remain protected until the RFQ deadline.",
+      "No supplier quote submissions have been received yet. Commercial pricing and ranking will remain protected until the RFQ deadline.",
     );
     expect(launchCritical.rfqQuoteWorkspace).toContain(
-      "Supplier submissions have been received, but commercial pricing and quote comparison remain protected until the authorized commercial opening stage.",
+      "Supplier quote submissions have been received, but commercial pricing and quote comparison remain protected until the authorized commercial opening stage.",
     );
     expect(launchCritical.rfqQuoteWorkspace).toContain(
       "receivedSubmissionCount > 0",

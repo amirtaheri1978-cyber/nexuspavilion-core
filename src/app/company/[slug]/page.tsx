@@ -663,7 +663,7 @@ Commercial History
 <MetricCard
 title="Submitted Quotes"
 value={String(vendorSubmittedQuotes)}
-detail="Recorded bid submissions"
+detail="Recorded quote submissions"
 />
 
 <MetricCard
@@ -757,24 +757,24 @@ className="rounded-[28px] border border-white/10 bg-[#07111F]/80 p-6"
 {isVendorProfile ? (
 <section className="mt-8 rounded-[34px] border border-white/10 bg-white/[0.055] p-8 shadow-[0_30px_80px_rgba(0,0,0,0.35)]">
 <p className="text-xs font-black uppercase tracking-[0.30em] text-[#C8A646]">
-Vendor Performance
+Supplier Performance
 </p>
 
 <h2 className="mt-3 text-3xl font-black text-white">
-Bid History
+Quote History
 </h2>
 
 <p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-400">
-Factual bid and award activity recorded across the Nexus Pavilion
+Factual quote and award activity recorded across the Nexus Pavilion
 procurement network, including submitted quotes, win rate, awarded
-revenue, and average bid value.
+revenue, and average quote value.
 </p>
 
 <div className="mt-8 grid gap-6 md:grid-cols-3 xl:grid-cols-6">
 <MetricCard
 title="Quotes"
 value={String(vendorSubmittedQuotes)}
-detail="Submitted bids"
+detail="Submitted quotes"
 />
 
 <MetricCard
@@ -796,13 +796,13 @@ detail="Total won value"
 />
 
 <MetricCard
-title="Average Bid"
+title="Average Submitted Quote"
 value={formatMoney(vendorAverageBid)}
 detail="Average submitted quote"
 />
 
 <MetricCard
-title="Bid Volume"
+title="Submitted Quote Value"
 value={formatMoney(vendorTotalBidValue)}
 detail="Total quoted value"
 />

@@ -94,7 +94,7 @@ export function getBlindBiddingMessage(rfq: RfqMetadata): string {
     return "This framework RFQ uses controlled commercial access. Supplier pricing remains hidden until the RFQ deadline has passed.";
   }
 
-  return "This invited RFQ uses blind bidding controls. Buyer-side users can see participation counts, but commercial pricing is locked until closing.";
+  return "This invited RFQ uses blind bidding controls. Authorized issuing-organization users can see participation counts, but commercial pricing is locked until closing.";
 }
 
 export function getRFQStatusClass(status: string | null): string {

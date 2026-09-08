@@ -102,13 +102,13 @@ averageBid,
 recommendedAmount: number;
 averageBid: number;
 }) {
-if (recommendedAmount <= 0 || averageBid <= 0) return "Bid-set position pending";
+if (recommendedAmount <= 0 || averageBid <= 0) return "Quote-set position pending";
 
 const ratio = recommendedAmount / averageBid;
 
-if (ratio <= 0.9) return "Strong relative bid position";
-if (ratio <= 1) return "Below submitted-bid average";
-if (ratio <= 1.1) return "Above submitted-bid average";
+if (ratio <= 0.9) return "Strong relative quote position";
+if (ratio <= 1) return "Below submitted-quote average";
+if (ratio <= 1.1) return "Above submitted-quote average";
 return "High relative cost position";
 }
 
@@ -268,8 +268,8 @@ commercialEvaluationUnlocked && recommendedQuote
 ? [
 `Current evaluation rank #${recommendedQuote.rank}`,
 recommendedQuote.amountNumber === lowestAmount
-? "Lowest submitted bid"
-: "Relative submitted-bid price position",
+? "Lowest submitted quote"
+: "Relative submitted-quote price position",
 `Price score ${recommendedQuote.priceScore}/100`,
 `Timeline score ${recommendedQuote.timelineScore}/100`,
 `Performance score ${recommendedQuote.performanceScore}/100`,
@@ -277,8 +277,8 @@ recommendedQuote.amountNumber === lowestAmount
 potentialSavings > 0
 ? `${formatMoney(
 Math.max(potentialSavings, 0)
-)} potential savings versus average submitted bid`
-: "At or above the average submitted bid",
+)} potential savings versus average submitted quote`
+: "At or above the average submitted quote",
 ]
 : [];
 
@@ -363,12 +363,12 @@ return (
         </h2>
         <div className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <ExecutiveMetricCard
-            label="Recommended bid"
+            label="Recommended quote"
             value={
               commercialEvaluationUnlocked && recommendedQuote
                 ? formatMoney(recommendedQuote.amountNumber)
                 : commercialEvaluationUnlocked
-                  ? "No bids"
+                  ? "No quotes"
                   : "Locked"
             }
             insight={
@@ -413,18 +413,18 @@ return (
                 ? formatMoney(Math.max(potentialSavings, 0))
                 : insufficientComparisonLabel
             }
-            insight="Compared to average bid"
+            insight="Compared to average submitted quote"
             tone="gold"
           />
         </div>
       </section>
 
       <ExecutivePanel variant="boardroom" padding="lg" className="np-region-major">
-        <p className="np-type-eyebrow">Submitted bid set</p>
-        <h2 className="np-type-h2 mt-3">Budget and submitted-bid distribution</h2>
+        <p className="np-type-eyebrow">Submitted quote set</p>
+        <h2 className="np-type-h2 mt-3">Budget and submitted-quote distribution</h2>
         <p className="np-type-body mt-3 max-w-4xl">
           This position uses only quotes submitted for this RFQ, their average
-          submitted bid, and the approved RFQ budget. No synthetic market or
+          submitted quote, and the approved RFQ budget. No synthetic market or
           external benchmark data is used.
         </p>
         <div className="mt-5 flex flex-wrap gap-2">
@@ -432,7 +432,7 @@ return (
           <ExecutiveBadge tone="neutral">{budgetPosition}</ExecutiveBadge>
           <ExecutiveBadge tone="blue">
             {commercialEvaluationUnlocked && recommendedQuote
-              ? `${bidSpreadPercent}% bid spread`
+              ? `${bidSpreadPercent}% quote spread`
               : insufficientComparisonLabel}
           </ExecutiveBadge>
         </div>
@@ -444,10 +444,10 @@ return (
                 ? `${recommendedQuote.totalScore}/100`
                 : insufficientComparisonLabel
             }
-            insight="Canonical evaluation score within this RFQ bid set"
+            insight="Canonical evaluation score within this RFQ quote set"
           />
           <ExecutiveMetricCard
-            label="Average bid"
+            label="Average submitted quote"
             value={
               commercialEvaluationUnlocked && averageBid
                 ? formatMoney(averageBid)
@@ -463,7 +463,7 @@ return (
             }
           />
           <ExecutiveMetricCard
-            label="Bid spread"
+            label="Quote spread"
             value={
               commercialEvaluationUnlocked && recommendedQuote
                 ? `${bidSpreadPercent}%`
@@ -481,7 +481,7 @@ return (
               {commercialEvaluationUnlocked && recommendedQuote
                 ? `Recommended supplier rank #${recommendedQuote.rank}`
                 : commercialEvaluationUnlocked
-                  ? "No bids"
+                  ? "No quotes"
                   : "Commercial evaluation locked"}
             </h2>
             <p className="np-type-body mt-4 max-w-4xl">{executiveSummary}</p>

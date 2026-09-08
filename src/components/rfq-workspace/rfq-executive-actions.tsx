@@ -54,7 +54,7 @@ function buildRespondentLifecycleStages(
       href: "#clarifications-addenda",
     },
     {
-      label: "Quote & Proposal Preparation",
+      label: "Quote Preparation",
       href: canSubmitQuote
         ? `/rfq/${rfqSlug}/submit`
         : "#quote-intelligence",

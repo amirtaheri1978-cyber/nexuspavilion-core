@@ -138,7 +138,7 @@ export function ExecutiveDecisionTimeline({
           : "locked",
       detail: isOwner
         ? executive.recommendation.recommendation
-        : "Supplier-side users can monitor their own submission while buyer-side award analysis remains confidential.",
+        : "Supplier-side users can monitor their own submission while issuing-organization award analysis remains confidential.",
       signal: recommendedQuote
         ? `${recommendedQuote.awardConfidence}% confidence`
         : "Awaiting intelligence",

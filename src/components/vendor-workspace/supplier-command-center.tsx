@@ -172,10 +172,10 @@ export function SupplierCommandCenter({
 
               <p className="np-type-body mt-2 break-words text-nexus-white!">
                 {pendingDecisions > 0
-                  ? `${pendingDecisions} open RFQ${pendingDecisions === 1 ? "" : "s"} with quotations awaiting buyer decision.`
+                  ? `${pendingDecisions} open RFQ${pendingDecisions === 1 ? "" : "s"} with quotations awaiting an issuing-organization decision.`
                   : submittedQuotes === 0
                     ? "No quotations submitted. Explore open RFQ opportunities to begin participation."
-                    : "No pending buyer decisions on submitted quotations."}
+                    : "No pending decisions from the issuing organization on submitted quotations."}
               </p>
             </div>
           </div>

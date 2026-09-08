@@ -63,7 +63,7 @@ Submit Quote
 </h1>
 
 <p className="mt-4 max-w-2xl text-sm text-slate-600">
-Submit your pricing, delivery timeline, and proposal notes for this
+Submit your pricing, delivery timeline, and a commercial note for this
 procurement opportunity.
 </p>
 </section>
@@ -93,7 +93,7 @@ className="rounded-2xl border border-slate-300 px-4 py-3 outline-none"
 <textarea
 required
 rows={6}
-placeholder="Message / proposal notes"
+placeholder="Commercial Note"
 value={message}
 onChange={(event) => setMessage(event.target.value)}
 className="rounded-2xl border border-slate-300 px-4 py-3 outline-none"

@@ -55,20 +55,20 @@ export function RFQQuoteWorkspace({
 
   const workspaceTitle = isOwner
     ? commercialEvaluationUnlocked
-      ? "Response evaluation intelligence"
+      ? "Quote evaluation intelligence"
       : "Commercial submission lockbox"
     : "Your organization’s quote submission";
 
   const workspaceDescription = !isOwner
-    ? "Quote pricing remains confidential. Your organization can review only its own submission. Competitor pricing, comparative evaluation, ranking, and award controls remain restricted to the issuer after commercial opening."
+    ? "Quote pricing remains confidential. Your organization can review only its own submission. Competitor pricing, comparative evaluation, ranking, and award controls remain restricted to the issuing organization after commercial opening."
     : commercialEvaluationUnlocked
-      ? "Quote evaluation applies weighted commercial and execution criteria across price, timeline, performance signals, procurement risk, and proposal validity."
-      : "Commercial submissions remain protected until the RFQ deadline. Issuers can monitor participation volume while pricing, ranking, comparison, and award controls remain unavailable.";
+      ? "Quote evaluation applies weighted commercial and execution criteria across price, timeline, performance signals, procurement risk, and quote validity."
+      : "Quote submissions remain protected until the RFQ deadline. The issuing organization can monitor participation volume while pricing, ranking, comparison, and award controls remain unavailable.";
 
   const commercialLockboxDescription =
     receivedSubmissionCount > 0
-      ? "Supplier submissions have been received, but commercial pricing and quote comparison remain protected until the authorized commercial opening stage."
-      : "No supplier submissions have been received yet. Commercial pricing and ranking will remain protected until the RFQ deadline.";
+      ? "Supplier quote submissions have been received, but commercial pricing and quote comparison remain protected until the authorized commercial opening stage."
+      : "No supplier quote submissions have been received yet. Commercial pricing and ranking will remain protected until the RFQ deadline.";
 
   return (
     <ExecutivePanel
@@ -166,7 +166,7 @@ export function RFQQuoteWorkspace({
                 <ExecutiveMetricCard
                   label="Submissions"
                   value={String(receivedSubmissionCount)}
-                  insight="Supplier responses received"
+                  insight="Supplier quote submissions received"
                   tone="gold"
                 />
 

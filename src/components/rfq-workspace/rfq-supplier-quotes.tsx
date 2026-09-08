@@ -33,7 +33,7 @@ export function RFQSupplierQuotes({
       data-rfq-supplier-quotes="true"
     >
       <h3 id="rfq-supplier-quotes-title" className="sr-only">
-        Supplier Commercial Submission
+        Supplier Quote Submission
       </h3>
 
       {quotes.length === 0 ? (
@@ -51,7 +51,7 @@ export function RFQSupplierQuotes({
             <div className="rounded-executive border border-white/10">
               <table className="w-full table-fixed border-collapse text-left">
                 <caption className="sr-only">
-                  Your organization’s RFQ commercial submission
+                  Your organization’s RFQ quote submission
                 </caption>
                 <colgroup>
                   <col className="w-[18%]" />
@@ -69,13 +69,13 @@ export function RFQSupplierQuotes({
                       Delivery timeline
                     </th>
                     <th scope="col" className="np-type-meta px-3 py-3">
-                      Proposal validity
+                      Quote validity
                     </th>
                     <th scope="col" className="np-type-meta px-3 py-3">
                       Submission status
                     </th>
                     <th scope="col" className="np-type-meta px-3 py-3">
-                      Supplier message
+                      Commercial note
                     </th>
                   </tr>
                 </thead>
@@ -115,7 +115,7 @@ export function RFQSupplierQuotes({
                         </td>
                         <td className="min-w-0 px-3 py-4 align-top">
                           <p className="np-type-body min-w-0 text-pretty">
-                            {quote.message || "No supplier message provided."}
+                            {quote.message || "No commercial note provided."}
                           </p>
                         </td>
                       </tr>
@@ -137,7 +137,7 @@ export function RFQSupplierQuotes({
                 <article
                   key={quote.id}
                   className="min-w-0 rounded-executive border border-white/10 bg-black/20 p-5"
-                  aria-label={`Commercial submission amount ${formatMoney(
+                  aria-label={`Quote submission amount ${formatMoney(
                     quote.amount,
                   )}, status ${decisionLabel}`}
                 >
@@ -170,7 +170,7 @@ export function RFQSupplierQuotes({
                         </dd>
                       </div>
                       <div className="min-w-0">
-                        <dt className="np-type-meta">Proposal validity</dt>
+                        <dt className="np-type-meta">Quote validity</dt>
                         <dd className="np-type-body mt-1 min-w-0 text-pretty text-white">
                           {quote.validity_days
                             ? `${quote.validity_days} days`
@@ -182,11 +182,11 @@ export function RFQSupplierQuotes({
 
                   <section
                     className="mt-5 border-t border-white/10 pt-4"
-                    aria-label="Supplier message"
+                    aria-label="Commercial note"
                   >
-                    <p className="np-type-meta">Supplier message</p>
+                    <p className="np-type-meta">Commercial note</p>
                     <p className="np-type-body mt-2 min-w-0 text-pretty">
-                      {quote.message || "No supplier message provided."}
+                      {quote.message || "No commercial note provided."}
                     </p>
                   </section>
                 </article>
@@ -215,12 +215,12 @@ function SupplierQuoteEmptyState({
       data-rfq-supplier-quotes-empty="true"
     >
       <p className="np-type-h3 min-w-0 text-pretty">
-        No Commercial Submission Recorded
+        No Quote Submission Recorded
       </p>
 
       <p className="mx-auto mt-3 max-w-xl min-w-0 text-pretty text-sm font-semibold leading-6 text-nexus-muted">
         {isOpen
-          ? "This RFQ is currently open for an authorized company submission."
+          ? "This RFQ is currently open for an authorized company quote submission."
           : "This RFQ is closed and is no longer accepting submissions."}
       </p>
 

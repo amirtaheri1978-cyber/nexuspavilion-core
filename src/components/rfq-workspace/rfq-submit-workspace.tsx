@@ -293,7 +293,7 @@ export function RfqSubmitWorkspace({ slug }: RfqSubmitWorkspaceProps) {
         rfqStatusError
           ? "We couldn't verify this RFQ status. Please reload the page and try again."
           : deadlinePassed
-          ? "Submission closed. The RFQ deadline has passed and late bids are not accepted."
+          ? "Submission closed. The RFQ deadline has passed and late quote submissions are not accepted."
           : "Submission closed. This RFQ is no longer accepting quotes.",
       );
       return;
@@ -326,7 +326,7 @@ export function RfqSubmitWorkspace({ slug }: RfqSubmitWorkspaceProps) {
       submitLock.current = false;
       setLoading(false);
       setErrorField("message");
-      setError("Please include a proposal note.");
+      setError("Please include a commercial note.");
       return;
     }
 
@@ -413,8 +413,8 @@ export function RfqSubmitWorkspace({ slug }: RfqSubmitWorkspaceProps) {
           <h1 className="np-type-h1 mt-4 min-w-0 text-pretty">Submit quote</h1>
           <p className="np-type-body mt-4 max-w-3xl min-w-0 text-pretty">
             {rfq?.title
-              ? `Quote and proposal submission for ${rfq.title}.`
-              : "Submit your quote with a validated contract amount, delivery timeline, and proposal note."}
+              ? `Quote submission for ${rfq.title}.`
+              : "Submit your quote with a validated contract amount, delivery timeline, and commercial note."}
           </p>
 
           <dl
@@ -480,7 +480,7 @@ export function RfqSubmitWorkspace({ slug }: RfqSubmitWorkspaceProps) {
             <div className="mt-8 min-w-0 rounded-executive border border-red-400/20 bg-red-500/10 p-5">
               <ExecutiveBadge tone="risk">Submission closed</ExecutiveBadge>
               <p className="np-type-body mt-3 min-w-0 text-pretty">
-                This RFQ is no longer accepting submissions. Late bids
+                This RFQ is no longer accepting submissions. Late quote submissions
                 are rejected automatically.
               </p>
             </div>
@@ -562,7 +562,7 @@ export function RfqSubmitWorkspace({ slug }: RfqSubmitWorkspaceProps) {
 
               <div className="mt-6 min-w-0">
                 <label htmlFor="quote-message" className="np-type-meta">
-                  Proposal note
+                  Commercial note
                 </label>
                 <textarea
                   id="quote-message"

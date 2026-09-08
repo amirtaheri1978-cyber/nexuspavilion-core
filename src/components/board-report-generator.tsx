@@ -192,7 +192,7 @@ body: `Procurement performance shows an enterprise score of ${enterpriseProcurem
 },
 {
 title: "Supplier Network Health",
-body: `Supplier engagement is currently ${supplierEngagementScore}/100. The supplier dependency signal is ${supplierDependencyRisk}, with vendor concentration marked as ${concentrationLevel}.`,
+body: `Supplier engagement is currently ${supplierEngagementScore}/100. The supplier dependency signal is ${supplierDependencyRisk}, with supplier concentration marked as ${concentrationLevel}.`,
 },
 {
 title: "Risk Visibility",
@@ -242,7 +242,7 @@ body: `Procurement maturity is ${procurementMaturityScore}/100, procurement effi
 },
 {
 title: "Risk Assessment",
-body: `${riskNarrative} The supplier dependency signal is ${supplierDependencyRisk} and vendor concentration is ${concentrationLevel}.`,
+body: `${riskNarrative} The supplier dependency signal is ${supplierDependencyRisk} and supplier concentration is ${concentrationLevel}.`,
 },
 {
 title: "Decision Evidence",
@@ -329,7 +329,7 @@ Executive Metrics:
 - Decision-Support Readiness: ${decisionSupportReadinessScore}/100
 - Data Quality: ${dataQualityScore}/100
 - Supplier Dependency Signal: ${supplierDependencyRisk}
-- Vendor Concentration: ${concentrationLevel}
+- Supplier Concentration: ${concentrationLevel}
 - Benchmark Readiness Score: ${benchmarkReadinessScore}/100
 - Board Health Index: ${boardHealthIndex}/100
 - Enterprise Procurement Score: ${enterpriseProcurementScore}/100

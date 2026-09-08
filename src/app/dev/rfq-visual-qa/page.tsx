@@ -753,13 +753,13 @@ export default function RfqVisualQaPage() {
               id="rfq-supplier-invitation-heading"
               className="mt-3 min-w-0 text-pretty text-2xl font-black tracking-tight text-nexus-white sm:text-3xl"
             >
-              Build Competitive Bid Coverage for the North Harbor refrigeration
+              Build Competitive Supplier Response Coverage for the North Harbor refrigeration
               replacement and bonded warehouse commissioning program
             </h2>
             <p className="mt-3 max-w-3xl min-w-0 text-pretty text-sm font-semibold leading-7 text-nexus-muted">
               Invite qualified suppliers directly into this RFQ workspace while
-              preserving buyer-side control, commercial confidentiality, and the
-              current governance workflow for authorized vendor contacts across
+              preserving issuing-organization control, commercial confidentiality, and the
+              current governance workflow for authorized supplier contacts across
               the North Harbor distribution campus.
             </p>
             <div className="mt-6 min-w-0">
@@ -877,7 +877,7 @@ export default function RfqVisualQaPage() {
                 </div>
                 <div className="mt-6 min-w-0">
                   <label htmlFor="qa-note" className="np-type-meta">
-                    Proposal note
+                    Commercial note
                   </label>
                   <textarea
                     id="qa-note"
@@ -922,7 +922,7 @@ export default function RfqVisualQaPage() {
                   {[
                     ["Quote amount", "Captured for this quotation."],
                     ["Delivery timeline", "Captured for this quotation."],
-                    ["Proposal note", "Captured for this quotation."],
+                    ["Commercial note", "Captured for this quotation."],
                   ].map(([label, detail]) => (
                     <li
                       key={label}

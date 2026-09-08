@@ -147,7 +147,7 @@ export function CommercialInsightsPanel({
                 <th className="px-4 py-3 text-xs">Positive Quotes</th>
                 <th className="px-4 py-3 text-xs">Average</th>
                 <th className="px-4 py-3 text-xs">Lowest</th>
-                <th className="px-4 py-3 text-xs">Bid Spread</th>
+                <th className="px-4 py-3 text-xs">Quote Spread</th>
                 <th className="px-4 py-3 text-xs">Max Median Deviation</th>
                 <th className="px-4 py-3 text-xs">Review Signal</th>
               </tr>

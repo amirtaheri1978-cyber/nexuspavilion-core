@@ -158,7 +158,7 @@ export function ExecutiveNegotiationIntelligence({
         negotiation.expectedSavings > 0
           ? formatMoney(negotiation.expectedSavings)
           : "Limited",
-      detail: "Relative to the current average bid position",
+      detail: "Relative to the current average quote position",
     },
   ];
 
@@ -174,8 +174,8 @@ export function ExecutiveNegotiationIntelligence({
       positive: quoteCount >= 3,
     },
     {
-      label: "Lowest Bid Position",
-      value: isLowest ? "Recommended bid is lowest" : "Not the lowest bid",
+      label: "Lowest Quote Position",
+      value: isLowest ? "Recommended quote is lowest" : "Not the lowest quote",
       positive: isLowest,
     },
     {
@@ -300,7 +300,7 @@ export function ExecutiveNegotiationIntelligence({
             </div>
 
             <p className="mt-3 max-w-3xl text-sm font-semibold leading-7 text-nexus-muted">
-              These signals indicate where competitive tension, bid position,
+              These signals indicate where competitive tension, quote position,
               budget alignment, and supplier risk strengthen or constrain the
               current negotiation strategy.
             </p>

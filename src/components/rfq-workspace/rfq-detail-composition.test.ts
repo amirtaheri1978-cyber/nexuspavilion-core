@@ -83,7 +83,7 @@ describe("Task 24-RFQ-04 RFQ detail structural composition", () => {
       "Documentation Readiness",
     ]);
     expect(intelligence[0].ceoRecommendation).toBe(
-      "Validate the bid spread and prepare negotiation strategy before final award.",
+      "Validate the quote spread and prepare negotiation strategy before final award.",
     );
 
     expect(detail).toContain("buildRfqExecutiveOpportunityIntelligence({");

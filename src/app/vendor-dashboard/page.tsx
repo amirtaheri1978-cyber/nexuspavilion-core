@@ -70,14 +70,14 @@ function buildExecutiveBrief({
   unsuccessfulQuotes: number;
 }) {
   if (submittedQuotes === 0) {
-    return "No quotation history is on record for this supplier profile. Explore open RFQ opportunities and submit the first competitive quotation to begin building a verifiable performance record.";
+    return "No quote history is on record for this supplier profile. Review open procurement opportunities and submit the first competitive quote to begin building a verifiable performance record.";
   }
 
   if (awardedQuoteCount === 0) {
     const pendingNote =
       pendingDecisions > 0
-        ? ` ${pendingDecisions} open RFQ${pendingDecisions === 1 ? "" : "s"} currently have quotations awaiting buyer decision.`
-        : " Continue monitoring open opportunities and refine proposal competitiveness.";
+        ? ` ${pendingDecisions} open RFQ${pendingDecisions === 1 ? "" : "s"} currently have quotations awaiting an issuing-organization decision.`
+        : " Continue monitoring open opportunities and refine submission competitiveness.";
 
     return `This supplier has submitted ${submittedQuotes} quotation${submittedQuotes === 1 ? "" : "s"} with no awards recorded yet.${pendingNote}`;
   }
@@ -94,7 +94,7 @@ function buildExecutiveBrief({
 
   if (pendingDecisions > 0) {
     parts.push(
-      `${pendingDecisions} open RFQ${pendingDecisions === 1 ? "" : "s"} await buyer decision.`,
+      `${pendingDecisions} open RFQ${pendingDecisions === 1 ? "" : "s"} await an issuing-organization decision.`,
     );
   }
 
@@ -221,12 +221,12 @@ export default async function VendorDashboardPage() {
 
   const nextBestAction =
     submittedQuotes === 0
-      ? "Explore active RFQ opportunities and submit the first competitive quotation."
+      ? "Review open procurement opportunities and submit the first competitive quote."
       : winRate < 25
-        ? "Review pricing competitiveness and proposal quality before the next quotation submission."
+        ? "Review pricing competitiveness and submission quality before the next quote submission."
         : pendingDecisions > 0
           ? "Monitor pending award decisions and prepare for clarification or negotiation requests."
-          : "Maintain quotation discipline and expand participation in strategically aligned RFQ opportunities.";
+          : "Maintain quotation discipline and expand participation in strategically aligned procurement opportunities.";
 
   const pipelineRows = rfqList.map((rfq) => {
     const rfqQuotes = quoteList.filter((quote) => quote.rfq_id === rfq.id);
@@ -288,9 +288,9 @@ export default async function VendorDashboardPage() {
               accentClassName: "text-[#F5D77B]",
             },
             {
-              title: "Total Bid Volume",
+              title: "Submitted Quote Value",
               value: formatMoney(totalBidVolume),
-              detail: "Combined value of all submitted quotations",
+              detail: "Combined value of all submitted quotes",
               accentClassName: "text-emerald-300",
             },
           ]}
@@ -308,7 +308,7 @@ export default async function VendorDashboardPage() {
               value: String(pendingDecisions),
             },
             {
-              title: "Open RFQs",
+              title: "Open Opportunities",
               value: String(openRfqCount),
             },
           ]}
@@ -343,12 +343,12 @@ export default async function VendorDashboardPage() {
           <ExecutiveMetricCard
             label="Pending Decisions"
             value={String(pendingDecisions)}
-            insight="Open RFQs with submitted quotations awaiting review"
+            insight="Open Opportunities with submitted quotations awaiting review"
             tone={pendingDecisions > 0 ? "gold" : "neutral"}
           />
 
           <ExecutiveMetricCard
-            label="Open RFQs"
+            label="Open Opportunities"
             value={String(openRfqCount)}
             insight="Active opportunities accepting or reviewing quotations"
             tone="blue"
@@ -378,19 +378,19 @@ export default async function VendorDashboardPage() {
           />
 
           <ExecutiveMetricCard
-            label="Total Bid Volume"
+            label="Submitted Quote Value"
             value={formatMoney(totalBidVolume)}
-            insight="Combined value of all submitted quotations"
+            insight="Combined value of all submitted quotes"
             tone="blue"
             valueClassName="text-2xl"
           />
 
           <ExecutiveMetricCard
-            label="Average Bid"
+            label="Average Submitted Quote"
             value={submittedQuotes > 0 ? formatMoney(averageBid) : "—"}
             insight={
               submittedQuotes > 0
-                ? "Average submitted quotation value"
+                ? "Average submitted quote value"
                 : "Insufficient data"
             }
             tone="blue"

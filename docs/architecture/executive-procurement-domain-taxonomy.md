@@ -139,7 +139,7 @@ A decision-relevant interpretation that explains why a pattern, condition, or ch
 
 ### Examples
 
-- “Bid dispersion indicates a potentially inconsistent scope interpretation.”
+- “Quote dispersion indicates a potentially inconsistent scope interpretation.”
 - “Supplier concentration is increasing in a category with limited contingency capacity.”
 
 ### Rules

@@ -74,7 +74,7 @@ export function buildExecutiveScenarios(
           : recommendation.recommendation,
       costImpact:
         savings > 0
-          ? `${Math.round(savings).toLocaleString()} below average bid`
+          ? `${Math.round(savings).toLocaleString()} below average submitted quote`
           : "Commercial position neutral",
       timeImpact: "Fastest route to contract award.",
       riskImpact: recommendedQuote.riskLevel,

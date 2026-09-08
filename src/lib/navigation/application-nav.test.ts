@@ -63,6 +63,27 @@ describe("Task 23 application navigation contract", () => {
     expect(new Set(hrefs).size).toBe(hrefs.length);
   });
 
+  it("uses canonical supplier terminology for vendor navigation", () => {
+    const items = getNavigation("vendor", {
+      activeRfqs: 4,
+      unreadNotifications: 2,
+      awardedContracts: 1,
+      supplierQuotes: 3,
+    }).flatMap((section) => section.items);
+
+    expect(items.find((item) => item.href === "/rfq")).toMatchObject({
+      label: "Procurement Center",
+      description: "Open and invited procurement opportunities",
+    });
+    expect(items.find((item) => item.href === "/vendor-dashboard")).toMatchObject({
+      label: "My Quotes",
+      description: "Submitted quote activity and outcomes",
+    });
+    expect(items.map((item) => item.label)).not.toContain(
+      "Bid & Proposal Submissions",
+    );
+  });
+
   it("keeps consultant destinations unique and omits marketing pricing", () => {
     const hrefs = hrefsFor("consultant");
 

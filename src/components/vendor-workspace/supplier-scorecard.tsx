@@ -71,7 +71,7 @@ export function SupplierScorecard({
             <SupplierEvidenceCard
               title="Pending Decisions"
               value={String(pendingDecisions)}
-              detail="Quotations awaiting buyer review"
+              detail="Quotations awaiting review by the issuing organization"
             />
           </div>
         </div>
@@ -94,12 +94,12 @@ export function SupplierScorecard({
             />
 
             <SupplierSignalRow
-              label="Open RFQs"
+              label="Open Opportunities"
               value={String(openRfqs)}
             />
 
             <SupplierSignalRow
-              label="Total Bid Volume"
+              label="Submitted Quote Value"
               value={totalBidVolume}
             />
 
@@ -109,7 +109,7 @@ export function SupplierScorecard({
             />
 
             <SupplierSignalRow
-              label="Average Bid"
+              label="Average Submitted Quote"
               value={averageBid}
             />
 

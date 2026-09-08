@@ -265,7 +265,7 @@ export function getExecutiveRiskMatrix({
             : "Low",
       detail:
         quoteCount >= 3
-          ? "Bid coverage is healthy"
+          ? "Supplier response coverage is healthy"
           : "More supplier participation recommended",
     },
     {

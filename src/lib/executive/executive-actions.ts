@@ -40,9 +40,9 @@ export function buildExecutiveActions(
         priority: "high",
         category: "Supplier Readiness",
         rationale:
-          "The buyer has provided RFQ documents that should be reviewed before submitting or validating pricing.",
+          "The issuing organization has provided RFQ documents that should be reviewed before submitting or validating pricing.",
         outcome:
-          "Improves proposal accuracy and reduces scope assumptions.",
+          "Improves quote accuracy and reduces scope assumptions.",
         anchorHref: "#document-center",
         actionLabel: "Open Documents",
       });
@@ -64,7 +64,7 @@ export function buildExecutiveActions(
 
     if (isOpen) {
       actions.push({
-        title: "Submit Commercial Proposal",
+        title: "Submit Quote",
         priority: "high",
         category: "Submission",
         rationale:
@@ -117,7 +117,7 @@ export function buildExecutiveActions(
       priority: "critical",
       category: "Competition",
       rationale:
-        "No supplier quotes have been received. The RFQ needs bid coverage before commercial comparison can produce decision-grade intelligence.",
+        "No supplier quotes have been received. The RFQ needs supplier response coverage before commercial comparison can produce decision-grade intelligence.",
       outcome:
         "Creates supplier competition and improves the probability of a credible award recommendation.",
       anchorHref: "#supplier-invitations",
@@ -131,7 +131,7 @@ export function buildExecutiveActions(
       priority: "high",
       category: "Market Coverage",
       rationale:
-        "Current bid coverage limits commercial leverage and should be strengthened before final award validation.",
+        "Current supplier response coverage limits commercial leverage and should be strengthened before final award validation.",
       outcome:
         "Improves competition, negotiation leverage, and executive decision confidence.",
       anchorHref: "#supplier-invitations",

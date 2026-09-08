@@ -36,8 +36,8 @@ export function RFQRecommendedAwardPath({
 
           <p className="mt-4 max-w-3xl text-sm font-semibold leading-7 text-nexus-muted">
             Nexus Pavilion recommends this supplier based on weighted analysis
-            of price competitiveness, delivery timeline, proposal strength,
-            procurement risk, proposal validity, and RFQ classification.
+            of price competitiveness, delivery timeline, submission strength,
+            procurement risk, quote validity, and RFQ classification.
           </p>
 
           <div className="mt-6 flex flex-wrap gap-3">

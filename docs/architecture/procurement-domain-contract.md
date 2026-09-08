@@ -8,6 +8,44 @@ It is the single source of truth for Sidebar metrics, Executive Dashboard metric
 
 No page, API route, component, or report may redefine these concepts locally.
 
+## Canonical Procurement Terminology
+
+### Company
+
+Use **Company** as the neutral legal, workspace, and network entity when a commercial role is not yet established.
+
+### Issuing Organization / Buyer
+
+Use **Buyer** in explicitly buyer-facing domain metrics and internal buyer semantics. Use **Issuing Organization** in respondent-facing or role-neutral workflow copy when the organization may be a client, general contractor, consultant, or other RFQ issuer.
+
+### Supplier
+
+Use **Supplier** as the default procurement term for an organization responding to an RFQ. This is the preferred term for invitations, opportunities, quote activity, supplier intelligence, and participation.
+
+### Vendor
+
+Use **Vendor** only for the Approved Vendor / AVL domain, an explicit Vendor network role, or retained internal / legacy identifiers. Vendor is not the generic synonym for Supplier.
+
+### Quote / Quotation
+
+Use **Quote** or **Quotation** for the commercial response to a generic RFQ. Preferred presentation includes **Submit Quote**, **Quote Amount**, **Quote Validity**, and **Commercial Note**.
+
+### Bid
+
+Use **Bid** only in bid-specific sourcing or governance contexts such as **Sealed Bid** and **Blind Bidding**, or for explicitly defined KPIs such as **Active Bid Value**. Do not use Bid as a generic synonym for Quote.
+
+### Proposal
+
+Use **Proposal** for consultant, professional-services, or technical-proposal contexts. Do not use Proposal for the narrative field of a generic quotation.
+
+### Commercial Note
+
+Use **Commercial Note** for the narrative field accompanying a generic quotation. A persisted legacy field such as `message` may remain unchanged; presentation terminology is Commercial Note.
+
+### RFI / Addendum
+
+Use **RFI** for a formal request for information or clarification. Material clarifications affecting all respondents must be issued through the formal **Addendum** workflow.
+
 ## 1. Core Identity Model
 
 ### User Identity

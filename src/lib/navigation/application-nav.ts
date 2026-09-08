@@ -215,14 +215,14 @@ export function getNavigation(
             label: "Procurement Center",
             href: "/rfq",
             key: "rfq",
-            description: "Open RFQs and buyer requests",
+            description: "Open and invited procurement opportunities",
             badge: formatCountBadge(stats.activeRfqs),
           },
           {
-            label: "Bid & Proposal Submissions",
+            label: "My Quotes",
             href: "/vendor-dashboard",
             key: "vendor-dashboard",
-            description: "Submitted quote activity",
+            description: "Submitted quote activity and outcomes",
             badge: formatCountBadge(stats.supplierQuotes),
           },
         ],
@@ -422,7 +422,7 @@ export function getAppSectionTitle(pathname: string) {
   }
 
   if (isActivePath(pathname, "/vendor-dashboard")) {
-    return "Bid & Proposal Submissions";
+    return "My Quotes";
   }
 
   return BOARDROOM_INTELLIGENCE_TITLE;

@@ -138,7 +138,7 @@ export default function RFQAddendaManager({
             Issued addenda
           </p>
           <p className="mt-2 min-w-0 text-pretty text-sm font-semibold leading-6 text-nexus-muted">
-            Current clarifications, revisions, and vendor notices for this RFQ.
+            Current clarifications, revisions, and supplier notices for this RFQ.
           </p>
         </div>
 
@@ -187,7 +187,7 @@ export default function RFQAddendaManager({
               No addenda issued yet.
             </p>
             <p className="mt-3 min-w-0 text-pretty text-sm font-semibold leading-6 text-nexus-muted">
-              Formal drawing changes, scope clarifications, and vendor notices
+              Formal drawing changes, scope clarifications, and supplier notices
               will appear here.
             </p>
           </div>
@@ -294,7 +294,7 @@ export default function RFQAddendaManager({
                 value={description}
                 onChange={(event) => setDescription(event.target.value)}
                 disabled={loading}
-                placeholder="Describe the clarification, revision, scope update, or instruction issued to vendors."
+                placeholder="Describe the clarification, revision, scope update, or instruction issued to suppliers."
                 className="min-w-0 w-full resize-none rounded-executive border border-white/10 bg-black/25 px-4 py-4 text-sm font-bold normal-case tracking-normal text-nexus-white outline-none transition placeholder:text-nexus-muted/70 focus:border-nexus-cyan/40 focus-visible:ring-2 focus-visible:ring-nexus-gold/40 disabled:cursor-not-allowed disabled:opacity-60"
               />
             </label>

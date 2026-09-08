@@ -69,7 +69,7 @@ Quote submitted successfully.
 </h1>
 
 <p style="margin:22px 0 0;color:#cbd5e1;font-size:17px;line-height:1.8;font-weight:600;">
-Your commercial submission has been securely recorded inside Nexus Pavilion and is now available for buyer-side evaluation.
+Your commercial submission has been securely recorded inside Nexus Pavilion and is now available for issuing-organization evaluation.
 </p>
 </td>
 </tr>
@@ -86,7 +86,7 @@ Submission Summary
 ${emailInfoBlock("RFQ", safeTitle)}
 ${emailInfoBlock("Submitted Amount", safeAmount)}
 ${emailInfoBlock("Delivery Timeline", safeTimeline)}
-${emailInfoBlock("Proposal Validity", safeValidityDays)}
+${emailInfoBlock("Quote Validity", safeValidityDays)}
 </td>
 </tr>
 </table>
@@ -97,17 +97,17 @@ ${emailInfoBlock("Proposal Validity", safeValidityDays)}
 <td style="padding:30px 44px 0;background:#07111F;">
 ${noticeCard(
 "Confidential Submission Notice",
-"Your pricing, commercial proposal, proposal validity period, and supporting information remain confidential. Competing suppliers cannot access or view your submission."
+"Your pricing, commercial note, quote validity period, and supporting information remain confidential. Competing suppliers cannot access or view your submission."
 )}
 
 ${noticeCard(
 "Evaluation Workflow",
-"Your submission has been securely recorded. Buyer-side evaluators may now review commercial and technical responses, and your proposal validity period is included in the procurement record."
+"Your submission has been securely recorded. Authorized issuing-organization evaluators may now review commercial and technical responses, and your quote validity period is included in the procurement record."
 )}
 
 ${noticeCard(
 "Governance & Compliance",
-"Late submissions are automatically rejected after the RFQ deadline. Supplier identities and bid information remain protected, and all submission activity is recorded in the audit trail."
+"Late submissions are automatically rejected after the RFQ deadline. Supplier identities and quote information remain protected, and all submission activity is recorded in the audit trail."
 )}
 
 ${noticeCard(

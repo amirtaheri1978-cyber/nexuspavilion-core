@@ -111,7 +111,7 @@ description:
 value: "invited",
 label: "Invited / Selective RFQ",
 description:
-"Sent to a selected group of qualified suppliers, vendors, or subcontractors.",
+"Sent to a selected group of qualified suppliers, subcontractors, or service providers.",
 },
 {
 value: "sealed_bid",
@@ -135,7 +135,7 @@ description: "A one-time procurement request for a defined project or scope.",
 value: "framework",
 label: "Master / Framework RFQ",
 description:
-"Used to establish recurring pricing or preferred vendor terms across projects.",
+"Used to establish recurring pricing or preferred supplier terms across projects.",
 },
 ];
 
@@ -900,7 +900,7 @@ className="bg-[#061426] text-white"
 </FieldLabel>
 </div>
 
-<FieldLabel label="Bidding Model">
+<FieldLabel label="Evaluation Model">
 <select
 value={formData.bid_model}
 onChange={(event) =>
@@ -1087,7 +1087,7 @@ updateField("bid_bond_required", !formData.bid_bond_required)
 
 <ToggleCard
 title="Insurance Required"
-description="Require vendors to confirm insurance coverage before award consideration."
+description="Require suppliers to confirm insurance coverage before award consideration."
 checked={formData.insurance_required}
 onChange={() =>
 updateField(
@@ -1230,7 +1230,7 @@ description="Live summary of the procurement package."
 <div className="mt-6 space-y-4">
 <SummaryRow title="Classification" value={rfqClassification} />
 <SummaryRow
-title="Bid Model"
+title="Evaluation Model"
 value={selectedBidModel?.label || "Pending"}
 />
 <SummaryRow title="Budget" value={budgetPreview} />

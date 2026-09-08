@@ -81,10 +81,10 @@ export function buildRfqExecutiveOpportunityIntelligence({
           value:
             potentialSavings > 0
               ? formatMoney(potentialSavings)
-              : "Awaiting bid spread",
+              : "Awaiting quote spread",
           summary:
             potentialSavings > 0
-              ? "Nexus Pavilion has identified a savings opportunity against the current average bid."
+              ? "Nexus Pavilion has identified a savings opportunity against the current average submitted quote."
               : "Savings opportunity will become clearer once supplier commercial submissions are available.",
         },
         {
@@ -98,7 +98,7 @@ export function buildRfqExecutiveOpportunityIntelligence({
           summary:
             quoteCount >= 3
               ? "Supplier competition is currently healthy for executive review."
-              : "Expanding supplier participation can improve bid quality, negotiation leverage, and award confidence.",
+              : "Expanding supplier participation can improve quote quality, negotiation leverage, and award confidence.",
         },
         {
           title: "Documentation Readiness",
@@ -147,7 +147,7 @@ export function buildRfqExecutiveOpportunityIntelligence({
         opportunity.title === "Commercial Savings Opportunity"
           ? "Improves cost control, commercial leverage, and executive visibility into procurement value."
           : opportunity.title === "Supplier Competition Expansion"
-            ? "Improves market coverage, bid competitiveness, and confidence in supplier selection."
+            ? "Improves market coverage, quote competitiveness, and confidence in supplier selection."
             : opportunity.title === "Documentation Readiness"
               ? "Reduces scope ambiguity, supplier assumptions, pricing risk, and downstream change exposure."
               : "Accelerates decision-making by aligning commercial intelligence, risk scoring, and award confidence.",
@@ -159,7 +159,7 @@ export function buildRfqExecutiveOpportunityIntelligence({
           : "Management-Level",
       ceoRecommendation:
         opportunity.title === "Commercial Savings Opportunity"
-          ? "Validate the bid spread and prepare negotiation strategy before final award."
+          ? "Validate the quote spread and prepare negotiation strategy before final award."
           : opportunity.title === "Supplier Competition Expansion"
             ? "Increase supplier participation before deadline if timing allows."
             : opportunity.title === "Documentation Readiness"

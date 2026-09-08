@@ -187,7 +187,7 @@ export default function RFQAddendumAcknowledgementCenter({
             </p>
             <p className="mt-3 min-w-0 text-pretty text-sm font-semibold leading-6 text-nexus-muted">
               Addenda and clarification notices will appear here when issued by
-              the buyer.
+              the issuing organization.
             </p>
           </div>
         ) : (

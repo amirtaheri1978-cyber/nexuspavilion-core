@@ -229,7 +229,7 @@ export function ExecutiveSupplierDNA({
 
             <div className="mt-6 grid gap-4 sm:grid-cols-2">
               <ExecutiveMiniTile
-                title="Recommended Bid"
+                title="Recommended Quote"
                 value={formatMoney(recommendedQuote.amountNumber)}
               />
 

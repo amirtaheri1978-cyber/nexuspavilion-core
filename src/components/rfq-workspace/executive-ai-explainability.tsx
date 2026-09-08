@@ -178,7 +178,7 @@ export function ExecutiveAIExplainability({
             <p className="mt-4 max-w-3xl text-sm font-semibold leading-7 text-nexus-muted">
               This decision-support view explains the factors behind the
               recommended supplier path using commercial value, delivery,
-              performance, risk, procurement health, and comparative bid
+              performance, risk, procurement health, and comparative quote
               signals.
             </p>
 
@@ -221,7 +221,7 @@ export function ExecutiveAIExplainability({
               />
 
               <MiniMetric
-                title="Recommended Bid"
+                title="Recommended Quote"
                 value={formatMoney(recommendedQuote.amountNumber)}
               />
 

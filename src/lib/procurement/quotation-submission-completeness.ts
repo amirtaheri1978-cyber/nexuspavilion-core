@@ -63,10 +63,10 @@ export function evaluateQuotationSubmissionCompleteness(
     },
     {
       key: "proposal_note",
-      label: "Proposal note",
+      label: "Commercial note",
       complete: message.length > 0,
-      source: "Quotation / Proposal note",
-      context: "Include a proposal note.",
+      source: "Quotation / Commercial note",
+      context: "Include a commercial note.",
     },
   ];
 

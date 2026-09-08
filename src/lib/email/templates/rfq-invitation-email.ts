@@ -44,11 +44,11 @@ function getSourcingDescription(
     normalizeSourcingMethod(sourcingMethodLabel);
 
   if (sourcingMethod === "open") {
-    return "This RFQ may be visible through the open marketplace to qualified vendors that meet the buyer’s requirements.";
+    return "This RFQ may be visible through the open marketplace to qualified suppliers that meet the issuing organization’s requirements.";
   }
 
   if (sourcingMethod === "sealed_bid") {
-    return "This RFQ uses a controlled sealed-bid workflow. Commercial responses remain confidential and are reviewed according to the buyer’s deadline and evaluation process.";
+    return "This RFQ uses a controlled sealed-bid workflow. Commercial responses remain confidential and are reviewed according to the issuing organization’s deadline and evaluation process.";
   }
 
   return "This RFQ is being routed to a selected supplier shortlist. Access is controlled through this secure invitation link.";
@@ -101,7 +101,7 @@ Open the secure RFQ invitation link:
 ${inviteUrl}
 
 Confidentiality notice:
-Supplier submissions are confidential. Competing vendors cannot view your commercial response.
+Supplier submissions are confidential. Competing suppliers cannot view your commercial response.
 
 Governance notice:
 The buyer reserves the right to accept or reject any or all submissions, or cancel the RFQ process at any point without incurring liability or obligation to justify the decision.
@@ -143,7 +143,7 @@ You have been invited to quote.
 </h1>
 
 <p style="margin:22px 0 0;color:#cbd5e1;font-size:17px;line-height:1.8;font-weight:600;">
-A buyer has invited you to review and respond to a secure construction procurement opportunity through Nexus Pavilion.
+An issuing organization has invited you to review and respond to a secure construction procurement opportunity through Nexus Pavilion.
 </p>
 </td>
 </tr>
@@ -204,8 +204,8 @@ Procurement Governance
 </p>
 
 <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:18px;">
-${governanceRow("Supplier submissions are confidential and not visible to competing vendors.")}
-${governanceRow("Commercial responses are reviewed only by authorized buyer-side users.")}
+${governanceRow("Supplier submissions are confidential and not visible to competing suppliers.")}
+${governanceRow("Commercial responses are reviewed only by authorized issuing-organization evaluators.")}
 ${governanceRow("Submission timing is governed by the RFQ deadline shown above.")}
 ${governanceRow("Quote comparison and award review are handled inside the secure workspace.")}
 </table>

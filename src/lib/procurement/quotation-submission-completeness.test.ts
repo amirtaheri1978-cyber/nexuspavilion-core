@@ -21,7 +21,7 @@ describe("evaluateQuotationSubmissionCompleteness", () => {
     const result = evaluateQuotationSubmissionCompleteness({
       amountNumber: 1000,
       timeline: "16 months",
-      message: "Complete proposal note",
+      message: "Complete commercial note",
     });
 
     expect(result.status).toBe("complete");
@@ -33,7 +33,7 @@ describe("evaluateQuotationSubmissionCompleteness", () => {
     const result = evaluateQuotationSubmissionCompleteness({
       amountNumber: 999,
       timeline: "16 months",
-      message: "Complete proposal note",
+      message: "Complete commercial note",
     });
 
     expect(result.status).toBe("incomplete");
@@ -44,7 +44,7 @@ describe("evaluateQuotationSubmissionCompleteness", () => {
     ]);
   });
 
-  it("treats whitespace-only timeline and proposal note as missing", () => {
+  it("treats whitespace-only timeline and commercial note as missing", () => {
     const result = evaluateQuotationSubmissionCompleteness({
       amountNumber: 1250000,
       timeline: "   ",
@@ -80,7 +80,7 @@ describe("evaluateQuotationSubmissionCompleteness", () => {
       const result = evaluateQuotationSubmissionCompleteness({
         amountNumber,
         timeline: "16 months",
-        message: "Complete proposal note",
+        message: "Complete commercial note",
       });
 
       expect(result.status).toBe("incomplete");
@@ -108,9 +108,9 @@ describe("evaluateQuotationSubmissionCompleteness", () => {
       }),
       expect.objectContaining({
         key: "proposal_note",
-        label: "Proposal note",
-        source: "Quotation / Proposal note",
-        context: "Include a proposal note.",
+        label: "Commercial note",
+        source: "Quotation / Commercial note",
+        context: "Include a commercial note.",
       }),
     ]);
   });

@@ -121,7 +121,7 @@ export function getCopilotSuggestions({
     return [
       "Review all active RFQ documents before submitting or revising internal pricing.",
       "Confirm whether issued addenda require acknowledgement before the deadline.",
-      "Keep your commercial proposal aligned with timeline, validity, and scope requirements.",
+      "Keep your quote aligned with timeline, validity, and scope requirements.",
     ];
   }
 
@@ -142,13 +142,13 @@ export function getCopilotSuggestions({
 
   if (isOpen && quoteCount === 0) {
     suggestions.push(
-      "Invite qualified suppliers now to create competitive bid coverage before the deadline.",
+      "Invite qualified suppliers now to strengthen supplier response coverage before the deadline.",
     );
   }
 
   if (isOpen && quoteCount > 0 && quoteCount < 3) {
     suggestions.push(
-      "Supplier competition is still light. Invite at least two more vendors if timing allows.",
+      "Supplier competition is still light. Invite at least two more suppliers if timing allows.",
     );
   }
 
@@ -174,7 +174,7 @@ export function getCopilotSuggestions({
     suggestions.push(
       `Potential savings are currently estimated at ${formatMoney(
         potentialSavings,
-      )} versus average bid.`,
+      )} versus average submitted quote.`,
     );
   }
 
@@ -221,7 +221,7 @@ export function getExecutiveBrief({
       documentCount === 1 ? "" : "s"
     }, ${addendaCount} addendum item${
       addendaCount === 1 ? "" : "s"
-    }, and a procurement health score of ${healthScore}/100. Next priority is supplier engagement and bid coverage.`;
+    }, and a procurement health score of ${healthScore}/100. Next priority is supplier engagement and supplier response coverage.`;
   }
 
   return "This RFQ is no longer accepting submissions. Review documents, addenda, supplier responses, commercial evaluation status, and award readiness before closing the procurement record.";
@@ -240,7 +240,7 @@ export function getNextBestAction({
 }: RFQNextBestActionInput) {
   if (!isOwner) {
     if (canSubmitQuote) {
-      return "Submit your commercial proposal before deadline.";
+      return "Submit your quote before deadline.";
     }
 
     return "Review the active RFQ package and monitor addenda acknowledgements.";
@@ -255,7 +255,7 @@ export function getNextBestAction({
   }
 
   if (isOpen && quoteCount === 0) {
-    return "Invite qualified suppliers to build competitive bid coverage.";
+    return "Invite qualified suppliers to strengthen supplier response coverage.";
   }
 
   if (isOpen && quoteCount < 3) {

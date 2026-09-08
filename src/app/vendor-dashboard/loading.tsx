@@ -5,7 +5,7 @@ export default function VendorDashboardLoading() {
   return (
     <main className="min-h-screen bg-nexus-navy text-white">
       <div className={EXECUTIVE_PAGE_CLASS} aria-busy="true" aria-live="polite">
-        <p className="sr-only">Loading bid and proposal submissions</p>
+        <p className="sr-only">Loading supplier quote submissions</p>
         <ExecutivePanel variant="executive" padding="lg" tone="gold">
           <div className="h-3 w-40 rounded-full bg-white/10" />
           <div className="mt-5 h-10 max-w-xl rounded-2xl bg-white/10" />

@@ -303,11 +303,11 @@ export function buildProcurementMarketplaceViewModel(
     mode === "supplier"
       ? [
           {
-            label: "Open RFQs",
+            label: "Open Opportunities",
             value: openCount,
           },
           {
-            label: "Submitted quotes",
+            label: "My Quotes",
             value: context.supplier.submittedQuotes.length,
           },
           {
@@ -342,11 +342,11 @@ export function buildProcurementMarketplaceViewModel(
     mode,
     title:
       mode === "supplier"
-        ? "Open & Invited Opportunities"
+        ? "Open and Invited Opportunities"
         : "Company RFQs",
     description:
       mode === "supplier"
-        ? "Review open public and authorized RFQs available to your company as a respondent."
+        ? "Review open public and authorized procurement opportunities available to your company as a respondent."
         : "Create, classify, monitor, and manage RFQs issued by your company workspace.",
     experienceLabel: "Procurement Activity",
     contextLabel:
@@ -355,11 +355,11 @@ export function buildProcurementMarketplaceViewModel(
         : "Company-managed RFQs",
     pipelineTitle:
       mode === "supplier"
-        ? "Accessible RFQ Records"
+        ? "Accessible Opportunities"
         : "Managed RFQ Records",
     pipelineDescription:
       mode === "supplier"
-        ? "Review open public and invited RFQs your company can respond to."
+        ? "Review open public and authorized invited opportunities your company can respond to."
         : "Review sourcing controls, contract framework, budget visibility, and governance status across company RFQs.",
     availabilityLabel:
       records.length > 0 ? "Available" : "Insufficient Data",
@@ -367,7 +367,7 @@ export function buildProcurementMarketplaceViewModel(
     hero: {
       primaryLabel:
         mode === "supplier"
-          ? "Open RFQs"
+          ? "Open Opportunities"
           : "Company RFQs",
       primaryValue: String(
         mode === "supplier"
@@ -393,11 +393,11 @@ export function buildProcurementMarketplaceViewModel(
     emptyState: {
       title:
         mode === "supplier"
-          ? "No open RFQs"
+          ? "No open opportunities"
           : "No RFQs found",
       description:
         mode === "supplier"
-          ? "No public or authorized RFQs are currently available for your company to respond to."
+          ? "No public or authorized procurement opportunities are currently available for your company to respond to."
           : "Create the first classified procurement opportunity for this company workspace.",
     },
   };

@@ -35,7 +35,7 @@ describe("Task 24-RFQ-07 respondent supplier quote density", () => {
   it("keeps respondent quote values, status mapping, and submit destinations intact", () => {
     expect(supplierQuotes).toContain("{formatMoney(quote.amount)}");
     expect(supplierQuotes).toContain("{quote.timeline || \"Not specified\"}");
-    expect(supplierQuotes).toContain("{quote.message || \"No supplier message provided.\"}");
+    expect(supplierQuotes).toContain("{quote.message || \"No commercial note provided.\"}");
     expect(supplierQuotes).toContain("quote.validity_days");
     expect(supplierQuotes).toContain(
       "const decisionLabel = formatSupplierDecisionLabel(quote.decision);",
@@ -47,9 +47,9 @@ describe("Task 24-RFQ-07 respondent supplier quote density", () => {
     expect(supplierQuotes).toContain("normalizedDecision === \"revision requested\"");
     expect(supplierQuotes).toContain("href={`/rfq/${rfqSlug}/submit`}");
     expect(supplierQuotes).toContain("canSubmitQuote");
-    expect(supplierQuotes).toContain("No Commercial Submission Recorded");
+    expect(supplierQuotes).toContain("No Quote Submission Recorded");
     expect(supplierQuotes).toContain(
-      "This RFQ is currently open for an authorized company submission.",
+      "This RFQ is currently open for an authorized company quote submission.",
     );
     expect(supplierQuotes).not.toContain(
       "authorized supplier submission",
@@ -84,7 +84,7 @@ describe("Task 24-RFQ-07 respondent supplier quote density", () => {
   it("separates commercial value, terms, status, and message without owner comparison chrome", () => {
     expect(supplierQuotes).toContain("Confidential commercial value");
     expect(supplierQuotes).toContain("Commercial terms");
-    expect(supplierQuotes).toContain("Supplier message");
+    expect(supplierQuotes).toContain("Commercial note");
     expect(supplierQuotes).toContain("<article");
     expect(supplierQuotes).toContain("@md:flex-row");
     expect(supplierQuotes).not.toContain("Owner action");

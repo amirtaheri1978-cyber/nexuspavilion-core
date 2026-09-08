@@ -43,7 +43,7 @@ describe("Task 24-RFQ-01 intelligence profile presentation", () => {
     expect(intelligence.map((item) => item.rank)).toEqual([1, 2, 3, 4]);
     expect(intelligence[0].businessImpact).toContain("cost control");
     expect(intelligence[0].ceoRecommendation).toBe(
-      "Validate the bid spread and prepare negotiation strategy before final award.",
+      "Validate the quote spread and prepare negotiation strategy before final award.",
     );
   });
 
@@ -173,7 +173,7 @@ describe("Task 24-RFQ-03 priority decision position presentation", () => {
     expect(intelligence[0].boardPriority).toBe("Board-Level");
     expect(intelligence[0].rank).toBe(1);
     expect(intelligence[0].ceoRecommendation).toBe(
-      "Validate the bid spread and prepare negotiation strategy before final award.",
+      "Validate the quote spread and prepare negotiation strategy before final award.",
     );
 
     const signalBlock = decisionSection.slice(

@@ -41,7 +41,7 @@ description:
 {
 title: "Supplier Performance",
 description:
-"Track vendor activity, award history, win rates, procurement scores, and supplier risk signals.",
+"Track supplier activity, award history, win rates, procurement scores, and supplier risk signals.",
 },
 {
 title: "Executive Analytics",
@@ -52,7 +52,7 @@ description:
 
 const buyerItems = [
 "Manage company RFQs and supplier quotes",
-"Compare bids using price, timeline, risk, and award probability",
+"Compare quotes using price, timeline, risk, and award probability",
 "Track procurement volume, savings, and award decisions",
 "Manage team members, roles, invitations, and access",
 ];
@@ -89,7 +89,7 @@ networks.
 
 <p className="mt-6 max-w-4xl text-base font-semibold leading-8 text-slate-300">
 Nexus Pavilion is a procurement intelligence platform designed to
-help buyers, vendors, and enterprise teams manage RFQs, supplier
+help buyers, suppliers, and enterprise teams manage RFQs, supplier
 quotes, award decisions, company workspaces, and procurement
 performance from one secure platform.
 </p>
@@ -123,7 +123,7 @@ Turning procurement data into confident decisions.
 
 <p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-400">
 Traditional procurement workflows often rely on spreadsheets,
-emails, disconnected vendor lists, and manual bid comparison. Nexus
+emails, disconnected supplier lists, and manual quote comparison. Nexus
 Pavilion centralizes the procurement lifecycle and adds intelligence
 on top of RFQs, quotes, awards, supplier performance, and executive
 reporting.

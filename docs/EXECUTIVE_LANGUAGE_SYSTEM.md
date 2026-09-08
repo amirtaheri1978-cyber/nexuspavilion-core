@@ -154,10 +154,19 @@ Buttons should clearly communicate the action being performed.
 |----------------|---------|
 | Your Organization's Quote | RFQ supplier quotation |
 | Commercial Submission Lockbox | Protected commercial submission stage |
-| Launch Comparative Evaluation | Buyer-side commercial evaluation |
+| Launch Comparative Evaluation | Issuing-organization commercial evaluation |
 | Awaiting Commercial Opening | Commercial stage has not yet commenced |
 | Procurement Package | Official RFQ documentation |
-| Supplier | Preferred public terminology |
+| Company | Neutral legal, workspace, and network entity |
+| Issuing Organization | Supplier-facing or role-neutral RFQ issuer terminology |
+| Supplier | Preferred public terminology for generic RFQ respondents |
+| Approved Vendor | Approved Vendor / AVL governance only |
+| Quote / Quotation | Generic RFQ commercial response |
+| Commercial Note | Narrative accompanying a generic quotation |
+| Quote Validity | Validity period of a generic quotation |
+| Sealed Bid / Blind Bidding | Bid-specific sourcing and confidentiality controls |
+| Proposal | Consultant, professional-services, or technical-proposal response |
+| RFI | Formal request for information or clarification |
 | Addendum | Official procurement revision |
 | Award Recommendation | AI-supported procurement recommendation |
 | Commercial Evaluation | Formal quote comparison process |
@@ -285,7 +294,7 @@ This document is a living standard.
 As Nexus Pavilion evolves, this document will expand to include:
 
 - Dashboard language
-- Vendor workspace standards
+- Supplier workspace standards
 - Analytics terminology
 - Report writing standards
 - Notification standards

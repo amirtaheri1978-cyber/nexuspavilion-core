@@ -75,7 +75,7 @@ export function RFQGovernanceNotice({
 
         <p className="mt-3 max-w-4xl text-sm font-bold leading-7 text-nexus-muted">
           Supplier submissions are confidential. Competing suppliers cannot
-          view each other’s pricing, proposal notes, validity periods, or
+          view each other’s pricing, commercial notes, validity periods, or
           commercial submission data.
         </p>
       </ExecutivePanel>

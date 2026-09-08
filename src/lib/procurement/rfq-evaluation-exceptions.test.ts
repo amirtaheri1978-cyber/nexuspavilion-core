@@ -102,7 +102,7 @@ describe("Master Plan 8-09 evaluation exception lifecycle contract", () => {
     expect(normalizedQuoteWorkspace).toContain(") : isowner ? (");
     expect(normalizedQuoteWorkspace).toContain("<rfqownerquotes");
     expect(normalizedQuoteWorkspace).toContain(
-      "commercial submissions remain protected until the rfq deadline.",
+      "quote submissions remain protected until the rfq deadline.",
     );
 
     const lockedIssuerBranch = normalizedQuoteWorkspace.indexOf(
@@ -165,7 +165,7 @@ describe("Master Plan 8-09 evaluation exception lifecycle contract", () => {
     expect(normalizedQuoteComparison).toContain("quote.ishighest");
     expect(normalizedQuoteComparison).toContain("below average");
     expect(normalizedQuoteComparison).toContain("strong timeline");
-    expect(normalizedQuoteComparison).toContain("highest bid");
+    expect(normalizedQuoteComparison).toContain("highest quote");
     expect(normalizedQuoteComparison).not.toContain('.from("quotes")');
     expect(normalizedQuoteComparison).not.toContain("createclient(");
     expect(normalizedQuoteComparison).not.toContain("fetch(");

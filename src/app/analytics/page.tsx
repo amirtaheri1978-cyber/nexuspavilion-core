@@ -615,7 +615,7 @@ remains ${ceoRiskLevel.toLowerCase()}.
     executiveAlerts.push({
       level: "warning",
       title: "Supplier Dependency Risk",
-      message: "Vendor concentration should be reviewed to reduce exposure.",
+      message: "Supplier concentration should be reviewed to reduce exposure.",
     });
   }
 
@@ -643,7 +643,7 @@ remains ${ceoRiskLevel.toLowerCase()}.
       role: "Procurement Director",
       action:
         supplierParticipationCount <= 3
-          ? "Expand supplier participation to reduce vendor dependency risk."
+          ? "Expand supplier participation to reduce supplier dependency risk."
           : `Continue strengthening supplier performance, ${dominantSourcing.toLowerCase()} workflows, and category coverage.`,
     },
     {
@@ -1289,7 +1289,7 @@ remains ${ceoRiskLevel.toLowerCase()}.
 
   if (vendorConcentrationRisk >= 70) {
     portfolioRecommendations.push(
-      "Reduce vendor concentration in awarded revenue.",
+      "Reduce supplier concentration in awarded revenue.",
     );
   }
 

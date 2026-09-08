@@ -58,6 +58,15 @@ describe("Task 24-RFQ-11 submit page presentation", () => {
     expect(submit.match(/<h1\b/g)?.length).toBe(1);
   });
 
+  it("uses canonical generic quotation terminology without bid/proposal drift", () => {
+    expect(submit).toContain("Quote submission");
+    expect(submit).toContain("Commercial note");
+    expect(submit).toContain("late quote submissions");
+    expect(submit).not.toContain("Quote and proposal submission");
+    expect(submit).not.toContain("Proposal note");
+    expect(submit).not.toContain("late bids");
+  });
+
   it("uses one submit surface with container-aware status instead of nested metric cards", () => {
     expect(submit).toContain('data-rfq-submit-workspace="true"');
     expect(submit).toContain("@container");
