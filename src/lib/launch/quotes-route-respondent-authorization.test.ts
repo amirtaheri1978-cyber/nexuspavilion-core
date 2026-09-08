@@ -82,6 +82,7 @@ function openRfq(overrides: Record<string, unknown> = {}) {
     awarded_quote_id: null,
     awarded_at: null,
     deadline: "2099-09-01T12:00:00.000Z",
+    deadline_timezone: "America/Toronto",
     sourcing_method: "open",
     ...overrides,
   };
@@ -420,12 +421,17 @@ describe("Task 33E POST /api/quotes respondent authorization", () => {
 
   it("CASE Q — deadline expired submissions are denied", async () => {
     mockQuoteClient({
-      rfq: openRfq({ deadline: "2020-01-01T00:00:00.000Z" }),
+      rfq: openRfq({
+        deadline: "2020-01-01T00:00:00.000Z",
+        deadline_timezone: "America/Toronto",
+      }),
     });
     const result = await submit();
 
     expect(result.status).toBe(403);
-    expect(result.body.error).toMatch(/deadline has passed/i);
+    expect(result.body.error).toBe(
+      "This RFQ deadline has passed. Late submissions are not accepted. Deadline: December 31, 2019 at 07:00 PM America/Toronto.",
+    );
   });
 
   it("CASE R — non-open RFQs are denied", async () => {

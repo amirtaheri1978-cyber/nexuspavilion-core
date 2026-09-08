@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { sendEmail } from "@/lib/email/send-email";
 import { buildRfqInvitationEmail } from "@/lib/email/templates/rfq-invitation-email";
 import { getActiveMembershipForUserCompany } from "@/lib/auth/membership";
+import { formatRfqDeadlineForDisplay } from "@/lib/datetime/format-rfq-deadline-display";
 import {
   getPublicSiteUrl,
   PUBLIC_SITE_URL_UNCONFIGURED,
@@ -73,22 +74,6 @@ function formatMoney(value: number | string | null | undefined) {
   return `$${amount.toLocaleString()}`;
 }
 
-function formatDate(value: string | null | undefined) {
-  if (!value) return "Not specified";
-
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return value;
-  }
-
-  return date.toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
-}
-
 function getProcurementScopeLabel(value: ProcurementScope | null | undefined) {
   if (value === "material") return "Material / Product RFQ";
   if (value === "equipment") return "Equipment Rental RFQ";
@@ -115,6 +100,7 @@ function buildInvitationEmailPayload(
     category: string | null;
     budget: number | string | null;
     deadline: string | null;
+    deadline_timezone: string | null;
     procurement_scope: string | null;
     sourcing_method: string | null;
     contract_framework: string | null;
@@ -139,7 +125,10 @@ function buildInvitationEmailPayload(
       rfqTitle: rfq.title || "Procurement RFQ",
       category: rfq.category || "Procurement",
       budget: formatMoney(rfq.budget),
-      deadline: formatDate(rfq.deadline),
+      deadline: formatRfqDeadlineForDisplay(
+        rfq.deadline,
+        rfq.deadline_timezone,
+      ),
       procurementScope,
       sourcingMethod,
       contractFramework,
@@ -286,7 +275,7 @@ export async function POST(request: Request) {
     const { data: rfq, error: rfqError } = await supabase
       .from("rfqs")
       .select(
-        "id, title, slug, company_id, status, category, budget, deadline, procurement_scope, sourcing_method, contract_framework",
+        "id, title, slug, company_id, status, category, budget, deadline, deadline_timezone, procurement_scope, sourcing_method, contract_framework",
       )
       .eq("id", rfqId)
       .single();

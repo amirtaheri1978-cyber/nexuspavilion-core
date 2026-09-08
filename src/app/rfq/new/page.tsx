@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState, type ReactNode } from "react";
 import { RFQScopeReview } from "@/components/rfq-workspace/rfq-scope-review";
 import { useRFQDraftAutosave } from "@/hooks/use-rfq-draft-autosave";
+import { formatRfqDeadlineForDisplay } from "@/lib/datetime/format-rfq-deadline-display";
+import { resolveRfqDeadlineForStorage } from "@/lib/datetime/local-date-time-to-utc";
 import { evaluateRfqRequirements } from "@/lib/procurement/rfq-requirements-completeness";
 import { evaluateRfqScopeReview } from "@/lib/procurement/rfq-scope-review";
 type ProcurementScope =
@@ -203,19 +205,19 @@ return `$${numericValue.toLocaleString()}`;
 function formatDeadlinePreview(value: string, timezone: string) {
 if (!value) return "Not set";
 
-const date = new Date(value);
+try {
+const resolved = resolveRfqDeadlineForStorage({
+deadline: value,
+deadline_timezone: timezone,
+});
 
-if (Number.isNaN(date.getTime())) {
+return formatRfqDeadlineForDisplay(
+resolved.deadline,
+resolved.deadline_timezone,
+);
+} catch {
 return `${value} · ${timezone}`;
 }
-
-return `${date.toLocaleString("en-CA", {
-year: "numeric",
-month: "long",
-day: "numeric",
-hour: "2-digit",
-minute: "2-digit",
-})} · ${timezone}`;
 }
 
 function getSelectedLabel<T extends string>(

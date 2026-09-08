@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { sendEmail } from "@/lib/email/send-email";
 import { quoteSubmittedEmail } from "@/lib/email/templates/quote-submitted-email";
 import { getActiveMembershipForUserCompany } from "@/lib/auth/membership";
+import { formatRfqDeadlineForDisplay } from "@/lib/datetime/format-rfq-deadline-display";
 import { joinPublicSitePath } from "@/lib/ops/public-site-url";
 import {
   canRespondToRfqSourcing,
@@ -65,24 +66,6 @@ return false;
 const now = new Date();
 
 return now.getTime() > deadlineDate.getTime();
-}
-
-function formatDeadline(deadline: string | null | undefined) {
-if (!deadline) return "Not specified";
-
-const deadlineDate = new Date(deadline);
-
-if (Number.isNaN(deadlineDate.getTime())) {
-return deadline;
-}
-
-return deadlineDate.toLocaleString("en-US", {
-year: "numeric",
-month: "long",
-day: "numeric",
-hour: "2-digit",
-minute: "2-digit",
-});
 }
 
 function isOpenForQuotes(rfq: {
@@ -173,7 +156,7 @@ if (!canSubmitCompanyQuote(membership, profile.company_id)) {
 const rfqQuery = supabase
 .from("rfqs")
 .select(
-"id, title, slug, status, company_id, awarded_quote_id, awarded_at, deadline, sourcing_method"
+"id, title, slug, status, company_id, awarded_quote_id, awarded_at, deadline, deadline_timezone, sourcing_method"
 );
 
 const { data: rfq, error: rfqError } = rfqId
@@ -187,8 +170,9 @@ return NextResponse.json({ error: "RFQ not found" }, { status: 404 });
 if (hasDeadlinePassed(rfq.deadline)) {
 return NextResponse.json(
 {
-error: `This RFQ deadline has passed. Late submissions are not accepted. Deadline: ${formatDeadline(
-rfq.deadline
+error: `This RFQ deadline has passed. Late submissions are not accepted. Deadline: ${formatRfqDeadlineForDisplay(
+rfq.deadline,
+rfq.deadline_timezone,
 )}.`,
 },
 { status: 403 }

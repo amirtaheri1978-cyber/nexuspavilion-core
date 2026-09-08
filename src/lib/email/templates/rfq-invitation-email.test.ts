@@ -128,4 +128,20 @@ describe("RFQ invitation email family", () => {
     expect(invitationEmail).not.toContain("background:#f6f6f3");
     expect(invitationEmail).not.toContain("#fb923c");
   });
+
+  it("formats RFQ invitation deadlines through the procurement timezone helper", () => {
+    expect(invitesRoute).toContain(
+      'from "@/lib/datetime/format-rfq-deadline-display"',
+    );
+    expect(invitesRoute).toContain("deadline_timezone");
+    expect(invitesRoute).toContain(
+      "deadline, deadline_timezone, procurement_scope",
+    );
+    expect(invitesRoute).toContain("deadline_timezone: string | null");
+    expect(invitesRoute).toContain("formatRfqDeadlineForDisplay(");
+    expect(invitesRoute).toContain("rfq.deadline,");
+    expect(invitesRoute).toContain("rfq.deadline_timezone,");
+    expect(invitesRoute).not.toContain("function formatDate(");
+    expect(invitesRoute).not.toContain("toLocaleDateString(");
+  });
 });
