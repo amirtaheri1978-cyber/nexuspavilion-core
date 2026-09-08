@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState, type ReactNode } from "react";
 import { RFQScopeReview } from "@/components/rfq-workspace/rfq-scope-review";
 import { useRFQDraftAutosave } from "@/hooks/use-rfq-draft-autosave";
+import { EXECUTIVE_FOCUS_CYAN } from "@/lib/design-system/executive-contract";
 import { formatRfqDeadlineForDisplay } from "@/lib/datetime/format-rfq-deadline-display";
 import { resolveRfqDeadlineForStorage } from "@/lib/datetime/local-date-time-to-utc";
 import { evaluateRfqRequirements } from "@/lib/procurement/rfq-requirements-completeness";
@@ -798,10 +799,11 @@ return (
 key={item.value}
 type="button"
 disabled={loading}
+aria-pressed={selected}
 onClick={() =>
 updateField("procurement_scope", item.value)
 }
-className={`rounded-[28px] border p-5 text-left transition disabled:cursor-not-allowed disabled:opacity-60 ${
+className={`rounded-[28px] border p-5 text-left transition disabled:cursor-not-allowed disabled:opacity-60 ${EXECUTIVE_FOCUS_CYAN} ${
 selected
 ? "border-[#C8A646]/35 bg-[#C8A646]/10 text-white shadow-[0_18px_55px_rgba(200,166,70,0.12)]"
 : "border-white/10 bg-[#061426]/70 text-white hover:border-[#2CC4E8]/25 hover:bg-[#07111F]"
@@ -1610,8 +1612,9 @@ onChange: () => void;
 return (
 <button
 type="button"
+aria-pressed={checked}
 onClick={onChange}
-className={`rounded-[24px] border p-5 text-left transition ${
+className={`rounded-[24px] border p-5 text-left transition ${EXECUTIVE_FOCUS_CYAN} ${
 checked
 ? "border-[#C8A646]/35 bg-[#C8A646]/10"
 : "border-white/10 bg-[#061426]/70 hover:border-[#2CC4E8]/25 hover:bg-[#07111F]"

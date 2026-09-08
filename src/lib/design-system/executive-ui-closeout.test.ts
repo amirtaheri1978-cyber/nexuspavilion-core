@@ -97,6 +97,14 @@ describe("NP-MASTER-22-B05 launch-critical closeout", () => {
     expect(launchCritical.topbar).toContain("EXECUTIVE_FOCUS_GOLD");
     expect(launchCritical.inviteForm).toContain("focus-visible:ring-2");
     expect(launchCritical.rfqNew).toContain('aria-current={activeStep === index ? "step" : undefined}');
+    expect(launchCritical.rfqNew).toMatch(
+      /type="button"\s+disabled=\{loading\}\s+aria-pressed=\{selected\}/,
+    );
+    expect(launchCritical.rfqNew).toMatch(
+      /type="button"\s+aria-pressed=\{checked\}\s+onClick=\{onChange\}/,
+    );
+    expect(launchCritical.rfqNew).toContain("EXECUTIVE_FOCUS_CYAN");
+    expect(launchCritical.rfqNew).not.toContain("onKeyDown=");
     expect(launchCritical.directory).toContain('aria-label="Search company network"');
   });
 
