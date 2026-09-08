@@ -282,6 +282,10 @@ export default function MemberActions({
     <div className="mt-4 rounded-[22px] border border-white/10 bg-[#061426]/80 p-4">
       <div className="grid gap-3 sm:grid-cols-[1fr_auto_auto]">
         <select
+          aria-label={`Access Level for ${formatMemberRemovalSubject(
+            memberLabel,
+            memberEmail,
+          )}`}
           value={selectedRole}
           onChange={(event) =>
             setSelectedRole(

@@ -60,6 +60,8 @@ const launchCritical = {
   publicCompany: readSource("src/app/company/[slug]/page.tsx"),
   members: readSource("src/components/company-members-center.tsx"),
   identityDisplay: readSource("src/components/member-identity-display.tsx"),
+  logoUpload: readSource("src/components/company-logo-upload.tsx"),
+  memberActions: readSource("src/components/member-actions.tsx"),
 };
 
 const launchCriticalCtaFiles = [
@@ -96,6 +98,12 @@ describe("NP-MASTER-22-B05 launch-critical closeout", () => {
     expect(launchCritical.appSidebar).toContain("EXECUTIVE_FOCUS_CYAN");
     expect(launchCritical.topbar).toContain("EXECUTIVE_FOCUS_GOLD");
     expect(launchCritical.inviteForm).toContain("focus-visible:ring-2");
+    expect(launchCritical.logoUpload).toContain('htmlFor="company-logo-upload"');
+    expect(launchCritical.logoUpload).toContain('id="company-logo-upload"');
+    expect(launchCritical.logoUpload).toContain("Upload company logo");
+    expect(launchCritical.memberActions).toContain(
+      'aria-label={`Access Level for ${formatMemberRemovalSubject(',
+    );
     expect(launchCritical.rfqNew).toContain('aria-current={activeStep === index ? "step" : undefined}');
     expect(launchCritical.rfqNew).toMatch(
       /type="button"\s+disabled=\{loading\}\s+aria-pressed=\{selected\}/,

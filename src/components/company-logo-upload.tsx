@@ -286,7 +286,15 @@ export default function CompanyLogoUpload({
       ) : null}
 
       <div className="mt-6">
+        <label
+          htmlFor="company-logo-upload"
+          className="mb-2 block text-xs font-black uppercase tracking-[0.15em] text-slate-300"
+        >
+          Upload company logo
+        </label>
+
         <input
+          id="company-logo-upload"
           type="file"
           accept="image/jpeg,image/png,image/webp"
           onChange={handleUpload}
