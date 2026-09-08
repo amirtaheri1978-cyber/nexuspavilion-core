@@ -37,6 +37,9 @@ const launchCritical = {
   rfqNew: readSource("src/app/rfq/new/page.tsx"),
   rfqDraftAutosave: readSource("src/hooks/use-rfq-draft-autosave.ts"),
   rfqCompare: readSource("src/app/rfq/[slug]/compare/page.tsx"),
+  rfqQuoteWorkspace: readSource(
+    "src/components/rfq-workspace/rfq-quote-workspace.tsx",
+  ),
   rfqSubmit: readSource("src/components/rfq-workspace/rfq-submit-workspace.tsx"),
   supplierCommand: readSource(
     "src/components/vendor-workspace/supplier-command-center.tsx",
@@ -236,5 +239,29 @@ describe("NP-MASTER-22-B05 launch-critical closeout", () => {
     expect(launchCritical.rfqNew).toContain("[activeStep, formData],");
     expect(launchCritical.rfqNew).toContain("value: draftValue,");
     expect(launchCritical.rfqNew).not.toContain("value: {\nactiveStep,\nformData,\n},");
+  });
+
+  it("keeps truthful RFQ quote empty-state and locked-submission presentation", () => {
+    expect(launchCritical.rfqCompare).not.toContain(
+      "Submit supplier quotes to activate procurement intelligence.",
+    );
+    expect(launchCritical.rfqCompare).toContain("Insufficient Data");
+    expect(launchCritical.rfqCompare).toContain("No bids");
+    expect(launchCritical.rfqCompare).toContain(
+      "No supplier quotations are available for comparison yet. Review RFQ participation and sourcing status.",
+    );
+    expect(launchCritical.rfqCompare).toContain(
+      'commercialEvaluationUnlocked && recommendedQuote\n                ? formatMoney(Math.max(potentialSavings, 0))\n                : insufficientComparisonLabel',
+    );
+
+    expect(launchCritical.rfqQuoteWorkspace).toContain(
+      "No supplier submissions have been received yet. Commercial pricing and ranking will remain protected until the RFQ deadline.",
+    );
+    expect(launchCritical.rfqQuoteWorkspace).toContain(
+      "Supplier submissions have been received, but commercial pricing and quote comparison remain protected until the authorized commercial opening stage.",
+    );
+    expect(launchCritical.rfqQuoteWorkspace).toContain(
+      "receivedSubmissionCount > 0",
+    );
   });
 });

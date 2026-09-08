@@ -236,6 +236,8 @@ recommendedQuote && commercialEvaluationUnlocked
 recommendedAmount: recommendedQuote.amountNumber,
 budget,
 })
+: commercialEvaluationUnlocked
+? "Insufficient Data"
 : "Locked";
 
 const bidSetPosition =
@@ -244,6 +246,8 @@ recommendedQuote && commercialEvaluationUnlocked
 recommendedAmount: recommendedQuote.amountNumber,
 averageBid,
 })
+: commercialEvaluationUnlocked
+? "Insufficient Data"
 : "Locked";
 
 const executiveSummary =
@@ -252,8 +256,12 @@ commercialEvaluationUnlocked && recommendedQuote
 recommendedQuote.amountNumber
 )} is the current rank #${recommendedQuote.rank} recommendation with an evaluation score of ${recommendedQuote.totalScore}/100 and ${formatRiskLevel(recommendedQuote.riskLevel).toLowerCase()}. It reflects the highest current weighted evaluation across submitted quotes, not a guaranteed award.`
 : commercialEvaluationUnlocked
-? "Submit supplier quotes to activate procurement intelligence."
+? "No supplier quotations are available for comparison yet. Review RFQ participation and sourcing status."
 : "Commercial evaluation is locked until the RFQ deadline. Participation is visible, but pricing, ranking, and award controls remain sealed.";
+
+const insufficientComparisonLabel = commercialEvaluationUnlocked
+? "Insufficient Data"
+: "Locked";
 
 const decisionDrivers =
 commercialEvaluationUnlocked && recommendedQuote
@@ -364,9 +372,11 @@ return (
                   : "Locked"
             }
             insight={
-              commercialEvaluationUnlocked
+              commercialEvaluationUnlocked && recommendedQuote
                 ? "Highest current evaluation score"
-                : "Hidden until deadline"
+                : commercialEvaluationUnlocked
+                  ? "No supplier quotations are available for comparison yet."
+                  : "Hidden until deadline"
             }
             tone="gold"
           />
@@ -375,7 +385,7 @@ return (
             value={
               commercialEvaluationUnlocked && recommendedQuote
                 ? `${recommendedQuote.totalScore}/100`
-                : "Locked"
+                : insufficientComparisonLabel
             }
             insight="Highest current weighted evaluation"
             tone="blue"
@@ -385,7 +395,7 @@ return (
             value={
               commercialEvaluationUnlocked && recommendedQuote
                 ? formatRiskLevel(recommendedQuote.riskLevel)
-                : "Locked"
+                : insufficientComparisonLabel
             }
             insight="Procurement risk signal"
             tone={
@@ -399,9 +409,9 @@ return (
           <ExecutiveMetricCard
             label="Potential savings"
             value={
-              commercialEvaluationUnlocked
+              commercialEvaluationUnlocked && recommendedQuote
                 ? formatMoney(Math.max(potentialSavings, 0))
-                : "Locked"
+                : insufficientComparisonLabel
             }
             insight="Compared to average bid"
             tone="gold"
@@ -420,7 +430,11 @@ return (
         <div className="mt-5 flex flex-wrap gap-2">
           <ExecutiveBadge tone="neutral">{bidSetPosition}</ExecutiveBadge>
           <ExecutiveBadge tone="neutral">{budgetPosition}</ExecutiveBadge>
-          <ExecutiveBadge tone="blue">{bidSpreadPercent}% bid spread</ExecutiveBadge>
+          <ExecutiveBadge tone="blue">
+            {commercialEvaluationUnlocked && recommendedQuote
+              ? `${bidSpreadPercent}% bid spread`
+              : insufficientComparisonLabel}
+          </ExecutiveBadge>
         </div>
         <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <ExecutiveMetricCard
@@ -428,7 +442,7 @@ return (
             value={
               commercialEvaluationUnlocked && recommendedQuote
                 ? `${recommendedQuote.totalScore}/100`
-                : "Locked"
+                : insufficientComparisonLabel
             }
             insight="Canonical evaluation score within this RFQ bid set"
           />
@@ -437,16 +451,24 @@ return (
             value={
               commercialEvaluationUnlocked && averageBid
                 ? formatMoney(averageBid)
-                : "Locked"
+                : insufficientComparisonLabel
             }
           />
           <ExecutiveMetricCard
             label="Budget position"
-            value={commercialEvaluationUnlocked ? budgetPosition : "Locked"}
+            value={
+              commercialEvaluationUnlocked
+                ? budgetPosition
+                : "Locked"
+            }
           />
           <ExecutiveMetricCard
             label="Bid spread"
-            value={commercialEvaluationUnlocked ? `${bidSpreadPercent}%` : "Locked"}
+            value={
+              commercialEvaluationUnlocked && recommendedQuote
+                ? `${bidSpreadPercent}%`
+                : insufficientComparisonLabel
+            }
           />
         </div>
       </ExecutivePanel>
@@ -459,7 +481,7 @@ return (
               {commercialEvaluationUnlocked && recommendedQuote
                 ? `Recommended supplier rank #${recommendedQuote.rank}`
                 : commercialEvaluationUnlocked
-                  ? "Awaiting supplier quotes"
+                  ? "No bids"
                   : "Commercial evaluation locked"}
             </h2>
             <p className="np-type-body mt-4 max-w-4xl">{executiveSummary}</p>
@@ -467,9 +489,11 @@ return (
           <ExecutiveBadge tone={hasAwardedContract ? "awarded" : commercialEvaluationUnlocked ? "gold" : "locked"}>
             {hasAwardedContract
               ? "Awarded"
-              : commercialEvaluationUnlocked
+              : commercialEvaluationUnlocked && recommendedQuote
                 ? "Decision ready"
-                : "Locked"}
+                : commercialEvaluationUnlocked
+                  ? "Insufficient Data"
+                  : "Locked"}
           </ExecutiveBadge>
         </div>
         <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -478,7 +502,7 @@ return (
             value={
               commercialEvaluationUnlocked && recommendedQuote
                 ? `${recommendedQuote.totalScore}/100`
-                : "Locked"
+                : insufficientComparisonLabel
             }
           />
           <ExecutiveMetricCard
@@ -486,7 +510,7 @@ return (
             value={
               commercialEvaluationUnlocked && recommendedQuote
                 ? `${recommendedQuote.totalScore}/100`
-                : "Locked"
+                : insufficientComparisonLabel
             }
           />
           <ExecutiveMetricCard
@@ -494,7 +518,7 @@ return (
             value={
               commercialEvaluationUnlocked && recommendedQuote
                 ? formatMoney(recommendedQuote.amountNumber)
-                : "Locked"
+                : insufficientComparisonLabel
             }
             tone="gold"
           />
@@ -503,7 +527,7 @@ return (
             value={
               commercialEvaluationUnlocked && recommendedQuote
                 ? formatRiskLevel(recommendedQuote.riskLevel)
-                : "Locked"
+                : insufficientComparisonLabel
             }
           />
         </div>
@@ -520,7 +544,7 @@ return (
           ) : (
             <p className="np-type-body mt-3">
               {commercialEvaluationUnlocked
-                ? "Supplier quotes are required before an executive award recommendation can be generated."
+                ? "No supplier quotations are available for comparison yet. Review RFQ participation and sourcing status."
                 : "Decision drivers remain locked until commercial opening."}
             </p>
           )}

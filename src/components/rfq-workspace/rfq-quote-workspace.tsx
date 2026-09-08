@@ -48,6 +48,7 @@ export function RFQQuoteWorkspace({
   averageBid,
   supplierCompanies,
 }: RFQQuoteWorkspaceProps) {
+  const receivedSubmissionCount = submissionCount ?? quoteList.length;
   const workspaceLabel = isOwner
     ? "Quote evaluation"
     : "Respondent submission";
@@ -63,6 +64,11 @@ export function RFQQuoteWorkspace({
     : commercialEvaluationUnlocked
       ? "Quote evaluation applies weighted commercial and execution criteria across price, timeline, performance signals, procurement risk, and proposal validity."
       : "Commercial submissions remain protected until the RFQ deadline. Issuers can monitor participation volume while pricing, ranking, comparison, and award controls remain unavailable.";
+
+  const commercialLockboxDescription =
+    receivedSubmissionCount > 0
+      ? "Supplier submissions have been received, but commercial pricing and quote comparison remain protected until the authorized commercial opening stage."
+      : "No supplier submissions have been received yet. Commercial pricing and ranking will remain protected until the RFQ deadline.";
 
   return (
     <ExecutivePanel
@@ -142,9 +148,7 @@ export function RFQQuoteWorkspace({
                     id="commercial-lockbox-status-description"
                     className="mt-3 max-w-3xl min-w-0 text-pretty text-sm font-semibold leading-7 text-nexus-muted"
                   >
-                    Supplier submissions have been received, but commercial
-                    pricing and quote comparison remain protected until the
-                    authorized commercial opening stage.
+                    {commercialLockboxDescription}
                   </p>
                 </div>
 
@@ -161,7 +165,7 @@ export function RFQQuoteWorkspace({
               >
                 <ExecutiveMetricCard
                   label="Submissions"
-                  value={String(submissionCount ?? quoteList.length)}
+                  value={String(receivedSubmissionCount)}
                   insight="Supplier responses received"
                   tone="gold"
                 />
