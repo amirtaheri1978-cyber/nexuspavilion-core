@@ -23,7 +23,9 @@ describe("Task 23 enterprise application shell", () => {
   it("mounts the live Sidebar primitive and keeps AppSidebar unmounted", () => {
     expect(layout).toContain("<AppShell>{children}</AppShell>");
     expect(appShell).toContain('import Sidebar from "@/components/sidebar"');
-    expect(appShell).toContain("<Sidebar />");
+    expect(appShell).toContain("<Sidebar");
+    expect(appShell).toContain("collapsed={sidebarCollapsed}");
+    expect(appShell).toContain("onCollapsedChange={setSidebarCollapsed}");
     expect(appShell).not.toContain("AppSidebar");
     expect(appShell).toContain("getAppShellKind");
     expect(appShell).toContain("<ApplicationFooter />");
@@ -53,6 +55,20 @@ describe("Task 23 enterprise application shell", () => {
     expect(sidebar).toContain(".select(\"role, company_id\")");
     expect(sidebar).not.toContain("first_name");
     expect(sidebar).not.toContain("/pricing");
+  });
+
+  it("supports synchronized desktop sidebar collapse without losing navigation context", () => {
+    expect(appShell).toContain("useState(false)");
+    expect(appShell).toContain('sidebarCollapsed ? "lg:ml-[96px]" : "lg:ml-[330px]"');
+    expect(sidebar).toContain('id="np-desktop-sidebar"');
+    expect(sidebar).toContain('collapsed ? "w-[96px]" : "w-[330px]"');
+    expect(sidebar).toContain('aria-controls="np-desktop-sidebar"');
+    expect(sidebar).toContain("aria-expanded={!collapsed}");
+    expect(sidebar).toContain('aria-label={compact ? compactAriaLabel : undefined}');
+    expect(sidebar).toContain('title={compact ? item.label : undefined}');
+    expect(sidebar).toContain("renderNavItem(item, collapsed)");
+    expect(sidebar).toContain('aria-label="Open NexusPavilion Intelligence"');
+    expect(sidebar).toContain("aria-label={compactWorkspaceLabel}");
   });
 
   it("keeps AppTopbar as context, not a page h1, with frozen action placement", () => {

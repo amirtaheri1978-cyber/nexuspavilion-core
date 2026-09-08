@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { usePathname } from "next/navigation";
 
 import ApplicationFooter from "@/components/application-footer";
@@ -16,6 +17,7 @@ export default function AppShell({
 }) {
   const pathname = usePathname();
   const shellKind = getAppShellKind(pathname);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   /*
    * Authentication, onboarding, invitation-token, and local preview routes
@@ -50,9 +52,17 @@ export default function AppShell({
    */
   return (
     <div className="min-h-screen bg-[#07111F] text-white">
-      <Sidebar />
+      <Sidebar
+        collapsed={sidebarCollapsed}
+        onCollapsedChange={setSidebarCollapsed}
+      />
 
-      <div className="min-h-screen bg-[radial-gradient(circle_at_top_right,rgba(44,196,232,0.08),transparent_34%),radial-gradient(circle_at_bottom_left,rgba(200,166,70,0.055),transparent_38%),#07111F] lg:ml-[330px]">
+      <div
+        className={[
+          "min-h-screen bg-[radial-gradient(circle_at_top_right,rgba(44,196,232,0.08),transparent_34%),radial-gradient(circle_at_bottom_left,rgba(200,166,70,0.055),transparent_38%),#07111F]",
+          sidebarCollapsed ? "lg:ml-[96px]" : "lg:ml-[330px]",
+        ].join(" ")}
+      >
         <AppTopbar />
 
         <main className="min-h-[calc(100vh-76px)] min-w-0">
