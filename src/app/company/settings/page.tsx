@@ -238,31 +238,56 @@ const supabase = await createClient();
 
 const {
 data: { user },
+error: authError,
 } = await supabase.auth.getUser();
 
-const { data: profile } = user
-? await supabase
+if (authError) {
+console.error("Company settings auth identity load failed.", authError);
+throw new Error("Unable to verify company settings identity.");
+}
+
+if (!user) {
+return <WorkspaceUnavailable />;
+}
+
+const { data: profile, error: profileError } = await supabase
 .from("profiles")
 .select("id, email, role, company_id, created_at")
 .eq("id", user.id)
-.single()
-: { data: null };
+.single();
+
+if (profileError) {
+console.error("Company settings profile load failed.", {
+userId: user.id,
+      error: profileError,
+    });
+throw new Error("Unable to load company settings profile.");
+}
 
 const currentProfile = profile as Profile | null;
 
-if (!user || !currentProfile?.company_id) {
+if (!currentProfile?.company_id) {
 return <WorkspaceUnavailable />;
 }
 
 const companyId = currentProfile.company_id;
 
-const { data: companyData } = await supabase
+const { data: companyData, error: companyError } = await supabase
 .from("companies")
 .select(
 "id, name, slug, category, location, network_role, status, workspace_status, logo_url, user_id"
 )
 .eq("id", companyId)
-.single();
+.maybeSingle();
+
+if (companyError) {
+console.error("Company settings company load failed.", {
+      companyId,
+      userId: currentProfile.id,
+      error: companyError,
+    });
+throw new Error("Unable to load company workspace settings.");
+}
 
 const company = companyData as Company | null;
 
@@ -284,6 +309,7 @@ if (organizationMembersError) {
     userId: currentProfile.id,
     error: organizationMembersError,
   });
+  throw new Error("Unable to load company workspace membership.");
 }
 
 const organizationMemberRows =
@@ -331,21 +357,34 @@ if (company.workspace_status !== "archived") {
       userId: currentProfile.id,
       error: invitationsError,
     });
+    throw new Error("Unable to load company workspace invitations.");
   }
 
   invitationList = (invitations ?? []) as Invitation[];
 }
 
-const { data: auditLogs } = await supabase
+const { data: auditLogs, error: auditLogsError } = await supabase
 .from("audit_logs")
 .select("id, action, entity_type, created_at")
 .eq("company_id", companyId)
 .order("created_at", { ascending: false })
 .limit(8);
 
+if (auditLogsError) {
+  console.error("Company settings activity lookup failed.", {
+    companyId,
+    userId: currentProfile.id,
+    error: auditLogsError,
+  });
+  throw new Error("Unable to load company workspace activity.");
+}
+
 const activityList = (auditLogs ?? []) as AuditLog[];
 
-const { data: pendingTransferData } = await supabase
+const {
+  data: pendingTransferData,
+  error: pendingTransferError,
+} = await supabase
   .from("ownership_transfer_requests")
   .select(
     `
@@ -369,6 +408,15 @@ const { data: pendingTransferData } = await supabase
   .limit(1)
   .maybeSingle();
 
+if (pendingTransferError) {
+  console.error("Company ownership transfer lookup failed.", {
+    companyId,
+    userId: currentProfile.id,
+    error: pendingTransferError,
+  });
+  throw new Error("Unable to load company ownership transfer status.");
+}
+
 const pendingTransfer =
   pendingTransferData as OwnershipTransfer | null;
   const pendingTransferFromEmail =
@@ -383,10 +431,22 @@ const pendingTransferToEmail =
       profile.id === pendingTransfer?.to_user_id,
   )?.profile.email ?? null;
 
-const { count: rfqCount } = await supabase
+const {
+  count: rfqCount,
+  error: rfqCountError,
+} = await supabase
 .from("rfqs")
 .select("id", { count: "exact", head: true })
 .eq("company_id", companyId);
+
+if (rfqCountError) {
+  console.error("Company settings RFQ count lookup failed.", {
+    companyId,
+    userId: currentProfile.id,
+    error: rfqCountError,
+  });
+  throw new Error("Unable to load company workspace readiness evidence.");
+}
 
 const admins = workspaceMembers.filter(
   ({ membership }) =>
@@ -455,20 +515,21 @@ if (company.workspace_status !== "archived") {
     }
   } catch (error) {
     if (
-      !(
-        error instanceof WorkspaceContextError &&
-        error.code === "UNAUTHENTICATED"
-      )
+      error instanceof WorkspaceContextError &&
+      error.code === "UNAUTHENTICATED"
     ) {
-      console.error(
-        "Workspace context lookup failed for invitation authority.",
-        {
-          companyId,
-          userId: currentProfile.id,
-          error,
-        },
-      );
+      return <WorkspaceUnavailable />;
     }
+
+    console.error(
+      "Workspace context lookup failed for invitation authority.",
+      {
+        companyId,
+        userId: currentProfile.id,
+        error,
+      },
+    );
+    throw new Error("Unable to verify company workspace management authority.");
   }
 }
 

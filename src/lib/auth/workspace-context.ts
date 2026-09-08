@@ -59,6 +59,7 @@ export type WorkspaceContext = {
 
 export type WorkspaceContextErrorCode =
   | "UNAUTHENTICATED"
+  | "AUTH_LOOKUP_FAILED"
   | "PROFILE_LOOKUP_FAILED"
   | "PROFILE_NOT_FOUND"
   | "MEMBERSHIP_LOOKUP_FAILED";
@@ -92,11 +93,18 @@ export async function getCurrentWorkspaceContext(
     error: userError,
   } = await supabase.auth.getUser();
 
-  if (userError || !user) {
+  if (userError) {
+    throw new WorkspaceContextError(
+      "Unable to verify authentication identity.",
+      "AUTH_LOOKUP_FAILED",
+      userError,
+    );
+  }
+
+  if (!user) {
     throw new WorkspaceContextError(
       "An authenticated user is required.",
       "UNAUTHENTICATED",
-      userError,
     );
   }
 

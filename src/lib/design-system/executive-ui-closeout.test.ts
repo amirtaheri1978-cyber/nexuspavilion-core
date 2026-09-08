@@ -363,4 +363,95 @@ describe("NP-MASTER-22-B05 launch-critical closeout", () => {
       "Workspace membership is separate from RFQ invitations",
     );
   });
+
+  it("keeps P1 fail-closed company workspace governance error states", () => {
+    expect(launchCritical.company).toContain("organizationMembersResult.error");
+    expect(launchCritical.company).toContain("invitationsResult.error");
+    expect(launchCritical.company).toContain("auditResult.error");
+    expect(launchCritical.company).toContain(
+      "Workspace membership could not be loaded.",
+    );
+    expect(launchCritical.company).toContain(
+      "Workspace invitations could not be loaded.",
+    );
+    expect(launchCritical.company).toContain(
+      "Workspace activity could not be loaded.",
+    );
+    expect(launchCritical.company).toMatch(
+      /if \(organizationMembersResult\.error\)[\s\S]*return \([\s\S]*SystemState/,
+    );
+    expect(launchCritical.company).toMatch(
+      /if \(invitationsResult\.error\)[\s\S]*return \([\s\S]*SystemState/,
+    );
+    expect(launchCritical.company).toMatch(
+      /if \(auditResult\.error\)[\s\S]*return \([\s\S]*SystemState/,
+    );
+    expect(launchCritical.company).toContain("loadCompanyCapabilities");
+    expect(launchCritical.company).toContain(
+      "Company capabilities lookup failed.",
+    );
+    expect(launchCritical.company).toContain(
+      "createEmptyGroupedCapabilities()",
+    );
+
+    expect(launchCritical.settings).toContain("authError");
+    expect(launchCritical.settings).toContain(
+      'throw new Error("Unable to verify company settings identity.")',
+    );
+    expect(launchCritical.settings).toMatch(
+      /if \(authError\)[\s\S]*throw new Error\("Unable to verify company settings identity\."\)[\s\S]*if \(!user\)[\s\S]*WorkspaceUnavailable/,
+    );
+    expect(launchCritical.settings).toContain("profileError");
+    expect(launchCritical.settings).toContain(
+      'throw new Error("Unable to load company settings profile.")',
+    );
+    expect(launchCritical.settings).toMatch(
+      /if \(profileError\)[\s\S]*throw new Error\("Unable to load company settings profile\."\)[\s\S]*if \(!currentProfile\?\.company_id\)[\s\S]*WorkspaceUnavailable/,
+    );
+    expect(launchCritical.settings).toContain("companyError");
+    expect(launchCritical.settings).toContain(
+      'throw new Error("Unable to load company workspace settings.")',
+    );
+    expect(launchCritical.settings).toMatch(
+      /\.from\("companies"\)[\s\S]*\.maybeSingle\(\)[\s\S]*if \(companyError\)[\s\S]*throw new Error\("Unable to load company workspace settings\."\)[\s\S]*if \(!company\)[\s\S]*CompanyNotFound/,
+    );
+    expect(launchCritical.settings).not.toMatch(
+      /\.from\("companies"\)[\s\S]*\.single\(\)[\s\S]*if \(companyError\)/,
+    );
+    expect(launchCritical.settings).toContain("organizationMembersError");
+    expect(launchCritical.settings).toContain(
+      'throw new Error("Unable to load company workspace membership.")',
+    );
+    expect(launchCritical.settings).toContain("invitationsError");
+    expect(launchCritical.settings).toContain(
+      'throw new Error("Unable to load company workspace invitations.")',
+    );
+    expect(launchCritical.settings).toContain("auditLogsError");
+    expect(launchCritical.settings).toContain(
+      'throw new Error("Unable to load company workspace activity.")',
+    );
+    expect(launchCritical.settings).toContain("pendingTransferError");
+    expect(launchCritical.settings).toContain(
+      'throw new Error("Unable to load company ownership transfer status.")',
+    );
+    expect(launchCritical.settings).toContain("rfqCountError");
+    expect(launchCritical.settings).toContain(
+      'throw new Error("Unable to load company workspace readiness evidence.")',
+    );
+    expect(launchCritical.settings).toContain(
+      'throw new Error("Unable to verify company workspace management authority.")',
+    );
+    expect(launchCritical.settings).toMatch(
+      /error\.code === "UNAUTHENTICATED"[\s\S]*WorkspaceUnavailable[\s\S]*throw new Error\("Unable to verify company workspace management authority\."\)/,
+    );
+    expect(launchCritical.settings).toContain(
+      "Workspace Access",
+    );
+    expect(launchCritical.settings).toContain(
+      'supabase.rpc("get_company_workspace_invitations")',
+    );
+    expect(launchCritical.inviteForm).toContain(
+      "Workspace membership is separate from RFQ invitations",
+    );
+  });
 });

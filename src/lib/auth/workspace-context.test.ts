@@ -238,8 +238,28 @@ describe("getCurrentWorkspaceContext", () => {
     expect(getScopedMembership).not.toHaveBeenCalled();
   });
 
+  it("returns AUTH_LOOKUP_FAILED when the auth identity lookup fails", async () => {
+    const authCause = { message: "auth lookup failed" };
+    const supabase = createSupabaseClient({
+      user: null,
+      userError: authCause,
+    });
+
+    const error = await expectWorkspaceContextError(
+      getCurrentWorkspaceContext(supabase),
+      "AUTH_LOOKUP_FAILED",
+    );
+
+    expect(error.cause).toBe(authCause);
+    expect(getScopedMembership).not.toHaveBeenCalled();
+    expect(getGenericMembership).not.toHaveBeenCalled();
+  });
+
   it("returns UNAUTHENTICATED when no authenticated user is available", async () => {
-    const supabase = createSupabaseClient({ user: null });
+    const supabase = createSupabaseClient({
+      user: null,
+      userError: null,
+    });
 
     await expectWorkspaceContextError(
       getCurrentWorkspaceContext(supabase),

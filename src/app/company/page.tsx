@@ -308,13 +308,25 @@ const [
     );
   }
 
-if (organizationMembersResult.error) {
-  console.error("Organization members RPC failed.", {
-    companyId,
-    userId: workspace.userId,
-    error: organizationMembersResult.error,
-  });
-}
+  if (organizationMembersResult.error) {
+    console.error("Organization members RPC failed.", {
+      companyId,
+      userId: workspace.userId,
+      error: organizationMembersResult.error,
+    });
+
+    return (
+      <SystemState
+        eyebrow="Company Workspace"
+        title="Workspace membership could not be loaded."
+        description="We could not load the organization member roster for this company workspace. Please try again or contact your workspace administrator."
+        primaryHref="/dashboard"
+        primaryLabel="Back to Dashboard"
+        secondaryHref="/"
+        secondaryLabel="Back Home"
+      />
+    );
+  }
 
   if (invitationsResult.error) {
     console.error("Company invitations lookup failed.", {
@@ -322,6 +334,18 @@ if (organizationMembersResult.error) {
       userId: workspace.userId,
       error: invitationsResult.error,
     });
+
+    return (
+      <SystemState
+        eyebrow="Company Workspace"
+        title="Workspace invitations could not be loaded."
+        description="We could not load pending workspace invitations for this company. Please try again or contact your workspace administrator."
+        primaryHref="/dashboard"
+        primaryLabel="Back to Dashboard"
+        secondaryHref="/"
+        secondaryLabel="Back Home"
+      />
+    );
   }
 
   if (auditResult.error) {
@@ -330,6 +354,18 @@ if (organizationMembersResult.error) {
       userId: workspace.userId,
       error: auditResult.error,
     });
+
+    return (
+      <SystemState
+        eyebrow="Company Workspace"
+        title="Workspace activity could not be loaded."
+        description="We could not load recent governance activity for this company workspace. Please try again or contact your workspace administrator."
+        primaryHref="/dashboard"
+        primaryLabel="Back to Dashboard"
+        secondaryHref="/"
+        secondaryLabel="Back Home"
+      />
+    );
   }
 
   const company = companyResult.data as Company;
