@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 
 import { getActiveMembershipForUserCompany } from "@/lib/auth/membership";
+import { sendEmail } from "@/lib/email/send-email";
+import { buildRfiResponseEmail } from "@/lib/email/templates/rfi-response-email";
+import { joinPublicSitePath } from "@/lib/ops/public-site-url";
 import {
   canRespondToRfqSourcing,
   isPublicSourcingMethod,
@@ -11,6 +14,110 @@ import {
 } from "@/lib/procurement/procurement-write-authorization";
 import { recordTrustedProcurementActivity } from "@/lib/procurement/record-procurement-activity";
 import { createClient } from "@/lib/supabase/server";
+
+type RfiResponseEmailDeliveryResult = {
+  sent: boolean;
+  skipped: boolean;
+  id: string | null;
+  error: string | null;
+};
+
+function skippedRfiResponseEmail(
+  error: string | null = null,
+): RfiResponseEmailDeliveryResult {
+  return {
+    sent: false,
+    skipped: true,
+    id: null,
+    error,
+  };
+}
+
+async function deliverRfiResponseNotificationEmail({
+  rfiId,
+  rfqTitle,
+  rfqSlug,
+  supabase,
+}: {
+  rfiId: string;
+  rfqTitle: string | null | undefined;
+  rfqSlug: string | null | undefined;
+  supabase: Awaited<ReturnType<typeof createClient>>;
+}): Promise<RfiResponseEmailDeliveryResult> {
+  const { data: recipientRows, error: recipientError } = await supabase.rpc(
+    "resolve_rfi_response_notification_recipient",
+    { p_rfi_id: rfiId },
+  );
+
+  if (recipientError) {
+    console.error("Private RFI response recipient resolution failed.");
+
+    return {
+      sent: false,
+      skipped: false,
+      id: null,
+      error: "RFI response notification recipient could not be resolved.",
+    };
+  }
+
+  const recipientEmail = Array.isArray(recipientRows)
+    ? String(
+        (recipientRows[0] as { email?: string | null } | undefined)?.email ||
+          "",
+      ).trim()
+    : String(
+        (recipientRows as { email?: string | null } | null | undefined)?.email ||
+          "",
+      ).trim();
+
+  if (!recipientEmail) {
+    return skippedRfiResponseEmail(
+      "RFI response notification recipient was unavailable.",
+    );
+  }
+
+  const workspaceUrl = rfqSlug
+    ? joinPublicSitePath(`/rfq/${rfqSlug}`)
+    : null;
+
+  if (!workspaceUrl) {
+    console.warn(
+      "Private RFI response email skipped because the public site URL is not configured.",
+    );
+
+    return skippedRfiResponseEmail("Public site URL is not configured.");
+  }
+
+  try {
+    const email = buildRfiResponseEmail({
+      rfqTitle: rfqTitle || "Procurement RFQ",
+      workspaceUrl,
+    });
+
+    const result = await sendEmail({
+      to: recipientEmail,
+      subject: email.subject,
+      html: email.html,
+      text: email.text,
+    });
+
+    return {
+      sent: Boolean(result.success),
+      skipped: Boolean(result.skipped),
+      id: result.id ?? null,
+      error: result.error ?? null,
+    };
+  } catch {
+    console.error("Private RFI response email delivery failed.");
+
+    return {
+      sent: false,
+      skipped: false,
+      id: null,
+      error: "RFI response saved, but email delivery failed.",
+    };
+  }
+}
 
 function normalizeText(value: unknown) {
   return String(value || "").trim();
@@ -311,7 +418,7 @@ export async function PATCH(request: Request) {
 
   const { data: rfq, error: rfqError } = await supabase
     .from("rfqs")
-    .select("id, company_id")
+    .select("id, company_id, title, slug")
     .eq("id", existing.rfq_id)
     .maybeSingle();
 
@@ -365,5 +472,24 @@ export async function PATCH(request: Request) {
     companyId: rfq.company_id,
   });
 
-  return NextResponse.json({ success: true, rfi: data });
+  let email: RfiResponseEmailDeliveryResult = skippedRfiResponseEmail();
+
+  try {
+    email = await deliverRfiResponseNotificationEmail({
+      rfiId: data.id,
+      rfqTitle: rfq.title,
+      rfqSlug: rfq.slug,
+      supabase,
+    });
+  } catch {
+    console.error("Private RFI response notification failed after save.");
+    email = {
+      sent: false,
+      skipped: false,
+      id: null,
+      error: "RFI response saved, but email delivery failed.",
+    };
+  }
+
+  return NextResponse.json({ success: true, rfi: data, email });
 }

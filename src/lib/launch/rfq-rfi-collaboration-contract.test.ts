@@ -240,4 +240,105 @@ describe("Cursor 04C RFI collaboration contract", () => {
     expect(addendaManager).not.toContain("companyId:");
     expect(addendaManager).toContain("Preview Addendum #");
   });
+
+  it("wires private RFI response notification after successful response persistence", () => {
+    expect(rfiApi).toContain(".update({ response_text: responseText })");
+    expect(rfiApi).not.toContain('status: "answered"');
+    expect(rfiApi).not.toContain("status: 'answered'");
+    expect(rfiApi).not.toContain("responded_by:");
+    expect(rfiApi).not.toContain("responded_at:");
+    expect(rfiApi).toContain(
+      'recordTrustedProcurementActivity(supabase, "rfi_responded"',
+    );
+    expect(rfiApi).toContain("deliverRfiResponseNotificationEmail");
+    expect(rfiApi).toContain("await sendEmail({");
+    expect(rfiApi).toContain(
+      'rpc(\n    "resolve_rfi_response_notification_recipient"',
+    );
+    expect(rfiApi).toContain("p_rfi_id: rfiId");
+    expect(rfiApi).toContain('from "@/lib/email/send-email"');
+    expect(rfiApi).toContain(
+      'from "@/lib/email/templates/rfi-response-email"',
+    );
+    expect(rfiApi).toContain("buildRfiResponseEmail({");
+    expect(rfiApi).toContain("joinPublicSitePath(`/rfq/${rfqSlug}`)");
+    expect(rfiApi).toContain('select("id, company_id, title, slug")');
+    expect(rfiApi).not.toContain("createServiceRoleClient");
+    expect(rfiApi).not.toContain("service_role");
+    expect(rfiApi).not.toContain('.from("profiles")\n    .select("email")');
+    expect(rfiApi).toContain('rfqTitle: rfqTitle || "Procurement RFQ"');
+    expect(rfiApi).toContain("workspaceUrl,");
+    expect(rfiApi).toMatch(
+      /buildRfiResponseEmail\(\{\s*rfqTitle: rfqTitle \|\| "Procurement RFQ",\s*workspaceUrl,\s*\}\)/,
+    );
+    expect(rfiApi).not.toMatch(
+      /buildRfiResponseEmail\(\{[^}]*responseText/,
+    );
+    expect(rfiApi).not.toMatch(
+      /buildRfiResponseEmail\(\{[^}]*response_text/,
+    );
+    expect(rfiApi).toContain("success: true, rfi: data, email");
+    expect(rfiApi).toContain("RFI response saved, but email delivery failed.");
+
+    const patchStart = rfiApi.indexOf("export async function PATCH");
+    const deliverStart = rfiApi.indexOf(
+      "deliverRfiResponseNotificationEmail",
+      patchStart,
+    );
+    const updateStart = rfiApi.indexOf(
+      ".update({ response_text: responseText })",
+      patchStart,
+    );
+    const activityStart = rfiApi.indexOf(
+      'recordTrustedProcurementActivity(supabase, "rfi_responded"',
+      patchStart,
+    );
+
+    expect(patchStart).toBeGreaterThan(-1);
+    expect(updateStart).toBeGreaterThan(-1);
+    expect(activityStart).toBeGreaterThan(updateStart);
+    expect(deliverStart).toBeGreaterThan(activityStart);
+  });
+
+  it("secures the purpose-bound RFI response notification recipient RPC", () => {
+    const notificationMigration = readSource(
+      "supabase/migrations/20260909032250_resolve_rfi_response_notification_recipient.sql",
+    );
+
+    expect(notificationMigration).toContain(
+      "create or replace function public.resolve_rfi_response_notification_recipient(",
+    );
+    expect(notificationMigration).toContain("p_rfi_id uuid");
+    expect(notificationMigration).toContain("returns table (\n  email text\n)");
+    expect(notificationMigration).toContain("security definer");
+    expect(notificationMigration).toContain("set search_path = ''");
+    expect(notificationMigration).toContain("auth.uid()");
+    expect(notificationMigration).toContain("raise exception 'Unauthorized'");
+    expect(notificationMigration).toContain("rfi.status = 'answered'");
+    expect(notificationMigration).toContain("rfi.responded_by = v_uid");
+    expect(notificationMigration).toContain(
+      "om.membership_status = 'active'",
+    );
+    expect(notificationMigration).toContain(
+      "om.workspace_role in ('owner', 'admin')",
+    );
+    expect(notificationMigration).toContain(
+      "om.procurement_function = 'buyer'",
+    );
+    expect(notificationMigration).toContain("p.id = rfi.submitted_by");
+    expect(notificationMigration).toContain("from public.rfq_rfis as rfi");
+    expect(notificationMigration).toContain("join public.profiles as p");
+    expect(notificationMigration).not.toContain("p_user_id");
+    expect(notificationMigration).not.toContain("p_email");
+    expect(notificationMigration).not.toContain("p_company_id");
+    expect(notificationMigration).toContain(
+      "revoke all\non function public.resolve_rfi_response_notification_recipient(uuid)\nfrom public;",
+    );
+    expect(notificationMigration).toContain(
+      "revoke all\non function public.resolve_rfi_response_notification_recipient(uuid)\nfrom anon;",
+    );
+    expect(notificationMigration).toContain(
+      "grant execute\non function public.resolve_rfi_response_notification_recipient(uuid)\nto authenticated;",
+    );
+  });
 });
