@@ -375,10 +375,11 @@ export async function POST(request: Request) {
 
       return NextResponse.json({
         success: true,
+        reused: true,
         invite: existingInvite,
         inviteUrl,
         absoluteInviteUrl,
-        message: "Supplier has already been invited to this RFQ.",
+        message: "Existing supplier invitation reused.",
         email: {
           sent: emailResult.success,
           skipped: emailResult.skipped,
@@ -437,6 +438,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       success: true,
+      reused: false,
       invite,
       inviteUrl,
       absoluteInviteUrl,

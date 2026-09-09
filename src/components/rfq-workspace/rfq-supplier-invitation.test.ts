@@ -75,9 +75,14 @@ describe("Task 24-RFQ-09 supplier invitation density", () => {
     expect(delivery).not.toContain("md:grid-cols-[1fr_auto]");
     expect(result).toContain('data-rfq-supplier-result="true"');
     expect(result).toContain("data-rfq-invitation-email-status");
+    expect(result).toContain("data-rfq-invitation-reused");
     expect(result).toContain("Invitation Email Sent");
     expect(result).toContain("Invitation Created, Email Not Sent");
     expect(result).toContain("Invitation Created, Email Failed");
+    expect(result).toContain("Invitation Email Resent");
+    expect(result).toContain("Existing Invitation, Email Not Sent");
+    expect(result).toContain("Existing Invitation, Email Retry Failed");
+    expect(result).toContain("Existing Invitation Reused");
     expect(result).not.toContain("rounded-[30px]");
   });
 
@@ -95,7 +100,19 @@ describe("Task 24-RFQ-09 supplier invitation density", () => {
     expect(delivery).not.toContain("break-words");
     expect(delivery).not.toContain("break-all");
     expect(delivery).toContain("Supplier contact email");
-    expect(delivery).toContain("Create Supplier Invite");
+    expect(delivery).toContain("Send Secure Supplier Invitation");
+    expect(delivery).toContain("Send Supplier Invitation");
+    expect(delivery).toContain("Sending Supplier Invitation...");
+    expect(delivery).not.toContain("Create Secure Supplier Invitation");
+    expect(delivery).not.toContain("Create Supplier Invite");
+    expect(delivery).not.toContain("Creating Secure Invite...");
+    expect(delivery).toContain("When an invitation already");
+    expect(delivery).toContain(
+      "exists for the same RFQ and supplier email, its secure",
+    );
+    expect(delivery).toContain(
+      "invitation link is reused for the delivery retry.",
+    );
     expect(delivery).toContain("min-h-11");
     expect(result).toContain("text-pretty");
     expect(result).toContain("min-h-11");
@@ -114,6 +131,8 @@ describe("Task 24-RFQ-09 supplier invitation density", () => {
     expect(invite).toContain("rfqId");
     expect(invite).toContain("email");
     expect(invite).toContain("setEmailResult(data.email || null)");
+    expect(invite).toContain("setInviteReused(data.reused === true)");
+    expect(invite).toContain("reused={inviteReused}");
     expect(invite).toContain("emailResult={emailResult}");
     expect(invite).toContain("const vendors: SupplierAvlVendorOption[] = [];");
     expect(invite).toContain("unavailable={!APPROVED_VENDOR_DOMAIN_AVAILABLE}");

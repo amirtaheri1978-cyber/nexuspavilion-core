@@ -9,12 +9,54 @@ type SupplierInvitationResultProps = {
   error: string;
   successMessage: string;
   emailResult?: InviteEmailResult | null;
+  reused?: boolean;
   inviteUrl: string;
   copyMessage: string;
   onCopyInviteLink: () => void;
 };
 
-function getEmailDeliveryCopy(emailResult: InviteEmailResult | null | undefined) {
+function getEmailDeliveryCopy(
+  emailResult: InviteEmailResult | null | undefined,
+  reused: boolean,
+) {
+  if (reused) {
+    if (!emailResult) {
+      return {
+        title: "Existing Invitation Reused",
+        message:
+          "The existing supplier invitation remains available. Confirm whether the invitation email was sent before treating delivery as complete.",
+        tone: "warning" as const,
+      };
+    }
+
+    if (emailResult.sent) {
+      return {
+        title: "Invitation Email Resent",
+        message:
+          "The existing supplier invitation email was sent again using the same secure invitation link.",
+        tone: "success" as const,
+      };
+    }
+
+    if (emailResult.skipped) {
+      return {
+        title: "Existing Invitation, Email Not Sent",
+        message: emailResult.error
+          ? `The existing invitation remains available, but the email retry was skipped: ${emailResult.error}`
+          : "The existing invitation remains available, but the email retry was skipped. Use the copy link as a fallback.",
+        tone: "warning" as const,
+      };
+    }
+
+    return {
+      title: "Existing Invitation, Email Retry Failed",
+      message: emailResult.error
+        ? `The existing invitation remains available, but the email retry failed: ${emailResult.error}`
+        : "The existing invitation remains available, but the email retry failed. Use the copy link as a fallback.",
+      tone: "warning" as const,
+    };
+  }
+
   if (!emailResult) {
     return {
       title: "Invitation Created",
@@ -56,12 +98,13 @@ export function SupplierInvitationResult({
   error,
   successMessage,
   emailResult = null,
+  reused = false,
   inviteUrl,
   copyMessage,
   onCopyInviteLink,
 }: SupplierInvitationResultProps) {
   const delivery = successMessage
-    ? getEmailDeliveryCopy(emailResult)
+    ? getEmailDeliveryCopy(emailResult, reused)
     : null;
   const deliveryClassName =
     delivery?.tone === "success"
@@ -104,6 +147,7 @@ export function SupplierInvitationResult({
                   ? "failed"
                   : "unknown"
           }
+          data-rfq-invitation-reused={reused ? "true" : "false"}
         >
           <p
             className={`text-xs font-black uppercase tracking-[0.2em] ${deliveryLabelClassName}`}

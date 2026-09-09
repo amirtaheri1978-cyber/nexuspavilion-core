@@ -33,13 +33,14 @@ export function SupplierInvitationDelivery({
         </p>
 
         <h3 className="mt-2 min-w-0 text-pretty text-xl font-black text-nexus-white">
-          Create Secure Supplier Invitation
+          Send Secure Supplier Invitation
         </h3>
 
         <p className="mt-2 max-w-3xl min-w-0 text-pretty text-sm font-semibold leading-6 text-nexus-muted">
           Enter the authorized supplier contact email. The invitation
-          remains associated with this RFQ. Invite by email remains
-          available.
+          remains associated with this RFQ. When an invitation already
+          exists for the same RFQ and supplier email, its secure
+          invitation link is reused for the delivery retry.
         </p>
       </div>
 
@@ -95,8 +96,8 @@ export function SupplierInvitationDelivery({
           className="inline-flex min-h-14 w-full items-center justify-center rounded-full border border-nexus-gold/30 bg-nexus-gold px-7 py-4 text-sm font-black text-nexus-navy transition duration-200 hover:bg-[#F5D77B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-nexus-gold/70 focus-visible:ring-offset-2 focus-visible:ring-offset-nexus-navy disabled:cursor-not-allowed disabled:opacity-50 @md:w-auto @md:shrink-0"
         >
           {loading
-            ? "Creating Secure Invite..."
-            : "Create Supplier Invite"}
+            ? "Sending Supplier Invitation..."
+            : "Send Supplier Invitation"}
         </button>
       </div>
 

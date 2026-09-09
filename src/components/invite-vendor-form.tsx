@@ -31,6 +31,7 @@ type InviteEmailResult = {
 type InviteResponse = {
   inviteUrl?: string;
   absoluteInviteUrl?: string | null;
+  reused?: boolean;
   message?: string;
   error?: string;
   email?: InviteEmailResult;
@@ -48,6 +49,7 @@ export default function InviteVendorForm({
   const [absoluteInviteUrl, setAbsoluteInviteUrl] = useState<string | null>(
     null,
   );
+  const [inviteReused, setInviteReused] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
   const [emailResult, setEmailResult] = useState<InviteEmailResult | null>(
     null,
@@ -74,6 +76,7 @@ export default function InviteVendorForm({
     setError("");
     setInviteUrl("");
     setAbsoluteInviteUrl(null);
+    setInviteReused(false);
     setSuccessMessage("");
     setEmailResult(null);
     setCopyMessage("");
@@ -103,6 +106,7 @@ export default function InviteVendorForm({
           ? data.absoluteInviteUrl
           : null,
       );
+      setInviteReused(data.reused === true);
       setEmailResult(data.email || null);
       setSuccessMessage(
         data.message || "Supplier invitation record created.",
@@ -206,6 +210,7 @@ export default function InviteVendorForm({
         error={error}
         successMessage={successMessage}
         emailResult={emailResult}
+        reused={inviteReused}
         inviteUrl={inviteUrl}
         copyMessage={copyMessage}
         onCopyInviteLink={copyInviteLink}

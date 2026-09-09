@@ -50,7 +50,8 @@ type InviteJson = {
   success?: boolean;
   error?: string;
   inviteUrl?: string;
-  absoluteInviteUrl?: string;
+  absoluteInviteUrl?: string | null;
+  reused?: boolean;
   message?: string;
   email?: {
     sent?: boolean;
@@ -261,6 +262,7 @@ describe("RFQ invitation email delivery", () => {
     expect(body.absoluteInviteUrl).toBe(
       `${PUBLIC_ORIGIN}${body.inviteUrl}`,
     );
+    expect(body.reused).toBe(false);
     expect(body.email).toEqual({
       sent: true,
       skipped: false,
@@ -277,7 +279,7 @@ describe("RFQ invitation email delivery", () => {
   });
 
   it("resends through sendEmail when an existing invite is reused", async () => {
-    mockClient({
+    const inserts = mockClient({
       existingInvite: {
         id: "existing-invite-row-id",
         rfq_id: RFQ_ID,
@@ -304,7 +306,8 @@ describe("RFQ invitation email delivery", () => {
 
     expect(response.status).toBe(200);
     expect(body.success).toBe(true);
-    expect(body.message).toBe("Supplier has already been invited to this RFQ.");
+    expect(body.reused).toBe(true);
+    expect(body.message).toBe("Existing supplier invitation reused.");
     expect(sendEmailMock).toHaveBeenCalledTimes(1);
     expect(sendEmailMock.mock.calls[0]?.[0]?.to).toBe(SUPPLIER_EMAIL);
     expect(sendEmailMock.mock.calls[0]?.[0]?.html).toContain(
@@ -314,7 +317,97 @@ describe("RFQ invitation email delivery", () => {
     expect(body.absoluteInviteUrl).toBe(
       `${PUBLIC_ORIGIN}/rfq/invite/${EXISTING_TOKEN}`,
     );
-    expect(body.email?.sent).toBe(true);
+    expect(body.email).toEqual({
+      sent: true,
+      skipped: false,
+      id: "re_resend_message_id",
+      error: null,
+    });
+    expect(inserts.find((entry) => entry.table === "rfq_invites")).toBeUndefined();
+  });
+
+  it("keeps reused invitation success when provider delivery fails", async () => {
+    const inserts = mockClient({
+      existingInvite: {
+        id: "existing-invite-row-id",
+        rfq_id: RFQ_ID,
+        email: SUPPLIER_EMAIL,
+        token: EXISTING_TOKEN,
+        status: "sent",
+        created_at: "2026-08-01T00:00:00.000Z",
+      },
+    });
+    sendEmailMock.mockResolvedValue({
+      success: false,
+      skipped: false,
+      id: null,
+      error: "The from address is not verified.",
+    });
+
+    const response = await postInvites(
+      jsonRequest({
+        rfqId: RFQ_ID,
+        email: SUPPLIER_EMAIL,
+      }),
+    );
+    const body = (await response.json()) as InviteJson;
+
+    expect(response.status).toBe(200);
+    expect(body.success).toBe(true);
+    expect(body.reused).toBe(true);
+    expect(body.inviteUrl).toBe(`/rfq/invite/${EXISTING_TOKEN}`);
+    expect(body.absoluteInviteUrl).toBe(
+      `${PUBLIC_ORIGIN}/rfq/invite/${EXISTING_TOKEN}`,
+    );
+    expect(body.email).toEqual({
+      sent: false,
+      skipped: false,
+      id: null,
+      error: "The from address is not verified.",
+    });
+    expect(inserts.find((entry) => entry.table === "rfq_invites")).toBeUndefined();
+  });
+
+  it("skips reused invitation delivery when the public site URL is unavailable", async () => {
+    delete process.env.NEXT_PUBLIC_SITE_URL;
+    const inserts = mockClient({
+      existingInvite: {
+        id: "existing-invite-row-id",
+        rfq_id: RFQ_ID,
+        email: SUPPLIER_EMAIL,
+        token: EXISTING_TOKEN,
+        status: "sent",
+        created_at: "2026-08-01T00:00:00.000Z",
+      },
+    });
+    sendEmailMock.mockResolvedValue({
+      success: true,
+      skipped: false,
+      id: "should-not-send",
+      error: null,
+    });
+
+    const response = await postInvites(
+      jsonRequest({
+        rfqId: RFQ_ID,
+        email: SUPPLIER_EMAIL,
+      }),
+    );
+    const body = (await response.json()) as InviteJson;
+
+    expect(response.status).toBe(200);
+    expect(body.success).toBe(true);
+    expect(body.reused).toBe(true);
+    expect(sendEmailMock).not.toHaveBeenCalled();
+    expect(body.inviteUrl).toBe(`/rfq/invite/${EXISTING_TOKEN}`);
+    expect(body.absoluteInviteUrl).toBeNull();
+    expect(body.email).toEqual({
+      sent: false,
+      skipped: true,
+      id: null,
+      error: "Public site URL is not configured.",
+    });
+    expect(inserts.find((entry) => entry.table === "rfq_invites")).toBeUndefined();
   });
 
   it("skips the provider when the public site URL is unset and does not claim email sent", async () => {
@@ -337,6 +430,7 @@ describe("RFQ invitation email delivery", () => {
 
     expect(response.status).toBe(200);
     expect(body.success).toBe(true);
+    expect(body.reused).toBe(false);
     expect(sendEmailMock).not.toHaveBeenCalled();
     expect(body.email).toEqual({
       sent: false,
@@ -369,6 +463,7 @@ describe("RFQ invitation email delivery", () => {
 
     expect(response.status).toBe(200);
     expect(body.success).toBe(true);
+    expect(body.reused).toBe(false);
     expect(sendEmailMock).not.toHaveBeenCalled();
     expect(body.email).toEqual({
       sent: false,
@@ -399,6 +494,7 @@ describe("RFQ invitation email delivery", () => {
 
     expect(response.status).toBe(200);
     expect(body.success).toBe(true);
+    expect(body.reused).toBe(false);
     expect(sendEmailMock).toHaveBeenCalledTimes(1);
     expect(body.email).toEqual({
       sent: false,
@@ -444,6 +540,11 @@ describe("RFQ invitation email delivery", () => {
 
     expect(invitesRoute).toContain('`${publicSiteUrl}/rfq/invite/${token}`');
     expect(invitesRoute).toContain("absoluteInviteUrl");
+    expect(invitesRoute).toContain("reused: true");
+    expect(invitesRoute).toContain("reused: false");
+    expect(invitesRoute).toContain(
+      'message: "Existing supplier invitation reused."',
+    );
     expect(invitesRoute).not.toContain("console.log(token");
     expect(invitesRoute).not.toContain("console.error(token");
     expect(invitesRoute).not.toContain("console.warn(token");
@@ -451,12 +552,16 @@ describe("RFQ invitation email delivery", () => {
     expect(invitePage).not.toContain('fetch("/api/quotes"');
     expect(inviteForm).toContain("setEmailResult(data.email || null)");
     expect(inviteForm).toContain("absoluteInviteUrl");
+    expect(inviteForm).toContain("setInviteReused(data.reused === true)");
+    expect(inviteForm).toContain("reused={inviteReused}");
     expect(inviteForm).toContain(
       "const copyTarget = absoluteInviteUrl || inviteUrl;",
     );
     expect(inviteForm).not.toContain("window.location.origin");
     expect(result).toContain("Invitation Email Sent");
     expect(result).toContain("Invitation Created, Email Failed");
+    expect(result).toContain("Invitation Email Resent");
+    expect(result).toContain("Existing Invitation, Email Retry Failed");
     expect(companyInvites).toContain("await sendEmail({");
     expect(companyInvites).toContain("to: email");
   });
