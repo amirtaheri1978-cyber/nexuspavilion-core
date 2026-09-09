@@ -140,7 +140,8 @@ describe("Cursor 04C RFI collaboration contract", () => {
     expect(addendaApi).toContain("canCreateCompanyRfq");
     expect(addendaApi).toContain("getActiveMembershipForUserCompany");
     expect(addendaApi).not.toContain("body.companyId");
-    expect(addendaApi).not.toContain("addendumNumber");
+    expect(addendaApi).not.toContain("body.addendumNumber");
+    expect(addendaApi).not.toMatch(/\.insert\(\{[\s\S]*?addendumNumber/);
     expect(addendaApi).not.toContain("addendum_number:");
     expect(addendaApi).toContain("rfq_id: rfqId");
     expect(addendaApi).toContain("title");
