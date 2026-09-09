@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
 
 import { sendEmail } from "@/lib/email/send-email";
-import { awardNotificationEmail } from "@/lib/email/templates/award-notification-email";
+import {
+  awardNotificationEmail,
+  supplierAwardNotificationEmail,
+} from "@/lib/email/templates/award-notification-email";
 import { joinPublicSitePath } from "@/lib/ops/public-site-url";
 import { createClient } from "@/lib/supabase/server";
 
@@ -64,6 +67,74 @@ function formatCurrency(
   }
 
   return `$${amount.toLocaleString()}`;
+}
+
+function collectAwardRecipientEmail(recipientRows: unknown) {
+  const recipientEmail = Array.isArray(recipientRows)
+    ? String(
+        (recipientRows[0] as { email?: string | null } | undefined)?.email ||
+          "",
+      ).trim()
+    : String(
+        (recipientRows as { email?: string | null } | null | undefined)?.email ||
+          "",
+      ).trim();
+
+  return recipientEmail;
+}
+
+async function deliverSupplierAwardNotificationEmail({
+  quoteId,
+  rfqTitle,
+  rfqSlug,
+  amount,
+  supabase,
+}: {
+  quoteId: string;
+  rfqTitle: string | null | undefined;
+  rfqSlug: string | null | undefined;
+  amount: number | string | null | undefined;
+  supabase: Awaited<ReturnType<typeof createClient>>;
+}) {
+  const { data: recipientRows, error: recipientError } = await supabase.rpc(
+    "resolve_rfq_award_notification_recipient",
+    { p_quote_id: quoteId },
+  );
+
+  if (recipientError) {
+    console.error("Award Supplier notification recipient resolution failed.");
+    return;
+  }
+
+  const recipientEmail = collectAwardRecipientEmail(recipientRows);
+
+  if (!recipientEmail) {
+    return;
+  }
+
+  const awardUrl = rfqSlug
+    ? joinPublicSitePath(`/rfq/${rfqSlug}`)
+    : null;
+
+  if (!awardUrl) {
+    console.warn(
+      "Award Supplier email skipped because the public site URL is not configured.",
+    );
+    return;
+  }
+
+  const email = supplierAwardNotificationEmail({
+    rfqTitle: rfqTitle || "Procurement Opportunity",
+    amount: formatCurrency(amount),
+    awardUrl,
+  });
+
+  await sendEmail({
+    to: recipientEmail,
+    subject: email.subject,
+    html: email.html,
+    text: email.text,
+  });
 }
 
 export async function POST(request: Request) {
@@ -160,6 +231,21 @@ export async function POST(request: Request) {
     } catch (error) {
       console.error(
         "Award notification email failed:",
+        error,
+      );
+    }
+
+    try {
+      await deliverSupplierAwardNotificationEmail({
+        quoteId: awardedQuote.id,
+        rfqTitle: updatedRfq.title,
+        rfqSlug: updatedRfq.slug,
+        amount: awardedQuote.amount,
+        supabase,
+      });
+    } catch (error) {
+      console.error(
+        "Award Supplier notification email failed:",
         error,
       );
     }

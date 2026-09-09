@@ -228,3 +228,166 @@ ${escapeHtml(body)}
 </table>
 `;
 }
+
+type SupplierAwardNotificationEmailProps = {
+  rfqTitle: string;
+  amount: string;
+  awardUrl: string;
+};
+
+/**
+ * Supplier-facing Contract Award notification.
+ * Intentionally limited to RFQ title, the Supplier's own awarded amount,
+ * Awarded status, and the canonical RFQ workspace URL.
+ */
+export function supplierAwardNotificationEmail({
+  rfqTitle,
+  amount,
+  awardUrl,
+}: SupplierAwardNotificationEmailProps) {
+  const displayTitle = safeValue(rfqTitle, "Procurement Opportunity");
+  const displayAmount = safeValue(amount, "Not specified");
+  const safeUrl = escapeHtml(awardUrl);
+
+  const subject = `Contract Award: ${displayTitle}`;
+
+  const text = `Contract Award
+
+Your quotation for ${displayTitle} has been selected for Contract Award.
+
+Award summary
+RFQ: ${displayTitle}
+Awarded amount: ${displayAmount}
+Status: Awarded
+
+This message confirms the Contract Award recorded in the Nexus Pavilion procurement record. It is not itself an executed legal contract. Review the award record and coordinate next contractual or project steps in the RFQ workspace:
+${awardUrl}
+
+Confidentiality notice:
+Your awarded quotation details remain confidential to your organization and the issuing procurement team. Competing suppliers cannot view your commercial submission.
+
+Nexus Pavilion`;
+
+  const html = `
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Contract Award</title>
+</head>
+
+<body style="margin:0;padding:0;background:#061426;font-family:Arial,Helvetica,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="padding:34px 16px;background:#061426;">
+<tr>
+<td align="center">
+<table width="720" cellpadding="0" cellspacing="0" border="0" style="max-width:720px;width:100%;background:#07111F;border-radius:30px;overflow:hidden;border:1px solid #1f3347;box-shadow:0 28px 90px rgba(0,0,0,0.38);">
+
+<tr>
+<td style="padding:42px 44px 34px;background:#07111F;border-bottom:1px solid #1f3347;">
+<div style="display:inline-block;background:#020617;border:1px solid #1f3347;border-radius:20px;padding:16px 20px;">
+<p style="margin:0;color:#ffffff;font-size:22px;font-weight:900;letter-spacing:-0.02em;">
+Nexus Pavilion
+</p>
+<p style="margin:6px 0 0;color:#C8A646;font-size:10px;font-weight:900;letter-spacing:3px;text-transform:uppercase;">
+Enterprise Procurement Intelligence
+</p>
+</div>
+
+<p style="margin:34px 0 0;color:#C8A646;font-size:12px;font-weight:900;letter-spacing:5px;text-transform:uppercase;">
+Contract Award
+</p>
+
+<h1 style="margin:18px 0 0;color:#ffffff;font-size:44px;line-height:1.05;font-weight:900;letter-spacing:-1.4px;">
+Your quotation has been selected for Contract Award.
+</h1>
+
+<p style="margin:22px 0 0;color:#cbd5e1;font-size:17px;line-height:1.8;font-weight:600;">
+The issuing procurement team has recorded a Contract Award for your selected quotation in the Nexus Pavilion procurement record.
+</p>
+</td>
+</tr>
+
+<tr>
+<td style="padding:36px 44px 0;background:#07111F;">
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid #24364a;border-radius:24px;background:#0b1b2c;">
+<tr>
+<td style="padding:28px;">
+<p style="margin:0;color:#94a3b8;font-size:12px;font-weight:900;letter-spacing:4px;text-transform:uppercase;">
+Award Summary
+</p>
+
+${infoCard("Procurement Opportunity", displayTitle)}
+${infoCard("Awarded Amount", displayAmount)}
+${infoCard("Status", "Awarded")}
+</td>
+</tr>
+</table>
+</td>
+</tr>
+
+<tr>
+<td style="padding:30px 44px 0;background:#07111F;">
+${noticeCard(
+  "Procurement Record",
+  "This notification confirms the Contract Award recorded in Nexus Pavilion. It is not itself an executed legal contract. Review the award record in the RFQ workspace for next contractual or project steps.",
+)}
+${noticeCard(
+  "Confidentiality Notice",
+  "Your awarded quotation details remain confidential to your organization and the issuing procurement team. Competing suppliers cannot view your commercial submission.",
+)}
+</td>
+</tr>
+
+<tr>
+<td style="padding:34px 44px 0;background:#07111F;">
+<a
+href="${safeUrl}"
+style="display:inline-block;background:#C8A646;color:#061426;text-decoration:none;padding:17px 30px;border-radius:16px;font-weight:900;font-size:15px;letter-spacing:1px;text-transform:uppercase;"
+>
+Review Award
+</a>
+
+<a
+href="${safeUrl}"
+style="display:inline-block;margin-left:10px;background:#0b1b2c;color:#ffffff;text-decoration:none;padding:17px 30px;border-radius:16px;font-weight:900;font-size:15px;border:1px solid #24364a;"
+>
+Open RFQ Workspace
+</a>
+</td>
+</tr>
+
+<tr>
+<td style="padding:28px 44px 0;background:#07111F;">
+<p style="margin:0;color:#94a3b8;font-size:13px;line-height:1.7;font-weight:600;">
+If the button does not work, copy and paste this secure RFQ workspace link into your browser:
+</p>
+<p style="margin:12px 0 0;word-break:break-all;color:#cbd5e1;font-size:13px;line-height:1.7;">
+${safeUrl}
+</p>
+</td>
+</tr>
+
+<tr>
+<td style="padding:34px 44px 42px;background:#07111F;">
+<p style="margin:0;color:#64748b;font-size:13px;line-height:1.8;font-weight:600;">
+Nexus Pavilion Procurement Intelligence Platform<br />
+Supplier Intelligence • RFQ Management • Award Analytics • Executive Reporting
+</p>
+</td>
+</tr>
+
+</table>
+</td>
+</tr>
+</table>
+</body>
+</html>
+`;
+
+  return {
+    subject,
+    html,
+    text,
+  };
+}
