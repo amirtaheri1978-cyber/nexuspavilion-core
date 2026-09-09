@@ -22,6 +22,7 @@ type Acknowledgement = {
 
 type Props = {
   rfqId: string;
+  canAcknowledge?: boolean;
   initialAddenda?: Addendum[];
   initialAcknowledgements?: Acknowledgement[];
 };
@@ -38,6 +39,7 @@ function formatDate(value: string | null) {
 
 export default function RFQAddendumAcknowledgementCenter({
   rfqId,
+  canAcknowledge = true,
   initialAddenda = [],
   initialAcknowledgements = [],
 }: Props) {
@@ -68,6 +70,10 @@ export default function RFQAddendumAcknowledgementCenter({
 
   const handleAcknowledge = useCallback(
     async (addendumId: string) => {
+      if (!canAcknowledge) {
+        return;
+      }
+
       setLoadingId(addendumId);
       setMessage("");
       setError("");
@@ -107,7 +113,7 @@ export default function RFQAddendumAcknowledgementCenter({
         setLoadingId("");
       }
     },
-    [rfqId],
+    [canAcknowledge, rfqId],
   );
 
   return (
@@ -155,6 +161,18 @@ export default function RFQAddendumAcknowledgementCenter({
           </div>
         </dl>
       </div>
+
+      {!canAcknowledge ? (
+        <div
+          className="mt-6 min-w-0 rounded-executive border border-amber-300/20 bg-amber-400/10 px-4 py-3 text-pretty text-sm font-bold text-amber-100"
+          role="status"
+          aria-live="polite"
+          data-rfq-addenda-acknowledgement-closed="true"
+        >
+          Acknowledgements are closed for this RFQ. Issued addenda remain
+          available for reference.
+        </div>
+      ) : null}
 
       {message ? (
         <div
@@ -249,7 +267,9 @@ export default function RFQAddendumAcknowledgementCenter({
                     ) : null}
                   </div>
 
-                  {requiresAcknowledgement && !acknowledged ? (
+                  {canAcknowledge &&
+                  requiresAcknowledgement &&
+                  !acknowledged ? (
                     <button
                       type="button"
                       onClick={() => void handleAcknowledge(addendum.id)}

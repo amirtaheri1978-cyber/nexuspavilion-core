@@ -23,6 +23,7 @@ const submitWorkspace = readSource(
 const inviteWorkspace = readSource(
   "src/components/rfq-workspace/rfq-invite-quote-submission.tsx",
 );
+const invitePage = readSource("src/app/rfq/invite/[token]/page.tsx");
 const quotesRoute = readSource("src/app/api/quotes/route.ts");
 const middleware = readSource("middleware.ts");
 const loginPage = readSource("src/app/login/page.tsx");
@@ -172,6 +173,50 @@ describe("anonymous RFQ submit auth continuation", () => {
     expect(inviteWorkspace).not.toContain("/login?next=");
     expect(inviteWorkspace).not.toContain("p_token");
     expect(inviteWorkspace).not.toContain("invite_token");
+  });
+
+  it("closes expired invitation landings without weakening submit auth (14-08)", () => {
+    expect(invitePage).toContain(
+      'rpc("get_rfq_invitation_context", { p_token: cleanToken })',
+    );
+    expect(invitePage).toContain(
+      'from "@/lib/datetime/rfq-deadline-risk"',
+    );
+    expect(invitePage).toContain(
+      "getRfqDeadlineRisk(\n    invitation.rfq_deadline,\n    new Date(),\n  )",
+    );
+    expect(invitePage).toContain(
+      'invitationDeadlineRisk.status === "expired"',
+    );
+
+    const contextIndex = invitePage.indexOf("get_rfq_invitation_context");
+    const deadlineRiskIndex = invitePage.indexOf("getRfqDeadlineRisk(");
+    const expiredIndex = invitePage.indexOf(
+      'invitationDeadlineRisk.status === "expired"',
+    );
+    const unavailableAfterExpiryIndex = invitePage.indexOf(
+      "<RfqInviteQuoteUnavailable />",
+      expiredIndex,
+    );
+    const submissionIndex = invitePage.indexOf(
+      "<RfqInviteQuoteSubmission invitation={invitation} />",
+    );
+
+    expect(contextIndex).toBeGreaterThan(-1);
+    expect(deadlineRiskIndex).toBeGreaterThan(contextIndex);
+    expect(expiredIndex).toBeGreaterThan(deadlineRiskIndex);
+    expect(unavailableAfterExpiryIndex).toBeGreaterThan(expiredIndex);
+    expect(submissionIndex).toBeGreaterThan(unavailableAfterExpiryIndex);
+    expect(invitePage).toContain("<RfqInviteQuoteSubmission invitation={invitation} />");
+    expect(invitePage).toContain("<RfqInviteQuoteUnavailable />");
+    expect(inviteWorkspace).toContain("Continue to Submit Quote");
+    expect(inviteWorkspace).toContain("`/rfq/${invitation.rfq_slug}/submit`");
+    expect(quotesRoute).not.toContain("get_rfq_invitation_context");
+    expect(quotesRoute).not.toContain("p_token");
+    expect(invitePage).not.toContain("/login?next=");
+    expect(getSafeNextPath("https://evil.example/rfq/harbor-point/submit")).toBe(
+      "/dashboard",
+    );
   });
 
   it("does not middleware-lock /rfq and keeps quote POST unauthenticated-protected", () => {

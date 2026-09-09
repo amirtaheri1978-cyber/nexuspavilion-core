@@ -120,7 +120,9 @@ export async function POST(request: Request) {
 
   const { data: rfq, error: rfqError } = await supabase
     .from("rfqs")
-    .select("id, company_id, status, sourcing_method")
+    .select(
+      "id, company_id, status, sourcing_method, deadline, deadline_timezone, awarded_quote_id, awarded_at",
+    )
     .eq("id", rfqId)
     .maybeSingle();
 
@@ -132,6 +134,57 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         error: "This RFQ is no longer open for addendum acknowledgement.",
+      },
+      { status: 403 },
+    );
+  }
+
+  if (rfq.awarded_quote_id || rfq.awarded_at) {
+    return NextResponse.json(
+      {
+        error: "This RFQ is no longer open for addendum acknowledgement.",
+      },
+      { status: 403 },
+    );
+  }
+
+  const { data: parsedDeadline, error: deadlineParseError } = await supabase.rpc(
+    "parse_rfq_deadline_timestamptz",
+    { p_deadline: rfq.deadline ?? null },
+  );
+
+  if (deadlineParseError) {
+    console.error(
+      "Addendum acknowledgement deadline parse RPC failed:",
+      deadlineParseError,
+    );
+
+    return NextResponse.json(
+      { error: "Unable to verify the RFQ deadline." },
+      { status: 500 },
+    );
+  }
+
+  if (!parsedDeadline) {
+    return NextResponse.json(
+      {
+        error:
+          "This RFQ deadline has passed or cannot be resolved. Addendum acknowledgements are closed.",
+      },
+      { status: 403 },
+    );
+  }
+
+  const deadlineDate = new Date(String(parsedDeadline));
+
+  if (
+    Number.isNaN(deadlineDate.getTime()) ||
+    Date.now() > deadlineDate.getTime()
+  ) {
+    return NextResponse.json(
+      {
+        error:
+          "This RFQ deadline has passed. Addendum acknowledgements are closed.",
       },
       { status: 403 },
     );

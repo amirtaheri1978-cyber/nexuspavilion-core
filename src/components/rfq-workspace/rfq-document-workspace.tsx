@@ -27,6 +27,7 @@ type RFQDocumentWorkspaceProps = {
   rfqId: string;
   companyId: string | null;
   isOwner: boolean;
+  canAcknowledge?: boolean;
   rfiDeadline?: string | null;
   rfiDeadlineTimezone?: string | null;
   documents: NonNullable<RFQDocumentLibraryProps["initialDocuments"]>;
@@ -42,6 +43,7 @@ export function RFQDocumentWorkspace({
   rfqId,
   companyId,
   isOwner,
+  canAcknowledge = true,
   rfiDeadline = null,
   rfiDeadlineTimezone = null,
   documents,
@@ -290,6 +292,7 @@ export function RFQDocumentWorkspace({
             ) : (
               <RFQAddendumAcknowledgementCenter
                 rfqId={rfqId}
+                canAcknowledge={canAcknowledge}
                 initialAddenda={addenda}
                 initialAcknowledgements={acknowledgements}
               />

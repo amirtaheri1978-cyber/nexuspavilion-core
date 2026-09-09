@@ -2,6 +2,7 @@ import {
   RfqInviteQuoteSubmission,
   RfqInviteQuoteUnavailable,
 } from "@/components/rfq-workspace/rfq-invite-quote-submission";
+import { getRfqDeadlineRisk } from "@/lib/datetime/rfq-deadline-risk";
 import { EXECUTIVE_PAGE_CLASS } from "@/lib/design-system/executive-contract";
 import { createClient } from "@/lib/supabase/server";
 
@@ -36,6 +37,21 @@ export default async function InvitePage({
   const invitation = data as InvitationContext | null;
 
   if (error || !invitation) {
+    return (
+      <main className="min-h-screen bg-nexus-navy text-white">
+        <div className={`${EXECUTIVE_PAGE_CLASS} min-w-0`}>
+          <RfqInviteQuoteUnavailable />
+        </div>
+      </main>
+    );
+  }
+
+  const invitationDeadlineRisk = getRfqDeadlineRisk(
+    invitation.rfq_deadline,
+    new Date(),
+  );
+
+  if (invitationDeadlineRisk.status === "expired") {
     return (
       <main className="min-h-screen bg-nexus-navy text-white">
         <div className={`${EXECUTIVE_PAGE_CLASS} min-w-0`}>

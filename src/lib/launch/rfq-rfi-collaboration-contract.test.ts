@@ -301,6 +301,80 @@ describe("Cursor 04C RFI collaboration contract", () => {
     expect(deliverStart).toBeGreaterThan(activityStart);
   });
 
+  it("hardens acknowledgement API/UI for RFQ terminal state (14-08)", () => {
+    const detail = readSource("src/app/rfq/[slug]/page.tsx");
+    const acknowledgementCenter = readSource(
+      "src/components/rfq-addendum-acknowledgement-center.tsx",
+    );
+    const terminalMigration = readSource(
+      "supabase/migrations/20260909090225_harden_rfq_addendum_acknowledgement_terminal_state.sql",
+    );
+
+    expect(acknowledgementApi).toContain(
+      "id, company_id, status, sourcing_method, deadline, deadline_timezone, awarded_quote_id, awarded_at",
+    );
+    expect(acknowledgementApi).toContain('rpc(\n    "parse_rfq_deadline_timestamptz"');
+    expect(acknowledgementApi).toContain("p_deadline: rfq.deadline ?? null");
+    expect(acknowledgementApi).toContain(
+      "Unable to verify the RFQ deadline.",
+    );
+    expect(acknowledgementApi).toContain(
+      "This RFQ deadline has passed. Addendum acknowledgements are closed.",
+    );
+    expect(acknowledgementApi).toContain("rfq.awarded_quote_id || rfq.awarded_at");
+    expect(acknowledgementApi).toContain(
+      "This RFQ is no longer open for addendum acknowledgement.",
+    );
+    expect(acknowledgementApi).toContain('code === "23505"');
+    expect(acknowledgementApi).toContain("idempotent: true");
+    expect(acknowledgementApi).not.toContain("new Date(rfq.deadline)");
+
+    expect(detail).toContain("awarded_quote_id: string | null;");
+    expect(detail).toContain("awarded_at: string | null;");
+    expect(detail).toContain("!rfq.awarded_quote_id");
+    expect(detail).toContain("!rfq.awarded_at");
+    expect(detail).toContain("canAcknowledge={isOpen}");
+    expect(documentWorkspace).toContain("canAcknowledge?: boolean");
+    expect(documentWorkspace).toContain("canAcknowledge = true");
+    expect(documentWorkspace).toContain("canAcknowledge={canAcknowledge}");
+    expect(acknowledgementCenter).toContain("canAcknowledge?: boolean");
+    expect(acknowledgementCenter).toContain("canAcknowledge = true");
+    expect(acknowledgementCenter).toContain("if (!canAcknowledge)");
+    expect(acknowledgementCenter).toContain(
+      "canAcknowledge &&\n                  requiresAcknowledgement &&\n                  !acknowledged",
+    );
+    expect(acknowledgementCenter).toContain(
+      "Acknowledgements are closed for this RFQ. Issued addenda remain",
+    );
+    expect(acknowledgementCenter).toContain("initialAddenda.map((addendum)");
+    expect(acknowledgementCenter).toContain("data-rfq-addenda-history");
+
+    expect(terminalMigration).toContain(
+      'drop policy if exists "Respondent companies can acknowledge required addenda"',
+    );
+    expect(terminalMigration).toContain(
+      'create policy "Respondent companies can acknowledge required addenda"',
+    );
+    expect(terminalMigration).toContain(
+      "public.parse_rfq_deadline_timestamptz(r.deadline) is not null",
+    );
+    expect(terminalMigration).toContain(
+      "now() <= public.parse_rfq_deadline_timestamptz(r.deadline)",
+    );
+    expect(terminalMigration).toContain("r.status = 'open'");
+    expect(terminalMigration).toContain("om.membership_status = 'active'");
+    expect(terminalMigration).toContain(
+      "or public.current_user_has_supplier_rfq_access(r.id)",
+    );
+    expect(terminalMigration).toContain("a.requires_acknowledgement = true");
+    expect(terminalMigration).toContain("r.awarded_quote_id is null");
+    expect(terminalMigration).toContain("r.awarded_at is null");
+    expect(terminalMigration).not.toContain("for select");
+    expect(terminalMigration).not.toContain("grant ");
+    expect(terminalMigration).not.toContain("security definer");
+    expect(terminalMigration).not.toContain("get_rfq_invitation_context");
+  });
+
   it("secures the purpose-bound RFI response notification recipient RPC", () => {
     const notificationMigration = readSource(
       "supabase/migrations/20260909032250_resolve_rfi_response_notification_recipient.sql",

@@ -124,6 +124,8 @@ company_id: string | null;
 procurement_scope: ProcurementScope | null;
 sourcing_method: SourcingMethod | null;
 contract_framework: ContractFramework | null;
+awarded_quote_id: string | null;
+awarded_at: string | null;
 };
 const RIGHT_TO_REJECT_NOTICE =
 "The Buyer reserves the right to accept or reject any or all submissions, request clarifications, negotiate commercial terms, or cancel the RFQ process at any time without liability or obligation to justify the decision.";
@@ -303,7 +305,10 @@ const blindBiddingEnabled = shouldEnforceBlindBidding(rfq);
 const commercialEvaluationUnlocked =
 !blindBiddingEnabled || deadlinePassed;
 const isOpen =
-(!rfq.status || rfqStatus === "open") && !deadlinePassed;
+  (!rfq.status || rfqStatus === "open") &&
+  !deadlinePassed &&
+  !rfq.awarded_quote_id &&
+  !rfq.awarded_at;
 
 const loadIssuerQuoteRows = isOwner && commercialEvaluationUnlocked;
 const loadIssuerQuoteCount = isOwner && !commercialEvaluationUnlocked;
@@ -1021,6 +1026,7 @@ governance workflow.
   rfqId={rfq.id}
   companyId={rfq.company_id}
   isOwner={isOwner}
+  canAcknowledge={isOpen}
   rfiDeadline={effectiveRfiDeadline}
   rfiDeadlineTimezone={effectiveRfiDeadlineTimezone}
   documents={rfqAttachments}
