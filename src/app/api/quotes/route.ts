@@ -329,7 +329,7 @@ companyId: profile.company_id,
 );
 
 try {
-const quoteUrl = joinPublicSitePath(`/rfq/${rfq.slug}/compare`);
+const quoteUrl = joinPublicSitePath(`/rfq/${rfq.slug}`);
 if (user.email && quoteUrl) {
 await sendEmail({
 to: user.email,
