@@ -44,6 +44,21 @@ const rfqSubmitPage = readFileSync(
   "utf8",
 );
 
+const signupPage = readFileSync(
+  resolve(process.cwd(), "src/app/signup/page.tsx"),
+  "utf8",
+);
+
+const createCompanyPage = readFileSync(
+  resolve(process.cwd(), "src/app/create-company/page.tsx"),
+  "utf8",
+);
+
+const createCompanyRoute = readFileSync(
+  resolve(process.cwd(), "src/app/api/companies/create/route.ts"),
+  "utf8",
+);
+
 const SESSION_EXPIRED_MESSAGE =
   "Your secure workspace session has expired. Please sign in again to continue.";
 const MISSING_AUTH_CODE_MESSAGE =
@@ -341,5 +356,128 @@ describe("active runtime RFQ invitation and submit continuation architecture", (
     expect(getCompanyOnboardingPath("/rfq/routing-check/submit")).toBe(
       "/create-company?next=%2Frfq%2Frouting-check%2Fsubmit",
     );
+  });
+});
+
+describe("signup page RFQ continuation wiring", () => {
+  it("derives onboardingPath from a sanitized next and forwards it through confirmation and success", () => {
+    expect(signupPage).toContain(
+      'from "@/lib/auth/login-continuation"',
+    );
+    expect(signupPage).toContain("getSafeNextPath");
+    expect(signupPage).toContain("getCompanyOnboardingPath");
+    expect(signupPage).toContain(
+      '<SignupScreen nextPath={getSafeNextPath(searchParams.get("next"))} />',
+    );
+    expect(signupPage).toContain(
+      "const onboardingPath = getCompanyOnboardingPath(nextPath);",
+    );
+    expect(signupPage).toContain(
+      'confirmationRedirect.searchParams.set("next", onboardingPath)',
+    );
+    expect(signupPage).toContain("router.push(onboardingPath)");
+    expect(signupPage).toContain(
+      "`/login?next=${encodeURIComponent(nextPath)}`",
+    );
+    expect(signupPage).not.toContain("function getSafeNextPath");
+    expect(signupPage).not.toContain("function getCompanyOnboardingPath");
+  });
+});
+
+describe("create-company page RFQ continuation wiring", () => {
+  it("forwards continuationNext through RFQ detection, create POST, and post-create navigation", () => {
+    expect(createCompanyPage).toContain(
+      'from "@/lib/auth/login-continuation"',
+    );
+    expect(createCompanyPage).toContain("getPostCompanyCreatePath");
+    expect(createCompanyPage).toContain("isRfqSubmitContinuationPath");
+    expect(createCompanyPage).toContain(
+      'const continuationNext = searchParams.get("next");',
+    );
+    expect(createCompanyPage).toContain(
+      "isRfqSubmitContinuationPath(continuationNext)",
+    );
+    expect(createCompanyPage).toContain("next: continuationNext,");
+    expect(createCompanyPage).toMatch(
+      /router\.push\(\s*getPostCompanyCreatePath\(\s*continuationNext,\s*data\.redirectTo\s*\|\|\s*"\/company\/settings",\s*\)\s*,?\s*\)/,
+    );
+    expect(createCompanyPage).not.toContain(
+      "function getPostCompanyCreatePath",
+    );
+    expect(createCompanyPage).not.toContain(
+      "function isRfqSubmitContinuationPath",
+    );
+  });
+});
+
+describe("create-company API RFQ continuation wiring", () => {
+  it("keeps next typed as unknown and sanitizes redirectTo through getPostCompanyCreatePath", () => {
+    expect(createCompanyRoute).toContain(
+      'from "@/lib/auth/login-continuation"',
+    );
+    expect(createCompanyRoute).toContain("getPostCompanyCreatePath");
+    expect(createCompanyRoute).toContain("next?: unknown;");
+    expect(createCompanyRoute).toMatch(
+      /redirectTo:\s*getPostCompanyCreatePath\(\s*typeof body\.next === "string" \? body\.next : null,\s*\)/,
+    );
+    expect(createCompanyRoute).not.toContain(
+      "function getPostCompanyCreatePath",
+    );
+  });
+});
+
+describe("canonical RFQ invitation authentication continuation chain", () => {
+  it("preserves /rfq/routing-check/submit through login, signup, and create-company", () => {
+    const submitPath = "/rfq/routing-check/submit";
+
+    expect(isRfqSubmitContinuationPath(submitPath)).toBe(true);
+    expect(getSafeNextPath(submitPath)).toBe(submitPath);
+    expect(getSignupHref(submitPath)).toBe(
+      "/signup?next=%2Frfq%2Frouting-check%2Fsubmit",
+    );
+    expect(getCompanyOnboardingPath(submitPath)).toBe(
+      "/create-company?next=%2Frfq%2Frouting-check%2Fsubmit",
+    );
+    expect(getPostCompanyCreatePath(submitPath)).toBe(submitPath);
+
+    expect(rfqSubmitPage).toContain(
+      "redirect(`/login?next=${encodeURIComponent(submitPath)}`)",
+    );
+    expect(loginPage).toContain("getSignupHref(nextPath)");
+    expect(signupPage).toContain(
+      "const onboardingPath = getCompanyOnboardingPath(nextPath);",
+    );
+    expect(createCompanyPage).toContain("next: continuationNext,");
+    expect(createCompanyRoute).toContain(
+      'typeof body.next === "string" ? body.next : null,',
+    );
+
+    expect(`/login?next=${encodeURIComponent(submitPath)}`).toBe(
+      "/login?next=%2Frfq%2Frouting-check%2Fsubmit",
+    );
+    expect(getSignupHref(submitPath)).toBe(
+      `/signup?next=${encodeURIComponent(submitPath)}`,
+    );
+    expect(getCompanyOnboardingPath(submitPath)).toBe(
+      `/create-company?next=${encodeURIComponent(submitPath)}`,
+    );
+  });
+
+  it("keeps unsafe next values out of the canonical RFQ continuation chain", () => {
+    expect(getSafeNextPath("https://evil.example/rfq/routing-check/submit")).toBe(
+      DEFAULT_POST_LOGIN_PATH,
+    );
+    expect(getSignupHref("//evil.example/rfq/routing-check/submit")).toBe(
+      "/signup",
+    );
+    expect(getCompanyOnboardingPath("/\\rfq/routing-check/submit")).toBe(
+      "/create-company",
+    );
+    expect(
+      getPostCompanyCreatePath("https://evil.example/rfq/routing-check/submit"),
+    ).toBe(DEFAULT_POST_COMPANY_CREATE_PATH);
+    expect(
+      isRfqSubmitContinuationPath("//evil.example/rfq/routing-check/submit"),
+    ).toBe(false);
   });
 });
