@@ -1,5 +1,6 @@
 "use client";
 
+import * as Sentry from "@sentry/nextjs";
 import Link from "next/link";
 import { useEffect } from "react";
 import Image from "next/image";
@@ -15,6 +16,11 @@ reset: () => void;
 }) {
 useEffect(() => {
 console.error("Nexus Pavilion application boundary:", error);
+try {
+Sentry.captureException(error);
+} catch {
+// Monitoring must remain fail-open relative to recovery UI.
+}
 }, [error]);
 
 return (

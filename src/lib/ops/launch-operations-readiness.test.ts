@@ -233,3 +233,135 @@ describe("Task 27 launch operations readiness", () => {
     );
   });
 });
+
+describe("Task 15-01 production error tracking", () => {
+  it("wires @sentry/nextjs dependency and instrumentation files without secrets", () => {
+    const packageJson = readSource("package.json");
+    const instrumentation = readSource("src/instrumentation.ts");
+    const clientInstrumentation = readSource("src/instrumentation-client.ts");
+    const serverConfig = readSource("src/sentry.server.config.ts");
+    const edgeConfig = readSource("src/sentry.edge.config.ts");
+    const nextConfig = readSource("next.config.ts");
+    const envExample = readSource(".env.example");
+    const sharedOptions = readSource("src/lib/ops/sentry-error-tracking.ts");
+
+    expect(packageJson).toContain('"@sentry/nextjs"');
+    expect(instrumentation).toContain("sanitizeSentryRequestPath(request.path)");
+    expect(instrumentation).toContain("Sentry.captureRequestError(");
+    expect(instrumentation).toContain('await import("./sentry.server.config")');
+    expect(instrumentation).toContain('await import("./sentry.edge.config")');
+    expect(sharedOptions).toContain("export function sanitizeSentryRequestPath");
+    expect(clientInstrumentation).toContain("Sentry.init(");
+    expect(clientInstrumentation).toContain("NEXT_PUBLIC_SENTRY_DSN");
+    expect(serverConfig).toContain("Sentry.init(");
+    expect(edgeConfig).toContain("Sentry.init(");
+    expect(nextConfig).toContain("withSentryConfig");
+    expect(nextConfig).toContain("sourcemaps: {\n    disable: true,");
+    expect(envExample).toContain("NEXT_PUBLIC_SENTRY_DSN=");
+    expect(envExample).toContain("SENTRY_DSN=");
+    expect(envExample).toContain("app remains fail-open when unset");
+    expect(envExample).not.toMatch(/https:\/\/.+@o\d+\.ingest/);
+    expect(envExample).not.toContain("SENTRY_AUTH_TOKEN=");
+    expect(sharedOptions).toContain("sendDefaultPii: false");
+    expect(sharedOptions).toContain("tracesSampleRate: 0");
+    expect(sharedOptions).not.toContain("sendDefaultPii: true");
+
+    for (const source of [
+      instrumentation,
+      clientInstrumentation,
+      serverConfig,
+      edgeConfig,
+      nextConfig,
+      sharedOptions,
+    ]) {
+      expect(source).not.toMatch(/https:\/\/.+@o\d+\.ingest/);
+      expect(source).not.toMatch(/sntrys_/);
+      expect(source).not.toContain("Sentry.setUser(");
+    }
+  });
+
+  it("keeps app error recovery UX and adds root-layout coverage capture", () => {
+    const errorBoundary = readSource("src/app/error.tsx");
+    const globalError = readSource("src/app/global-error.tsx");
+
+    expect(errorBoundary).toContain("onClick={() => reset()}");
+    expect(errorBoundary).toContain('href="/dashboard"');
+    expect(errorBoundary).toContain("Sentry.captureException(error)");
+    expect(errorBoundary).toContain(
+      'console.error("Nexus Pavilion application boundary:", error)',
+    );
+    expect(errorBoundary).not.toContain("/api/debug-sentry");
+    expect(errorBoundary).not.toContain("/api/test-error");
+
+    expect(globalError).toContain("<html lang=\"en\">");
+    expect(globalError).toContain("<body");
+    expect(globalError).toContain("onClick={() => reset()}");
+    expect(globalError).toContain("Sentry.captureException(error)");
+    expect(globalError).not.toContain("/api/debug-sentry");
+    expect(globalError).not.toContain("Sentry.setUser(");
+  });
+
+  it("uses conservative privacy defaults and fail-open DSN resolution", async () => {
+    const {
+      getSentryErrorTrackingOptions,
+      resolveSentryDsn,
+    } = await import("@/lib/ops/sentry-error-tracking");
+
+    expect(resolveSentryDsn(undefined, undefined)).toBeUndefined();
+    expect(resolveSentryDsn("  ", "")).toBeUndefined();
+    expect(resolveSentryDsn("https://example.ingest.sentry.io/1")).toBe(
+      "https://example.ingest.sentry.io/1",
+    );
+    expect(
+      resolveSentryDsn(undefined, "https://example.ingest.sentry.io/2"),
+    ).toBe("https://example.ingest.sentry.io/2");
+
+    const options = getSentryErrorTrackingOptions(undefined);
+    expect(options.dsn).toBeUndefined();
+    expect(options.tracesSampleRate).toBe(0);
+    expect(options.sendDefaultPii).toBe(false);
+    expect(options.enableLogs).toBe(false);
+    expect(options.dataCollection.userInfo).toBe(false);
+    expect(options.dataCollection.cookies).toBe(false);
+    expect(options.dataCollection.httpBodies).toEqual([]);
+    expect(options.dataCollection.databaseQueryData).toBe(false);
+    expect(options.dataCollection.stackFrameVariables).toBe(false);
+  });
+
+  it("redacts invitation token path segments and strips query values before Sentry capture", async () => {
+    const { sanitizeSentryRequestPath } = await import(
+      "@/lib/ops/sentry-error-tracking"
+    );
+    const instrumentation = readSource("src/instrumentation.ts");
+
+    expect(sanitizeSentryRequestPath("/rfq/invite/sensitive-token")).toBe(
+      "/rfq/invite/[redacted]",
+    );
+    expect(sanitizeSentryRequestPath("/invite/sensitive-token")).toBe(
+      "/invite/[redacted]",
+    );
+
+    const rfqWithQuery = sanitizeSentryRequestPath(
+      "/rfq/invite/sensitive-token?next=/rfq/example&email=test",
+    );
+    expect(rfqWithQuery).toBe("/rfq/invite/[redacted]");
+    expect(rfqWithQuery).not.toContain("sensitive-token");
+    expect(rfqWithQuery).not.toContain("email=test");
+    expect(rfqWithQuery).not.toContain("next=");
+
+    const ordinaryWithQuery = sanitizeSentryRequestPath(
+      "/api/quotes?token=sensitive&foo=bar",
+    );
+    expect(ordinaryWithQuery).toBe("/api/quotes");
+    expect(ordinaryWithQuery).not.toContain("token=sensitive");
+    expect(ordinaryWithQuery).not.toContain("foo=bar");
+
+    expect(sanitizeSentryRequestPath("/api/quotes")).toBe("/api/quotes");
+
+    expect(instrumentation).toContain("sanitizeSentryRequestPath(request.path)");
+    expect(instrumentation).toContain("Sentry.captureRequestError(");
+    expect(instrumentation).toContain("method: request.method");
+    expect(instrumentation).toContain("headers: request.headers");
+    expect(instrumentation).toContain("context");
+  });
+});
