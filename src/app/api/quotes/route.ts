@@ -328,29 +328,64 @@ companyId: profile.company_id,
 },
 );
 
+let email: {
+  sent: boolean;
+  skipped: boolean;
+  id: string | null;
+  error: string | null;
+} = {
+  sent: false,
+  skipped: true,
+  id: null,
+  error: null,
+};
+
 try {
-const quoteUrl = joinPublicSitePath(`/rfq/${rfq.slug}`);
-if (user.email && quoteUrl) {
-await sendEmail({
-to: user.email,
-subject: `Quote Submitted: ${rfq.title}`,
-html: quoteSubmittedEmail({
-rfqTitle: rfq.title || "RFQ",
-amount: amount ? String(amount) : "Not specified",
-timeline: timeline || "Not specified",
-validityDays: `${validityDays} days`,
-quoteUrl,
-}),
-});
-}
+  const quoteUrl = joinPublicSitePath(`/rfq/${rfq.slug}`);
+  if (user.email && quoteUrl) {
+    const emailResult = await sendEmail({
+      to: user.email,
+      subject: `Quote Submitted: ${rfq.title}`,
+      html: quoteSubmittedEmail({
+        rfqTitle: rfq.title || "RFQ",
+        amount: amount ? String(amount) : "Not specified",
+        timeline: timeline || "Not specified",
+        validityDays: `${validityDays} days`,
+        quoteUrl,
+      }),
+    });
+
+    email = {
+      sent: Boolean(emailResult.success),
+      skipped: Boolean(emailResult.skipped),
+      id: emailResult.id ?? null,
+      error: emailResult.error ?? null,
+    };
+  } else {
+    email = {
+      sent: false,
+      skipped: true,
+      id: null,
+      error: !user.email
+        ? "Quote confirmation recipient was unavailable."
+        : "Public site URL is not configured.",
+    };
+  }
 } catch (error) {
-console.error("Quote submitted email failed:", error);
+  console.error("Quote submitted email failed:", error);
+  email = {
+    sent: false,
+    skipped: false,
+    id: null,
+    error: "Quote submitted, but email delivery failed.",
+  };
 }
 
 return NextResponse.json({
-success: true,
-quote,
-redirectTo: `/rfq/${rfq.slug}`,
+  success: true,
+  quote,
+  redirectTo: `/rfq/${rfq.slug}`,
+  email,
 });
 } catch (error) {
 console.error(error);

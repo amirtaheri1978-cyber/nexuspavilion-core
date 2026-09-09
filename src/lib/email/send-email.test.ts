@@ -86,7 +86,7 @@ describe("sendEmail provider contract", () => {
     });
   });
 
-  it("does not report success when Resend returns an error", async () => {
+  it("sanitizes provider-returned errors into a safe delivery failure", async () => {
     sendMock.mockResolvedValue({
       data: null,
       error: { message: "The from address is not verified." },
@@ -101,6 +101,25 @@ describe("sendEmail provider contract", () => {
     expect(result.success).toBe(false);
     expect(result.skipped).toBe(false);
     expect(result.id).toBeNull();
-    expect(result.error).toBe("The from address is not verified.");
+    expect(result.error).toBe("Email delivery failed.");
+    expect(result.error).not.toContain("from address");
+    expect(result.error).not.toContain("verified");
+  });
+
+  it("sanitizes thrown provider/network errors into a safe delivery failure", async () => {
+    sendMock.mockRejectedValue(new Error("socket hang up ECONNRESET"));
+
+    const result = await sendEmail({
+      to: "supplier@example.test",
+      subject: "RFQ Invitation: Harbor Package",
+      html: "<p>Invite</p>",
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.skipped).toBe(false);
+    expect(result.id).toBeNull();
+    expect(result.error).toBe("Email delivery could not be completed.");
+    expect(result.error).not.toContain("ECONNRESET");
+    expect(result.error).not.toContain("socket");
   });
 });

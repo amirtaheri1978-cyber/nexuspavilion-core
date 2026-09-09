@@ -83,6 +83,35 @@ function collectAwardRecipientEmail(recipientRows: unknown) {
   return recipientEmail;
 }
 
+type AwardEmailDeliveryResult = {
+  sent: boolean;
+  skipped: boolean;
+  id: string | null;
+  error: string | null;
+};
+
+function skippedAwardEmail(
+  error: string | null = null,
+): AwardEmailDeliveryResult {
+  return {
+    sent: false,
+    skipped: true,
+    id: null,
+    error,
+  };
+}
+
+function failedAwardEmail(
+  error: string,
+): AwardEmailDeliveryResult {
+  return {
+    sent: false,
+    skipped: false,
+    id: null,
+    error,
+  };
+}
+
 async function deliverSupplierAwardNotificationEmail({
   quoteId,
   rfqTitle,
@@ -95,7 +124,7 @@ async function deliverSupplierAwardNotificationEmail({
   rfqSlug: string | null | undefined;
   amount: number | string | null | undefined;
   supabase: Awaited<ReturnType<typeof createClient>>;
-}) {
+}): Promise<AwardEmailDeliveryResult> {
   const { data: recipientRows, error: recipientError } = await supabase.rpc(
     "resolve_rfq_award_notification_recipient",
     { p_quote_id: quoteId },
@@ -103,13 +132,17 @@ async function deliverSupplierAwardNotificationEmail({
 
   if (recipientError) {
     console.error("Award Supplier notification recipient resolution failed.");
-    return;
+    return failedAwardEmail(
+      "Award Supplier notification recipient could not be resolved.",
+    );
   }
 
   const recipientEmail = collectAwardRecipientEmail(recipientRows);
 
   if (!recipientEmail) {
-    return;
+    return skippedAwardEmail(
+      "Award Supplier notification recipient was unavailable.",
+    );
   }
 
   const awardUrl = rfqSlug
@@ -120,7 +153,7 @@ async function deliverSupplierAwardNotificationEmail({
     console.warn(
       "Award Supplier email skipped because the public site URL is not configured.",
     );
-    return;
+    return skippedAwardEmail("Public site URL is not configured.");
   }
 
   const email = supplierAwardNotificationEmail({
@@ -129,12 +162,19 @@ async function deliverSupplierAwardNotificationEmail({
     awardUrl,
   });
 
-  await sendEmail({
+  const result = await sendEmail({
     to: recipientEmail,
     subject: email.subject,
     html: email.html,
     text: email.text,
   });
+
+  return {
+    sent: Boolean(result.success),
+    skipped: Boolean(result.skipped),
+    id: result.id ?? null,
+    error: result.error ?? null,
+  };
 }
 
 export async function POST(request: Request) {
@@ -211,10 +251,12 @@ export async function POST(request: Request) {
       );
     }
 
+    let buyerEmail: AwardEmailDeliveryResult = skippedAwardEmail();
+
     try {
       const awardUrl = joinPublicSitePath(`/rfq/${updatedRfq.slug}`);
       if (user.email && awardUrl) {
-        await sendEmail({
+        const emailResult = await sendEmail({
           to: user.email,
           subject: `Contract Awarded: ${
             updatedRfq.title ?? "Project"
@@ -227,16 +269,34 @@ export async function POST(request: Request) {
             awardUrl,
           }),
         });
+
+        buyerEmail = {
+          sent: Boolean(emailResult.success),
+          skipped: Boolean(emailResult.skipped),
+          id: emailResult.id ?? null,
+          error: emailResult.error ?? null,
+        };
+      } else {
+        buyerEmail = skippedAwardEmail(
+          !user.email
+            ? "Award confirmation recipient was unavailable."
+            : "Public site URL is not configured.",
+        );
       }
     } catch (error) {
       console.error(
         "Award notification email failed:",
         error,
       );
+      buyerEmail = failedAwardEmail(
+        "Contract awarded, but Buyer notification email delivery failed.",
+      );
     }
 
+    let supplierEmail: AwardEmailDeliveryResult = skippedAwardEmail();
+
     try {
-      await deliverSupplierAwardNotificationEmail({
+      supplierEmail = await deliverSupplierAwardNotificationEmail({
         quoteId: awardedQuote.id,
         rfqTitle: updatedRfq.title,
         rfqSlug: updatedRfq.slug,
@@ -248,18 +308,39 @@ export async function POST(request: Request) {
         "Award Supplier notification email failed:",
         error,
       );
+      supplierEmail = failedAwardEmail(
+        "Contract awarded, but Supplier notification email delivery failed.",
+      );
     }
+
+    const ownerNotification =
+      buyerEmail.sent
+        ? null
+        : buyerEmail.error ||
+          "Contract awarded, but Buyer notification was not sent.";
+    const supplierNotification =
+      supplierEmail.sent
+        ? null
+        : supplierEmail.error ||
+          "Contract awarded, but Supplier notification was not sent.";
+    const notificationWarning = [ownerNotification, supplierNotification]
+      .filter(Boolean)
+      .join(" ");
 
     return NextResponse.json({
       success: true,
       awardedQuote,
       rfq: updatedRfq,
       redirectTo: `/rfq/${updatedRfq.slug}`,
+      email: {
+        buyer: buyerEmail,
+        supplier: supplierEmail,
+      },
       warnings: {
-        notification: null,
+        notification: notificationWarning || null,
         audit: null,
-        ownerNotification: null,
-        supplierNotification: null,
+        ownerNotification,
+        supplierNotification,
         ownerAudit: null,
         supplierAudit: null,
       },

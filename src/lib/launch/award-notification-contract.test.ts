@@ -85,6 +85,30 @@ describe("14-07 Award notification contract", () => {
     expect(buyerCatch).toBeLessThan(supplierDeliverStart);
   });
 
+  it("reports truthful Buyer and Supplier delivery outcomes without failing Award mutation", () => {
+    expect(awardRoute).toContain("const emailResult = await sendEmail({");
+    expect(awardRoute).toContain("buyerEmail = {");
+    expect(awardRoute).toContain("supplierEmail = await deliverSupplierAwardNotificationEmail({");
+    expect(awardRoute).toContain("email: {\n        buyer: buyerEmail,\n        supplier: supplierEmail,\n      }");
+    expect(awardRoute).toContain("ownerNotification");
+    expect(awardRoute).toContain("supplierNotification");
+    expect(awardRoute).toContain("notificationWarning");
+    expect(awardRoute).toContain(
+      "Contract awarded, but Buyer notification email delivery failed.",
+    );
+    expect(awardRoute).toContain(
+      "Contract awarded, but Supplier notification email delivery failed.",
+    );
+    expect(awardRoute).toContain("success: true,");
+    expect(awardRoute).not.toContain(
+      "notification: null,\n        audit: null,\n        ownerNotification: null,\n        supplierNotification: null,",
+    );
+    expect(awardRoute).not.toContain("recipientEmail:");
+    expect(awardRoute).not.toContain("emails:");
+    expect(awardRoute).not.toContain("resubmit");
+    expect(awardRoute).not.toContain("create another");
+  });
+
   it("secures the purpose-bound award Supplier recipient RPC", () => {
     expect(notificationMigration).toContain(
       "create or replace function public.resolve_rfq_award_notification_recipient(",

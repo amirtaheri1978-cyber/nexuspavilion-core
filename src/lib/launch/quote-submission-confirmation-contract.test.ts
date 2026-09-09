@@ -46,7 +46,7 @@ describe("14-06 Quote submission confirmation contract", () => {
       postStart,
     );
     const successStart = quotesRoute.indexOf(
-      "success: true,\nquote,",
+      "success: true,\n  quote,",
       postStart,
     );
     const emailCatch = quotesRoute.indexOf(
@@ -63,6 +63,21 @@ describe("14-06 Quote submission confirmation contract", () => {
     expect(quotesRoute).toContain(
       'console.error("Quote submitted email failed:"',
     );
+  });
+
+  it("surfaces sent/skipped/failed confirmation delivery without failing Quote mutation", () => {
+    expect(quotesRoute).toContain("const emailResult = await sendEmail({");
+    expect(quotesRoute).toContain("sent: Boolean(emailResult.success)");
+    expect(quotesRoute).toContain("skipped: Boolean(emailResult.skipped)");
+    expect(quotesRoute).toContain("id: emailResult.id ?? null");
+    expect(quotesRoute).toContain("error: emailResult.error ?? null");
+    expect(quotesRoute).toContain(
+      "Quote submitted, but email delivery failed.",
+    );
+    expect(quotesRoute).toContain("success: true,\n  quote,");
+    expect(quotesRoute).toContain("email,");
+    expect(quotesRoute).not.toContain("resubmit");
+    expect(quotesRoute).not.toContain("/compare");
   });
 
   it("renders a clear supplier receipt without competitor or buyer-private fields", () => {
