@@ -65,6 +65,59 @@ Storage objects as the launch-stage recovery checkpoint. Recorded
 filenames, sizes, and SHA-256 hashes live in
 `docs/operations/TASK_28_OPERATOR_EVIDENCE.md`. Do not claim PITR exists.
 
+## Application and database health verification (Task 15-10)
+
+Health verification is deliberately split into two independent signals.
+A green public liveness response is not sufficient evidence that Auth or
+database-backed application behavior is healthy.
+
+Production application liveness evidence captured on **2026-09-11**:
+
+- Public origin: `https://nexuspavilion-core.vercel.app`.
+- `GET /api/health` returned `HTTP 200`, `ok: true`,
+  `service: "nexus-pavilion"`, and
+  `commitSha: "7a0d937cc7cfcfcb26a93655bc8a4783ffa4dfde"`.
+- Response fields were limited to `commitSha`, `ok`, and `service`.
+- The public probe remains dependency-light: it does not query Supabase,
+  expose secret/configuration presence, or require authenticated access.
+
+Database/backend verification evidence:
+
+- Target: active launch-candidate Supabase project `nexus-pavilion-dev`,
+  ref `bzntqnwoytdakmstbtyh`.
+- Supabase project status was `ACTIVE_HEALTHY`.
+- An operator-only, read-only SQL connectivity check returned
+  `database_name = postgres` and `reachable = true`.
+- The bounded check used
+  `select current_database() as database_name, true as reachable;`.
+- Database verification is not exposed through `/api/health`, does not
+  require a service-role client in the Next.js application, and performs
+  no schema, data, RLS, RPC, migration, Auth, or Storage mutation.
+- Retired Supabase project `nexus-pavilion-core` remains out of scope.
+
+The active backend remains classified **DEVELOPMENT / LAUNCH-CANDIDATE
+BACKEND**. This health evidence establishes launch-readiness connectivity;
+it does not reclassify that backend as Production.
+
+### Health verification procedure
+
+1. From the real public application origin, call `GET /api/health` and
+   require `HTTP 200`, `ok: true`, and `service: "nexus-pavilion"`.
+   Compare `commitSha` with the intended deployment SHA when the host
+   provides deployment metadata.
+2. If public liveness passes but login, RFQ reads, or other database-backed
+   behavior fails, do **not** declare the full application healthy.
+3. The Database/Supabase operator verifies the active project status and
+   performs a bounded read-only connectivity query such as
+   `select current_database() as database_name, true as reachable;`.
+4. Never add database credentials, table contents, environment values, or
+   service-role access to the public health response. Never mutate data or
+   schema merely to prove health.
+5. Application/database health readiness requires both public application
+   liveness and operator-confirmed database connectivity. Auth, RFQ/quote
+   writes, tenant isolation, and other business-flow checks remain governed
+   by their dedicated launch gates and incident procedures.
+
 ## Shared stop conditions
 
 Stop launching or stop writing when any of the following is true:

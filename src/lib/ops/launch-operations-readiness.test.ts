@@ -1075,3 +1075,76 @@ describe("Task 15-09 production environment audit", () => {
     expect(contactRoute).toContain("process.env.CONTACT_EMAIL?.trim()");
   });
 });
+
+describe("Task 15-10 application and database health verification", () => {
+  it("keeps public liveness separate from operator-only database verification", async () => {
+    const runbook = readSource(
+      "docs/operations/LAUNCH_OPERATIONS_RUNBOOK.md",
+    );
+    const healthRoute = readSource("src/app/api/health/route.ts");
+
+    const healthStart = runbook.indexOf(
+      "## Application and database health verification (Task 15-10)",
+    );
+    const healthEnd = runbook.indexOf(
+      "## Shared stop conditions",
+      healthStart,
+    );
+
+    expect(healthStart).toBeGreaterThanOrEqual(0);
+    expect(healthEnd).toBeGreaterThan(healthStart);
+
+    const healthSection = runbook.slice(healthStart, healthEnd);
+
+    expect(healthSection).toContain(
+      "`https://nexuspavilion-core.vercel.app`",
+    );
+    expect(healthSection).toContain("`HTTP 200`");
+    expect(healthSection).toContain("`ok: true`");
+    expect(healthSection).toContain("`service: \"nexus-pavilion\"`");
+    expect(healthSection).toContain(
+      "`commitSha: \"7a0d937cc7cfcfcb26a93655bc8a4783ffa4dfde\"`",
+    );
+    expect(healthSection).toContain("`nexus-pavilion-dev`");
+    expect(healthSection).toContain("`bzntqnwoytdakmstbtyh`");
+    expect(healthSection).toContain("`ACTIVE_HEALTHY`");
+    expect(healthSection).toContain(
+      "`database_name = postgres` and `reachable = true`",
+    );
+    expect(healthSection).toContain(
+      "`select current_database() as database_name, true as reachable;`",
+    );
+    expect(healthSection).toContain(
+      "Database verification is not exposed through `/api/health`",
+    );
+    expect(healthSection).toContain(
+      "does not reclassify that backend as Production",
+    );
+    expect(healthSection).toContain(
+      "both public application",
+    );
+    expect(healthSection).toContain(
+      "liveness and operator-confirmed database connectivity",
+    );
+
+    expect(healthSection).not.toMatch(/SUPABASE_SERVICE_ROLE_KEY\s*=/);
+    expect(healthSection).not.toMatch(/RESEND_API_KEY\s*=/);
+
+    expect(healthRoute).toContain("ok: true");
+    expect(healthRoute).not.toContain("createClient");
+    expect(healthRoute).not.toMatch(/from\s+["']@\/lib\/supabase/);
+    expect(healthRoute).not.toContain("SERVICE_ROLE");
+
+    const response = await getHealth();
+    const body = (await response.json()) as {
+      ok?: boolean;
+      service?: string;
+      commitSha?: string | null;
+    };
+
+    expect(response.status).toBe(200);
+    expect(body.ok).toBe(true);
+    expect(body.service).toBe("nexus-pavilion");
+    expect(Object.keys(body).sort()).toEqual(["commitSha", "ok", "service"]);
+  });
+});
