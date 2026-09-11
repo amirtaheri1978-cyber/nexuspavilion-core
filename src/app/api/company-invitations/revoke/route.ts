@@ -5,6 +5,10 @@ import {
   WorkspaceContextError,
 } from "@/lib/auth/workspace-context";
 import { canInviteWorkspaceMembers } from "@/lib/authorization/workspace-permissions";
+import {
+  buildSafeCriticalApiFailureContext,
+  reportCriticalApiFailure,
+} from "@/lib/ops/report-critical-api-failure";
 import { createClient } from "@/lib/supabase/server";
 
 type RevokeInvitationRpcResult = {
@@ -60,9 +64,16 @@ export async function POST(request: Request) {
         );
       }
 
-      console.error(
-        "Company invitation revoke workspace context lookup failed.",
-        error,
+      console.warn(
+        "[workspace-invitation-diagnostic]",
+        buildSafeCriticalApiFailureContext({
+          domain: "workspace_invitation",
+          operation: "revoke",
+          failureStage: "workspace_context_lookup",
+          route: "/api/company-invitations/revoke",
+          method: "POST",
+          error,
+        }),
       );
 
       return NextResponse.json(
@@ -98,7 +109,14 @@ export async function POST(request: Request) {
     );
 
     if (rpcError) {
-      console.error(rpcError);
+      reportCriticalApiFailure({
+        domain: "workspace_invitation",
+        operation: "revoke",
+        failureStage: "revoke_invitation_rpc",
+        route: "/api/company-invitations/revoke",
+        method: "POST",
+        error: rpcError,
+      });
 
       return NextResponse.json(
         { error: "Failed to revoke invitation." },
@@ -157,7 +175,14 @@ export async function POST(request: Request) {
       success: true,
     });
   } catch (error) {
-    console.error(error);
+    reportCriticalApiFailure({
+      domain: "workspace_invitation",
+      operation: "revoke",
+      failureStage: "outer_catch",
+      route: "/api/company-invitations/revoke",
+      method: "POST",
+      error,
+    });
 
     return NextResponse.json(
       { error: "Internal server error." },

@@ -637,6 +637,124 @@ describe("Task 15-02 critical API failure visibility", () => {
   });
 });
 
+describe("Task 15-05 invitation diagnostics", () => {
+  it("separates bounded 403 diagnostics from critical invitation failures", () => {
+    const cases = [
+      {
+        source: readSource("src/app/api/company-invitations/route.ts"),
+        operation: "create",
+        route: "/api/company-invitations",
+        criticalStages: [
+          "create_invitation_rpc",
+          "invitation_token_missing",
+          "outer_catch",
+        ],
+      },
+      {
+        source: readSource(
+          "src/app/api/company-invitations/resend/route.ts",
+        ),
+        operation: "resend",
+        route: "/api/company-invitations/resend",
+        criticalStages: ["invitation_lookup_rpc", "outer_catch"],
+      },
+      {
+        source: readSource(
+          "src/app/api/company-invitations/revoke/route.ts",
+        ),
+        operation: "revoke",
+        route: "/api/company-invitations/revoke",
+        criticalStages: ["revoke_invitation_rpc", "outer_catch"],
+      },
+    ] as const;
+
+    for (const { source, operation, route, criticalStages } of cases) {
+      const criticalCalls = [
+        ...source.matchAll(/reportCriticalApiFailure\(\{([\s\S]*?)\}\);/g),
+      ].map((match) => match[1] ?? "");
+
+      expect(criticalCalls.length).toBeGreaterThan(0);
+
+      for (const stage of criticalStages) {
+        expect(
+          criticalCalls.some((payload) =>
+            payload.includes(`failureStage: "${stage}"`),
+          ),
+        ).toBe(true);
+      }
+
+      for (const payload of criticalCalls) {
+        expect(payload).toContain('domain: "workspace_invitation"');
+        expect(payload).toContain(`operation: "${operation}"`);
+        expect(payload).toContain(`route: "${route}"`);
+        expect(payload).toContain('method: "POST"');
+        expect(payload).not.toContain(
+          'failureStage: "workspace_context_lookup"',
+        );
+      }
+
+      const workspaceWarnings = [
+        ...source.matchAll(
+          /console\.warn\(\s*"\[workspace-invitation-diagnostic\]",\s*buildSafeCriticalApiFailureContext\(\{([\s\S]*?)\}\),\s*\);/g,
+        ),
+      ];
+
+      expect(workspaceWarnings).toHaveLength(1);
+
+      const workspacePayload = workspaceWarnings[0]?.[1] ?? "";
+
+      expect(workspacePayload).toContain(
+        'domain: "workspace_invitation"',
+      );
+      expect(workspacePayload).toContain(`operation: "${operation}"`);
+      expect(workspacePayload).toContain(
+        'failureStage: "workspace_context_lookup"',
+      );
+      expect(workspacePayload).toContain(`route: "${route}"`);
+      expect(workspacePayload).toContain('method: "POST"');
+
+      expect(workspacePayload).not.toMatch(/\bemail\b/);
+      expect(workspacePayload).not.toMatch(/\brecipient\b/);
+      expect(workspacePayload).not.toMatch(/\binviteUrl\b/);
+      expect(workspacePayload).not.toMatch(/\binvite_url\b/);
+      expect(workspacePayload).not.toMatch(/\buserId\b/);
+      expect(workspacePayload).not.toMatch(/\bcompanyId\b/);
+      expect(workspacePayload).not.toMatch(/\bauthorization\b/i);
+      expect(workspacePayload).not.toMatch(/\brequestBody\b/);
+
+      expect(source).not.toContain("console.error(");
+    }
+  });
+
+  it("keeps critical workspace invitation diagnostics free of sensitive invitation context", () => {
+    const sources = [
+      readSource("src/app/api/company-invitations/route.ts"),
+      readSource("src/app/api/company-invitations/resend/route.ts"),
+      readSource("src/app/api/company-invitations/revoke/route.ts"),
+    ];
+
+    for (const source of sources) {
+      const helperCalls = [
+        ...source.matchAll(/reportCriticalApiFailure\(\{([\s\S]*?)\}\);/g),
+      ];
+
+      expect(helperCalls.length).toBeGreaterThan(0);
+
+      for (const call of helperCalls) {
+        const payload = call[1] ?? "";
+
+        expect(payload).not.toMatch(/\bemail\b/);
+        expect(payload).not.toMatch(/\brecipient\b/);
+        expect(payload).not.toMatch(/\binviteUrl\b/);
+        expect(payload).not.toMatch(/\binvite_url\b/);
+        expect(payload).not.toMatch(/\buserId\b/);
+        expect(payload).not.toMatch(/\bcompanyId\b/);
+        expect(payload).not.toMatch(/\bauthorization\b/i);
+        expect(payload).not.toMatch(/\brequestBody\b/);
+      }
+    }
+  });
+});
 describe("Task 15-03 migration discipline", () => {
   const migrationsDir = resolve(process.cwd(), "supabase/migrations");
   const archiveV2Dir = resolve(

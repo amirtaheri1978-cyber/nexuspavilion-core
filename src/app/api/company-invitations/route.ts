@@ -11,7 +11,10 @@ import {
   getPublicSiteUrl,
   PUBLIC_SITE_URL_UNCONFIGURED,
 } from "@/lib/ops/public-site-url";
-import { reportCriticalApiFailure } from "@/lib/ops/report-critical-api-failure";
+import {
+  buildSafeCriticalApiFailureContext,
+  reportCriticalApiFailure,
+} from "@/lib/ops/report-critical-api-failure";
 import { createClient } from "@/lib/supabase/server";
 
 type Company = {
@@ -109,9 +112,16 @@ export async function POST(request: Request) {
         );
       }
 
-      console.error(
-        "Company invitation workspace context lookup failed.",
-        error,
+      console.warn(
+        "[workspace-invitation-diagnostic]",
+        buildSafeCriticalApiFailureContext({
+          domain: "workspace_invitation",
+          operation: "create",
+          failureStage: "workspace_context_lookup",
+          route: "/api/company-invitations",
+          method: "POST",
+          error,
+        }),
       );
 
       return NextResponse.json(

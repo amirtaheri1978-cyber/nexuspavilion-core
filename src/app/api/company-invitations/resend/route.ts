@@ -11,6 +11,10 @@ import {
   getPublicSiteUrl,
   PUBLIC_SITE_URL_UNCONFIGURED,
 } from "@/lib/ops/public-site-url";
+import {
+  buildSafeCriticalApiFailureContext,
+  reportCriticalApiFailure,
+} from "@/lib/ops/report-critical-api-failure";
 import { createClient } from "@/lib/supabase/server";
 
 type WorkspaceInvitation = {
@@ -70,9 +74,16 @@ export async function POST(request: Request) {
         );
       }
 
-      console.error(
-        "Company invitation resend workspace context lookup failed.",
-        error,
+      console.warn(
+        "[workspace-invitation-diagnostic]",
+        buildSafeCriticalApiFailureContext({
+          domain: "workspace_invitation",
+          operation: "resend",
+          failureStage: "workspace_context_lookup",
+          route: "/api/company-invitations/resend",
+          method: "POST",
+          error,
+        }),
       );
 
       return NextResponse.json(
@@ -108,7 +119,14 @@ export async function POST(request: Request) {
     );
 
     if (rpcError) {
-      console.error(rpcError);
+      reportCriticalApiFailure({
+        domain: "workspace_invitation",
+        operation: "resend",
+        failureStage: "invitation_lookup_rpc",
+        route: "/api/company-invitations/resend",
+        method: "POST",
+        error: rpcError,
+      });
 
       return NextResponse.json(
         { error: "Failed to load invitation." },
@@ -219,7 +237,14 @@ export async function POST(request: Request) {
       },
     });
   } catch (error) {
-    console.error(error);
+    reportCriticalApiFailure({
+      domain: "workspace_invitation",
+      operation: "resend",
+      failureStage: "outer_catch",
+      route: "/api/company-invitations/resend",
+      method: "POST",
+      error,
+    });
 
     return NextResponse.json(
       { error: "Internal server error." },
