@@ -865,3 +865,59 @@ describe("Task 15-03 migration discipline", () => {
     expect(runbook).toContain("15-09");
   });
 });
+describe("Task 15-07 deployment rollback procedure", () => {
+  it("keeps an executable application rollback procedure in the launch runbook", () => {
+    const runbook = readSource(
+      "docs/operations/LAUNCH_OPERATIONS_RUNBOOK.md",
+    );
+
+    const startMarker = "## 2. Application rollback (Task 15-07)";
+    const endMarker = "## 3. Database migration rollback";
+
+    const start = runbook.indexOf(startMarker);
+    const end = runbook.indexOf(
+      endMarker,
+      start + startMarker.length,
+    );
+
+    expect(start).toBeGreaterThanOrEqual(0);
+    expect(end).toBeGreaterThan(start);
+
+    const rollbackSection = runbook.slice(start, end);
+
+    expect(rollbackSection).toContain("### Operator rollback procedure");
+    expect(rollbackSection).toContain("Freeze promotion");
+    expect(rollbackSection).toContain("Record the bad deployment");
+    expect(rollbackSection).toContain("known-good rollback SHA");
+    expect(rollbackSection).toContain("deployment host history");
+    expect(rollbackSection).toContain(
+      "Check database compatibility before rollback",
+    );
+    expect(rollbackSection).toContain(
+      "Product Owner rollback authorization",
+    );
+    expect(rollbackSection).toContain(
+      "Restore the known-good deployment",
+    );
+    expect(rollbackSection).toContain(
+      "Verify the restored revision",
+    );
+    expect(rollbackSection).toContain("Record rollback evidence");
+
+    expect(rollbackSection).toContain("/api/health");
+    expect(rollbackSection).toContain("commitSha");
+    expect(rollbackSection).toContain("login");
+    expect(rollbackSection).toContain("RFQ read");
+    expect(rollbackSection).toContain("non-destructive");
+    expect(rollbackSection).toContain(
+      "Application rollback does **not** reverse SQL",
+    );
+
+    expect(rollbackSection).toContain(
+      "does not assert backup/PITR capability",
+    );
+    expect(rollbackSection).toMatch(
+      /does not\s+perform the Task 15-09 environment variable audit/,
+    );
+  });
+});

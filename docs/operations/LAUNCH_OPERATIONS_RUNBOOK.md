@@ -95,22 +95,65 @@ Stop launching or stop writing when any of the following is true:
 - Escalation: repeated deploy failure after a clean rebuild, or health OK
   while auth/data is down (Supabase incident).
 
-## 2. Application rollback
+## 2. Application rollback (Task 15-07)
 
 - Detection signal: post-deploy functional failure (auth, RFQ, quote, award)
-  with a healthy previous SHA.
+  with a healthy previous deployment available.
 - Immediate stop: freeze new Production deploys until Product Owner authorizes
-  rollback or a forward fix.
-- Owner: Product Owner authorizes; application/operator executes the host
-  rollback.
-- Containment: do not apply database migrations while rolling back the app.
-- Rollback/recovery: restore the previous host deployment / previous git SHA.
-  Application rollback does **not** undo Postgres migrations. If the failing
-  release included a migration, follow Database migration rollback.
-- Verification: health, login, RFQ read, and one non-destructive write path
-  (or a Product Owner-approved synthetic check) succeed on the restored SHA.
-- Escalation: rollback does not restore service, or database schema is ahead
-  of the rolled-back application.
+  rollback or a forward fix. Do not mutate Production data to compensate for
+  an application release.
+- Owner: Product Owner holds rollback authority; application/operator executes
+  the authorized host rollback.
+- Containment: do not apply database migrations and do not change environment
+  variables while performing an application-only rollback.
+- Boundary: application rollback changes the deployed application revision
+  only. Application rollback does **not** reverse SQL or undo Postgres
+  migrations. If the failing release crossed a database compatibility
+  boundary, stop and follow Database migration rollback.
+- Escalation: rollback does not restore service, the database schema is ahead
+  of the restored application, the known-good deployment cannot be identified,
+  or post-rollback tenant isolation is uncertain.
+
+### Operator rollback procedure
+
+1. **Freeze promotion.** Stop new deployment promotion and record the incident
+   reason. Do not start a second deploy while rollback is being evaluated.
+2. **Record the bad deployment.** Capture the bad deployment SHA, deployment
+   identifier when the host exposes one, public application origin, detection
+   time, and the failing verification signal. `/api/health` `commitSha` may be
+   used as deployment evidence when the host injects it.
+3. **Identify the known-good rollback SHA.** Use deployment host history and
+   repository history to select the most recent deployment that was previously
+   healthy. Record the exact known-good git SHA; do not use an unverified
+   branch tip or an ad-hoc local commit as the rollback target.
+4. **Check database compatibility before rollback.** Determine whether the bad
+   deployment introduced or depended on a database migration. If the database
+   schema would be incompatible with the known-good application SHA, do not
+   proceed with an application-only rollback; follow Database migration
+   rollback under the separate Product Owner gate.
+5. **Obtain Product Owner rollback authorization.** Record the bad deployment
+   SHA, known-good rollback SHA, rollback reason, database-compatibility
+   determination, and authorization before changing the live deployment.
+6. **Restore the known-good deployment.** In the existing deployment host,
+   select the previously successful deployment for the known-good SHA and use
+   the provider's rollback, promote, or redeploy capability to make that exact
+   revision live. If the provider has no direct rollback action, redeploy the
+   exact known-good git SHA through the existing project. Do not create a
+   fix-forward commit and call it a rollback.
+7. **Verify the restored revision.** Confirm `/api/health` returns `ok: true`
+   from the real public origin and, when available, `commitSha` matches the
+   known-good rollback SHA. Verify login, one RFQ read, and one non-destructive
+   write path or Product Owner-approved synthetic check. Any cross-company
+   visibility or authorization regression is an immediate stop condition.
+8. **Record rollback evidence.** Preserve the bad deployment SHA, restored
+   deployment SHA, rollback time, operator, Product Owner authorization,
+   verification results, and any unresolved follow-up. Do not declare service
+   restored until the verification checks pass.
+
+A rollback is complete only when the public application is serving the
+authorized known-good revision and the post-rollback verification checks pass.
+This Task 15-07 procedure does not assert backup/PITR capability and does not
+perform the Task 15-09 environment variable audit.
 
 ## 3. Database migration rollback (Task 29)
 
