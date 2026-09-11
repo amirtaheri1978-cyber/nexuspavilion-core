@@ -124,7 +124,7 @@ export default async function SubmitQuotePage({ params }: PageProps) {
 
   const { data: rfq, error: rfqError } = await supabase
     .from("rfqs")
-    .select("id, slug, company_id, sourcing_method")
+    .select("id, slug, company_id, sourcing_method, title, deadline, deadline_timezone, status, awarded_quote_id, awarded_at")
     .eq("slug", slug)
     .maybeSingle();
 
@@ -172,5 +172,5 @@ export default async function SubmitQuotePage({ params }: PageProps) {
     return <SubmitAccessBlocked slug={slug} reason="sourcing" />;
   }
 
-  return <RfqSubmitWorkspace slug={slug} />;
+  return <RfqSubmitWorkspace slug={slug} initialRfq={rfq} />;
 }

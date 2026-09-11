@@ -124,7 +124,7 @@ describe("anonymous RFQ submit auth continuation", () => {
   });
 
   it("keeps authenticated submit on the existing quote workspace and POST /api/quotes", () => {
-    expect(submitPage).toContain("<RfqSubmitWorkspace slug={slug} />");
+    expect(submitPage).toContain("<RfqSubmitWorkspace slug={slug} initialRfq={rfq} />");
     expect(submitPage).toContain("canRespondToRfqSourcing");
     expect(submitPage).toContain("resolveRfqParticipantRole");
     expect(submitPage).toContain("data-rfq-submit-access-blocked={reason}");
@@ -142,7 +142,7 @@ describe("anonymous RFQ submit auth continuation", () => {
   it("aligns submit-page UX with existing RFQ sourcing access before rendering the form", () => {
     const profileGateIndex = submitPage.indexOf("if (!profile?.company_id)");
     const rfqLookupIndex = submitPage.indexOf(
-      '.select("id, slug, company_id, sourcing_method")',
+      '.select("id, slug, company_id, sourcing_method, title, deadline, deadline_timezone, status, awarded_quote_id, awarded_at")',
     );
     const participantRoleIndex = submitPage.indexOf(
       "const participantRole = resolveRfqParticipantRole",
@@ -153,7 +153,9 @@ describe("anonymous RFQ submit auth continuation", () => {
       "if (!canRespondToRfqSourcing(rfq.sourcing_method, hasRestrictedRfqAccess))",
     );
     const sourcingBlockIndex = submitPage.indexOf('reason="sourcing"');
-    const workspaceIndex = submitPage.indexOf("<RfqSubmitWorkspace slug={slug} />");
+    const workspaceIndex = submitPage.indexOf(
+      "<RfqSubmitWorkspace slug={slug} initialRfq={rfq} />",
+    );
 
     expect(rfqLookupIndex).toBeGreaterThan(profileGateIndex);
     expect(participantRoleIndex).toBeGreaterThan(rfqLookupIndex);

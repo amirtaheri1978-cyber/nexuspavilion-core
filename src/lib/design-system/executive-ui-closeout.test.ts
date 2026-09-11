@@ -56,6 +56,7 @@ const launchCritical = {
   rfqQuoteComparison: readSource(
     "src/components/rfq-workspace/rfq-quote-comparison.tsx",
   ),
+  rfqSubmitPage: readSource("src/app/rfq/[slug]/submit/page.tsx"),
   rfqSubmit: readSource("src/components/rfq-workspace/rfq-submit-workspace.tsx"),
   supplierCommand: readSource(
     "src/components/vendor-workspace/supplier-command-center.tsx",
@@ -382,23 +383,27 @@ describe("NP-MASTER-22-B05 launch-critical closeout", () => {
       "approvedVendorQueryRequired && approvedVendorError",
     );
 
-    expect(launchCritical.rfqSubmit).toContain("rfqStatusError");
-    expect(launchCritical.rfqSubmit).toContain("Status unavailable");
-    expect(launchCritical.rfqSubmit).toContain("statusError || !data");
-    expect(launchCritical.rfqSubmit).toContain("setRfqStatusError(true)");
-    expect(launchCritical.rfqSubmit).toContain("setRfqStatusError(false)");
+    expect(launchCritical.rfqSubmitPage).toContain("if (profileError)");
+    expect(launchCritical.rfqSubmitPage).toContain(
+      'throw new Error("Unable to verify company workspace.")',
+    );
+    expect(launchCritical.rfqSubmitPage).toContain("if (rfqError)");
+    expect(launchCritical.rfqSubmitPage).toContain(
+      'throw new Error("Unable to verify RFQ access.")',
+    );
+    expect(launchCritical.rfqSubmitPage).toContain("if (accessError)");
+    expect(launchCritical.rfqSubmitPage).toContain(
+      "<RfqSubmitWorkspace slug={slug} initialRfq={rfq} />",
+    );
+    expect(launchCritical.rfqSubmit).toContain("const rfq = initialRfq;");
     expect(launchCritical.rfqSubmit).toContain(
-      "rfqStatusError || isSubmissionClosed(rfq)",
+      "const submissionClosed = isSubmissionClosed(rfq);",
     );
     expect(launchCritical.rfqSubmit).toContain(
-      'rfqStatusError\n      ? "Status unavailable"\n      : submissionClosed\n        ? "Submission closed"\n        : "Open for quotes"',
+      "disabled={loading || submissionClosed}",
     );
-    expect(launchCritical.rfqSubmit).toContain(
-      "disabled={loading || submissionClosed || rfqLoading}",
-    );
-    expect(launchCritical.rfqSubmit).toMatch(
-      /if \(statusError \|\| !data\)[\s\S]*setRfqStatusError\(true\)[\s\S]*else \{[\s\S]*setRfq\(data as RfqStatus\)[\s\S]*setRfqStatusError\(false\)/,
-    );
+    expect(launchCritical.rfqSubmit).not.toContain("rfqStatusError");
+    expect(launchCritical.rfqSubmit).not.toContain("rfqLoading");
 
     expect(launchCritical.inviteForm).toContain(
       "We couldn't send the workspace invitation. Please try again.",

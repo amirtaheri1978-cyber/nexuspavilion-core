@@ -17,7 +17,7 @@ import {
   EXECUTIVE_FOCUS_CYAN,
   EXECUTIVE_PAGE_CLASS,
 } from "@/lib/design-system/executive-contract";
-import { createClient } from "@/lib/supabase/client";
+
 
 type RfqStatus = {
   title: string | null;
@@ -179,17 +179,17 @@ const RFQ_DEADLINE_RISK_REFRESH_INTERVAL_MS = 60_000;
 
 type RfqSubmitWorkspaceProps = {
   slug: string;
+  initialRfq: RfqStatus;
 };
 
-export function RfqSubmitWorkspace({ slug }: RfqSubmitWorkspaceProps) {
+export function RfqSubmitWorkspace({
+  slug,
+  initialRfq,
+}: RfqSubmitWorkspaceProps) {
   const router = useRouter();
-  const supabase = useMemo(() => createClient(), []);
 
   const currency = useMemo(() => detectCurrencyFromSlug(slug), [slug]);
-
-  const [rfq, setRfq] = useState<RfqStatus | null>(null);
-  const [rfqLoading, setRfqLoading] = useState(true);
-  const [rfqStatusError, setRfqStatusError] = useState(false);
+  const rfq = initialRfq;
 
   const [amount, setAmount] = useState("");
   const [timeline, setTimeline] = useState("");
@@ -213,7 +213,7 @@ export function RfqSubmitWorkspace({ slug }: RfqSubmitWorkspaceProps) {
     [amountNumber, timeline, message],
   );
 
-  const submissionClosed = rfqStatusError || isSubmissionClosed(rfq);
+  const submissionClosed = isSubmissionClosed(rfq);
   const deadlinePassed = hasDeadlinePassed(rfq?.deadline);
   const deadlineRisk = useMemo(
     () => getRfqDeadlineRisk(rfq?.deadline, deadlineNow),
@@ -242,57 +242,18 @@ export function RfqSubmitWorkspace({ slug }: RfqSubmitWorkspaceProps) {
     };
   }, []);
 
-  useEffect(() => {
-    async function loadRfqStatus() {
-      setRfqLoading(true);
-      setRfqStatusError(false);
-
-      const { data, error: statusError } = await supabase
-        .from("rfqs")
-        .select(
-          "title, deadline, deadline_timezone, status, awarded_quote_id, awarded_at",
-        )
-        .eq("slug", slug)
-        .maybeSingle();
-
-      if (statusError || !data) {
-        if (statusError) {
-          console.error("RFQ status verification failed:", statusError);
-        } else {
-          console.error("RFQ status verification failed: RFQ row missing.");
-        }
-        setRfq(null);
-        setRfqStatusError(true);
-        setErrorField("form");
-        setError(
-          "We couldn't verify this RFQ status. Please reload the page and try again.",
-        );
-      } else {
-        setRfq(data as RfqStatus);
-        setRfqStatusError(false);
-      }
-
-      setRfqLoading(false);
-    }
-
-    if (slug) {
-      loadRfqStatus();
-    }
-  }, [slug, supabase]);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (submitLock.current || loading || rfqLoading) {
+    if (submitLock.current || loading) {
       return;
     }
 
     if (submissionClosed) {
       setErrorField("form");
       setError(
-        rfqStatusError
-          ? "We couldn't verify this RFQ status. Please reload the page and try again."
-          : deadlinePassed
+        deadlinePassed
           ? "Submission closed. The RFQ deadline has passed and late quote submissions are not accepted."
           : "Submission closed. This RFQ is no longer accepting quotes.",
       );
@@ -378,18 +339,12 @@ export function RfqSubmitWorkspace({ slug }: RfqSubmitWorkspaceProps) {
 
   const errorId = error ? "quote-submit-error" : undefined;
 
-  const rfqStatusLabel = rfqLoading
-    ? "Checking..."
-    : rfqStatusError
-      ? "Status unavailable"
-      : submissionClosed
-        ? "Submission closed"
-        : "Open for quotes";
-  const governanceLabel = rfqStatusError
-    ? "Verification required"
-    : deadlinePassed
-      ? "Hard lock active"
-      : "Deadline enforced";
+  const rfqStatusLabel = submissionClosed
+    ? "Submission closed"
+    : "Open for quotes";
+  const governanceLabel = deadlinePassed
+    ? "Hard lock active"
+    : "Deadline enforced";
 
   return (
     <div className="min-h-full bg-nexus-navy text-white">
@@ -444,39 +399,21 @@ export function RfqSubmitWorkspace({ slug }: RfqSubmitWorkspaceProps) {
             </div>
           </dl>
 
-          {!rfqLoading ? (
-            <div
-              className="mt-5 min-w-0 rounded-executive border border-white/10 bg-white/[0.025] p-5"
-              data-rfq-submit-deadline-risk={deadlineRisk.status}
-              role="status"
-              aria-live="polite"
-            >
-              <ExecutiveBadge tone={deadlineRiskPresentation.tone}>
-                {deadlineRiskPresentation.label}
-              </ExecutiveBadge>
-              <p className="np-type-body mt-3 min-w-0 max-w-3xl text-pretty">
-                {deadlineRiskPresentation.detail}
-              </p>
-            </div>
-          ) : null}
+          <div
+            className="mt-5 min-w-0 rounded-executive border border-white/10 bg-white/[0.025] p-5"
+            data-rfq-submit-deadline-risk={deadlineRisk.status}
+            role="status"
+            aria-live="polite"
+          >
+            <ExecutiveBadge tone={deadlineRiskPresentation.tone}>
+              {deadlineRiskPresentation.label}
+            </ExecutiveBadge>
+            <p className="np-type-body mt-3 min-w-0 max-w-3xl text-pretty">
+              {deadlineRiskPresentation.detail}
+            </p>
+          </div>
 
-          {rfqStatusError ? (
-            <div className="mt-8 min-w-0 rounded-executive border border-red-400/20 bg-red-500/10 p-5">
-              <ExecutiveBadge tone="risk">Status verification failed</ExecutiveBadge>
-              <p className="np-type-body mt-3 min-w-0 text-pretty">
-                We couldn&apos;t verify whether this RFQ is open for quotation
-                submission. Quotation remains disabled until RFQ status can be
-                confirmed. Please reload the page and try again.
-              </p>
-              <button
-                type="button"
-                onClick={() => window.location.reload()}
-                className={`${EXECUTIVE_CTA_SECONDARY} mt-5`}
-              >
-                Reload page
-              </button>
-            </div>
-          ) : submissionClosed ? (
+          {submissionClosed ? (
             <div className="mt-8 min-w-0 rounded-executive border border-red-400/20 bg-red-500/10 p-5">
               <ExecutiveBadge tone="risk">Submission closed</ExecutiveBadge>
               <p className="np-type-body mt-3 min-w-0 text-pretty">
@@ -688,12 +625,10 @@ export function RfqSubmitWorkspace({ slug }: RfqSubmitWorkspaceProps) {
             <div className="sticky bottom-4 z-10 flex min-w-0 flex-col gap-3 rounded-executive bg-nexus-navy/90 p-3 @sm:flex-row">
               <button
                 type="submit"
-                disabled={loading || submissionClosed || rfqLoading}
+                disabled={loading || submissionClosed}
                 className={`${EXECUTIVE_CTA_PRIMARY} w-full @sm:w-auto`}
               >
-                {rfqStatusError
-                  ? "Status unavailable"
-                  : submissionClosed
+                {submissionClosed
                   ? "Submission closed"
                   : loading
                     ? "Submitting quote..."

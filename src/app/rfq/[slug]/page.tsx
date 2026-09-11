@@ -230,22 +230,25 @@ const {
 data: { user },
 } = await supabase.auth.getUser();
 
-const { data: profileData } = user
-? await supabase
+const [profileResult, rfqResult] = await Promise.all([
+user
+? supabase
 .from("profiles")
 .select("id, email, role, company_id")
 .eq("id", user.id)
 .single()
-: { data: null };
-
-const profile = profileData as Profile | null;
-
-const { data: rfqData } = await supabase
+: Promise.resolve({ data: null }),
+supabase
 .from("rfqs")
 .select("*")
 .eq("slug", slug)
-.single();
+.single(),
+]);
 
+const { data: profileData } = profileResult;
+const profile = profileData as Profile | null;
+
+const { data: rfqData } = rfqResult;
 const rfq = rfqData as RFQ | null;
 
 if (!rfq) {
@@ -321,6 +324,7 @@ documentRequirementResult,
 addendaResult,
 acknowledgementResult,
 aiReviewResult,
+parsedRfiDeadlineResult,
 ] = await Promise.all([
 loadIssuerQuoteRows
 ? supabase
@@ -372,6 +376,11 @@ isOwner
 .limit(1)
 .maybeSingle()
 : Promise.resolve({ data: null }),
+rfq.rfi_deadline
+? Promise.resolve({ data: null, error: null })
+: supabase.rpc("parse_rfq_deadline_timestamptz", {
+    p_deadline: rfq.deadline ?? null,
+  }),
 ]);
 
 const quoteList = (quotesResult.data ?? []) as Quote[];
@@ -388,6 +397,8 @@ const documentCoverageUnavailableReason = documentRequirementResult.error
 const rfqAddenda = addendaResult.data ?? [];
 const rfqAcknowledgements = acknowledgementResult.data ?? [];
 const latestAiReview = aiReviewResult.data ?? null;
+const parsedRfiDeadline = parsedRfiDeadlineResult.data;
+const parsedRfiDeadlineError = parsedRfiDeadlineResult.error;
 
 let effectiveRfiDeadline: string | null = null;
 let effectiveRfiDeadlineTimezone: string | null =
@@ -396,18 +407,11 @@ let effectiveRfiDeadlineTimezone: string | null =
 if (rfq.rfi_deadline) {
   effectiveRfiDeadline = rfq.rfi_deadline;
   effectiveRfiDeadlineTimezone = rfq.rfi_deadline_timezone ?? null;
+} else if (!parsedRfiDeadlineError && parsedRfiDeadline) {
+  effectiveRfiDeadline = String(parsedRfiDeadline);
+  effectiveRfiDeadlineTimezone = rfq.deadline_timezone ?? null;
 } else {
-  const { data: parsedDeadline, error: parsedDeadlineError } =
-    await supabase.rpc("parse_rfq_deadline_timestamptz", {
-      p_deadline: rfq.deadline ?? null,
-    });
-
-  if (!parsedDeadlineError && parsedDeadline) {
-    effectiveRfiDeadline = String(parsedDeadline);
-    effectiveRfiDeadlineTimezone = rfq.deadline_timezone ?? null;
-  } else {
-    effectiveRfiDeadline = null;
-  }
+  effectiveRfiDeadline = null;
 }
 
 const budget = Number(rfq.budget || 0);

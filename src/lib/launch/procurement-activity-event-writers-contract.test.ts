@@ -72,8 +72,9 @@ describe("Cursor 05B procurement activity event writers", () => {
     expect(invitesRoute).not.toContain('.from("audit_logs")');
     expect(invitesRoute).not.toContain('.from("notifications")');
     expect(invitesRoute).toContain("existingInvite");
+    expect(invitesRoute).toContain("reused: true");
     expect(invitesRoute).toContain(
-      "Supplier has already been invited to this RFQ.",
+      'message: "Existing supplier invitation reused."',
     );
 
     const existingInviteBlock = invitesRoute.slice(

@@ -135,7 +135,7 @@ describe("Task 32B RFQ vendor onboarding continuation", () => {
     expect(submitPage).toContain(".maybeSingle()");
     expect(submitPage).toContain("if (profileError)");
     expect(submitPage).toContain("if (!profile?.company_id)");
-    expect(submitPage).toContain("<RfqSubmitWorkspace slug={slug} />");
+    expect(submitPage).toContain("<RfqSubmitWorkspace slug={slug} initialRfq={rfq} />");
     expect(getCompanyOnboardingPath("/rfq/harbor-point/submit")).toBe(
       "/create-company?next=%2Frfq%2Fharbor-point%2Fsubmit",
     );

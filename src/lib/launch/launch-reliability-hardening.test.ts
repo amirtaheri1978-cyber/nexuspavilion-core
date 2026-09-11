@@ -42,7 +42,7 @@ describe("Task 26 launch reliability hardening", () => {
 
   it("locks in-flight quote, award, invite, and addenda mutations before a second request can start", () => {
     expect(submit).toContain("submitLock.current");
-    expect(submit).toContain("if (submitLock.current || loading || rfqLoading)");
+    expect(submit).toContain("if (submitLock.current || loading)");
     expect(submit).toContain("JSON.parse(text)");
     expect(submit).toContain("The quote could not be submitted. Please try again.");
     expect(submit.indexOf("router.push(`/rfq/${slug}`)")).toBeGreaterThan(

@@ -118,7 +118,7 @@ describe("Task 24-RFQ-11 submit page presentation", () => {
     expect(submit).toContain("Deadline urgent");
     expect(submit).toContain("72 hours or less remain");
     expect(submit).toContain(
-      "disabled={loading || submissionClosed || rfqLoading}",
+      "disabled={loading || submissionClosed}",
     );
     expect(visualQa).toContain('data-rfq-submit-deadline-risk="urgent"');
     expect(visualQa).toContain("Deadline urgent");
@@ -138,7 +138,7 @@ describe("Task 24-RFQ-11 submit page presentation", () => {
       "addenda acknowledgement, and duplicate-submission controls are",
     );
     expect(submit).toContain(
-      "disabled={loading || submissionClosed || rfqLoading}",
+      "disabled={loading || submissionClosed}",
     );
     expect(visualQa).toContain('data-rfq-submit-completeness="true"');
     expect(visualQa).toContain("3/3 required inputs complete.");
