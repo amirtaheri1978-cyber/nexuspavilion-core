@@ -20,6 +20,8 @@ describe("sendEmail provider contract", () => {
     sendMock.mockReset();
     process.env.RESEND_API_KEY = "test-resend-key";
     process.env.EMAIL_FROM = "Nexus Pavilion <invites@example.test>";
+
+    vi.spyOn(console, "info").mockImplementation(() => undefined);
     vi.spyOn(console, "warn").mockImplementation(() => undefined);
     vi.spyOn(console, "error").mockImplementation(() => undefined);
   });
@@ -40,7 +42,7 @@ describe("sendEmail provider contract", () => {
     vi.restoreAllMocks();
   });
 
-  it("skips the provider when RESEND_API_KEY is missing", async () => {
+  it("logs a safe skipped outcome when RESEND_API_KEY is missing", async () => {
     delete process.env.RESEND_API_KEY;
 
     const result = await sendEmail({
@@ -57,9 +59,47 @@ describe("sendEmail provider contract", () => {
       id: null,
       error: "Email delivery is not configured.",
     });
+
+    expect(console.warn).toHaveBeenCalledTimes(1);
+    expect(console.warn).toHaveBeenCalledWith("[email-delivery]", {
+      event: "email_delivery",
+      provider: "resend",
+      status: "skipped",
+      attempted: false,
+      failure_reason: "not_configured",
+      provider_message_id: null,
+    });
+    expect(console.info).not.toHaveBeenCalled();
+    expect(console.error).not.toHaveBeenCalled();
   });
 
-  it("awaits Resend and returns the provider id on success", async () => {
+  it("logs a safe failure when required email fields are missing", async () => {
+    const result = await sendEmail({
+      to: "",
+      subject: "RFQ Invitation: Harbor Package",
+      html: "<p>Invite</p>",
+    });
+
+    expect(sendMock).not.toHaveBeenCalled();
+    expect(result).toEqual({
+      success: false,
+      skipped: false,
+      id: null,
+      error: "Email delivery is missing required fields.",
+    });
+
+    expect(console.error).toHaveBeenCalledTimes(1);
+    expect(console.error).toHaveBeenCalledWith("[email-delivery]", {
+      event: "email_delivery",
+      provider: "resend",
+      status: "failed",
+      attempted: false,
+      failure_reason: "missing_required_fields",
+      provider_message_id: null,
+    });
+  });
+
+  it("awaits Resend, returns the provider id, and logs a safe sent outcome", async () => {
     sendMock.mockResolvedValue({
       data: { id: "re_test_message_id" },
       error: null,
@@ -78,18 +118,35 @@ describe("sendEmail provider contract", () => {
       to: "supplier@example.test",
       subject: "RFQ Invitation: Harbor Package",
     });
+
     expect(result).toEqual({
       success: true,
       skipped: false,
       id: "re_test_message_id",
       error: null,
     });
+
+    expect(console.info).toHaveBeenCalledTimes(1);
+    expect(console.info).toHaveBeenCalledWith("[email-delivery]", {
+      event: "email_delivery",
+      provider: "resend",
+      status: "sent",
+      attempted: true,
+      failure_reason: null,
+      provider_message_id: "re_test_message_id",
+    });
+    expect(console.warn).not.toHaveBeenCalled();
+    expect(console.error).not.toHaveBeenCalled();
   });
 
-  it("sanitizes provider-returned errors into a safe delivery failure", async () => {
+  it("logs a bounded provider rejection without exposing provider or email data", async () => {
     sendMock.mockResolvedValue({
       data: null,
-      error: { message: "The from address is not verified." },
+      error: {
+        message: "The from address is not verified.",
+        recipient: "supplier@example.test",
+        token: "private-provider-token",
+      },
     });
 
     const result = await sendEmail({
@@ -104,10 +161,32 @@ describe("sendEmail provider contract", () => {
     expect(result.error).toBe("Email delivery failed.");
     expect(result.error).not.toContain("from address");
     expect(result.error).not.toContain("verified");
+
+    expect(console.error).toHaveBeenCalledTimes(1);
+    expect(console.error).toHaveBeenCalledWith("[email-delivery]", {
+      event: "email_delivery",
+      provider: "resend",
+      status: "failed",
+      attempted: true,
+      failure_reason: "provider_rejected",
+      provider_message_id: null,
+    });
+
+    const logged = JSON.stringify(vi.mocked(console.error).mock.calls);
+
+    expect(logged).not.toContain("supplier@example.test");
+    expect(logged).not.toContain("Harbor Package");
+    expect(logged).not.toContain("from address");
+    expect(logged).not.toContain("verified");
+    expect(logged).not.toContain("private-provider-token");
   });
 
-  it("sanitizes thrown provider/network errors into a safe delivery failure", async () => {
-    sendMock.mockRejectedValue(new Error("socket hang up ECONNRESET"));
+  it("logs a bounded provider exception without exposing exception or email data", async () => {
+    sendMock.mockRejectedValue(
+      new Error(
+        "socket hang up ECONNRESET for supplier@example.test private-provider-token",
+      ),
+    );
 
     const result = await sendEmail({
       to: "supplier@example.test",
@@ -121,5 +200,23 @@ describe("sendEmail provider contract", () => {
     expect(result.error).toBe("Email delivery could not be completed.");
     expect(result.error).not.toContain("ECONNRESET");
     expect(result.error).not.toContain("socket");
+
+    expect(console.error).toHaveBeenCalledTimes(1);
+    expect(console.error).toHaveBeenCalledWith("[email-delivery]", {
+      event: "email_delivery",
+      provider: "resend",
+      status: "failed",
+      attempted: true,
+      failure_reason: "provider_exception",
+      provider_message_id: null,
+    });
+
+    const logged = JSON.stringify(vi.mocked(console.error).mock.calls);
+
+    expect(logged).not.toContain("supplier@example.test");
+    expect(logged).not.toContain("Harbor Package");
+    expect(logged).not.toContain("ECONNRESET");
+    expect(logged).not.toContain("socket");
+    expect(logged).not.toContain("private-provider-token");
   });
 });
