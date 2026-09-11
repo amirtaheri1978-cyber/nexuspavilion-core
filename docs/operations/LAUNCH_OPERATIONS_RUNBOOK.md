@@ -118,6 +118,103 @@ it does not reclassify that backend as Production.
    writes, tenant isolation, and other business-flow checks remain governed
    by their dedicated launch gates and incident procedures.
 
+## Rate-limit and abuse protection review (Task 15-11)
+
+Launch abuse review distinguishes provider-managed authentication controls from
+custom application endpoints. Supabase Auth provider controls must not be
+misrepresented as rate limiting for unrelated custom Next.js API routes.
+
+### Review boundary
+
+- Authentication actions use Supabase Auth, including `signUp`,
+  `signInWithPassword`, `resetPasswordForEmail`, and `/auth/callback` session
+  exchange.
+- Supabase Auth enforces provider-side authentication rate limits and returns
+  `HTTP 429 Too Many Requests` when applicable limits are exceeded.
+- Task 15-11 does not add a second application-level authentication limiter.
+- Repository review found no general application-level `429`, `Retry-After`,
+  request-IP extraction, CAPTCHA, or distributed rate-limit dependency for
+  custom Next.js API routes.
+- `/api/contact` was identified as the anonymous custom endpoint with an
+  external email side effect.
+- Its existing `website` honeypot remains bot friction but is not considered
+  sufficient protection against sustained anonymous submission abuse.
+- Workspace Invitation, RFQ Invitation, Quotation, RFQ, RFI, addendum, and
+  other procurement write flows retain their existing authentication and
+  authorization boundaries. The contact limiter does not replace them.
+
+### Production contact abuse control
+
+Production Vercel Firewall evidence captured on **2026-09-11**:
+
+- Team: `nexus-pavilion`.
+- Project: `nexuspavilion-core`.
+- Project ID: `prj_KMhk2Q5Gtm0cadrv7uX6IZkI99tg`.
+- Firewall configuration ID: `waf_eTacgRDePCgf`.
+- Active configuration version: `1`.
+- Rule ID: `rule_rate_limit_contact_submissions_YoP3MN`.
+- Rule name: `Rate limit contact submissions`.
+- Match: exact path `/api/contact` AND method `POST`.
+- Action: `rate_limit`.
+- Key: client `ip`.
+- Algorithm: `fixed_window`.
+- Limit: `10` requests per `600` seconds.
+- Exceeded action: `rate_limit`.
+- Vercel reported the rule `valid: true` with no validation errors.
+
+No Next.js application route, package dependency, Supabase project, database
+schema, RLS policy, environment variable, or procurement authorization
+behavior was changed to provide this control.
+
+### Activation sequencing evidence
+
+The authorized change was intended to follow a draft-review-publish sequence.
+The initial inline-JSON CLI attempt failed during local argument parsing before
+any firewall mutation occurred.
+
+The subsequent authorized Vercel Firewall API `PATCH`, using a validated
+temporary JSON payload, returned success and immediately exposed the approved
+rule in the active configuration with `draft: null`.
+
+The provider therefore activated the exact approved change without a separate
+publish step. No rollback/re-publish cycle was performed solely to recreate the
+intended sequencing because the active rule exactly matched the authorized
+scope and additional Production security churn would add risk without improving
+the resulting control.
+
+This sequencing deviation must not be represented as if a separate publish
+command occurred.
+
+### Bounded Production verification
+
+Runtime enforcement was verified using the existing contact-form `website`
+honeypot so synthetic requests did not send email.
+
+- `GET /api/contact` returned `HTTP 405`.
+- Contact POST requests `1` through `10` returned `HTTP 200`.
+- Contact POST request `11` returned `HTTP 429`.
+- `GET /api/health` returned `HTTP 200` after the contact test.
+- The temporary test payload was removed after verification.
+- Repository HEAD and staged index remained unchanged during runtime
+  verification.
+
+### Operator security verification procedure
+
+1. Keep Supabase Auth as the provider-managed throttling boundary for
+   authentication operations unless a separate reviewed requirement changes
+   that architecture.
+2. Read the active Vercel Firewall configuration and require exactly one
+   enabled, valid `Rate limit contact submissions` rule matching
+   `POST /api/contact`.
+3. Treat a missing, disabled, invalid, broadened, or materially weakened
+   contact rule as a launch security stop condition.
+4. Any Production firewall mutation remains Product Owner-gated.
+5. Prefer configuration read-back for routine evidence. Use bounded Production
+   enforcement testing only when runtime behavior itself must be reconfirmed.
+6. Keep Workspace Membership, Workspace Invitation, RFQ Invitation, Quotation,
+   and Contract Award domains distinct. Contact abuse protection does not
+   replace business authorization or tenant isolation.
+
 ## Shared stop conditions
 
 Stop launching or stop writing when any of the following is true:

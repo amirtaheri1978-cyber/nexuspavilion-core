@@ -1148,3 +1148,99 @@ describe("Task 15-10 application and database health verification", () => {
     expect(Object.keys(body).sort()).toEqual(["commitSha", "ok", "service"]);
   });
 });
+describe("Task 15-11 rate-limit and security review", () => {
+  it("keeps provider auth throttling separate from the Production contact abuse control", () => {
+    const runbook = readSource(
+      "docs/operations/LAUNCH_OPERATIONS_RUNBOOK.md",
+    );
+    const contactRoute = readSource("src/app/api/contact/route.ts");
+    const packageJson = readSource("package.json");
+    const loginPage = readSource("src/app/login/page.tsx");
+    const signupPage = readSource("src/app/signup/page.tsx");
+    const forgotPasswordPage = readSource(
+      "src/app/forgot-password/page.tsx",
+    );
+    const authCallback = readSource("src/app/auth/callback/route.ts");
+
+    const reviewStart = runbook.indexOf(
+      "## Rate-limit and abuse protection review (Task 15-11)",
+    );
+    const reviewEnd = runbook.indexOf(
+      "## Shared stop conditions",
+      reviewStart,
+    );
+
+    expect(reviewStart).toBeGreaterThanOrEqual(0);
+    expect(reviewEnd).toBeGreaterThan(reviewStart);
+
+    const reviewSection = runbook.slice(reviewStart, reviewEnd);
+
+    expect(reviewSection).toContain(
+      "`prj_KMhk2Q5Gtm0cadrv7uX6IZkI99tg`",
+    );
+    expect(reviewSection).toContain("`waf_eTacgRDePCgf`");
+    expect(reviewSection).toContain(
+      "`rule_rate_limit_contact_submissions_YoP3MN`",
+    );
+    expect(reviewSection).toContain(
+      "`Rate limit contact submissions`",
+    );
+    expect(reviewSection).toContain(
+      "exact path `/api/contact` AND method `POST`",
+    );
+    expect(reviewSection).toContain("Algorithm: `fixed_window`");
+    expect(reviewSection).toContain(
+      "Limit: `10` requests per `600` seconds",
+    );
+    expect(reviewSection).toContain("Key: client `ip`");
+    expect(reviewSection).toContain(
+      "Vercel reported the rule `valid: true`",
+    );
+
+    expect(reviewSection).toContain(
+      "Contact POST requests `1` through `10` returned `HTTP 200`",
+    );
+    expect(reviewSection).toContain(
+      "Contact POST request `11` returned `HTTP 429`",
+    );
+    expect(reviewSection).toContain(
+      "`GET /api/contact` returned `HTTP 405`",
+    );
+    expect(reviewSection).toContain(
+      "`GET /api/health` returned `HTTP 200`",
+    );
+
+    expect(reviewSection).toContain(
+      "Supabase Auth enforces provider-side authentication rate limits",
+    );
+    expect(reviewSection).toContain(
+      "does not add a second application-level authentication limiter",
+    );
+    expect(reviewSection).toContain("`draft: null`");
+    expect(reviewSection).toMatch(
+      /must not be represented as if a separate publish\s+command occurred/,
+    );
+
+    expect(contactRoute).toContain(
+      "const website = body.website?.trim()",
+    );
+    expect(contactRoute).toContain("if (website)");
+    expect(contactRoute).toContain("await sendEmail({");
+
+    expect(contactRoute).not.toContain("@vercel/firewall");
+    expect(contactRoute).not.toContain("x-forwarded-for");
+    expect(contactRoute).not.toContain("cf-connecting-ip");
+
+    expect(packageJson).not.toContain("@vercel/firewall");
+    expect(packageJson).not.toContain("@upstash/ratelimit");
+
+    expect(loginPage).toContain("signInWithPassword");
+    expect(signupPage).toContain("supabase.auth.signUp({");
+    expect(forgotPasswordPage).toContain(
+      "supabase.auth.resetPasswordForEmail(",
+    );
+    expect(authCallback).toContain(
+      "supabase.auth.exchangeCodeForSession(code)",
+    );
+  });
+});
