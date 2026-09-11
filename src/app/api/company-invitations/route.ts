@@ -11,6 +11,7 @@ import {
   getPublicSiteUrl,
   PUBLIC_SITE_URL_UNCONFIGURED,
 } from "@/lib/ops/public-site-url";
+import { reportCriticalApiFailure } from "@/lib/ops/report-critical-api-failure";
 import { createClient } from "@/lib/supabase/server";
 
 type Company = {
@@ -147,7 +148,14 @@ export async function POST(request: Request) {
     );
 
     if (rpcError) {
-      console.error(rpcError);
+      reportCriticalApiFailure({
+        domain: "workspace_invitation",
+        operation: "create",
+        failureStage: "create_invitation_rpc",
+        route: "/api/company-invitations",
+        method: "POST",
+        error: rpcError,
+      });
 
       return NextResponse.json(
         { error: "Failed to create invitation." },
@@ -176,6 +184,15 @@ export async function POST(request: Request) {
     const invitation = result.invitation;
 
     if (!invitation?.token) {
+      reportCriticalApiFailure({
+        domain: "workspace_invitation",
+        operation: "create",
+        failureStage: "invitation_token_missing",
+        route: "/api/company-invitations",
+        method: "POST",
+        error: new Error("InvitationTokenMissing"),
+      });
+
       return NextResponse.json(
         { error: "Invitation token was not generated." },
         { status: 500 },
@@ -273,7 +290,14 @@ export async function POST(request: Request) {
       },
     });
   } catch (error) {
-    console.error(error);
+    reportCriticalApiFailure({
+      domain: "workspace_invitation",
+      operation: "create",
+      failureStage: "outer_catch",
+      route: "/api/company-invitations",
+      method: "POST",
+      error,
+    });
 
     return NextResponse.json(
       { error: "Internal server error." },

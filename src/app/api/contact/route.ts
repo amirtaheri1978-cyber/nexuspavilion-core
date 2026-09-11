@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { sendEmail } from "@/lib/email/send-email";
+import { reportCriticalApiFailure } from "@/lib/ops/report-critical-api-failure";
 
 type ContactRequestBody = {
 name?: string;
@@ -81,7 +82,14 @@ const safeMessage = escapeHtml(message).replaceAll("\n", "<br />");
 const contactEmail = process.env.CONTACT_EMAIL?.trim();
 
 if (!contactEmail) {
-console.error("Contact email destination is not configured.");
+reportCriticalApiFailure({
+  domain: "contact",
+  operation: "submit",
+  failureStage: "destination_unconfigured",
+  route: "/api/contact",
+  method: "POST",
+  error: new Error("ContactEmailUnconfigured"),
+});
 
 return NextResponse.json(
 {
@@ -133,7 +141,14 @@ message:
 }
 
 if (!emailResult.success) {
-console.error("Contact email delivery failed.");
+reportCriticalApiFailure({
+  domain: "contact",
+  operation: "submit",
+  failureStage: "email_delivery",
+  route: "/api/contact",
+  method: "POST",
+  error: new Error("ContactEmailDeliveryFailed"),
+});
 
 return NextResponse.json(
 {
@@ -149,7 +164,14 @@ success: true,
 message: "Contact request sent successfully.",
 });
 } catch (error) {
-console.error("Contact API error:", error);
+reportCriticalApiFailure({
+  domain: "contact",
+  operation: "submit",
+  failureStage: "outer_catch",
+  route: "/api/contact",
+  method: "POST",
+  error,
+});
 
 return NextResponse.json(
 {

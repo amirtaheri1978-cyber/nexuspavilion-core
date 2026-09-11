@@ -1,10 +1,33 @@
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { join, relative, resolve } from "node:path";
 
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { GET as getHealth } from "@/app/api/health/route";
 import { LAUNCH_REGRESSION_TEST_FILES } from "@/lib/launch/launch-regression.files";
+
+vi.mock("server-only", () => ({}));
+
+const sentryMocks = vi.hoisted(() => {
+  const captureMessage = vi.fn();
+  const withScope = vi.fn((callback: (scope: {
+    setTag: ReturnType<typeof vi.fn>;
+    setContext: ReturnType<typeof vi.fn>;
+  }) => void) => {
+    callback({
+      setTag: vi.fn(),
+      setContext: vi.fn(),
+    });
+  });
+
+  return { captureMessage, withScope };
+});
+
+vi.mock("@sentry/nextjs", () => ({
+  withScope: sentryMocks.withScope,
+  captureMessage: sentryMocks.captureMessage,
+  captureException: vi.fn(),
+}));
 
 function readSource(relativePath: string) {
   return readFileSync(resolve(process.cwd(), relativePath), "utf8").replace(
@@ -79,13 +102,20 @@ describe("Task 27 launch operations readiness", () => {
       "src/app/api/company-invitations/accept/route.ts",
     );
 
-    expect(acceptRoute).toContain("Invitation acceptance RPC failed.");
+    expect(acceptRoute).toContain("reportCriticalApiFailure");
+    expect(acceptRoute).toContain('domain: "workspace_invitation"');
+    expect(acceptRoute).toContain('operation: "accept"');
     expect(acceptRoute).toContain("invitation_token: token");
+    expect(acceptRoute).not.toContain(
+      "Invitation acceptance RPC failed.",
+    );
+    expect(acceptRoute).not.toMatch(
+      /console\.error\(\s*["']Unexpected invitation acceptance failure/,
+    );
 
     const consoleCalls = [
       ...acceptRoute.matchAll(/console\.(?:error|warn)\(([\s\S]*?)\);/g),
     ];
-    expect(consoleCalls.length).toBeGreaterThan(0);
     for (const call of consoleCalls) {
       expect(call[1]).not.toMatch(/\btoken\b/);
     }
@@ -363,5 +393,246 @@ describe("Task 15-01 production error tracking", () => {
     expect(instrumentation).toContain("method: request.method");
     expect(instrumentation).toContain("headers: request.headers");
     expect(instrumentation).toContain("context");
+  });
+});
+
+describe("Task 15-02 critical API failure visibility", () => {
+  afterEach(() => {
+    sentryMocks.captureMessage.mockReset();
+    sentryMocks.withScope.mockClear();
+    vi.restoreAllMocks();
+  });
+
+  it("builds sanitized context and excludes raw error message fields", async () => {
+    const {
+      buildSafeCriticalApiFailureContext,
+      normalizeCriticalErrorName,
+      normalizeCriticalProviderCode,
+    } = await import("@/lib/ops/report-critical-api-failure");
+
+    const error = Object.assign(new Error("SELECT * FROM secrets WHERE token='abc'"), {
+      name: "PostgrestError",
+      code: "PGRST116",
+    });
+
+    const context = buildSafeCriticalApiFailureContext({
+      domain: "quotation",
+      operation: "submit",
+      failureStage: "outer_catch",
+      route: "/api/quotes?token=sensitive",
+      method: "post",
+      error,
+    });
+
+    expect(context.route).toBe("/api/quotes");
+    expect(context.method).toBe("POST");
+    expect(context.domain).toBe("quotation");
+    expect(context.operation).toBe("submit");
+    expect(context.failure_stage).toBe("outer_catch");
+    expect(context.error_name).toBe("PostgrestError");
+    expect(context.provider_code).toBe("PGRST116");
+    expect(JSON.stringify(context)).not.toContain("SELECT");
+    expect(JSON.stringify(context)).not.toContain("token");
+    expect(JSON.stringify(context)).not.toContain("secrets");
+    expect(Object.keys(context).sort()).toEqual([
+      "domain",
+      "error_name",
+      "failure_stage",
+      "method",
+      "operation",
+      "provider_code",
+      "route",
+    ]);
+
+    expect(normalizeCriticalErrorName(error)).toBe("PostgrestError");
+    expect(
+      normalizeCriticalProviderCode({
+        code: "this is arbitrary provider prose that must be rejected",
+      }),
+    ).toBeNull();
+    expect(normalizeCriticalProviderCode({ code: "42501" })).toBe("42501");
+  });
+
+  it("reports via captureMessage and safe console without serializing the error", async () => {
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+    const { reportCriticalApiFailure } = await import(
+      "@/lib/ops/report-critical-api-failure"
+    );
+
+    const sensitive = Object.assign(new Error("leak-me-please"), {
+      name: "DatabaseError",
+      code: "XX000",
+      details: "email=buyer@example.com cookie=abc",
+    });
+
+    reportCriticalApiFailure({
+      domain: "contract_award",
+      operation: "award",
+      failureStage: "outer_catch",
+      route: "/api/award-contract",
+      method: "POST",
+      error: sensitive,
+    });
+
+    expect(sentryMocks.withScope).toHaveBeenCalledTimes(1);
+    expect(sentryMocks.captureMessage).toHaveBeenCalledWith(
+      "Critical API failure: contract_award.award",
+      "error",
+    );
+
+    expect(consoleError).toHaveBeenCalledTimes(1);
+    expect(consoleError.mock.calls[0]?.[0]).toBe("[critical-api-failure]");
+    const logged = consoleError.mock.calls[0]?.[1] as Record<string, unknown>;
+    expect(logged).toMatchObject({
+      domain: "contract_award",
+      operation: "award",
+      failure_stage: "outer_catch",
+      route: "/api/award-contract",
+      method: "POST",
+      error_name: "DatabaseError",
+      provider_code: "XX000",
+    });
+    expect(JSON.stringify(consoleError.mock.calls)).not.toContain("leak-me-please");
+    expect(JSON.stringify(consoleError.mock.calls)).not.toContain("buyer@example.com");
+    expect(JSON.stringify(consoleError.mock.calls)).not.toContain("cookie=");
+  });
+
+  it("remains fail-open when Sentry capture throws", async () => {
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+    sentryMocks.withScope.mockImplementationOnce(() => {
+      throw new Error("sentry-unavailable");
+    });
+
+    const { reportCriticalApiFailure } = await import(
+      "@/lib/ops/report-critical-api-failure"
+    );
+
+    expect(() =>
+      reportCriticalApiFailure({
+        domain: "contact",
+        operation: "submit",
+        failureStage: "outer_catch",
+        route: "/api/contact",
+        method: "POST",
+        error: new Error("boom"),
+      }),
+    ).not.toThrow();
+
+    expect(consoleError).toHaveBeenCalledWith(
+      "[critical-api-failure]",
+      expect.objectContaining({
+        domain: "contact",
+        operation: "submit",
+      }),
+    );
+  });
+
+  it("wires reportCriticalApiFailure into representative critical routes without raw outer catch dumps", () => {
+    const quotes = readSource("src/app/api/quotes/route.ts");
+    const award = readSource("src/app/api/award-contract/route.ts");
+    const invites = readSource("src/app/api/invites/route.ts");
+    const addenda = readSource("src/app/api/rfq-addenda/route.ts");
+    const companyCreate = readSource("src/app/api/companies/create/route.ts");
+    const helper = readSource("src/lib/ops/report-critical-api-failure.ts");
+
+    expect(helper).toContain('import "server-only"');
+    expect(helper).toContain("sanitizeSentryRequestPath");
+    expect(helper).toContain("Sentry.captureMessage");
+    expect(helper).not.toContain("Sentry.captureException");
+    expect(helper).not.toContain("Sentry.setUser");
+    expect(helper).not.toContain("error.message");
+
+    for (const [source, domain] of [
+      [quotes, "quotation"],
+      [award, "contract_award"],
+      [invites, "rfq_invitation"],
+      [addenda, "addendum"],
+      [companyCreate, "company_workspace"],
+    ] as const) {
+      expect(source).toContain("reportCriticalApiFailure");
+      expect(source).toContain(`domain: "${domain}"`);
+    }
+
+    expect(quotes).toContain('{ error: "Internal server error" }');
+    expect(quotes).toContain("{ status: 500 }");
+    expect(award).toContain('{ error: "Internal server error." }');
+    expect(invites).toContain('{ error: "Server error." }');
+    expect(companyCreate).toContain('{ error: "Internal server error." }');
+
+    expect(quotes).not.toMatch(/} catch \(error\) \{\s*console\.error\(error\);/);
+    expect(award).not.toContain('console.error("Award contract route failed:", error)');
+    expect(invites).not.toMatch(/} catch \(error\) \{\s*console\.error\(error\);/);
+    expect(companyCreate).not.toContain(
+      "Unexpected company creation route failure.",
+    );
+
+    expect(quotes).toContain("{ status: 403 }");
+    expect(quotes).not.toMatch(
+      /status:\s*403[\s\S]{0,80}reportCriticalApiFailure/,
+    );
+  });
+
+  it("instruments companies/create mid-route caught 5xx failures with stable create_company operation", () => {
+    const companyCreate = readSource("src/app/api/companies/create/route.ts");
+
+    expect(companyCreate).toContain('operation: "create_company"');
+    expect(companyCreate).not.toContain('operation: "create"');
+
+    for (const stage of [
+      "profile_lookup",
+      "owned_company_lookup",
+      "professional_name_sync",
+      "existing_company_recovery",
+      "company_insert",
+      "company_result_missing",
+      "workspace_bootstrap",
+      "outer_catch",
+    ]) {
+      expect(companyCreate).toContain(`failureStage: "${stage}"`);
+    }
+
+    expect(companyCreate).toContain("{ error: WORKSPACE_ELIGIBILITY_ERROR }");
+    expect(companyCreate).toContain("{ error: WORKSPACE_CREATE_FAILED_ERROR }");
+    expect(companyCreate).toContain(
+      "{ error: WORKSPACE_BOOTSTRAP_INCOMPLETE_ERROR }",
+    );
+    expect(companyCreate).toContain('{ error: "Internal server error." }');
+    expect(companyCreate).toContain("{ status: 500 }");
+
+    expect(companyCreate).not.toContain("profile lookup could not be completed.");
+    expect(companyCreate).not.toContain(
+      "owned-company lookup could not be completed.",
+    );
+    expect(companyCreate).not.toContain(
+      "owned company could not be recovered.",
+    );
+    expect(companyCreate).not.toContain("company record was not created.");
+    expect(companyCreate).not.toContain(
+      "owned-company identity was not established.",
+    );
+
+    const helperCalls = [
+      ...companyCreate.matchAll(
+        /reportCriticalApiFailure\(\{([\s\S]*?)\}\);/g,
+      ),
+    ];
+    expect(helperCalls.length).toBeGreaterThanOrEqual(8);
+    for (const call of helperCalls) {
+      expect(call[1]).toContain('domain: "company_workspace"');
+      expect(call[1]).toContain('operation: "create_company"');
+      expect(call[1]).not.toMatch(/\buserId\b/);
+      expect(call[1]).not.toMatch(/\bcompanyId\b/);
+      expect(call[1]).not.toMatch(/\bemail\b/);
+    }
+
+    expect(companyCreate).toContain("{ status: 409 }");
+    expect(companyCreate).toContain("{ status: 401 }");
+    expect(companyCreate).toContain("{ status: 400 }");
+    expect(companyCreate).not.toMatch(
+      /status:\s*409[\s\S]{0,120}reportCriticalApiFailure/,
+    );
+    expect(companyCreate).not.toMatch(
+      /status:\s*401[\s\S]{0,120}reportCriticalApiFailure/,
+    );
   });
 });

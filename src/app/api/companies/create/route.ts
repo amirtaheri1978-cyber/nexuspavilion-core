@@ -20,6 +20,7 @@ import { getPostCompanyCreatePath } from "@/lib/auth/login-continuation";
 import { companyWelcomeEmail } from "@/lib/email/templates/company-welcome-email";
 import { sendEmail } from "@/lib/email/send-email";
 import { joinPublicSitePath } from "@/lib/ops/public-site-url";
+import { reportCriticalApiFailure } from "@/lib/ops/report-critical-api-failure";
 import { createClient } from "@/lib/supabase/server";
 
 type AccountType =
@@ -358,13 +359,14 @@ export async function POST(request: Request) {
         .maybeSingle();
 
     if (profileReadError) {
-      console.error(
-        "Company creation failed: profile lookup could not be completed.",
-        {
-          userId: user.id,
-          error: profileReadError,
-        },
-      );
+      reportCriticalApiFailure({
+        domain: "company_workspace",
+        operation: "create_company",
+        failureStage: "profile_lookup",
+        route: "/api/companies/create",
+        method: "POST",
+        error: profileReadError,
+      });
 
       return NextResponse.json(
         { error: WORKSPACE_ELIGIBILITY_ERROR },
@@ -379,13 +381,14 @@ export async function POST(request: Request) {
         .eq("user_id", user.id);
 
     if (ownedCompaniesError) {
-      console.error(
-        "Company creation failed: owned-company lookup could not be completed.",
-        {
-          userId: user.id,
-          error: ownedCompaniesError,
-        },
-      );
+      reportCriticalApiFailure({
+        domain: "company_workspace",
+        operation: "create_company",
+        failureStage: "owned_company_lookup",
+        route: "/api/companies/create",
+        method: "POST",
+        error: ownedCompaniesError,
+      });
 
       return NextResponse.json(
         { error: WORKSPACE_ELIGIBILITY_ERROR },
@@ -437,13 +440,26 @@ export async function POST(request: Request) {
     );
 
     if (!nameSyncResult.ok) {
+      const nameSyncStatus =
+        nameSyncResult.error === PROFESSIONAL_NAME_SYNC_ERROR
+          ? 500
+          : 400;
+
+      if (nameSyncStatus === 500) {
+        reportCriticalApiFailure({
+          domain: "company_workspace",
+          operation: "create_company",
+          failureStage: "professional_name_sync",
+          route: "/api/companies/create",
+          method: "POST",
+          error: new Error("ProfessionalNameSyncFailed"),
+        });
+      }
+
       return NextResponse.json(
         { error: nameSyncResult.error || PROFESSIONAL_NAME_SYNC_ERROR },
         {
-          status:
-            nameSyncResult.error === PROFESSIONAL_NAME_SYNC_ERROR
-              ? 500
-              : 400,
+          status: nameSyncStatus,
         },
       );
     }
@@ -466,14 +482,14 @@ export async function POST(request: Request) {
           .maybeSingle();
 
       if (recoverError || !recoveredCompany) {
-        console.error(
-          "Company creation failed: owned company could not be recovered.",
-          {
-            userId: user.id,
-            companyId: companyPlan.companyId,
-            error: recoverError,
-          },
-        );
+        reportCriticalApiFailure({
+          domain: "company_workspace",
+          operation: "create_company",
+          failureStage: "existing_company_recovery",
+          route: "/api/companies/create",
+          method: "POST",
+          error: recoverError ?? new Error("OwnedCompanyRecoveryMissing"),
+        });
 
         return NextResponse.json(
           { error: WORKSPACE_ELIGIBILITY_ERROR },
@@ -499,16 +515,14 @@ export async function POST(request: Request) {
           .single();
 
       if (companyError || !createdCompany) {
-        console.error(
-          "Company creation failed: company record was not created.",
-          {
-            userId: user.id,
-            slug,
-            accountType: rawAccountType,
-            networkRole,
-            error: companyError,
-          },
-        );
+        reportCriticalApiFailure({
+          domain: "company_workspace",
+          operation: "create_company",
+          failureStage: "company_insert",
+          route: "/api/companies/create",
+          method: "POST",
+          error: companyError ?? new Error("CompanyInsertMissing"),
+        });
 
         return NextResponse.json(
           { error: WORKSPACE_CREATE_FAILED_ERROR },
@@ -521,6 +535,15 @@ export async function POST(request: Request) {
     }
 
     if (!company) {
+      reportCriticalApiFailure({
+        domain: "company_workspace",
+        operation: "create_company",
+        failureStage: "company_result_missing",
+        route: "/api/companies/create",
+        method: "POST",
+        error: new Error("CompanyResultMissing"),
+      });
+
       return NextResponse.json(
         { error: WORKSPACE_CREATE_FAILED_ERROR },
         { status: 500 },
@@ -545,15 +568,14 @@ export async function POST(request: Request) {
       | null;
 
     if (bootstrapError || bootstrapPayload?.success !== true) {
-      console.error(
-        "Workspace bootstrap incomplete: owned-company identity was not established.",
-        {
-          userId: user.id,
-          companyId: company.id,
-          createdNewCompany,
-          error: bootstrapError,
-        },
-      );
+      reportCriticalApiFailure({
+        domain: "company_workspace",
+        operation: "create_company",
+        failureStage: "workspace_bootstrap",
+        route: "/api/companies/create",
+        method: "POST",
+        error: bootstrapError ?? new Error("WorkspaceBootstrapIncomplete"),
+      });
 
       return NextResponse.json(
         { error: WORKSPACE_BOOTSTRAP_INCOMPLETE_ERROR },
@@ -650,10 +672,14 @@ export async function POST(request: Request) {
       ),
     });
   } catch (error) {
-    console.error(
-      "Unexpected company creation route failure.",
+    reportCriticalApiFailure({
+      domain: "company_workspace",
+      operation: "create_company",
+      failureStage: "outer_catch",
+      route: "/api/companies/create",
+      method: "POST",
       error,
-    );
+    });
 
     return NextResponse.json(
       { error: "Internal server error." },

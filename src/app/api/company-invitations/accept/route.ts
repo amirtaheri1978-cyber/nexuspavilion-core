@@ -12,6 +12,7 @@ import {
   validateProfessionalName,
 } from "@/lib/auth/professional-names";
 import { resolveRequestSiteUrl } from "@/lib/ops/public-site-url";
+import { reportCriticalApiFailure } from "@/lib/ops/report-critical-api-failure";
 import { createClient } from "@/lib/supabase/server";
 
 let SITE_URL = "";
@@ -163,13 +164,14 @@ export async function POST(request: Request) {
     );
 
     if (error) {
-      console.error(
-        "Invitation acceptance RPC failed.",
-        {
-          userId: user.id,
-          error,
-        },
-      );
+      reportCriticalApiFailure({
+        domain: "workspace_invitation",
+        operation: "accept",
+        failureStage: "accept_invitation_rpc",
+        route: "/api/company-invitations/accept",
+        method: "POST",
+        error,
+      });
 
       return redirectTo(
         `/invite/${token}?error=accept-failed`,
@@ -196,10 +198,14 @@ export async function POST(request: Request) {
 
     return redirectTo("/dashboard");
   } catch (error) {
-    console.error(
-      "Unexpected invitation acceptance failure.",
+    reportCriticalApiFailure({
+      domain: "workspace_invitation",
+      operation: "accept",
+      failureStage: "outer_catch",
+      route: "/api/company-invitations/accept",
+      method: "POST",
       error,
-    );
+    });
 
     return redirectTo(
       "/dashboard?error=invitation-acceptance-failed",

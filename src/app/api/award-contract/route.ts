@@ -6,6 +6,7 @@ import {
   supplierAwardNotificationEmail,
 } from "@/lib/email/templates/award-notification-email";
 import { joinPublicSitePath } from "@/lib/ops/public-site-url";
+import { reportCriticalApiFailure } from "@/lib/ops/report-critical-api-failure";
 import { createClient } from "@/lib/supabase/server";
 
 type AwardRequestBody = {
@@ -211,7 +212,14 @@ export async function POST(request: Request) {
     );
 
     if (rpcError) {
-      console.error("Award contract RPC error:", rpcError);
+      reportCriticalApiFailure({
+        domain: "contract_award",
+        operation: "award",
+        failureStage: "award_rpc",
+        route: "/api/award-contract",
+        method: "POST",
+        error: rpcError,
+      });
 
       return NextResponse.json(
         {
@@ -243,6 +251,15 @@ export async function POST(request: Request) {
     const updatedRfq = result.rfq;
 
     if (!awardedQuote || !updatedRfq) {
+      reportCriticalApiFailure({
+        domain: "contract_award",
+        operation: "award",
+        failureStage: "award_result_incomplete",
+        route: "/api/award-contract",
+        method: "POST",
+        error: new Error("AwardResultIncomplete"),
+      });
+
       return NextResponse.json(
         {
           error: "Failed to award contract.",
@@ -346,7 +363,14 @@ export async function POST(request: Request) {
       },
     });
   } catch (error) {
-    console.error("Award contract route failed:", error);
+    reportCriticalApiFailure({
+      domain: "contract_award",
+      operation: "award",
+      failureStage: "outer_catch",
+      route: "/api/award-contract",
+      method: "POST",
+      error,
+    });
 
     return NextResponse.json(
       { error: "Internal server error." },

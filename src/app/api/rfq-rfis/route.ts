@@ -4,6 +4,7 @@ import { getActiveMembershipForUserCompany } from "@/lib/auth/membership";
 import { sendEmail } from "@/lib/email/send-email";
 import { buildRfiResponseEmail } from "@/lib/email/templates/rfi-response-email";
 import { joinPublicSitePath } from "@/lib/ops/public-site-url";
+import { reportCriticalApiFailure } from "@/lib/ops/report-critical-api-failure";
 import {
   canRespondToRfqSourcing,
   isPublicSourcingMethod,
@@ -158,7 +159,14 @@ async function resolveEffectiveRfiDeadline(
   );
 
   if (error) {
-    console.error("RFI deadline parse RPC failed:", error);
+    reportCriticalApiFailure({
+      domain: "rfi",
+      operation: "deadline_parse",
+      failureStage: "deadline_parse_rpc",
+      route: "/api/rfq-rfis",
+      method: "POST",
+      error,
+    });
     return {
       ok: false,
       status: 500,
@@ -204,6 +212,15 @@ export async function GET(request: Request) {
     .order("created_at", { ascending: false });
 
   if (error) {
+    reportCriticalApiFailure({
+      domain: "rfi",
+      operation: "list",
+      failureStage: "rfi_load",
+      route: "/api/rfq-rfis",
+      method: "GET",
+      error,
+    });
+
     return NextResponse.json(
       { error: error.message || "Failed to load RFIs." },
       { status: 500 },
@@ -258,7 +275,14 @@ export async function POST(request: Request) {
       profile.company_id,
     );
   } catch (membershipError) {
-    console.error("RFI submit membership lookup failed:", membershipError);
+    reportCriticalApiFailure({
+      domain: "rfi",
+      operation: "submit",
+      failureStage: "membership_lookup",
+      route: "/api/rfq-rfis",
+      method: "POST",
+      error: membershipError,
+    });
 
     return NextResponse.json(
       { error: "Unable to verify organization membership." },
@@ -311,7 +335,14 @@ export async function POST(request: Request) {
     );
 
     if (accessError) {
-      console.error("RFI submit RFQ access lookup failed:", accessError);
+      reportCriticalApiFailure({
+        domain: "rfi",
+        operation: "submit",
+        failureStage: "rfq_access_lookup",
+        route: "/api/rfq-rfis",
+        method: "POST",
+        error: accessError,
+      });
 
       return NextResponse.json(
         { error: "Unable to verify RFQ access." },
@@ -362,6 +393,15 @@ export async function POST(request: Request) {
     .single();
 
   if (error || !data) {
+    reportCriticalApiFailure({
+      domain: "rfi",
+      operation: "submit",
+      failureStage: "rfi_insert",
+      route: "/api/rfq-rfis",
+      method: "POST",
+      error: error ?? new Error("RfiInsertMissing"),
+    });
+
     return NextResponse.json(
       { error: error?.message || "Failed to submit RFI." },
       { status: 500 },
@@ -435,7 +475,14 @@ export async function PATCH(request: Request) {
       rfq.company_id,
     );
   } catch (membershipError) {
-    console.error("RFI answer membership lookup failed:", membershipError);
+    reportCriticalApiFailure({
+      domain: "rfi",
+      operation: "answer",
+      failureStage: "membership_lookup",
+      route: "/api/rfq-rfis",
+      method: "PATCH",
+      error: membershipError,
+    });
 
     return NextResponse.json(
       { error: "Unable to verify organization membership." },
@@ -461,6 +508,15 @@ export async function PATCH(request: Request) {
     .single();
 
   if (error || !data) {
+    reportCriticalApiFailure({
+      domain: "rfi",
+      operation: "answer",
+      failureStage: "rfi_update",
+      route: "/api/rfq-rfis",
+      method: "PATCH",
+      error: error ?? new Error("RfiUpdateMissing"),
+    });
+
     return NextResponse.json(
       { error: error?.message || "Failed to answer RFI." },
       { status: 500 },

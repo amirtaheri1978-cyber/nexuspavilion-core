@@ -5,6 +5,7 @@ import { quoteSubmittedEmail } from "@/lib/email/templates/quote-submitted-email
 import { getActiveMembershipForUserCompany } from "@/lib/auth/membership";
 import { formatRfqDeadlineForDisplay } from "@/lib/datetime/format-rfq-deadline-display";
 import { joinPublicSitePath } from "@/lib/ops/public-site-url";
+import { reportCriticalApiFailure } from "@/lib/ops/report-critical-api-failure";
 import {
   canRespondToRfqSourcing,
   isPublicSourcingMethod,
@@ -135,7 +136,14 @@ user.id,
 profile.company_id
 );
 } catch (membershipError) {
-console.error("Quote submit membership lookup failed:", membershipError);
+reportCriticalApiFailure({
+  domain: "quotation",
+  operation: "submit",
+  failureStage: "membership_lookup",
+  route: "/api/quotes",
+  method: "POST",
+  error: membershipError,
+});
 
 return NextResponse.json(
 { error: "Unable to verify organization membership." },
@@ -202,7 +210,14 @@ if (!isPublicSourcingMethod(rfq.sourcing_method)) {
   );
 
   if (accessError) {
-    console.error("Quote submit RFQ access lookup failed:", accessError);
+    reportCriticalApiFailure({
+      domain: "quotation",
+      operation: "submit",
+      failureStage: "rfq_access_lookup",
+      route: "/api/quotes",
+      method: "POST",
+      error: accessError,
+    });
 
     return NextResponse.json(
       { error: "Unable to verify RFQ access." },
@@ -243,10 +258,14 @@ const { data: requiredAddenda, error: requiredAddendaError } = await supabase
 .eq("requires_acknowledgement", true);
 
 if (requiredAddendaError) {
-console.error(
-"Quote submit required addenda lookup failed:",
-requiredAddendaError
-);
+reportCriticalApiFailure({
+  domain: "quotation",
+  operation: "submit",
+  failureStage: "required_addenda_lookup",
+  route: "/api/quotes",
+  method: "POST",
+  error: requiredAddendaError,
+});
 
 return NextResponse.json(
 { error: "Unable to verify required RFQ addenda acknowledgements." },
@@ -265,10 +284,14 @@ await supabase
 .in("addendum_id", requiredIds);
 
 if (acknowledgementError) {
-console.error(
-"Quote submit addendum acknowledgement lookup failed:",
-acknowledgementError
-);
+reportCriticalApiFailure({
+  domain: "quotation",
+  operation: "submit",
+  failureStage: "addendum_acknowledgement_lookup",
+  route: "/api/quotes",
+  method: "POST",
+  error: acknowledgementError,
+});
 
 return NextResponse.json(
 { error: "Unable to verify required RFQ addenda acknowledgements." },
@@ -312,6 +335,15 @@ score,
 .single();
 
 if (quoteError || !quote) {
+reportCriticalApiFailure({
+  domain: "quotation",
+  operation: "submit",
+  failureStage: "quote_insert",
+  route: "/api/quotes",
+  method: "POST",
+  error: quoteError ?? new Error("QuoteInsertMissing"),
+});
+
 return NextResponse.json(
 { error: quoteError?.message || "Failed to submit quote" },
 { status: 500 }
@@ -388,7 +420,14 @@ return NextResponse.json({
   email,
 });
 } catch (error) {
-console.error(error);
+reportCriticalApiFailure({
+  domain: "quotation",
+  operation: "submit",
+  failureStage: "outer_catch",
+  route: "/api/quotes",
+  method: "POST",
+  error,
+});
 
 return NextResponse.json(
 { error: "Internal server error" },

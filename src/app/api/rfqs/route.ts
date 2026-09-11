@@ -5,6 +5,7 @@ import { rfqCreatedEmail } from "@/lib/email/templates/rfq-created-email";
 import { getActiveMembershipForUserCompany } from "@/lib/auth/membership";
 import { resolveRfqDeadlineForStorage } from "@/lib/datetime/local-date-time-to-utc";
 import { joinPublicSitePath } from "@/lib/ops/public-site-url";
+import { reportCriticalApiFailure } from "@/lib/ops/report-critical-api-failure";
 import { canCreateCompanyRfq } from "@/lib/procurement/procurement-write-authorization";
 import { evaluateRfqRequirements } from "@/lib/procurement/rfq-requirements-completeness";
 import { recordTrustedProcurementActivity } from "@/lib/procurement/record-procurement-activity";
@@ -132,7 +133,14 @@ user.id,
 profile.company_id
 );
 } catch (membershipError) {
-console.error("RFQ create membership lookup failed:", membershipError);
+reportCriticalApiFailure({
+  domain: "rfq",
+  operation: "create",
+  failureStage: "membership_lookup",
+  route: "/api/rfqs",
+  method: "POST",
+  error: membershipError,
+});
 
 return NextResponse.json(
 { error: "Unable to verify organization membership." },
@@ -281,6 +289,15 @@ user_id: user.id,
 .single();
 
 if (error || !rfq) {
+reportCriticalApiFailure({
+  domain: "rfq",
+  operation: "create",
+  failureStage: "rfq_insert",
+  route: "/api/rfqs",
+  method: "POST",
+  error: error ?? new Error("RfqInsertMissing"),
+});
+
 return NextResponse.json(
 { error: error?.message || "Failed to create RFQ." },
 { status: 500 }
@@ -323,7 +340,14 @@ success: true,
 rfq,
 });
 } catch (error) {
-console.error(error);
+reportCriticalApiFailure({
+  domain: "rfq",
+  operation: "create",
+  failureStage: "outer_catch",
+  route: "/api/rfqs",
+  method: "POST",
+  error,
+});
 
 return NextResponse.json(
 { error: "Internal server error." },

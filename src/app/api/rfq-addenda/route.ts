@@ -4,6 +4,7 @@ import { getActiveMembershipForUserCompany } from "@/lib/auth/membership";
 import { sendEmail } from "@/lib/email/send-email";
 import { buildRfqAddendumEmail } from "@/lib/email/templates/rfq-addendum-email";
 import { joinPublicSitePath } from "@/lib/ops/public-site-url";
+import { reportCriticalApiFailure } from "@/lib/ops/report-critical-api-failure";
 import { canCreateCompanyRfq } from "@/lib/procurement/procurement-write-authorization";
 import { recordTrustedProcurementActivity } from "@/lib/procurement/record-procurement-activity";
 import { createClient } from "@/lib/supabase/server";
@@ -190,6 +191,15 @@ export async function GET(request: Request) {
     .order("created_at", { ascending: false });
 
   if (error) {
+    reportCriticalApiFailure({
+      domain: "addendum",
+      operation: "list",
+      failureStage: "addenda_load",
+      route: "/api/rfq-addenda",
+      method: "GET",
+      error,
+    });
+
     return NextResponse.json(
       { error: error.message || "Failed to load addenda." },
       { status: 500 },
@@ -247,7 +257,14 @@ export async function POST(request: Request) {
       rfq.company_id,
     );
   } catch (membershipError) {
-    console.error("Addenda create membership lookup failed:", membershipError);
+    reportCriticalApiFailure({
+      domain: "addendum",
+      operation: "create",
+      failureStage: "membership_lookup",
+      route: "/api/rfq-addenda",
+      method: "POST",
+      error: membershipError,
+    });
 
     return NextResponse.json(
       { error: "Unable to verify organization membership." },
@@ -278,6 +295,15 @@ export async function POST(request: Request) {
     .single();
 
   if (error || !data) {
+    reportCriticalApiFailure({
+      domain: "addendum",
+      operation: "create",
+      failureStage: "addendum_insert",
+      route: "/api/rfq-addenda",
+      method: "POST",
+      error: error ?? new Error("AddendumInsertMissing"),
+    });
+
     return NextResponse.json(
       { error: error?.message || "Failed to create addendum." },
       { status: 500 },

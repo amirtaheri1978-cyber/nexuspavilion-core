@@ -8,6 +8,7 @@ import {
   getPublicSiteUrl,
   PUBLIC_SITE_URL_UNCONFIGURED,
 } from "@/lib/ops/public-site-url";
+import { reportCriticalApiFailure } from "@/lib/ops/report-critical-api-failure";
 import { canInviteCompanySuppliers } from "@/lib/procurement/procurement-write-authorization";
 import { recordTrustedProcurementActivity } from "@/lib/procurement/record-procurement-activity";
 import { APPROVED_VENDOR_DOMAIN_AVAILABLE } from "@/lib/procurement/supplier-domain-availability";
@@ -250,9 +251,12 @@ export async function POST(request: Request) {
         profile.company_id,
       );
     } catch (membershipError) {
-      console.error("Supplier invite membership lookup failed.", {
-        userId: user.id,
-        companyId: profile.company_id,
+      reportCriticalApiFailure({
+        domain: "rfq_invitation",
+        operation: "create",
+        failureStage: "membership_lookup",
+        route: "/api/invites",
+        method: "POST",
         error: membershipError,
       });
 
@@ -314,10 +318,14 @@ export async function POST(request: Request) {
           .maybeSingle();
 
       if (approvedVendorError) {
-        console.error(
-          "Could not validate selected AVL supplier.",
-          approvedVendorError,
-        );
+        reportCriticalApiFailure({
+          domain: "rfq_invitation",
+          operation: "create",
+          failureStage: "avl_supplier_lookup",
+          route: "/api/invites",
+          method: "POST",
+          error: approvedVendorError,
+        });
 
         return NextResponse.json(
           { error: "The selected AVL supplier could not be validated." },
@@ -345,10 +353,14 @@ export async function POST(request: Request) {
       .maybeSingle();
 
     if (existingInviteError) {
-      console.error(
-        "Could not verify existing supplier invitations.",
-        existingInviteError,
-      );
+      reportCriticalApiFailure({
+        domain: "rfq_invitation",
+        operation: "create",
+        failureStage: "existing_invite_lookup",
+        route: "/api/invites",
+        method: "POST",
+        error: existingInviteError,
+      });
 
       return NextResponse.json(
         { error: "Existing supplier invitations could not be verified." },
@@ -407,7 +419,14 @@ export async function POST(request: Request) {
       .single();
 
     if (inviteError || !invite) {
-      console.error(inviteError);
+      reportCriticalApiFailure({
+        domain: "rfq_invitation",
+        operation: "create",
+        failureStage: "invite_insert",
+        route: "/api/invites",
+        method: "POST",
+        error: inviteError ?? new Error("InviteInsertMissing"),
+      });
 
       return NextResponse.json(
         { error: inviteError?.message || "Could not create supplier invite." },
@@ -453,7 +472,14 @@ export async function POST(request: Request) {
       },
     });
   } catch (error) {
-    console.error(error);
+    reportCriticalApiFailure({
+      domain: "rfq_invitation",
+      operation: "create",
+      failureStage: "outer_catch",
+      route: "/api/invites",
+      method: "POST",
+      error,
+    });
 
     return NextResponse.json({ error: "Server error." }, { status: 500 });
   }
