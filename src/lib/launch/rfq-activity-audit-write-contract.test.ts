@@ -48,6 +48,25 @@ const helperSource = readFileSync(
   resolve(process.cwd(), "src/lib/procurement/record-procurement-activity.ts"),
   "utf8",
 ).replace(/\r\n/g, "\n");
+const rfiRouteSource = readFileSync(
+  resolve(process.cwd(), "src/app/api/rfq-rfis/route.ts"),
+  "utf8",
+).replace(/\r\n/g, "\n");
+const quoteRouteSource = readFileSync(
+  resolve(process.cwd(), "src/app/api/quotes/route.ts"),
+  "utf8",
+).replace(/\r\n/g, "\n");
+const awardRouteSource = readFileSync(
+  resolve(process.cwd(), "src/app/api/award-contract/route.ts"),
+  "utf8",
+).replace(/\r\n/g, "\n");
+const launchBaselineSource = readFileSync(
+  resolve(
+    process.cwd(),
+    "supabase/migrations/20260911000000_launch_candidate_baseline_v2.sql",
+  ),
+  "utf8",
+).replace(/\r\n/g, "\n");
 
 type RpcCall = {
   fn: string;
@@ -274,5 +293,97 @@ describe("RFQ create activity and audit write contract", () => {
     expect(helperSource).toContain("if (error)");
     expect(helperSource).toContain("result.success === true");
     expect(helperSource).toContain("describeClientWriteError");
+  });
+});
+describe("Task 15-06 critical procurement business event logging contract", () => {
+  function sqlFunctionBody(functionName: string) {
+    const startMarker =
+      `CREATE OR REPLACE FUNCTION "public"."${functionName}"`;
+    const endMarker =
+      `ALTER FUNCTION "public"."${functionName}"`;
+
+    const start = launchBaselineSource.indexOf(startMarker);
+    const end = launchBaselineSource.indexOf(
+      endMarker,
+      start + startMarker.length,
+    );
+
+    if (start < 0 || end <= start) {
+      throw new Error(`Unable to resolve SQL contract for ${functionName}.`);
+    }
+
+    return launchBaselineSource.slice(start, end);
+  }
+
+  it("keeps RFQ, RFI, and quote lifecycle events wired to the trusted activity writer", () => {
+    const routeContracts = [
+      [routeSource, ["rfq_created"]],
+      [rfiRouteSource, ["rfi_submitted", "rfi_responded"]],
+      [quoteRouteSource, ["quote_submitted"]],
+    ] as const;
+
+    for (const [source, activityKinds] of routeContracts) {
+      expect(source).toContain("recordTrustedProcurementActivity");
+
+      for (const activityKind of activityKinds) {
+        expect(source).toContain(`"${activityKind}"`);
+      }
+    }
+
+    for (const activityKind of [
+      "rfq_created",
+      "quote_submitted",
+      "rfi_submitted",
+      "rfi_responded",
+    ]) {
+      expect(helperSource).toContain(`| "${activityKind}"`);
+    }
+  });
+
+  it("keeps trusted RFQ, RFI, and quote activity mapped to persistent audit actions", () => {
+    const trustedActivitySql = sqlFunctionBody(
+      "record_procurement_activity",
+    );
+
+    expect(trustedActivitySql).toContain(
+      "insert into public.audit_logs",
+    );
+
+    const activityContracts = [
+      ["rfq_created", "RFQ_CREATED"],
+      ["quote_submitted", "QUOTE_SUBMITTED"],
+      ["rfi_submitted", "RFI_SUBMITTED"],
+      ["rfi_responded", "RFI_RESPONDED"],
+    ] as const;
+
+    for (const [activityKind, auditAction] of activityContracts) {
+      expect(trustedActivitySql).toContain(`'${activityKind}'`);
+      expect(trustedActivitySql).toContain(`'${auditAction}'`);
+    }
+  });
+
+  it("keeps contract award activity inside the atomic award transaction", () => {
+    const awardSql = sqlFunctionBody("award_rfq_quote");
+    const awardActivitySql = sqlFunctionBody(
+      "record_rfq_award_workspace_activity",
+    );
+
+    expect(awardRouteSource).toContain('"award_rfq_quote"');
+    expect(awardRouteSource).not.toContain(
+      "recordTrustedProcurementActivity",
+    );
+    expect(awardRouteSource).not.toContain('.from("audit_logs")');
+
+    expect(awardSql).toContain(
+      "perform public.record_rfq_award_workspace_activity(",
+    );
+
+    expect(awardActivitySql).toContain(
+      "insert into public.audit_logs",
+    );
+    expect(awardActivitySql).toContain("'CONTRACT_AWARDED'");
+    expect(awardActivitySql).toContain(
+      "'CONTRACT_AWARD_RECEIVED'",
+    );
   });
 });
