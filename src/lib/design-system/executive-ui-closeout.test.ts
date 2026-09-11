@@ -129,6 +129,41 @@ describe("NP-MASTER-22-B05 launch-critical closeout", () => {
     expect(launchCritical.directory).toContain('aria-label="Search company network"');
   });
 
+  it("keeps Company Network filtering responsive and list rendering bounded", () => {
+    expect(launchCritical.directory).toContain("useDeferredValue");
+    expect(launchCritical.directory).toContain(
+      "const DIRECTORY_PAGE_SIZE = 12;",
+    );
+    expect(launchCritical.directory).toContain(
+      "const deferredSearch = useDeferredValue(search);",
+    );
+    expect(launchCritical.directory).toContain(
+      "const query = deferredSearch.toLowerCase().trim();",
+    );
+    expect(launchCritical.directory).toContain("setCurrentPage(1);");
+    expect(launchCritical.directory).toContain(
+      "filteredCompanies.slice(",
+    );
+    expect(launchCritical.directory).toContain(
+      "paginatedCompanies.map((company) => {",
+    );
+    expect(launchCritical.directory).not.toContain(
+      "filteredCompanies.map((company) => {",
+    );
+    expect(launchCritical.directory).toContain(
+      'aria-label="Company network pagination"',
+    );
+    expect(launchCritical.directory).toContain(
+      'aria-label="Previous company network page"',
+    );
+    expect(launchCritical.directory).toContain(
+      'aria-label="Next company network page"',
+    );
+    expect(launchCritical.directory).toContain(
+      "Page {safeCurrentPage} of {totalPages}",
+    );
+  });
+
   it("keeps one page h1 on key launch surfaces", () => {
     expect(launchCritical.dashboardHero.match(/<h1[\s>]/g) || []).toHaveLength(1);
     expect(launchCritical.notifications.match(/<h1[\s>]/g) || []).toHaveLength(1);

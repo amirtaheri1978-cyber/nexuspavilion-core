@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useDeferredValue, useEffect, useMemo, useState } from "react";
 
 import {
   getActiveMembershipForUserCompany,
@@ -60,6 +60,7 @@ status: string | null;
 rating: number | null;
 };
 
+const DIRECTORY_PAGE_SIZE = 12;
 
 function formatMoney(value: number) {
 if (!Number.isFinite(value)) return "$0";
@@ -194,6 +195,8 @@ const [profile, setProfile] = useState<Profile | null>(null);
 const [membership, setMembership] = useState<OrganizationMembership | null>(null);
 
 const [search, setSearch] = useState("");
+const deferredSearch = useDeferredValue(search);
+const [currentPage, setCurrentPage] = useState(1);
 const [loading, setLoading] = useState(true);
 const [loadError, setLoadError] = useState("");
 const [savingVendorId, setSavingVendorId] = useState<string | null>(null);
@@ -430,7 +433,7 @@ suspendedCount,
 }, [rankedCompanies, supplierCompanies, approvedVendors]);
 
 const filteredCompanies = useMemo(() => {
-const query = search.toLowerCase().trim();
+const query = deferredSearch.toLowerCase().trim();
 
 if (!query) return rankedCompanies;
 
@@ -474,11 +477,33 @@ supplierScopedMatch
 });
 }, [
 rankedCompanies,
-search,
+deferredSearch,
 approvedVendorMap,
 capabilitiesByCompany,
 qualificationsByCompany,
 ]);
+
+const totalPages = Math.max(
+1,
+Math.ceil(filteredCompanies.length / DIRECTORY_PAGE_SIZE)
+);
+
+const safeCurrentPage = Math.min(currentPage, totalPages);
+const pageStartIndex = (safeCurrentPage - 1) * DIRECTORY_PAGE_SIZE;
+
+const pageEndIndex = Math.min(
+pageStartIndex + DIRECTORY_PAGE_SIZE,
+filteredCompanies.length
+);
+
+const paginatedCompanies = useMemo(
+() =>
+filteredCompanies.slice(
+pageStartIndex,
+pageStartIndex + DIRECTORY_PAGE_SIZE
+),
+[filteredCompanies, pageStartIndex]
+);
 
 async function updateApprovedVendor(
 vendorCompanyId: string,
@@ -565,7 +590,10 @@ supplier-specific procurement intelligence where supported.
 type="text"
 placeholder="Search companies, categories, regions, roles, capabilities, or qualifications..."
 value={search}
-onChange={(event) => setSearch(event.target.value)}
+onChange={(event) => {
+setSearch(event.target.value);
+setCurrentPage(1);
+}}
 aria-label="Search company network"
 className="h-[58px] w-full rounded-2xl border border-white/10 bg-[#07111F] px-5 text-sm font-semibold text-white outline-none transition placeholder:text-slate-400 focus:border-[#C8A646] focus:bg-[#081827] focus-visible:ring-2 focus-visible:ring-[#C8A646]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#07111F]"
 />
@@ -704,8 +732,9 @@ Try another search term or check back as the network grows.
 </p>
 </div>
 ) : (
+<>
 <div className="mt-10 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-{filteredCompanies.map((company) => {
+{paginatedCompanies.map((company) => {
 const avlRecord = approvedVendorMap.get(company.id);
 const isSelfCompany = profile?.company_id === company.id;
 const isSupplierScopedCompany = isSupplierCompany(company);
@@ -990,6 +1019,52 @@ View Profile →
 );
 })}
 </div>
+
+<nav
+className="mt-8 flex flex-col gap-4 rounded-[28px] border border-white/10 bg-white/[0.045] px-5 py-4 sm:flex-row sm:items-center sm:justify-between"
+aria-label="Company network pagination"
+>
+<p
+className="text-sm font-semibold text-slate-400"
+aria-live="polite"
+>
+Showing {pageStartIndex + 1} to {pageEndIndex} of {filteredCompanies.length} companies
+</p>
+
+<div className="flex items-center gap-3">
+<button
+type="button"
+onClick={() =>
+setCurrentPage(Math.max(1, safeCurrentPage - 1))
+}
+disabled={safeCurrentPage === 1}
+aria-label="Previous company network page"
+className={`inline-flex min-h-11 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.055] px-4 text-sm font-black text-white transition hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-40 ${EXECUTIVE_FOCUS_CYAN}`}
+>
+Previous
+</button>
+
+<span
+className="min-w-[112px] text-center text-sm font-black text-slate-200"
+aria-live="polite"
+>
+Page {safeCurrentPage} of {totalPages}
+</span>
+
+<button
+type="button"
+onClick={() =>
+setCurrentPage(Math.min(totalPages, safeCurrentPage + 1))
+}
+disabled={safeCurrentPage === totalPages}
+aria-label="Next company network page"
+className={`inline-flex min-h-11 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.055] px-4 text-sm font-black text-white transition hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-40 ${EXECUTIVE_FOCUS_CYAN}`}
+>
+Next
+</button>
+</div>
+</nav>
+</>
 )}
 </div>
 </main>
