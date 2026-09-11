@@ -546,6 +546,50 @@ Still open:
 - Still-binding D1–D6 and retention / legal-hold governance items unless
   the Product Owner explicitly changes those gates
 
+## Production environment variable audit (Task 15-09)
+
+Audit date: **2026-09-11**.
+
+Audit target:
+
+- Vercel team: `nexus-pavilion`
+- Vercel project: `nexuspavilion-core`
+- Vercel project ID: `prj_KMhk2Q5Gtm0cadrv7uX6IZkI99tg`
+- Environment: **Production**
+
+This audit validates configuration presence, target, classification, and
+safe value shape where Vercel permits read-only runtime access. Secret
+values are not copied into the repository, runbook, terminal evidence,
+tests, or launch tracker.
+
+| Variable | Classification | Production evidence | Validation |
+| --- | --- | --- | --- |
+| `NEXT_PUBLIC_SUPABASE_URL` | Required public | Present as Production Config | HTTPS origin matches `bzntqnwoytdakmstbtyh.supabase.co`. |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Required public | Present as Production Config | Non-empty publishable-key shape validated; value not recorded. |
+| `NEXT_PUBLIC_SITE_URL` | Required public | Present as Production Config | HTTPS origin; not localhost; not `*.github.dev`; no credentials/path/query/hash. |
+| `RESEND_API_KEY` | Required server-only secret | Present as Production Secret | Secret presence/type/target verified. Vercel intentionally refused to pull the Secret value, so the value was not inspected. |
+| `CONTACT_EMAIL` | Required server-only | Present as Production Config | Email-address shape validated; value not recorded. |
+| `EMAIL_FROM` | Server-only / operationally expected | Present as Production Config | Sender shape validated; value not recorded. |
+| `NEXT_PUBLIC_SENTRY_DSN` | Optional / fail-open | Absent | Allowed by the current Sentry contract. |
+| `SENTRY_DSN` | Optional / fail-open | Absent | Allowed by the current Sentry contract. |
+| `SUPABASE_SERVICE_ROLE_KEY` | Forbidden in the Next.js application | Absent | Must remain absent from application configuration and Production source usage. |
+
+Additional classification:
+
+- `NEXT_PUBLIC_APP_URL` is present in Vercel Production but is not
+  referenced by the current application `process.env` source audit.
+  It is not part of the current launch-required environment contract and
+  is left unchanged by Task 15-09.
+- `NEXT_RUNTIME` and `NODE_ENV` are framework/runtime-managed markers,
+  not application-managed environment configuration and are not required
+  in `.env.example`.
+- `VERCEL_GIT_COMMIT_SHA` and `NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA` are
+  host-provided deployment metadata used opportunistically by `/api/health`.
+
+Task 15-09 performs no `vercel env pull`, secret-value export, environment
+mutation, deployment, Supabase mutation, database/schema/RLS change, or
+Production application behavior change.
+
 ## Environment notes (names only)
 
 Required public: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`,

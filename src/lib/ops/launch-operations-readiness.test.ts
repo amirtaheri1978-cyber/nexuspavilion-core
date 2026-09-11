@@ -996,3 +996,82 @@ describe("Task 15-08 backup recovery understanding", () => {
     );
   });
 });
+
+describe("Task 15-09 production environment audit", () => {
+  it("keeps the Production environment contract explicit without exposing secrets", () => {
+    const runbook = readSource(
+      "docs/operations/LAUNCH_OPERATIONS_RUNBOOK.md",
+    );
+    const envExample = readSource(".env.example");
+    const supabaseClient = readSource("src/lib/supabase/client.ts");
+    const supabaseServer = readSource("src/lib/supabase/server.ts");
+    const sendEmail = readSource("src/lib/email/send-email.ts");
+    const contactRoute = readSource("src/app/api/contact/route.ts");
+
+    const auditStart = runbook.indexOf(
+      "## Production environment variable audit (Task 15-09)",
+    );
+    const auditEnd = runbook.indexOf(
+      "## Environment notes (names only)",
+      auditStart,
+    );
+
+    expect(auditStart).toBeGreaterThanOrEqual(0);
+    expect(auditEnd).toBeGreaterThan(auditStart);
+
+    const auditSection = runbook.slice(auditStart, auditEnd);
+
+    expect(auditSection).toContain("Vercel team: `nexus-pavilion`");
+    expect(auditSection).toContain("Vercel project: `nexuspavilion-core`");
+    expect(auditSection).toContain(
+      "Vercel project ID: `prj_KMhk2Q5Gtm0cadrv7uX6IZkI99tg`",
+    );
+    expect(auditSection).toContain("Environment: **Production**");
+
+    expect(auditSection).toContain("`NEXT_PUBLIC_SUPABASE_URL`");
+    expect(auditSection).toContain("`NEXT_PUBLIC_SUPABASE_ANON_KEY`");
+    expect(auditSection).toContain("`NEXT_PUBLIC_SITE_URL`");
+    expect(auditSection).toContain("`RESEND_API_KEY`");
+    expect(auditSection).toContain("`CONTACT_EMAIL`");
+    expect(auditSection).toContain("`EMAIL_FROM`");
+    expect(auditSection).toContain("`NEXT_PUBLIC_SENTRY_DSN`");
+    expect(auditSection).toContain("`SENTRY_DSN`");
+    expect(auditSection).toContain("`SUPABASE_SERVICE_ROLE_KEY`");
+
+    expect(auditSection).toContain(
+      "Vercel intentionally refused to pull the Secret value",
+    );
+    expect(auditSection).toContain(
+      "Must remain absent from application configuration and Production source usage.",
+    );
+    expect(auditSection).toContain("`NEXT_PUBLIC_APP_URL`");
+    expect(auditSection).toContain("`NEXT_RUNTIME`");
+    expect(auditSection).toContain("`VERCEL_GIT_COMMIT_SHA`");
+
+    expect(auditSection).not.toMatch(/RESEND_API_KEY\s*=\s*\S+/);
+    expect(auditSection).not.toMatch(/SUPABASE_SERVICE_ROLE_KEY\s*=\s*\S+/);
+
+    expect(envExample).toContain("NEXT_PUBLIC_SUPABASE_URL=");
+    expect(envExample).toContain("NEXT_PUBLIC_SUPABASE_ANON_KEY=");
+    expect(envExample).toContain("NEXT_PUBLIC_SITE_URL=");
+    expect(envExample).toContain("RESEND_API_KEY=");
+    expect(envExample).toContain("EMAIL_FROM=");
+    expect(envExample).toContain("CONTACT_EMAIL=");
+    expect(envExample).not.toContain("NEXT_PUBLIC_APP_URL=");
+
+    expect(supabaseClient).toContain(
+      "process.env.NEXT_PUBLIC_SUPABASE_URL!",
+    );
+    expect(supabaseClient).toContain(
+      "process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!",
+    );
+    expect(supabaseServer).toContain(
+      "process.env.NEXT_PUBLIC_SUPABASE_URL!",
+    );
+    expect(supabaseServer).toContain(
+      "process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!",
+    );
+    expect(sendEmail).toContain("process.env.RESEND_API_KEY");
+    expect(contactRoute).toContain("process.env.CONTACT_EMAIL?.trim()");
+  });
+});
