@@ -721,7 +721,13 @@ describe("Task 15-03 migration discipline", () => {
     expect(runbook).toContain("20260909090225");
     expect(runbook).toContain("20260904204031");
     expect(runbook).toContain("immutable historical evidence");
-    expect(runbook).toContain("NOT yet been normalized");
+    expect(runbook).not.toContain("NOT yet been normalized");
+    expect(runbook).toContain("no longer active-dev ledger rows");
+    expect(runbook).toContain("remote ledger contains only");
+    expect(runbook).toContain(
+      "20260911000000 | launch_candidate_baseline_v2",
+    );
+    expect(runbook).toContain("11/11 fingerprint categories MATCH");
     expect(runbook).toContain("metadata-only");
     expect(runbook).toContain("MUST NOT be pushed to active-dev");
 
