@@ -19,7 +19,7 @@ const templateSource = readSource(
   "src/lib/email/templates/award-notification-email.ts",
 );
 const notificationMigration = readSource(
-  "supabase/migrations/20260909083600_resolve_rfq_award_notification_recipient.sql",
+  "supabase/legacy-migrations/pre-baseline-v2/20260909083600_resolve_rfq_award_notification_recipient.sql",
 );
 const workspaceUrl = "https://app.example.test/rfq/harbor-point-package";
 

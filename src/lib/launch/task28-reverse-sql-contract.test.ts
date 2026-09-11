@@ -5,9 +5,9 @@ import { describe, expect, it } from "vitest";
 const reverse290Path = "docs/operations/sql/task28_reverse_20260829000000.sql";
 const reverse280Path = "docs/operations/sql/task28_reverse_20260828000000.sql";
 const awardMigrationPath =
-  "supabase/migrations/20260826000000_enforce_atomic_rfq_award_integrity.sql";
+  "supabase/legacy-migrations/pre-baseline-v2/20260826000000_enforce_atomic_rfq_award_integrity.sql";
 const baselineMigrationPath =
-  "supabase/migrations/20260822000000_dev_public_baseline.sql";
+  "supabase/legacy-migrations/pre-baseline-v2/20260822000000_dev_public_baseline.sql";
 
 function readSource(relativePath: string) {
   return readFileSync(resolve(process.cwd(), relativePath), "utf8").replace(

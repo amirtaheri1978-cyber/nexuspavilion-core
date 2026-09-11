@@ -31,7 +31,7 @@ const inviteSignupPage = readSource(
 const submitPage = readSource("src/app/rfq/[slug]/submit/page.tsx");
 const bootstrapHelper = readSource("src/lib/auth/workspace-bootstrap.ts");
 const bootstrapMigration = readSource(
-  "supabase/migrations/20260827000000_enable_professional_identity_primitives.sql",
+  "supabase/legacy-migrations/pre-baseline-v2/20260827000000_enable_professional_identity_primitives.sql",
 );
 
 describe("Task 32B RFQ vendor onboarding continuation", () => {

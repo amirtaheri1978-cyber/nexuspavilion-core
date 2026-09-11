@@ -45,7 +45,7 @@ const sidebar = readSource("src/components/sidebar.tsx");
 const appShell = readSource("src/components/app-shell.tsx");
 const detail = readSource("src/app/rfq/[slug]/page.tsx");
 const migration = readSource(
-  "supabase/migrations/20260904052726_rfq_document_requirements_contract.sql",
+  "supabase/legacy-migrations/pre-baseline-v2/20260904052726_rfq_document_requirements_contract.sql",
 );
 
 describe("Task 24-RFQ-08 document workspace density", () => {

@@ -51,7 +51,7 @@ const identityApi = readSource(
   "src/app/api/profile/professional-identity/route.ts",
 );
 const identityMigration = readSource(
-  "supabase/migrations/20260827000000_enable_professional_identity_primitives.sql",
+  "supabase/legacy-migrations/pre-baseline-v2/20260827000000_enable_professional_identity_primitives.sql",
 );
 
 describe("NP-MASTER-22-B04-5 current-user account display", () => {

@@ -44,7 +44,7 @@ const visualQa = readSource(
 const nameHelper = readSource("src/lib/auth/professional-names.ts");
 const companyPage = readSource("src/app/company/page.tsx");
 const identityMigration = readSource(
-  "supabase/migrations/20260827000000_enable_professional_identity_primitives.sql",
+  "supabase/legacy-migrations/pre-baseline-v2/20260827000000_enable_professional_identity_primitives.sql",
 );
 
 const rpcCall = identityApi.slice(

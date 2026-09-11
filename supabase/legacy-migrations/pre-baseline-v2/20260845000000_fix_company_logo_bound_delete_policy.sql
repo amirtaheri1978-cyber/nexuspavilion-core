@@ -1,17 +1,23 @@
 -- Nexus Pavilion
 -- 7-10D-LOGO forward remediation
 --
+-- Canonical repository migration source: 20260845000000
+-- Legacy launch-candidate ledger version: 20260831070207
+--
 -- Purpose:
--- - Preserve the immutable migration history of
---   20260843000000_company_logo_storage_contract.sql.
+-- - Canonical forward remediation after 20260843000000_company_logo_storage_contract.sql.
 -- - Correct the installed Company-logos DELETE-policy correlation so the
 --   currently bound company logo cannot be deleted by authenticated cleanup.
--- - Reproduce the targeted remediation already verified on nexus-pavilion-dev.
--- - Remain safe when the equivalent remediation is already installed: the
---   reviewed policy is validated, then recreated in its canonical form.
+-- - Equivalent remediation is already present on the launch-candidate backend
+--   under legacy development migration version 20260831070207.
+-- - This canonical file includes non-material idempotent detection/hardening;
+--   final policy end-state matches the verified launch-candidate policy.
+-- - Do NOT execute against linked nexus-pavilion-dev before migration-ledger
+--   normalization is authorized. Canonical 43 is not yet recorded as applied
+--   under its canonical version ID on that backend.
 --
 -- Scope exclusions:
--- - No bucket creation.
+-- - No bucket creation (owned by canonical migration 43).
 -- - No Storage UPDATE policy.
 -- - No broad Storage grants.
 -- - No audit/notification grants.

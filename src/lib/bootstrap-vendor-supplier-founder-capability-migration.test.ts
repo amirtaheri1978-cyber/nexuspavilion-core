@@ -10,9 +10,9 @@ function readSource(relativePath: string) {
 }
 
 const migrationPath =
-  "supabase/migrations/20260832000000_bootstrap_vendor_supplier_founder_capability.sql";
+  "supabase/legacy-migrations/pre-baseline-v2/20260832000000_bootstrap_vendor_supplier_founder_capability.sql";
 const historicalBootstrapPath =
-  "supabase/migrations/20260827000000_enable_professional_identity_primitives.sql";
+  "supabase/legacy-migrations/pre-baseline-v2/20260827000000_enable_professional_identity_primitives.sql";
 const createRoutePath = "src/app/api/companies/create/route.ts";
 const createCompanyPagePath = "src/app/create-company/page.tsx";
 const quotesRoutePath = "src/app/api/quotes/route.ts";
@@ -22,7 +22,7 @@ const submitPagePath = "src/app/rfq/[slug]/submit/page.tsx";
 const inviteSignupPath = "src/app/invite/[token]/signup/page.tsx";
 const sourcingRlsPath =
   "supabase/legacy-migrations/pre-baseline/20260819_restrict_rfq_sourcing_access_rls.sql";
-const baselinePath = "supabase/migrations/20260822000000_dev_public_baseline.sql";
+const baselinePath = "supabase/legacy-migrations/pre-baseline-v2/20260822000000_dev_public_baseline.sql";
 
 const sql = readSource(migrationPath);
 const normalized = sql.replace(/\s+/g, " ").trim().toLowerCase();

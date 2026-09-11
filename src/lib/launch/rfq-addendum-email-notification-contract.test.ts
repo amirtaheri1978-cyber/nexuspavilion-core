@@ -15,10 +15,10 @@ const acknowledgementRoute = readSource(
 );
 const quotesRoute = readSource("src/app/api/quotes/route.ts");
 const activityFanoutMigration = readSource(
-  "supabase/migrations/20260836000000_deliver_addendum_respondent_activity.sql",
+  "supabase/legacy-migrations/pre-baseline-v2/20260836000000_deliver_addendum_respondent_activity.sql",
 );
 const notificationMigration = readSource(
-  "supabase/migrations/20260909050709_resolve_rfq_addendum_notification_recipients.sql",
+  "supabase/legacy-migrations/pre-baseline-v2/20260909050709_resolve_rfq_addendum_notification_recipients.sql",
 );
 
 describe("14-05 RFQ Addendum email notification contract", () => {

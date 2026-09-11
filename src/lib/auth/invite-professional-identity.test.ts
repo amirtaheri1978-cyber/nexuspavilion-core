@@ -46,10 +46,10 @@ const visualQaFixture = readSource(
   "src/app/dev/invite-enrollment-visual-qa/page.tsx",
 );
 const identityMigration = readSource(
-  "supabase/migrations/20260827000000_enable_professional_identity_primitives.sql",
+  "supabase/legacy-migrations/pre-baseline-v2/20260827000000_enable_professional_identity_primitives.sql",
 );
 const invitationContextSql = readSource(
-  "supabase/migrations/20260823000000_create_get_organization_invitation_context.sql",
+  "supabase/legacy-migrations/pre-baseline-v2/20260823000000_create_get_organization_invitation_context.sql",
 );
 const acceptBody = identityMigration.slice(
   identityMigration.indexOf(

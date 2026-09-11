@@ -34,7 +34,7 @@ const repositorySource = fs.readFileSync(
 const migrationSource = fs.readFileSync(
   path.join(
     process.cwd(),
-    "supabase/migrations/20260905093000_project_portfolio_foundation.sql",
+    "supabase/legacy-migrations/pre-baseline-v2/20260905093000_project_portfolio_foundation.sql",
   ),
   "utf8",
 );

@@ -31,25 +31,28 @@ function readSource(relativePath: string) {
   );
 }
 
-const QUOTE_SELECT_MIGRATION =
-  "supabase/migrations/20260829000000_restrict_issuer_quote_select_until_commercial_unlock.sql";
-const RFI_COLLABORATION_MIGRATION =
-  "supabase/migrations/20260834000000_rfi_collaboration_persistence_foundation.sql";
-const AUDIT_ACTIVITY_MIGRATION =
-  "supabase/migrations/20260828000000_enable_company_scoped_audit_and_notification_access.sql";
-const BASELINE_MIGRATION =
-  "supabase/migrations/20260822000000_dev_public_baseline.sql";
-const UNIVERSAL_RESPONDENT_MIGRATION =
-  "supabase/migrations/20260833000000_universal_rfq_respondent_authorization.sql";
-const INVITATION_CONTEXT_MIGRATION =
-  "supabase/migrations/20260831000000_add_rfq_invitation_deadline_timezone.sql";
+function normalizeContractSql(source: string) {
+  return source
+    .replace(/\r\n/g, "\n")
+    .replace(/"/g, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLowerCase();
+}
 
-function policyBlock(source: string, policyName: string) {
-  const lowerSql = source.toLowerCase();
+// FINAL ACTIVE SQL authority for RLS/policy/constraint contracts.
+const BASELINE_V2_PATH =
+  "supabase/migrations/20260911000000_launch_candidate_baseline_v2.sql";
+const baselineSql = readSource(BASELINE_V2_PATH);
+const sql = normalizeContractSql(baselineSql);
+
+function policyBlock(policyName: string) {
+  // Dump CREATE POLICY uses quoted identifiers; search the raw Baseline V2 text.
+  const lowerSql = baselineSql.toLowerCase();
   const marker = `create policy "${policyName.toLowerCase()}"`;
   const start = lowerSql.indexOf(marker);
   expect(start, `missing policy ${policyName}`).toBeGreaterThan(-1);
-  const rest = source.slice(start);
+  const rest = baselineSql.slice(start);
   const lowerRest = rest.toLowerCase();
   const candidates = [
     lowerRest.indexOf("\ndrop policy", marker.length),
@@ -61,7 +64,7 @@ function policyBlock(source: string, policyName: string) {
     lowerRest.indexOf("\ncommit;", marker.length),
     rest.length,
   ].filter((value) => value > 0);
-  return rest.slice(0, Math.min(...candidates));
+  return normalizeContractSql(rest.slice(0, Math.min(...candidates)));
 }
 
 const COMPANY_A = "11111111-1111-1111-1111-111111111111";
@@ -243,9 +246,7 @@ describe("Security Regression Matrix SEC-01..SEC-14", () => {
 
     it("enforces self-deal denial at the quotes route and quote INSERT RLS", () => {
       const quotesRoute = readSource("src/app/api/quotes/route.ts");
-      const rfiCollaboration = readSource(RFI_COLLABORATION_MIGRATION);
       const quoteInsertPolicy = policyBlock(
-        rfiCollaboration,
         "Supplier members can submit company quotes",
       );
 
@@ -253,7 +254,7 @@ describe("Security Regression Matrix SEC-01..SEC-14", () => {
       expect(quotesRoute).toContain(
         "Your company cannot submit a quote to its own RFQ.",
       );
-      expect(quoteInsertPolicy.toLowerCase()).toContain("for insert");
+      expect(quoteInsertPolicy).toContain("for insert");
       expect(quoteInsertPolicy).toMatch(
         /r\.company_id\s*<>\s*quotes\.company_id/,
       );
@@ -293,9 +294,8 @@ describe("Security Regression Matrix SEC-01..SEC-14", () => {
     });
 
     it("keeps DB unique constraint quotes_rfq_company_key as defense in depth", () => {
-      const baseline = readSource(BASELINE_MIGRATION);
-      expect(baseline).toContain('"quotes_rfq_company_key"');
-      expect(baseline).toMatch(
+      expect(baselineSql).toContain('"quotes_rfq_company_key"');
+      expect(baselineSql).toMatch(
         /ADD CONSTRAINT "quotes_rfq_company_key" UNIQUE \("rfq_id", "company_id"\)/,
       );
     });
@@ -303,15 +303,15 @@ describe("Security Regression Matrix SEC-01..SEC-14", () => {
 
   describe("SEC-06 Competitor commercial isolation", () => {
     it("keeps supplier quote SELECT RLS scoped to own-company quotes only", () => {
-      const quoteSelectMigration = readSource(QUOTE_SELECT_MIGRATION);
       const ownCompanyPolicy = policyBlock(
-        quoteSelectMigration,
         "Company members can read own company quotes",
       );
 
-      expect(ownCompanyPolicy.toLowerCase()).toContain("for select");
+      expect(ownCompanyPolicy).toContain("for select");
       expect(ownCompanyPolicy).toContain("om.user_id = auth.uid()");
-      expect(ownCompanyPolicy).toContain("om.membership_status = 'active'");
+      expect(ownCompanyPolicy).toContain(
+        "om.membership_status = any (array['active'::text, 'archived'::text])",
+      );
       expect(ownCompanyPolicy).toContain("om.company_id = quotes.company_id");
       expect(ownCompanyPolicy).not.toContain("om.company_id = r.company_id");
     });
@@ -343,26 +343,29 @@ describe("Security Regression Matrix SEC-01..SEC-14", () => {
     });
 
     it("gates issuer commercial quote SELECT behind the unlock contract", () => {
-      const quoteSelectMigration = readSource(QUOTE_SELECT_MIGRATION);
       const issuerSelectPolicy = policyBlock(
-        quoteSelectMigration,
         "Issuing buyers can read quotes after commercial unlock",
       );
 
-      expect(issuerSelectPolicy.toLowerCase()).toContain("for select");
+      expect(issuerSelectPolicy).toContain("for select");
       expect(issuerSelectPolicy).toContain("om.company_id = r.company_id");
-      expect(issuerSelectPolicy).toContain("om.membership_status = 'active'");
       expect(issuerSelectPolicy).toContain(
-        "om.workspace_role in ('owner', 'admin')",
+        "om.membership_status = any (array['active'::text, 'archived'::text])",
+      );
+      expect(issuerSelectPolicy).toContain(
+        "om.workspace_role = any (array['owner'::text, 'admin'::text])",
       );
       expect(issuerSelectPolicy).toContain(
         "om.procurement_function = 'buyer'",
       );
-      expect(issuerSelectPolicy).toContain(
-        "coalesce(r.sourcing_method, 'invited') = 'open'",
+      expect(issuerSelectPolicy).toMatch(
+        /workspace_role[\s\S]*or[\s\S]*procurement_function = 'buyer'/,
       );
       expect(issuerSelectPolicy).toContain(
-        "coalesce(r.contract_framework, 'project_specific') <> 'framework'",
+        "coalesce(r.sourcing_method, 'invited'::text) = 'open'::text",
+      );
+      expect(issuerSelectPolicy).toContain(
+        "coalesce(r.contract_framework, 'project_specific'::text) <> 'framework'::text",
       );
       expect(issuerSelectPolicy).toContain(
         "public.parse_rfq_deadline_timestamptz(r.deadline) is not null",
@@ -371,7 +374,7 @@ describe("Security Regression Matrix SEC-01..SEC-14", () => {
         "public.parse_rfq_deadline_timestamptz(r.deadline) < now()",
       );
       expect(issuerSelectPolicy).toMatch(
-        /coalesce\(r\.sourcing_method, 'invited'\) = 'open'[\s\S]*coalesce\(r\.contract_framework, 'project_specific'\) <> 'framework'[\s\S]*or \([\s\S]*parse_rfq_deadline_timestamptz\(r\.deadline\) is not null[\s\S]*parse_rfq_deadline_timestamptz\(r\.deadline\) < now\(\)/,
+        /coalesce\(r\.sourcing_method, 'invited'::text\) = 'open'::text[\s\S]*coalesce\(r\.contract_framework, 'project_specific'::text\) <> 'framework'::text[\s\S]*or[\s\S]*parse_rfq_deadline_timestamptz\(r\.deadline\) is not null[\s\S]*parse_rfq_deadline_timestamptz\(r\.deadline\) < now\(\)/,
       );
 
       const lockedIssuer = buildRfqCapabilities({
@@ -443,34 +446,38 @@ describe("Security Regression Matrix SEC-01..SEC-14", () => {
   });
 
   describe("SEC-08 RFI participant visibility", () => {
-    it("keeps RFI SELECT RLS issuer/respondent scoped in the authoritative migration", () => {
-      const rfiCollaboration = readSource(RFI_COLLABORATION_MIGRATION);
+    it("keeps RFI SELECT RLS issuer/respondent scoped in Baseline V2", () => {
       const issuerRead = policyBlock(
-        rfiCollaboration,
         "Issuer procurement users can read RFQ RFIs",
       );
       const respondentRead = policyBlock(
-        rfiCollaboration,
         "Respondent companies can read own RFQ RFIs",
       );
 
-      expect(issuerRead.toLowerCase()).toContain("for select");
+      expect(issuerRead).toContain("for select");
       expect(issuerRead).toContain("r.id = rfq_rfis.rfq_id");
       expect(issuerRead).toContain("om.user_id = auth.uid()");
       expect(issuerRead).toContain("om.company_id = r.company_id");
-      expect(issuerRead).toContain("om.membership_status = 'active'");
       expect(issuerRead).toContain(
-        "om.workspace_role in ('owner', 'admin')",
+        "om.membership_status = any (array['active'::text, 'archived'::text])",
+      );
+      expect(issuerRead).toContain(
+        "om.workspace_role = any (array['owner'::text, 'admin'::text])",
       );
       expect(issuerRead).toContain("om.procurement_function = 'buyer'");
+      expect(issuerRead).toMatch(
+        /workspace_role[\s\S]*or[\s\S]*procurement_function = 'buyer'/,
+      );
 
-      expect(respondentRead.toLowerCase()).toContain("for select");
+      expect(respondentRead).toContain("for select");
       expect(respondentRead).toContain("om.user_id = auth.uid()");
       expect(respondentRead).toContain("r.id = rfq_rfis.rfq_id");
       expect(respondentRead).toContain(
         "om.company_id = rfq_rfis.respondent_company_id",
       );
-      expect(respondentRead).toContain("om.membership_status = 'active'");
+      expect(respondentRead).toContain(
+        "om.membership_status = any (array['active'::text, 'archived'::text])",
+      );
       expect(respondentRead).toContain(
         "r.company_id <> rfq_rfis.respondent_company_id",
       );
@@ -512,9 +519,7 @@ describe("Security Regression Matrix SEC-01..SEC-14", () => {
     });
 
     it("keeps quote INSERT RLS late-submission protection", () => {
-      const rfiCollaboration = readSource(RFI_COLLABORATION_MIGRATION);
       const quoteInsertPolicy = policyBlock(
-        rfiCollaboration,
         "Supplier members can submit company quotes",
       );
 
@@ -528,14 +533,12 @@ describe("Security Regression Matrix SEC-01..SEC-14", () => {
     });
 
     it("keeps RFI INSERT RLS deadline boundary", () => {
-      const rfiCollaboration = readSource(RFI_COLLABORATION_MIGRATION);
       const respondentInsert = policyBlock(
-        rfiCollaboration,
         "Respondent companies can submit RFQ RFIs",
       );
 
       expect(respondentInsert).toMatch(
-        /now\(\)\s*<=\s*coalesce\(\s*r\.rfi_deadline,\s*public\.parse_rfq_deadline_timestamptz\(r\.deadline\)\s*\)/,
+        /now\(\)\s*<=\s*coalesce\(r\.rfi_deadline,\s*public\.parse_rfq_deadline_timestamptz\(r\.deadline\)\)/,
       );
     });
   });
@@ -543,9 +546,7 @@ describe("Security Regression Matrix SEC-01..SEC-14", () => {
   describe("SEC-10 RLS aligns with API auth", () => {
     it("aligns quote respondent API authorization with quote INSERT RLS", () => {
       const quotesRoute = readSource("src/app/api/quotes/route.ts");
-      const rfiCollaboration = readSource(RFI_COLLABORATION_MIGRATION);
       const quoteInsertPolicy = policyBlock(
-        rfiCollaboration,
         "Supplier members can submit company quotes",
       );
 
@@ -564,13 +565,10 @@ describe("Security Regression Matrix SEC-01..SEC-14", () => {
 
     it("aligns RFI respondent/issuer API authorization with RFI INSERT/UPDATE RLS", () => {
       const rfiRoute = readSource("src/app/api/rfq-rfis/route.ts");
-      const rfiCollaboration = readSource(RFI_COLLABORATION_MIGRATION);
       const respondentInsert = policyBlock(
-        rfiCollaboration,
         "Respondent companies can submit RFQ RFIs",
       );
       const issuerAnswer = policyBlock(
-        rfiCollaboration,
         "Issuer procurement users can answer open RFQ RFIs",
       );
 
@@ -598,10 +596,10 @@ describe("Security Regression Matrix SEC-01..SEC-14", () => {
         "public.current_user_has_supplier_rfq_access(r.id)",
       );
       expect(respondentInsert).toContain(
-        "coalesce(\n        r.rfi_deadline,\n        public.parse_rfq_deadline_timestamptz(r.deadline)\n      ) is not null",
+        "coalesce(r.rfi_deadline, public.parse_rfq_deadline_timestamptz(r.deadline)) is not null",
       );
       expect(respondentInsert).toContain(
-        "now() <= coalesce(\n        r.rfi_deadline,\n        public.parse_rfq_deadline_timestamptz(r.deadline)\n      )",
+        "now() <= coalesce(r.rfi_deadline, public.parse_rfq_deadline_timestamptz(r.deadline))",
       );
 
       expect(issuerAnswer).toContain("status = 'open'");
@@ -612,13 +610,16 @@ describe("Security Regression Matrix SEC-01..SEC-14", () => {
       expect(issuerAnswer).toContain("responded_by = auth.uid()");
       expect(issuerAnswer).toContain("responded_at is not null");
       expect(issuerAnswer).toContain(
-        "nullif(btrim(coalesce(response_text, '')), '') is not null",
+        "nullif(btrim(coalesce(response_text, ''::text)), ''::text) is not null",
       );
       expect(issuerAnswer).toContain("om.company_id = r.company_id");
       expect(issuerAnswer).toContain(
-        "om.workspace_role in ('owner', 'admin')",
+        "om.workspace_role = any (array['owner'::text, 'admin'::text])",
       );
       expect(issuerAnswer).toContain("om.procurement_function = 'buyer'");
+      expect(issuerAnswer).toMatch(
+        /workspace_role[\s\S]*or[\s\S]*procurement_function = 'buyer'/,
+      );
     });
   });
 
@@ -645,13 +646,10 @@ describe("Security Regression Matrix SEC-01..SEC-14", () => {
     });
 
     it("keeps authenticated activity read policies company-scoped", () => {
-      const auditMigration = readSource(AUDIT_ACTIVITY_MIGRATION);
       const notificationsPage = readSource("src/app/notifications/page.tsx");
 
-      expect(auditMigration).toContain(
-        "om.company_id = notifications.company_id",
-      );
-      expect(auditMigration).toContain("om.company_id = audit_logs.company_id");
+      expect(sql).toContain("om.company_id = notifications.company_id");
+      expect(sql).toContain("om.company_id = audit_logs.company_id");
       expect(notificationsPage).toContain(
         '.eq("company_id", profile.company_id)',
       );
@@ -697,7 +695,6 @@ describe("Security Regression Matrix SEC-01..SEC-14", () => {
   describe("SEC-13 Invitation email binding", () => {
     it("binds RFQ invitation create to rfq_id + normalized email + unique token", () => {
       const invitesRoute = readSource("src/app/api/invites/route.ts");
-      const baseline = readSource(BASELINE_MIGRATION);
 
       expect(invitesRoute).toContain("function normalizeEmail(value: string)");
       expect(invitesRoute).toContain("return value.trim().toLowerCase();");
@@ -710,31 +707,28 @@ describe("Security Regression Matrix SEC-01..SEC-14", () => {
       expect(invitesRoute).toContain("/rfq/invite/${token}");
       expect(invitesRoute).not.toContain("company_invitations");
 
-      expect(baseline).toContain('"rfq_invites_token_key"');
-      expect(baseline).toContain('"rfq_invites_rfq_email_key"');
-      expect(baseline).toMatch(
+      expect(baselineSql).toContain('"rfq_invites_token_key"');
+      expect(baselineSql).toContain('"rfq_invites_rfq_email_key"');
+      expect(baselineSql).toMatch(
         /CREATE UNIQUE INDEX "rfq_invites_rfq_email_key"[\s\S]*\("rfq_id", "lower"\("email"\)\)/,
       );
     });
 
     it("resolves invitation tokens to a specific RFQ invite and binds access to authenticated email", () => {
-      const invitationContext = readSource(INVITATION_CONTEXT_MIGRATION);
-      const respondentAccess = readSource(UNIVERSAL_RESPONDENT_MIGRATION);
-
-      expect(invitationContext).toContain(
-        "create function public.get_rfq_invitation_context(p_token text)",
+      expect(sql).toContain(
+        "create or replace function public.get_rfq_invitation_context(p_token text)",
       );
-      expect(invitationContext).toContain("i.token = p_token");
-      expect(invitationContext).toContain("on r.id = i.rfq_id");
+      expect(sql).toContain("i.token = p_token");
+      expect(sql).toContain("on r.id = i.rfq_id");
 
-      expect(respondentAccess).toContain(
+      expect(sql).toContain(
         "create or replace function public.current_user_has_supplier_rfq_access(p_rfq_id uuid)",
       );
-      expect(respondentAccess).toContain("from public.rfq_invites i");
-      expect(respondentAccess).toContain("i.rfq_id = p_rfq_id");
-      expect(respondentAccess).toContain("i.email = v_email");
-      expect(respondentAccess).toContain(
-        "Access is bound to the authenticated email, not an invitation URL.",
+      expect(sql).toContain("from public.rfq_invites i");
+      expect(sql).toContain("i.rfq_id = p_rfq_id");
+      expect(sql).toContain("i.email = v_email");
+      expect(sql).toContain(
+        "access is bound to the authenticated email, not an invitation url.",
       );
     });
   });

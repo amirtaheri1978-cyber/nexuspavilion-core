@@ -20,7 +20,7 @@ const acceptRoute = readSource("src/app/api/company-invitations/accept/route.ts"
 const nameHelper = readSource("src/lib/auth/professional-names.ts");
 const workspaceBootstrap = readSource("src/lib/auth/workspace-bootstrap.ts");
 const identityMigration = readSource(
-  "supabase/migrations/20260827000000_enable_professional_identity_primitives.sql",
+  "supabase/legacy-migrations/pre-baseline-v2/20260827000000_enable_professional_identity_primitives.sql",
 );
 const visualQaFixture = readSource(
   "src/app/dev/founder-onboarding-visual-qa/page.tsx",

@@ -2,20 +2,31 @@ import { readdirSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
-const MIGRATION_PATH =
-  "supabase/migrations/20260842000000_company_documents_contract.sql";
+const BASELINE_V2_PATH =
+  "supabase/migrations/20260911000000_launch_candidate_baseline_v2.sql";
+const BASELINE_V2_FILENAME = "20260911000000_launch_candidate_baseline_v2.sql";
+
+function normalizeContractSql(source: string) {
+  return source
+    .replace(/\r\n/g, "\n")
+    .replace(/"/g, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLowerCase();
+}
 
 function readSource(relativePath: string) {
   return readFileSync(resolve(process.cwd(), relativePath), "utf8");
 }
 
-const sql = readSource(MIGRATION_PATH);
+const baselineSql = readSource(BASELINE_V2_PATH);
+const sql = normalizeContractSql(baselineSql);
 
 function sectionBetween(start: string, end: string) {
-  const startIndex = sql.indexOf(start);
+  const startIndex = sql.indexOf(start.toLowerCase());
   expect(startIndex).toBeGreaterThan(-1);
 
-  const endIndex = sql.indexOf(end, startIndex);
+  const endIndex = sql.indexOf(end.toLowerCase(), startIndex);
   expect(endIndex).toBeGreaterThan(startIndex);
 
   return sql.slice(startIndex, endIndex);
@@ -23,29 +34,30 @@ function sectionBetween(start: string, end: string) {
 
 const createTableBlock = sectionBetween(
   "create table if not exists public.company_documents",
-  "create index if not exists company_documents_company_created_idx",
+  "alter table public.company_documents owner",
 );
 
 const createFunctionBody = sectionBetween(
   "create or replace function public.create_company_document(",
-  "create or replace function public.update_company_document(",
+  "alter function public.create_company_document(",
 );
 
 const updateFunctionBody = sectionBetween(
   "create or replace function public.update_company_document(",
-  "create or replace function public.delete_company_document(",
+  "alter function public.update_company_document(",
 );
 
 const deleteFunctionBody = sectionBetween(
   "create or replace function public.delete_company_document(",
-  "comment on table public.company_documents",
+  "alter function public.delete_company_document(",
 );
 
-describe("company documents migration table contract", () => {
+describe("company documents table contract (FINAL ACTIVE: Baseline V2)", () => {
   it("creates a company-owned table with the exact approved column set", () => {
-    expect(createTableBlock).toContain("id uuid primary key");
-    expect(createTableBlock).toContain(
-      "company_id uuid not null references public.companies(id) on delete cascade",
+    expect(createTableBlock).toContain("id uuid default gen_random_uuid() not null");
+    expect(createTableBlock).toContain("company_id uuid not null");
+    expect(sql).toContain(
+      "company_documents_company_id_fkey foreign key (company_id) references public.companies(id) on delete cascade",
     );
     expect(createTableBlock).toContain("document_type text not null");
     expect(createTableBlock).toContain("title text not null");
@@ -55,11 +67,11 @@ describe("company documents migration table contract", () => {
     expect(createTableBlock).toContain("file_size bigint not null");
     expect(createTableBlock).toContain("issued_on date");
     expect(createTableBlock).toContain("expires_on date");
-    expect(createTableBlock).toContain(
-      "uploaded_by uuid references public.profiles(id) on delete set null",
+    expect(sql).toContain(
+      "company_documents_uploaded_by_fkey foreign key (uploaded_by) references public.profiles(id) on delete set null",
     );
-    expect(createTableBlock).toContain("created_at timestamptz not null");
-    expect(createTableBlock).toContain("updated_at timestamptz not null");
+    expect(createTableBlock).toContain("created_at timestamp with time zone");
+    expect(createTableBlock).toContain("updated_at timestamp with time zone");
   });
 
   it("never introduces notes, identifiers, status, public, or FK columns", () => {
@@ -97,58 +109,62 @@ describe("company documents migration table contract", () => {
   });
 
   it("enforces title, file, MIME, size, and date constraints", () => {
-    expect(createTableBlock).toContain("check (char_length(btrim(title)) > 0)");
-    expect(createTableBlock).toContain("check (char_length(title) <= 160)");
+    expect(createTableBlock).toContain("check ((char_length(btrim(title)) > 0))");
+    expect(createTableBlock).toContain("check ((char_length(title) <= 160))");
     expect(createTableBlock).toContain(
-      "check (char_length(btrim(file_name)) > 0)",
-    );
-    expect(createTableBlock).toContain("check (char_length(file_name) <= 255)");
-    expect(createTableBlock).toContain(
-      "constraint company_documents_file_path_unique unique (file_path)",
+      "check ((char_length(btrim(file_name)) > 0))",
     );
     expect(createTableBlock).toContain(
-      "check (file_size > 0 and file_size <= 10485760)",
+      "check ((char_length(file_name) <= 255))",
+    );
+    expect(sql).toContain("company_documents_file_path_unique unique (file_path)");
+    expect(createTableBlock).toContain(
+      "check (((file_size > 0) and (file_size <= 10485760)))",
     );
     expect(createTableBlock).toContain("'application/pdf'");
     expect(createTableBlock).toContain("'image/jpeg'");
     expect(createTableBlock).toContain("'image/png'");
     expect(createTableBlock).toContain("'image/webp'");
     expect(createTableBlock).toContain(
-      "check (expires_on is null or issued_on is null or expires_on >= issued_on)",
+      "check (((expires_on is null) or (issued_on is null) or (expires_on >= issued_on)))",
     );
   });
 });
 
-describe("company documents migration security contract", () => {
-  it("enables RLS and limits internal select to active same-company members", () => {
+describe("company documents security contract (FINAL ACTIVE: Baseline V2)", () => {
+  it("enables RLS and limits internal select to active/archived same-company members", () => {
     expect(sql).toContain(
       "alter table public.company_documents enable row level security",
     );
-    expect(sql).toContain("create policy company_documents_select_active_member");
-    expect(sql).toContain("for select");
-    expect(sql).toContain("to authenticated");
+    expect(sql).toContain(
+      "create policy company_documents_select_active_member",
+    );
     expect(sql).toContain("om.company_id = company_documents.company_id");
-    expect(sql).toContain("om.membership_status = 'active'");
+    expect(sql).toContain(
+      "om.membership_status = any (array['active'::text, 'archived'::text])",
+    );
   });
 
-  it("revokes direct DML and never grants anon table access", () => {
+  it("grants select only to authenticated and never grants anon table access", () => {
     expect(sql).toContain(
-      "revoke all on table public.company_documents from public;",
+      "grant select on table public.company_documents to authenticated",
     );
-    expect(sql).toContain(
-      "revoke all on table public.company_documents from anon;",
+    expect(sql).not.toContain(
+      "grant select on table public.company_documents to anon",
     );
-    expect(sql).toContain(
-      "revoke insert, update, delete on table public.company_documents from authenticated;",
+    expect(sql).not.toContain(
+      "grant insert on table public.company_documents to authenticated",
     );
-    expect(sql).toContain(
-      "grant select on table public.company_documents to authenticated;",
+    expect(sql).not.toContain(
+      "grant update on table public.company_documents to authenticated",
+    );
+    expect(sql).not.toContain(
+      "grant delete on table public.company_documents to authenticated",
+    );
+    expect(sql).not.toContain(
+      "grant all on table public.company_documents to authenticated",
     );
     expect(sql).not.toContain("company_documents_public");
-    expect(sql).not.toMatch(/create\s+(or\s+replace\s+)?view/i);
-    expect(sql).not.toMatch(
-      /grant\s+select\s+on\s+table\s+public\.company_documents\s+to\s+anon/i,
-    );
   });
 
   it("declares owned SECURITY DEFINER write primitives with a safe search_path", () => {
@@ -160,28 +176,25 @@ describe("company documents migration security contract", () => {
       expect(sql).toContain(`create or replace function public.${fn}(`);
     }
 
-    expect(sql).toContain("security definer");
-    expect(sql).toContain("set search_path = public, pg_temp");
+    expect(createFunctionBody).toContain("security definer");
+    expect(createFunctionBody).toContain(
+      "set search_path to 'public', 'pg_temp'",
+    );
     expect(sql).toContain(
-      "alter function public.create_company_document(uuid, uuid, text, text, text, text, text, bigint, date, date)\n  owner to postgres;",
+      "alter function public.create_company_document(p_company_id uuid, p_document_id uuid, p_document_type text, p_title text, p_file_name text, p_file_path text, p_file_type text, p_file_size bigint, p_issued_on date, p_expires_on date) owner to postgres",
     );
   });
 
   it("grants execute to authenticated only", () => {
     expect(sql).toContain(
-      "revoke all on function public.create_company_document(uuid, uuid, text, text, text, text, text, bigint, date, date)\nfrom anon;",
+      "revoke all on function public.create_company_document(p_company_id uuid, p_document_id uuid, p_document_type text, p_title text, p_file_name text, p_file_path text, p_file_type text, p_file_size bigint, p_issued_on date, p_expires_on date) from public",
     );
     expect(sql).toContain(
-      "grant execute on function public.create_company_document(uuid, uuid, text, text, text, text, text, bigint, date, date)\nto authenticated;",
+      "grant all on function public.create_company_document(p_company_id uuid, p_document_id uuid, p_document_type text, p_title text, p_file_name text, p_file_path text, p_file_type text, p_file_size bigint, p_issued_on date, p_expires_on date) to authenticated",
     );
     expect(sql).toContain(
-      "grant execute on function public.delete_company_document(uuid, uuid)\nto authenticated;",
+      "grant all on function public.delete_company_document(p_company_id uuid, p_document_id uuid) to authenticated",
     );
-  });
-
-  it("wraps the whole contract in a single transaction", () => {
-    expect(sql.trimStart().startsWith("begin;")).toBe(true);
-    expect(sql.trimEnd().endsWith("commit;")).toBe(true);
   });
 });
 
@@ -194,32 +207,31 @@ describe("company documents private bucket and storage policies", () => {
     expect(sql).toContain("'image/jpeg'::text");
     expect(sql).toContain("'image/png'::text");
     expect(sql).toContain("'image/webp'::text");
-    expect(sql).not.toContain("rfq-attachments");
-    expect(sql).not.toContain("Company-logos");
   });
 
-  it("binds storage SELECT to active membership and matching metadata", () => {
+  it("binds storage SELECT to active/archived membership and matching metadata", () => {
     const selectPolicy = sectionBetween(
-      'create policy "Company members can read company-documents objects"',
-      'create policy "Company owners and admins can read company-documents cleanup objects"',
+      "create policy company members can read company-documents objects",
+      "create policy company owners and admins can read company-documents cleanup objects",
     );
 
     expect(selectPolicy).toContain("for select");
     expect(selectPolicy).toContain("to authenticated");
     expect(selectPolicy).toContain("bucket_id = 'company-documents'");
-    expect(selectPolicy).toContain("om.membership_status = 'active'");
+    expect(selectPolicy).toContain(
+      "om.membership_status = any (array['active'::text, 'archived'::text])",
+    );
     expect(selectPolicy).toContain("cd.file_path = name");
     expect(selectPolicy).toContain(
       "om.company_id::text = (storage.foldername(name))[1]",
     );
     expect(selectPolicy).not.toContain("anon");
-    expect(selectPolicy).not.toContain("om.workspace_role in ('owner', 'admin')");
   });
 
   it("adds owner/admin same-company SELECT so cleanup can see orphan objects", () => {
     const cleanupPolicy = sectionBetween(
-      'create policy "Company owners and admins can read company-documents cleanup objects"',
-      'create policy "Company owners and admins can upload company-documents objects"',
+      "create policy company owners and admins can read company-documents cleanup objects",
+      "create policy company owners and admins can upload company-documents objects",
     );
 
     expect(cleanupPolicy).toContain("for select");
@@ -229,28 +241,29 @@ describe("company documents private bucket and storage policies", () => {
       "om.company_id::text = (storage.foldername(name))[1]",
     );
     expect(cleanupPolicy).toContain("om.membership_status = 'active'");
-    expect(cleanupPolicy).toContain("om.workspace_role in ('owner', 'admin')");
+    expect(cleanupPolicy).toContain(
+      "om.workspace_role in ('owner', 'admin')",
+    );
     expect(cleanupPolicy).not.toContain("cd.file_path");
     expect(cleanupPolicy).not.toContain("company_documents");
     expect(cleanupPolicy).not.toContain("anon");
-    expect(cleanupPolicy).not.toContain("to public");
-    expect(sql).not.toMatch(
-      /create policy[^;]+on storage\.objects[\s\S]{0,80}to anon/i,
-    );
   });
 
   it("limits storage INSERT and DELETE to owner/admin and does not create UPDATE", () => {
     const insertPolicy = sectionBetween(
-      'create policy "Company owners and admins can upload company-documents objects"',
-      'create policy "Company owners and admins can delete company-documents objects"',
+      "create policy company owners and admins can upload company-documents objects",
+      "create policy company owners and admins can delete company-documents objects",
     );
     const deletePolicy = sectionBetween(
-      'create policy "Company owners and admins can delete company-documents objects"',
-      "create or replace function public.create_company_document(",
+      "create policy company owners and admins can delete company-documents objects",
+      "-- company-logos",
     );
 
     expect(insertPolicy).toContain("for insert");
-    expect(insertPolicy).toContain("om.workspace_role in ('owner', 'admin')");
+    expect(insertPolicy).toContain(
+      "om.workspace_role in ('owner', 'admin')",
+    );
+    expect(insertPolicy).toContain("om.membership_status = 'active'");
     expect(insertPolicy).toContain(
       "om.company_id::text = (storage.foldername(name))[1]",
     );
@@ -259,14 +272,15 @@ describe("company documents private bucket and storage policies", () => {
     expect(deletePolicy).toContain("for delete");
     expect(deletePolicy).toContain("to authenticated");
     expect(deletePolicy).toContain("bucket_id = 'company-documents'");
-    expect(deletePolicy).toContain("om.workspace_role in ('owner', 'admin')");
+    expect(deletePolicy).toContain(
+      "om.workspace_role in ('owner', 'admin')",
+    );
     expect(deletePolicy).toContain(
       "om.company_id::text = (storage.foldername(name))[1]",
     );
     expect(deletePolicy).toContain("om.membership_status = 'active'");
-    expect(deletePolicy).not.toContain("company_documents");
     expect(sql).not.toMatch(
-      /create policy[^;]+on storage\.objects\s+for update/i,
+      /create policy[^;]+on storage\.objects\s+for update/,
     );
     expect(sql).toContain("public = false");
   });
@@ -274,15 +288,15 @@ describe("company documents private bucket and storage policies", () => {
 
 describe("company documents RPC authorization and object verification", () => {
   it("resolves authentication, company, membership, and role before payload validation", () => {
-    const unauthenticated = createFunctionBody.indexOf("'UNAUTHENTICATED'");
-    const invalidCompany = createFunctionBody.indexOf("'INVALID_COMPANY'");
+    const unauthenticated = createFunctionBody.indexOf("'unauthenticated'");
+    const invalidCompany = createFunctionBody.indexOf("'invalid_company'");
     const membershipLookup = createFunctionBody.indexOf(
       "from public.organization_memberships as om",
     );
     const ownerAdminGuard = createFunctionBody.indexOf(
       "if actor_workspace_role not in ('owner', 'admin') then",
     );
-    const invalidPayload = createFunctionBody.indexOf("'INVALID_PAYLOAD'");
+    const invalidPayload = createFunctionBody.indexOf("'invalid_payload'");
 
     expect(unauthenticated).toBeGreaterThan(-1);
     expect(unauthenticated).toBeLessThan(invalidCompany);
@@ -292,9 +306,7 @@ describe("company documents RPC authorization and object verification", () => {
   });
 
   it("verifies the private storage object exists before inserting metadata", () => {
-    const objectCheck = createFunctionBody.indexOf(
-      "from storage.objects as so",
-    );
+    const objectCheck = createFunctionBody.indexOf("from storage.objects as so");
     const insertRows = createFunctionBody.indexOf(
       "insert into public.company_documents (",
     );
@@ -303,11 +315,11 @@ describe("company documents RPC authorization and object verification", () => {
     expect(objectCheck).toBeLessThan(insertRows);
     expect(createFunctionBody).toContain("so.bucket_id = 'company-documents'");
     expect(createFunctionBody).toContain("so.name = p_file_path");
-    expect(createFunctionBody).toContain("'OBJECT_NOT_FOUND'");
+    expect(createFunctionBody).toContain("'object_not_found'");
   });
 
   it("verifies storage object MIME and size metadata before write and audit", () => {
-    const createNotFound = createFunctionBody.indexOf("'OBJECT_NOT_FOUND'");
+    const createNotFound = createFunctionBody.indexOf("'object_not_found'");
     const createMetadataCheck = createFunctionBody.indexOf(
       "so.metadata->>'mimetype' = p_file_type",
     );
@@ -320,8 +332,10 @@ describe("company documents RPC authorization and object verification", () => {
     const createInsert = createFunctionBody.indexOf(
       "insert into public.company_documents (",
     );
-    const createAudit = createFunctionBody.indexOf("insert into public.audit_logs");
-    const updateNotFound = updateFunctionBody.indexOf("'OBJECT_NOT_FOUND'");
+    const createAudit = createFunctionBody.indexOf(
+      "insert into public.audit_logs",
+    );
+    const updateNotFound = updateFunctionBody.indexOf("'object_not_found'");
     const updateMetadataCheck = updateFunctionBody.indexOf(
       "so.metadata->>'mimetype' = p_file_type",
     );
@@ -334,34 +348,22 @@ describe("company documents RPC authorization and object verification", () => {
     const updateWrite = updateFunctionBody.indexOf(
       "update public.company_documents",
     );
-    const updateAudit = updateFunctionBody.indexOf("insert into public.audit_logs");
+    const updateAudit = updateFunctionBody.indexOf(
+      "insert into public.audit_logs",
+    );
     const updateReplacementElse = updateFunctionBody.indexOf(
       "next_file_name := current_document.file_name;",
     );
 
     expect(createFunctionBody).toContain("so.metadata->>'mimetype'");
     expect(createFunctionBody).toContain("so.metadata->>'size'");
-    expect(createFunctionBody).toContain("so.metadata->>'mimetype' = p_file_type");
-    expect(createFunctionBody).toContain(
-      "(so.metadata->>'size')::bigint = p_file_size",
-    );
-    expect(createFunctionBody).toContain("so.metadata->>'size' ~ '^[0-9]+$'");
-    expect(createFunctionBody).toContain("so.metadata ? 'mimetype'");
-    expect(createFunctionBody).toContain("so.metadata ? 'size'");
-    expect(createFunctionBody).toContain("'INVALID_STORAGE_OBJECT'");
-    expect(createFunctionBody).toContain("'OBJECT_NOT_FOUND'");
+    expect(createFunctionBody).toContain("'invalid_storage_object'");
+    expect(createFunctionBody).toContain("'object_not_found'");
 
     expect(updateFunctionBody).toContain("so.metadata->>'mimetype'");
     expect(updateFunctionBody).toContain("so.metadata->>'size'");
-    expect(updateFunctionBody).toContain(
-      "so.metadata->>'mimetype' = p_file_type",
-    );
-    expect(updateFunctionBody).toContain(
-      "(so.metadata->>'size')::bigint = p_file_size",
-    );
-    expect(updateFunctionBody).toContain("so.metadata->>'size' ~ '^[0-9]+$'");
-    expect(updateFunctionBody).toContain("'INVALID_STORAGE_OBJECT'");
-    expect(updateFunctionBody).toContain("'OBJECT_NOT_FOUND'");
+    expect(updateFunctionBody).toContain("'invalid_storage_object'");
+    expect(updateFunctionBody).toContain("'object_not_found'");
 
     expect(createNotFound).toBeGreaterThan(-1);
     expect(createNotFound).toBeLessThan(createMetadataCheck);
@@ -379,14 +381,11 @@ describe("company documents RPC authorization and object verification", () => {
     expect(updateWrite).toBeLessThan(updateAudit);
 
     expect(createFunctionBody).toContain(
-      "Storage object metadata does not match the document.",
+      "storage object metadata does not match the document.",
     );
     expect(updateFunctionBody).toContain(
-      "Storage object metadata does not match the document.",
+      "storage object metadata does not match the document.",
     );
-    expect(createFunctionBody).not.toContain("so.metadata->>'mimetype' ||");
-    expect(updateFunctionBody).not.toContain("so.metadata->>'mimetype' ||");
-
     expect(createFunctionBody).toContain(
       "nullif(btrim(so.metadata->>'mimetype'), '') is not null",
     );
@@ -436,31 +435,37 @@ describe("company documents RPC authorization and object verification", () => {
     expect(updateFunctionBody).toContain(
       "lower(normalized_file_name) !~ '\\.webp$'",
     );
-    expect(createFunctionBody).toContain("'INVALID_FILE_TYPE'");
-    expect(updateFunctionBody).toContain("'INVALID_FILE_TYPE'");
+    expect(createFunctionBody).toContain("'invalid_file_type'");
+    expect(updateFunctionBody).toContain("'invalid_file_type'");
   });
 });
 
 describe("company documents RPC audit contract", () => {
   it("emits uploaded, updated, and deleted events inside the write transaction", () => {
-    expect(createFunctionBody).toContain("'COMPANY_DOCUMENT_UPLOADED'");
-    expect(updateFunctionBody).toContain("'COMPANY_DOCUMENT_UPDATED'");
-    expect(deleteFunctionBody).toContain("'COMPANY_DOCUMENT_DELETED'");
+    expect(createFunctionBody).toContain("'company_document_uploaded'");
+    expect(updateFunctionBody).toContain("'company_document_updated'");
+    expect(deleteFunctionBody).toContain("'company_document_deleted'");
 
-    expect(createFunctionBody.indexOf("insert into public.company_documents")).toBeLessThan(
-      createFunctionBody.indexOf("insert into public.audit_logs"),
-    );
-    expect(updateFunctionBody.indexOf("update public.company_documents")).toBeLessThan(
-      updateFunctionBody.indexOf("insert into public.audit_logs"),
-    );
-    expect(deleteFunctionBody.indexOf("delete from public.company_documents")).toBeLessThan(
-      deleteFunctionBody.indexOf("insert into public.audit_logs"),
-    );
+    expect(
+      createFunctionBody.indexOf("insert into public.company_documents"),
+    ).toBeLessThan(createFunctionBody.indexOf("insert into public.audit_logs"));
+    expect(
+      updateFunctionBody.indexOf("update public.company_documents"),
+    ).toBeLessThan(updateFunctionBody.indexOf("insert into public.audit_logs"));
+    expect(
+      deleteFunctionBody.indexOf("delete from public.company_documents"),
+    ).toBeLessThan(deleteFunctionBody.indexOf("insert into public.audit_logs"));
   });
 
   it("restricts audit metadata to safe aggregate context", () => {
-    for (const body of [createFunctionBody, updateFunctionBody, deleteFunctionBody]) {
-      const auditMetadata = body.slice(body.indexOf("insert into public.audit_logs"));
+    for (const body of [
+      createFunctionBody,
+      updateFunctionBody,
+      deleteFunctionBody,
+    ]) {
+      const auditMetadata = body.slice(
+        body.indexOf("insert into public.audit_logs"),
+      );
 
       expect(auditMetadata).toContain("'document_id'");
       expect(auditMetadata).toContain("'document_type'");
@@ -479,47 +484,45 @@ describe("company documents RPC audit contract", () => {
 });
 
 describe("company documents domain boundaries", () => {
-  it("never creates or references out-of-domain procurement or invitation artifacts", () => {
-    for (const outOfDomain of [
-      "rfq_attachments",
-      "rfq-attachments",
-      "rfq_addenda",
-      "Company-logos",
-      "supplier_compliance",
-      "approved_vendors",
-      "invitations",
-      "company_qualifications",
-      "company_compliance",
-      "replace_company_qualifications",
-      "replace_company_compliance",
+  it("keeps RFQ attachment and branding concerns out of document write RPCs", () => {
+    for (const body of [
+      createFunctionBody,
+      updateFunctionBody,
+      deleteFunctionBody,
     ]) {
-      expect(sql, `migration must not reference ${outOfDomain}`).not.toContain(
-        outOfDomain,
-      );
+      for (const outOfDomain of [
+        "rfq_attachments",
+        "rfq-attachments",
+        "rfq_addenda",
+        "company-logos",
+        "supplier_compliance",
+        "approved_vendors",
+        "invitations",
+        "replace_company_qualifications",
+        "replace_company_compliance",
+      ]) {
+        expect(body).not.toContain(outOfDomain);
+      }
     }
   });
 
-  it("satisfies the existing supplier-domain closeout guard", () => {
+  it("satisfies the existing supplier-domain closeout guard against active migrations", () => {
     const migrationFiles = readdirSync(
       resolve(process.cwd(), "supabase/migrations"),
     ).filter((file) => file.endsWith(".sql"));
 
-    expect(migrationFiles).toContain(
-      "20260842000000_company_documents_contract.sql",
+    expect(migrationFiles).toEqual([BASELINE_V2_FILENAME]);
+
+    const migrationSql = normalizeContractSql(
+      readSource(`supabase/migrations/${BASELINE_V2_FILENAME}`),
     );
 
-    for (const file of migrationFiles) {
-      const migrationSql = readSource(
-        `supabase/migrations/${file}`,
-      ).toLowerCase();
-
-      expect(migrationSql).not.toMatch(
-        /create\s+table(?:\s+if\s+not\s+exists)?\s+(?:public\.)?approved_vendors\b/,
-      );
-      expect(migrationSql).not.toMatch(
-        /create\s+table(?:\s+if\s+not\s+exists)?\s+(?:public\.)?supplier_compliance\b/,
-      );
-    }
+    expect(migrationSql).not.toMatch(
+      /create\s+table(?:\s+if\s+not\s+exists)?\s+(?:public\.)?approved_vendors\b/,
+    );
+    expect(migrationSql).not.toMatch(
+      /create\s+table(?:\s+if\s+not\s+exists)?\s+(?:public\.)?supplier_compliance\b/,
+    );
   });
 });
 

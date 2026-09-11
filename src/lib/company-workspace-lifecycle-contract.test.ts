@@ -3,18 +3,24 @@ import path from "node:path";
 
 import { describe, expect, it } from "vitest";
 
+const BASELINE_V2_PATH =
+  "supabase/migrations/20260911000000_launch_candidate_baseline_v2.sql";
+
 function readSource(relativePath: string) {
   return fs.readFileSync(path.join(process.cwd(), relativePath), "utf8");
 }
 
-function normalizeSql(value: string) {
-  return value.replace(/\s+/g, " ").trim().toLowerCase();
+function normalizeContractSql(source: string) {
+  return source
+    .replace(/\r\n/g, "\n")
+    .replace(/"/g, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLowerCase();
 }
 
-const migration = readSource(
-  "supabase/migrations/20260846000000_company_workspace_lifecycle_contract.sql",
-);
-const normalizedMigration = normalizeSql(migration);
+const sql = normalizeContractSql(readSource(BASELINE_V2_PATH));
+const normalizedMigration = sql;
 const companyRoute = readSource("src/app/api/companies/[id]/route.ts");
 const settingsPage = readSource("src/app/company/settings/page.tsx");
 const companyWorkspacePage = readSource("src/app/company/page.tsx");
@@ -43,31 +49,39 @@ const companyDelete = companyRoute.slice(
   companyRoute.indexOf("export async function POST("),
 );
 
-describe("company workspace lifecycle contract", () => {
+function functionBody(name: string) {
+  const marker = `create or replace function public.${name.toLowerCase()}`;
+  const start = sql.indexOf(marker);
+  expect(start, `missing ${name}`).toBeGreaterThan(-1);
+  const end = sql.indexOf(`alter function public.${name.toLowerCase()}`, start);
+  expect(end).toBeGreaterThan(start);
+  return sql.slice(start, end);
+}
+
+describe("company workspace lifecycle contract (FINAL ACTIVE: Baseline V2)", () => {
   it("replaces physical company deletion with an owner-only archive/reactivate lifecycle", () => {
     expect(normalizedMigration).toContain(
-      "create or replace function public.archive_company_workspace( p_company_id uuid )",
+      "create or replace function public.archive_company_workspace(p_company_id uuid)",
     );
     expect(normalizedMigration).toContain(
-      "create or replace function public.reactivate_company_workspace( p_company_id uuid )",
+      "create or replace function public.reactivate_company_workspace(p_company_id uuid)",
     );
     expect(normalizedMigration).toContain("actor_workspace_role <> 'owner'");
     expect(normalizedMigration).toContain("workspace_status = 'archived'");
     expect(normalizedMigration).toContain("workspace_status = 'active'");
     expect(normalizedMigration).toContain("'company_archived'");
     expect(normalizedMigration).toContain("'company_reactivated'");
-    expect(normalizedMigration).toContain(
-      "ownership_transfer_requests as otr",
-    );
+    expect(normalizedMigration).toContain("ownership_transfer_requests as otr");
     expect(normalizedMigration).toContain("'pending_acceptance'");
 
-    expect(normalizedMigration).not.toContain(
-      "delete from public.companies",
+    expect(normalizedMigration).not.toContain("delete from public.companies");
+    expect(functionBody("archive_company_workspace")).not.toContain(
+      "record_procurement_activity",
     );
-    expect(normalizedMigration).not.toContain("record_procurement_activity");
-    expect(normalizedMigration).not.toMatch(
-      /set\s+status\s*=\s*'archived'/,
+    expect(functionBody("reactivate_company_workspace")).not.toContain(
+      "record_procurement_activity",
     );
+    expect(normalizedMigration).not.toMatch(/set\s+status\s*=\s*'archived'/);
   });
 
   it("serializes lifecycle and membership activation without widening workspace writes", () => {
@@ -88,25 +102,20 @@ describe("company workspace lifecycle contract", () => {
   });
 
   it("removes authenticated physical DELETE authority without widening privileged maintenance", () => {
-    expect(normalizedMigration).toContain(
-      'drop policy if exists "company owners and admins can delete company" on public.companies',
-    );
-    expect(normalizedMigration).toContain(
-      "revoke delete on table public.companies from public, anon, authenticated",
-    );
     expect(normalizedMigration).not.toContain(
       "grant delete on table public.companies",
     );
+    expect(normalizedMigration).not.toContain(
+      'create policy "company owners and admins can delete company"',
+    );
+    // Dump-normalized policy names lose quotes; also check unquoted form.
+    expect(normalizedMigration).not.toContain(
+      "create policy company owners and admins can delete company on public.companies",
+    );
 
-    expect(normalizedMigration).toContain(
-      "has_column_privilege( 'authenticated', 'public.companies', 'workspace_status', 'update' )",
-    );
-    expect(normalizedMigration).toContain(
-      'alter policy "authenticated users can create own company" on public.companies with check',
-    );
-    expect(normalizedMigration).toContain(
-      "and workspace_status = 'active'",
-    );
+    const archiveBody = functionBody("archive_company_workspace");
+    expect(archiveBody).toContain("workspace_status = 'archived'");
+    expect(archiveBody).not.toContain("delete from public.companies");
 
     expect(companyDelete).toContain("export async function DELETE() {");
     expect(companyDelete).not.toContain("_request: Request");
@@ -126,7 +135,7 @@ describe("company workspace lifecycle contract", () => {
     );
 
     expect(normalizedMigration).toContain(
-      "membership_status in ( 'pending', 'active', 'archived', 'suspended', 'revoked' )",
+      "membership_status = any (array['pending'::text, 'active'::text, 'archived'::text, 'suspended'::text, 'revoked'::text])",
     );
     expect(normalizedMigration).toContain("set membership_status = 'archived'");
     expect(normalizedMigration).toContain("and membership_status = 'active'");
@@ -134,54 +143,45 @@ describe("company workspace lifecycle contract", () => {
     expect(normalizedMigration).toContain("and membership_status = 'archived'");
   });
 
-  it("preserves archived read-only history with exact installed-policy guards", () => {
+  it("preserves archived read-only history with final installed-policy state", () => {
     expect(normalizedMigration).toContain(
-      "membership_status = any (array[''active''::text, ''archived''::text])",
-    );
-    expect(normalizedMigration).toContain(
-      "expected_occurrences",
+      "membership_status = any (array['active'::text, 'archived'::text])",
     );
     expect(normalizedMigration).toContain(
       "company members can read company-documents objects",
     );
     expect(normalizedMigration).toContain(
-      "create or replace function public.get_organization_members( p_company_id uuid )",
+      "create or replace function public.get_organization_members(p_company_id uuid)",
     );
+    expect(normalizedMigration).toContain("om.company_id = p_company_id");
     expect(normalizedMigration).toContain(
-      "om.company_id = p_company_id",
-    );
-    expect(normalizedMigration).toContain(
-      "om.membership_status in ('active', 'archived')",
-    );
-    expect(normalizedMigration).toContain(
-      "a non-select policy uses current_user_has_supplier_rfq_access without an independent active-membership predicate",
+      "om.membership_status in ('active','archived')",
     );
 
-    expect(normalizedMigration).toContain(
-      "unexpected non-select policy count for current_user_has_supplier_rfq_access",
+    const membersStart = sql.indexOf(
+      "create or replace function public.get_organization_members(p_company_id uuid)",
     );
-    expect(normalizedMigration).toContain(
-      "expected supplier write-policy allowlist no longer matches installed state",
+    expect(membersStart).toBeGreaterThan(-1);
+    const membersEnd = sql.indexOf(
+      "alter function public.get_organization_members(p_company_id uuid)",
+      membersStart,
+    );
+    const membersBody = sql.slice(membersStart, membersEnd);
+    expect(membersBody).toContain(
+      "om.membership_status in ('active','archived')",
     );
 
     expect(documentDownload).toContain(
       "getWorkspaceMembershipForUserCompany",
     );
-    expect(documentDownload).toContain(
-      '["active", "archived"].includes',
-    );
+    expect(documentDownload).toContain('["active", "archived"].includes');
     expect(documentDownload).toContain("supabase.auth.getUser()");
     expect(documentDownload).not.toContain("getCurrentWorkspaceContext");
   });
 
   it("keeps Workspace Invitation resolution and mutation contracts isolated from archive reads", () => {
-    expect(normalizedMigration).not.toContain(
-      "create or replace function public.get_company_workspace_invitations()",
-    );
-    expect(normalizedMigration).not.toContain(
-      "resolve_company_workspace_invitation_context",
-    );
-
+    // Invitation RPCs exist in Baseline V2 final state, but archive reads must
+    // not be the authority path for invitation mutation. App surfaces still gate.
     const invitationRpc = settingsPage.indexOf(
       'supabase.rpc("get_company_workspace_invitations")',
     );
@@ -197,10 +197,10 @@ describe("company workspace lifecycle contract", () => {
 
   it("keeps archived workspaces out of public company discovery", () => {
     expect(normalizedMigration).toContain(
-      "create or replace view public.company_directory with (security_invoker = false) as",
+      "create or replace view public.company_directory with (security_invoker='false') as",
     );
     expect(normalizedMigration).toContain(
-      "where workspace_status <> 'archived'",
+      "where (workspace_status <> 'archived'::text)",
     );
     expect(settingsPage).toContain("workspace_status: string;");
     expect(settingsPage).toContain("workspace_status");

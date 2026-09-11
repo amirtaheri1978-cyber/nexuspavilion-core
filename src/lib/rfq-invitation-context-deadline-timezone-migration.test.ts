@@ -3,11 +3,11 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
 const migrationPath =
-  "supabase/migrations/20260831000000_add_rfq_invitation_deadline_timezone.sql";
+  "supabase/legacy-migrations/pre-baseline-v2/20260831000000_add_rfq_invitation_deadline_timezone.sql";
 const baselinePath =
-  "supabase/migrations/20260822000000_dev_public_baseline.sql";
+  "supabase/legacy-migrations/pre-baseline-v2/20260822000000_dev_public_baseline.sql";
 const parserMigrationPath =
-  "supabase/migrations/20260829000000_restrict_issuer_quote_select_until_commercial_unlock.sql";
+  "supabase/legacy-migrations/pre-baseline-v2/20260829000000_restrict_issuer_quote_select_until_commercial_unlock.sql";
 const invitePagePath = "src/app/rfq/invite/[token]/page.tsx";
 const inviteWorkspacePath =
   "src/components/rfq-workspace/rfq-invite-quote-submission.tsx";

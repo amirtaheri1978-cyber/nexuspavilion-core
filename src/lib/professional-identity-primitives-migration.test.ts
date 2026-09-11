@@ -3,13 +3,13 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
 const migrationPath =
-  "supabase/migrations/20260827000000_enable_professional_identity_primitives.sql";
+  "supabase/legacy-migrations/pre-baseline-v2/20260827000000_enable_professional_identity_primitives.sql";
 const bootstrapMigrationPath =
-  "supabase/migrations/20260825000000_enable_workspace_bootstrap_self_authorization.sql";
+  "supabase/legacy-migrations/pre-baseline-v2/20260825000000_enable_workspace_bootstrap_self_authorization.sql";
 const invitationContextPath =
-  "supabase/migrations/20260823000000_create_get_organization_invitation_context.sql";
+  "supabase/legacy-migrations/pre-baseline-v2/20260823000000_create_get_organization_invitation_context.sql";
 const baselinePath =
-  "supabase/migrations/20260822000000_dev_public_baseline.sql";
+  "supabase/legacy-migrations/pre-baseline-v2/20260822000000_dev_public_baseline.sql";
 const acceptRoutePath =
   "src/app/api/company-invitations/accept/route.ts";
 const createRoutePath = "src/app/api/companies/create/route.ts";

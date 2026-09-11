@@ -25,7 +25,7 @@ const quoteComparison = readSource(
   "src/components/rfq-workspace/rfq-quote-comparison.tsx",
 );
 const issuerUnlockMigration = readSource(
-  "supabase/migrations/20260829000000_restrict_issuer_quote_select_until_commercial_unlock.sql",
+  "supabase/legacy-migrations/pre-baseline-v2/20260829000000_restrict_issuer_quote_select_until_commercial_unlock.sql",
 );
 
 const normalizedAccessContract = normalizeWhitespace(accessContract);

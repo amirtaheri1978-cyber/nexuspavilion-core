@@ -636,3 +636,108 @@ describe("Task 15-02 critical API failure visibility", () => {
     );
   });
 });
+
+describe("Task 15-03 migration discipline", () => {
+  const migrationsDir = resolve(process.cwd(), "supabase/migrations");
+  const archiveV2Dir = resolve(
+    process.cwd(),
+    "supabase/legacy-migrations/pre-baseline-v2",
+  );
+  const baselineV2Name =
+    "20260911000000_launch_candidate_baseline_v2.sql";
+  const historicalSurgeryName =
+    "20260904204031_populate_notification_rfq_source_from_trusted_writers.sql";
+
+  function migrationFilenames() {
+    return readdirSync(migrationsDir).filter((name) => name.endsWith(".sql"));
+  }
+
+  function archiveV2Filenames() {
+    return readdirSync(archiveV2Dir).filter((name) => name.endsWith(".sql"));
+  }
+
+  it("keeps Canonical Baseline V2 as the only active migration", () => {
+    expect(migrationFilenames()).toEqual([baselineV2Name]);
+
+    const baseline = readSource(`supabase/migrations/${baselineV2Name}`);
+    const compact = baseline.replace(/\s+/g, " ");
+
+    expect(compact.toLowerCase()).toContain("insert into storage.buckets");
+    expect(compact).toContain("'Company-logos'");
+    expect(compact).toContain("public = true");
+    expect(compact).toContain("5242880");
+    expect(compact).toContain("'image/jpeg'");
+    expect(compact).toContain("'image/png'");
+    expect(compact).toContain("'image/webp'");
+    expect(baseline).not.toContain(
+      "record_procurement_activity definition changed after 8-10 review",
+    );
+    expect(baseline).not.toContain("30dfff294c0cfe2151456ac1d18c558e");
+    expect(baseline).not.toMatch(/md5\(\s*v_(?:proc|award)\s*\)\s*<>/i);
+    expect(baseline).toContain("DO NOT push this baseline SQL to linked active-dev");
+  });
+
+  it("archives the prior 33-file chain including immutable 20260904204031", () => {
+    const archived = archiveV2Filenames();
+
+    expect(archived).toHaveLength(33);
+    expect(archived).toContain(historicalSurgeryName);
+    expect(archived).toContain(
+      "20260822000000_dev_public_baseline.sql",
+    );
+    expect(archived).toContain(
+      "20260909090225_harden_rfq_addendum_acknowledgement_terminal_state.sql",
+    );
+    expect(migrationFilenames()).not.toContain(historicalSurgeryName);
+
+    for (const legacyPrefix of [
+      "20260831065829",
+      "20260831070207",
+      "20260831070506",
+      "20260831143650",
+    ]) {
+      expect(
+        migrationFilenames().some((name) => name.startsWith(legacyPrefix)),
+        `unexpected active legacy migration file prefix ${legacyPrefix}`,
+      ).toBe(false);
+    }
+  });
+
+  it("documents Baseline V2 cutover, archive range, and Production ledger state", () => {
+    const runbook = readSource("docs/operations/LAUNCH_OPERATIONS_RUNBOOK.md");
+
+    expect(runbook).toContain("nexus-pavilion-dev");
+    expect(runbook).toContain("bzntqnwoytdakmstbtyh");
+    expect(runbook).toContain("DEVELOPMENT / LAUNCH-CANDIDATE BACKEND");
+    expect(runbook).toContain("NO VERIFIED PRODUCTION MIGRATIONS EXECUTED");
+
+    expect(runbook).toContain(
+      "20260911000000_launch_candidate_baseline_v2.sql",
+    );
+    expect(runbook).toContain(
+      "supabase/legacy-migrations/pre-baseline-v2/",
+    );
+    expect(runbook).toContain("20260822000000");
+    expect(runbook).toContain("20260909090225");
+    expect(runbook).toContain("20260904204031");
+    expect(runbook).toContain("immutable historical evidence");
+    expect(runbook).toContain("NOT yet been normalized");
+    expect(runbook).toContain("metadata-only");
+    expect(runbook).toContain("MUST NOT be pushed to active-dev");
+
+    expect(runbook).toContain("forward corrective migration");
+    expect(runbook).toContain("migration repair");
+    expect(runbook).toContain("does **not** reverse SQL");
+    expect(runbook).toContain("Product Owner / ChatGPT gated");
+    expect(runbook).toContain("Company-logos");
+    expect(runbook).toContain("APPLICATION ROLLBACK");
+    expect(runbook).toContain("FORWARD DATABASE CORRECTION");
+    expect(runbook).toContain("DATA RECOVERY");
+    expect(runbook).toContain("MIGRATION HISTORY REPAIR");
+    expect(runbook).toContain("Production Migration Ledger");
+    expect(runbook).toContain("Migration discipline and history reconciliation");
+    expect(runbook).toContain("15-07");
+    expect(runbook).toContain("15-08");
+    expect(runbook).toContain("15-09");
+  });
+});

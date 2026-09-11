@@ -3,13 +3,13 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
 const migrationPath =
-  "supabase/migrations/20260828000000_enable_company_scoped_audit_and_notification_access.sql";
+  "supabase/legacy-migrations/pre-baseline-v2/20260828000000_enable_company_scoped_audit_and_notification_access.sql";
 const notificationsPagePath = "src/app/notifications/page.tsx";
 const companySettingsPath = "src/app/company/settings/page.tsx";
 const rfqRoutePath = "src/app/api/rfqs/route.ts";
 const quoteRoutePath = "src/app/api/quotes/route.ts";
 const invitationRpcMigrationPath =
-  "supabase/migrations/20260827000000_enable_professional_identity_primitives.sql";
+  "supabase/legacy-migrations/pre-baseline-v2/20260827000000_enable_professional_identity_primitives.sql";
 
 const sql = readFileSync(resolve(process.cwd(), migrationPath), "utf8").replace(
   /\r\n/g,

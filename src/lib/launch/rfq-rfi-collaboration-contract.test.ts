@@ -10,7 +10,7 @@ function readSource(relativePath: string) {
 }
 
 const migration = readSource(
-  "supabase/migrations/20260834000000_rfi_collaboration_persistence_foundation.sql",
+  "supabase/legacy-migrations/pre-baseline-v2/20260834000000_rfi_collaboration_persistence_foundation.sql",
 );
 const rfqCreate = readSource("src/app/api/rfqs/route.ts");
 const addendaApi = readSource("src/app/api/rfq-addenda/route.ts");
@@ -307,7 +307,7 @@ describe("Cursor 04C RFI collaboration contract", () => {
       "src/components/rfq-addendum-acknowledgement-center.tsx",
     );
     const terminalMigration = readSource(
-      "supabase/migrations/20260909090225_harden_rfq_addendum_acknowledgement_terminal_state.sql",
+      "supabase/legacy-migrations/pre-baseline-v2/20260909090225_harden_rfq_addendum_acknowledgement_terminal_state.sql",
     );
 
     expect(acknowledgementApi).toContain(
@@ -377,7 +377,7 @@ describe("Cursor 04C RFI collaboration contract", () => {
 
   it("secures the purpose-bound RFI response notification recipient RPC", () => {
     const notificationMigration = readSource(
-      "supabase/migrations/20260909032250_resolve_rfi_response_notification_recipient.sql",
+      "supabase/legacy-migrations/pre-baseline-v2/20260909032250_resolve_rfi_response_notification_recipient.sql",
     );
 
     expect(notificationMigration).toContain(

@@ -10,10 +10,10 @@ function readSource(relativePath: string) {
 }
 
 const migration = readSource(
-  "supabase/migrations/20260835000000_expand_procurement_activity_event_writers.sql",
+  "supabase/legacy-migrations/pre-baseline-v2/20260835000000_expand_procurement_activity_event_writers.sql",
 );
 const fanoutMigration = readSource(
-  "supabase/migrations/20260836000000_deliver_addendum_respondent_activity.sql",
+  "supabase/legacy-migrations/pre-baseline-v2/20260836000000_deliver_addendum_respondent_activity.sql",
 );
 const helper = readSource(
   "src/lib/procurement/record-procurement-activity.ts",

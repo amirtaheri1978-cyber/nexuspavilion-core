@@ -1,18 +1,22 @@
 -- Nexus Pavilion
 -- 7-10D-R47
 --
--- DRAFT ONLY. NOT AUTHORIZED FOR DATABASE EXECUTION.
+-- Canonical repository migration source: 20260844000000
+-- Legacy launch-candidate ledger version: 20260831070506
 --
--- Proposed final repository path after explicit execution approval:
---   supabase/migrations/20260844000000_company_governance_update_integrity.sql
+-- Equivalent executable behavior already exists on the launch-candidate
+-- backend under legacy development migration version 20260831070506.
+-- Do NOT push this canonical version to the linked nexus-pavilion-dev backend
+-- until the separate migration-ledger normalization gate is authorized.
+-- Fresh environments use this file after canonical migration 20260843000000.
 --
 -- Scope:
 -- - Company profile updates: name/category/location/network_role.
 -- - Company logo binding: logo_url.
 -- - Immutable audit evidence must be atomic with the primary company update.
 -- - The existing Company Profile Updated product notification remains atomic
---   in this draft so the current product behavior is preserved without
---   restoring direct authenticated INSERT authority.
+--   so the current product behavior is preserved without restoring direct
+--   authenticated INSERT authority.
 -- - Permanent company DELETE is explicitly excluded and remains under the
 --   separate 7-10D-DELETE retention/lifecycle architecture gate.
 --

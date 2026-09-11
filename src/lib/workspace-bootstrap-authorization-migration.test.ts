@@ -3,11 +3,11 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
 const migrationPath =
-  "supabase/migrations/20260825000000_enable_workspace_bootstrap_self_authorization.sql";
+  "supabase/legacy-migrations/pre-baseline-v2/20260825000000_enable_workspace_bootstrap_self_authorization.sql";
 const baselinePath =
-  "supabase/migrations/20260822000000_dev_public_baseline.sql";
+  "supabase/legacy-migrations/pre-baseline-v2/20260822000000_dev_public_baseline.sql";
 const directoryMigrationPath =
-  "supabase/migrations/20260824000000_restrict_public_company_column_disclosure.sql";
+  "supabase/legacy-migrations/pre-baseline-v2/20260824000000_restrict_public_company_column_disclosure.sql";
 const loginPagePath = "src/app/login/page.tsx";
 const createRoutePath = "src/app/api/companies/create/route.ts";
 

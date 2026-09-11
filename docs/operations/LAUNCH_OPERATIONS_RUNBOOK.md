@@ -4,15 +4,27 @@ Status: Task 29 operator evidence recorded. This runbook describes
 capabilities that exist in the Launch Candidate application and host
 dashboards. It does not invent APM, paging, or backup products.
 
-Launch backend (intentional): Supabase project `nexus-pavilion-dev`,
-ref `bzntqnwoytdakmstbtyh`. This same project is the launch/production
-backend. Do not use a retired project. A distinct Production Supabase
-project is **not** a remaining requirement.
+Active backend: Supabase project `nexus-pavilion-dev`, ref
+`bzntqnwoytdakmstbtyh`.
 
-Migrations `20260828000000` and `20260829000000` are **already applied**
-and live-validated on that backend. **DO NOT RE-APPLY 280 OR 290.**
-Remaining launch work is application deployment, host configuration, and
-Product Owner Go/No-Go — not another database migration apply.
+Current classification: **DEVELOPMENT / LAUNCH-CANDIDATE BACKEND**.
+
+Future intended role: this same project may become the launch/production
+backend only after the authorized Task 29 Go/No-Go / cutover. Product Owner
+decision stands: a second, distinct Supabase project is **not** currently
+required. Do not use a retired project.
+
+Current Production migration state: **NO VERIFIED PRODUCTION MIGRATIONS
+EXECUTED**. Do not treat development / launch-candidate history as
+Production history, and do not claim the application is already in
+Production.
+
+Historical migrations `20260828000000` and `20260829000000` were applied and
+live-validated during the pre-Baseline V2 development history. Their final
+schema/security effects remain embodied in `nexus-pavilion-dev`, but their
+historical ledger rows were retired by the authorized metadata-only Baseline V2
+normalization. **DO NOT RE-APPLY 280 OR 290.** The canonical active migration
+identity is now `20260911000000_launch_candidate_baseline_v2.sql`.
 
 ## Ownership (do not invent extra roles)
 
@@ -122,6 +134,10 @@ Stop launching or stop writing when any of the following is true:
   submit, and RFQ reads succeed; no duplicate awarded quotes.
 - Escalation: restore would discard writes after the dump point, or 290
   reverse would re-open locked quotes — Product Owner decision only.
+
+See **Migration discipline and history reconciliation** for the general
+migration rollback model (application rollback vs forward database
+correction vs data recovery vs migration history repair).
 
 ## 4. Production backup verification
 
@@ -252,6 +268,192 @@ Stop launching or stop writing when any of the following is true:
 - Verification: authorized upload + list on one RFQ; other company cannot
   list those objects.
 - Escalation: public bucket listing of procurement files.
+
+---
+
+## Migration discipline and history reconciliation (Task 15-03)
+
+Task boundary: **15-03** covers migration history, migration discipline, and
+migration-specific rollback considerations. It does **not** close **15-07**
+(full deployment rollback procedure), **15-08** (backup/recovery capability),
+or **15-09** (environment variable audit).
+
+### Environment classification
+
+| Item | Value |
+| --- | --- |
+| Active project | `nexus-pavilion-dev` |
+| Project ref | `bzntqnwoytdakmstbtyh` |
+| Current classification | DEVELOPMENT / LAUNCH-CANDIDATE BACKEND |
+| Future intended role | May become launch/production backend only after Task 29 Go/No-Go / cutover |
+| Second Supabase project | Not currently required (Product Owner decision) |
+| Production migration state | **NO VERIFIED PRODUCTION MIGRATIONS EXECUTED** |
+
+### Canonical repository migration model (Baseline V2)
+
+Active apply order contains exactly one canonical migration:
+
+1. `20260911000000_launch_candidate_baseline_v2.sql`
+
+This baseline represents the **final intended** public schema plus curated
+Storage bucket/policy contracts through historical state
+`20260909090225`. It does **not** replay historical intermediate
+transforms (including `20260904204031` text surgery / MD5 guards).
+
+**Baseline SQL MUST NOT be pushed to active-dev.** Active-dev already embodies
+this schema. On 2026-09-11, the separately authorized reconciliation gate
+normalized only `supabase_migrations.schema_migrations`; Baseline V2 SQL was
+**not** executed against active-dev.
+
+### Historical archive (pre-baseline-v2)
+
+| Item | Value |
+| --- | --- |
+| Archive location | `supabase/legacy-migrations/pre-baseline-v2/` |
+| Archive range | `20260822000000` → `20260909090225` |
+| File count | 33 SQL migrations (byte-preserved) |
+
+Earlier pre-V1 history remains under
+`supabase/legacy-migrations/pre-baseline/` (unchanged).
+
+`20260904204031_populate_notification_rfq_source_from_trusted_writers.sql`
+remains **immutable historical evidence** in the V2 archive. Do not edit
+it. Do not restore it into active `supabase/migrations/`.
+
+### Legacy development / launch-candidate ledger mapping (historical)
+
+These timestamps remain preserved historical evidence in
+`supabase/legacy-migrations/pre-baseline-v2/`. They are **not** active migration
+execution filenames and are no longer active-dev ledger rows.
+
+| Legacy version | Name | Historical archive (pre-baseline-v2) |
+| --- | --- | --- |
+| `20260831065829` | `company_logo_storage_contract` | `20260843000000` |
+| `20260831070207` | `fix_company_logo_bound_delete_policy` | `20260845000000` |
+| `20260831070506` | `company_governance_update_integrity` | `20260844000000` |
+| `20260831143650` | `company_workspace_lifecycle_contract` | `20260846000000` |
+
+
+
+### Active-dev Baseline V2 ledger normalization — completed 2026-09-11
+
+Normalization was authorized only after both prerequisites passed:
+
+- fresh Baseline V2 local reconstruction from zero: **PASS**
+- schema/security equivalence: **11/11 fingerprint categories MATCH**
+
+The active target was `nexus-pavilion-dev`
+(`bzntqnwoytdakmstbtyh`). Reconciliation was metadata-only:
+
+- `20260911000000` was marked `applied`
+- the 33 preserved historical ledger versions were marked `reverted`
+- no Baseline V2 SQL was executed against active-dev
+- no schema, RLS, function, policy, grant, Storage contract, or business-data
+  mutation was performed by the repair
+
+Post-normalization verification showed the remote ledger contains only
+`20260911000000 | launch_candidate_baseline_v2`, and all 11 schema/security
+fingerprints remained unchanged and matched the fresh local Baseline V2.
+
+`supabase migration repair` in this event was ledger reconciliation only; it was
+not SQL rollback. The archived historical chain remains immutable evidence and
+must not be restored to active `supabase/migrations/`.
+
+### Company-logos provisioning
+
+Canonical Baseline V2 owns reproducible provisioning of the
+`Company-logos` Storage bucket (`public = true`, 5 MiB,
+JPEG/PNG/WebP) together with `company-documents` and `rfq-attachments`.
+Fresh environments must **not** require manual Dashboard bucket creation.
+Manual provisioning is not the canonical path.
+
+### Forward-only discipline
+
+After Baseline V2 cutover, normal forward-only migration discipline
+resumes. Once a migration is applied under its **canonical** version:
+
+- **NEVER** edit it to fix a deployed environment
+- use a **new forward corrective migration**
+- never delete applied migration files to hide history
+- never rename applied migration versions
+- never manually alter migration tracking without an approved reconciliation
+  gate
+- never run casual Production SQL
+- never infer Production state from development migration history
+- every migration requires target-project verification before execution
+
+### Migration-specific rollback model
+
+| Model | Use when |
+| --- | --- |
+| **APPLICATION ROLLBACK** | Schema remains backward-compatible; restore prior app SHA |
+| **FORWARD DATABASE CORRECTION** | Preferred for a bad applied schema migration (new corrective migration) |
+| **DATA RECOVERY** | Destructive data loss cannot be corrected forward (dump / Storage copies) |
+| **MIGRATION HISTORY REPAIR** | Metadata reconciliation only — **not** schema rollback |
+
+`supabase migration repair` does **not** reverse SQL. It only adjusts
+migration tracking metadata.
+
+### Migration repair policy
+
+`supabase migration repair` requires explicit Product Owner / ChatGPT gated
+authorization. Use it only when:
+
+1. actual schema state is independently verified, and
+2. migration tracking metadata is known to be wrong/out-of-sync.
+
+Never use repair blindly to make `migration list` look clean.
+
+Baseline V2 repository cutover does **not** authorize automatic remote SQL
+execution. The one-time active-dev ledger reconciliation was separately
+authorized and completed on 2026-09-11 only after fresh reconstruction and
+11/11 schema/security equivalence were proven.
+
+Future `migration repair` operations require a new explicit reconciliation gate.
+Do not use repair merely to make `migration list` appear clean, and do not run
+`db reset --linked`, blind `db push`, or the Baseline V2 SQL against active-dev
+as a substitute for metadata reconciliation.
+
+### Migration execution preflight checklist
+
+Before any migration execution:
+
+1. Verify branch / commit
+2. Verify target Supabase project / ref
+3. Verify target environment classification
+4. Run migration history comparison (local vs remote)
+5. Identify the exact pending migration set
+6. Review dependency order
+7. Classify destructive / reversible impact
+8. Review RLS / policy / grants / SECURITY DEFINER changes
+9. Review Representative Verification / ownership impact when applicable
+10. Confirm backup/recovery consideration for destructive changes
+11. Require explicit execution approval
+12. Record post-execution migration history
+13. Verify affected application / runtime paths
+
+### Migration stop conditions
+
+Stop and escalate; do not “repair and continue” automatically when:
+
+- local/remote migration history unexpectedly diverges
+- target project/ref is ambiguous
+- an applied canonical migration file was modified
+- a destructive migration lacks recovery consideration
+- RLS / ownership / SECURITY DEFINER change lacks explicit review
+- remote schema was manually changed outside migration governance
+- migration order differs from reviewed dependency order
+- Production authorization is absent
+
+### Production Migration Ledger
+
+Current truthful state: **NO VERIFIED PRODUCTION MIGRATIONS EXECUTED**.
+
+Future rows (do not fabricate historical Production entries):
+
+| Migration version / name | Release / commit | Target environment | Execution status | Verification evidence | Rollback / recovery consideration |
+| --- | --- | --- | --- | --- | --- |
+| — | — | — | NO VERIFIED PRODUCTION MIGRATIONS EXECUTED | — | — |
 
 ---
 

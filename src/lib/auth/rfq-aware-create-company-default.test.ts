@@ -15,7 +15,7 @@ const createCompanyPage = readSource("src/app/create-company/page.tsx");
 const createRoute = readSource("src/app/api/companies/create/route.ts");
 const helper = readSource("src/lib/auth/login-continuation.ts");
 const bootstrapMigration = readSource(
-  "supabase/migrations/20260832000000_bootstrap_vendor_supplier_founder_capability.sql",
+  "supabase/legacy-migrations/pre-baseline-v2/20260832000000_bootstrap_vendor_supplier_founder_capability.sql",
 );
 
 const wizard = createCompanyPage.slice(

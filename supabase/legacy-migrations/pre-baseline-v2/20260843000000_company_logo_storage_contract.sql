@@ -1,12 +1,18 @@
 -- Nexus Pavilion
 -- 7-10D-LOGO
 --
--- DRAFT ONLY. NOT AUTHORIZED FOR DATABASE EXECUTION.
+-- Canonical repository migration source: 20260843000000
+-- Legacy launch-candidate ledger version: 20260831065829
 --
--- Proposed final repository path after explicit execution approval:
---   supabase/migrations/20260843000000_company_logo_storage_contract.sql
+-- Equivalent Storage contract behavior already exists on the launch-candidate
+-- backend under legacy development migration version 20260831065829.
+-- Do NOT push this canonical version to the linked nexus-pavilion-dev backend
+-- until the separate migration-ledger normalization gate is authorized.
+-- Fresh environments use this file in dependency-safe order after
+-- 20260842000000_company_documents_contract.sql.
 --
 -- Contract:
+-- - Canonically provision the Company-logos Storage bucket.
 -- - Preserve public delivery for company logos.
 -- - New managed objects use:
 --     <company_id>/branding/<uuid>.(jpg|jpeg|png|webp)
@@ -18,20 +24,34 @@
 -- - Authenticated DELETE cannot remove the object currently referenced by
 --   companies.logo_url.
 -- - No existing legacy/orphan object is deleted or rewritten here.
+-- - Migration 20260845000000 remains the explicit DELETE-policy remediation.
 
 begin;
 
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values (
+  'Company-logos',
+  'Company-logos',
+  true,
+  5242880,
+  array[
+    'image/jpeg'::text,
+    'image/png'::text,
+    'image/webp'::text
+  ]
+)
+on conflict (id) do update
+set
+  public = true,
+  file_size_limit = 5242880,
+  allowed_mime_types = array[
+    'image/jpeg'::text,
+    'image/png'::text,
+    'image/webp'::text
+  ];
+
 do $$
 begin
-  if not exists (
-    select 1
-    from storage.buckets
-    where id = 'Company-logos'
-  ) then
-    raise exception
-      'Company-logos bucket is required before installing the logo storage contract.';
-  end if;
-
   if exists (
     select 1
     from pg_policies
@@ -52,17 +72,6 @@ begin
   end if;
 end
 $$;
-
-update storage.buckets
-set
-  public = true,
-  file_size_limit = 5242880,
-  allowed_mime_types = array[
-    'image/jpeg',
-    'image/png',
-    'image/webp'
-  ]::text[]
-where id = 'Company-logos';
 
 drop policy if exists
   "Company owners and admins can read Company-logos objects"

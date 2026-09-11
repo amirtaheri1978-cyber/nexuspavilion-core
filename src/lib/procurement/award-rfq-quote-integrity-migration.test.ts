@@ -3,7 +3,7 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
 const migrationPath =
-  "supabase/migrations/20260826000000_enforce_atomic_rfq_award_integrity.sql";
+  "supabase/legacy-migrations/pre-baseline-v2/20260826000000_enforce_atomic_rfq_award_integrity.sql";
 const awardRoutePath = "src/app/api/award-contract/route.ts";
 const quoteDecisionRoutePath = "src/app/api/quote-decision/route.ts";
 

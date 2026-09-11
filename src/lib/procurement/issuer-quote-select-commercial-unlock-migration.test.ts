@@ -3,11 +3,11 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
 const migrationPath =
-  "supabase/migrations/20260829000000_restrict_issuer_quote_select_until_commercial_unlock.sql";
+  "supabase/legacy-migrations/pre-baseline-v2/20260829000000_restrict_issuer_quote_select_until_commercial_unlock.sql";
 const baselineMigrationPath =
-  "supabase/migrations/20260822000000_dev_public_baseline.sql";
+  "supabase/legacy-migrations/pre-baseline-v2/20260822000000_dev_public_baseline.sql";
 const auditMigrationPath =
-  "supabase/migrations/20260828000000_enable_company_scoped_audit_and_notification_access.sql";
+  "supabase/legacy-migrations/pre-baseline-v2/20260828000000_enable_company_scoped_audit_and_notification_access.sql";
 const sourcingFixPath =
   "supabase/legacy-migrations/pre-baseline/20260819_restrict_rfq_sourcing_access_rls.sql";
 const detailPath = "src/app/rfq/[slug]/page.tsx";
@@ -493,7 +493,7 @@ describe("award_rfq_quote commercial unlock", () => {
   const historicalAward = readFileSync(
     resolve(
       process.cwd(),
-      "supabase/migrations/20260826000000_enforce_atomic_rfq_award_integrity.sql",
+      "supabase/legacy-migrations/pre-baseline-v2/20260826000000_enforce_atomic_rfq_award_integrity.sql",
     ),
     "utf8",
   ).replace(/\r\n/g, "\n");

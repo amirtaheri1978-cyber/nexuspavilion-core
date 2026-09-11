@@ -10,18 +10,18 @@ function readSource(relativePath: string) {
 }
 
 const migrationPath =
-  "supabase/migrations/20260833000000_universal_rfq_respondent_authorization.sql";
+  "supabase/legacy-migrations/pre-baseline-v2/20260833000000_universal_rfq_respondent_authorization.sql";
 const historicalSourcingPath =
   "supabase/legacy-migrations/pre-baseline/20260819_restrict_rfq_sourcing_access_rls.sql";
 const historicalActivityPath =
-  "supabase/migrations/20260828000000_enable_company_scoped_audit_and_notification_access.sql";
+  "supabase/legacy-migrations/pre-baseline-v2/20260828000000_enable_company_scoped_audit_and_notification_access.sql";
 const quotesRoutePath = "src/app/api/quotes/route.ts";
 const quotesAuthPath = "src/lib/procurement/procurement-write-authorization.ts";
 const accessContractPath = "src/lib/procurement/rfq-access-contract.ts";
 const bootstrapPath =
-  "supabase/migrations/20260832000000_bootstrap_vendor_supplier_founder_capability.sql";
+  "supabase/legacy-migrations/pre-baseline-v2/20260832000000_bootstrap_vendor_supplier_founder_capability.sql";
 const commercialUnlockPath =
-  "supabase/migrations/20260829000000_restrict_issuer_quote_select_until_commercial_unlock.sql";
+  "supabase/legacy-migrations/pre-baseline-v2/20260829000000_restrict_issuer_quote_select_until_commercial_unlock.sql";
 
 const sql = readSource(migrationPath);
 const normalized = sql.replace(/\s+/g, " ").trim().toLowerCase();

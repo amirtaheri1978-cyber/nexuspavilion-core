@@ -2,7 +2,18 @@
 -- 7-10D-DELETE
 -- Company workspace archive/reactivation lifecycle contract.
 --
--- DRAFT SOURCE ONLY. NOT AUTHORIZED FOR DATABASE EXECUTION.
+-- Canonical repository migration source: 20260846000000
+-- Legacy launch-candidate ledger version: 20260831143650
+--
+-- Equivalent executable lifecycle behavior already exists on the
+-- launch-candidate backend under legacy development migration version
+-- 20260831143650. Do NOT push this canonical version to the linked
+-- nexus-pavilion-dev backend until the separate migration-ledger
+-- normalization gate is authorized.
+--
+-- Ordering: remain AFTER 20260842000000. Fail-closed preflight depends on
+-- contracts created by migrations 20260834000000 and 20260839000000 through
+-- 20260842000000. Do not move this migration earlier.
 --
 -- Contract:
 -- - Physical authenticated deletion of public.companies is disabled.

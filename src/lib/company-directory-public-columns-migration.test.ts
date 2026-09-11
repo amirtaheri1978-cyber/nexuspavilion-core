@@ -3,9 +3,9 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
 const migrationPath =
-  "supabase/migrations/20260824000000_restrict_public_company_column_disclosure.sql";
+  "supabase/legacy-migrations/pre-baseline-v2/20260824000000_restrict_public_company_column_disclosure.sql";
 const baselinePath =
-  "supabase/migrations/20260822000000_dev_public_baseline.sql";
+  "supabase/legacy-migrations/pre-baseline-v2/20260822000000_dev_public_baseline.sql";
 
 const sql = readFileSync(resolve(process.cwd(), migrationPath), "utf8");
 const normalized = sql.replace(/\s+/g, " ").trim().toLowerCase();
