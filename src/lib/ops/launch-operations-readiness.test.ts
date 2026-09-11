@@ -921,3 +921,78 @@ describe("Task 15-07 deployment rollback procedure", () => {
     );
   });
 });
+
+describe("Task 15-08 backup recovery understanding", () => {
+  it("documents backup recovery capability ownership and restore boundaries", () => {
+    const runbook = readSource(
+      "docs/operations/LAUNCH_OPERATIONS_RUNBOOK.md",
+    );
+    const evidence = readSource(
+      "docs/operations/TASK_28_OPERATOR_EVIDENCE.md",
+    );
+
+    expect(runbook).toContain(
+      "| Database, Auth, Storage, RLS, backup/PITR console evidence | Database/Supabase operator via the Supabase dashboard (same Product Owner gate) |",
+    );
+    expect(runbook).toContain(
+      "Scheduled backups and PITR are **unavailable** on the current Free Plan.",
+    );
+    expect(runbook).toContain(
+      "manual pre-launch database dump plus copied",
+    );
+    expect(runbook).toContain(
+      "Storage objects as the launch-stage recovery checkpoint.",
+    );
+    expect(runbook).toContain("## 4. Production backup verification");
+    expect(runbook).toContain(
+      "Product Owner accepted the manual checkpoint",
+    );
+    expect(runbook).toContain(
+      "operator preserves the local dump and Storage copies (not in git).",
+    );
+    expect(runbook).toContain(
+      "backups/nexus-pavilion-dev-prelaunch-2026-08-22.dump",
+    );
+    expect(runbook).toContain(
+      "Rollback/recovery: `pg_restore` of that dump after Product Owner",
+    );
+    expect(runbook).toContain(
+      "Dashboard PITR is not available.",
+    );
+
+    expect(evidence).toContain(
+      "### C2. Backup / PITR (Free Plan — do not claim PITR exists)",
+    );
+    expect(evidence).toContain(
+      "Product Owner accepted a **manual pre-launch database + Storage",
+    );
+    expect(evidence).toContain(
+      "backup** as the launch-stage recovery checkpoint",
+    );
+    expect(evidence).toContain(
+      "No restore into the live launch database was executed",
+    );
+    expect(evidence).toContain(
+      "### C3. Restore procedure (document, do not execute)",
+    );
+    expect(evidence).toContain(
+      "Product Owner authorizes restore and names the checkpoint",
+    );
+    expect(evidence).toContain(
+      "Freeze application writes",
+    );
+    expect(evidence).toContain(
+      "Restore Postgres from the authorized dump (`pg_restore`)",
+    );
+    expect(evidence).toContain(
+      "Restore Storage objects separately from the recorded local copies",
+    );
+    expect(evidence).toContain("### C4. Storage assets");
+    expect(evidence).toContain(
+      "Scheduled Storage backups are **unavailable** on Free Plan.",
+    );
+    expect(evidence).toContain(
+      "Do **not** claim PITR exists. Do **not** invent a scheduled backup.",
+    );
+  });
+});
