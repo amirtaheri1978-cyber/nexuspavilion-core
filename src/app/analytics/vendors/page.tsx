@@ -101,8 +101,9 @@ redirect("/analytics");
 
 const companyId = activeMembership.companyId;
 
-const { data: approvedVendorsData } = APPROVED_VENDOR_DOMAIN_AVAILABLE
-? await supabase
+const [approvedVendorsResult, complianceResult] = await Promise.all([
+APPROVED_VENDOR_DOMAIN_AVAILABLE
+? supabase
 .from("approved_vendors")
 .select(
 `
@@ -124,16 +125,19 @@ status
 )
 .eq("buyer_company_id", companyId)
 .order("created_at", { ascending: false })
-: { data: [] as ApprovedVendor[] };
-
-const { data: complianceData } = SUPPLIER_COMPLIANCE_DOMAIN_AVAILABLE
-? await supabase
+: { data: [] as ApprovedVendor[] },
+SUPPLIER_COMPLIANCE_DOMAIN_AVAILABLE
+? supabase
 .from("supplier_compliance")
 .select(
 "id, vendor_company_id, insurance_status, insurance_expiry, certificate_status, certificate_expiry, license_status, license_expiry, tax_status, compliance_score, overall_status"
 )
 .eq("buyer_company_id", companyId)
-: { data: [] as Compliance[] };
+: { data: [] as Compliance[] },
+]);
+
+const { data: approvedVendorsData } = approvedVendorsResult;
+const { data: complianceData } = complianceResult;
 
 const vendorCompanyIds = approvedVendorsData
 ? approvedVendorsData
