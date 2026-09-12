@@ -49,6 +49,7 @@ import {
 
 import {
   buildCommercialIntelligence,
+  isRfqCommercialOpeningUnlocked,
   type Quote,
 } from "@/lib/procurement/rfq-commercial-intelligence";
 import {
@@ -135,17 +136,6 @@ if (!Number.isFinite(amount)) {
 return "$0";
 }
 return `$${amount.toLocaleString()}`;
-}
-function hasDeadlinePassed(deadline: string | null | undefined) {
-if (!deadline) return false;
-
-const deadlineDate = new Date(deadline);
-
-if (Number.isNaN(deadlineDate.getTime())) {
-return false;
-}
-
-return new Date().getTime() > deadlineDate.getTime();
 }
 
 function readQuoteSubmissionCount(value: unknown) {
@@ -297,7 +287,10 @@ if (isOwner && user && profile?.company_id) {
 }
 
 const rfqStatus = String(rfq.status || "open");
-const deadlinePassed = hasDeadlinePassed(rfq.deadline);
+const commercialEvaluationUnlocked = isRfqCommercialOpeningUnlocked({
+  deadline: rfq.deadline,
+});
+const deadlinePassed = commercialEvaluationUnlocked;
 const daysUntilDeadline = getDaysUntilDeadline(rfq.deadline);
 const deadlineRisk = getCurrentRfqDeadlineRisk(rfq.deadline);
 const deadlineMetric = getDeadlineMetricPresentation(
@@ -305,8 +298,6 @@ const deadlineMetric = getDeadlineMetricPresentation(
   daysUntilDeadline,
 );
 const blindBiddingEnabled = shouldEnforceBlindBidding(rfq);
-const commercialEvaluationUnlocked =
-!blindBiddingEnabled || deadlinePassed;
 const isOpen =
   (!rfq.status || rfqStatus === "open") &&
   !deadlinePassed &&

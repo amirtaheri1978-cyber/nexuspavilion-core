@@ -1,4 +1,4 @@
-﻿import { readFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
@@ -104,6 +104,20 @@ describe("Master Plan 8-09 evaluation exception lifecycle contract", () => {
     expect(normalizedQuoteWorkspace).toContain(
       "quote submissions remain protected until the rfq deadline.",
     );
+    expect(normalizedQuoteWorkspace).toContain(
+      "commercial submission lock active",
+    );
+    expect(normalizedQuoteWorkspace).toContain("commercial data sealed");
+    expect(normalizedQuoteWorkspace).toContain(
+      "pending commercial opening",
+    );
+    expect(normalizedQuoteWorkspace).not.toContain(
+      "blind bidding controls active",
+    );
+    expect(normalizedQuoteWorkspace).not.toContain("blind bidding active");
+    expect(normalizedQuoteWorkspace).not.toContain(
+      "blind bidding remains active",
+    );
 
     const lockedIssuerBranch = normalizedQuoteWorkspace.indexOf(
       "{isowner && !commercialevaluationunlocked ? (",
@@ -121,6 +135,9 @@ describe("Master Plan 8-09 evaluation exception lifecycle contract", () => {
       "if (!profile?.company_id || profile.company_id !== rfq.company_id) { redirect(\"/rfq\"); }",
     );
     expect(normalizedComparePage).toContain(
+      "const commercialevaluationunlocked = isrfqcommercialopeningunlocked({ deadline: rfq.deadline, });",
+    );
+    expect(normalizedComparePage).not.toContain(
       "const commercialevaluationunlocked = !blindbiddingenabled || deadlinepassed;",
     );
     expect(normalizedComparePage).toContain(
@@ -171,7 +188,7 @@ describe("Master Plan 8-09 evaluation exception lifecycle contract", () => {
     expect(normalizedQuoteComparison).not.toContain("fetch(");
   });
 
-  it("retains database defense-in-depth for authorized issuer evaluation visibility", () => {
+  it("documents the historical issuer RLS policy that Phase 18 must supersede with a universal deadline lock", () => {
     expect(normalizedUnlockMigration).toContain(
       'create policy "issuing buyers can read quotes after commercial unlock" on public.quotes for select to authenticated',
     );

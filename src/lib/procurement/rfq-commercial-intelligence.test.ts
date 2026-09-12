@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   buildCommercialIntelligence,
+  isRfqCommercialOpeningUnlocked,
   type Quote,
 } from "./rfq-commercial-intelligence";
 
@@ -368,5 +369,56 @@ describe("buildCommercialIntelligence", () => {
       averageBid: 0,
       potentialSavings: 0,
     });
+  });
+});
+describe("isRfqCommercialOpeningUnlocked", () => {
+  const deadline = "2026-09-22T20:00:00.000Z";
+
+  it("keeps commercial evaluation locked before the submission deadline", () => {
+    expect(
+      isRfqCommercialOpeningUnlocked({
+        deadline,
+        now: new Date("2026-09-22T19:59:59.999Z"),
+      }),
+    ).toBe(false);
+  });
+
+  it("keeps commercial evaluation locked at the exact submission deadline", () => {
+    expect(
+      isRfqCommercialOpeningUnlocked({
+        deadline,
+        now: new Date(deadline),
+      }),
+    ).toBe(false);
+  });
+
+  it("unlocks commercial evaluation only after the submission deadline", () => {
+    expect(
+      isRfqCommercialOpeningUnlocked({
+        deadline,
+        now: new Date("2026-09-22T20:00:00.001Z"),
+      }),
+    ).toBe(true);
+  });
+
+  it.each([null, undefined, "", "not-a-deadline"])(
+    "fails closed for an unavailable or invalid deadline: %s",
+    (invalidDeadline) => {
+      expect(
+        isRfqCommercialOpeningUnlocked({
+          deadline: invalidDeadline,
+          now: new Date("2026-09-23T00:00:00.000Z"),
+        }),
+      ).toBe(false);
+    },
+  );
+
+  it("fails closed when the evaluation clock is invalid", () => {
+    expect(
+      isRfqCommercialOpeningUnlocked({
+        deadline,
+        now: new Date("invalid"),
+      }),
+    ).toBe(false);
   });
 });

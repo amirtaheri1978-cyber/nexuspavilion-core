@@ -12,6 +12,7 @@ import {
 import { formatRfqDeadlineForDisplay as formatDateTime } from "@/lib/datetime/format-rfq-deadline-display";
 import {
   buildCommercialIntelligence,
+  isRfqCommercialOpeningUnlocked,
   type Quote,
 } from "@/lib/procurement/rfq-commercial-intelligence";
 import { createClient } from "@/lib/supabase/server";
@@ -48,15 +49,6 @@ if (!Number.isFinite(amount)) return "$0";
 return `$${amount.toLocaleString()}`;
 }
 
-function hasDeadlinePassed(deadline: string | null | undefined) {
-if (!deadline) return false;
-
-const deadlineDate = new Date(deadline);
-
-if (Number.isNaN(deadlineDate.getTime())) return false;
-
-return new Date().getTime() > deadlineDate.getTime();
-}
 
 function readQuoteSubmissionCount(value: unknown) {
 const count = Number(value);
@@ -163,9 +155,10 @@ if (!profile?.company_id || profile.company_id !== rfq.company_id) {
 redirect("/rfq");
 }
 
-const deadlinePassed = hasDeadlinePassed(rfq.deadline);
+const commercialEvaluationUnlocked = isRfqCommercialOpeningUnlocked({
+  deadline: rfq.deadline,
+});
 const blindBiddingEnabled = shouldEnforceBlindBidding(rfq);
-const commercialEvaluationUnlocked = !blindBiddingEnabled || deadlinePassed;
 
 let quoteList: Quote[] = [];
 let quoteCount = 0;

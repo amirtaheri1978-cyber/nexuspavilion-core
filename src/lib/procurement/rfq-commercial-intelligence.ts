@@ -42,6 +42,28 @@ type BuildCommercialIntelligenceInput = {
   isOwner: boolean;
 };
 
+type RfqCommercialOpeningInput = {
+  deadline: string | null | undefined;
+  now?: Date;
+};
+
+export function isRfqCommercialOpeningUnlocked({
+  deadline,
+  now = new Date(),
+}: RfqCommercialOpeningInput): boolean {
+  if (!deadline || Number.isNaN(now.getTime())) {
+    return false;
+  }
+
+  const deadlineDate = new Date(deadline);
+
+  if (Number.isNaN(deadlineDate.getTime())) {
+    return false;
+  }
+
+  return now.getTime() > deadlineDate.getTime();
+}
+
 export type CommercialIntelligence = {
   scoredQuotes: ScoredQuote[];
   recommendedQuote: ScoredQuote | null;

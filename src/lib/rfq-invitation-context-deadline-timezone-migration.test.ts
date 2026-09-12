@@ -80,21 +80,22 @@ describe("RFQ invitation deadline timezone forward migration", () => {
 });
 
 describe("RFQ deadline timezone display wiring", () => {
-  it("compare uses stored timezone for display and keeps instant enforcement", () => {
+  it("compare uses stored timezone for display and delegates instant enforcement to the canonical commercial-opening authority", () => {
     expect(compare).toContain("deadline_timezone?: string | null");
     expect(compare).toContain(
       "value={formatDateTime(rfq.deadline, rfq.deadline_timezone)}"
     );
+    expect(compare).toContain("isRfqCommercialOpeningUnlocked,");
     expect(compare).toContain(
+      "const commercialEvaluationUnlocked = isRfqCommercialOpeningUnlocked({"
+    );
+    expect(compare).toContain("deadline: rfq.deadline,");
+    expect(compare).not.toContain(
       "function hasDeadlinePassed(deadline: string | null | undefined)"
     );
-    expect(compare).toContain(
-      "return new Date().getTime() > deadlineDate.getTime();"
+    expect(compare).not.toContain(
+      "!blindBiddingEnabled || deadlinePassed"
     );
-    expect(compare).toContain(
-      "const deadlinePassed = hasDeadlinePassed(rfq.deadline);"
-    );
-    expect(compare).not.toContain("hasDeadlinePassed(rfq.deadline,");
   });
 
   it("invitation context and UI carry deadline_timezone", () => {

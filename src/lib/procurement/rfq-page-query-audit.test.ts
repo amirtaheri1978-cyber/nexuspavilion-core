@@ -11,6 +11,7 @@ function readSource(relativePath: string) {
 }
 
 const detail = readSource("src/app/rfq/[slug]/page.tsx");
+const comparePage = readSource("src/app/rfq/[slug]/compare/page.tsx");
 const submitPage = readSource("src/app/rfq/[slug]/submit/page.tsx");
 const submitWorkspace = readSource(
   "src/components/rfq-workspace/rfq-submit-workspace.tsx",
@@ -83,5 +84,28 @@ describe("Task 16-02 RFQ page query audit", () => {
       '"current_user_has_supplier_rfq_access"',
     );
     expect(quoteRoute).toContain("canRespondToRfqSourcing");
+  });
+});
+describe("Task 18-14 commercial opening authority", () => {
+  it("uses the canonical deadline-only authority on issuer commercial surfaces", () => {
+    for (const source of [detail, comparePage]) {
+      expect(source).toContain("isRfqCommercialOpeningUnlocked({");
+      expect(source).not.toContain("!blindBiddingEnabled || deadlinePassed");
+    }
+  });
+
+  it("keeps RFQ detail quote rows behind commercial opening and uses the safe aggregate while locked", () => {
+    expect(detail).toContain(
+      "const loadIssuerQuoteRows = isOwner && commercialEvaluationUnlocked;",
+    );
+    expect(detail).toContain(
+      "const loadIssuerQuoteCount = isOwner && !commercialEvaluationUnlocked;",
+    );
+    expect(detail).toContain('rpc("count_rfq_quote_submissions"');
+  });
+
+  it("keeps compare quote rows behind commercial opening and falls back to the safe aggregate while locked", () => {
+    expect(comparePage).toContain("if (commercialEvaluationUnlocked) {");
+    expect(comparePage).toContain('"count_rfq_quote_submissions"');
   });
 });

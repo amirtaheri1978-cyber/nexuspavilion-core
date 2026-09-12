@@ -141,7 +141,7 @@ export function RFQQuoteWorkspace({
                     id="commercial-lockbox-status-title"
                     className="mt-3 min-w-0 text-pretty text-xl font-black tracking-tight text-nexus-white sm:text-2xl"
                   >
-                    Blind Bidding Controls Active
+                    Commercial Submission Lock Active
                   </h3>
 
                   <p
@@ -154,7 +154,7 @@ export function RFQQuoteWorkspace({
 
                 <div className="shrink-0">
                   <ExecutiveBadge tone="warning">
-                    Blind Bidding Active
+                    Commercial Data Sealed
                   </ExecutiveBadge>
                 </div>
               </div>
@@ -180,7 +180,7 @@ export function RFQQuoteWorkspace({
                 <ExecutiveMetricCard
                   label="Evaluation Status"
                   value="Pending"
-                  insight="Blind bidding remains active"
+                  insight="Pending commercial opening"
                   tone="blue"
                 />
               </div>
