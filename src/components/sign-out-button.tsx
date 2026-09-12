@@ -12,6 +12,7 @@ import { createPortal } from "react-dom";
 import { usePathname, useRouter } from "next/navigation";
 
 import { NexusPavilionLogo } from "@/components/branding/nexus-pavilion-logo";
+import { EXECUTIVE_FOCUS_CYAN } from "@/lib/design-system/executive-contract";
 import { ACCOUNT_MENU_LINKS, isActivePath } from "@/lib/navigation/application-nav";
 import { createClient } from "@/lib/supabase/client";
 
@@ -342,7 +343,7 @@ export default function SignOutButton({
           aria-haspopup="menu"
           aria-controls="executive-workspace-menu"
           aria-label="Executive workspace menu"
-          className={`flex min-h-11 items-center gap-3 rounded-full border border-white/10 bg-[#061426]/90 px-3 py-2 text-left text-white shadow-executive backdrop-blur transition-colors hover:border-[#2CC4E8]/30 hover:bg-[#07111F] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2CC4E8]/40 ${className}`}
+          className={`flex min-h-11 items-center gap-3 rounded-full border border-white/10 bg-[#061426]/90 px-3 py-2 text-left text-white shadow-executive backdrop-blur transition-colors hover:border-[#2CC4E8]/30 hover:bg-[#07111F] ${EXECUTIVE_FOCUS_CYAN} ${className}`}
         >
           <NexusPavilionLogo variant="icon" size={32} />
 

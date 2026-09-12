@@ -32,8 +32,18 @@ describe("company settings governance authorization contract", () => {
     expect(settingsPage).not.toMatch(
       /can(?:Manage|Archive|Reactivate)\w*\s*=.*currentProfile\.role/,
     );
-    expect(settingsPage).toContain("getCurrentWorkspaceContext(supabase)");
-    expect(settingsPage).toContain("workspace.companyId === companyId");
+
+    expect(settingsPage).toMatch(
+      /const activeMembership = await getActiveMembershipForUserCompany\(\s*supabase,\s*user\.id,\s*companyId,\s*\);/,
+    );
+    expect(settingsPage).not.toContain("getCurrentWorkspaceContext");
+    expect(settingsPage).toContain(
+      "workspaceRole: activeMembership?.workspaceRole ?? null",
+    );
+    expect(settingsPage).toContain(
+      "membershipStatus: activeMembership?.membershipStatus ?? null",
+    );
+
     expect(settingsPage).toContain(
       "canManageCompanyWorkspace(permissionContext)",
     );
@@ -51,7 +61,7 @@ describe("company settings governance authorization contract", () => {
     expect(settingsPage).toContain("p_company_id: companyId");
   });
 
-  it("does not invoke active-only invitation or active workspace-context resolution for archived settings", () => {
+  it("does not invoke active-only invitation or active membership resolution for archived settings", () => {
     const invitationRpc = settingsPage.indexOf(
       'supabase.rpc("get_company_workspace_invitations")',
     );
@@ -59,18 +69,19 @@ describe("company settings governance authorization contract", () => {
       'if (company.workspace_status !== "archived")',
       invitationRpc,
     );
-    const workspaceContextLookup = settingsPage.indexOf(
-      "getCurrentWorkspaceContext(supabase)",
+    const activeMembershipLookup = settingsPage.search(
+      /const activeMembership = await getActiveMembershipForUserCompany\(\s*supabase,\s*user\.id,\s*companyId,\s*\);/,
     );
-    const contextGuard = settingsPage.lastIndexOf(
+    const membershipGuard = settingsPage.lastIndexOf(
       'if (company.workspace_status !== "archived")',
-      workspaceContextLookup,
+      activeMembershipLookup,
     );
 
     expect(invitationGuard).toBeGreaterThan(-1);
     expect(invitationGuard).toBeLessThan(invitationRpc);
-    expect(contextGuard).toBeGreaterThan(-1);
-    expect(contextGuard).toBeLessThan(workspaceContextLookup);
+    expect(activeMembershipLookup).toBeGreaterThan(-1);
+    expect(membershipGuard).toBeGreaterThan(-1);
+    expect(membershipGuard).toBeLessThan(activeMembershipLookup);
   });
 
   it("passes explicit management and lifecycle booleans without reconstructing legacy role authority", () => {

@@ -62,7 +62,7 @@ describe("Task 16-02 RFQ page query audit", () => {
     expect(submitPage).toContain("deadline_timezone");
     expect(submitPage).toContain("awarded_quote_id");
     expect(submitPage).toContain(
-      "<RfqSubmitWorkspace slug={slug} initialRfq={rfq} />",
+      "<RfqSubmitWorkspace slug={slug} initialRfq={submitRfq} />",
     );
 
     expect(submitWorkspace).toContain("initialRfq: RfqStatus;");

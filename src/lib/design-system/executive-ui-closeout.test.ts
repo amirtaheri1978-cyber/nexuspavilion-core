@@ -111,6 +111,9 @@ describe("NP-MASTER-22-B05 launch-critical closeout", () => {
     expect(launchCritical.sidebar).toContain('aria-current={isActive ? "page" : undefined}');
     expect(launchCritical.appSidebar).toContain("EXECUTIVE_FOCUS_CYAN");
     expect(launchCritical.topbar).toContain("EXECUTIVE_FOCUS_GOLD");
+    expect(launchCritical.signOut).toMatch(
+      /aria-label="Executive workspace menu"[\s\S]*?className=\{`[^`]*\$\{EXECUTIVE_FOCUS_CYAN\}[^`]*`\}/,
+    );
     expect(launchCritical.inviteForm).toContain("focus-visible:ring-2");
     expect(launchCritical.logoUpload).toContain('htmlFor="company-logo-upload"');
     expect(launchCritical.logoUpload).toContain('id="company-logo-upload"');

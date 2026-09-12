@@ -124,7 +124,7 @@ describe("anonymous RFQ submit auth continuation", () => {
   });
 
   it("keeps authenticated submit on the existing quote workspace and POST /api/quotes", () => {
-    expect(submitPage).toContain("<RfqSubmitWorkspace slug={slug} initialRfq={rfq} />");
+    expect(submitPage).toContain("<RfqSubmitWorkspace slug={slug} initialRfq={submitRfq} />");
     expect(submitPage).toContain("canRespondToRfqSourcing");
     expect(submitPage).toContain("resolveRfqParticipantRole");
     expect(submitPage).toContain("data-rfq-submit-access-blocked={reason}");
@@ -153,8 +153,9 @@ describe("anonymous RFQ submit auth continuation", () => {
       "if (!canRespondToRfqSourcing(rfq.sourcing_method, hasRestrictedRfqAccess))",
     );
     const sourcingBlockIndex = submitPage.indexOf('reason="sourcing"');
+    const submitRfqIndex = submitPage.indexOf("const submitRfq = {");
     const workspaceIndex = submitPage.indexOf(
-      "<RfqSubmitWorkspace slug={slug} initialRfq={rfq} />",
+      "<RfqSubmitWorkspace slug={slug} initialRfq={submitRfq} />",
     );
 
     expect(rfqLookupIndex).toBeGreaterThan(profileGateIndex);
@@ -163,7 +164,8 @@ describe("anonymous RFQ submit auth continuation", () => {
     expect(rpcIndex).toBeGreaterThan(issuerBlockIndex);
     expect(sourcingGateIndex).toBeGreaterThan(rpcIndex);
     expect(sourcingBlockIndex).toBeGreaterThan(sourcingGateIndex);
-    expect(workspaceIndex).toBeGreaterThan(sourcingBlockIndex);
+    expect(submitRfqIndex).toBeGreaterThan(sourcingBlockIndex);
+    expect(workspaceIndex).toBeGreaterThan(submitRfqIndex);
     expect(submitPage).toContain('participantRole === "issuer"');
     expect(submitPage).toContain("isPublicSourcingMethod");
     expect(submitPage).not.toContain('data-rfq-submit-workspace="true"');
