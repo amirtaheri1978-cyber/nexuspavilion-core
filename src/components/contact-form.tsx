@@ -27,10 +27,11 @@ const [website, setWebsite] = useState("");
 const [submissionState, setSubmissionState] =
 useState<SubmissionState>("idle");
 const [statusMessage, setStatusMessage] = useState("");
+const [fieldErrorTarget, setFieldErrorTarget] = useState<
+"name" | "email" | "message" | null
+>(null);
 
 const loading = submissionState === "submitting";
-const hasError = submissionState === "error";
-
 async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
 event.preventDefault();
 
@@ -49,18 +50,21 @@ return;
 }
 
 if (trimmedName.length < 2) {
+setFieldErrorTarget("name");
 setSubmissionState("error");
 setStatusMessage("Please enter your full name.");
 return;
 }
 
 if (!isValidEmail(trimmedEmail)) {
+setFieldErrorTarget("email");
 setSubmissionState("error");
 setStatusMessage("Please enter a valid business email address.");
 return;
 }
 
 if (trimmedMessage.length < 20) {
+setFieldErrorTarget("message");
 setSubmissionState("error");
 setStatusMessage("Please include a message with at least 20 characters.");
 return;
@@ -68,6 +72,7 @@ return;
 
 setSubmissionState("submitting");
 setStatusMessage("");
+setFieldErrorTarget(null);
 
 try {
 const response = await fetch("/api/contact", {
@@ -94,6 +99,7 @@ data = {};
 }
 
 if (!response.ok) {
+setFieldErrorTarget(null);
 setSubmissionState("error");
 setStatusMessage(
 data.message ||
@@ -115,6 +121,7 @@ setInquiryType("General Inquiry");
 setMessage("");
 setWebsite("");
 } catch {
+setFieldErrorTarget(null);
 setSubmissionState("error");
 setStatusMessage(
 "The contact service is currently unavailable. Please try again later.",
@@ -145,12 +152,18 @@ onChange={(event) => setWebsite(event.target.value)}
 id="name"
 name="name"
 value={name}
-onChange={(event) => setName(event.target.value)}
+onChange={(event) => {
+setName(event.target.value);
+if (fieldErrorTarget === "name") setFieldErrorTarget(null);
+}}
 placeholder="Enter your full name"
 required
 minLength={2}
 disabled={loading}
-aria-invalid={hasError && name.trim().length < 2}
+aria-invalid={fieldErrorTarget === "name"}
+aria-describedby={
+fieldErrorTarget === "name" ? "contact-form-status" : undefined
+}
 className={inputClassName}
 />
 </FormField>
@@ -160,12 +173,18 @@ className={inputClassName}
 id="email"
 name="email"
 value={email}
-onChange={(event) => setEmail(event.target.value)}
+onChange={(event) => {
+setEmail(event.target.value);
+if (fieldErrorTarget === "email") setFieldErrorTarget(null);
+}}
 placeholder="name@company.com"
 type="email"
 required
 disabled={loading}
-aria-invalid={hasError && !isValidEmail(email.trim())}
+aria-invalid={fieldErrorTarget === "email"}
+aria-describedby={
+fieldErrorTarget === "email" ? "contact-form-status" : undefined
+}
 className={inputClassName}
 />
 </FormField>
@@ -202,13 +221,19 @@ className={inputClassName}
 id="message"
 name="message"
 value={message}
-onChange={(event) => setMessage(event.target.value)}
+onChange={(event) => {
+setMessage(event.target.value);
+if (fieldErrorTarget === "message") setFieldErrorTarget(null);
+}}
 placeholder="Tell us how Nexus Pavilion can help."
 required
 minLength={20}
 rows={6}
 disabled={loading}
-aria-invalid={hasError && message.trim().length < 20}
+aria-invalid={fieldErrorTarget === "message"}
+aria-describedby={
+fieldErrorTarget === "message" ? "contact-form-status" : undefined
+}
 className={`${inputClassName} resize-none`}
 />
 </FormField>

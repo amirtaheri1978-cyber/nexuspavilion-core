@@ -46,6 +46,7 @@ const launchCritical = {
   ),
   rfqList: readSource("src/app/rfq/page.tsx"),
   rfqNew: readSource("src/app/rfq/new/page.tsx"),
+  deadlineField: readSource("src/components/deadline-field.tsx"),
   rfqDraftAutosave: readSource("src/hooks/use-rfq-draft-autosave.ts"),
   rfqCompare: readSource("src/app/rfq/[slug]/compare/page.tsx"),
   rfqQuoteWorkspace: readSource(
@@ -62,6 +63,8 @@ const launchCritical = {
   rfqRfi: readSource(
     "src/components/rfq-workspace/rfq-rfi-workspace.tsx",
   ),
+  contactForm: readSource("src/components/contact-form.tsx"),
+  capabilities: readSource("src/components/company-capabilities-editor.tsx"),
   supplierCommand: readSource(
     "src/components/vendor-workspace/supplier-command-center.tsx",
   ),
@@ -489,6 +492,47 @@ describe("NP-MASTER-22-B05 launch-critical closeout", () => {
     expect(launchCritical.rfqNew).toContain("[activeStep, formData],");
     expect(launchCritical.rfqNew).toContain("value: draftValue,");
     expect(launchCritical.rfqNew).not.toContain("value: {\nactiveStep,\nformData,\n},");
+  });
+
+  it("keeps local form validation visible and associated with the failing control", () => {
+    expect(launchCritical.rfqNew).toContain(
+      'const validationErrorId = "rfq-new-validation-error";',
+    );
+    expect(launchCritical.rfqNew).toContain('role="alert"');
+    expect(launchCritical.rfqNew).toContain(
+      'isMissingRequiredField("title")',
+    );
+    expect(launchCritical.rfqNew).toContain(
+      'isMissingRequiredField("description")',
+    );
+    expect(launchCritical.rfqNew).toContain(
+      'isMissingRequiredField("category")',
+    );
+    expect(launchCritical.rfqNew).toContain(
+      'isMissingRequiredField("location")',
+    );
+    expect(launchCritical.rfqNew).toContain(
+      'ariaInvalid={isMissingRequiredField("submission_deadline")}',
+    );
+    expect(launchCritical.rfqNew).toContain("ariaDescribedBy={");
+    expect(launchCritical.deadlineField).toContain("ariaInvalid?: boolean;");
+    expect(launchCritical.deadlineField).toContain("ariaDescribedBy?: string;");
+    expect(launchCritical.deadlineField).toContain("aria-invalid={ariaInvalid}");
+    expect(launchCritical.deadlineField).toContain(
+      "aria-describedby={ariaDescribedBy}",
+    );
+
+    expect(launchCritical.contactForm).toContain("fieldErrorTarget");
+    expect(launchCritical.contactForm).toContain('fieldErrorTarget === "name"');
+    expect(launchCritical.contactForm).toContain('fieldErrorTarget === "email"');
+    expect(launchCritical.contactForm).toContain('fieldErrorTarget === "message"');
+    expect(launchCritical.contactForm).toContain('"contact-form-status"');
+
+    expect(launchCritical.capabilities).toContain("const groupErrorId = useId();");
+    expect(launchCritical.capabilities).toContain(
+      "aria-describedby={groupError ? groupErrorId : undefined}",
+    );
+    expect(launchCritical.capabilities).toContain("id={groupErrorId}");
   });
 
   it("keeps truthful RFQ quote empty-state and locked-submission presentation", () => {

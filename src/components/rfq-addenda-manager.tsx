@@ -43,6 +43,8 @@ export default function RFQAddendaManager({
   const [refreshing, setRefreshing] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [titleValidationError, setTitleValidationError] = useState(false);
+  const errorId = "rfq-addenda-error";
 
   const nextAddendumNumber = useMemo(
     () =>
@@ -77,6 +79,7 @@ export default function RFQAddendaManager({
     if (createLock.current || loading) return;
 
     if (!title.trim()) {
+      setTitleValidationError(true);
       setError("Addendum title is required.");
       return;
     }
@@ -85,6 +88,7 @@ export default function RFQAddendaManager({
     setLoading(true);
     setMessage("");
     setError("");
+    setTitleValidationError(false);
 
     try {
       const response = await fetch("/api/rfq-addenda", {
@@ -169,6 +173,7 @@ export default function RFQAddendaManager({
 
       {error ? (
         <div
+          id={errorId}
           className="mt-6 min-w-0 rounded-executive border border-red-300/20 bg-red-400/10 px-4 py-3 text-pretty text-sm font-bold text-red-200"
           role="alert"
           aria-live="assertive"
@@ -280,8 +285,15 @@ export default function RFQAddendaManager({
               <input
                 required
                 value={title}
-                onChange={(event) => setTitle(event.target.value)}
+                onChange={(event) => {
+                  setTitle(event.target.value);
+                  if (titleValidationError) {
+                    setTitleValidationError(false);
+                  }
+                }}
                 disabled={loading}
+                aria-invalid={titleValidationError}
+                aria-describedby={titleValidationError ? errorId : undefined}
                 placeholder="Updated ceiling layout"
                 className="min-h-14 min-w-0 w-full rounded-executive border border-white/10 bg-black/25 px-4 py-4 text-sm font-bold normal-case tracking-normal text-nexus-white outline-none transition placeholder:text-nexus-muted/70 focus:border-nexus-cyan/40 focus-visible:ring-2 focus-visible:ring-nexus-gold/40 disabled:cursor-not-allowed disabled:opacity-60"
               />

@@ -52,6 +52,7 @@ function CapabilityGroupEditor({
 }) {
   const inputId = useId();
   const headingId = useId();
+  const groupErrorId = useId();
   const [draft, setDraft] = useState("");
   const [groupError, setGroupError] = useState("");
   const atGroupLimit = labels.length >= COMPANY_CAPABILITY_MAX_PER_TYPE;
@@ -165,6 +166,7 @@ function CapabilityGroupEditor({
                 className={inputClass}
                 maxLength={120}
                 aria-invalid={groupError ? true : undefined}
+                aria-describedby={groupError ? groupErrorId : undefined}
               />
 
               <div className="mt-3 flex flex-wrap gap-3">
@@ -181,7 +183,11 @@ function CapabilityGroupEditor({
           )}
 
           {groupError ? (
-            <p className="mt-2 text-sm font-semibold text-red-300" role="alert">
+            <p
+              id={groupErrorId}
+              className="mt-2 text-sm font-semibold text-red-300"
+              role="alert"
+            >
               {groupError}
             </p>
           ) : null}

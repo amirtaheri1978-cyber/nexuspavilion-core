@@ -199,6 +199,14 @@ describe("Cursor 04C RFI collaboration contract", () => {
     expect(rfiWorkspace).toContain("Addendum workflow");
     expect(rfiWorkspace).toContain('fetch("/api/rfq-rfis"');
     expect(rfiWorkspace).toContain('method: "PATCH"');
+    expect(rfiWorkspace).toContain('const errorId = "rfq-rfi-error";');
+    expect(rfiWorkspace).toContain('validationTarget === "question"');
+    expect(rfiWorkspace).toContain("aria-invalid={validationTarget === \"question\"}");
+    expect(rfiWorkspace).toContain("aria-describedby={");
+    expect(rfiWorkspace).toContain("`response:${rfiId}`");
+    expect(rfiWorkspace).toContain(
+      "aria-invalid={validationTarget === `response:${rfi.id}`}",
+    );
     expect(documentWorkspace).toContain("RFQRfiWorkspace");
     expect(documentWorkspace).toContain("rfiDeadline={rfiDeadline}");
   });

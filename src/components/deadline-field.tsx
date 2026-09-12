@@ -9,6 +9,8 @@ onTimezoneChange: (value: string) => void;
 required?: boolean;
 disabled?: boolean;
 helperText?: string;
+ariaInvalid?: boolean;
+ariaDescribedBy?: string;
 };
 
 const TIMEZONES = [
@@ -51,6 +53,8 @@ onTimezoneChange,
 required = false,
 disabled = false,
 helperText,
+ariaInvalid = false,
+ariaDescribedBy,
 }: DeadlineFieldProps) {
 return (
 <div className="rounded-[24px] border border-white/10 bg-[#061426]/70 p-5">
@@ -85,6 +89,8 @@ required={required}
 value={dateTimeValue}
 onChange={(event) => onDateTimeChange(event.target.value)}
 disabled={disabled}
+aria-invalid={ariaInvalid}
+aria-describedby={ariaDescribedBy}
 className="w-full rounded-2xl border border-white/10 bg-[#07111F] px-4 py-4 text-sm font-bold text-white outline-none transition focus:border-[#2CC4E8]/40 disabled:cursor-not-allowed disabled:opacity-60"
 />
 </label>

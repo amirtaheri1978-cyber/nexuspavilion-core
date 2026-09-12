@@ -242,6 +242,7 @@ slug: string;
 title: string;
 } | null>(null);
 const [error, setError] = useState("");
+const [validationAttempted, setValidationAttempted] = useState(false);
 const [formData, setFormData] = useState<RFQFormData>(initialFormData);
 
 const draftValue = useMemo(
@@ -375,6 +376,10 @@ const recommendedScore = Math.round(
 );
 
 const isFormReady = rfqRequirements.status === "ready";
+const validationErrorId = "rfq-new-validation-error";
+const isMissingRequiredField = (key: string) =>
+validationAttempted &&
+rfqRequirements.missingSignals.some((signal) => signal.key === key);
 const scopeSummaryReady =
 rfqRequirements.signals.find((signal) => signal.key === "description")
 ?.complete ?? false;
@@ -392,8 +397,10 @@ setFormData((current) => ({
 
 function goToNextStep() {
 setError("");
+setValidationAttempted(false);
 
 if (activeStep === 0 && !isFormReady) {
+setValidationAttempted(true);
 setError("Complete the required project fields before continuing.");
 return;
 }
@@ -403,6 +410,7 @@ setActiveStep((current) => Math.min(current + 1, 4) as WizardStep);
 
 function goToPreviousStep() {
 setError("");
+setValidationAttempted(false);
 setActiveStep((current) => Math.max(current - 1, 0) as WizardStep);
 }
 
@@ -411,6 +419,7 @@ event.preventDefault();
 if (loading) return;
 
 if (!isFormReady) {
+setValidationAttempted(true);
 setError("Please complete the required RFQ fields before publishing.");
 setActiveStep(0);
 return;
@@ -418,6 +427,7 @@ return;
 
 setLoading(true);
 setError("");
+setValidationAttempted(false);
 setPublishProgress(15);
 setPublishStage("Validating procurement package...");
 
@@ -704,6 +714,10 @@ value={formData.title}
 onChange={(event) =>
 updateField("title", event.target.value)
 }
+aria-invalid={isMissingRequiredField("title")}
+aria-describedby={
+isMissingRequiredField("title") ? validationErrorId : undefined
+}
 className="w-full rounded-2xl border border-white/10 bg-[#061426]/80 px-4 py-4 text-sm font-bold text-white outline-none transition placeholder:text-slate-400 focus:border-[#2CC4E8]/40 focus:bg-[#07111F]"
 />
 </FieldLabel>
@@ -716,6 +730,10 @@ placeholder="Describe inclusions, exclusions, technical requirements, site condi
 value={formData.description}
 onChange={(event) =>
 updateField("description", event.target.value)
+}
+aria-invalid={isMissingRequiredField("description")}
+aria-describedby={
+isMissingRequiredField("description") ? validationErrorId : undefined
 }
 className="w-full resize-none rounded-2xl border border-white/10 bg-[#061426]/80 px-4 py-4 text-sm font-bold text-white outline-none transition placeholder:text-slate-400 focus:border-[#2CC4E8]/40 focus:bg-[#07111F]"
 />
@@ -730,6 +748,10 @@ value={formData.category}
 onChange={(event) =>
 updateField("category", event.target.value)
 }
+aria-invalid={isMissingRequiredField("category")}
+aria-describedby={
+isMissingRequiredField("category") ? validationErrorId : undefined
+}
 className="w-full rounded-2xl border border-white/10 bg-[#061426]/80 px-4 py-4 text-sm font-bold text-white outline-none transition placeholder:text-slate-400 focus:border-[#2CC4E8]/40 focus:bg-[#07111F]"
 />
 </FieldLabel>
@@ -741,6 +763,10 @@ placeholder="e.g. Toronto, ON"
 value={formData.location}
 onChange={(event) =>
 updateField("location", event.target.value)
+}
+aria-invalid={isMissingRequiredField("location")}
+aria-describedby={
+isMissingRequiredField("location") ? validationErrorId : undefined
 }
 className="w-full rounded-2xl border border-white/10 bg-[#061426]/80 px-4 py-4 text-sm font-bold text-white outline-none transition placeholder:text-slate-400 focus:border-[#2CC4E8]/40 focus:bg-[#07111F]"
 />
@@ -773,6 +799,12 @@ updateField("deadline", value)
 }
 onTimezoneChange={(value) =>
 updateField("deadline_timezone", value)
+}
+ariaInvalid={isMissingRequiredField("submission_deadline")}
+ariaDescribedBy={
+isMissingRequiredField("submission_deadline")
+? validationErrorId
+: undefined
 }
 helperText="The official closing date and time for supplier submissions."
 />
@@ -1141,7 +1173,11 @@ className="w-full resize-none rounded-2xl border border-white/10 bg-[#061426]/80
 ) : null}
 
 {error ? (
-<div className="rounded-2xl border border-red-300/20 bg-red-400/10 px-4 py-3 text-sm font-bold leading-6 text-red-200">
+<div
+id={validationErrorId}
+role="alert"
+className="rounded-2xl border border-red-300/20 bg-red-400/10 px-4 py-3 text-sm font-bold leading-6 text-red-200"
+>
 {error}
 </div>
 ) : null}

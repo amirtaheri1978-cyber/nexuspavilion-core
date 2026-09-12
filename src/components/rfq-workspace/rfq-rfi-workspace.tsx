@@ -90,6 +90,10 @@ export function RFQRfiWorkspace({
   const [answeringId, setAnsweringId] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [validationTarget, setValidationTarget] = useState<
+    "question" | `response:${string}` | null
+  >(null);
+  const errorId = "rfq-rfi-error";
   const [deadlineNow, setDeadlineNow] = useState(() => Date.now());
 
   const deadlineAwareness = useMemo(
@@ -181,6 +185,7 @@ export function RFQRfiWorkspace({
     if (isOwner || submitting || deadlineClosed) return;
 
     if (!question.trim()) {
+      setValidationTarget("question");
       setError("Enter a private RFI question before submitting.");
       return;
     }
@@ -188,6 +193,7 @@ export function RFQRfiWorkspace({
     setSubmitting(true);
     setMessage("");
     setError("");
+    setValidationTarget(null);
 
     try {
       const response = await fetch("/api/rfq-rfis", {
@@ -223,6 +229,7 @@ export function RFQRfiWorkspace({
     const responseText = (responseDrafts[rfiId] || "").trim();
 
     if (!responseText) {
+      setValidationTarget(`response:${rfiId}`);
       setError("Enter a response before answering this private RFI.");
       return;
     }
@@ -230,6 +237,7 @@ export function RFQRfiWorkspace({
     setAnsweringId(rfiId);
     setMessage("");
     setError("");
+    setValidationTarget(null);
 
     try {
       const response = await fetch("/api/rfq-rfis", {
@@ -325,6 +333,7 @@ export function RFQRfiWorkspace({
 
       {error ? (
         <div
+          id={errorId}
           className="mt-6 min-w-0 rounded-executive border border-red-300/20 bg-red-400/10 px-4 py-3 text-pretty text-sm font-bold text-red-200"
           role="alert"
           aria-live="assertive"
@@ -360,8 +369,17 @@ export function RFQRfiWorkspace({
                 <textarea
                   rows={4}
                   value={question}
-                  onChange={(event) => setQuestion(event.target.value)}
+                  onChange={(event) => {
+                    setQuestion(event.target.value);
+                    if (validationTarget === "question") {
+                      setValidationTarget(null);
+                    }
+                  }}
                   disabled={submitting}
+                  aria-invalid={validationTarget === "question"}
+                  aria-describedby={
+                    validationTarget === "question" ? errorId : undefined
+                  }
                   placeholder="Ask a private clarification that applies only to your company response."
                   className="min-w-0 w-full resize-none rounded-executive border border-white/10 bg-black/25 px-4 py-4 text-sm font-bold normal-case tracking-normal text-nexus-white outline-none transition placeholder:text-nexus-muted focus:border-nexus-cyan/40 focus-visible:ring-2 focus-visible:ring-nexus-gold/40 disabled:cursor-not-allowed disabled:opacity-60"
                 />
@@ -448,12 +466,23 @@ export function RFQRfiWorkspace({
                         rows={3}
                         value={responseDrafts[rfi.id] || ""}
                         onChange={(event) =>
-                          setResponseDrafts((current) => ({
-                            ...current,
-                            [rfi.id]: event.target.value,
-                          }))
+                          {
+                            setResponseDrafts((current) => ({
+                              ...current,
+                              [rfi.id]: event.target.value,
+                            }));
+                            if (validationTarget === `response:${rfi.id}`) {
+                              setValidationTarget(null);
+                            }
+                          }
                         }
                         disabled={answeringId === rfi.id}
+                        aria-invalid={validationTarget === `response:${rfi.id}`}
+                        aria-describedby={
+                          validationTarget === `response:${rfi.id}`
+                            ? errorId
+                            : undefined
+                        }
                         placeholder="Provide a private response to this respondent company."
                         className="min-w-0 w-full resize-none rounded-executive border border-white/10 bg-black/25 px-4 py-4 text-sm font-bold normal-case tracking-normal text-nexus-white outline-none transition placeholder:text-nexus-muted focus:border-nexus-cyan/40 focus-visible:ring-2 focus-visible:ring-nexus-gold/40 disabled:cursor-not-allowed disabled:opacity-60"
                       />

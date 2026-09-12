@@ -53,6 +53,12 @@ describe("Task 24-RFQ-10 addenda manager presentation", () => {
     expect(manager).toContain("requiresAcknowledgement");
     expect(manager).toContain("Issue Addendum");
     expect(manager).toContain("Refreshing...");
+    expect(manager).toContain('const errorId = "rfq-addenda-error";');
+    expect(manager).toContain("id={errorId}");
+    expect(manager).toContain("aria-invalid={titleValidationError}");
+    expect(manager).toContain(
+      "aria-describedby={titleValidationError ? errorId : undefined}",
+    );
     expect(documents).toContain("RFQRfiWorkspace");
     expect(acknowledgement).toContain(
       'fetch("/api/rfq-addendum-acknowledgements"',
