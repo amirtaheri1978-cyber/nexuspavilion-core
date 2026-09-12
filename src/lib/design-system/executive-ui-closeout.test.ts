@@ -530,8 +530,19 @@ describe("NP-MASTER-22-B05 launch-critical closeout", () => {
     expect(launchCritical.settings).toContain(
       'throw new Error("Unable to verify company workspace management authority.")',
     );
-    expect(launchCritical.settings).toMatch(
-      /error\.code === "UNAUTHENTICATED"[\s\S]*WorkspaceUnavailable[\s\S]*throw new Error\("Unable to verify company workspace management authority\."\)/,
+    expect(launchCritical.settings).toContain("if (authError)");
+    expect(launchCritical.settings).toContain(
+      'throw new Error("Unable to verify company settings identity.")',
+    );
+    expect(launchCritical.settings).toContain("if (!user)");
+    expect(launchCritical.settings).toContain(
+      "return <WorkspaceUnavailable />;",
+    );
+    expect(launchCritical.settings).toContain(
+      "getActiveMembershipForUserCompany",
+    );
+    expect(launchCritical.settings).toContain(
+      'throw new Error("Unable to verify company workspace management authority.")',
     );
     expect(launchCritical.settings).toContain(
       "Workspace Access",

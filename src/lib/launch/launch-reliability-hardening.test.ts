@@ -20,15 +20,18 @@ const addenda = readSource("src/components/rfq-addenda-manager.tsx");
 const inviteForm = readSource("src/components/submit-quote-form.tsx");
 
 describe("Task 26 launch reliability hardening", () => {
-  it("loads independent RFQ detail and dashboard reads concurrently", () => {
+  it("keeps independent RFQ detail reads concurrent while avoiding redundant dashboard requests", () => {
     expect(detail).toContain("await Promise.all([");
     expect(detail).toContain('.from("quotes")');
     expect(detail).toContain('.from("rfq_attachments")');
     expect(detail).toContain('.from("rfq_addenda")');
     expect(detail).toContain('.from("company_directory")');
-    expect(dashboard).toContain("await Promise.all([");
     expect(dashboard).toContain('.from("rfqs")');
-    expect(dashboard).toContain('.from("notifications")');
+    expect(dashboard).toContain('.from("quotes")');
+    expect(dashboard).not.toContain('.from("notifications")');
+    expect(dashboard).not.toContain(
+      "const [rfqResult] = await Promise.all([",
+    );
   });
 
   it("keeps an RFQ detail loading boundary so sequential round-trips cannot strand the shell", () => {

@@ -217,19 +217,11 @@ export default async function DashboardPage() {
 
   const currentCompany = company as Company | null;
 
-  const [rfqResult] = await Promise.all([
-    supabase
-      .from("rfqs")
-      .select("*")
-      .eq("company_id", profile.company_id)
-      .order("created_at", { ascending: false }),
-    supabase
-      .from("notifications")
-      .select("id, is_read")
-      .eq("company_id", profile.company_id)
-      .order("created_at", { ascending: false })
-      .limit(8),
-  ]);
+  const rfqResult = await supabase
+    .from("rfqs")
+    .select("*")
+    .eq("company_id", profile.company_id)
+    .order("created_at", { ascending: false });
 
   if (rfqResult.error) {
     console.error("Dashboard RFQ load failed:", rfqResult.error);

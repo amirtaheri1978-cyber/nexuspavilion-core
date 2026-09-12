@@ -159,8 +159,16 @@ describe("settings utility navigation", () => {
     expect(settingsPage).not.toContain("RFQ Invitation");
   });
 
-  it("does not change reserved 7-10 authorization sources", () => {
-    expect(settingsPage).toContain("getCurrentWorkspaceContext");
+  it("keeps authoritative membership authorization without duplicate identity reads", () => {
+    expect(settingsPage).toContain("getActiveMembershipForUserCompany");
+    expect(settingsPage).not.toContain("getCurrentWorkspaceContext");
+    expect(
+      settingsPage.match(/supabase\.auth\.getUser\(\)/g) || [],
+    ).toHaveLength(1);
+    expect(
+      settingsPage.match(/\.from\("profiles"\)/g) || [],
+    ).toHaveLength(1);
+    expect(settingsPage).toContain("const activeMembership =");
     expect(settingsPage).toContain("canManageCompanyWorkspace");
     expect(settingsPage).toContain("canInviteWorkspaceMembers");
     expect(settingsPage).not.toContain(

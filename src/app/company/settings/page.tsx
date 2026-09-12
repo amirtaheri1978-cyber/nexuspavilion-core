@@ -9,10 +9,7 @@ import CompanyMembersCenter from "@/components/company-members-center";
 import { ExecutivePanel } from "@/components/executive/executive-panel";
 import { ProfessionalIdentitySettingsForm } from "@/components/professional-identity-settings-form";
 import { loadCurrentUserProfessionalNames } from "@/lib/auth/professional-names";
-import {
-  getCurrentWorkspaceContext,
-  WorkspaceContextError,
-} from "@/lib/auth/workspace-context";
+import { getActiveMembershipForUserCompany } from "@/lib/auth/membership";
 import {
   canArchiveCompanyWorkspace,
   canInviteWorkspaceMembers,
@@ -502,28 +499,23 @@ let canManageCapabilities = false;
 
 if (company.workspace_status !== "archived") {
   try {
-    const workspace = await getCurrentWorkspaceContext(supabase);
+    const activeMembership = await getActiveMembershipForUserCompany(
+      supabase,
+      user.id,
+      companyId,
+    );
 
-    if (workspace.companyId === companyId) {
-      const permissionContext = {
-        workspaceRole: workspace.workspaceRole,
-        membershipStatus: workspace.membershipStatus,
-      };
+    const permissionContext = {
+      workspaceRole: activeMembership?.workspaceRole ?? null,
+      membershipStatus: activeMembership?.membershipStatus ?? null,
+    };
 
-      canManage = canManageCompanyWorkspace(permissionContext);
-      canManageInvitations = canInviteWorkspaceMembers(permissionContext);
-      canManageCapabilities = canManageCompanyWorkspace(permissionContext);
-    }
+    canManage = canManageCompanyWorkspace(permissionContext);
+    canManageInvitations = canInviteWorkspaceMembers(permissionContext);
+    canManageCapabilities = canManageCompanyWorkspace(permissionContext);
   } catch (error) {
-    if (
-      error instanceof WorkspaceContextError &&
-      error.code === "UNAUTHENTICATED"
-    ) {
-      return <WorkspaceUnavailable />;
-    }
-
     console.error(
-      "Workspace context lookup failed for invitation authority.",
+      "Active workspace membership lookup failed for management authority.",
       {
         companyId,
         userId: currentProfile.id,

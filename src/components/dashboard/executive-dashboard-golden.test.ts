@@ -105,8 +105,8 @@ describe("NP-MASTER-22-B02 golden executive dashboard", () => {
   it("does not add backend queries for appearance", () => {
     expect(page).toContain('.from("rfqs")');
     expect(page).toContain('.from("quotes")');
-    expect(page).toContain('.from("notifications")');
+    expect(page).not.toContain('.from("notifications")');
     expect(page).not.toContain("createBrowserClient");
-    expect(page.match(/\.from\("/g) || []).toHaveLength(5);
+    expect(page.match(/\.from\("/g) || []).toHaveLength(4);
   });
 });
