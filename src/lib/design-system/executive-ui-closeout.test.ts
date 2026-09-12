@@ -59,6 +59,9 @@ const launchCritical = {
   ),
   rfqSubmitPage: readSource("src/app/rfq/[slug]/submit/page.tsx"),
   rfqSubmit: readSource("src/components/rfq-workspace/rfq-submit-workspace.tsx"),
+  rfqRfi: readSource(
+    "src/components/rfq-workspace/rfq-rfi-workspace.tsx",
+  ),
   supplierCommand: readSource(
     "src/components/vendor-workspace/supplier-command-center.tsx",
   ),
@@ -133,6 +136,43 @@ describe("NP-MASTER-22-B05 launch-critical closeout", () => {
     expect(launchCritical.directory).toContain('aria-label="Search company network"');
   });
 
+  it("keeps RFQ, RFI, and quotation fields visibly and programmatically labeled", () => {
+    expect(launchCritical.rfqNew).not.toContain(
+      '<FieldLabel label="Procurement Scope" required>',
+    );
+
+    expect(launchCritical.rfqNew).toMatch(
+      /<fieldset className="min-w-0 border-0 p-0">[\s\S]*?<legend className="np-type-meta mb-2 block text-slate-500">[\s\S]*?Procurement Scope[\s\S]*?<span className="text-\[#F5D77B\]"> \*<\/span>[\s\S]*?<\/legend>[\s\S]*?PROCUREMENT_SCOPES\.map\([\s\S]*?aria-pressed=\{selected\}[\s\S]*?<\/fieldset>/,
+    );
+
+    expect(launchCritical.rfqNew).toMatch(
+      /<FieldLabel label="Scope of Work Summary" required>(?:(?!<\/FieldLabel>)[\s\S])*?<textarea(?:(?!<\/FieldLabel>)[\s\S])*?<\/FieldLabel>/,
+    );
+
+    expect(launchCritical.rfqNew).toMatch(
+      /<FieldLabel label="Category \/ Trade" required>(?:(?!<\/FieldLabel>)[\s\S])*?<input(?:(?!<\/FieldLabel>)[\s\S])*?<\/FieldLabel>/,
+    );
+
+    expect(launchCritical.rfqRfi).toMatch(
+      /<label[^>]*>(?:(?!<\/label>)[\s\S])*?Question \*(?:(?!<\/label>)[\s\S])*?<textarea(?:(?!<\/label>)[\s\S])*?<\/label>/,
+    );
+
+    expect(launchCritical.rfqRfi).toMatch(
+      /<label[^>]*>(?:(?!<\/label>)[\s\S])*?Response(?:(?!<\/label>)[\s\S])*?<textarea(?:(?!<\/label>)[\s\S])*?<\/label>/,
+    );
+
+    expect(launchCritical.rfqSubmit).toMatch(
+      /<label htmlFor="quote-amount"[^>]*>[\s\S]*?Quote amount[\s\S]*?<\/label>[\s\S]*?<input[\s\S]*?id="quote-amount"/,
+    );
+
+    expect(launchCritical.rfqSubmit).toMatch(
+      /<label htmlFor="quote-timeline"[^>]*>[\s\S]*?Delivery timeline[\s\S]*?<\/label>[\s\S]*?<input[\s\S]*?id="quote-timeline"/,
+    );
+
+    expect(launchCritical.rfqSubmit).toMatch(
+      /<label htmlFor="quote-message"[^>]*>[\s\S]*?Commercial note[\s\S]*?<\/label>[\s\S]*?<textarea[\s\S]*?id="quote-message"/,
+    );
+  });
   it("keeps authenticated workspace navigation keyboard-complete", () => {
     expect(launchCritical.signOut).toContain(
       'const MENU_ITEM_SELECTOR =',

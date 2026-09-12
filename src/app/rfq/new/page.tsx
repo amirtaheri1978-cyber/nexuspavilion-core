@@ -788,7 +788,11 @@ title="Procurement strategy"
 description="Choose how the RFQ should go to market and how the procurement package should be classified."
 >
 <div className="mt-8 grid gap-5">
-<FieldLabel label="Procurement Scope" required>
+<fieldset className="min-w-0 border-0 p-0">
+<legend className="np-type-meta mb-2 block text-slate-500">
+Procurement Scope
+<span className="text-[#F5D77B]"> *</span>
+</legend>
 <div className="grid gap-4">
 {PROCUREMENT_SCOPES.map((item) => {
 const selected =
@@ -845,7 +849,7 @@ className="rounded-full border border-white/10 bg-white/[0.055] px-3 py-1 text-x
 );
 })}
 </div>
-</FieldLabel>
+</fieldset>
 <div className="grid gap-6 md:grid-cols-2">
 <FieldLabel label="Sourcing Method" required>
 <select
