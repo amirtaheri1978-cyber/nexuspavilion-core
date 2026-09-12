@@ -8,7 +8,7 @@ import {
   formatDocumentFileSize,
   hasAnyCompanyDocuments,
   isCompanyDocumentType,
-  type CompanyDocumentRecord,
+  type CompanyDocumentClientRecord,
 } from "@/lib/company/documents";
 import { EXECUTIVE_FOCUS_GOLD } from "@/lib/design-system/executive-contract";
 
@@ -29,7 +29,7 @@ async function downloadCompanyDocument(
 }
 
 type CompanyDocumentsDisplayProps = {
-  documents: CompanyDocumentRecord[];
+  documents: CompanyDocumentClientRecord[];
   companyId: string;
   className?: string;
 };
@@ -38,7 +38,7 @@ function DocumentCard({
   document,
   companyId,
 }: {
-  document: CompanyDocumentRecord;
+  document: CompanyDocumentClientRecord;
   companyId: string;
 }) {
   const typeLabel = isCompanyDocumentType(document.document_type)

@@ -172,5 +172,14 @@ export default async function SubmitQuotePage({ params }: PageProps) {
     return <SubmitAccessBlocked slug={slug} reason="sourcing" />;
   }
 
-  return <RfqSubmitWorkspace slug={slug} initialRfq={rfq} />;
+  const submitRfq = {
+    title: rfq.title,
+    deadline: rfq.deadline,
+    deadline_timezone: rfq.deadline_timezone,
+    status: rfq.status,
+    awarded_quote_id: rfq.awarded_quote_id,
+    awarded_at: rfq.awarded_at,
+  };
+
+  return <RfqSubmitWorkspace slug={slug} initialRfq={submitRfq} />;
 }

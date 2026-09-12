@@ -314,22 +314,29 @@ const currentUserMembershipStatus =
   currentWorkspaceMember?.membership
     ?.membership_status ?? null;
 
-const transferTargets = workspaceMembers
-  .filter(
-    ({ membership, profile }) =>
-      membership?.membership_status === "active" &&
-      membership.workspace_role !== "owner" &&
-      profile.id !== currentProfile.id,
-  )
-  .map(({ profile, membership }) => ({
-    id: profile.id,
-    email: profile.email,
-    first_name: profile.first_name,
-    last_name: profile.last_name,
-    job_title: membership?.job_title ?? null,
-    workspace_role: membership!.workspace_role,
-    membership_status: "active" as const,
-  }));
+const canInitiateOwnershipTransfer =
+  workspaceStatus !== "archived" &&
+  currentUserWorkspaceRole === "owner" &&
+  currentUserMembershipStatus === "active";
+
+const transferTargets = canInitiateOwnershipTransfer
+  ? workspaceMembers
+      .filter(
+        ({ membership, profile }) =>
+          membership?.membership_status === "active" &&
+          membership.workspace_role !== "owner" &&
+          profile.id !== currentProfile.id,
+      )
+      .map(({ profile, membership }) => ({
+        id: profile.id,
+        email: profile.email,
+        first_name: profile.first_name,
+        last_name: profile.last_name,
+        job_title: membership?.job_title ?? null,
+        workspace_role: membership!.workspace_role,
+        membership_status: "active" as const,
+      }))
+  : [];
 
 const currentOwner = workspaceMembers.find(
   ({ membership }) =>

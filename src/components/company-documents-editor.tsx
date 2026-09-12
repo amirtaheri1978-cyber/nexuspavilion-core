@@ -14,7 +14,7 @@ import {
   isCompanyDocumentType,
   normalizeDocumentDate,
   normalizeDocumentText,
-  type CompanyDocumentRecord,
+  type CompanyDocumentClientRecord,
   type CompanyDocumentType,
 } from "@/lib/company/documents";
 import {
@@ -25,7 +25,7 @@ import { createClient } from "@/lib/supabase/client";
 
 type CompanyDocumentsEditorProps = {
   companyId: string;
-  initialDocuments: CompanyDocumentRecord[];
+  initialDocuments: CompanyDocumentClientRecord[];
   canEdit: boolean;
 };
 
@@ -40,7 +40,7 @@ type UploadIntentResponse = {
 type DocumentsResponse = {
   success?: boolean;
   error?: string;
-  documents?: CompanyDocumentRecord[];
+  documents?: CompanyDocumentClientRecord[];
 };
 
 type DownloadResponse = {
@@ -173,7 +173,7 @@ function DocumentCard({
   onReplace,
   onDelete,
 }: {
-  document: CompanyDocumentRecord;
+  document: CompanyDocumentClientRecord;
   companyId: string;
   canEdit: boolean;
   onEdit: () => void;
@@ -302,13 +302,13 @@ export function CompanyDocumentsEditor({
     setError("");
   }
 
-  function applyDocuments(next: CompanyDocumentRecord[] | undefined) {
+  function applyDocuments(next: CompanyDocumentClientRecord[] | undefined) {
     if (next) {
       setDocuments(next);
     }
   }
 
-  function beginEdit(document: CompanyDocumentRecord) {
+  function beginEdit(document: CompanyDocumentClientRecord) {
     setEditingId(document.id);
     setEditTitle(document.title);
     setEditType(

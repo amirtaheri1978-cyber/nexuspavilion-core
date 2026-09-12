@@ -27,6 +27,7 @@ import {
 } from "@/lib/company/compliance";
 import {
   loadCompanyDocuments,
+  serializeCompanyDocumentsForClient,
   type CompanyDocumentRecord,
 } from "@/lib/company/documents";
 import {
@@ -533,6 +534,9 @@ const workspaceMembers: WorkspaceMember[] =
     });
   }
 
+  const companyDocumentsForClient =
+    serializeCompanyDocumentsForClient(companyDocuments);
+
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#061426] px-4 py-6 text-white sm:px-6 lg:px-10">
       <div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(circle_at_top_left,rgba(44,196,232,0.18),transparent_34%),radial-gradient(circle_at_top_right,rgba(200,166,70,0.15),transparent_30%),linear-gradient(180deg,#061426_0%,#07111F_45%,#020617_100%)]" />
@@ -688,7 +692,7 @@ const workspaceMembers: WorkspaceMember[] =
 
         <section className="rounded-[32px] border border-white/10 bg-white/[0.065] p-7 shadow-[0_36px_120px_rgba(0,0,0,0.52)] backdrop-blur-2xl sm:p-8">
           <CompanyDocumentsDisplay
-            documents={companyDocuments}
+            documents={companyDocumentsForClient}
             companyId={companyId}
           />
         </section>

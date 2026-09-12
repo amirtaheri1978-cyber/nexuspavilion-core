@@ -28,6 +28,7 @@ import {
 import {
   COMPANY_DOCUMENTS_SELF_DECLARED_NOTICE,
   loadCompanyDocuments,
+  serializeCompanyDocumentsForClient,
   type CompanyDocumentRecord,
 } from "@/lib/company/documents";
 import {
@@ -602,6 +603,9 @@ try {
   });
 }
 
+const companyDocumentsForClient =
+  serializeCompanyDocumentsForClient(companyDocuments);
+
 return (
 <main className="relative min-h-screen overflow-hidden bg-[#07111F] text-white">
 <div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(circle_at_top_left,rgba(44,196,232,0.18),transparent_34%),radial-gradient(circle_at_top_right,rgba(200,166,70,0.15),transparent_30%),linear-gradient(180deg,#07111F_0%,#07111F_45%,#020617_100%)]" />
@@ -839,7 +843,7 @@ networkRole={company.network_role?.trim() || "Not specified"}
   </p>
   <CompanyDocumentsEditor
     companyId={companyId}
-    initialDocuments={companyDocuments}
+    initialDocuments={companyDocumentsForClient}
     canEdit={canManageCapabilities}
   />
 </ExecutivePanel>

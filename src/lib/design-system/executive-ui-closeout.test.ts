@@ -428,7 +428,7 @@ describe("NP-MASTER-22-B05 launch-critical closeout", () => {
     );
     expect(launchCritical.rfqSubmitPage).toContain("if (accessError)");
     expect(launchCritical.rfqSubmitPage).toContain(
-      "<RfqSubmitWorkspace slug={slug} initialRfq={rfq} />",
+      "<RfqSubmitWorkspace slug={slug} initialRfq={submitRfq} />",
     );
     expect(launchCritical.rfqSubmit).toContain("const rfq = initialRfq;");
     expect(launchCritical.rfqSubmit).toContain(

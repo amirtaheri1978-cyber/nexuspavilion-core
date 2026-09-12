@@ -192,4 +192,39 @@ describe("Task 24-RFQ-08 document workspace density", () => {
     expect(supplierQuotes).toContain('data-rfq-supplier-quotes="true"');
     expect(supplierQuotes).toContain("@min-[1500px]:hidden");
   });
+
+
+  it("limits initial RFQ document payloads to explicit RSC-safe columns", () => {
+    expect(detail).toMatch(
+      /\.from\("rfq_attachments"\)\s*\.select\(\s*"id, file_name, file_path, file_size, attachment_type, revision_label, created_at",\s*\)/,
+    );
+
+    expect(detail).toMatch(
+      /\.from\("rfq_document_requirements"\)\s*\.select\("id, rfq_id, attachment_type"\)/,
+    );
+
+    expect(detail).toMatch(
+      /\.from\("rfq_addenda"\)\s*\.select\(\s*"id, title, description, addendum_number, affected_documents, requires_acknowledgement, created_at",\s*\)/,
+    );
+
+    expect(detail).toMatch(
+      /\.from\("rfq_addendum_acknowledgements"\)\s*\.select\("id, addendum_id, rfq_id, company_id, acknowledged_at"\)/,
+    );
+
+    expect(detail).not.toMatch(
+      /\.from\("rfq_attachments"\)\s*\.select\("\*"\)/,
+    );
+
+    expect(detail).not.toMatch(
+      /\.from\("rfq_addenda"\)\s*\.select\("\*"\)/,
+    );
+
+    expect(detail).not.toMatch(
+      /\.from\("rfq_addendum_acknowledgements"\)\s*\.select\("\*"\)/,
+    );
+
+    expect(detail).not.toContain(
+      '.select("id, rfq_id, attachment_type, created_by, created_at")',
+    );
+  });
 });

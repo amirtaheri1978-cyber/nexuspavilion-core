@@ -2,6 +2,11 @@ import { readdirSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
+import {
+  serializeCompanyDocumentsForClient,
+  type CompanyDocumentRecord,
+} from "@/lib/company/documents";
+
 const BASELINE_V2_PATH =
   "supabase/migrations/20260911000000_launch_candidate_baseline_v2.sql";
 const BASELINE_V2_FILENAME = "20260911000000_launch_candidate_baseline_v2.sql";
@@ -595,5 +600,72 @@ describe("company documents page load logging is privacy safe", () => {
     expect(block).toMatch(/userId: [A-Za-z.]+,/);
     expect(block).toContain("} catch {");
     expect(block).not.toMatch(/catch\s*\(/);
+  });
+});
+
+describe("company document RSC serialization contract", () => {
+  it("projects only client-required company document fields across RSC boundaries", () => {
+    const source: CompanyDocumentRecord = {
+      id: "11111111-1111-4111-8111-111111111111",
+      company_id: "22222222-2222-4222-8222-222222222222",
+      document_type: "insurance",
+      title: "Insurance Certificate",
+      file_name: "insurance.pdf",
+      file_path:
+        "22222222-2222-4222-8222-222222222222/11111111-1111-4111-8111-111111111111/33333333-3333-4333-8333-333333333333.pdf",
+      file_type: "application/pdf",
+      file_size: 12345,
+      issued_on: "2026-01-01",
+      expires_on: "2027-01-01",
+      uploaded_by: "44444444-4444-4444-8444-444444444444",
+      created_at: "2026-01-01T00:00:00.000Z",
+      updated_at: "2026-01-02T00:00:00.000Z",
+    };
+
+    expect(serializeCompanyDocumentsForClient([source])).toEqual([
+      {
+        id: source.id,
+        document_type: "insurance",
+        title: "Insurance Certificate",
+        file_name: "insurance.pdf",
+        file_size: 12345,
+        issued_on: "2026-01-01",
+        expires_on: "2027-01-01",
+      },
+    ]);
+  });
+
+  it("uses the projected DTO on both company server-to-client boundaries", () => {
+    const companyPage = readSource("src/app/company/page.tsx");
+    const settingsPage = readSource("src/app/company/settings/page.tsx");
+    const display = readSource(
+      "src/components/company-documents-display.tsx",
+    );
+    const editor = readSource(
+      "src/components/company-documents-editor.tsx",
+    );
+
+    expect(companyPage).toContain(
+      "serializeCompanyDocumentsForClient(companyDocuments)",
+    );
+    expect(companyPage).toContain(
+      "documents={companyDocumentsForClient}",
+    );
+    expect(companyPage).not.toContain(
+      "documents={companyDocuments}",
+    );
+
+    expect(settingsPage).toContain(
+      "serializeCompanyDocumentsForClient(companyDocuments)",
+    );
+    expect(settingsPage).toContain(
+      "initialDocuments={companyDocumentsForClient}",
+    );
+    expect(settingsPage).not.toContain(
+      "initialDocuments={companyDocuments}",
+    );
+
+    expect(display).toContain("CompanyDocumentClientRecord");
+    expect(editor).toContain("CompanyDocumentClientRecord");
   });
 });

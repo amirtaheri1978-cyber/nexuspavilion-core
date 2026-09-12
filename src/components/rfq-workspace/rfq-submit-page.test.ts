@@ -10,6 +10,7 @@ function readSource(relativePath: string) {
 }
 
 const submit = readSource("src/components/rfq-workspace/rfq-submit-workspace.tsx");
+const submitPage = readSource("src/app/rfq/[slug]/submit/page.tsx");
 const visualQa = readSource("src/app/dev/rfq-visual-qa/page.tsx");
 const documents = readSource(
   "src/components/rfq-workspace/rfq-document-workspace.tsx",
@@ -156,5 +157,46 @@ describe("Task 24-RFQ-11 submit page presentation", () => {
     expect(comparison).toContain("@min-[1500px]:block");
     expect(supplierQuotes).toContain('data-rfq-supplier-quotes="true"');
     expect(submit).not.toContain("award_rfq_quote");
+  });
+
+
+  it("projects the RFQ authorization row before the submit client boundary", () => {
+    expect(submitPage).toContain("const submitRfq = {");
+    expect(submitPage).toContain("title: rfq.title");
+    expect(submitPage).toContain("deadline: rfq.deadline");
+    expect(submitPage).toContain(
+      "deadline_timezone: rfq.deadline_timezone",
+    );
+    expect(submitPage).toContain("status: rfq.status");
+    expect(submitPage).toContain(
+      "awarded_quote_id: rfq.awarded_quote_id",
+    );
+    expect(submitPage).toContain("awarded_at: rfq.awarded_at");
+
+    expect(submitPage).toContain(
+      "initialRfq={submitRfq}",
+    );
+
+    expect(submitPage).not.toContain(
+      "initialRfq={rfq}",
+    );
+
+    const projectionStart =
+      submitPage.indexOf("const submitRfq = {");
+
+    const projectionEnd = submitPage.indexOf(
+      "return <RfqSubmitWorkspace",
+      projectionStart,
+    );
+
+    const projection = submitPage.slice(
+      projectionStart,
+      projectionEnd,
+    );
+
+    expect(projection).not.toContain("company_id");
+    expect(projection).not.toContain("sourcing_method");
+    expect(projection).not.toContain("slug: rfq.slug");
+    expect(projection).not.toContain("id: rfq.id");
   });
 });

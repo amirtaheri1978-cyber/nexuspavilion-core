@@ -99,6 +99,31 @@ export type CompanyDocumentRecord = {
   updated_at?: string | null;
 };
 
+export type CompanyDocumentClientRecord = Pick<
+  CompanyDocumentRecord,
+  | "id"
+  | "document_type"
+  | "title"
+  | "file_name"
+  | "file_size"
+  | "issued_on"
+  | "expires_on"
+>;
+
+export function serializeCompanyDocumentsForClient(
+  documents: CompanyDocumentRecord[],
+): CompanyDocumentClientRecord[] {
+  return documents.map((document) => ({
+    id: document.id,
+    document_type: document.document_type,
+    title: document.title,
+    file_name: document.file_name,
+    file_size: document.file_size,
+    issued_on: document.issued_on,
+    expires_on: document.expires_on,
+  }));
+}
+
 export type CompanyDocumentInput = {
   document_type: CompanyDocumentType;
   title: string;
@@ -897,7 +922,9 @@ export function countCompanyDocumentsByType(
   return counts;
 }
 
-export function hasAnyCompanyDocuments(documents: CompanyDocumentRecord[]) {
+export function hasAnyCompanyDocuments(
+  documents: CompanyDocumentClientRecord[],
+) {
   return documents.length > 0;
 }
 

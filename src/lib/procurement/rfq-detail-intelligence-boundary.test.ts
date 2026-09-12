@@ -422,4 +422,19 @@ describe("Task 33C RFQ buyer executive intelligence isolation", () => {
       "Executive Decision Center",
     );
   });
+
+
+  it("limits issuer AI review serialization to the client advisor contract", () => {
+    expect(detailPage).toMatch(
+      /\.from\("rfq_ai_reviews"\)\s*\.select\(\s*"id, readiness_score, risk_level, executive_summary, missing_items, recommendations, created_at",\s*\)/,
+    );
+
+    expect(detailPage).not.toMatch(
+      /\.from\("rfq_ai_reviews"\)\s*\.select\("\*"\)/,
+    );
+
+    expect(detailPage).toContain(
+      "<RFQAIAdvisor rfqId={rfq.id} initialReview={latestAiReview} />",
+    );
+  });
 });

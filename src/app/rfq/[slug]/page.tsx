@@ -345,24 +345,28 @@ loadIssuerQuoteCount
 : Promise.resolve({ data: null }),
 supabase
 .from("rfq_attachments")
-.select("*")
+.select(
+  "id, file_name, file_path, file_size, attachment_type, revision_label, created_at",
+)
 .eq("rfq_id", rfq.id)
 .order("created_at", { ascending: false }),
 supabase
 .from("rfq_document_requirements")
-.select("id, rfq_id, attachment_type, created_by, created_at")
+.select("id, rfq_id, attachment_type")
 .eq("rfq_id", rfq.id)
 .order("created_at", { ascending: true }),
 supabase
 .from("rfq_addenda")
-.select("*")
+.select(
+  "id, title, description, addendum_number, affected_documents, requires_acknowledgement, created_at",
+)
 .eq("rfq_id", rfq.id)
 .order("addendum_number", { ascending: false })
 .order("created_at", { ascending: false }),
 !isOwner && profile?.company_id
 ? supabase
 .from("rfq_addendum_acknowledgements")
-.select("*")
+.select("id, addendum_id, rfq_id, company_id, acknowledged_at")
 .eq("rfq_id", rfq.id)
 .eq("company_id", profile.company_id)
 .order("acknowledged_at", { ascending: false })
@@ -370,7 +374,9 @@ supabase
 isOwner
 ? supabase
 .from("rfq_ai_reviews")
-.select("*")
+.select(
+  "id, readiness_score, risk_level, executive_summary, missing_items, recommendations, created_at",
+)
 .eq("rfq_id", rfq.id)
 .order("created_at", { ascending: false })
 .limit(1)

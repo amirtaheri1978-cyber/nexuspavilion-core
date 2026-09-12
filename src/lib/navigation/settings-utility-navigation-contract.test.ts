@@ -174,4 +174,24 @@ describe("settings utility navigation", () => {
     expect(companyPage).toContain("canManageCompanyWorkspace");
     expect(membersCenter).toContain("CompanyLogoUpload");
   });
+
+
+  it("does not serialize ownership transfer targets to non-owner viewers", () => {
+    expect(membersCenter).toContain(
+      "const canInitiateOwnershipTransfer =",
+    );
+    expect(membersCenter).toContain(
+      'currentUserWorkspaceRole === "owner"',
+    );
+    expect(membersCenter).toContain(
+      'currentUserMembershipStatus === "active"',
+    );
+    expect(membersCenter).toContain(
+      "const transferTargets = canInitiateOwnershipTransfer",
+    );
+    expect(membersCenter).toContain(": [];");
+    expect(membersCenter).toContain(
+      "transferTargets={transferTargets}",
+    );
+  });
 });
