@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 
 import { NexusPavilionLogo } from "@/components/branding/nexus-pavilion-logo";
@@ -33,6 +33,7 @@ export default function Sidebar({
 }: SidebarProps) {
   const pathname = usePathname();
   const supabase = useMemo(() => createClient(), []);
+  const mobileMenuButtonRef = useRef<HTMLButtonElement | null>(null);
 
   const [mobileOpen, setMobileOpen] = useState(false);
   const [stats, setStats] = useState<ApplicationNavStats>(defaultStats);
@@ -57,7 +58,12 @@ export default function Sidebar({
 
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") {
+        event.preventDefault();
         setMobileOpen(false);
+
+        window.requestAnimationFrame(() => {
+          mobileMenuButtonRef.current?.focus();
+        });
       }
     }
 
@@ -255,6 +261,7 @@ export default function Sidebar({
 
           <div className="flex shrink-0 items-center gap-2">
             <button
+              ref={mobileMenuButtonRef}
               type="button"
               aria-expanded={mobileOpen}
               aria-controls="np-mobile-nav"

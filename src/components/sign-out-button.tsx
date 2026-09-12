@@ -27,6 +27,9 @@ type MenuPosition = {
   right: number;
 };
 
+const MENU_ITEM_SELECTOR =
+  '[role="menuitem"]:not([disabled])';
+
 const subscribeToClient = () => () => {};
 
 function useHasMounted() {
@@ -48,6 +51,7 @@ export default function SignOutButton({
 
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
+  const keyboardOpenFocusRef = useRef<"first" | "last" | null>(null);
 
   const [open, setOpen] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
@@ -59,6 +63,19 @@ export default function SignOutButton({
 
   useEffect(() => {
     if (mode !== "workspace-menu" || !open) return;
+
+    const focusTarget = keyboardOpenFocusRef.current;
+    let focusFrame: number | null = null;
+
+    function getMenuItems() {
+      if (!menuRef.current) return [];
+
+      return [
+        ...menuRef.current.querySelectorAll<HTMLElement>(
+          MENU_ITEM_SELECTOR,
+        ),
+      ];
+    }
 
     function updateMenuPosition() {
       const trigger = triggerRef.current;
@@ -89,12 +106,69 @@ export default function SignOutButton({
 
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") {
+        event.preventDefault();
         setOpen(false);
         triggerRef.current?.focus();
+        return;
       }
+
+      const target = event.target;
+
+      if (
+        !(target instanceof Node) ||
+        !menuRef.current?.contains(target)
+      ) {
+        return;
+      }
+
+      const items = getMenuItems();
+
+      if (items.length === 0) return;
+
+      const activeElement = document.activeElement as HTMLElement | null;
+      const currentIndex = activeElement
+        ? items.indexOf(activeElement)
+        : -1;
+
+      let nextIndex: number | null = null;
+
+      if (event.key === "ArrowDown") {
+        nextIndex =
+          currentIndex < 0
+            ? 0
+            : (currentIndex + 1) % items.length;
+      } else if (event.key === "ArrowUp") {
+        nextIndex =
+          currentIndex <= 0
+            ? items.length - 1
+            : currentIndex - 1;
+      } else if (event.key === "Home") {
+        nextIndex = 0;
+      } else if (event.key === "End") {
+        nextIndex = items.length - 1;
+      }
+
+      if (nextIndex === null) return;
+
+      event.preventDefault();
+      items[nextIndex]?.focus();
     }
 
     updateMenuPosition();
+
+    if (focusTarget) {
+      focusFrame = window.requestAnimationFrame(() => {
+        const items = getMenuItems();
+
+        const target =
+          focusTarget === "last"
+            ? items[items.length - 1]
+            : items[0];
+
+        target?.focus();
+        keyboardOpenFocusRef.current = null;
+      });
+    }
 
     window.addEventListener("resize", updateMenuPosition);
     window.addEventListener("scroll", updateMenuPosition, true);
@@ -102,6 +176,10 @@ export default function SignOutButton({
     document.addEventListener("keydown", handleKeyDown);
 
     return () => {
+      if (focusFrame !== null) {
+        window.cancelAnimationFrame(focusFrame);
+      }
+
       window.removeEventListener("resize", updateMenuPosition);
       window.removeEventListener("scroll", updateMenuPosition, true);
       document.removeEventListener("mousedown", handlePointerDown);
@@ -216,6 +294,49 @@ export default function SignOutButton({
         <button
           ref={triggerRef}
           type="button"
+          onKeyDown={(event) => {
+            if (event.key === "ArrowDown") {
+              event.preventDefault();
+
+              if (open && menuRef.current) {
+                const firstItem =
+                  menuRef.current.querySelector<HTMLElement>(
+                    MENU_ITEM_SELECTOR,
+                  );
+                firstItem?.focus();
+              } else {
+                keyboardOpenFocusRef.current = "first";
+                setOpen(true);
+              }
+
+              return;
+            }
+
+            if (event.key === "ArrowUp") {
+              event.preventDefault();
+
+              if (open && menuRef.current) {
+                const items = [
+                  ...menuRef.current.querySelectorAll<HTMLElement>(
+                    MENU_ITEM_SELECTOR,
+                  ),
+                ];
+                items[items.length - 1]?.focus();
+              } else {
+                keyboardOpenFocusRef.current = "last";
+                setOpen(true);
+              }
+
+              return;
+            }
+
+            if (
+              !open &&
+              (event.key === "Enter" || event.key === " ")
+            ) {
+              keyboardOpenFocusRef.current = "first";
+            }
+          }}
           onClick={() => setOpen((current) => !current)}
           aria-expanded={open}
           aria-haspopup="menu"

@@ -28,6 +28,7 @@ const launchCritical = {
   command: readSource("src/components/company-command-center.tsx"),
   governance: readSource("src/components/company-governance-center.tsx"),
   sidebar: readSource("src/components/sidebar.tsx"),
+  signOut: readSource("src/components/sign-out-button.tsx"),
   topbar: readSource("src/components/common/AppTopbar.tsx"),
   appSidebar: readSource("src/components/common/AppSidebar.tsx"),
   directory: readSource("src/app/directory/page.tsx"),
@@ -127,6 +128,45 @@ describe("NP-MASTER-22-B05 launch-critical closeout", () => {
     expect(launchCritical.rfqNew).toContain("EXECUTIVE_FOCUS_CYAN");
     expect(launchCritical.rfqNew).not.toContain("onKeyDown=");
     expect(launchCritical.directory).toContain('aria-label="Search company network"');
+  });
+
+  it("keeps authenticated workspace navigation keyboard-complete", () => {
+    expect(launchCritical.signOut).toContain(
+      'const MENU_ITEM_SELECTOR =',
+    );
+    expect(launchCritical.signOut).toContain(
+      '[role="menuitem"]:not([disabled])',
+    );
+    expect(launchCritical.signOut).toContain(
+      'event.key === "ArrowDown"',
+    );
+    expect(launchCritical.signOut).toContain(
+      'event.key === "ArrowUp"',
+    );
+    expect(launchCritical.signOut).toContain(
+      'event.key === "Home"',
+    );
+    expect(launchCritical.signOut).toContain(
+      'event.key === "End"',
+    );
+    expect(launchCritical.signOut).toContain(
+      "triggerRef.current?.focus();",
+    );
+    expect(launchCritical.signOut).toContain(
+      'keyboardOpenFocusRef.current = "first";',
+    );
+    expect(launchCritical.sidebar).toContain(
+      "const mobileMenuButtonRef = useRef<HTMLButtonElement | null>(null);",
+    );
+    expect(launchCritical.sidebar).toContain(
+      "ref={mobileMenuButtonRef}",
+    );
+    expect(launchCritical.sidebar).toContain(
+      "window.requestAnimationFrame(() => {",
+    );
+    expect(launchCritical.sidebar).toContain(
+      "mobileMenuButtonRef.current?.focus();",
+    );
   });
 
   it("keeps Company Network filtering responsive and list rendering bounded", () => {
