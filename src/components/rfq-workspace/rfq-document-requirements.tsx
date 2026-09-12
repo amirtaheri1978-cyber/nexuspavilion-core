@@ -356,7 +356,7 @@ export function RFQDocumentRequirements({
                   <h4 className="min-w-0 text-pretty text-base font-black text-white">
                     {RFQ_ATTACHMENT_TYPE_LABELS[attachmentType]}
                   </h4>
-                  <p className="mt-2 min-w-0 text-pretty text-sm font-semibold leading-6 text-slate-500">
+                  <p className="mt-2 min-w-0 text-pretty text-sm font-semibold leading-6 text-slate-400">
                     {requirementStateUnavailable
                       ? "Requirement declaration state is unavailable."
                       : attachmentEvidenceUnavailable
@@ -385,7 +385,7 @@ export function RFQDocumentRequirements({
 
               {required && matchingAttachments.length > 0 ? (
                 <div className="mt-4 rounded-2xl border border-white/10 bg-[#07111F]/70 px-4 py-3">
-                  <p className="text-xs font-black uppercase tracking-[0.16em] text-slate-500">
+                  <p className="text-xs font-black uppercase tracking-[0.16em] text-slate-400">
                     Current evidence
                   </p>
                   <div className="mt-2 space-y-2">
@@ -401,7 +401,7 @@ export function RFQDocumentRequirements({
                       </p>
                     ))}
                     {matchingAttachments.length > 2 ? (
-                      <p className="text-xs font-bold text-slate-500">
+                      <p className="text-xs font-bold text-slate-400">
                         +{matchingAttachments.length - 2} additional matching
                         document
                         {matchingAttachments.length - 2 === 1 ? "" : "s"}

@@ -433,7 +433,7 @@ Public Company Profile
 {company.location?.trim() || "Location N/A"}
 </p>
 
-<p className="mt-2 text-sm font-bold uppercase tracking-[0.2em] text-slate-500">
+<p className="mt-2 text-sm font-bold uppercase tracking-[0.2em] text-slate-400">
 {company.network_role?.trim() || "Not specified"}
 </p>
 </div>
@@ -611,7 +611,7 @@ className="rounded-[28px] border border-white/10 bg-[#07111F]/80 p-6"
 {relatedRfq?.title || "Awarded RFQ"}
 </p>
 
-<p className="mt-2 text-sm font-semibold text-slate-500">
+<p className="mt-2 text-sm font-semibold text-slate-400">
 {relatedRfq?.location || "Location N/A"}
 </p>
 </div>
@@ -625,7 +625,7 @@ Awarded
 {formatMoney(quote.amount)}
 </p>
 
-<p className="mt-3 text-xs font-bold uppercase tracking-[0.18em] text-slate-500">
+<p className="mt-3 text-xs font-bold uppercase tracking-[0.18em] text-slate-400">
 {formatDate(quote.created_at)}
 </p>
 </div>
@@ -741,7 +741,7 @@ className="rounded-[28px] border border-white/10 bg-[#07111F]/80 p-6"
 </span>
 </div>
 
-<p className="mt-4 text-xs font-black uppercase tracking-[0.2em] text-slate-500">
+<p className="mt-4 text-xs font-black uppercase tracking-[0.2em] text-slate-400">
 {log.entity_type || "activity"}
 </p>
 </div>
@@ -842,7 +842,7 @@ value: number | string;
 }) {
 return (
 <div className="rounded-3xl border border-white/10 bg-white/[0.045] p-5">
-<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">
+<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
 {title}
 </p>
 
@@ -862,7 +862,7 @@ detail: string;
 }) {
 return (
 <div className="rounded-3xl border border-white/10 bg-white/[0.045] p-7">
-<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">
+<p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
 {title}
 </p>
 
@@ -963,7 +963,7 @@ className="flex h-[56px] items-center justify-center rounded-2xl border border-w
 function EmptyState({ message }: { message: string }) {
 return (
 <div className="rounded-3xl border border-dashed border-white/15 bg-white/[0.035] p-8 text-center">
-<p className="text-sm font-bold text-slate-500">{message}</p>
+<p className="text-sm font-bold text-slate-400">{message}</p>
 </div>
 );
 }

@@ -243,7 +243,7 @@ export default function InviteUserForm() {
             value={email}
             onChange={(event) => setEmail(event.target.value)}
             disabled={loading}
-            className="h-[56px] w-full rounded-2xl border border-white/10 bg-[#061426]/80 px-4 text-sm font-bold text-white outline-none transition placeholder:text-slate-600 focus:border-[#2CC4E8]/40 focus:bg-[#07111F] disabled:cursor-not-allowed disabled:opacity-60"
+            className="h-[56px] w-full rounded-2xl border border-white/10 bg-[#061426]/80 px-4 text-sm font-bold text-white outline-none transition placeholder:text-slate-400 focus:border-[#2CC4E8]/40 focus:bg-[#07111F] disabled:cursor-not-allowed disabled:opacity-60"
           />
         </label>
 

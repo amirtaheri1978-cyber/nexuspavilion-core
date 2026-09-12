@@ -578,7 +578,7 @@ attention={expiredVendors > 0}
 </div>
 
 <div className="border-t border-white/10 p-6 sm:p-8 lg:min-w-64 lg:border-l lg:border-t-0">
-<p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
+<p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
 Recommended Next Step
 </p>
 

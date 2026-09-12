@@ -692,7 +692,7 @@ value={formData.project_name}
 onChange={(event) =>
 updateField("project_name", event.target.value)
 }
-className="w-full rounded-2xl border border-white/10 bg-[#061426]/80 px-4 py-4 text-sm font-bold text-white outline-none transition placeholder:text-slate-600 focus:border-[#2CC4E8]/40 focus:bg-[#07111F]"
+className="w-full rounded-2xl border border-white/10 bg-[#061426]/80 px-4 py-4 text-sm font-bold text-white outline-none transition placeholder:text-slate-400 focus:border-[#2CC4E8]/40 focus:bg-[#07111F]"
 />
 </FieldLabel>
 
@@ -704,7 +704,7 @@ value={formData.title}
 onChange={(event) =>
 updateField("title", event.target.value)
 }
-className="w-full rounded-2xl border border-white/10 bg-[#061426]/80 px-4 py-4 text-sm font-bold text-white outline-none transition placeholder:text-slate-600 focus:border-[#2CC4E8]/40 focus:bg-[#07111F]"
+className="w-full rounded-2xl border border-white/10 bg-[#061426]/80 px-4 py-4 text-sm font-bold text-white outline-none transition placeholder:text-slate-400 focus:border-[#2CC4E8]/40 focus:bg-[#07111F]"
 />
 </FieldLabel>
 
@@ -717,7 +717,7 @@ value={formData.description}
 onChange={(event) =>
 updateField("description", event.target.value)
 }
-className="w-full resize-none rounded-2xl border border-white/10 bg-[#061426]/80 px-4 py-4 text-sm font-bold text-white outline-none transition placeholder:text-slate-600 focus:border-[#2CC4E8]/40 focus:bg-[#07111F]"
+className="w-full resize-none rounded-2xl border border-white/10 bg-[#061426]/80 px-4 py-4 text-sm font-bold text-white outline-none transition placeholder:text-slate-400 focus:border-[#2CC4E8]/40 focus:bg-[#07111F]"
 />
 </FieldLabel>
 
@@ -730,7 +730,7 @@ value={formData.category}
 onChange={(event) =>
 updateField("category", event.target.value)
 }
-className="w-full rounded-2xl border border-white/10 bg-[#061426]/80 px-4 py-4 text-sm font-bold text-white outline-none transition placeholder:text-slate-600 focus:border-[#2CC4E8]/40 focus:bg-[#07111F]"
+className="w-full rounded-2xl border border-white/10 bg-[#061426]/80 px-4 py-4 text-sm font-bold text-white outline-none transition placeholder:text-slate-400 focus:border-[#2CC4E8]/40 focus:bg-[#07111F]"
 />
 </FieldLabel>
 
@@ -742,7 +742,7 @@ value={formData.location}
 onChange={(event) =>
 updateField("location", event.target.value)
 }
-className="w-full rounded-2xl border border-white/10 bg-[#061426]/80 px-4 py-4 text-sm font-bold text-white outline-none transition placeholder:text-slate-600 focus:border-[#2CC4E8]/40 focus:bg-[#07111F]"
+className="w-full rounded-2xl border border-white/10 bg-[#061426]/80 px-4 py-4 text-sm font-bold text-white outline-none transition placeholder:text-slate-400 focus:border-[#2CC4E8]/40 focus:bg-[#07111F]"
 />
 </FieldLabel>
 </div>
@@ -759,7 +759,7 @@ updateField(
 event.target.value.replace(/[^0-9.]/g, "")
 )
 }
-className="w-full rounded-2xl border border-white/10 bg-[#061426]/80 px-4 py-4 text-sm font-bold text-white outline-none transition placeholder:text-slate-600 focus:border-[#2CC4E8]/40 focus:bg-[#07111F]"
+className="w-full rounded-2xl border border-white/10 bg-[#061426]/80 px-4 py-4 text-sm font-bold text-white outline-none transition placeholder:text-slate-400 focus:border-[#2CC4E8]/40 focus:bg-[#07111F]"
 />
 </FieldLabel>
 
@@ -789,7 +789,7 @@ description="Choose how the RFQ should go to market and how the procurement pack
 >
 <div className="mt-8 grid gap-5">
 <fieldset className="min-w-0 border-0 p-0">
-<legend className="np-type-meta mb-2 block text-slate-500">
+<legend className="np-type-meta mb-2 block text-slate-400">
 Procurement Scope
 <span className="text-[#F5D77B]"> *</span>
 </legend>
@@ -872,7 +872,7 @@ className="bg-[#061426] text-white"
 ))}
 </select>
 
-<p className="mt-2 text-xs font-semibold leading-5 text-slate-500">
+<p className="mt-2 text-xs font-semibold leading-5 text-slate-400">
 {selectedSourcing?.description}
 </p>
 </FieldLabel>
@@ -898,7 +898,7 @@ className="bg-[#061426] text-white"
 ))}
 </select>
 
-<p className="mt-2 text-xs font-semibold leading-5 text-slate-500">
+<p className="mt-2 text-xs font-semibold leading-5 text-slate-400">
 {selectedFramework?.description}
 </p>
 </FieldLabel>
@@ -924,7 +924,7 @@ className="bg-[#061426] text-white"
 ))}
 </select>
 
-<p className="mt-2 text-xs font-semibold leading-5 text-slate-500">
+<p className="mt-2 text-xs font-semibold leading-5 text-slate-400">
 {selectedBidModel?.description}
 </p>
 </FieldLabel>
@@ -947,7 +947,7 @@ value={formData.owner_client}
 onChange={(event) =>
 updateField("owner_client", event.target.value)
 }
-className="w-full rounded-2xl border border-white/10 bg-[#061426]/80 px-4 py-4 text-sm font-bold text-white outline-none transition placeholder:text-slate-600 focus:border-[#2CC4E8]/40 focus:bg-[#07111F]"
+className="w-full rounded-2xl border border-white/10 bg-[#061426]/80 px-4 py-4 text-sm font-bold text-white outline-none transition placeholder:text-slate-400 focus:border-[#2CC4E8]/40 focus:bg-[#07111F]"
 />
 </FieldLabel>
 
@@ -958,7 +958,7 @@ value={formData.internal_project_id}
 onChange={(event) =>
 updateField("internal_project_id", event.target.value)
 }
-className="w-full rounded-2xl border border-white/10 bg-[#061426]/80 px-4 py-4 text-sm font-bold text-white outline-none transition placeholder:text-slate-600 focus:border-[#2CC4E8]/40 focus:bg-[#07111F]"
+className="w-full rounded-2xl border border-white/10 bg-[#061426]/80 px-4 py-4 text-sm font-bold text-white outline-none transition placeholder:text-slate-400 focus:border-[#2CC4E8]/40 focus:bg-[#07111F]"
 />
 </FieldLabel>
 </div>
@@ -1109,7 +1109,7 @@ value={formData.insurance_notes}
 onChange={(event) =>
 updateField("insurance_notes", event.target.value)
 }
-className="w-full resize-none rounded-2xl border border-white/10 bg-[#061426]/80 px-4 py-4 text-sm font-bold text-white outline-none transition placeholder:text-slate-600 focus:border-[#2CC4E8]/40 focus:bg-[#07111F]"
+className="w-full resize-none rounded-2xl border border-white/10 bg-[#061426]/80 px-4 py-4 text-sm font-bold text-white outline-none transition placeholder:text-slate-400 focus:border-[#2CC4E8]/40 focus:bg-[#07111F]"
 />
 </FieldLabel>
 
@@ -1121,7 +1121,7 @@ value={formData.safety_requirements}
 onChange={(event) =>
 updateField("safety_requirements", event.target.value)
 }
-className="w-full resize-none rounded-2xl border border-white/10 bg-[#061426]/80 px-4 py-4 text-sm font-bold text-white outline-none transition placeholder:text-slate-600 focus:border-[#2CC4E8]/40 focus:bg-[#07111F]"
+className="w-full resize-none rounded-2xl border border-white/10 bg-[#061426]/80 px-4 py-4 text-sm font-bold text-white outline-none transition placeholder:text-slate-400 focus:border-[#2CC4E8]/40 focus:bg-[#07111F]"
 />
 </FieldLabel>
 
@@ -1133,7 +1133,7 @@ value={formData.prequalification_notes}
 onChange={(event) =>
 updateField("prequalification_notes", event.target.value)
 }
-className="w-full resize-none rounded-2xl border border-white/10 bg-[#061426]/80 px-4 py-4 text-sm font-bold text-white outline-none transition placeholder:text-slate-600 focus:border-[#2CC4E8]/40 focus:bg-[#07111F]"
+className="w-full resize-none rounded-2xl border border-white/10 bg-[#061426]/80 px-4 py-4 text-sm font-bold text-white outline-none transition placeholder:text-slate-400 focus:border-[#2CC4E8]/40 focus:bg-[#07111F]"
 />
 </FieldLabel>
 </div>
@@ -1347,7 +1347,7 @@ Supplier Workspace Ready
 Executive Dashboard Ready
 </div>
 <div className="mt-8 border-t border-white/10 pt-5">
-<p className="text-center text-xs font-black uppercase tracking-[0.24em] text-slate-500">
+<p className="text-center text-xs font-black uppercase tracking-[0.24em] text-slate-400">
 Opening RFQ Workspace
 </p>
 
@@ -1372,7 +1372,7 @@ Procurement Analytics Ready
 Executive Dashboard Ready
 <div className="mt-8 border-t border-white/10 pt-5">
 
-<p className="text-center text-xs font-black uppercase tracking-[0.24em] text-slate-500">
+<p className="text-center text-xs font-black uppercase tracking-[0.24em] text-slate-400">
 Opening RFQ Workspace
 </p>
 
@@ -1413,7 +1413,7 @@ width: `${publishProgress}%`,
 
 </div>
 
-<p className="mt-3 text-center text-xs font-bold text-slate-500">
+<p className="mt-3 text-center text-xs font-bold text-slate-400">
 {publishProgress}% Complete
 </p>
 
@@ -1469,7 +1469,7 @@ children: ReactNode;
 }) {
 return (
 <label className="block">
-<span className="np-type-meta mb-2 block text-slate-500">
+<span className="np-type-meta mb-2 block text-slate-400">
 {label}
 {required ? <span className="text-[#F5D77B]"> *</span> : null}
 </span>
@@ -1482,7 +1482,7 @@ return (
 function MiniMetric({ title, value }: { title: string; value: string }) {
 return (
 <div className="rounded-[26px] border border-white/10 bg-[#061426]/75 p-5">
-<p className="np-type-meta text-slate-500">
+<p className="np-type-meta text-slate-400">
 {title}
 </p>
 
@@ -1494,7 +1494,7 @@ return (
 function SummaryRow({ title, value }: { title: string; value: string }) {
 return (
 <div className="rounded-[22px] border border-white/10 bg-[#061426]/70 p-4">
-<p className="np-type-meta text-slate-500">
+<p className="np-type-meta text-slate-400">
 {title}
 </p>
 
@@ -1526,7 +1526,7 @@ Source: {source}
 ) : null}
 
 {!complete && context ? (
-<p className="mt-1 text-xs font-semibold leading-5 text-slate-500">
+<p className="mt-1 text-xs font-semibold leading-5 text-slate-400">
 {context}
 </p>
 ) : null}
@@ -1594,7 +1594,7 @@ return (
 Available After Publish
 </p>
 
-<p className="mt-2 text-xs font-semibold leading-5 text-slate-500">
+<p className="mt-2 text-xs font-semibold leading-5 text-slate-400">
 This upload becomes available as soon as your RFQ is published.
 </p>
 </div>

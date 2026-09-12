@@ -364,7 +364,7 @@ export default async function NotificationsPage({
                             </Link>
                           </div>
                         ) : hasDeclaredRfqSource ? (
-                          <p className="mt-3 text-xs font-bold text-slate-500">
+                          <p className="mt-3 text-xs font-bold text-slate-400">
                             RFQ source is not available under the current
                             workspace access.
                           </p>

@@ -148,7 +148,7 @@ export function ExecutiveEnrollmentGateway({
             </div>
 
             <div className="mt-7">
-              <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-slate-500">
+              <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-slate-400">
                 Authorized organization
               </p>
               <p className="mt-2 text-xl font-semibold text-[#e4c98f]">
@@ -171,7 +171,7 @@ export function ExecutiveEnrollmentGateway({
                   <p className="text-[11px] font-bold uppercase tracking-[0.23em] text-[#d6b977]">
                     Enrollment Summary
                   </p>
-                  <p className="mt-1 text-sm text-slate-500">
+                  <p className="mt-1 text-sm text-slate-400">
                     Verified identity, role assignment, and workspace authority
                   </p>
                 </div>
@@ -197,7 +197,7 @@ export function ExecutiveEnrollmentGateway({
                   )}
 
                   <div className="min-w-0">
-                    <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">
+                    <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400">
                       Procurement workspace
                     </p>
                     <h2 className="mt-2 break-words text-2xl font-semibold tracking-[-0.025em] text-white sm:text-3xl">
@@ -223,7 +223,7 @@ export function ExecutiveEnrollmentGateway({
             <section className="mt-7 rounded-[28px] border border-white/10 bg-[#071829]/80 p-6 sm:p-7">
               <div className="flex items-center justify-between gap-4">
                 <div>
-                  <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-slate-500">
+                  <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-slate-400">
                     Access Activation Timeline
                   </p>
                   <p className="mt-2 text-sm text-slate-400">
@@ -246,7 +246,7 @@ export function ExecutiveEnrollmentGateway({
                             ? "border-emerald-300/30 bg-emerald-300/10 text-emerald-200"
                             : item.state === "active"
                               ? "border-[#d6b977]/50 bg-[#c9a35d]/15 text-[#f0d89f] shadow-[0_0_30px_rgba(201,163,93,.2)]"
-                              : "border-white/10 bg-white/[0.03] text-slate-600",
+                              : "border-white/10 bg-white/[0.03] text-slate-400",
                         ].join(" ")}
                       >
                         {item.state === "complete" ? <CheckIcon /> : index + 1}
@@ -264,12 +264,12 @@ export function ExecutiveEnrollmentGateway({
                             ? "text-white"
                             : item.state === "complete"
                               ? "text-slate-300"
-                              : "text-slate-600",
+                              : "text-slate-400",
                         ].join(" ")}
                       >
                         {item.label}
                       </p>
-                      <p className="mt-1 text-xs leading-5 text-slate-600">
+                      <p className="mt-1 text-xs leading-5 text-slate-400">
                         {item.description}
                       </p>
                     </div>
@@ -282,7 +282,7 @@ export function ExecutiveEnrollmentGateway({
           <div className="lg:sticky lg:top-8">{children}</div>
         </section>
 
-        <footer className="border-t border-white/10 py-5 text-center text-xs leading-5 text-slate-600">
+        <footer className="border-t border-white/10 py-5 text-center text-xs leading-5 text-slate-400">
           Protected enrollment session · Access activity may be recorded for
           governance, audit, and security assurance.
         </footer>
@@ -294,7 +294,7 @@ export function ExecutiveEnrollmentGateway({
 function SummaryRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="grid gap-2 py-4 sm:grid-cols-[180px_minmax(0,1fr)] sm:items-center">
-      <dt className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">
+      <dt className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">
         {label}
       </dt>
       <dd className="min-w-0 break-words text-sm font-semibold text-slate-200 sm:text-right">

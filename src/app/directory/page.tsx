@@ -652,7 +652,7 @@ detail="Supplier intelligence average"
 ) : null}
 
 <section className="mt-6 rounded-[28px] border border-white/10 bg-white/[0.055] p-6">
-<p className="text-[10px] font-black uppercase tracking-[0.22em] text-slate-500">
+<p className="text-[10px] font-black uppercase tracking-[0.22em] text-slate-400">
 Approved Vendor List
 </p>
 <p className="mt-3 text-sm font-semibold leading-6 text-slate-300">
@@ -692,7 +692,7 @@ signals.
 
 {loading ? (
 <div
-className="mt-12 rounded-3xl border border-white/10 bg-white/[0.045] p-10 text-center text-sm font-bold text-slate-500"
+className="mt-12 rounded-3xl border border-white/10 bg-white/[0.045] p-10 text-center text-sm font-bold text-slate-400"
 role="status"
 aria-live="polite"
 aria-busy="true"
@@ -727,7 +727,7 @@ Try again
 No verified companies found
 </h2>
 
-<p className="mt-3 text-sm font-semibold text-slate-500">
+<p className="mt-3 text-sm font-semibold text-slate-400">
 Try another search term or check back as the network grows.
 </p>
 </div>
@@ -838,7 +838,7 @@ Select RFQ to Invite →
 
 {capabilityPreview.length > 0 ? (
 <div className="mt-5 rounded-3xl border border-white/10 bg-[#07111F]/70 p-4">
-<p className="text-[10px] font-black uppercase tracking-[0.22em] text-slate-500">
+<p className="text-[10px] font-black uppercase tracking-[0.22em] text-slate-400">
 Company Capabilities
 </p>
 
@@ -848,7 +848,7 @@ Company Capabilities
 key={`${item.capabilityType}-${item.label}`}
 className="inline-flex max-w-full items-center rounded-full border border-white/10 bg-white/[0.055] px-3 py-1.5 text-[11px] font-bold leading-5 text-slate-200 break-words"
 >
-<span className="mr-1 text-slate-500">
+<span className="mr-1 text-slate-400">
 {COMPANY_CAPABILITY_TYPE_LABELS[item.capabilityType]}:
 </span>
 {item.label}
@@ -866,11 +866,11 @@ className="inline-flex max-w-full items-center rounded-full border border-white/
 
 {qualificationPreview.length > 0 ? (
 <div className="mt-5 rounded-3xl border border-white/10 bg-[#07111F]/70 p-4">
-<p className="text-[10px] font-black uppercase tracking-[0.22em] text-slate-500">
+<p className="text-[10px] font-black uppercase tracking-[0.22em] text-slate-400">
 Published Qualifications
 </p>
 
-<p className="mt-2 text-[11px] font-semibold leading-5 text-slate-500">
+<p className="mt-2 text-[11px] font-semibold leading-5 text-slate-400">
 Organization-published profile details; not a Nexus Pavilion authorization or eligibility signal.
 </p>
 
@@ -880,12 +880,12 @@ Organization-published profile details; not a Nexus Pavilion authorization or el
 key={`${item.qualificationType}-${item.name}-${item.issuer || "unissued"}`}
 className="inline-flex max-w-full flex-wrap items-center rounded-full border border-white/10 bg-white/[0.055] px-3 py-1.5 text-[11px] font-bold leading-5 text-slate-200 break-words"
 >
-<span className="mr-1 text-slate-500">
+<span className="mr-1 text-slate-400">
 {COMPANY_QUALIFICATION_TYPE_LABELS[item.qualificationType]}:
 </span>
 {item.name}
 {item.issuer ? (
-<span className="ml-1 text-slate-500">· {item.issuer}</span>
+<span className="ml-1 text-slate-400">· {item.issuer}</span>
 ) : null}
 </span>
 ))}
@@ -1004,7 +1004,7 @@ procurement governance and future RFQ invitations.
 ) : null}
 
 <div className="mt-6 flex items-center justify-between">
-<p className="text-sm font-semibold text-slate-500">
+<p className="text-sm font-semibold text-slate-400">
 Verified company profile
 </p>
 
@@ -1082,7 +1082,7 @@ detail: string;
 }) {
 return (
 <div className="rounded-[28px] border border-white/10 bg-white/[0.055] p-6 shadow-[0_16px_50px_rgba(0,0,0,.25)]">
-<p className="text-[10px] font-black uppercase tracking-[0.22em] text-slate-500">
+<p className="text-[10px] font-black uppercase tracking-[0.22em] text-slate-400">
 {title}
 </p>
 
@@ -1126,7 +1126,7 @@ value: string;
 }) {
 return (
 <div className="rounded-2xl border border-white/10 bg-[#07111F] p-4">
-<p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
+<p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
 {title}
 </p>
 
@@ -1146,7 +1146,7 @@ value: string;
 }) {
 return (
 <div className="rounded-2xl border border-white/10 bg-[#07111F] px-3 py-3">
-<p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
+<p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
 {title}
 </p>
 

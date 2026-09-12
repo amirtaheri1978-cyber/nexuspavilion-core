@@ -142,7 +142,7 @@ describe("NP-MASTER-22-B05 launch-critical closeout", () => {
     );
 
     expect(launchCritical.rfqNew).toMatch(
-      /<fieldset className="min-w-0 border-0 p-0">[\s\S]*?<legend className="np-type-meta mb-2 block text-slate-500">[\s\S]*?Procurement Scope[\s\S]*?<span className="text-\[#F5D77B\]"> \*<\/span>[\s\S]*?<\/legend>[\s\S]*?PROCUREMENT_SCOPES\.map\([\s\S]*?aria-pressed=\{selected\}[\s\S]*?<\/fieldset>/,
+      /<fieldset className="min-w-0 border-0 p-0">[\s\S]*?<legend className="np-type-meta mb-2 block text-slate-400">[\s\S]*?Procurement Scope[\s\S]*?<span className="text-\[#F5D77B\]"> \*<\/span>[\s\S]*?<\/legend>[\s\S]*?PROCUREMENT_SCOPES\.map\([\s\S]*?aria-pressed=\{selected\}[\s\S]*?<\/fieldset>/,
     );
 
     expect(launchCritical.rfqNew).toMatch(
@@ -260,6 +260,84 @@ describe("NP-MASTER-22-B05 launch-critical closeout", () => {
     expect(launchCritical.sidebar).not.toContain("text-slate-500");
     expect(launchCritical.command).not.toContain("hover:text-slate-950");
     expect(launchCritical.identityDisplay).not.toContain("text-slate-500");
+
+    const analyticsVendors = readSource(
+      "src/app/analytics/vendors/page.tsx",
+    );
+    const enrollmentForm = readSource(
+      "src/components/executive/enrollment/executive-enrollment-form.tsx",
+    );
+    const enrollmentGateway = readSource(
+      "src/components/executive/enrollment/executive-enrollment-gateway.tsx",
+    );
+    const opportunityRanking = readSource(
+      "src/components/executive/executive-opportunity-ranking.tsx",
+    );
+    const invitationIdentityForm = readSource(
+      "src/components/executive/invitation/invite-acceptance-identity-form.tsx",
+    );
+    const rfqDocumentRequirements = readSource(
+      "src/components/rfq-workspace/rfq-document-requirements.tsx",
+    );
+    const executiveMiniTile = readSource(
+      "src/components/rfq-workspace/shared/executive-mini-tile.tsx",
+    );
+    const supplierInvitationDelivery = readSource(
+      "src/components/rfq-workspace/supplier-invitation-delivery.tsx",
+    );
+
+    expect(analyticsVendors).not.toContain("text-slate-500");
+    expect(launchCritical.publicCompany).not.toContain("text-slate-500");
+    expect(launchCritical.directory).not.toContain("text-slate-500");
+    expect(launchCritical.notifications).not.toContain("text-slate-500");
+
+    expect(launchCritical.rfqNew).not.toContain("text-slate-500");
+    expect(launchCritical.rfqNew).not.toContain(
+      "placeholder:text-slate-600",
+    );
+    expect(launchCritical.settingsForm).not.toContain(
+      "placeholder:text-slate-600",
+    );
+    expect(launchCritical.inviteForm).not.toContain(
+      "placeholder:text-slate-600",
+    );
+
+    expect(enrollmentForm).not.toContain("text-slate-500");
+    expect(enrollmentForm).not.toContain("text-slate-600");
+
+    expect(enrollmentGateway).not.toContain("text-slate-500");
+    expect(enrollmentGateway.match(/text-slate-600/g) || []).toHaveLength(1);
+    expect(enrollmentGateway).toContain(
+      'className="mx-2 text-slate-600"',
+    );
+
+    expect(
+      opportunityRanking.match(/text-slate-500/g) || [],
+    ).toHaveLength(1);
+    expect(opportunityRanking).toContain(
+      'className="text-sm font-black text-slate-500"',
+    );
+    expect(opportunityRanking).not.toContain("text-slate-600");
+
+    expect(invitationIdentityForm).not.toContain(
+      "placeholder:text-slate-600",
+    );
+
+    expect(rfqDocumentRequirements).not.toContain("text-slate-500");
+
+    expect(launchCritical.rfqQuoteComparison).not.toContain(
+      "placeholder:text-slate-500",
+    );
+
+    expect(launchCritical.rfqRfi).not.toContain(
+      "placeholder:text-nexus-muted/70",
+    );
+
+    expect(executiveMiniTile).not.toContain("text-slate-500");
+
+    expect(supplierInvitationDelivery).not.toContain(
+      "placeholder:text-nexus-muted/70",
+    );
   });
 
   it("keeps RFQ compare/submit free of light islands", () => {

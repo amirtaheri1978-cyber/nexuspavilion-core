@@ -19,7 +19,7 @@ import {
 
 const identityInputClass = [
   "mt-2 w-full rounded-2xl border border-white/10 bg-white/[0.045] px-4 py-3.5 text-sm font-medium text-white outline-none transition",
-  "placeholder:text-slate-600 hover:border-white/20",
+  "placeholder:text-slate-400 hover:border-white/20",
   "focus:border-[#C8A646]/60 focus:bg-white/[0.065]",
   EXECUTIVE_FOCUS_GOLD,
 ].join(" ");

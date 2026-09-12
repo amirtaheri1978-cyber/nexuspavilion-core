@@ -186,7 +186,7 @@ export function RfqQuoteComparison({
           }}
           placeholder="Search respondents by supplier name"
           aria-label="Search RFQ respondents"
-          className={`min-h-12 w-full rounded-executive border border-white/10 bg-black/20 px-4 text-sm font-semibold text-white outline-none transition placeholder:text-slate-500 hover:border-white/20 focus:border-nexus-cyan-bright ${EXECUTIVE_FOCUS_CYAN}`}
+          className={`min-h-12 w-full rounded-executive border border-white/10 bg-black/20 px-4 text-sm font-semibold text-white outline-none transition placeholder:text-slate-400 hover:border-white/20 focus:border-nexus-cyan-bright ${EXECUTIVE_FOCUS_CYAN}`}
         />
 
         <p className="np-type-meta" aria-live="polite">

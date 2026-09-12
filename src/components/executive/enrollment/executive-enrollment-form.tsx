@@ -49,7 +49,7 @@ type ExecutiveEnrollmentFormProps = {
 
 const enrollmentInputClass = [
   "w-full rounded-2xl border border-white/10 bg-white/[0.045] px-4 py-3.5 text-sm font-medium text-white outline-none transition",
-  "placeholder:text-slate-600 hover:border-white/20",
+  "placeholder:text-slate-400 hover:border-white/20",
   "focus:border-[#d6b977]/60 focus:bg-white/[0.065]",
   EXECUTIVE_FOCUS_GOLD,
 ].join(" ");
@@ -298,7 +298,7 @@ export function ExecutiveEnrollmentForm({
                   }
                   className={enrollmentInputClass}
                 />
-                <p id={jobTitleHintId} className="mt-2 text-[11px] leading-4 text-slate-600">
+                <p id={jobTitleHintId} className="mt-2 text-[11px] leading-4 text-slate-400">
                   Your title in this invited workspace. Role assignment remains
                   governed by the invitation.
                 </p>
@@ -386,10 +386,10 @@ export function ExecutiveEnrollmentForm({
 
             <div className="rounded-2xl border border-white/8 bg-black/10 p-4">
               <div className="flex items-center justify-between">
-                <p className="text-[10px] font-bold uppercase tracking-[0.19em] text-slate-500">
+                <p className="text-[10px] font-bold uppercase tracking-[0.19em] text-slate-400">
                   Security controls
                 </p>
-                <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-600">
+                <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">
                   Required
                 </span>
               </div>
@@ -456,7 +456,7 @@ export function ExecutiveEnrollmentForm({
                 : "Provision Executive Access"}
             </button>
 
-            <p className="text-center text-xs leading-5 text-slate-600">
+            <p className="text-center text-xs leading-5 text-slate-400">
               Continuing confirms that you are the intended recipient of this
               controlled workspace invitation.
             </p>
@@ -495,12 +495,12 @@ function WorkflowControl({
         <p
           className={[
             "text-xs font-semibold",
-            verified || ready ? "text-slate-200" : "text-slate-500",
+            verified || ready ? "text-slate-200" : "text-slate-400",
           ].join(" ")}
         >
           {label}
         </p>
-        <p className="mt-1 text-[11px] leading-4 text-slate-600">
+        <p className="mt-1 text-[11px] leading-4 text-slate-400">
           {description}
         </p>
       </div>
@@ -512,7 +512,7 @@ function WorkflowControl({
             ? "border-emerald-300/20 bg-emerald-300/[0.07] text-emerald-200"
             : ready
               ? "border-[#c9a35d]/20 bg-[#c9a35d]/[0.07] text-[#d6b977]"
-              : "border-white/8 bg-white/[0.025] text-slate-600",
+              : "border-white/8 bg-white/[0.025] text-slate-400",
         ].join(" ")}
       >
         {verified ? <CheckIcon /> : null}
@@ -585,7 +585,7 @@ function ProvisioningProgress({ phase }: { phase: EnrollmentPhase }) {
                     ? "text-white"
                     : complete
                       ? "text-slate-300"
-                      : "text-slate-600",
+                      : "text-slate-400",
                 ].join(" ")}
               >
                 {step.label}

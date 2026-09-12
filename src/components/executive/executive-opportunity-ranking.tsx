@@ -51,7 +51,7 @@ export function ExecutiveOpportunityRanking({
                 className="hidden h-1 w-1 rounded-full bg-white/20 sm:block"
               />
 
-              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">
+              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">
                 Enterprise value prioritization
               </p>
             </div>
@@ -75,7 +75,7 @@ export function ExecutiveOpportunityRanking({
               {hasData ? "Decision Intelligence Available" : "Insufficient Data"}
             </StatusBadge>
 
-            <p className="text-[10px] font-black uppercase tracking-[0.16em] text-slate-500">
+            <p className="text-[10px] font-black uppercase tracking-[0.16em] text-slate-400">
               {opportunities.length} ranked opportunities
             </p>
           </div>
@@ -216,7 +216,7 @@ export function ExecutiveOpportunityRanking({
               </h3>
             </div>
 
-            <p className="max-w-xl text-xs font-semibold leading-5 text-slate-500 sm:text-right">
+            <p className="max-w-xl text-xs font-semibold leading-5 text-slate-400 sm:text-right">
               Opportunities retain the exact priority sequence supplied by the
               active procurement intelligence model.
             </p>
@@ -433,11 +433,11 @@ function EmptyState({
         <span className="text-sm font-black text-slate-500">—</span>
       </div>
 
-      <p className="mt-5 text-[10px] font-black uppercase tracking-[0.18em] text-slate-600">
+      <p className="mt-5 text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">
         Insufficient data
       </p>
 
-      <p className="mt-3 text-sm font-bold leading-6 text-slate-500">
+      <p className="mt-3 text-sm font-bold leading-6 text-slate-400">
         {message}
       </p>
     </div>
