@@ -6,6 +6,8 @@ const migrationPath =
   "supabase/legacy-migrations/pre-baseline-v2/20260829000000_restrict_issuer_quote_select_until_commercial_unlock.sql";
 const deadlineLockedMigrationPath =
   "supabase/migrations/20260913072244_enforce_deadline_locked_quote_rls.sql";
+const deadlineLockedAwardMigrationPath =
+  "supabase/migrations/20260913082925_enforce_deadline_locked_rfq_award.sql";
 const baselineMigrationPath =
   "supabase/legacy-migrations/pre-baseline-v2/20260822000000_dev_public_baseline.sql";
 const auditMigrationPath =
@@ -33,6 +35,14 @@ const deadlineLockedSql = readFileSync(
   "utf8",
 ).replace(/\r\n/g, "\n");
 const normalizedDeadlineLockedSql = deadlineLockedSql
+  .replace(/\s+/g, " ")
+  .trim()
+  .toLowerCase();
+const deadlineLockedAwardSql = readFileSync(
+  resolve(process.cwd(), deadlineLockedAwardMigrationPath),
+  "utf8",
+).replace(/\r\n/g, "\n");
+const normalizedDeadlineLockedAwardSql = deadlineLockedAwardSql
   .replace(/\s+/g, " ")
   .trim()
   .toLowerCase();
@@ -434,17 +444,17 @@ function splitUpdateExpressions(policy: string) {
 }
 
 function awardRpcSql() {
-  const start = sql
+  const start = deadlineLockedAwardSql
     .toLowerCase()
     .indexOf(
       "create or replace function public.award_rfq_quote(p_quote_id uuid)",
     );
   expect(start).toBeGreaterThan(-1);
-  const commentAt = sql
+  const nextFunctionAt = deadlineLockedAwardSql
     .toLowerCase()
-    .indexOf("comment on function public.award_rfq_quote", start);
-  expect(commentAt).toBeGreaterThan(start);
-  return sql.slice(start, commentAt);
+    .indexOf("\ncreate or replace function public.", start + 1);
+  expect(nextFunctionAt).toBeGreaterThan(start);
+  return deadlineLockedAwardSql.slice(start, nextFunctionAt);
 }
 
 describe("issuer quote UPDATE commercial unlock", () => {
@@ -516,7 +526,7 @@ describe("award_rfq_quote commercial unlock", () => {
   ).replace(/\r\n/g, "\n");
 
   it("redefines award_rfq_quote in the forward migration without rewriting history", () => {
-    expect(sql).toContain(
+    expect(deadlineLockedAwardSql).toContain(
       "create or replace function public.award_rfq_quote(p_quote_id uuid)",
     );
     expect(historicalAward).toContain(
@@ -541,15 +551,16 @@ describe("award_rfq_quote commercial unlock", () => {
     expect(normalizedHelper).toContain(
       "company_status is distinct from 'verified'",
     );
-    expect(normalizedHelper).toContain("'error_code', 'self_award_not_allowed'");
     expect(normalizedHelper).toContain("'error_code', 'rfq_already_awarded'");
     expect(normalizedHelper).toContain("'error_code', 'quote_already_awarded'");
+    expect(normalizedHelper).toContain("'error_code', 'award_not_permitted'");
     expect(normalizedHelper).not.toContain("p_company_id");
+    expect(normalizedHelper).not.toContain("procurement_function");
   });
 
   it("checks commercial unlock with the same predicate before any UPDATE", () => {
     const unlockAt = normalizedHelper.indexOf(
-      "coalesce(rfq_row.sourcing_method, 'invited') = 'open'",
+      awardDeadlineUnlock,
     );
     const rfqUpdateAt = normalizedHelper.indexOf("update public.rfqs");
     const quoteUpdateAt = normalizedHelper.indexOf("update public.quotes");
@@ -558,28 +569,43 @@ describe("award_rfq_quote commercial unlock", () => {
     expect(rfqUpdateAt).toBeGreaterThan(unlockAt);
     expect(quoteUpdateAt).toBeGreaterThan(rfqUpdateAt);
     expect(normalizedHelper).toContain(
-      "coalesce(rfq_row.contract_framework, 'project_specific') <> 'framework'",
-    );
-    expect(normalizedHelper).toContain(
       "public.parse_rfq_deadline_timestamptz(rfq_row.deadline)",
     );
     expect(normalizedHelper).toContain(awardDeadlineUnlock);
     expect(normalizedHelper).not.toContain("rfq_row.deadline < now()");
     expect(normalizedHelper).toContain("'error_code', 'award_not_permitted'");
-    expect(helper).toContain(
-      "Commercial evaluation remains locked until the RFQ deadline.",
+    expect(helper).toContain("'error_code', 'AWARD_NOT_PERMITTED'");
+    expect(normalizedHelper).not.toContain("sourcing_method");
+    expect(normalizedHelper).not.toContain("contract_framework");
+  });
+
+  it("removes Open and Framework award bypasses while keeping the post-deadline path", () => {
+    expect(normalizedHelper).not.toContain("sourcing_method");
+    expect(normalizedHelper).not.toContain("contract_framework");
+    expect(normalizedHelper).toContain(awardDeadlineUnlock);
+    expect(normalizedHelper).toContain("decision = 'awarded'");
+    expect(normalizedHelper).toContain("awarded_at = v_awarded_at");
+  });
+
+  it("requires selected-company acknowledgement for every required addendum", () => {
+    expect(normalizedHelper).toContain("a.requires_acknowledgement = true");
+    expect(normalizedHelper).toContain("ack.rfq_id = rfq_row.id");
+    expect(normalizedHelper).toContain("ack.addendum_id = a.id");
+    expect(normalizedHelper).toContain(
+      "ack.company_id = selected_quote.company_id",
     );
   });
 
-  it("keeps open non-framework awardability and post-deadline award path", () => {
-    expect(normalizedHelper).toContain(
-      "coalesce(rfq_row.sourcing_method, 'invited') = 'open' and coalesce(rfq_row.contract_framework, 'project_specific') <> 'framework'",
+  it("bounds unavailable, rejected, and issuer-owned quote identifiers", () => {
+    expect(normalizedHelper).not.toContain("'error_code', 'quote_not_found'");
+    expect(normalizedHelper).not.toContain("'error_code', 'not_rfq_company'");
+    expect(normalizedHelper).not.toContain("'error_code', 'quote_ineligible'");
+    expect(normalizedHelper).not.toContain(
+      "'error_code', 'self_award_not_allowed'",
     );
-    expect(normalizedHelper).toContain(
-      `or ( ${awardDeadlineUnlock} )`,
-    );
-    expect(normalizedHelper).toContain("decision = 'awarded'");
-    expect(normalizedHelper).toContain("awarded_at = v_awarded_at");
+    expect(
+      normalizedHelper.match(/'error_code', 'award_not_permitted'/g)?.length,
+    ).toBeGreaterThanOrEqual(3);
   });
 
   it("does not introduce a service-role browser workaround", () => {
@@ -595,6 +621,8 @@ describe("award_rfq_quote commercial unlock", () => {
     expect(quoteRoute).not.toContain("service_role");
     expect(detail).not.toContain("award_rfq_quote");
     expect(compare).not.toContain("award_rfq_quote");
+    expect(normalizedDeadlineLockedAwardSql).not.toContain("grant ");
+    expect(normalizedDeadlineLockedAwardSql).not.toContain("revoke ");
   });
 });
 
@@ -837,7 +865,9 @@ describe("text deadline fail-closed commercial unlock parsing", () => {
     expect(withCheck).toContain(deadlineUnlock);
     expect(using).not.toContain(" or ");
     expect(withCheck).not.toContain(" or ");
-    expect(awardHelper).toContain(`or ( ${awardDeadlineUnlock} )`);
+    expect(awardHelper).toContain(awardDeadlineUnlock);
+    expect(awardHelper).not.toContain("sourcing_method");
+    expect(awardHelper).not.toContain("contract_framework");
   });
 
   it("uses the helper consistently in SELECT, UPDATE USING, UPDATE WITH CHECK, and award_rfq_quote", () => {
@@ -860,7 +890,7 @@ describe("text deadline fail-closed commercial unlock parsing", () => {
     expect(awardHelper.indexOf("update public.rfqs")).toBeGreaterThan(parseAt);
   });
 
-  it("removes open non-framework immediate read/write while preserving historical award behavior", () => {
+  it("removes open non-framework immediate read, write, and award behavior", () => {
     expect(issuerSelect).not.toContain(unlockPredicate);
     expect(using).not.toContain(unlockPredicate);
     expect(withCheck).not.toContain(unlockPredicate);
@@ -870,9 +900,9 @@ describe("text deadline fail-closed commercial unlock parsing", () => {
     expect(using).not.toContain("contract_framework");
     expect(withCheck).not.toContain("sourcing_method");
     expect(withCheck).not.toContain("contract_framework");
-    expect(awardHelper).toContain(
-      "coalesce(rfq_row.sourcing_method, 'invited') = 'open' and coalesce(rfq_row.contract_framework, 'project_specific') <> 'framework'",
-    );
+    expect(awardHelper).not.toContain("sourcing_method");
+    expect(awardHelper).not.toContain("contract_framework");
+    expect(awardHelper).toContain(awardDeadlineUnlock);
   });
 
   it("keeps prior column-integrity grants intact", () => {

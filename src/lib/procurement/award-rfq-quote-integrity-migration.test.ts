@@ -4,6 +4,8 @@ import { describe, expect, it } from "vitest";
 
 const migrationPath =
   "supabase/legacy-migrations/pre-baseline-v2/20260826000000_enforce_atomic_rfq_award_integrity.sql";
+const deadlineLockedAwardMigrationPath =
+  "supabase/migrations/20260913082925_enforce_deadline_locked_rfq_award.sql";
 const awardRoutePath = "src/app/api/award-contract/route.ts";
 const quoteDecisionRoutePath = "src/app/api/quote-decision/route.ts";
 
@@ -11,6 +13,10 @@ const sql = readFileSync(resolve(process.cwd(), migrationPath), "utf8").replace(
   /\r\n/g,
   "\n",
 );
+const deadlineLockedAwardSql = readFileSync(
+  resolve(process.cwd(), deadlineLockedAwardMigrationPath),
+  "utf8",
+).replace(/\r\n/g, "\n");
 const awardRoute = readFileSync(resolve(process.cwd(), awardRoutePath), "utf8");
 const quoteDecisionRoute = readFileSync(
   resolve(process.cwd(), quoteDecisionRoutePath),
@@ -21,6 +27,19 @@ const functionBody = sql.slice(
   sql.indexOf("create or replace function public.award_rfq_quote"),
   sql.indexOf("comment on function public.award_rfq_quote"),
 );
+
+function currentFunctionBody(name: string) {
+  const marker = `create or replace function public.${name}`;
+  const start = deadlineLockedAwardSql.toLowerCase().indexOf(marker);
+  expect(start, `missing current function ${name}`).toBeGreaterThan(-1);
+  const nextFunction = deadlineLockedAwardSql
+    .toLowerCase()
+    .indexOf("\ncreate or replace function public.", start + marker.length);
+  return deadlineLockedAwardSql.slice(
+    start,
+    nextFunction === -1 ? deadlineLockedAwardSql.length : nextFunction,
+  );
+}
 
 describe("atomic RFQ award integrity migration", () => {
   it("adds a partial unique index of one awarded quote per RFQ", () => {
@@ -108,6 +127,166 @@ describe("atomic RFQ award integrity migration", () => {
     expect(sql).toContain("tg_op = 'UPDATE'");
     expect(sql).toContain("tg_op = 'INSERT'");
     expect(sql).toContain("deferrable initially deferred");
+  });
+});
+
+describe("deadline-locked RFQ award forward migration", () => {
+  const awardFunction = currentFunctionBody("award_rfq_quote");
+  const authorizationFunction = currentFunctionBody(
+    "enforce_rfq_award_authorization",
+  );
+  const consistencyFunction = currentFunctionBody(
+    "enforce_rfq_award_terminal_consistency",
+  );
+  const normalizedAward = awardFunction.replace(/\s+/g, " ").toLowerCase();
+  const normalizedAuthorization = authorizationFunction
+    .replace(/\s+/g, " ")
+    .toLowerCase();
+  const normalizedConsistency = consistencyFunction
+    .replace(/\s+/g, " ")
+    .toLowerCase();
+
+  it("replaces all three existing functions without adding grants or helpers", () => {
+    expect(awardFunction).toContain("security definer");
+    expect(awardFunction).toContain("set search_path = ''");
+    expect(authorizationFunction).toContain("security definer");
+    expect(authorizationFunction).toContain("set search_path = ''");
+    expect(consistencyFunction).toContain("security definer");
+    expect(consistencyFunction).toContain("set search_path = ''");
+    expect(deadlineLockedAwardSql.toLowerCase()).not.toContain("grant ");
+    expect(deadlineLockedAwardSql.toLowerCase()).not.toContain("revoke ");
+    expect(deadlineLockedAwardSql.toLowerCase()).not.toContain(
+      "create trigger",
+    );
+  });
+
+  it("uses only a valid parsed deadline strictly before now for award opening", () => {
+    expect(normalizedAward).toContain(
+      "public.parse_rfq_deadline_timestamptz(r.deadline) is not null",
+    );
+    expect(normalizedAward).toContain(
+      "public.parse_rfq_deadline_timestamptz(r.deadline) < now()",
+    );
+    expect(normalizedAward).toContain(
+      "not ( parsed_deadline is not null and parsed_deadline < now() )",
+    );
+    expect(normalizedAward).not.toContain("sourcing_method");
+    expect(normalizedAward).not.toContain("contract_framework");
+    expect(normalizedAward).not.toContain("<= now()");
+    expect(normalizedAward).not.toContain("deadline = now()");
+  });
+
+  it("preserves owner/admin workspace authorization and denies buyer-only award", () => {
+    expect(normalizedAward).toContain("actor_user_id uuid := auth.uid()");
+    expect(normalizedAward).toContain("om.membership_status = 'active'");
+    expect(normalizedAward).toContain("om.workspace_role in ('owner', 'admin')");
+    expect(normalizedAward).toContain(
+      "company_workspace_status is distinct from 'active'",
+    );
+    expect(normalizedAward).toContain("company_status is distinct from 'verified'");
+    expect(normalizedAward).not.toContain("procurement_function");
+    expect(normalizedAuthorization).toContain(
+      "om.workspace_role in ('owner', 'admin')",
+    );
+    expect(normalizedAuthorization).not.toContain("procurement_function");
+  });
+
+  it("bounds unavailable quote identifiers and enforces selected-company addendum acknowledgement", () => {
+    const boundedLookup = normalizedAward.slice(
+      normalizedAward.indexOf("select r.id into candidate_rfq_id"),
+      normalizedAward.indexOf("select r.* into rfq_row"),
+    );
+    expect(boundedLookup).toContain("r.company_id = actor_company_id");
+    expect(boundedLookup).toContain("q.decision is distinct from 'rejected'");
+    expect(boundedLookup).toContain("q.company_id is distinct from r.company_id");
+    expect(boundedLookup).toContain("a.requires_acknowledgement = true");
+    expect(boundedLookup).toContain("ack.addendum_id = a.id");
+    expect(boundedLookup).toContain("ack.company_id = q.company_id");
+    expect(normalizedAward.match(/'error_code', 'award_not_permitted'/g)?.length).toBeGreaterThanOrEqual(3);
+    expect(normalizedAward).not.toContain("'error_code', 'quote_not_found'");
+    expect(normalizedAward).not.toContain("'error_code', 'not_rfq_company'");
+    expect(normalizedAward).not.toContain("'error_code', 'quote_ineligible'");
+    expect(normalizedAward).not.toContain("'error_code', 'self_award_not_allowed'");
+  });
+
+  it("revalidates deadline, quote eligibility, and acknowledgements after row locking", () => {
+    const lockAt = normalizedAward.indexOf("for update");
+    const revalidationAt = normalizedAward.indexOf(
+      "parsed_deadline := public.parse_rfq_deadline_timestamptz(rfq_row.deadline)",
+    );
+    const rfqUpdateAt = normalizedAward.indexOf("update public.rfqs");
+    expect(lockAt).toBeGreaterThan(-1);
+    expect(revalidationAt).toBeGreaterThan(lockAt);
+    expect(rfqUpdateAt).toBeGreaterThan(revalidationAt);
+    expect(normalizedAward.slice(revalidationAt, rfqUpdateAt)).toContain(
+      "ack.company_id = selected_quote.company_id",
+    );
+  });
+
+  it("guards direct award mutation with issuer, deadline, quote, and addendum checks", () => {
+    expect(normalizedAuthorization).toContain(
+      "new.company_id is distinct from old.company_id",
+    );
+    expect(normalizedAuthorization).toContain(
+      "new.deadline is distinct from old.deadline",
+    );
+    expect(normalizedAuthorization).toContain("auth.uid() is null");
+    expect(normalizedAuthorization).toContain("c.workspace_status = 'active'");
+    expect(normalizedAuthorization).toContain("c.status = 'verified'");
+    expect(normalizedAuthorization).toContain(
+      "parsed_deadline := public.parse_rfq_deadline_timestamptz(new.deadline)",
+    );
+    expect(normalizedAuthorization).toContain(
+      "not ( parsed_deadline is not null and parsed_deadline < now() )",
+    );
+    expect(normalizedAuthorization).toContain("q.rfq_id = new.id");
+    expect(normalizedAuthorization).toContain(
+      "selected_quote_company_id is not distinct from new.company_id",
+    );
+    expect(normalizedAuthorization).toContain(
+      "selected_quote_decision is not distinct from 'rejected'",
+    );
+    expect(normalizedAuthorization).toContain(
+      "ack.company_id = selected_quote_company_id",
+    );
+  });
+
+  it("requires a fully coherent RFQ and Quote terminal award state", () => {
+    expect(normalizedConsistency).toContain("new.status = 'awarded'");
+    expect(normalizedConsistency).toContain("new.awarded_quote_id is not null");
+    expect(normalizedConsistency).toContain("new.awarded_at is not null");
+    expect(normalizedConsistency).toContain(
+      "new.status is distinct from 'awarded' or new.awarded_quote_id is null or new.awarded_at is null",
+    );
+    expect(normalizedConsistency).toContain(
+      "select q.decision, q.rfq_id, q.awarded_at",
+    );
+    expect(normalizedConsistency).toContain(
+      "awarded_quote_rfq_id is distinct from new.id",
+    );
+    expect(normalizedConsistency).toContain(
+      "awarded_quote_decision is distinct from 'awarded'",
+    );
+    expect(normalizedConsistency).toContain(
+      "awarded_quote_awarded_at is distinct from new.awarded_at",
+    );
+  });
+
+  it("preserves atomic writes, competing rejection, and the activity writer", () => {
+    const rfqUpdateAt = normalizedAward.indexOf("update public.rfqs");
+    const competingUpdateAt = normalizedAward.indexOf(
+      "update public.quotes set decision = 'rejected'",
+    );
+    const selectedUpdateAt = normalizedAward.indexOf(
+      "update public.quotes set decision = 'awarded', awarded_at = v_awarded_at",
+    );
+    const activityAt = normalizedAward.indexOf(
+      "perform public.record_rfq_award_workspace_activity",
+    );
+    expect(rfqUpdateAt).toBeGreaterThan(-1);
+    expect(competingUpdateAt).toBeGreaterThan(rfqUpdateAt);
+    expect(selectedUpdateAt).toBeGreaterThan(competingUpdateAt);
+    expect(activityAt).toBeGreaterThan(selectedUpdateAt);
   });
 });
 
