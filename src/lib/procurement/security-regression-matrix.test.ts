@@ -9,7 +9,10 @@ import {
   selectRfqDetailCommandMetrics,
   serializeRfqBuyerExecutiveIntelligenceForViewer,
 } from "@/lib/procurement/rfq-detail-intelligence-boundary";
-import { buildCommercialIntelligence } from "@/lib/procurement/rfq-commercial-intelligence";
+import {
+  buildCommercialIntelligence,
+  isRfqCommercialOpeningUnlocked,
+} from "@/lib/procurement/rfq-commercial-intelligence";
 import {
   buildRfqCapabilities,
   canRespondToRfqSourcing,
@@ -45,14 +48,16 @@ const BASELINE_V2_PATH =
   "supabase/migrations/20260911000000_launch_candidate_baseline_v2.sql";
 const baselineSql = readSource(BASELINE_V2_PATH);
 const sql = normalizeContractSql(baselineSql);
+const DEADLINE_LOCKED_QUOTE_RLS_PATH =
+  "supabase/migrations/20260913072244_enforce_deadline_locked_quote_rls.sql";
+const deadlineLockedQuoteRlsSql = readSource(DEADLINE_LOCKED_QUOTE_RLS_PATH);
 
-function policyBlock(policyName: string) {
-  // Dump CREATE POLICY uses quoted identifiers; search the raw Baseline V2 text.
-  const lowerSql = baselineSql.toLowerCase();
+function policyBlock(policyName: string, source = baselineSql) {
+  const lowerSql = source.toLowerCase();
   const marker = `create policy "${policyName.toLowerCase()}"`;
   const start = lowerSql.indexOf(marker);
   expect(start, `missing policy ${policyName}`).toBeGreaterThan(-1);
-  const rest = baselineSql.slice(start);
+  const rest = source.slice(start);
   const lowerRest = rest.toLowerCase();
   const candidates = [
     lowerRest.indexOf("\ndrop policy", marker.length),
@@ -345,15 +350,16 @@ describe("Security Regression Matrix SEC-01..SEC-14", () => {
     it("gates issuer commercial quote SELECT behind the unlock contract", () => {
       const issuerSelectPolicy = policyBlock(
         "Issuing buyers can read quotes after commercial unlock",
+        deadlineLockedQuoteRlsSql,
       );
 
       expect(issuerSelectPolicy).toContain("for select");
       expect(issuerSelectPolicy).toContain("om.company_id = r.company_id");
       expect(issuerSelectPolicy).toContain(
-        "om.membership_status = any (array['active'::text, 'archived'::text])",
+        "om.membership_status in ('active', 'archived')",
       );
       expect(issuerSelectPolicy).toContain(
-        "om.workspace_role = any (array['owner'::text, 'admin'::text])",
+        "om.workspace_role in ('owner', 'admin')",
       );
       expect(issuerSelectPolicy).toContain(
         "om.procurement_function = 'buyer'",
@@ -362,20 +368,14 @@ describe("Security Regression Matrix SEC-01..SEC-14", () => {
         /workspace_role[\s\S]*or[\s\S]*procurement_function = 'buyer'/,
       );
       expect(issuerSelectPolicy).toContain(
-        "coalesce(r.sourcing_method, 'invited'::text) = 'open'::text",
-      );
-      expect(issuerSelectPolicy).toContain(
-        "coalesce(r.contract_framework, 'project_specific'::text) <> 'framework'::text",
-      );
-      expect(issuerSelectPolicy).toContain(
         "public.parse_rfq_deadline_timestamptz(r.deadline) is not null",
       );
       expect(issuerSelectPolicy).toContain(
         "public.parse_rfq_deadline_timestamptz(r.deadline) < now()",
       );
-      expect(issuerSelectPolicy).toMatch(
-        /coalesce\(r\.sourcing_method, 'invited'::text\) = 'open'::text[\s\S]*coalesce\(r\.contract_framework, 'project_specific'::text\) <> 'framework'::text[\s\S]*or[\s\S]*parse_rfq_deadline_timestamptz\(r\.deadline\) is not null[\s\S]*parse_rfq_deadline_timestamptz\(r\.deadline\) < now\(\)/,
-      );
+      expect(issuerSelectPolicy).not.toContain("sourcing_method");
+      expect(issuerSelectPolicy).not.toContain("contract_framework");
+      expect(issuerSelectPolicy).not.toContain("procurement_scope");
 
       const lockedIssuer = buildRfqCapabilities({
         participantRole: "issuer",
@@ -397,6 +397,44 @@ describe("Security Regression Matrix SEC-01..SEC-14", () => {
       });
       expect(unlockedIssuer.canViewCommercialEvaluation).toBe(true);
     });
+
+    it.each([
+      ["open", "project_specific"],
+      ["open", "framework"],
+      ["invited", "project_specific"],
+      ["invited", "framework"],
+      ["sealed_bid", "project_specific"],
+      ["sealed_bid", "framework"],
+    ] as const)(
+      "keeps %s × %s deadline-locked regardless of sourcing metadata",
+      (sourcingMethod, contractFramework) => {
+        const deadline = "2026-09-20T12:00:00.000Z";
+        const rfq = buildRfq({
+          sourcing_method: sourcingMethod,
+          contract_framework: contractFramework,
+          deadline,
+        });
+
+        expect(
+          isRfqCommercialOpeningUnlocked({
+            deadline: rfq.deadline,
+            now: new Date("2026-09-20T11:59:59.999Z"),
+          }),
+        ).toBe(false);
+        expect(
+          isRfqCommercialOpeningUnlocked({
+            deadline: rfq.deadline,
+            now: new Date("2026-09-20T12:00:00.000Z"),
+          }),
+        ).toBe(false);
+        expect(
+          isRfqCommercialOpeningUnlocked({
+            deadline: rfq.deadline,
+            now: new Date("2026-09-20T12:00:00.001Z"),
+          }),
+        ).toBe(true);
+      },
+    );
   });
 
   describe("SEC-07 Issuer intelligence isolation", () => {
