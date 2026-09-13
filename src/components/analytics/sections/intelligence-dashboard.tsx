@@ -3,6 +3,7 @@ import { ExecutiveAlertsCenter } from "@/components/analytics/executive-alerts-c
 import ExecutiveRecommendations from "@/components/analytics/executive-recommendations";
 import DailyExecutiveBriefing from "@/components/executive/daily-executive-briefing";
 import type { DecisionSupportReadiness } from "@/lib/analytics/executive/decision-support-readiness";
+import type { CommercialEvidenceState } from "@/lib/analytics/commercial/commercial-insights";
 
 type ExecutiveAlert = {
   level: "healthy" | "opportunity" | "warning";
@@ -25,8 +26,9 @@ type IntelligenceDashboardProps = {
   executiveRecommendations: ExecutiveRecommendation[];
   dailyExecutiveBriefing: DailyBriefingItem[];
 
-  decisionSupportReadiness: DecisionSupportReadiness;
-  supplierReliabilityScore: number;
+  decisionSupportReadiness: DecisionSupportReadiness | null;
+  supplierReliabilityScore: number | null;
+  supplierCommercialEvidenceState: CommercialEvidenceState;
 };
 
 export function IntelligenceDashboard({
@@ -35,7 +37,17 @@ export function IntelligenceDashboard({
   dailyExecutiveBriefing,
   decisionSupportReadiness,
   supplierReliabilityScore,
+  supplierCommercialEvidenceState,
 }: IntelligenceDashboardProps) {
+  const unavailableEvidenceLabel =
+    supplierCommercialEvidenceState === "available"
+      ? null
+      : supplierCommercialEvidenceState === "access-restricted"
+        ? "Access Restricted"
+        : supplierCommercialEvidenceState === "policy-locked"
+          ? "Policy Locked"
+          : "Insufficient Data";
+
   return (
     <section
       aria-labelledby="intelligence-command-layer-heading"
@@ -96,10 +108,24 @@ export function IntelligenceDashboard({
         dailyExecutiveBriefing={dailyExecutiveBriefing}
       />
 
-      <AIConfidenceEngine
-        decisionSupportReadiness={decisionSupportReadiness}
-        supplierReliabilityScore={supplierReliabilityScore}
-      />
+      {supplierCommercialEvidenceState !== "available" ||
+      decisionSupportReadiness === null ||
+      supplierReliabilityScore === null ? (
+        <div className="mt-6 rounded-3xl border border-amber-300/15 bg-amber-400/[0.04] p-5 text-white">
+          <p className="text-sm font-black">
+            Commercial Evidence {unavailableEvidenceLabel ?? "Insufficient Data"}
+          </p>
+          <p className="mt-2 text-sm font-semibold leading-6 text-slate-400">
+            Supplier reliability evidence is unavailable under the current
+            commercial evidence controls.
+          </p>
+        </div>
+      ) : (
+        <AIConfidenceEngine
+          decisionSupportReadiness={decisionSupportReadiness}
+          supplierReliabilityScore={supplierReliabilityScore}
+        />
+      )}
     </section>
   );
 }

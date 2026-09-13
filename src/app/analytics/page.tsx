@@ -8,14 +8,23 @@ import BoardReportGenerator from "@/components/board-report-generator";
 import BoardNarrativeGenerator from "@/components/ai-board-narrative-generator";
 import ExecutiveRiskIntelligence from "@/components/executive-risk-intelligence";
 import ProcurementCopilotIntelligence from "@/components/procurement-copilot-intelligence";
-import { loadAnalyticsSourceData } from "@/lib/analytics/source-data/load-analytics-source-data";
+import {
+  loadAnalyticsSourceData,
+  type AnalyticsQuote,
+} from "@/lib/analytics/source-data/load-analytics-source-data";
 import { ExecutiveOpportunityRanking } from "@/components/executive/executive-opportunity-ranking";
 import { ExecutiveDashboard } from "@/components/analytics/sections/executive-dashboard";
 import { BoardDashboard } from "@/components/analytics/sections/board-dashboard";
 import { ProcurementDashboard } from "@/components/analytics/sections/procurement-dashboard";
 import { buildAnalyticsNarrative } from "@/lib/analytics/narrative/analytics-narrative";
-import { buildCommercialInsights } from "@/lib/analytics/commercial/commercial-insights";
-import { buildPortfolioIntelligence } from "@/lib/analytics/portfolio/portfolio-intelligence";
+import {
+  buildCommercialInsights,
+  type CommercialEvidenceState,
+} from "@/lib/analytics/commercial/commercial-insights";
+import {
+  buildPortfolioIntelligence,
+  type ProcurementRatioEvidence,
+} from "@/lib/analytics/portfolio/portfolio-intelligence";
 import { buildExecutiveBrief } from "@/lib/analytics/executive/executive-brief";
 import { buildRiskComplianceEvidence } from "@/lib/analytics/executive/risk-intelligence";
 import { buildExecutiveHistoricalPatterns } from "@/lib/analytics/executive/executive-trend";
@@ -24,6 +33,7 @@ import {
   CONTRACT_FRAMEWORK_LABELS,
   PROCUREMENT_SCOPE_LABELS,
   SOURCING_METHOD_LABELS,
+  type AnalyticsRFQ,
   buildAnalyticsRfqSourceHref,
   countByFramework,
   countByScope,
@@ -62,6 +72,514 @@ type ExecutiveAlert = {
   message: string;
 };
 
+type RfqDecisionReadinessSourceRfq = Pick<AnalyticsRFQ, "id"> &
+  Partial<
+    Pick<
+      AnalyticsRFQ,
+      | "title"
+      | "category"
+      | "procurement_scope"
+      | "sourcing_method"
+      | "contract_framework"
+      | "status"
+      | "slug"
+    >
+  >;
+
+type AnalyticsExecutiveScoreInputs = {
+  evidenceState: CommercialEvidenceState;
+  totalRfqs: number;
+  supplierQuotes: number;
+  awardedContracts: number;
+  budgetTotal: number;
+  avgQuotesPerRfq: number;
+  awardRate: number;
+  budgetUtilization: number;
+  supplierReliabilityScore: number;
+  supplierDiversificationScore: number;
+  observedCommercialOpportunity: number;
+  constructionClassificationScore: number;
+};
+
+type AvailableAnalyticsExecutiveScores = {
+  state: "available";
+  supplierActivityScore: number;
+  competitionScore: number;
+  awardScore: number;
+  commercialOpportunityEvidenceScore: number;
+  procurementHealthScore: number;
+  executiveProcurementHealth: number;
+  procurementRiskIndex: number;
+  procurementMaturityScore: number;
+  dataQualityScore: number;
+  enterpriseProcurementScore: number;
+  executiveStatus: string;
+  procurementEfficiencyScore: number;
+  supplierEngagementScore: number;
+  executiveReadinessScore: number;
+  digitalMaturityScore: number;
+  boardHealthIndex: number;
+  benchmarkReadinessScore: number;
+  decisionSupportReadiness: ReturnType<typeof buildDecisionSupportReadiness>;
+  procurementOpportunityScore: number;
+  boardReadinessScore: number;
+  ceoReadinessScore: number;
+  internalPerformanceIndex: number;
+  procurementPerformanceIndex: number;
+  supplierPerformanceIndex: number;
+  costOpportunityIndex: number;
+  portfolioHealthIndex: number;
+};
+
+type UnavailableAnalyticsExecutiveScores = {
+  state: Exclude<CommercialEvidenceState, "available">;
+} & {
+  [Key in Exclude<
+    keyof AvailableAnalyticsExecutiveScores,
+    "state" | "executiveStatus" | "decisionSupportReadiness"
+  >]: null;
+} & {
+  executiveStatus: "Policy Locked" | "Access Restricted" | "Insufficient Data";
+  decisionSupportReadiness: null;
+};
+
+export type AnalyticsExecutiveScoreEvidence =
+  | AvailableAnalyticsExecutiveScores
+  | UnavailableAnalyticsExecutiveScores;
+
+export function getCommercialEvidenceLabel(
+  state: Exclude<CommercialEvidenceState, "available">,
+) {
+  if (state === "access-restricted") {
+    return "Access Restricted";
+  }
+
+  return state === "policy-locked" ? "Policy Locked" : "Insufficient Data";
+}
+
+export function buildSafeSubmissionParticipation({
+  rfqIds,
+  safeSubmissionCountByRfqId,
+}: {
+  rfqIds: readonly string[];
+  safeSubmissionCountByRfqId: Readonly<Record<string, number>>;
+}) {
+  const totalSubmissions = rfqIds.reduce(
+    (total, rfqId) => total + (safeSubmissionCountByRfqId[rfqId] ?? 0),
+    0,
+  );
+  const rfqsWithSubmissions = rfqIds.filter(
+    (rfqId) => (safeSubmissionCountByRfqId[rfqId] ?? 0) > 0,
+  ).length;
+  const rfqSubmissionCoverage: ProcurementRatioEvidence =
+    rfqIds.length === 0
+      ? {
+          numerator: 0,
+          denominator: 0,
+          percentage: null,
+          status: "insufficient-data",
+        }
+      : {
+          numerator: rfqsWithSubmissions,
+          denominator: rfqIds.length,
+          percentage: Math.round((rfqsWithSubmissions / rfqIds.length) * 100),
+          status: "available",
+        };
+
+  return { totalSubmissions, rfqSubmissionCoverage };
+}
+
+export function resolveCommercialEvidenceStateForSealedParticipation({
+  globalEvidenceState,
+  hasSealedCommercialEvidence,
+}: {
+  globalEvidenceState: CommercialEvidenceState;
+  hasSealedCommercialEvidence: boolean;
+}): CommercialEvidenceState {
+  if (globalEvidenceState !== "available") {
+    return globalEvidenceState;
+  }
+
+  return hasSealedCommercialEvidence ? "policy-locked" : "available";
+}
+
+export function buildDecisionStreamRiskMessage({
+  evidenceState,
+  totalSubmissions,
+  fallbackMessage,
+}: {
+  evidenceState: CommercialEvidenceState;
+  totalSubmissions: number;
+  fallbackMessage: string;
+}) {
+  const representsMissingQuotationEvidence =
+    /^\d+ active RFQs? (?:has|have) no submitted quotation evidence in the authorized analytics dataset\.$/.test(
+      fallbackMessage,
+    );
+
+  if (
+    evidenceState === "policy-locked" &&
+    totalSubmissions > 0 &&
+    representsMissingQuotationEvidence
+  ) {
+    return `${totalSubmissions} submitted ${totalSubmissions === 1 ? "quotation is" : "quotations are"} recorded; commercial evidence remains policy locked until the applicable RFQ opening control unlocks it.`;
+  }
+
+  return fallbackMessage;
+}
+
+export function buildGovernedRiskComplianceEvidence({
+  evidenceState,
+  totalSubmissions,
+  riskComplianceEvidence,
+}: {
+  evidenceState: CommercialEvidenceState;
+  totalSubmissions: number;
+  riskComplianceEvidence: ReturnType<typeof buildRiskComplianceEvidence>;
+}) {
+  const governMessage = (fallbackMessage: string) =>
+    buildDecisionStreamRiskMessage({
+      evidenceState,
+      totalSubmissions,
+      fallbackMessage,
+    });
+
+  return {
+    ...riskComplianceEvidence,
+    narrative: governMessage(riskComplianceEvidence.narrative),
+    indicators: riskComplianceEvidence.indicators.map(governMessage),
+  };
+}
+
+export function formatCommercialCurrencyEvidence(
+  evidenceState: CommercialEvidenceState,
+  value: number,
+) {
+  return evidenceState === "available"
+    ? `$${value.toLocaleString()}`
+    : getCommercialEvidenceLabel(evidenceState);
+}
+
+export function buildGovernedAnalyticsNarrative({
+  evidenceState,
+  ...narrativeInput
+}: Parameters<typeof buildAnalyticsNarrative>[0] & {
+  evidenceState: CommercialEvidenceState;
+}) {
+  if (evidenceState === "available") {
+    return buildAnalyticsNarrative(narrativeInput);
+  }
+
+  const evidenceLabel = getCommercialEvidenceLabel(evidenceState);
+
+  return {
+    executiveSummary: `${evidenceLabel}: supplier and commercial evidence is unavailable under the current evidence controls. Numeric quotation counts, average quotation values, award rates, and dependent executive scores are withheld rather than reported as zero.`,
+    strategicRecommendations: [
+      evidenceState === "policy-locked"
+        ? "Wait for the applicable RFQ commercial opening before interpreting supplier or commercial outcomes."
+        : evidenceState === "access-restricted"
+          ? "Use an authorized workspace membership when supplier or commercial analytics are required."
+          : "Increase complete, comparable commercial evidence before interpreting supplier or commercial outcomes.",
+    ],
+  };
+}
+
+export function buildAnalyticsExecutiveScoreEvidence({
+  evidenceState,
+  totalRfqs,
+  supplierQuotes,
+  awardedContracts,
+  budgetTotal,
+  avgQuotesPerRfq,
+  awardRate,
+  budgetUtilization,
+  supplierReliabilityScore,
+  supplierDiversificationScore,
+  observedCommercialOpportunity,
+  constructionClassificationScore,
+}: AnalyticsExecutiveScoreInputs): AnalyticsExecutiveScoreEvidence {
+  if (evidenceState !== "available") {
+    const executiveStatus = getCommercialEvidenceLabel(evidenceState);
+
+    return {
+      state: evidenceState,
+      supplierActivityScore: null,
+      competitionScore: null,
+      awardScore: null,
+      commercialOpportunityEvidenceScore: null,
+      procurementHealthScore: null,
+      executiveProcurementHealth: null,
+      procurementRiskIndex: null,
+      procurementMaturityScore: null,
+      dataQualityScore: null,
+      enterpriseProcurementScore: null,
+      executiveStatus,
+      procurementEfficiencyScore: null,
+      supplierEngagementScore: null,
+      executiveReadinessScore: null,
+      digitalMaturityScore: null,
+      boardHealthIndex: null,
+      benchmarkReadinessScore: null,
+      decisionSupportReadiness: null,
+      procurementOpportunityScore: null,
+      boardReadinessScore: null,
+      ceoReadinessScore: null,
+      internalPerformanceIndex: null,
+      procurementPerformanceIndex: null,
+      supplierPerformanceIndex: null,
+      costOpportunityIndex: null,
+      portfolioHealthIndex: null,
+    };
+  }
+
+  const supplierActivityScore = Math.min(100, supplierQuotes * 12);
+  const competitionScore = Math.min(100, avgQuotesPerRfq * 25);
+  const awardScore = Math.min(100, Math.round(awardRate * 1.5));
+  const commercialOpportunityEvidenceScore =
+    observedCommercialOpportunity > 0 ? 85 : 55;
+  const procurementHealthScore = Math.round(
+    supplierActivityScore * 0.25 +
+      competitionScore * 0.25 +
+      awardScore * 0.25 +
+      commercialOpportunityEvidenceScore * 0.25,
+  );
+  const executiveProcurementHealth = Math.min(
+    100,
+    Math.round(
+      awardRate * 0.4 + budgetUtilization * 0.3 + avgQuotesPerRfq * 10,
+    ),
+  );
+  const procurementRiskIndex = Math.max(0, 100 - procurementHealthScore);
+  const procurementMaturityScore = Math.min(
+    100,
+    Math.round(
+      procurementHealthScore * 0.45 +
+        competitionScore * 0.2 +
+        awardRate * 0.15 +
+        budgetUtilization * 0.1 +
+        constructionClassificationScore * 0.1,
+    ),
+  );
+  const dataQualityScore = Math.min(
+    100,
+    Math.round(
+      (totalRfqs > 0 ? 25 : 0) +
+        (supplierQuotes > 0 ? 25 : 0) +
+        (awardedContracts > 0 ? 20 : 0) +
+        (budgetTotal > 0 ? 15 : 0) +
+        (constructionClassificationScore >= 60 ? 15 : 0),
+    ),
+  );
+  const { score: enterpriseProcurementScore, status: executiveStatus } =
+    calculateExecutiveScore(
+      procurementHealthScore,
+      dataQualityScore,
+      procurementRiskIndex,
+      constructionClassificationScore,
+    );
+  const procurementEfficiencyScore = Math.min(
+    100,
+    Math.round(
+      awardRate * 0.35 +
+        budgetUtilization * 0.25 +
+        avgQuotesPerRfq * 10 +
+        procurementHealthScore * 0.2 +
+        constructionClassificationScore * 0.1,
+    ),
+  );
+  const supplierEngagementScore = Math.min(
+    100,
+    Math.round(
+      supplierQuotes * 5 +
+        avgQuotesPerRfq * 15 +
+        supplierReliabilityScore * 0.3,
+    ),
+  );
+  const executiveReadinessScore = calculateExecutiveReadiness(
+    enterpriseProcurementScore,
+    dataQualityScore,
+  );
+  const digitalMaturityScore = calculateDigitalMaturity(
+    procurementMaturityScore,
+    dataQualityScore,
+    supplierEngagementScore,
+    constructionClassificationScore,
+  );
+  const boardHealthIndex = calculateBoardHealth(
+    procurementEfficiencyScore,
+    executiveReadinessScore,
+    digitalMaturityScore,
+    procurementHealthScore,
+  );
+  const benchmarkReadinessScore = Math.min(
+    100,
+    Math.round(
+      procurementMaturityScore * (5 / 17) +
+        supplierEngagementScore * (4 / 17) +
+        executiveReadinessScore * (4 / 17) +
+        dataQualityScore * (4 / 17),
+    ),
+  );
+  const decisionSupportReadiness = buildDecisionSupportReadiness({
+    dataQualityScore,
+    supplierEngagementScore,
+    benchmarkReadinessScore,
+  });
+  const procurementOpportunityScore = Math.min(
+    100,
+    Math.round(
+      observedCommercialOpportunity / 1000 +
+        avgQuotesPerRfq * 15 +
+        awardRate * 0.3 +
+        budgetUtilization * 0.2 +
+        constructionClassificationScore * 0.15,
+    ),
+  );
+  const boardReadinessScore = Math.min(
+    100,
+    Math.round(
+      boardHealthIndex * 0.3 +
+        executiveReadinessScore * 0.25 +
+        enterpriseProcurementScore * 0.2 +
+        benchmarkReadinessScore * 0.15 +
+        dataQualityScore * 0.1,
+    ),
+  );
+  const ceoReadinessScore = Math.min(
+    100,
+    Math.round(
+      boardReadinessScore * 0.3 +
+        enterpriseProcurementScore * 0.25 +
+        executiveReadinessScore * 0.2 +
+        benchmarkReadinessScore * 0.15 +
+        supplierEngagementScore * 0.1,
+    ),
+  );
+  const internalPerformanceIndex = Math.min(
+    100,
+    Math.round(
+      procurementHealthScore * (7 / 17) +
+        supplierReliabilityScore * (4 / 17) +
+        competitionScore * (4 / 17) +
+        constructionClassificationScore * (2 / 17),
+    ),
+  );
+  const procurementPerformanceIndex = Math.min(
+    100,
+    Math.round(
+      procurementMaturityScore * 0.45 +
+        executiveProcurementHealth * 0.25 +
+        boardHealthIndex * 0.2 +
+        constructionClassificationScore * 0.1,
+    ),
+  );
+  const supplierPerformanceIndex = Math.min(
+    100,
+    Math.round(
+      supplierReliabilityScore * 0.5 +
+        supplierEngagementScore * 0.3 +
+        competitionScore * 0.2,
+    ),
+  );
+  const costOpportunityIndex = Math.min(
+    100,
+    Math.round(
+      budgetUtilization * 0.3 +
+        procurementOpportunityScore * 0.4 +
+        commercialOpportunityEvidenceScore * 0.3,
+    ),
+  );
+  const portfolioHealthIndex = Math.min(
+    100,
+    Math.round(
+      supplierReliabilityScore * 0.4 +
+        supplierDiversificationScore * 0.3 +
+        supplierEngagementScore * 0.3,
+    ),
+  );
+
+  return {
+    state: "available",
+    supplierActivityScore,
+    competitionScore,
+    awardScore,
+    commercialOpportunityEvidenceScore,
+    procurementHealthScore,
+    executiveProcurementHealth,
+    procurementRiskIndex,
+    procurementMaturityScore,
+    dataQualityScore,
+    enterpriseProcurementScore,
+    executiveStatus,
+    procurementEfficiencyScore,
+    supplierEngagementScore,
+    executiveReadinessScore,
+    digitalMaturityScore,
+    boardHealthIndex,
+    benchmarkReadinessScore,
+    decisionSupportReadiness,
+    procurementOpportunityScore,
+    boardReadinessScore,
+    ceoReadinessScore,
+    internalPerformanceIndex,
+    procurementPerformanceIndex,
+    supplierPerformanceIndex,
+    costOpportunityIndex,
+    portfolioHealthIndex,
+  };
+}
+
+function formatEvidenceScore(score: number | null, unavailableLabel: string) {
+  return score === null ? unavailableLabel : `${score}/100`;
+}
+
+export function buildRfqDecisionReadiness({
+  rfqList,
+  quoteList,
+  commerciallyOpenRfqIdSet,
+  safeSubmissionCountByRfqId,
+}: {
+  rfqList: readonly RfqDecisionReadinessSourceRfq[];
+  quoteList: readonly Pick<AnalyticsQuote, "rfq_id">[];
+  commerciallyOpenRfqIdSet: ReadonlySet<string>;
+  safeSubmissionCountByRfqId: Readonly<Record<string, number>>;
+}) {
+  return rfqList
+    .map((rfq) => {
+      const rfqQuotes = quoteList.filter((quote) => quote.rfq_id === rfq.id);
+      const safeSubmissionCount = safeSubmissionCountByRfqId[rfq.id] ?? 0;
+      const commercialOpeningUnlocked = commerciallyOpenRfqIdSet.has(rfq.id);
+
+      const scope = getProcurementScope(rfq.procurement_scope);
+      const sourcing = getSourcingMethod(rfq.sourcing_method);
+      const framework = getContractFramework(rfq.contract_framework);
+      const status = String(rfq.status || "open").toLowerCase();
+      const evaluationState =
+        status === "awarded"
+          ? "Awarded"
+          : rfqQuotes.length > 0
+            ? "Evaluation Active"
+            : safeSubmissionCount > 0 && !commercialOpeningUnlocked
+              ? "Commercial Opening Pending"
+              : status === "open" || status === "published"
+                ? "Awaiting Quotes"
+                : "No Submission Evidence";
+
+      return {
+        title: rfq.title || "Untitled RFQ",
+        category: rfq.category || "Procurement",
+        scope: PROCUREMENT_SCOPE_LABELS[scope],
+        sourcing: SOURCING_METHOD_LABELS[sourcing],
+        framework: CONTRACT_FRAMEWORK_LABELS[framework],
+        quotes: safeSubmissionCount,
+        evaluationState,
+        status: rfq.status || "open",
+        sourceHref: buildAnalyticsRfqSourceHref(rfq.slug),
+      };
+    })
+    .slice(0, 10);
+}
+
 export default async function AnalyticsPage() {
   const {
     companyId,
@@ -70,10 +588,17 @@ export default async function AnalyticsPage() {
     rfqList,
     quoteList,
     companyList,
+    commerciallyOpenRfqIds,
+    safeSubmissionCountByRfqId,
   } = await loadAnalyticsSourceData();
 
   const analyticsAsOf = new Date();
-
+  const commerciallyOpenRfqIdSet = new Set(commerciallyOpenRfqIds);
+  const hasSealedSubmissionEvidence = rfqList.some(
+    (rfq) =>
+      !commerciallyOpenRfqIdSet.has(rfq.id) &&
+      safeSubmissionCountByRfqId[rfq.id] > 0,
+  );
   const currentCompany =
     companyList.find((company) => company.id === companyId) ?? null;
 
@@ -130,6 +655,35 @@ export default async function AnalyticsPage() {
     asOf: analyticsAsOf,
   });
 
+  const supplierCommercialEvidenceState: CommercialEvidenceState =
+    resolveCommercialEvidenceStateForSealedParticipation({
+      globalEvidenceState: commercialInsights.state,
+      hasSealedCommercialEvidence: hasSealedSubmissionEvidence,
+    });
+  const unavailableCommercialEvidenceLabel =
+    supplierCommercialEvidenceState === "available"
+      ? null
+      : getCommercialEvidenceLabel(supplierCommercialEvidenceState);
+  const executiveEvidenceLabel =
+    unavailableCommercialEvidenceLabel ?? "Insufficient Data";
+  const commercialEvidenceUnavailable =
+    supplierCommercialEvidenceState !== "available";
+  const safeSubmissionParticipation = buildSafeSubmissionParticipation({
+    rfqIds: rfqList.map((rfq) => rfq.id),
+    safeSubmissionCountByRfqId,
+  });
+  const governedProcurementInsights = {
+    ...procurementInsights,
+    rfqSubmissionCoverage:
+      safeSubmissionParticipation.rfqSubmissionCoverage,
+  };
+  const procurementVolumeDisplay = formatCommercialCurrencyEvidence(
+    supplierCommercialEvidenceState,
+    procurementVolume,
+  );
+  const formatCurrentEvidenceScore = (score: number | null) =>
+    formatEvidenceScore(score, executiveEvidenceLabel);
+
   const observedCommercialOpportunity =
     commercialInsights.state === "available"
       ? commercialInsights.estimatedOpportunity ?? 0
@@ -174,6 +728,11 @@ export default async function AnalyticsPage() {
     canViewQuoteHistory: commercialAccess.canViewIssuerCommercialAnalytics,
     asOf: analyticsAsOf,
   });
+  const governedRiskComplianceEvidence = buildGovernedRiskComplianceEvidence({
+    evidenceState: supplierCommercialEvidenceState,
+    totalSubmissions: safeSubmissionParticipation.totalSubmissions,
+    riskComplianceEvidence,
+  });
 
   const materialRfqs = countByScope(rfqList, "material");
   const tradeRfqs = countByScope(rfqList, "subcontractor");
@@ -210,32 +769,50 @@ export default async function AnalyticsPage() {
           ? "Early RFQ Mix"
           : "No RFQ Mix Yet";
 
-  const supplierActivityScore = Math.min(100, supplierQuotes * 12);
-  const competitionScore = Math.min(100, avgQuotesPerRfq * 25);
-  const awardScore = Math.min(100, Math.round(awardRate * 1.5));
-  const commercialOpportunityEvidenceScore =
-    commercialInsights.state === "available"
-      ? observedCommercialOpportunity > 0
-        ? 85
-        : 55
-      : 55;
+  const executiveScoreEvidence = buildAnalyticsExecutiveScoreEvidence({
+    evidenceState: supplierCommercialEvidenceState,
+    totalRfqs,
+    supplierQuotes,
+    awardedContracts,
+    budgetTotal,
+    avgQuotesPerRfq,
+    awardRate,
+    budgetUtilization,
+    supplierReliabilityScore,
+    supplierDiversificationScore,
+    observedCommercialOpportunity,
+    constructionClassificationScore,
+  });
+  const {
+    supplierActivityScore,
+    competitionScore,
+    awardScore,
+    procurementHealthScore,
+    procurementRiskIndex,
+    procurementMaturityScore,
+    dataQualityScore,
+    enterpriseProcurementScore,
+    supplierEngagementScore,
+    executiveReadinessScore,
+    boardHealthIndex,
+    benchmarkReadinessScore,
+    decisionSupportReadiness,
+    procurementOpportunityScore,
+    boardReadinessScore,
+    ceoReadinessScore,
+    internalPerformanceIndex,
+    procurementPerformanceIndex,
+    supplierPerformanceIndex,
+    costOpportunityIndex,
+    portfolioHealthIndex,
+  } = executiveScoreEvidence;
 
-  const procurementHealthScore = Math.round(
-    supplierActivityScore * 0.25 +
-      competitionScore * 0.25 +
-      awardScore * 0.25 +
-      commercialOpportunityEvidenceScore * 0.25,
-  );
-
-  const procurementHealth = getHealthLabel(procurementHealthScore);
-  const competitionIndex = getCompetitionLabel(avgQuotesPerRfq);
-
-  const executiveProcurementHealth = Math.min(
-    100,
-    Math.round(
-      awardRate * 0.4 + budgetUtilization * 0.3 + avgQuotesPerRfq * 10,
-    ),
-  );
+  const procurementHealth =
+    procurementHealthScore === null
+      ? unavailableCommercialEvidenceLabel ?? "Insufficient Data"
+      : getHealthLabel(procurementHealthScore);
+  const competitionIndex =
+    unavailableCommercialEvidenceLabel ?? getCompetitionLabel(avgQuotesPerRfq);
   const dominantScope =
     [
       { label: "Material", value: materialRfqs },
@@ -251,7 +828,8 @@ export default async function AnalyticsPage() {
       { label: "Sealed Bid", value: sealedBidRfqs },
     ].sort((a, b) => b.value - a.value)[0]?.label || "N/A";
 
-  const { executiveSummary } = buildAnalyticsNarrative({
+  const { executiveSummary } = buildGovernedAnalyticsNarrative({
+    evidenceState: supplierCommercialEvidenceState,
     totalRfqs,
     procurementHealth,
     competitionIndex,
@@ -268,45 +846,24 @@ export default async function AnalyticsPage() {
     topCategory,
   });
 
-  const rfqDecisionReadiness = rfqList
-    .map((rfq) => {
-      const rfqQuotes = quoteList.filter((quote) => quote.rfq_id === rfq.id);
-
-      const scope = getProcurementScope(rfq.procurement_scope);
-      const sourcing = getSourcingMethod(rfq.sourcing_method);
-      const framework = getContractFramework(rfq.contract_framework);
-      const status = String(rfq.status || "open").toLowerCase();
-      const evaluationState =
-        status === "awarded"
-          ? "Awarded"
-          : rfqQuotes.length > 0
-            ? "Evaluation Active"
-            : status === "open" || status === "published"
-              ? "Awaiting Quotes"
-              : "No Submission Evidence";
-
-      return {
-        title: rfq.title || "Untitled RFQ",
-        category: rfq.category || "Procurement",
-        scope: PROCUREMENT_SCOPE_LABELS[scope],
-        sourcing: SOURCING_METHOD_LABELS[sourcing],
-        framework: CONTRACT_FRAMEWORK_LABELS[framework],
-        quotes: rfqQuotes.length,
-        evaluationState,
-        status: rfq.status || "open",
-        sourceHref: buildAnalyticsRfqSourceHref(rfq.slug),
-      };
-    })
-    .slice(0, 10);
-
-  const procurementRiskIndex = Math.max(0, 100 - procurementHealthScore);
+  const rfqDecisionReadiness = buildRfqDecisionReadiness({
+    rfqList,
+    quoteList,
+    commerciallyOpenRfqIdSet,
+    safeSubmissionCountByRfqId,
+  });
 
   const supplierDependencyRisk =
-    vendorLeaderboard.length <= 1
-      ? "Critical"
-      : vendorLeaderboard.length <= 3
-        ? "Medium"
-        : "Low";
+    commercialEvidenceUnavailable ||
+    procurementRiskIndex === null ||
+    procurementOpportunityScore === null ||
+    enterpriseProcurementScore === null
+      ? executiveEvidenceLabel
+      : vendorLeaderboard.length <= 1
+        ? "Critical"
+        : vendorLeaderboard.length <= 3
+          ? "Medium"
+          : "Low";
   const topVendorRevenue = vendorLeaderboard[0]?.revenue || 0;
 
   const vendorConcentrationRisk =
@@ -321,93 +878,10 @@ export default async function AnalyticsPage() {
         ? "Moderate"
         : "Low";
 
-  const procurementMaturityScore = Math.min(
-    100,
-    Math.round(
-      procurementHealthScore * 0.45 +
-        competitionScore * 0.2 +
-        awardRate * 0.15 +
-        budgetUtilization * 0.1 +
-        constructionClassificationScore * 0.1,
-    ),
-  );
-
-  const dataQualityScore = Math.min(
-    100,
-    Math.round(
-      (totalRfqs > 0 ? 25 : 0) +
-        (supplierQuotes > 0 ? 25 : 0) +
-        (awardedContracts > 0 ? 20 : 0) +
-        (budgetTotal > 0 ? 15 : 0) +
-        (constructionClassificationScore >= 60 ? 15 : 0),
-    ),
-  );
-
-  const { score: enterpriseProcurementScore, status: executiveStatus } =
-    calculateExecutiveScore(
-      procurementHealthScore,
-      dataQualityScore,
-      procurementRiskIndex,
-      constructionClassificationScore,
-    );
-
-  const procurementEfficiencyScore = Math.min(
-    100,
-    Math.round(
-      awardRate * 0.35 +
-        budgetUtilization * 0.25 +
-        avgQuotesPerRfq * 10 +
-        procurementHealthScore * 0.2 +
-        constructionClassificationScore * 0.1,
-    ),
-  );
-
-  const supplierEngagementScore = Math.min(
-    100,
-    Math.round(
-      supplierQuotes * 5 +
-        avgQuotesPerRfq * 15 +
-        supplierReliabilityScore * 0.3,
-    ),
-  );
-
-  const executiveReadinessScore = calculateExecutiveReadiness(
-    enterpriseProcurementScore,
-    dataQualityScore,
-  );
-
-  const digitalMaturityScore = calculateDigitalMaturity(
-    procurementMaturityScore,
-    dataQualityScore,
-    supplierEngagementScore,
-    constructionClassificationScore,
-  );
-
-  const boardHealthIndex = calculateBoardHealth(
-    procurementEfficiencyScore,
-    executiveReadinessScore,
-    digitalMaturityScore,
-    procurementHealthScore,
-  );
-
-  const benchmarkReadinessScore = Math.min(
-    100,
-    Math.round(
-      procurementMaturityScore * (5 / 17) +
-        supplierEngagementScore * (4 / 17) +
-        executiveReadinessScore * (4 / 17) +
-        dataQualityScore * (4 / 17),
-    ),
-  );
-
-  const decisionSupportReadiness = buildDecisionSupportReadiness({
-    dataQualityScore,
-    supplierEngagementScore,
-    benchmarkReadinessScore,
-  });
-
   const executiveBenchmarkStatus =
-    benchmarkReadinessScore >= 85
+    benchmarkReadinessScore === null
+      ? executiveEvidenceLabel
+      : benchmarkReadinessScore >= 85
       ? "Board Ready"
       : benchmarkReadinessScore >= 70
         ? "Executive Ready"
@@ -416,16 +890,20 @@ export default async function AnalyticsPage() {
           : "Insufficient Data";
 
   const supplierNetworkBenchmark =
-    supplierParticipationCount >= 10
-      ? "Scaled"
-      : supplierParticipationCount >= 5
-        ? "Developing"
-        : supplierParticipationCount > 0
-          ? "Early"
-          : "Insufficient Data";
+    commercialEvidenceUnavailable || internalPerformanceIndex === null
+      ? executiveEvidenceLabel
+      : supplierParticipationCount >= 10
+        ? "Scaled"
+        : supplierParticipationCount >= 5
+          ? "Developing"
+          : supplierParticipationCount > 0
+            ? "Early"
+            : "Insufficient Data";
 
   const riskBenchmark =
-    procurementRiskIndex <= 25
+    procurementRiskIndex === null
+      ? executiveEvidenceLabel
+      : procurementRiskIndex <= 25
       ? "Low Exposure"
       : procurementRiskIndex <= 50
         ? "Moderate Exposure"
@@ -433,23 +911,17 @@ export default async function AnalyticsPage() {
           ? "Elevated Exposure"
           : "Critical Exposure";
 
-  const procurementOpportunityScore = Math.min(
-    100,
-    Math.round(
-      observedCommercialOpportunity / 1000 +
-        avgQuotesPerRfq * 15 +
-        awardRate * 0.3 +
-        budgetUtilization * 0.2 +
-        constructionClassificationScore * 0.15,
-    ),
-  );
-
-  const enterpriseCommandStatus = commandStatus(enterpriseProcurementScore);
+  const enterpriseCommandStatus =
+    enterpriseProcurementScore === null
+      ? executiveEvidenceLabel
+      : commandStatus(enterpriseProcurementScore);
 
   const riskCommandStatus = riskComplianceEvidence.stateLabel;
 
   const opportunityCommandStatus =
-    procurementOpportunityScore >= 80
+    procurementOpportunityScore === null
+      ? executiveEvidenceLabel
+      : procurementOpportunityScore >= 80
       ? "High Opportunity"
       : procurementOpportunityScore >= 60
         ? "Strong Opportunity"
@@ -458,14 +930,18 @@ export default async function AnalyticsPage() {
           : "Limited Opportunity";
 
   const governanceReadiness =
-    executiveReadinessScore >= 80
+    executiveReadinessScore === null
+      ? executiveEvidenceLabel
+      : executiveReadinessScore >= 80
       ? "Board Ready"
       : executiveReadinessScore >= 60
         ? "Executive Review"
         : "Operational Review";
 
   const financialVisibility =
-    dataQualityScore >= 80
+    dataQualityScore === null
+      ? executiveEvidenceLabel
+      : dataQualityScore >= 80
       ? "High"
       : dataQualityScore >= 60
         ? "Moderate"
@@ -473,30 +949,10 @@ export default async function AnalyticsPage() {
 
   const riskVisibility = riskComplianceEvidence.stateLabel;
 
-  const boardReadinessScore = Math.min(
-    100,
-    Math.round(
-      boardHealthIndex * 0.3 +
-        executiveReadinessScore * 0.25 +
-        enterpriseProcurementScore * 0.2 +
-        benchmarkReadinessScore * 0.15 +
-        dataQualityScore * 0.1,
-    ),
-  );
-
-  const ceoReadinessScore = Math.min(
-    100,
-    Math.round(
-      boardReadinessScore * 0.3 +
-        enterpriseProcurementScore * 0.25 +
-        executiveReadinessScore * 0.2 +
-        benchmarkReadinessScore * 0.15 +
-        supplierEngagementScore * 0.1,
-    ),
-  );
-
   const ceoPriorityLevel =
-    ceoReadinessScore >= 85
+    ceoReadinessScore === null
+      ? executiveEvidenceLabel
+      : ceoReadinessScore >= 85
       ? "Strategic Expansion"
       : ceoReadinessScore >= 70
         ? "Executive Optimization"
@@ -507,16 +963,18 @@ export default async function AnalyticsPage() {
   const ceoRiskLevel = riskComplianceEvidence.stateLabel;
 
   const ceoOpportunityLevel =
-    procurementOpportunityScore >= 80
+    procurementOpportunityScore === null
+      ? executiveEvidenceLabel
+      : procurementOpportunityScore >= 80
       ? "High Opportunity"
       : procurementOpportunityScore >= 60
         ? "Strong Opportunity"
         : "Emerging Opportunity";
 
   const ceoPriorityQueue = [
-    `Board Readiness: ${boardReadinessScore}/100`,
-    `Enterprise Score: ${enterpriseProcurementScore}/100`,
-    `Executive Readiness: ${executiveReadinessScore}/100`,
+    `Board Readiness: ${formatCurrentEvidenceScore(boardReadinessScore)}`,
+    `Enterprise Score: ${formatCurrentEvidenceScore(enterpriseProcurementScore)}`,
+    `Executive Readiness: ${formatCurrentEvidenceScore(executiveReadinessScore)}`,
     `Benchmark Status: ${executiveBenchmarkStatus}`,
   ];
 
@@ -526,12 +984,14 @@ export default async function AnalyticsPage() {
       : [riskComplianceEvidence.narrative];
 
   const ceoStrategicOpportunities = [
-    `Supplier Engagement: ${supplierEngagementScore}/100`,
-    `Procurement Opportunity: ${procurementOpportunityScore}/100`,
-    `Benchmark Readiness: ${benchmarkReadinessScore}/100`,
+    `Supplier Engagement: ${formatCurrentEvidenceScore(supplierEngagementScore)}`,
+    `Procurement Opportunity: ${formatCurrentEvidenceScore(procurementOpportunityScore)}`,
+    `Benchmark Readiness: ${formatCurrentEvidenceScore(benchmarkReadinessScore)}`,
   ];
 
-  const ceoMorningBrief = `
+  const ceoMorningBrief = commercialEvidenceUnavailable
+    ? `${executiveEvidenceLabel}: executive supplier and commercial scoring is unavailable under the current evidence controls. Non-commercial RFQ classification evidence remains available independently.`
+    : `
 Nexus Pavilion executive intelligence indicates a CEO readiness score
 of ${ceoReadinessScore}/100. Current board readiness is
 ${boardReadinessScore}/100 with ${executiveBenchmarkStatus}
@@ -554,20 +1014,28 @@ remains ${ceoRiskLevel.toLowerCase()}.
             : "Low";
 
   const executiveCommandRecommendation =
-    boardHealthIndex >= 85 &&
-    benchmarkReadinessScore >= 80 &&
-    procurementRiskIndex <= 35
-      ? "Board-ready environment. Accelerate strategic procurement initiatives."
-      : procurementRiskIndex >= 70
-        ? "High risk exposure detected. Prioritize mitigation before expansion."
-        : supplierDependencyRisk === "Critical"
-          ? "Supplier concentration risk detected. Diversify supplier network."
-          : procurementOpportunityScore >= 70
-            ? "Strong opportunity signals detected. Increase procurement leverage."
-            : "Continue operational optimization and monitor performance.";
+    commercialEvidenceUnavailable || internalPerformanceIndex === null
+      ? `${executiveEvidenceLabel}: defer supplier coverage and dependency conclusions until commercial evidence becomes available.`
+      : boardHealthIndex !== null &&
+          benchmarkReadinessScore !== null &&
+          procurementRiskIndex !== null &&
+          boardHealthIndex >= 85 &&
+          benchmarkReadinessScore >= 80 &&
+          procurementRiskIndex <= 35
+        ? "Board-ready environment. Accelerate strategic procurement initiatives."
+        : procurementRiskIndex !== null && procurementRiskIndex >= 70
+          ? "High risk exposure detected. Prioritize mitigation before expansion."
+          : supplierDependencyRisk === "Critical"
+            ? "Supplier concentration risk detected. Diversify supplier network."
+            : procurementOpportunityScore !== null &&
+                procurementOpportunityScore >= 70
+              ? "Strong opportunity signals detected. Increase procurement leverage."
+              : "Continue operational optimization and monitor performance.";
 
   const boardPresentationStatus =
-    boardHealthIndex >= 85 && benchmarkReadinessScore >= 80
+    boardHealthIndex === null || benchmarkReadinessScore === null
+      ? executiveEvidenceLabel
+      : boardHealthIndex >= 85 && benchmarkReadinessScore >= 80
       ? "Ready For Board Review"
       : boardHealthIndex >= 70
         ? "Executive Review Required"
@@ -576,11 +1044,16 @@ remains ${ceoRiskLevel.toLowerCase()}.
   const boardRiskPosition = riskComplianceEvidence.stateLabel;
 
   const boardStrategicPosition =
-    procurementOpportunityScore >= 70
-      ? "Growth Opportunity"
-      : supplierDependencyRisk === "Critical"
-        ? "Supplier Diversification Required"
-        : "Operational Optimization";
+    commercialEvidenceUnavailable ||
+    procurementRiskIndex === null ||
+    procurementOpportunityScore === null ||
+    enterpriseProcurementScore === null
+      ? `Commercial Evidence ${executiveEvidenceLabel}`
+      : procurementOpportunityScore !== null && procurementOpportunityScore >= 70
+        ? "Growth Opportunity"
+        : supplierDependencyRisk === "Critical"
+          ? "Supplier Diversification Required"
+          : "Operational Optimization";
 
   const executiveAlerts: ExecutiveAlert[] = [];
   if (constructionClassificationScore < 60) {
@@ -603,7 +1076,7 @@ remains ${ceoRiskLevel.toLowerCase()}.
     });
   }
 
-  if (dataQualityScore >= 75) {
+  if (dataQualityScore !== null && dataQualityScore >= 75) {
     executiveAlerts.push({
       level: "healthy",
       title: "Data Quality Supports Decision Review",
@@ -611,7 +1084,13 @@ remains ${ceoRiskLevel.toLowerCase()}.
     });
   }
 
-  if (procurementRiskIndex >= 35) {
+  if (commercialEvidenceUnavailable) {
+    executiveAlerts.push({
+      level: "warning",
+      title: `Supplier Commercial Evidence ${executiveEvidenceLabel}`,
+      message: `${executiveEvidenceLabel}: supplier identities and commercial evidence are unavailable under the current evidence controls.`,
+    });
+  } else if (procurementRiskIndex !== null && procurementRiskIndex >= 35) {
     executiveAlerts.push({
       level: "warning",
       title: "Supplier Dependency Risk",
@@ -619,7 +1098,7 @@ remains ${ceoRiskLevel.toLowerCase()}.
     });
   }
 
-  if (supplierParticipationCount <= 3) {
+  if (!commercialEvidenceUnavailable && supplierParticipationCount <= 3) {
     executiveAlerts.push({
       level: "warning",
       title: "Limited Supplier Participation",
@@ -631,7 +1110,9 @@ remains ${ceoRiskLevel.toLowerCase()}.
     {
       role: "CEO Action",
       action:
-        procurementOpportunityScore >= 80
+        procurementOpportunityScore === null
+          ? `Commercial opportunity scoring is ${executiveEvidenceLabel.toLowerCase()}.`
+          : procurementOpportunityScore >= 80
           ? `Prioritize ${bestProcurementCategory} and ${dominantScope} procurement as strategic growth and commercial-leverage areas.`
           : "Maintain procurement discipline while scaling executive visibility and classified RFQ activity.",
     },
@@ -642,14 +1123,18 @@ remains ${ceoRiskLevel.toLowerCase()}.
     {
       role: "Procurement Director",
       action:
-        supplierParticipationCount <= 3
-          ? "Expand supplier participation to reduce supplier dependency risk."
-          : `Continue strengthening supplier performance, ${dominantSourcing.toLowerCase()} workflows, and category coverage.`,
+        commercialEvidenceUnavailable
+          ? "Reassess supplier participation and dependency after complete commercial evidence becomes available."
+          : supplierParticipationCount <= 3
+            ? "Expand supplier participation to reduce supplier dependency risk."
+            : `Continue strengthening supplier performance, ${dominantSourcing.toLowerCase()} workflows, and category coverage.`,
     },
     {
       role: "Board Priority",
       action:
-        boardHealthIndex >= 70
+        boardHealthIndex === null
+          ? "Defer composite executive scoring until commercial evidence is available."
+          : boardHealthIndex >= 70
           ? "Scale procurement intelligence adoption across enterprise stakeholders."
           : "Improve procurement data maturity, supplier coverage, RFQ classification, and award conversion.",
     },
@@ -666,6 +1151,24 @@ remains ${ceoRiskLevel.toLowerCase()}.
       const categoryQuotes = quoteList.filter((quote) =>
         categoryRfqIds.includes(quote.rfq_id),
       );
+
+      const safeCategoryResponses = categoryRfqIds.reduce(
+        (total, rfqId) =>
+          total + (safeSubmissionCountByRfqId[rfqId] ?? 0),
+        0,
+      );
+      const categoryHasSealedCommercialEvidence = categoryRfqIds.some(
+        (rfqId) =>
+          !commerciallyOpenRfqIdSet.has(rfqId) &&
+          (safeSubmissionCountByRfqId[rfqId] ?? 0) > 0,
+      );
+      const categoryCommercialEvidenceState =
+        resolveCommercialEvidenceStateForSealedParticipation({
+          globalEvidenceState: commercialInsights.state,
+          hasSealedCommercialEvidence: categoryHasSealedCommercialEvidence,
+        });
+      const categoryCommercialEvidenceUnavailable =
+        categoryCommercialEvidenceState !== "available";
 
       const categoryAwards = categoryQuotes.filter(
         (quote) => quote.decision === "awarded",
@@ -694,28 +1197,31 @@ remains ${ceoRiskLevel.toLowerCase()}.
       return {
         category,
         rfqs: count,
-        quotes: categoryQuotes.length,
-        awards: categoryAwards.length,
-        spend: categorySpend,
-        winRate: categoryWinRate,
-        opportunityScore: categoryOpportunityScore,
+        quotes: safeCategoryResponses,
+        commercialEvidenceState: categoryCommercialEvidenceState,
+        awards: categoryCommercialEvidenceUnavailable
+          ? null
+          : categoryAwards.length,
+        spend: categoryCommercialEvidenceUnavailable ? null : categorySpend,
+        winRate: categoryCommercialEvidenceUnavailable
+          ? null
+          : categoryWinRate,
+        opportunityScore: categoryCommercialEvidenceUnavailable
+          ? null
+          : categoryOpportunityScore,
       };
     })
-    .sort((a, b) => b.opportunityScore - a.opportunityScore)
+    .sort((a, b) =>
+      commercialEvidenceUnavailable || hasSealedSubmissionEvidence
+        ? b.rfqs - a.rfqs || a.category.localeCompare(b.category)
+        : (b.opportunityScore ?? 0) - (a.opportunityScore ?? 0),
+    )
     .slice(0, 5);
 
-  const internalPerformanceIndex = Math.min(
-    100,
-    Math.round(
-      procurementHealthScore * (7 / 17) +
-        supplierReliabilityScore * (4 / 17) +
-        competitionScore * (4 / 17) +
-        constructionClassificationScore * (2 / 17),
-    ),
-  );
-
   const internalPerformanceStatus =
-    internalPerformanceIndex >= 85
+    internalPerformanceIndex === null
+      ? executiveEvidenceLabel
+      : internalPerformanceIndex >= 85
       ? "Strong"
       : internalPerformanceIndex >= 70
         ? "Established"
@@ -730,7 +1236,7 @@ remains ${ceoRiskLevel.toLowerCase()}.
     },
     {
       title: "Decision Evidence",
-      value: decisionSupportReadiness.label,
+      value: decisionSupportReadiness?.label ?? executiveEvidenceLabel,
     },
     {
       title: "Risk Position",
@@ -739,7 +1245,9 @@ remains ${ceoRiskLevel.toLowerCase()}.
     {
       title: "Opportunity Position",
       value:
-        procurementOpportunityScore >= 80
+        procurementOpportunityScore === null
+          ? executiveEvidenceLabel
+          : procurementOpportunityScore >= 80
           ? "High"
           : procurementOpportunityScore >= 60
             ? "Medium"
@@ -756,21 +1264,27 @@ remains ${ceoRiskLevel.toLowerCase()}.
   ];
 
   const procurementCommandRoomStatus =
-    boardHealthIndex >= 80 && executiveReadinessScore >= 80
+    boardHealthIndex === null || executiveReadinessScore === null
+      ? executiveEvidenceLabel
+      : boardHealthIndex >= 80 && executiveReadinessScore >= 80
       ? "Executive Control"
       : boardHealthIndex >= 65
         ? "Operational Control"
         : "Capability Development";
 
   const boardPresentationReadiness =
-    benchmarkReadinessScore >= 85
+    benchmarkReadinessScore === null
+      ? executiveEvidenceLabel
+      : benchmarkReadinessScore >= 85
       ? "Board Ready"
       : benchmarkReadinessScore >= 70
         ? "Executive Ready"
         : "Preparation Required";
 
   const boardNarrative =
-    procurementRiskIndex >= 60
+    procurementRiskIndex === null || procurementOpportunityScore === null
+      ? `${executiveEvidenceLabel}: supplier and commercial executive evidence is unavailable under the current evidence controls.`
+      : procurementRiskIndex >= 60
       ? "Board attention should focus on supplier dependency, concentration risk, and procurement resilience."
       : procurementOpportunityScore >= 80
         ? "Board attention should focus on growth opportunities, validated commercial evidence, and supplier expansion."
@@ -779,81 +1293,101 @@ remains ${ceoRiskLevel.toLowerCase()}.
   const boardPresentationMetrics = [
     {
       title: "Board Readiness",
-      value: `${boardReadinessScore}/100`,
+      value: formatCurrentEvidenceScore(boardReadinessScore),
     },
     {
       title: "Board Health",
-      value: `${boardHealthIndex}/100`,
+      value: formatCurrentEvidenceScore(boardHealthIndex),
     },
     {
       title: "Executive Readiness",
-      value: `${executiveReadinessScore}/100`,
+      value: formatCurrentEvidenceScore(executiveReadinessScore),
     },
     {
       title: "Decision Evidence",
-      value: `${decisionSupportReadiness.score}/100`,
+      value: formatCurrentEvidenceScore(decisionSupportReadiness?.score ?? null),
     },
   ];
   const boardRiskPriorities = [
     {
       title:
-        procurementRiskIndex >= 60
-          ? "Supplier Dependency Risk"
-          : "Supplier Risk Position",
+        commercialEvidenceUnavailable || procurementRiskIndex === null
+          ? "Supplier Commercial Evidence"
+          : procurementRiskIndex >= 60
+            ? "Supplier Dependency Risk"
+            : "Supplier Risk Position",
       priority:
-        procurementRiskIndex >= 60
-          ? "Critical"
-          : procurementRiskIndex >= 40
-            ? "Moderate"
-            : "Monitor",
+        commercialEvidenceUnavailable || procurementRiskIndex === null
+          ? "Review"
+          : procurementRiskIndex >= 60
+            ? "Critical"
+            : procurementRiskIndex >= 40
+              ? "Moderate"
+              : "Monitor",
       impact:
-        procurementRiskIndex >= 60
-          ? "High"
-          : procurementRiskIndex >= 40
-            ? "Medium"
-            : "Low",
+        commercialEvidenceUnavailable || procurementRiskIndex === null
+          ? "Unavailable"
+          : procurementRiskIndex >= 60
+            ? "High"
+            : procurementRiskIndex >= 40
+              ? "Medium"
+              : "Low",
       attention:
-        procurementRiskIndex >= 60
-          ? "Immediate"
-          : procurementRiskIndex >= 40
-            ? "90 Days"
-            : "Ongoing",
+        commercialEvidenceUnavailable || procurementRiskIndex === null
+          ? "After Opening"
+          : procurementRiskIndex >= 60
+            ? "Immediate"
+            : procurementRiskIndex >= 40
+              ? "90 Days"
+              : "Ongoing",
       summary:
-        procurementRiskIndex >= 60
-          ? "Supplier dependency requires board visibility before procurement volume scales further."
-          : procurementRiskIndex >= 40
-            ? "Supplier dependency should remain under management review as procurement activity expands."
-            : "Supplier risk is currently controlled but should continue to be monitored.",
+        commercialEvidenceUnavailable || procurementRiskIndex === null
+          ? "Supplier dependency cannot be assessed while supplier and commercial evidence is unavailable."
+          : procurementRiskIndex >= 60
+            ? "Supplier dependency requires board visibility before procurement volume scales further."
+            : procurementRiskIndex >= 40
+              ? "Supplier dependency should remain under management review as procurement activity expands."
+              : "Supplier risk is currently controlled but should continue to be monitored.",
     },
     {
       title:
-        supplierParticipationCount <= 3
-          ? "Limited Supplier Competition"
-          : "Supplier Competition Health",
+        commercialEvidenceUnavailable
+          ? "Supplier Competition Evidence"
+          : supplierParticipationCount <= 3
+            ? "Limited Supplier Competition"
+            : "Supplier Competition Health",
       priority:
-        supplierParticipationCount <= 3
-          ? "Critical"
-          : supplierParticipationCount <= 6
-            ? "Moderate"
-            : "Monitor",
+        commercialEvidenceUnavailable
+          ? "Review"
+          : supplierParticipationCount <= 3
+            ? "Critical"
+            : supplierParticipationCount <= 6
+              ? "Moderate"
+              : "Monitor",
       impact:
-        supplierParticipationCount <= 3
-          ? "High"
-          : supplierParticipationCount <= 6
-            ? "Medium"
-            : "Low",
+        commercialEvidenceUnavailable
+          ? "Unavailable"
+          : supplierParticipationCount <= 3
+            ? "High"
+            : supplierParticipationCount <= 6
+              ? "Medium"
+              : "Low",
       attention:
-        supplierParticipationCount <= 3
-          ? "Immediate"
-          : supplierParticipationCount <= 6
-            ? "90 Days"
-            : "Ongoing",
+        commercialEvidenceUnavailable
+          ? "After Opening"
+          : supplierParticipationCount <= 3
+            ? "Immediate"
+            : supplierParticipationCount <= 6
+              ? "90 Days"
+              : "Ongoing",
       summary:
-        supplierParticipationCount <= 3
-          ? "Limited supplier participation may reduce quote quality, competitive leverage, and decision confidence."
-          : supplierParticipationCount <= 6
-            ? "Supplier participation is developing and should be expanded to improve competitive coverage."
-            : "Supplier participation supports healthy procurement competition.",
+        commercialEvidenceUnavailable
+          ? "Supplier competition cannot be assessed while supplier and commercial evidence is unavailable."
+          : supplierParticipationCount <= 3
+            ? "Limited supplier participation may reduce quote quality, competitive leverage, and decision confidence."
+            : supplierParticipationCount <= 6
+              ? "Supplier participation is developing and should be expanded to improve competitive coverage."
+              : "Supplier participation supports healthy procurement competition.",
     },
     {
       title:
@@ -885,14 +1419,38 @@ remains ${ceoRiskLevel.toLowerCase()}.
     },
     {
       title:
-        awardRate < 25 ? "Award Execution Risk" : "Quotation Award Outcome Health",
+        commercialEvidenceUnavailable
+          ? "Quotation Award Evidence"
+          : awardRate < 25
+            ? "Award Execution Risk"
+            : "Quotation Award Outcome Health",
       priority:
-        awardRate < 25 ? "Critical" : awardRate < 45 ? "Moderate" : "Monitor",
-      impact: awardRate < 25 ? "High" : awardRate < 45 ? "Medium" : "Low",
+        commercialEvidenceUnavailable
+          ? "Review"
+          : awardRate < 25
+            ? "Critical"
+            : awardRate < 45
+              ? "Moderate"
+              : "Monitor",
+      impact: commercialEvidenceUnavailable
+        ? "Unavailable"
+        : awardRate < 25
+          ? "High"
+          : awardRate < 45
+            ? "Medium"
+            : "Low",
       attention:
-        awardRate < 25 ? "Immediate" : awardRate < 45 ? "90 Days" : "Ongoing",
+        commercialEvidenceUnavailable
+          ? "After Evidence Access"
+          : awardRate < 25
+            ? "Immediate"
+            : awardRate < 45
+              ? "90 Days"
+              : "Ongoing",
       summary:
-        awardRate < 25
+        commercialEvidenceUnavailable
+          ? `${executiveEvidenceLabel}: quotation award outcomes cannot be assessed from unavailable commercial evidence.`
+          : awardRate < 25
           ? "Award execution history is not yet strong enough to support high-confidence procurement decision patterns."
           : awardRate < 45
             ? "Award conversion is developing and should be monitored as RFQ activity increases."
@@ -910,7 +1468,7 @@ remains ${ceoRiskLevel.toLowerCase()}.
     {
       slide: "02",
       title: "Board Readiness",
-      focus: `${benchmarkReadinessScore}/100`,
+      focus: formatCurrentEvidenceScore(benchmarkReadinessScore),
       narrative:
         "Board readiness reflects procurement maturity, executive confidence, supplier engagement, and benchmark strength.",
     },
@@ -926,13 +1484,17 @@ remains ${ceoRiskLevel.toLowerCase()}.
       slide: "04",
       title: "Opportunity Priorities",
       focus:
-        procurementOpportunityScore >= 80
+        procurementOpportunityScore === null
+          ? executiveEvidenceLabel
+          : procurementOpportunityScore >= 80
           ? "High Opportunity"
           : procurementOpportunityScore >= 60
             ? "Medium Opportunity"
             : "Opportunity Monitoring",
       narrative:
-        procurementOpportunityScore >= 80
+        procurementOpportunityScore === null
+          ? `Procurement opportunity scoring is ${executiveEvidenceLabel.toLowerCase()} until complete commercial evidence becomes available.`
+          : procurementOpportunityScore >= 80
           ? "Procurement opportunity is strong and should be reviewed for board-level growth planning."
           : procurementOpportunityScore >= 60
             ? "Procurement opportunity is developing and should remain under executive review."
@@ -941,7 +1503,7 @@ remains ${ceoRiskLevel.toLowerCase()}.
     {
       slide: "05",
       title: "Decision Evidence",
-      focus: `${decisionSupportReadiness.score}/100`,
+      focus: formatCurrentEvidenceScore(decisionSupportReadiness?.score ?? null),
       narrative:
         "Decision evidence reflects data quality, internal benchmark readiness, supplier participation, and procurement signal quality.",
     },
@@ -961,23 +1523,27 @@ remains ${ceoRiskLevel.toLowerCase()}.
     `${dominantScope} RFQ mix growth`,
     "Supplier network growth",
   ];
-  const executiveOpportunityRanking = [
+  const executiveOpportunityRanking = commercialEvidenceUnavailable ? [] : [
     {
       title: `${bestProcurementCategory} Expansion`,
       priority:
-        procurementOpportunityScore >= 80
+        procurementOpportunityScore === null
+          ? executiveEvidenceLabel
+          : procurementOpportunityScore >= 80
           ? "Immediate"
           : procurementOpportunityScore >= 60
             ? "90 Days"
             : "Strategic",
       impact:
-        procurementOpportunityScore >= 80
+        procurementOpportunityScore === null
+          ? "Unavailable"
+          : procurementOpportunityScore >= 80
           ? "High"
           : procurementOpportunityScore >= 60
             ? "Medium"
             : "Long-Term",
       valueLabel: "Opportunity Score",
-      value: `${procurementOpportunityScore}/100`,
+      value: formatCurrentEvidenceScore(procurementOpportunityScore),
       summary: `Expand procurement activity within ${bestProcurementCategory} to increase sourcing coverage and operational leverage.`,
     },
     {
@@ -1010,14 +1576,21 @@ remains ${ceoRiskLevel.toLowerCase()}.
     {
       title: "Supplier Network Growth",
       priority:
-        supplierEngagementScore < 60
+        supplierEngagementScore === null
+          ? executiveEvidenceLabel
+          : supplierEngagementScore < 60
           ? "Immediate"
           : supplierEngagementScore < 80
             ? "90 Days"
             : "Strategic",
-      impact: supplierEngagementScore < 60 ? "High" : "Medium",
+      impact:
+        supplierEngagementScore === null
+          ? "Unavailable"
+          : supplierEngagementScore < 60
+            ? "High"
+            : "Medium",
       valueLabel: "Supplier Engagement",
-      value: `${supplierEngagementScore}/100`,
+      value: formatCurrentEvidenceScore(supplierEngagementScore),
       summary:
         "Expand supplier participation to improve competition, quote coverage, and decision confidence.",
     },
@@ -1064,41 +1637,15 @@ remains ${ceoRiskLevel.toLowerCase()}.
   );
 
   const boardRecommendation =
-    procurementRiskIndex >= 60
-      ? "Reduce supplier dependency and review award concentration before scaling procurement volume."
-      : procurementOpportunityScore >= 80
-        ? "Prioritize high-opportunity procurement categories and expand supplier participation; validate commercial evidence before value-capture decisions."
-        : enterpriseProcurementScore >= 75
-          ? "Continue scaling competitive RFQs while maintaining supplier performance, RFQ structure, and decision evidence readiness."
-          : "Improve RFQ participation, supplier coverage, classification maturity, and procurement data quality to strengthen executive confidence.";
-
-  const procurementPerformanceIndex = Math.min(
-    100,
-    Math.round(
-      procurementMaturityScore * 0.45 +
-        executiveProcurementHealth * 0.25 +
-        boardHealthIndex * 0.2 +
-        constructionClassificationScore * 0.1,
-    ),
-  );
-
-  const supplierPerformanceIndex = Math.min(
-    100,
-    Math.round(
-      supplierReliabilityScore * 0.5 +
-        supplierEngagementScore * 0.3 +
-        competitionScore * 0.2,
-    ),
-  );
-
-  const costOpportunityIndex = Math.min(
-    100,
-    Math.round(
-      budgetUtilization * 0.3 +
-        procurementOpportunityScore * 0.4 +
-        commercialOpportunityEvidenceScore * 0.3,
-    ),
-  );
+    commercialEvidenceUnavailable || internalPerformanceIndex === null
+      ? `${executiveEvidenceLabel}: defer supplier coverage, dependency, and competition conclusions until complete commercial evidence becomes available.`
+      : procurementRiskIndex >= 60
+        ? "Reduce supplier dependency and review award concentration before scaling procurement volume."
+        : procurementOpportunityScore >= 80
+          ? "Prioritize high-opportunity procurement categories and expand supplier participation; validate commercial evidence before value-capture decisions."
+          : enterpriseProcurementScore >= 75
+            ? "Continue scaling competitive RFQs while maintaining supplier performance, RFQ structure, and decision evidence readiness."
+            : "Improve RFQ participation, supplier coverage, classification maturity, and procurement data quality to strengthen executive confidence.";
 
   const benchmarkMatrix = [
     { title: "Operating Health", score: internalPerformanceIndex },
@@ -1107,7 +1654,9 @@ remains ${ceoRiskLevel.toLowerCase()}.
     { title: "Cost Opportunity", score: costOpportunityIndex },
   ];
   const internalPerformancePosition =
-    internalPerformanceIndex >= 85
+    internalPerformanceIndex === null
+      ? executiveEvidenceLabel
+      : internalPerformanceIndex >= 85
       ? "Strong Internal Position"
       : internalPerformanceIndex >= 70
         ? "Established Internal Position"
@@ -1116,55 +1665,73 @@ remains ${ceoRiskLevel.toLowerCase()}.
           : "Early Internal Position";
 
   const internalEvidenceReadiness =
-    benchmarkReadinessScore >= 80 && dataQualityScore >= 70
+    benchmarkReadinessScore === null || dataQualityScore === null
+      ? executiveEvidenceLabel
+      : benchmarkReadinessScore >= 80 && dataQualityScore >= 70
       ? "High Evidence Readiness"
       : benchmarkReadinessScore >= 60 && dataQualityScore >= 50
         ? "Moderate Evidence Readiness"
         : "Limited Evidence Readiness";
 
   const internalPerformanceNarrative =
-    internalPerformanceIndex >= 85
-      ? "Internal procurement performance signals indicate a strong operating position across health, supplier participation, competition, and classification maturity."
-      : internalPerformanceIndex >= 70
-        ? "Internal procurement performance signals indicate an established operating position. Continued improvement should focus on supplier depth, award history, and financial validation."
-        : internalPerformanceIndex >= 55
-          ? "Internal procurement performance signals indicate a developing operating position. Stronger RFQ volume, supplier coverage, and award validation are required before broader executive reliance."
-          : "Internal procurement performance remains at an early evidence stage. Executive use should stay focused on transparent improvement until procurement activity, supplier participation, and decision history improve.";
+    commercialEvidenceUnavailable || internalPerformanceIndex === null
+      ? `Internal procurement activity is recorded. ${executiveEvidenceLabel}: supplier participation, reliability, and commercial performance conclusions are unavailable.`
+      : internalPerformanceIndex >= 85
+        ? "Internal procurement performance signals indicate a strong operating position across health, supplier participation, competition, and classification maturity."
+        : internalPerformanceIndex >= 70
+          ? "Internal procurement performance signals indicate an established operating position. Continued improvement should focus on supplier depth, award history, and financial validation."
+          : internalPerformanceIndex >= 55
+            ? "Internal procurement performance signals indicate a developing operating position. Stronger RFQ volume, supplier coverage, and award validation are required before broader executive reliance."
+            : "Internal procurement performance remains at an early evidence stage. Executive use should stay focused on transparent improvement until procurement activity, supplier participation, and decision history improve.";
 
   const internalPerformanceRecommendation =
-    internalPerformanceIndex >= 85
-      ? "Maintain governance discipline while scaling procurement intelligence across additional categories and supplier segments."
-      : internalPerformanceIndex >= 70
-        ? "Prioritize supplier network expansion, award workflow completion, and evidence validation to strengthen internal operating performance."
-        : internalPerformanceIndex >= 55
-          ? "Strengthen RFQ activity, supplier participation, and procurement data quality before positioning the platform as board-ready."
-          : "Focus on foundational procurement data capture before using internal performance output for executive decisions.";
+    commercialEvidenceUnavailable || internalPerformanceIndex === null
+      ? "Reassess supplier coverage, reliability, and commercial performance after complete evidence becomes available."
+      : internalPerformanceIndex >= 85
+        ? "Maintain governance discipline while scaling procurement intelligence across additional categories and supplier segments."
+        : internalPerformanceIndex >= 70
+          ? "Prioritize supplier network expansion, award workflow completion, and evidence validation to strengthen internal operating performance."
+          : internalPerformanceIndex >= 55
+            ? "Strengthen RFQ activity, supplier participation, and procurement data quality before positioning the platform as board-ready."
+            : "Focus on foundational procurement data capture before using internal performance output for executive decisions.";
 
   const decisionEvidenceDrivers = [
-    `Data Quality: ${dataQualityScore}/100`,
-    `Supplier Engagement: ${supplierEngagementScore}/100`,
-    `Benchmark Readiness: ${benchmarkReadinessScore}/100`,
+    `Data Quality: ${formatCurrentEvidenceScore(dataQualityScore)}`,
+    commercialEvidenceUnavailable
+      ? `Supplier Engagement: ${executiveEvidenceLabel}`
+      : `Supplier Engagement: ${formatCurrentEvidenceScore(supplierEngagementScore)}`,
+    `Benchmark Readiness: ${formatCurrentEvidenceScore(benchmarkReadinessScore)}`,
   ];
 
   const decisionEvidenceRisks = [
-    procurementRiskIndex >= 60
+    procurementRiskIndex === null
+      ? `Procurement risk evidence is ${executiveEvidenceLabel.toLowerCase()}.`
+      : procurementRiskIndex >= 60
       ? "Procurement risk exposure may limit decision readiness."
       : "Procurement risk is not currently blocking decision readiness.",
-    supplierEngagementScore < 50
-      ? "Supplier engagement remains below executive decision threshold."
-      : "Supplier engagement supports decision interpretation.",
-    dataQualityScore < 60
+    commercialEvidenceUnavailable || supplierEngagementScore === null
+      ? `Supplier engagement evidence is ${executiveEvidenceLabel.toLowerCase()}.`
+      : supplierEngagementScore < 50
+        ? "Supplier engagement remains below executive decision threshold."
+        : "Supplier engagement supports decision interpretation.",
+    dataQualityScore === null
+      ? `Data quality scoring is ${executiveEvidenceLabel.toLowerCase()}.`
+      : dataQualityScore < 60
       ? "Data quality requires improvement before stronger executive reliance."
       : "Data quality supports executive reporting readiness.",
-    benchmarkReadinessScore < 60
+    benchmarkReadinessScore === null
+      ? `Benchmark readiness is ${executiveEvidenceLabel.toLowerCase()}.`
+      : benchmarkReadinessScore < 60
       ? "Benchmark readiness is still below the board-review threshold."
       : "Internal benchmark readiness supports executive review.",
   ];
 
   const executiveDecisionQueue = [
-    procurementRiskIndex >= 50
-      ? "Review supplier concentration risk."
-      : "Maintain supplier diversification strategy.",
+    commercialEvidenceUnavailable || procurementRiskIndex === null
+      ? "Reassess supplier concentration after complete commercial evidence becomes available."
+      : procurementRiskIndex >= 50
+        ? "Review supplier concentration risk."
+        : "Maintain supplier diversification strategy.",
     hasCommercialOpportunity &&
     observedCommercialOpportunity > 10000
       ? `Validate $${observedCommercialOpportunity.toLocaleString()} in observed within-RFQ quotation opportunity.`
@@ -1172,9 +1739,11 @@ remains ${ceoRiskLevel.toLowerCase()}.
     constructionClassificationScore < 60
       ? "Improve construction RFQ classification maturity."
       : "Maintain RFQ classification discipline.",
-    awardRate < 25
-      ? "Improve quotation decision follow-through and award execution."
-      : "Maintain quotation award follow-through.",
+    commercialEvidenceUnavailable
+      ? "Reassess quotation award follow-through after complete commercial evidence becomes available."
+      : awardRate < 25
+        ? "Improve quotation decision follow-through and award execution."
+        : "Maintain quotation award follow-through.",
   ];
   const ceoActionCenter = [
     {
@@ -1204,14 +1773,18 @@ remains ${ceoRiskLevel.toLowerCase()}.
   ];
 
   const ceoOperatingStatus =
-    enterpriseProcurementScore >= 80 && executiveReadinessScore >= 80
+    enterpriseProcurementScore === null || executiveReadinessScore === null
+      ? executiveEvidenceLabel
+      : enterpriseProcurementScore >= 80 && executiveReadinessScore >= 80
       ? "Executive Growth Mode"
       : enterpriseProcurementScore >= 65
         ? "Operational Scaling Mode"
         : "Capability Development Mode";
 
   const ceoDecisionPosture =
-    decisionSupportReadiness.status === "board-ready"
+    decisionSupportReadiness === null
+      ? executiveEvidenceLabel
+      : decisionSupportReadiness.status === "board-ready"
       ? "Proceed"
       : decisionSupportReadiness.status === "management-ready"
         ? "Proceed With Review"
@@ -1236,58 +1809,57 @@ remains ${ceoRiskLevel.toLowerCase()}.
     },
     {
       title: "Decision Support Readiness",
-      value: decisionSupportReadiness.label,
+      value: decisionSupportReadiness?.label ?? executiveEvidenceLabel,
       status: executiveBenchmarkStatus,
     },
   ];
 
   const commandCenterStatus =
-    enterpriseProcurementScore >= 80 &&
-    decisionSupportReadiness.status === "board-ready"
+    enterpriseProcurementScore === null || decisionSupportReadiness === null
+      ? executiveEvidenceLabel
+      : enterpriseProcurementScore >= 80 &&
+          decisionSupportReadiness.status === "board-ready"
       ? "Command Ready"
       : enterpriseProcurementScore >= 65
         ? "Operational Command"
         : "Developing Command";
 
-  const portfolioHealthIndex = Math.min(
-    100,
-    Math.round(
-      supplierReliabilityScore * 0.4 +
-        supplierDiversificationScore * 0.3 +
-        supplierEngagementScore * 0.3,
-    ),
-  );
-
   const portfolioStatus =
-    portfolioHealthIndex >= 85
-      ? "Excellent"
-      : portfolioHealthIndex >= 70
-        ? "Healthy"
-        : portfolioHealthIndex >= 55
-          ? "Moderate"
-          : "Needs Attention";
+    commercialEvidenceUnavailable || portfolioHealthIndex === null
+      ? executiveEvidenceLabel
+      : portfolioHealthIndex >= 85
+        ? "Excellent"
+        : portfolioHealthIndex >= 70
+          ? "Healthy"
+          : portfolioHealthIndex >= 55
+            ? "Moderate"
+            : "Needs Attention";
 
   const portfolioRecommendations: string[] = [];
 
-  if (suppliersWithLimitedQuoteHistory > 0) {
+  if (commercialEvidenceUnavailable) {
+    portfolioRecommendations.push(
+      "Reassess supplier portfolio coverage after sealed commercial evidence becomes available.",
+    );
+  } else if (suppliersWithLimitedQuoteHistory > 0) {
     portfolioRecommendations.push(
       "Increase supplier history depth for suppliers with limited quotation participation.",
     );
   }
 
-  if (supplierDiversificationScore < 60) {
+  if (!commercialEvidenceUnavailable && supplierDiversificationScore < 60) {
     portfolioRecommendations.push(
       "Expand supplier participation to improve supply-base coverage.",
     );
   }
 
-  if (suppliersWithAwardHistory < 3) {
+  if (!commercialEvidenceUnavailable && suppliersWithAwardHistory < 3) {
     portfolioRecommendations.push(
       "Gather more award history across the active supplier set.",
     );
   }
 
-  if (vendorConcentrationRisk >= 70) {
+  if (!commercialEvidenceUnavailable && vendorConcentrationRisk >= 70) {
     portfolioRecommendations.push(
       "Reduce supplier concentration in awarded revenue.",
     );
@@ -1299,8 +1871,13 @@ remains ${ceoRiskLevel.toLowerCase()}.
     );
   }
 
-  const topRisk =
-    riskComplianceEvidence.indicators[0] ?? riskComplianceEvidence.narrative;
+  const topRisk = buildDecisionStreamRiskMessage({
+    evidenceState: supplierCommercialEvidenceState,
+    totalSubmissions: safeSubmissionParticipation.totalSubmissions,
+    fallbackMessage:
+      governedRiskComplianceEvidence.indicators[0] ??
+      governedRiskComplianceEvidence.narrative,
+  });
 
   const topOpportunity =
     commercialInsights.state === "available"
@@ -1310,16 +1887,20 @@ remains ${ceoRiskLevel.toLowerCase()}.
       : commercialInsights.limitation;
 
   const ceoPriority =
-    procurementOpportunityScore >= 70
+    procurementOpportunityScore === null
+      ? `Procurement opportunity scoring is ${executiveEvidenceLabel.toLowerCase()}.`
+      : procurementOpportunityScore >= 70
       ? "Scale supplier network, category expansion, and RFQ intelligence maturity."
       : "Improve procurement growth initiatives.";
 
   const cfoPriority = commercialOpportunityAction;
 
   const procurementPriority =
-    avgQuotesPerRfq < 2
-      ? "Increase RFQ competition and supplier engagement."
-      : "Maintain healthy procurement competition levels.";
+    commercialEvidenceUnavailable
+      ? `Supplier competition evidence is ${executiveEvidenceLabel.toLowerCase()}.`
+      : avgQuotesPerRfq < 2
+        ? "Increase RFQ competition and supplier engagement."
+        : "Maintain healthy procurement competition levels.";
   const dailyExecutiveBriefing = [
     { title: "CEO", message: ceoPriority },
     { title: "CFO", message: cfoPriority },
@@ -1331,23 +1912,26 @@ remains ${ceoRiskLevel.toLowerCase()}.
   const activityChartData = [
     { name: "RFQs", value: totalRfqs },
     { name: "Active", value: activeRfqs },
-    { name: "Quotes", value: supplierQuotes },
-    { name: "Awards", value: awardedContracts },
+    ...(supplierCommercialEvidenceState === "available"
+      ? [
+          { name: "Quotes", value: supplierQuotes },
+          { name: "Awards", value: awardedContracts },
+        ]
+      : []),
   ];
 
-  const valueChartData = [
-    { name: "Volume", value: procurementVolume },
-    { name: "Awarded", value: awardedVolume },
-    { name: "Avg Quote", value: averageQuote },
-    ...(commercialInsights.state === "available"
+  const valueChartData =
+    supplierCommercialEvidenceState === "available"
       ? [
+          { name: "Volume", value: procurementVolume },
+          { name: "Awarded", value: awardedVolume },
+          { name: "Avg Quote", value: averageQuote },
           {
             name: "Observed Opportunity",
             value: observedCommercialOpportunity,
           },
         ]
-      : []),
-  ];
+      : [];
 
   const rfqMixChartData = [
     { name: "Material", value: materialRfqs },
@@ -1374,12 +1958,15 @@ remains ${ceoRiskLevel.toLowerCase()}.
     historicalPatterns.supplierParticipation.summary;
   const riskCaseScenario = historicalPatterns.submittedQuoteValue.summary;
 
-  const forecastConfidenceLevel = decisionSupportReadiness.label;
+  const forecastConfidenceLevel =
+    decisionSupportReadiness?.label ?? executiveEvidenceLabel;
   const executiveScenarioStatus = historicalPatterns.statusLabel;
   const boardForecastBriefing = historicalPatterns.narrative;
 
   const boardForecastPriority =
-    procurementRiskIndex >= 60
+    procurementRiskIndex === null || procurementOpportunityScore === null
+      ? executiveEvidenceLabel
+      : procurementRiskIndex >= 60
       ? "Risk Stabilization"
       : procurementOpportunityScore >= 80
         ? "Opportunity Review"
@@ -1408,7 +1995,9 @@ remains ${ceoRiskLevel.toLowerCase()}.
   ];
 
   const exportReadinessStatus =
-    benchmarkReadinessScore >= 80 && executiveReadinessScore >= 80
+    benchmarkReadinessScore === null || executiveReadinessScore === null
+      ? executiveEvidenceLabel
+      : benchmarkReadinessScore >= 80 && executiveReadinessScore >= 80
       ? "Export Ready"
       : "Review Required";
 
@@ -1423,7 +2012,9 @@ remains ${ceoRiskLevel.toLowerCase()}.
       : "Pending executive validation";
 
   const boardDistributionStatus =
-    benchmarkReadinessScore >= 80 && executiveReadinessScore >= 80
+    benchmarkReadinessScore === null || executiveReadinessScore === null
+      ? executiveEvidenceLabel
+      : benchmarkReadinessScore >= 80 && executiveReadinessScore >= 80
       ? "Distribution Ready"
       : "Distribution Hold";
 
@@ -1458,11 +2049,21 @@ remains ${ceoRiskLevel.toLowerCase()}.
     },
     {
       stage: "Executive Validation",
-      status: executiveReadinessScore >= 80 ? "Complete" : "In Progress",
+      status:
+        executiveReadinessScore === null
+          ? executiveEvidenceLabel
+          : executiveReadinessScore >= 80
+            ? "Complete"
+            : "In Progress",
     },
     {
       stage: "Board Preparation",
-      status: benchmarkReadinessScore >= 80 ? "Ready" : "Pending",
+      status:
+        benchmarkReadinessScore === null
+          ? executiveEvidenceLabel
+          : benchmarkReadinessScore >= 80
+            ? "Ready"
+            : "Pending",
     },
     {
       stage: "Board Distribution",
@@ -1481,11 +2082,21 @@ remains ${ceoRiskLevel.toLowerCase()}.
     },
     {
       channel: "Executive Committee",
-      status: executiveReadinessScore >= 80 ? "Ready" : "Pending",
+      status:
+        executiveReadinessScore === null
+          ? executiveEvidenceLabel
+          : executiveReadinessScore >= 80
+            ? "Ready"
+            : "Pending",
     },
     {
       channel: "Audit Committee",
-      status: procurementRiskIndex <= 50 ? "Ready" : "Review Required",
+      status:
+        procurementRiskIndex === null
+          ? executiveEvidenceLabel
+          : procurementRiskIndex <= 50
+            ? "Ready"
+            : "Review Required",
     },
   ];
 
@@ -1497,11 +2108,21 @@ remains ${ceoRiskLevel.toLowerCase()}.
   const boardApprovalStages = [
     {
       stage: "Executive Review",
-      status: executiveReadinessScore >= 80 ? "Approved" : "Pending",
+      status:
+        executiveReadinessScore === null
+          ? executiveEvidenceLabel
+          : executiveReadinessScore >= 80
+            ? "Approved"
+            : "Pending",
     },
     {
       stage: "Risk Validation",
-      status: procurementRiskIndex <= 50 ? "Approved" : "Review Required",
+      status:
+        procurementRiskIndex === null
+          ? executiveEvidenceLabel
+          : procurementRiskIndex <= 50
+            ? "Approved"
+            : "Review Required",
     },
     {
       stage: "Board Package Approval",
@@ -1525,32 +2146,43 @@ remains ${ceoRiskLevel.toLowerCase()}.
       : "Awaiting Approval";
 
   const topQuarterRisks = [
-    procurementRiskIndex >= 50 ? "Supplier dependency" : "Low risk exposure",
-    supplierParticipationCount <= 3
-      ? "Limited supplier competition"
-      : "Healthy supplier participation",
+    commercialEvidenceUnavailable || procurementRiskIndex === null
+      ? `Supplier dependency evidence ${executiveEvidenceLabel.toLowerCase()}`
+      : procurementRiskIndex >= 50
+        ? "Supplier dependency"
+        : "Low risk exposure",
+    commercialEvidenceUnavailable
+      ? `Supplier competition evidence ${executiveEvidenceLabel.toLowerCase()}`
+      : supplierParticipationCount <= 3
+        ? "Limited supplier competition"
+        : "Healthy supplier participation",
     constructionClassificationScore < 60
       ? "Low RFQ classification maturity"
       : "Structured RFQ intelligence active",
   ];
 
-  const executiveBrief = buildExecutiveBrief({
-    opportunity: {
-      topCategory,
-      potentialSavings: observedCommercialOpportunity,
-      avgQuotesPerRfq,
-      supplierCount: supplierParticipationCount,
-      commercialEvidenceState: commercialInsights.state,
-    },
-    executiveRecommendation: executiveCommandRecommendation,
-    decisionSupportReadinessScore: decisionSupportReadiness.score,
-    topRisk,
-    procurementRiskIndex,
-    supplierCount: supplierParticipationCount,
-    avgQuotesPerRfq,
-    classificationScore: constructionClassificationScore,
-  });
-  const executiveNarrative = buildExecutiveNarrative(executiveBrief);
+  const executiveBrief =
+    decisionSupportReadiness !== null && procurementRiskIndex !== null
+      ? buildExecutiveBrief({
+          opportunity: {
+            topCategory,
+            potentialSavings: observedCommercialOpportunity,
+            avgQuotesPerRfq,
+            supplierCount: supplierParticipationCount,
+            commercialEvidenceState: commercialInsights.state,
+          },
+          executiveRecommendation: executiveCommandRecommendation,
+          decisionSupportReadinessScore: decisionSupportReadiness.score,
+          topRisk,
+          procurementRiskIndex,
+          supplierCount: supplierParticipationCount,
+          avgQuotesPerRfq,
+          classificationScore: constructionClassificationScore,
+        })
+      : null;
+  const executiveNarrative = executiveBrief
+    ? buildExecutiveNarrative(executiveBrief)
+    : null;
 
   return (
     <main className="analytics-report-root min-h-screen bg-transparent px-4 py-5 text-white sm:px-6 lg:px-8 lg:py-6">
@@ -1565,7 +2197,10 @@ remains ${ceoRiskLevel.toLowerCase()}.
           generatedAt={reportGeneratedAt}
         />
 
-        <ExecutiveSummary
+        {enterpriseProcurementScore !== null &&
+        procurementRiskIndex !== null &&
+        decisionSupportReadiness !== null ? (
+          <ExecutiveSummary
           companyName={reportCompanyName}
           generatedAt={reportGeneratedAt}
           procurementHealth={enterpriseProcurementScore}
@@ -1590,27 +2225,47 @@ remains ${ceoRiskLevel.toLowerCase()}.
             boardForecastPriority,
           ]}
           recommendation={internalPerformanceRecommendation}
-        />
+          />
+        ) : (
+          <section className="rounded-3xl border border-amber-300/20 bg-amber-400/[0.04] p-6 text-white">
+            <p className="np-type-eyebrow text-amber-300!">Executive Summary</p>
+            <h2 className="np-type-h2 mt-3">{executiveEvidenceLabel}</h2>
+            <p className="np-type-body mt-3">
+              Executive scoring is unavailable under the current supplier and
+              commercial evidence controls.
+            </p>
+          </section>
+        )}
 
         <BoardExecutiveReport
           companyName={reportCompanyName}
           generatedAt={reportGeneratedAt}
-          decisionStatement={`${executiveNarrative.headline} ${executiveNarrative.summary}`}
+          decisionStatement={
+            executiveNarrative
+              ? `${executiveNarrative.headline} ${executiveNarrative.summary}`
+              : `${executiveEvidenceLabel}: executive scoring is unavailable under the current supplier and commercial evidence controls.`
+          }
           recommendation={internalPerformanceRecommendation}
           boardPriority={boardForecastPriority}
           enterpriseScore={enterpriseProcurementScore}
           boardReadiness={boardReadinessScore}
-          decisionReadiness={decisionSupportReadiness.score}
+          decisionReadiness={decisionSupportReadiness?.score ?? null}
           riskIndex={procurementRiskIndex}
-          riskComplianceEvidence={riskComplianceEvidence}
+          riskComplianceEvidence={governedRiskComplianceEvidence}
           opportunityValue={commercialOpportunityDisplay}
-          procurementVolume={`$${procurementVolume.toLocaleString()}`}
-          awardedVolume={`$${awardedVolume.toLocaleString()}`}
+          procurementVolume={procurementVolumeDisplay}
+          awardedVolume={
+            unavailableCommercialEvidenceLabel ??
+            `$${awardedVolume.toLocaleString()}`
+          }
           awardRate={`${awardRate}%`}
           supplierCount={supplierParticipationCount}
           supplierEngagement={supplierEngagementScore}
           supplierDiversification={supplierDiversificationScore}
           portfolioHealth={portfolioHealthIndex}
+          supplierCommercialEvidenceState={
+            supplierCommercialEvidenceState
+          }
           forecastConfidence={forecastConfidenceLevel}
           forecastNarrative={boardForecastBriefing}
           benchmarkPosition={internalPerformancePosition}
@@ -1712,13 +2367,13 @@ remains ${ceoRiskLevel.toLowerCase()}.
 
                 <div className="grid grid-cols-2 overflow-hidden rounded-2xl border border-white/10 bg-black/10 sm:grid-cols-4">
                   {[
-                    ["Enterprise", `${enterpriseProcurementScore}/100`],
+                    ["Enterprise", formatCurrentEvidenceScore(enterpriseProcurementScore)],
                     [
                       "Decision readiness",
-                      `${decisionSupportReadiness.score}/100`,
+                      formatCurrentEvidenceScore(decisionSupportReadiness?.score ?? null),
                     ],
-                    ["Risk exposure", `${procurementRiskIndex}/100`],
-                    ["Board readiness", `${boardReadinessScore}/100`],
+                    ["Risk exposure", formatCurrentEvidenceScore(procurementRiskIndex)],
+                    ["Board readiness", formatCurrentEvidenceScore(boardReadinessScore)],
                   ].map(([label, value], index) => (
                     <div
                       key={label}
@@ -1770,15 +2425,26 @@ remains ${ceoRiskLevel.toLowerCase()}.
             aria-hidden="true"
             className="pointer-events-none absolute left-1/2 top-0 h-3 w-px -translate-x-1/2 bg-gradient-to-b from-[#C8A646]/35 to-transparent"
           />
-          <BoardroomSnapshot
-            executiveBrief={executiveBrief}
-            quotedPortfolioValue={procurementVolume}
-            commercialOpportunityValue={commercialOpportunityDisplay}
-            commercialOpportunityContext={commercialInsights.limitation}
-            enterpriseProcurementScore={enterpriseProcurementScore}
-            constructionClassificationScore={constructionClassificationScore}
-            executiveNarrative={executiveNarrative}
-          />
+          {executiveBrief && executiveNarrative && enterpriseProcurementScore !== null ? (
+            <BoardroomSnapshot
+              executiveBrief={executiveBrief}
+              quotedPortfolioValue={procurementVolume}
+              commercialOpportunityValue={commercialOpportunityDisplay}
+              commercialOpportunityContext={commercialInsights.limitation}
+              enterpriseProcurementScore={enterpriseProcurementScore}
+              constructionClassificationScore={constructionClassificationScore}
+              executiveNarrative={executiveNarrative}
+            />
+          ) : (
+            <div className="rounded-3xl border border-amber-300/15 bg-amber-400/[0.04] p-6 text-white">
+              <p className="np-type-eyebrow text-amber-300!">Executive Overview</p>
+              <h2 className="np-type-h2 mt-3">{executiveEvidenceLabel}</h2>
+              <p className="np-type-body mt-3">
+                Composite executive intelligence is withheld while supplier
+                and commercial evidence is unavailable.
+              </p>
+            </div>
+          )}
         </section>
         <ReportSectionDivider
           number={2}
@@ -1986,18 +2652,23 @@ remains ${ceoRiskLevel.toLowerCase()}.
           dailyExecutiveBriefing={dailyExecutiveBriefing}
           decisionSupportReadiness={decisionSupportReadiness}
           supplierReliabilityScore={supplierReliabilityScore}
+          supplierCommercialEvidenceState={
+            supplierCommercialEvidenceState
+          }
         />
 
         <section className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <MetricCard
             title="Health Score"
-            value={`${procurementHealthScore}/100`}
+            value={formatCurrentEvidenceScore(procurementHealthScore)}
           />
           <MetricCard title="Procurement Health" value={procurementHealth} />
           <MetricCard title="Competition Index" value={competitionIndex} />
           <MetricCard
             title="Avg Quotes / RFQ"
-            value={avgQuotesPerRfq.toString()}
+            value={
+              unavailableCommercialEvidenceLabel ?? avgQuotesPerRfq.toString()
+            }
           />
         </section>
         <section className="mt-6 rounded-3xl border border-white/10 bg-[#061426]/82 p-5 text-white sm:p-6 lg:p-7">
@@ -2017,15 +2688,15 @@ remains ${ceoRiskLevel.toLowerCase()}.
           <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             <MetricCard
               title="Readiness Score"
-              value={`${decisionSupportReadiness.score}/100`}
+              value={formatCurrentEvidenceScore(decisionSupportReadiness?.score ?? null)}
             />
             <MetricCard
               title="Readiness Level"
-              value={decisionSupportReadiness.label}
+              value={decisionSupportReadiness?.label ?? executiveEvidenceLabel}
             />
             <MetricCard
               title="Decision Evidence"
-              value={`${decisionSupportReadiness.score}/100`}
+              value={formatCurrentEvidenceScore(decisionSupportReadiness?.score ?? null)}
             />
             <MetricCard
               title="Evidence Readiness"
@@ -2059,11 +2730,12 @@ remains ${ceoRiskLevel.toLowerCase()}.
               </p>
 
               <h3 className="np-type-h3 mt-4">
-                {decisionSupportReadiness.label}
+                {decisionSupportReadiness?.label ?? executiveEvidenceLabel}
               </h3>
 
               <p className="np-type-body mt-4">
-                {decisionSupportReadiness.guidance}
+                {decisionSupportReadiness?.guidance ??
+                  "Executive guidance is unavailable until sealed supplier and commercial evidence becomes available."}
               </p>
             </div>
           </div>
@@ -2090,6 +2762,7 @@ remains ${ceoRiskLevel.toLowerCase()}.
           <ExecutiveOpportunityRanking
             opportunities={executiveOpportunityRanking}
             intelligence={executiveOpportunityIntelligence}
+            commercialEvidenceState={supplierCommercialEvidenceState}
           />
         </div>
 
@@ -2100,6 +2773,7 @@ remains ${ceoRiskLevel.toLowerCase()}.
             executiveBenchmarkStatus={executiveBenchmarkStatus}
             executiveCommandRecommendation={executiveCommandRecommendation}
             ceoActionCenter={ceoActionCenter}
+            commercialEvidenceState={supplierCommercialEvidenceState}
           />
         </div>
 
@@ -2144,6 +2818,9 @@ remains ${ceoRiskLevel.toLowerCase()}.
             benchmarkNarrative={internalPerformanceNarrative}
             benchmarkBoardRecommendation={internalPerformanceRecommendation}
             supplierReliabilityScore={supplierReliabilityScore}
+            supplierCommercialEvidenceState={
+              supplierCommercialEvidenceState
+            }
           />
         </section>
         <section className="mt-8 rounded-3xl border border-white/10 bg-slate-950 p-5 text-white shadow-executive sm:p-7 lg:p-8">
@@ -2197,7 +2874,8 @@ remains ${ceoRiskLevel.toLowerCase()}.
         />
 
         <section id="board-intelligence" className="scroll-mt-6">
-          <BoardDashboard
+          {boardReadinessScore !== null ? (
+            <BoardDashboard
             boardReadinessScore={boardReadinessScore}
             governanceReadiness={governanceReadiness}
             financialVisibility={financialVisibility}
@@ -2216,7 +2894,17 @@ remains ${ceoRiskLevel.toLowerCase()}.
             boardDistributionReadiness={boardDistributionReadiness}
             boardApprovalStages={boardApprovalStages}
             boardApprovalStatus={boardApprovalStatus}
-          />
+            />
+          ) : (
+            <div className="rounded-3xl border border-amber-300/15 bg-amber-400/[0.04] p-6 text-white">
+              <p className="np-type-eyebrow text-amber-300!">Board Intelligence</p>
+              <h2 className="np-type-h2 mt-3">{executiveEvidenceLabel}</h2>
+              <p className="np-type-body mt-3">
+                Board readiness scoring is withheld while required supplier
+                and commercial evidence is unavailable.
+              </p>
+            </div>
+          )}
         </section>
 
         <section className="mt-8 rounded-3xl border border-white/10 bg-[#061426]/88 p-5 text-white shadow-executive sm:p-7 lg:p-8">
@@ -2243,15 +2931,15 @@ remains ${ceoRiskLevel.toLowerCase()}.
               <div className="mt-4 space-y-3">
                 <SignalRow
                   label="Supplier Activity"
-                  value={`${supplierActivityScore}/100`}
+                  value={formatCurrentEvidenceScore(supplierActivityScore)}
                 />
                 <SignalRow
                   label="Competition"
-                  value={`${competitionScore}/100`}
+                  value={formatCurrentEvidenceScore(competitionScore)}
                 />
                 <SignalRow
                   label="Quotation Award Signal"
-                  value={`${awardScore}/100`}
+                  value={formatCurrentEvidenceScore(awardScore)}
                 />
                 <SignalRow
                   label="RFQ Maturity"
@@ -2267,28 +2955,41 @@ remains ${ceoRiskLevel.toLowerCase()}.
           <MetricCard title="Active RFQs" value={activeRfqs.toString()} />
           <MetricCard
             title="Awarded Contracts"
-            value={awardedContracts.toString()}
+            value={
+              unavailableCommercialEvidenceLabel ?? awardedContracts.toString()
+            }
           />
           <MetricCard
             title="Supplier Quotes"
-            value={supplierQuotes.toString()}
+            value={
+              unavailableCommercialEvidenceLabel ?? supplierQuotes.toString()
+            }
           />
         </section>
 
         <section className="mt-6 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
           <MetricCard
             title="Procurement Volume"
-            value={`$${procurementVolume.toLocaleString()}`}
+            value={procurementVolumeDisplay}
           />
           <MetricCard
             title="Awarded Volume"
-            value={`$${awardedVolume.toLocaleString()}`}
+            value={
+              unavailableCommercialEvidenceLabel ??
+              `$${awardedVolume.toLocaleString()}`
+            }
           />
           <MetricCard
             title="Average Quote"
-            value={`$${averageQuote.toLocaleString()}`}
+            value={
+              unavailableCommercialEvidenceLabel ??
+              `$${averageQuote.toLocaleString()}`
+            }
           />
-          <MetricCard title="Award Rate" value={`${awardRate}%`} />
+          <MetricCard
+            title="Award Rate"
+            value={unavailableCommercialEvidenceLabel ?? `${awardRate}%`}
+          />
         </section>
 
         <ReportSectionDivider
@@ -2315,6 +3016,9 @@ remains ${ceoRiskLevel.toLowerCase()}.
             sourcingMethodLabels={SOURCING_METHOD_LABELS}
             contractFrameworkLabels={CONTRACT_FRAMEWORK_LABELS}
             categoryIntelligence={categoryIntelligence}
+            supplierCommercialEvidenceState={
+              supplierCommercialEvidenceState
+            }
             portfolioHealthIndex={portfolioHealthIndex}
             suppliersWithAwardHistory={suppliersWithAwardHistory}
             suppliersWithMultipleAwards={suppliersWithMultipleAwards}
@@ -2325,7 +3029,7 @@ remains ${ceoRiskLevel.toLowerCase()}.
             supplierParticipationCount={supplierParticipationCount}
             awardHistoryCoverage={awardHistoryCoverage}
             commercialInsights={commercialInsights}
-            procurementInsights={procurementInsights}
+            procurementInsights={governedProcurementInsights}
             portfolioStatus={portfolioStatus}
             portfolioRecommendations={portfolioRecommendations}
           />
@@ -2354,7 +3058,7 @@ remains ${ceoRiskLevel.toLowerCase()}.
           <div className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-5">
             <MetricCard
               title="Internal Benchmark Readiness"
-              value={`${benchmarkReadinessScore}/100`}
+              value={formatCurrentEvidenceScore(benchmarkReadinessScore)}
             />
             <MetricCard
               title="Readiness Status"
@@ -2538,6 +3242,7 @@ remains ${ceoRiskLevel.toLowerCase()}.
         <section id="risk-intelligence" className="scroll-mt-6">
           <ExecutiveRiskIntelligence
             supplierRanking={supplierRanking}
+            supplierCommercialEvidenceState={supplierCommercialEvidenceState}
           />
         </section>
 
@@ -2557,11 +3262,11 @@ remains ${ceoRiskLevel.toLowerCase()}.
           <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
             <DarkMetric
               title="Board Health"
-              value={`${boardHealthIndex}/100`}
+              value={formatCurrentEvidenceScore(boardHealthIndex)}
             />
             <DarkMetric
               title="Benchmark"
-              value={`${benchmarkReadinessScore}/100`}
+              value={formatCurrentEvidenceScore(benchmarkReadinessScore)}
             />
             <DarkMetric title="Enterprise" value={enterpriseCommandStatus} />
             <DarkMetric title="Risk" value={riskCommandStatus} />
@@ -2579,43 +3284,65 @@ remains ${ceoRiskLevel.toLowerCase()}.
           </div>
         </section>
 
-        <ProcurementCopilotIntelligence
-          executiveBrief={executiveBrief}
-          executiveNarrative={executiveNarrative}
-        />
+        {executiveBrief && executiveNarrative ? (
+          <ProcurementCopilotIntelligence
+            executiveBrief={executiveBrief}
+            executiveNarrative={executiveNarrative}
+          />
+        ) : null}
 
         <section id="board-reporting" className="scroll-mt-6">
-          <BoardReportGenerator
-            procurementRiskIndex={procurementRiskIndex}
-            procurementMaturityScore={procurementMaturityScore}
-            decisionSupportReadinessScore={decisionSupportReadiness.score}
-            dataQualityScore={dataQualityScore}
+          {executiveScoreEvidence.state === "available" ? (
+            <BoardReportGenerator
+            procurementRiskIndex={executiveScoreEvidence.procurementRiskIndex}
+            procurementMaturityScore={executiveScoreEvidence.procurementMaturityScore}
+            decisionSupportReadinessScore={executiveScoreEvidence.decisionSupportReadiness.score}
+            dataQualityScore={executiveScoreEvidence.dataQualityScore}
             supplierDependencyRisk={supplierDependencyRisk}
             concentrationLevel={concentrationLevel}
-            benchmarkReadinessScore={benchmarkReadinessScore}
-            boardHealthIndex={boardHealthIndex}
-            enterpriseProcurementScore={enterpriseProcurementScore}
-            executiveReadinessScore={executiveReadinessScore}
-            procurementEfficiencyScore={procurementEfficiencyScore}
-            supplierEngagementScore={supplierEngagementScore}
-            digitalMaturityScore={digitalMaturityScore}
-          />
+            benchmarkReadinessScore={executiveScoreEvidence.benchmarkReadinessScore}
+            boardHealthIndex={executiveScoreEvidence.boardHealthIndex}
+            enterpriseProcurementScore={executiveScoreEvidence.enterpriseProcurementScore}
+            executiveReadinessScore={executiveScoreEvidence.executiveReadinessScore}
+            procurementEfficiencyScore={executiveScoreEvidence.procurementEfficiencyScore}
+            supplierEngagementScore={executiveScoreEvidence.supplierEngagementScore}
+            supplierCommercialEvidenceState={
+              supplierCommercialEvidenceState
+            }
+            digitalMaturityScore={executiveScoreEvidence.digitalMaturityScore}
+            />
+          ) : (
+            <LockedExecutiveOutput
+              title="Board Reporting"
+              evidenceState={executiveScoreEvidence.state}
+            />
+          )}
         </section>
         <section id="board-narrative" className="scroll-mt-6">
-          <BoardNarrativeGenerator
+          {executiveScoreEvidence.state === "available" ? (
+            <BoardNarrativeGenerator
             executiveBenchmarkStatus={executiveBenchmarkStatus}
-            executiveStatus={executiveStatus}
-            boardHealthIndex={boardHealthIndex}
-            enterpriseProcurementScore={enterpriseProcurementScore}
-            executiveReadinessScore={executiveReadinessScore}
-            procurementRiskIndex={procurementRiskIndex}
-            supplierEngagementScore={supplierEngagementScore}
-            benchmarkReadinessScore={benchmarkReadinessScore}
+            executiveStatus={executiveScoreEvidence.executiveStatus}
+            boardHealthIndex={executiveScoreEvidence.boardHealthIndex}
+            enterpriseProcurementScore={executiveScoreEvidence.enterpriseProcurementScore}
+            executiveReadinessScore={executiveScoreEvidence.executiveReadinessScore}
+            procurementRiskIndex={executiveScoreEvidence.procurementRiskIndex}
+            supplierEngagementScore={executiveScoreEvidence.supplierEngagementScore}
+            supplierCommercialEvidenceState={
+              supplierCommercialEvidenceState
+            }
+            benchmarkReadinessScore={executiveScoreEvidence.benchmarkReadinessScore}
             boardRecommendation={boardRecommendation}
-            procurementMaturityScore={procurementMaturityScore}
-            decisionSupportReadinessScore={decisionSupportReadiness.score}
-            decisionSupportReadinessLabel={decisionSupportReadiness.label}
-          />
+            procurementMaturityScore={executiveScoreEvidence.procurementMaturityScore}
+            decisionSupportReadinessScore={executiveScoreEvidence.decisionSupportReadiness.score}
+            decisionSupportReadinessLabel={executiveScoreEvidence.decisionSupportReadiness.label}
+            />
+          ) : (
+            <LockedExecutiveOutput
+              title="Board Narrative"
+              evidenceState={executiveScoreEvidence.state}
+            />
+          )}
         </section>
 
         </div>
@@ -2638,6 +3365,27 @@ function SignalRow({ label, value }: { label: string; value: string }) {
       <p className="np-type-meta min-w-0">{label}</p>
       <p className="np-type-kpi shrink-0 text-sm tabular-nums">
         {value}
+      </p>
+    </div>
+  );
+}
+
+function LockedExecutiveOutput({
+  title,
+  evidenceState,
+}: {
+  title: string;
+  evidenceState: Exclude<CommercialEvidenceState, "available">;
+}) {
+  const evidenceLabel = getCommercialEvidenceLabel(evidenceState);
+
+  return (
+    <div className="mt-8 rounded-3xl border border-amber-300/15 bg-amber-400/[0.04] p-6 text-white">
+      <p className="np-type-eyebrow text-amber-300!">{title}</p>
+      <h2 className="np-type-h2 mt-3">{evidenceLabel}</h2>
+      <p className="np-type-body mt-3">
+        This output is unavailable under the current supplier and commercial
+        evidence controls. No incomplete numeric score is reported.
       </p>
     </div>
   );

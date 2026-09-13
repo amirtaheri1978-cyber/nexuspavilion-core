@@ -1,19 +1,54 @@
 import fs from "node:fs";
 import path from "node:path";
 
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
+import CategoryIntelligence from "@/components/analytics/procurement/category-intelligence";
+import { ProcurementInsightMetrics } from "@/components/analytics/procurement/procurement-insight-metrics";
+import { CEOActionCenter } from "@/components/analytics/ceo-action-center";
+import { ProcurementCommandCenter } from "@/components/analytics/procurement-command-center";
+import { SupplierPortfolioIntelligence } from "@/components/analytics/supplier-portfolio-intelligence";
+import { ExecutiveOpportunityRanking } from "@/components/executive/executive-opportunity-ranking";
+import ExecutiveRiskIntelligence from "@/components/executive-risk-intelligence";
+import BoardReportGenerator from "@/components/board-report-generator";
+import BoardNarrativeGenerator from "@/components/ai-board-narrative-generator";
+import { BoardExecutiveReport } from "@/components/report-engine/BoardExecutiveReport";
+import { IntelligenceDashboard } from "@/components/analytics/sections/intelligence-dashboard";
 import { buildAnalyticsRfqSourceHref } from "@/lib/analytics/procurement-utils";
 import { buildDecisionSupportReadiness } from "@/lib/analytics/executive/decision-support-readiness";
 import { buildRiskComplianceEvidence } from "@/lib/analytics/executive/risk-intelligence";
 import { calculateExecutiveReadiness } from "@/lib/executive/executive-readiness-score";
 import { calculateExecutiveScore } from "@/lib/executive/executive-score";
+import {
+  buildAnalyticsExecutiveScoreEvidence,
+  buildDecisionStreamRiskMessage,
+  buildGovernedRiskComplianceEvidence,
+  buildGovernedAnalyticsNarrative,
+  buildRfqDecisionReadiness,
+  buildSafeSubmissionParticipation,
+  formatCommercialCurrencyEvidence,
+  resolveCommercialEvidenceStateForSealedParticipation,
+} from "@/app/analytics/page";
+import { buildPortfolioIntelligence } from "@/lib/analytics/portfolio/portfolio-intelligence";
 
 function readSource(relativePath: string) {
   return fs.readFileSync(path.join(process.cwd(), relativePath), "utf8");
 }
 
+function renderedText(markup: string) {
+  return markup.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+}
+
 const analyticsPage = readSource("src/app/analytics/page.tsx");
+const dashboardPage = readSource("src/app/dashboard/page.tsx");
+const analyticsVendors = readSource("src/app/analytics/vendors/page.tsx");
+const publicCompanyPage = readSource("src/app/company/[slug]/page.tsx");
+const publicDirectoryPage = readSource("src/app/directory/page.tsx");
+const procurementContextRepository = readSource(
+  "src/lib/procurement/procurement-context-repository.ts",
+);
 const evidenceEngine = readSource("src/components/ai-confidence-engine.tsx");
 const decisionReadiness = readSource(
   "src/components/analytics/award-probability-forecast.tsx",
@@ -301,7 +336,7 @@ it("keeps executive visual semantics aligned with the underlying evidence", () =
       'valueLabel: "Dominant Procurement Scope"',
     );
     expect(analyticsPage).toContain(
-      'title: "Board Readiness",\n      value: `${boardReadinessScore}/100`,',
+      'title: "Board Readiness",\n      value: formatCurrentEvidenceScore(boardReadinessScore),',
     );
 
     expect(executiveOpportunityRankingSurface).toContain(
@@ -344,7 +379,20 @@ it("keeps executive visual semantics aligned with the underlying evidence", () =
     expect(analyticsSourceLoader).toContain(
       "commercialAccess.canViewIssuerCommercialAnalytics &&",
     );
+    expect(analyticsSourceLoader).toContain(
+      "isRfqCommercialOpeningUnlocked",
+    );
+    expect(analyticsSourceLoader).toContain("commerciallyOpenRfqIds");
+    expect(analyticsSourceLoader).toContain(
+      '.in("rfq_id", commerciallyOpenRfqIds)',
+    );
 
+    expect(commercialInsightsSource).toContain(
+      "isRfqCommercialOpeningUnlocked",
+    );
+    expect(commercialInsightsSource).not.toContain(
+      'sourcingMethod === "open"',
+    );
     expect(commercialInsightsSource).toContain(
       'state: "access-restricted"',
     );
@@ -365,6 +413,70 @@ it("keeps executive visual semantics aligned with the underlying evidence", () =
     );
     expect(commercialInsightsSource).not.toMatch(
       /AI anomaly|industry benchmark|statistical significance/i,
+    );
+
+    expect(dashboardPage).toContain("isRfqCommercialOpeningUnlocked");
+    expect(dashboardPage).toContain("commerciallyOpenRfqIds");
+    expect(dashboardPage).toContain(
+      '.in("rfq_id", commerciallyOpenRfqIds)',
+    );
+    expect(dashboardPage).toContain(
+      'supabase.rpc("count_rfq_quote_submissions", {',
+    );
+    expect(dashboardPage).toContain("const safeSubmissionCountResults =");
+    expect(dashboardPage).toContain("let safeSubmissionCount = 0;");
+    expect(dashboardPage).toContain('typeof value !== "number"');
+    expect(dashboardPage).toContain("if (result.error || count === null)");
+    expect(dashboardPage).toContain(
+      'throw new Error("Unable to load company quote submission counts.")',
+    );
+
+    const dashboardPortfolioBuild = dashboardPage.slice(
+      dashboardPage.indexOf("const portfolio = buildPortfolioIntelligence"),
+      dashboardPage.indexOf("const awardedQuotes"),
+    );
+    expect(dashboardPortfolioBuild).toContain("quoteList");
+    expect(dashboardPortfolioBuild).not.toContain("safeSubmissionCount");
+
+    expect(dashboardPage).toContain("supplierQuotes: safeSubmissionCount");
+    expect(dashboardPage).toContain("String(safeSubmissionCount)");
+    expect(dashboardPage).toContain(
+      "${safeSubmissionCount} supplier quotes received",
+    );
+
+    const dashboardCoverageSignal = dashboardPage.slice(
+      dashboardPage.indexOf("const supplierQuoteCoverage"),
+      dashboardPage.indexOf("const alerts"),
+    );
+    expect(dashboardCoverageSignal).toContain("safeSubmissionCount");
+    expect(dashboardCoverageSignal).not.toContain("portfolio.supplierQuotes");
+
+    const dashboardCoverageAlert = dashboardPage.slice(
+      dashboardPage.indexOf("if (safeSubmissionCount < 3"),
+      dashboardPage.indexOf("if (budgetVariance"),
+    );
+    expect(dashboardCoverageAlert).toContain("safeSubmissionCount");
+    expect(dashboardCoverageAlert).not.toContain("portfolio.supplierQuotes");
+
+    const dashboardAwardRate = dashboardPage.slice(
+      dashboardPage.indexOf('label: "Award Rate"'),
+      dashboardPage.indexOf('label: "Budget Utilization"'),
+    );
+    expect(dashboardAwardRate).toContain("portfolio.supplierQuotes");
+    expect(dashboardAwardRate).not.toContain("safeSubmissionCount");
+
+    const dashboardAverageQuotes = dashboardPage.slice(
+      dashboardPage.indexOf('title: "Avg Quotes per RFQ"'),
+      dashboardPage.indexOf('title: "Planned Budget"'),
+    );
+    expect(dashboardAverageQuotes).toContain("portfolio.avgQuotesPerRfq");
+    expect(dashboardAverageQuotes).not.toContain("safeSubmissionCount");
+    expect(analyticsVendors).toContain(
+      "isRfqCommercialOpeningUnlocked",
+    );
+    expect(analyticsVendors).toContain("commerciallyOpenRfqIds");
+    expect(analyticsVendors).toContain(
+      '.in("rfq_id", commerciallyOpenRfqIds)',
     );
 
     expect(portfolioIntelligenceSource).toContain(
@@ -460,10 +572,10 @@ it("keeps executive visual semantics aligned with the underlying evidence", () =
 
     expect(analyticsPage).toContain("<BoardNarrativeGenerator");
     expect(analyticsPage).toContain(
-      "decisionSupportReadinessScore={decisionSupportReadiness.score}",
+      "decisionSupportReadinessScore={executiveScoreEvidence.decisionSupportReadiness.score}",
     );
     expect(analyticsPage).toContain(
-      "decisionSupportReadinessLabel={decisionSupportReadiness.label}",
+      "decisionSupportReadinessLabel={executiveScoreEvidence.decisionSupportReadiness.label}",
     );
     expect(analyticsPage).not.toContain(
       "awardPredictionConfidence={decisionSupportReadiness.label}",
@@ -662,7 +774,7 @@ it("keeps executive visual semantics aligned with the underlying evidence", () =
     expect(companyProfile).not.toContain("supplierIntelligenceScore");
     expect(companyProfile).not.toContain("Procurement Fit");
     expect(companyProfile).not.toContain("Buyer suitability");
-    expect(companyProfile).toContain("Supplier Performance Evidence");
+    expect(companyProfile).toContain("Supplier Commercial Evidence");
 
     expect(vendorDashboard).not.toContain("supplierScore");
     expect(vendorDashboard).not.toContain("awardProbability");
@@ -786,11 +898,1172 @@ describe("analytics procurement insight denominator truthfulness", () => {
       "supplierParticipationCount={supplierParticipationCount}",
     );
     expect(analyticsPage10_03).toContain(
-      "procurementInsights={procurementInsights}",
+      "procurementInsights={governedProcurementInsights}",
     );
     expect(analyticsPage10_03).not.toContain(
       "Improve RFQ conversion and award execution.",
     );
     expect(analyticsPage10_03).not.toContain('label="Award Conversion"');
+  });
+  it("keeps public discovery surfaces free of quote-row commercial intelligence and gates buyer context by commercial opening", () => {
+    expect(publicCompanyPage).not.toContain('.from("quotes")');
+    expect(publicCompanyPage).toContain("Commercial Award Details");
+    expect(publicCompanyPage).toContain("Access Restricted");
+    expect(publicCompanyPage).toContain(
+      "Commercial performance data is not published on public company",
+    );
+
+    expect(publicDirectoryPage).not.toContain('.from("quotes")');
+    expect(publicDirectoryPage).toContain("Public Supplier Evidence");
+    expect(publicDirectoryPage).toContain("Public Evidence Avg");
+    expect(publicDirectoryPage).toContain(
+      "Commercial quote history and award-value signals are excluded.",
+    );
+    expect(publicDirectoryPage).not.toContain("supplierScore");
+    expect(publicDirectoryPage).not.toContain("winRate");
+    expect(publicDirectoryPage).not.toContain("awardsWon");
+    expect(publicDirectoryPage).not.toContain("awardedRevenue");
+    expect(publicDirectoryPage).not.toContain("getRankTone");
+
+    expect(procurementContextRepository).toContain(
+      "isRfqCommercialOpeningUnlocked",
+    );
+    expect(procurementContextRepository).toContain(
+      "const commerciallyOpenRfqIds = ownedRfqs",
+    );
+    expect(procurementContextRepository).toContain(
+      '.in("rfq_id", commerciallyOpenRfqIds)',
+    );
+    expect(procurementContextRepository).toContain(
+      "loadSupplierQuotes(supabase, identity.companyId)",
+    );
+  });
+});
+
+describe("analytics sealed-participation truthfulness", () => {
+  const scoreInputs = {
+    totalRfqs: 4,
+    supplierQuotes: 8,
+    awardedContracts: 2,
+    budgetTotal: 1000,
+    avgQuotesPerRfq: 2,
+    awardRate: 25,
+    budgetUtilization: 50,
+    supplierReliabilityScore: 70,
+    supplierDiversificationScore: 60,
+    observedCommercialOpportunity: 10000,
+    constructionClassificationScore: 80,
+  } as const;
+
+  it("marks every supplier/commercial executive score unavailable while evidence is locked", () => {
+    const scores = buildAnalyticsExecutiveScoreEvidence({
+      evidenceState: "policy-locked",
+      ...scoreInputs,
+    });
+
+    expect(scores).toMatchObject({
+      state: "policy-locked",
+      supplierActivityScore: null,
+      competitionScore: null,
+      awardScore: null,
+      commercialOpportunityEvidenceScore: null,
+      procurementHealthScore: null,
+      procurementRiskIndex: null,
+      dataQualityScore: null,
+      enterpriseProcurementScore: null,
+      supplierEngagementScore: null,
+      executiveReadinessScore: null,
+      digitalMaturityScore: null,
+      boardHealthIndex: null,
+      benchmarkReadinessScore: null,
+      decisionSupportReadiness: null,
+      procurementOpportunityScore: null,
+      boardReadinessScore: null,
+      ceoReadinessScore: null,
+      internalPerformanceIndex: null,
+      procurementPerformanceIndex: null,
+      supplierPerformanceIndex: null,
+      costOpportunityIndex: null,
+      portfolioHealthIndex: null,
+    });
+    expect(
+      Object.values(scores).filter((value) => typeof value === "number"),
+    ).toEqual([]);
+  });
+
+  it("preserves the established score formulas when commercial evidence is fully available", () => {
+    const scores = buildAnalyticsExecutiveScoreEvidence({
+      evidenceState: "available",
+      ...scoreInputs,
+    });
+
+    expect(scores).toMatchObject({
+      state: "available",
+      supplierActivityScore: 96,
+      competitionScore: 50,
+      awardScore: 38,
+      commercialOpportunityEvidenceScore: 85,
+      procurementHealthScore: 67,
+      executiveProcurementHealth: 45,
+      procurementRiskIndex: 33,
+      procurementMaturityScore: 57,
+      dataQualityScore: 100,
+    });
+    expect(scores.decisionSupportReadiness).not.toBeNull();
+    expect(
+      Object.entries(scores)
+        .filter(([key]) => key !== "state" && key !== "executiveStatus")
+        .every(([, value]) => value !== null),
+    ).toBe(true);
+  });
+
+  it("does not score partial commercial evidence or accept safe counts as score inputs", () => {
+    const partialScores = buildAnalyticsExecutiveScoreEvidence({
+      evidenceState: "policy-locked",
+      ...scoreInputs,
+      supplierQuotes: 3,
+      avgQuotesPerRfq: 3,
+      awardRate: 100,
+    });
+    const withSafeCount = buildAnalyticsExecutiveScoreEvidence({
+      evidenceState: "policy-locked",
+      ...scoreInputs,
+      safeSubmissionCount: 999,
+    } as Parameters<typeof buildAnalyticsExecutiveScoreEvidence>[0] & {
+      safeSubmissionCount: number;
+    });
+
+    expect(partialScores).toEqual(withSafeCount);
+    expect(partialScores.state).toBe("policy-locked");
+    expect(partialScores.procurementHealthScore).toBeNull();
+    expect(partialScores.procurementOpportunityScore).toBeNull();
+  });
+
+  it.each(["access-restricted", "insufficient-data"] as const)(
+    "does not substitute a default commercial score when evidence is %s",
+    (evidenceState) => {
+      const scores = buildAnalyticsExecutiveScoreEvidence({
+        evidenceState,
+        ...scoreInputs,
+      });
+
+      expect(scores.state).toBe(evidenceState);
+      expect(scores.commercialOpportunityEvidenceScore).toBeNull();
+      expect(scores.procurementHealthScore).toBeNull();
+      expect(scores.enterpriseProcurementScore).toBeNull();
+      expect(scores.boardHealthIndex).toBeNull();
+      expect(
+        Object.values(scores).filter((value) => typeof value === "number"),
+      ).toEqual([]);
+    },
+  );
+
+  it("bypasses numeric narrative generation while commercial evidence is unavailable", () => {
+    const narrativeInput = {
+      totalRfqs: 1,
+      procurementHealth: "Policy Locked",
+      competitionIndex: "Policy Locked",
+      dominantScope: "Material",
+      dominantSourcing: "Sealed Bid",
+      awardRate: 0,
+      supplierQuotes: 0,
+      commercialInsights: {
+        state: "policy-locked" as const,
+        asOf: "2026-09-12T12:00:00.000Z",
+        reviewThresholdPercentage: 20,
+        unlockedRfqCount: 0,
+        lockedRfqCount: 1,
+        visiblePositiveQuoteCount: 0,
+        comparableRfqCount: 0,
+        highDeviationRfqCount: 0,
+        estimatedOpportunity: null,
+        limitation: "Commercial evidence is locked.",
+        rfqEvidence: [],
+      },
+      constructionClassificationScore: 80,
+      avgQuotesPerRfq: 0,
+      sealedBidRfqs: 1,
+      frameworkRfqs: 0,
+      budgetUtilization: 0,
+      topCategory: "Concrete",
+    };
+
+    for (const evidenceState of [
+      "policy-locked",
+      "access-restricted",
+      "insufficient-data",
+    ] as const) {
+      const result = buildGovernedAnalyticsNarrative({
+        ...narrativeInput,
+        evidenceState,
+      });
+
+      expect(result.executiveSummary).toContain(
+        evidenceState === "policy-locked"
+          ? "Policy Locked"
+          : evidenceState === "access-restricted"
+            ? "Access Restricted"
+            : "Insufficient Data",
+      );
+      expect(result.executiveSummary).not.toContain("0 supplier quotes");
+      expect(result.executiveSummary).not.toContain("award rate is 0%");
+      expect(result.executiveSummary).not.toContain("$0 average quote");
+    }
+
+    const available = buildGovernedAnalyticsNarrative({
+      ...narrativeInput,
+      evidenceState: "available",
+      supplierQuotes: 8,
+      avgQuotesPerRfq: 2,
+      awardRate: 25,
+      commercialInsights: {
+        ...narrativeInput.commercialInsights,
+        state: "available",
+        unlockedRfqCount: 1,
+        lockedRfqCount: 0,
+        visiblePositiveQuoteCount: 8,
+        comparableRfqCount: 1,
+        estimatedOpportunity: 10000,
+      },
+    });
+
+    expect(available.executiveSummary).toContain(
+      "quotation award rate is 25%, with 8 supplier quotes",
+    );
+  });
+
+  it("reports sealed RFQ participation without claiming evaluation has opened", () => {
+    const [readiness] = buildRfqDecisionReadiness({
+      rfqList: [
+        {
+          id: "rfq-locked",
+          title: "Sealed concrete package",
+          category: "Concrete",
+          procurement_scope: "material",
+          sourcing_method: "sealed_bid",
+          contract_framework: "project_specific",
+          status: "open",
+          slug: "sealed-concrete-package",
+        },
+      ],
+      quoteList: [],
+      commerciallyOpenRfqIdSet: new Set(),
+      safeSubmissionCountByRfqId: { "rfq-locked": 1 },
+    });
+
+    expect(readiness).toMatchObject({
+      quotes: 1,
+      evaluationState: "Commercial Opening Pending",
+    });
+  });
+
+  it("continues to report awaiting quotes when a locked RFQ has no submissions", () => {
+    const [readiness] = buildRfqDecisionReadiness({
+      rfqList: [
+        {
+          id: "rfq-empty",
+          status: "published",
+          slug: "empty-rfq",
+        },
+      ],
+      quoteList: [],
+      commerciallyOpenRfqIdSet: new Set(),
+      safeSubmissionCountByRfqId: { "rfq-empty": 0 },
+    });
+
+    expect(readiness).toMatchObject({
+      quotes: 0,
+      evaluationState: "Awaiting Quotes",
+    });
+  });
+
+  it("preserves active and awarded evaluation states after commercial opening", () => {
+    const readiness = buildRfqDecisionReadiness({
+      rfqList: [
+        {
+          id: "rfq-opened",
+          status: "open",
+          slug: "opened-rfq",
+        },
+        {
+          id: "rfq-awarded",
+          status: "awarded",
+          slug: "awarded-rfq",
+        },
+      ],
+      quoteList: [{ rfq_id: "rfq-opened" }, { rfq_id: "rfq-awarded" }],
+      commerciallyOpenRfqIdSet: new Set(["rfq-opened", "rfq-awarded"]),
+      safeSubmissionCountByRfqId: {
+        "rfq-opened": 1,
+        "rfq-awarded": 1,
+      },
+    });
+
+    expect(readiness[0]).toMatchObject({
+      quotes: 1,
+      evaluationState: "Evaluation Active",
+    });
+    expect(readiness[1]).toMatchObject({
+      quotes: 1,
+      evaluationState: "Awarded",
+    });
+  });
+
+  it("keeps safe readiness counts outside commercial portfolio calculations", () => {
+    const [readiness] = buildRfqDecisionReadiness({
+      rfqList: [{ id: "rfq-locked", status: "open", slug: "locked-rfq" }],
+      quoteList: [],
+      commerciallyOpenRfqIdSet: new Set(),
+      safeSubmissionCountByRfqId: { "rfq-locked": 7 },
+    });
+    const portfolio = buildPortfolioIntelligence({
+      rfqList: [
+        {
+          id: "rfq-locked",
+          title: "Locked RFQ",
+          category: "Concrete",
+          location: null,
+          budget: 1000,
+          status: "open",
+          created_at: "2026-09-01T00:00:00.000Z",
+          deadline: "2026-10-01T00:00:00.000Z",
+          procurement_scope: "material",
+          sourcing_method: "sealed_bid",
+          contract_framework: "project_specific",
+        },
+      ],
+      quoteList: [],
+      asOf: new Date("2026-09-12T12:00:00.000Z"),
+    });
+
+    expect(readiness.quotes).toBe(7);
+    expect(portfolio.supplierQuotes).toBe(0);
+    expect(portfolio.awardRate).toBe(0);
+    expect(portfolio.averageQuote).toBe(0);
+    expect(portfolio.procurementInsights.averageQuotationsPerRfq.value).toBe(0);
+  });
+
+  it("renders safe category responses while locking every commercial category value", () => {
+    const text = renderedText(
+      renderToStaticMarkup(
+        createElement(CategoryIntelligence, {
+          categoryIntelligence: [
+            {
+              category: "Concrete",
+              rfqs: 1,
+              quotes: 4,
+              commercialEvidenceState: "policy-locked",
+              awards: null,
+              winRate: null,
+              spend: null,
+              opportunityScore: null,
+            },
+          ],
+        }),
+      ),
+    );
+
+    expect(text).toContain("Concrete");
+    expect(text).toMatch(/4 Responses/);
+    expect(text.match(/Policy Locked/g)).toHaveLength(4);
+    expect(text).not.toContain("$0");
+    expect(text).not.toContain("0/100");
+  });
+
+  it.each([
+    ["access-restricted", "Access Restricted"],
+    ["insufficient-data", "Insufficient Data"],
+  ] as const)(
+    "propagates %s through category commercial fields without numeric zeroes",
+    (commercialEvidenceState, evidenceLabel) => {
+      const text = renderedText(
+        renderToStaticMarkup(
+          createElement(CategoryIntelligence, {
+            categoryIntelligence: [
+              {
+                category: "Concrete",
+                rfqs: 1,
+                quotes: 4,
+                commercialEvidenceState,
+                awards: null,
+                winRate: null,
+                spend: null,
+                opportunityScore: null,
+              },
+            ],
+          }),
+        ),
+      );
+
+      expect(text).toMatch(/4 Responses/);
+      expect(text.match(new RegExp(evidenceLabel, "g"))).toHaveLength(4);
+      expect(text).not.toContain("$0");
+      expect(text).not.toContain("0%");
+      expect(text).not.toContain("0/100");
+    },
+  );
+
+  it("preserves global category evidence state before applying category sealing", () => {
+    expect(
+      resolveCommercialEvidenceStateForSealedParticipation({
+        globalEvidenceState: "access-restricted",
+        hasSealedCommercialEvidence: true,
+      }),
+    ).toBe("access-restricted");
+    expect(
+      resolveCommercialEvidenceStateForSealedParticipation({
+        globalEvidenceState: "insufficient-data",
+        hasSealedCommercialEvidence: true,
+      }),
+    ).toBe("insufficient-data");
+    expect(
+      resolveCommercialEvidenceStateForSealedParticipation({
+        globalEvidenceState: "policy-locked",
+        hasSealedCommercialEvidence: false,
+      }),
+    ).toBe("policy-locked");
+    expect(
+      resolveCommercialEvidenceStateForSealedParticipation({
+        globalEvidenceState: "available",
+        hasSealedCommercialEvidence: true,
+      }),
+    ).toBe("policy-locked");
+    expect(
+      resolveCommercialEvidenceStateForSealedParticipation({
+        globalEvidenceState: "available",
+        hasSealedCommercialEvidence: false,
+      }),
+    ).toBe("available");
+  });
+
+  it("preserves numeric commercial category output when evidence is available", () => {
+    const markup = renderToStaticMarkup(
+      createElement(CategoryIntelligence, {
+        categoryIntelligence: [
+          {
+            category: "Electrical",
+            rfqs: 2,
+            quotes: 4,
+            commercialEvidenceState: "available",
+            awards: 2,
+            winRate: 50,
+            spend: 1200,
+            opportunityScore: 70,
+          },
+        ],
+      }),
+    );
+    const text = renderedText(markup);
+
+    expect(text).toMatch(/4 Responses/);
+    expect(text).toMatch(/2 Decisions/);
+    expect(text).toContain("50% Win rate");
+    expect(text).toContain("$1,200 Portfolio value");
+    expect(text).toContain("70/100 Potential");
+    expect(markup).toContain("Electrical award conversion rate 50%");
+    expect(markup).toContain("Electrical opportunity score 70 out of 100");
+  });
+
+  it("replaces supplier portfolio zeroes with governed locked state", () => {
+    const text = renderedText(
+      renderToStaticMarkup(
+        createElement(SupplierPortfolioIntelligence, {
+          commercialEvidenceState: "policy-locked",
+          portfolioHealthIndex: 0,
+          supplierParticipationCount: 0,
+          awardHistoryCoverage: 0,
+          suppliersWithAwardHistory: 0,
+          suppliersWithMultipleAwards: 0,
+          suppliersWithLimitedQuoteHistory: 0,
+          supplierDiversificationScore: 0,
+          portfolioStatus: "Needs Attention",
+          portfolioRecommendations: [
+            "Reassess supplier evidence after commercial opening.",
+          ],
+        }),
+      ),
+    );
+
+    expect(text).toContain("Policy Locked");
+    expect(text).toContain("Supplier identities and commercial history remain sealed");
+    expect(text).not.toContain("0/100");
+    expect(text).not.toContain("0%");
+    expect(text).not.toContain("Needs Attention");
+  });
+
+  it("does not turn an empty sealed ranking into no-history supplier facts", () => {
+    const text = renderedText(
+      renderToStaticMarkup(
+        createElement(ExecutiveRiskIntelligence, {
+          supplierRanking: [],
+          supplierCommercialEvidenceState: "policy-locked",
+        }),
+      ),
+    );
+
+    expect(text).toContain("Commercial Evidence Policy Locked");
+    expect(text).not.toContain("No supplier history available");
+    expect(text).not.toContain("0%");
+    expect(text).not.toContain("0 supplier records");
+  });
+
+  it.each([
+    ["access-restricted", "Commercial Evidence Access Restricted"],
+    ["insufficient-data", "Commercial Evidence Insufficient Data"],
+  ] as const)(
+    "preserves the %s supplier evidence state in executive risk output",
+    (supplierCommercialEvidenceState, expectedHeading) => {
+      const text = renderedText(
+        renderToStaticMarkup(
+          createElement(ExecutiveRiskIntelligence, {
+            supplierRanking: [],
+            supplierCommercialEvidenceState,
+          }),
+        ),
+      );
+
+      expect(text).toContain(expectedHeading);
+      expect(text).not.toContain("Commercial Evidence Policy Locked");
+      expect(text).not.toContain("No supplier history available");
+      expect(text).not.toContain("0 supplier records");
+    },
+  );
+
+  it("preserves available supplier evidence in executive risk output", () => {
+    const text = renderedText(
+      renderToStaticMarkup(
+        createElement(ExecutiveRiskIntelligence, {
+          supplierRanking: [
+            {
+              name: "Supplier Alpha",
+              quotes: 4,
+              awards: 2,
+              revenue: 1200,
+              winRate: 50,
+            },
+          ],
+          supplierCommercialEvidenceState: "available",
+        }),
+      ),
+    );
+
+    expect(text).toContain("Supplier Alpha");
+    expect(text).toContain("1 supplier records");
+    expect(text).not.toContain("Commercial Evidence Policy Locked");
+    expect(text).not.toContain("Commercial Evidence Access Restricted");
+    expect(text).not.toContain("Commercial Evidence Insufficient Data");
+  });
+
+  it("locks supplier metrics in board reporting and confidence wrappers", () => {
+    const riskEvidence = buildRiskComplianceEvidence({
+      rfqs: [],
+      quotes: [],
+      compliance: {
+        insurance: [],
+        workers_compensation: [],
+        safety: [],
+      },
+      canViewQuoteHistory: false,
+      asOf: new Date("2026-09-12T12:00:00.000Z"),
+    });
+    const boardText = renderedText(
+      renderToStaticMarkup(
+        createElement(BoardExecutiveReport, {
+          companyName: "Nexus",
+          generatedAt: "September 12, 2026",
+          decisionStatement: "Review governed evidence.",
+          recommendation: "Await commercial opening.",
+          boardPriority: "Evidence governance",
+          enterpriseScore: 80,
+          boardReadiness: 80,
+          decisionReadiness: 80,
+          riskIndex: 20,
+          riskComplianceEvidence: riskEvidence,
+          opportunityValue: "Policy Locked",
+          procurementVolume: "$0",
+          awardedVolume: "$0",
+          awardRate: "0%",
+          supplierCount: 0,
+          supplierEngagement: 0,
+          supplierDiversification: 0,
+          portfolioHealth: 0,
+          supplierCommercialEvidenceState: "policy-locked",
+          forecastConfidence: "Limited",
+          forecastNarrative: "Governed evidence only.",
+          benchmarkPosition: "Internal",
+          benchmarkScore: 80,
+          findings: [],
+          risks: [],
+          opportunities: [],
+          actions: [],
+        }),
+      ),
+    );
+    const confidenceText = renderedText(
+      renderToStaticMarkup(
+        createElement(IntelligenceDashboard, {
+          executiveAlerts: [],
+          executiveRecommendations: [],
+          dailyExecutiveBriefing: [],
+          decisionSupportReadiness: buildDecisionSupportReadiness({
+            dataQualityScore: 80,
+            supplierEngagementScore: 0,
+            benchmarkReadinessScore: 80,
+          }),
+          supplierReliabilityScore: 0,
+          supplierCommercialEvidenceState: "policy-locked",
+        }),
+      ),
+    );
+
+    expect(boardText).toContain("Supplier network Policy Locked");
+    expect(boardText).toContain("Supplier engagement Policy Locked");
+    expect(boardText).toContain("Internal diversification score Policy Locked");
+    expect(boardText).toContain("Portfolio health Policy Locked");
+    expect(boardText).toContain("Enterprise health Policy Locked");
+    expect(boardText).toContain("Board readiness Policy Locked");
+    expect(boardText).toContain("Decision readiness Policy Locked");
+    expect(boardText).toContain("Quotation award rate Policy Locked");
+    expect(boardText).not.toContain("Quotation award rate 0%");
+    expect(boardText).not.toContain("80/100");
+    expect(confidenceText).toContain("Commercial Evidence Policy Locked");
+    expect(confidenceText).not.toContain("Supplier Reliability 0/100");
+  });
+
+  it("uses access-restricted state instead of serializing a zero board award rate", () => {
+    const riskEvidence = buildRiskComplianceEvidence({
+      rfqs: [],
+      quotes: [],
+      compliance: { insurance: [], workers_compensation: [], safety: [] },
+      canViewQuoteHistory: false,
+      asOf: new Date("2026-09-12T12:00:00.000Z"),
+    });
+    const text = renderedText(
+      renderToStaticMarkup(
+        createElement(BoardExecutiveReport, {
+          companyName: "Nexus",
+          generatedAt: "September 12, 2026",
+          decisionStatement: "Review governed evidence.",
+          recommendation: "Request authorized access.",
+          boardPriority: "Evidence governance",
+          enterpriseScore: null,
+          boardReadiness: null,
+          decisionReadiness: null,
+          riskIndex: null,
+          riskComplianceEvidence: riskEvidence,
+          opportunityValue: "Access Restricted",
+          procurementVolume: "$1,000",
+          awardedVolume: "Access Restricted",
+          awardRate: "0%",
+          supplierCount: 0,
+          supplierEngagement: null,
+          supplierDiversification: 0,
+          portfolioHealth: null,
+          supplierCommercialEvidenceState: "access-restricted",
+          forecastConfidence: "Access Restricted",
+          forecastNarrative: "Governed evidence only.",
+          benchmarkPosition: "Access Restricted",
+          benchmarkScore: null,
+          findings: [],
+          risks: [],
+          opportunities: [],
+          actions: [],
+        }),
+      ),
+    );
+
+    expect(text).toContain("Quotation award rate Access Restricted");
+    expect(text).not.toContain("Quotation award rate 0%");
+    expect(text).not.toMatch(/\d+\/100/);
+  });
+
+  it("keeps locked supplier scores out of report and narrative output", () => {
+    const reportText = renderedText(
+      renderToStaticMarkup(
+        createElement(BoardReportGenerator, {
+          procurementRiskIndex: 0,
+          procurementMaturityScore: 80,
+          decisionSupportReadinessScore: 80,
+          dataQualityScore: 80,
+          supplierDependencyRisk: "Critical",
+          concentrationLevel: "Low",
+          benchmarkReadinessScore: 80,
+          boardHealthIndex: 80,
+          enterpriseProcurementScore: 80,
+          executiveReadinessScore: 80,
+          procurementEfficiencyScore: 80,
+          supplierEngagementScore: 0,
+          supplierCommercialEvidenceState: "policy-locked",
+          digitalMaturityScore: 80,
+        }),
+      ),
+    );
+    const narrativeText = renderedText(
+      renderToStaticMarkup(
+        createElement(BoardNarrativeGenerator, {
+          executiveBenchmarkStatus: "Board Ready",
+          executiveStatus: "Strong",
+          boardHealthIndex: 80,
+          enterpriseProcurementScore: 80,
+          executiveReadinessScore: 80,
+          procurementRiskIndex: 0,
+          supplierEngagementScore: 0,
+          supplierCommercialEvidenceState: "policy-locked",
+          benchmarkReadinessScore: 80,
+          boardRecommendation: "Review evidence.",
+          procurementMaturityScore: 80,
+          decisionSupportReadinessScore: 80,
+          decisionSupportReadinessLabel: "Board Ready",
+        }),
+      ),
+    );
+
+    expect(boardReport).toContain("commercialEvidenceLabel");
+    expect(reportText).toContain("Board Reporting Policy Locked");
+    expect(reportText).not.toMatch(/\d+\/100/);
+    expect(narrativeText).toContain("Board Narrative Policy Locked");
+    expect(narrativeText).not.toMatch(/\d+\/100/);
+  });
+
+  it("keeps safe response evidence outside commercial and supplier builders", () => {
+    expect(analyticsPage).toContain("const safeCategoryResponses");
+    expect(analyticsPage).toContain("quotes: safeCategoryResponses");
+    expect(analyticsPage).toContain("categoryHasSealedCommercialEvidence");
+    expect(analyticsPage).toContain(
+      "globalEvidenceState: commercialInsights.state",
+    );
+
+    const portfolioBuild = analyticsPage.slice(
+      analyticsPage.indexOf("buildPortfolioIntelligence({"),
+      analyticsPage.indexOf("const commercialInsights"),
+    );
+    const supplierBuild = analyticsPage.slice(
+      analyticsPage.indexOf("buildSupplierIntelligence({"),
+      analyticsPage.indexOf("buildPortfolioIntelligence({"),
+    );
+    const categoryScore = analyticsPage.slice(
+      analyticsPage.indexOf("const categoryOpportunityScore"),
+      analyticsPage.indexOf("return {", analyticsPage.indexOf("const categoryOpportunityScore")),
+    );
+
+    expect(portfolioBuild).not.toContain("safeSubmissionCountByRfqId");
+    expect(supplierBuild).not.toContain("safeSubmissionCountByRfqId");
+    expect(categoryScore).not.toContain("safeSubmissionCountByRfqId");
+
+    expect(boardExecutiveReport).toContain(
+      "supplierCommercialEvidenceState",
+    );
+    expect(
+      readSource("src/components/analytics/sections/executive-dashboard.tsx"),
+    ).toContain('supplierCommercialEvidenceState !== "available"');
+  });
+
+  it("uses safe participation for a locked decision stream and RFQ coverage only", () => {
+    const participation = buildSafeSubmissionParticipation({
+      rfqIds: ["rfq-locked"],
+      safeSubmissionCountByRfqId: { "rfq-locked": 1 },
+    });
+    const fallbackMessage =
+      "1 active RFQ has no submitted quotation evidence in the authorized analytics dataset.";
+    const decisionStreamMessage = buildDecisionStreamRiskMessage({
+      evidenceState: "policy-locked",
+      totalSubmissions: participation.totalSubmissions,
+      fallbackMessage,
+    });
+    const portfolio = buildPortfolioIntelligence({
+      rfqList: [
+        {
+          id: "rfq-locked",
+          title: "Sealed concrete package",
+          category: "Concrete",
+          location: null,
+          budget: 1850000,
+          status: "open",
+          created_at: "2026-09-01T00:00:00.000Z",
+          deadline: "2026-10-01T00:00:00.000Z",
+          procurement_scope: "material",
+          sourcing_method: "sealed_bid",
+          contract_framework: "project_specific",
+        },
+      ],
+      quoteList: [],
+      asOf: new Date("2026-09-12T12:00:00.000Z"),
+    });
+    const metricsText = renderedText(
+      renderToStaticMarkup(
+        createElement(ProcurementInsightMetrics, {
+          metrics: {
+            ...portfolio.procurementInsights,
+            rfqSubmissionCoverage: participation.rfqSubmissionCoverage,
+          },
+          commercialEvidenceState: "policy-locked",
+        }),
+      ),
+    );
+
+    expect(participation).toEqual({
+      totalSubmissions: 1,
+      rfqSubmissionCoverage: {
+        numerator: 1,
+        denominator: 1,
+        percentage: 100,
+        status: "available",
+      },
+    });
+    expect(decisionStreamMessage).toContain("1 submitted quotation is recorded");
+    expect(decisionStreamMessage).toContain(
+      "commercial evidence remains policy locked",
+    );
+    expect(decisionStreamMessage).not.toContain("no submitted quotation evidence");
+    expect(metricsText).toContain("RFQ Submission Coverage 100%");
+    expect(metricsText).toContain("1 RFQs with submissions / 1 total RFQs");
+    expect(metricsText).toContain("Average Quotations per RFQ Policy Locked");
+    expect(metricsText).not.toContain("Average Quotations per RFQ 0.0");
+    expect(formatCommercialCurrencyEvidence("policy-locked", 999999)).toBe(
+      "Policy Locked",
+    );
+    expect(portfolio.supplierQuotes).toBe(0);
+    expect(portfolio.procurementVolume).toBe(0);
+    expect(portfolio.avgQuotesPerRfq).toBe(0);
+  });
+
+  it("preserves a truthful raw zero when no locked RFQ has submissions", () => {
+    const participation = buildSafeSubmissionParticipation({
+      rfqIds: ["rfq-empty"],
+      safeSubmissionCountByRfqId: { "rfq-empty": 0 },
+    });
+    const fallbackMessage =
+      "1 active RFQ has no submitted quotation evidence in the authorized analytics dataset.";
+
+    expect(participation).toMatchObject({
+      totalSubmissions: 0,
+      rfqSubmissionCoverage: {
+        numerator: 0,
+        denominator: 1,
+        percentage: 0,
+      },
+    });
+    expect(
+      buildDecisionStreamRiskMessage({
+        evidenceState: "policy-locked",
+        totalSubmissions: participation.totalSubmissions,
+        fallbackMessage,
+      }),
+    ).toBe(fallbackMessage);
+  });
+
+  it.each([
+    "1 self-declared compliance record is past the recorded expiry date.",
+    "1 active RFQ has a recorded deadline earlier than the current review date.",
+    "1 RFQ is missing one or more procurement classification fields.",
+  ])(
+    "preserves unrelated top-risk evidence while locked submissions exist: %s",
+    (fallbackMessage) => {
+      expect(
+        buildDecisionStreamRiskMessage({
+          evidenceState: "policy-locked",
+          totalSubmissions: 1,
+          fallbackMessage,
+        }),
+      ).toBe(fallbackMessage);
+    },
+  );
+
+  it("governs only quotation-absence evidence in the board report", () => {
+    const quotationAbsence =
+      "1 active RFQ has no submitted quotation evidence in the authorized analytics dataset.";
+    const complianceRisk =
+      "1 self-declared compliance record is past the recorded expiry date.";
+    const deadlineRisk =
+      "1 active RFQ has a recorded deadline earlier than the current review date.";
+    const classificationRisk =
+      "1 RFQ is missing one or more procurement classification fields.";
+    const baseRiskEvidence = buildRiskComplianceEvidence({
+      rfqs: [],
+      quotes: [],
+      compliance: { insurance: [], workers_compensation: [], safety: [] },
+      canViewQuoteHistory: false,
+      asOf: new Date("2026-09-12T12:00:00.000Z"),
+    });
+    const governedRiskEvidence = buildGovernedRiskComplianceEvidence({
+      evidenceState: "policy-locked",
+      totalSubmissions: 1,
+      riskComplianceEvidence: {
+        ...baseRiskEvidence,
+        narrative: quotationAbsence,
+        indicators: [
+          quotationAbsence,
+          complianceRisk,
+          deadlineRisk,
+          classificationRisk,
+        ],
+      },
+    });
+    const boardText = renderedText(
+      renderToStaticMarkup(
+        createElement(BoardExecutiveReport, {
+          companyName: "Nexus",
+          generatedAt: "September 12, 2026",
+          decisionStatement: "Review governed evidence.",
+          recommendation: "Await commercial opening.",
+          boardPriority: "Evidence governance",
+          enterpriseScore: null,
+          boardReadiness: null,
+          decisionReadiness: null,
+          riskIndex: null,
+          riskComplianceEvidence: governedRiskEvidence,
+          opportunityValue: "Policy Locked",
+          procurementVolume: "Policy Locked",
+          awardedVolume: "Policy Locked",
+          awardRate: "0%",
+          supplierCount: 0,
+          supplierEngagement: null,
+          supplierDiversification: 0,
+          portfolioHealth: null,
+          supplierCommercialEvidenceState: "policy-locked",
+          forecastConfidence: "Policy Locked",
+          forecastNarrative: "Governed evidence only.",
+          benchmarkPosition: "Policy Locked",
+          benchmarkScore: null,
+          findings: [],
+          risks: [],
+          opportunities: [],
+          actions: [],
+        }),
+      ),
+    );
+
+    expect(boardText).toContain("1 submitted quotation is recorded");
+    expect(boardText).toContain(
+      "commercial evidence remains policy locked",
+    );
+    expect(boardText).not.toContain(quotationAbsence);
+    expect(boardText).toContain(complianceRisk);
+    expect(boardText).toContain(deadlineRisk);
+    expect(boardText).toContain(classificationRisk);
+  });
+
+  it("withholds locked opportunity ranking and CEO readiness without serializing commercial details", () => {
+    const opportunity = {
+      title: "Secret supplier opportunity",
+      priority: "Immediate",
+      impact: "High",
+      value: "$999,999",
+      valueLabel: "Observed Quotation Opportunity",
+      summary: "Supplier Alpha submitted the lowest amount.",
+    };
+    const opportunityText = renderedText(
+      renderToStaticMarkup(
+        createElement(ExecutiveOpportunityRanking, {
+          opportunities: [opportunity],
+          intelligence: [
+            {
+              ...opportunity,
+              rank: 1,
+              businessImpact: "High commercial impact",
+              executionHorizon: "Immediate executive action",
+              boardPriority: "High",
+              ceoRecommendation: "Award to Supplier Alpha",
+            },
+          ],
+          commercialEvidenceState: "policy-locked",
+        }),
+      ),
+    );
+    const ceoText = renderedText(
+      renderToStaticMarkup(
+        createElement(CEOActionCenter, {
+          ceoOperatingStatus: "Policy Locked",
+          ceoDecisionPosture: "Policy Locked",
+          executiveBenchmarkStatus: "Policy Locked",
+          executiveCommandRecommendation: "Await commercial opening.",
+          ceoActionCenter: [
+            {
+              phase: "Immediate",
+              title: "Review governed evidence",
+              summary: "Await commercial opening.",
+            },
+          ],
+          commercialEvidenceState: "policy-locked",
+        }),
+      ),
+    );
+
+    expect(opportunityText).toContain("Opportunity Evidence Policy Locked");
+    expect(opportunityText).not.toContain("Decision Intelligence Available");
+    expect(opportunityText).not.toContain("Highest commercial priority");
+    expect(opportunityText).not.toContain("Secret supplier opportunity");
+    expect(opportunityText).not.toContain("Supplier Alpha");
+    expect(opportunityText).not.toContain("$999,999");
+    expect(ceoText).toContain("Decision layer Policy Locked");
+    expect(ceoText).toContain("Decision evidence remains policy locked");
+    expect(ceoText).toContain(
+      "Executive review is deferred pending complete commercial evidence",
+    );
+    expect(ceoText).not.toContain("Active and decision-ready");
+    expect(ceoText).not.toContain("ready for review");
+    expect(ceoText).not.toContain("decision layer is active");
+  });
+
+  it("withholds active command claims while command evidence is policy locked", () => {
+    const text = renderedText(
+      renderToStaticMarkup(
+        createElement(ProcurementCommandCenter, {
+          procurementCommandRoom: [
+            { title: "Board Readiness", value: "Policy Locked" },
+          ],
+          procurementCommandRoomStatus: "Policy Locked",
+          procurementCommandCenter: [
+            {
+              title: "Decision Readiness",
+              value: "Policy Locked",
+              status: "Policy Locked",
+            },
+          ],
+          commandCenterStatus: "Policy Locked",
+          executiveCommandRecommendation:
+            "Await complete commercial evidence.",
+        }),
+      ),
+    );
+
+    expect(text).toContain("Command room evidence remains policy locked");
+    expect(text).toContain(
+      "Command center alignment awaits complete commercial evidence",
+    );
+    expect(text).not.toContain("Command room readiness is active");
+    expect(text).not.toContain("Command center alignment is active");
+    expect(text).not.toContain("active command environment");
+    expect(text).not.toContain("Command alignment active");
+  });
+
+  it("preserves available commercial metrics, ranking, and CEO state", () => {
+    const metrics = {
+      asOf: "2026-09-12T12:00:00.000Z",
+      averageActiveRfqAge: {
+        numerator: 10,
+        denominator: 1,
+        value: 10,
+        unit: "days" as const,
+        status: "available" as const,
+      },
+      rfqSubmissionCoverage: {
+        numerator: 1,
+        denominator: 1,
+        percentage: 100,
+        status: "available" as const,
+      },
+      quotationDecisionCoverage: {
+        numerator: 1,
+        denominator: 2,
+        percentage: 50,
+        status: "available" as const,
+      },
+      quotationAwardRate: {
+        numerator: 1,
+        denominator: 2,
+        percentage: 50,
+        status: "available" as const,
+      },
+      averageQuotationsPerRfq: {
+        numerator: 2,
+        denominator: 1,
+        value: 2,
+        unit: "quotations" as const,
+        status: "available" as const,
+      },
+      completedCycleDuration: {
+        value: null,
+        unit: "days" as const,
+        status: "insufficient-data" as const,
+        limitation: "No trusted terminal timestamp.",
+      },
+    };
+    const opportunity = {
+      title: "Concrete opportunity",
+      priority: "Immediate",
+      impact: "High",
+      value: "$25,000",
+      summary: "Visible quotation evidence supports review.",
+    };
+    const metricsText = renderedText(
+      renderToStaticMarkup(
+        createElement(ProcurementInsightMetrics, {
+          metrics,
+          commercialEvidenceState: "available",
+        }),
+      ),
+    );
+    const opportunityText = renderedText(
+      renderToStaticMarkup(
+        createElement(ExecutiveOpportunityRanking, {
+          opportunities: [opportunity],
+          intelligence: [
+            {
+              ...opportunity,
+              rank: 1,
+              businessImpact: "High business impact",
+              executionHorizon: "Immediate executive action",
+              boardPriority: "High",
+              ceoRecommendation: "Review the visible evidence.",
+            },
+          ],
+          commercialEvidenceState: "available",
+        }),
+      ),
+    );
+    const ceoText = renderedText(
+      renderToStaticMarkup(
+        createElement(CEOActionCenter, {
+          ceoOperatingStatus: "Executive Growth Mode",
+          ceoDecisionPosture: "Proceed",
+          executiveBenchmarkStatus: "Board Ready",
+          executiveCommandRecommendation: "Proceed with review.",
+          ceoActionCenter: [
+            {
+              phase: "Immediate",
+              title: "Review visible evidence",
+              summary: "Proceed with review.",
+            },
+          ],
+          commercialEvidenceState: "available",
+        }),
+      ),
+    );
+
+    expect(metricsText).toContain("Quotation Decision Coverage 50%");
+    expect(metricsText).toContain("Quotation Award Rate 50%");
+    expect(metricsText).toContain("Average Quotations per RFQ 2.0");
+    expect(opportunityText).toContain("Decision Intelligence Available");
+    expect(opportunityText).toContain("[01] Highest commercial priority");
+    expect(ceoText).toContain("Active and decision-ready");
+    expect(ceoText).toContain("Executive priority is ready for review");
+    expect(ceoText).toContain("CEO decision layer is active");
+    const commandText = renderedText(
+      renderToStaticMarkup(
+        createElement(ProcurementCommandCenter, {
+          procurementCommandRoom: [
+            { title: "Board Readiness", value: "Board Ready" },
+          ],
+          procurementCommandRoomStatus: "Executive Control",
+          procurementCommandCenter: [
+            {
+              title: "Decision Readiness",
+              value: "Board Ready",
+              status: "Active",
+            },
+          ],
+          commandCenterStatus: "Command Ready",
+          executiveCommandRecommendation: "Proceed with review.",
+        }),
+      ),
+    );
+    expect(commandText).toContain("Command room readiness is active");
+    expect(commandText).toContain("Command center alignment is active");
+    expect(commandText).toContain("active command environment");
+    expect(commandText).toContain("Command alignment active");
+    expect(formatCommercialCurrencyEvidence("available", 25000)).toBe(
+      "$25,000",
+    );
   });
 });

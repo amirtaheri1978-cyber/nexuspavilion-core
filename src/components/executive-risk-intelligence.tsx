@@ -1,3 +1,5 @@
+import type { CommercialEvidenceState } from "@/lib/analytics/commercial/commercial-insights";
+
 type SupplierPerformanceEvidence = {
   name: string | null;
   quotes: number;
@@ -8,11 +10,48 @@ type SupplierPerformanceEvidence = {
 
 type ExecutiveRiskIntelligenceProps = {
   supplierRanking: SupplierPerformanceEvidence[];
+  supplierCommercialEvidenceState: CommercialEvidenceState;
 };
 
 export default function ExecutiveRiskIntelligence({
   supplierRanking,
+  supplierCommercialEvidenceState,
 }: ExecutiveRiskIntelligenceProps) {
+  if (supplierCommercialEvidenceState !== "available") {
+    const evidenceLabel =
+      supplierCommercialEvidenceState === "access-restricted"
+        ? "Access Restricted"
+        : supplierCommercialEvidenceState === "policy-locked"
+          ? "Policy Locked"
+          : "Insufficient Data";
+    const evidenceDescription =
+      supplierCommercialEvidenceState === "access-restricted"
+        ? "Supplier performance evidence is restricted for the current workspace membership. Supplier identities and commercial history remain unavailable."
+        : supplierCommercialEvidenceState === "policy-locked"
+          ? "Submission activity is recorded, but supplier identities, award history, win rates, and commercial ranking remain sealed until the applicable RFQ submission deadlines pass."
+          : "Supplier performance evidence is insufficient for supplier identity, award history, win-rate, or commercial-ranking conclusions."
+
+    return (
+      <section
+        aria-labelledby="supplier-network-benchmark-heading"
+        className="mt-8 overflow-hidden rounded-[34px] border border-white/10 bg-[#061426]/88 p-6 text-white shadow-executive sm:p-8"
+      >
+        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[#C8A646] sm:text-[11px]">
+          Supplier Performance Evidence
+        </p>
+        <h2
+          id="supplier-network-benchmark-heading"
+          className="mt-4 text-3xl font-black tracking-tight text-white sm:text-4xl"
+        >
+          Commercial Evidence {evidenceLabel}
+        </h2>
+        <p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-400 sm:text-base">
+          {evidenceDescription}
+        </p>
+      </section>
+    );
+  }
+
   const topSupplier = supplierRanking[0] || null;
 
   const suppliersWithAwardHistory = supplierRanking.filter(

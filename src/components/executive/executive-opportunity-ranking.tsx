@@ -1,3 +1,5 @@
+import type { CommercialEvidenceState } from "@/lib/analytics/commercial/commercial-insights";
+
 type ExecutiveOpportunity = {
   title: string;
   priority: string;
@@ -18,12 +20,51 @@ type ExecutiveOpportunityIntelligence = ExecutiveOpportunity & {
 type ExecutiveOpportunityRankingProps = {
   opportunities: ExecutiveOpportunity[];
   intelligence: ExecutiveOpportunityIntelligence[];
+  commercialEvidenceState?: CommercialEvidenceState;
 };
 
 export function ExecutiveOpportunityRanking({
   opportunities,
   intelligence,
+  commercialEvidenceState = "available",
 }: ExecutiveOpportunityRankingProps) {
+  if (commercialEvidenceState !== "available") {
+    const evidenceLabel =
+      commercialEvidenceState === "access-restricted"
+        ? "Access Restricted"
+        : commercialEvidenceState === "policy-locked"
+          ? "Policy Locked"
+          : "Insufficient Data";
+
+    return (
+      <section
+        aria-labelledby="executive-opportunity-ranking-heading"
+        className="mt-8 overflow-hidden rounded-[34px] border border-white/10 bg-[#061426]/88 text-white shadow-executive"
+      >
+        <header className="border-b border-white/10 p-6 sm:p-8">
+          <p className="text-[10px] font-black uppercase tracking-[0.28em] text-[#C8A646] sm:text-[11px]">
+            Executive Opportunity Portfolio
+          </p>
+          <h2
+            id="executive-opportunity-ranking-heading"
+            className="mt-4 text-3xl font-black tracking-tight text-white sm:text-4xl"
+          >
+            Opportunity Evidence {evidenceLabel}
+          </h2>
+          <p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-400">
+            Commercial opportunity ranking is withheld until the required
+            quotation evidence becomes available under the current controls.
+          </p>
+        </header>
+        <div className="p-6 sm:p-8">
+          <EmptyState
+            message={`${evidenceLabel}: no authoritative commercial opportunity ranking is available.`}
+          />
+        </div>
+      </section>
+    );
+  }
+
   const hasData = opportunities.length > 0 || intelligence.length > 0;
   const topOpportunity = opportunities[0];
   const topOpportunityIntelligence = intelligence[0];

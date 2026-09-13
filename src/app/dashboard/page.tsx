@@ -8,6 +8,7 @@ import { GovernanceReferenceWorkspace } from "@/components/dashboard/governance-
 import { ProcurementOperationsWorkspace } from "@/components/dashboard/procurement-operations-workspace";
 import { StrategicIntelligenceWorkspace } from "@/components/dashboard/strategic-intelligence-workspace";
 import { buildPortfolioIntelligence } from "@/lib/analytics/portfolio/portfolio-intelligence";
+import { isRfqCommercialOpeningUnlocked } from "@/lib/procurement/rfq-commercial-intelligence";
 import { EXECUTIVE_PAGE_CLASS } from "@/lib/design-system/executive-contract";
 import { createClient } from "@/lib/supabase/server";
 
@@ -30,6 +31,7 @@ type RFQ = {
   budget: number | string | null;
   status: string | null;
   created_at: string | null;
+  deadline: string | null;
   procurement_scope: ProcurementScope | null;
   sourcing_method: SourcingMethod | null;
   contract_framework: ContractFramework | null;
@@ -121,6 +123,19 @@ function formatMoney(value: number | string | null | undefined) {
   }
 
   return `$${amount.toLocaleString()}`;
+}
+
+function readSafeSubmissionCount(value: unknown) {
+  if (
+    typeof value !== "number" ||
+    !Number.isFinite(value) ||
+    value < 0 ||
+    !Number.isInteger(value)
+  ) {
+    return null;
+  }
+
+  return value;
 }
 
 function buildReadinessItems({
@@ -229,14 +244,46 @@ export default async function DashboardPage() {
   }
 
   const rfqList = (rfqResult.data ?? []) as RFQ[];
-  const rfqIds = rfqList.map((rfq) => rfq.id);
+  const dashboardAsOf = new Date();
+  const commerciallyOpenRfqIds = rfqList
+    .filter((rfq) =>
+      isRfqCommercialOpeningUnlocked({
+        deadline: rfq.deadline,
+        now: dashboardAsOf,
+      }),
+    )
+    .map((rfq) => rfq.id);
+
+  const safeSubmissionCountResults = await Promise.all(
+    rfqList.map((rfq) =>
+      supabase.rpc("count_rfq_quote_submissions", {
+        p_rfq_id: rfq.id,
+      }),
+    ),
+  );
+
+  let safeSubmissionCount = 0;
+
+  for (const result of safeSubmissionCountResults) {
+    const count = readSafeSubmissionCount(result.data);
+
+    if (result.error || count === null) {
+      console.error(
+        "Dashboard safe submission count load failed:",
+        result.error ?? "Invalid aggregate count response.",
+      );
+      throw new Error("Unable to load company quote submission counts.");
+    }
+
+    safeSubmissionCount += count;
+  }
 
   const { data: quotes, error: quotesError } =
-    rfqIds.length > 0
+    commerciallyOpenRfqIds.length > 0
       ? await supabase
           .from("quotes")
           .select("*")
-          .in("rfq_id", rfqIds)
+          .in("rfq_id", commerciallyOpenRfqIds)
           .order("created_at", { ascending: false })
       : { data: [] as Quote[], error: null };
 
@@ -253,22 +300,31 @@ export default async function DashboardPage() {
   });
 
   const awardedQuotes = quoteList.filter((quote) => quote.decision === "awarded");
+  const awardedRfqIds = new Set(awardedQuotes.map((quote) => quote.rfq_id));
   const awardedRfqs = rfqList.filter((rfq) => rfq.status === "awarded").length;
+  const hasIncompleteCommercialQuoteCoverage =
+    safeSubmissionCount > portfolio.supplierQuotes;
 
   const hasProcurementData =
     portfolio.totalRfqs > 0 ||
     portfolio.supplierQuotes > 0 ||
     portfolio.awardedContracts > 0;
 
-  const budgetVariance = Math.max(
-    portfolio.budgetTotal - portfolio.awardedVolume,
-    0,
-  );
+  const awardedRfqBudgetTotal = rfqList.reduce((total, rfq) => {
+    if (!awardedRfqIds.has(rfq.id)) return total;
+
+    const budget = Number(rfq.budget);
+    return Number.isFinite(budget) ? total + Math.max(budget, 0) : total;
+  }, 0);
+  const hasAwardEvidence = awardedQuotes.length > 0;
+  const budgetVariance = hasAwardEvidence
+    ? Math.max(awardedRfqBudgetTotal - portfolio.awardedVolume, 0)
+    : null;
 
   const readinessItems = buildReadinessItems({
     company: currentCompany,
     totalRfqs: portfolio.totalRfqs,
-    supplierQuotes: portfolio.supplierQuotes,
+    supplierQuotes: safeSubmissionCount,
   });
   const readinessScore = calculateReadinessScore(readinessItems);
 
@@ -341,6 +397,25 @@ export default async function DashboardPage() {
       { label: "Sealed Bid", value: sealedBidRfqs },
     ].sort((a, b) => b.value - a.value)[0]?.label || "N/A";
 
+  const supplierQuoteCoverage =
+    safeSubmissionCount === 0
+      ? {
+          value: "No Submissions",
+          detail:
+            "No supplier quotes have been received on company-owned RFQs.",
+        }
+      : safeSubmissionCount < 3
+        ? {
+            value: "Limited",
+            detail:
+              "Few supplier quotes have been received on company-owned RFQs. Invite additional suppliers to improve coverage.",
+          }
+        : {
+            value: "Active",
+            detail:
+              "Supplier quotes have been received across the current RFQ portfolio.",
+          };
+
   const alerts: WorkspaceAlert[] = [];
 
   if (!hasProcurementData) {
@@ -361,16 +436,18 @@ export default async function DashboardPage() {
     });
   }
 
-  if (portfolio.supplierQuotes < 3 && hasProcurementData) {
+  if (safeSubmissionCount < 3 && hasProcurementData) {
     alerts.push({
       level: "warning",
-      title: "Supplier Quote Coverage Is Limited",
-      message:
-        "Few supplier quotes have been received on company-owned RFQs. Invite additional suppliers to improve coverage.",
+      title:
+        safeSubmissionCount === 0
+          ? "No Supplier Quote Submissions"
+          : "Supplier Quote Coverage Is Limited",
+      message: supplierQuoteCoverage.detail,
     });
   }
 
-  if (budgetVariance > 0 && hasProcurementData) {
+  if (budgetVariance !== null && budgetVariance > 0 && hasProcurementData) {
     alerts.push({
       level: "opportunity",
       title: "Budget-to-Award Variance Recorded",
@@ -382,11 +459,8 @@ export default async function DashboardPage() {
   const decisionSignals = [
     {
       title: "Supplier Quote Coverage",
-      value: portfolio.supplierQuotes < 3 ? "Limited" : "Active",
-      detail:
-        portfolio.supplierQuotes < 3
-          ? "Few supplier quotes have been received on company-owned RFQs."
-          : "Supplier quotes have been received across the current RFQ portfolio.",
+      value: supplierQuoteCoverage.value,
+      detail: supplierQuoteCoverage.detail,
     },
     {
       title: "RFQ Classification",
@@ -401,16 +475,23 @@ export default async function DashboardPage() {
     },
     {
       title: "Budget-to-Award Variance",
-      value: budgetVariance > 0 ? formatMoney(budgetVariance) : "None Recorded",
+      value:
+        budgetVariance === null
+          ? "Insufficient Data"
+          : budgetVariance > 0
+            ? formatMoney(budgetVariance)
+            : "None Recorded",
       detail:
-        budgetVariance > 0
-          ? "Difference between planned budget and awarded spend on recorded RFQs; not a validated savings measure."
-          : "No budget-to-award variance is currently recorded across the portfolio.",
+        budgetVariance === null
+          ? "Award evidence is required before budget-to-award variance can be calculated."
+          : budgetVariance > 0
+            ? "Difference between awarded-RFQ planned budget and awarded spend; not a validated savings measure."
+            : "No budget-to-award variance is currently recorded for awarded RFQs.",
     },
   ];
 
   const executiveBriefSummary = hasProcurementData
-    ? `${portfolio.totalRfqs} company-owned RFQs, ${portfolio.supplierQuotes} supplier quotes received, ${portfolio.awardedContracts} awarded quotes, and ${formatMoney(portfolio.awardedVolume)} in awarded spend are currently recorded.`
+    ? `${portfolio.totalRfqs} company-owned RFQs, ${safeSubmissionCount} supplier quotes received, ${portfolio.awardedContracts} awarded quotes, and ${formatMoney(portfolio.awardedVolume)} in awarded spend are currently recorded.`
     : "Procurement overview is available, but more company-owned RFQ, quote, and award data is required before portfolio signals can be interpreted.";
 
   const executiveDecisionStatus = {
@@ -430,7 +511,7 @@ export default async function DashboardPage() {
     {
       label: "Supplier Quotes Received",
       value: hasProcurementData
-        ? String(portfolio.supplierQuotes)
+        ? String(safeSubmissionCount)
         : "Insufficient Data",
       tone: "neutral" as const,
       insight:
@@ -460,7 +541,7 @@ export default async function DashboardPage() {
   ];
 
   const portfolioNarrative = hasProcurementData
-    ? `The company portfolio includes ${portfolio.totalRfqs} owned RFQs (${portfolio.activeRfqs} active), ${portfolio.supplierQuotes} supplier quotes received, ${awardedRfqs} awarded RFQs, and ${formatMoney(portfolio.awardedVolume)} in awarded spend against ${formatMoney(portfolio.budgetTotal)} in planned budget.`
+    ? `The company portfolio includes ${portfolio.totalRfqs} owned RFQs (${portfolio.activeRfqs} active), ${safeSubmissionCount} supplier quotes received, ${awardedRfqs} awarded RFQs, and ${formatMoney(portfolio.awardedVolume)} in awarded spend against ${formatMoney(portfolio.budgetTotal)} in planned budget.`
     : "Insufficient Data. Create company-owned RFQs and record supplier quote or award activity to populate the portfolio snapshot.";
 
   const portfolioAvailability = {
@@ -479,9 +560,14 @@ export default async function DashboardPage() {
     },
     {
       label: "Potential Budget Variance",
-      value: hasProcurementData ? formatMoney(budgetVariance) : "Pending",
+      value:
+        hasProcurementData && budgetVariance !== null
+          ? formatMoney(budgetVariance)
+          : "Insufficient Data",
       insight:
-        "Planned budget minus awarded spend on recorded RFQs; not a validated savings measure.",
+        budgetVariance === null
+          ? "Award evidence is required before budget-to-award variance can be calculated."
+          : "Awarded-RFQ planned budget minus awarded spend; not a validated savings measure.",
       tone: "gold" as const,
     },
   ];
@@ -496,9 +582,13 @@ export default async function DashboardPage() {
     {
       title: "Avg Quotes per RFQ",
       value: hasProcurementData
-        ? String(portfolio.avgQuotesPerRfq)
+        ? hasIncompleteCommercialQuoteCoverage
+          ? "Policy Locked"
+          : String(portfolio.avgQuotesPerRfq)
         : "Insufficient Data",
-      insight: "Supplier quotes received divided by company-owned RFQs.",
+      insight: hasIncompleteCommercialQuoteCoverage
+        ? "Commercial quote coverage remains policy locked until sealed submissions open."
+        : "Commercially visible supplier quotes divided by company-owned RFQs.",
       tone: "blue" as const,
     },
     {

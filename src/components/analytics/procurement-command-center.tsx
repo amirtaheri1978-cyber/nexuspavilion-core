@@ -28,6 +28,10 @@ export function ProcurementCommandCenter({
   commandCenterStatus,
   executiveCommandRecommendation,
 }: ProcurementCommandCenterProps) {
+  const evidencePolicyLocked =
+    procurementCommandRoomStatus === "Policy Locked" ||
+    commandCenterStatus === "Policy Locked";
+
   return (
     <ExecutivePanel variant="boardroom" padding="lg" tone="blue">
       <header className="grid min-w-0 gap-6 border-b border-white/10 pb-7 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-end">
@@ -155,16 +159,32 @@ export function ProcurementCommandCenter({
           <ExecutiveInsightCard
             title={procurementCommandRoomStatus}
             insight={executiveCommandRecommendation}
-            recommendation="Use command room signals to align procurement performance, supplier strength, and board confidence."
-            impact="Command room readiness is active."
+            recommendation={
+              evidencePolicyLocked
+                ? "Defer commercial command decisions until governed evidence becomes available."
+                : "Use command room signals to align procurement performance, supplier strength, and board confidence."
+            }
+            impact={
+              evidencePolicyLocked
+                ? "Command room evidence remains policy locked."
+                : "Command room readiness is active."
+            }
             tone="blue"
           />
 
           <ExecutiveInsightCard
             title={commandCenterStatus}
             insight={executiveCommandRecommendation}
-            recommendation="Prioritize procurement actions with the strongest decision confidence and business impact."
-            impact="Command center alignment is active."
+            recommendation={
+              evidencePolicyLocked
+                ? "Defer commercial prioritization until governed evidence becomes available."
+                : "Prioritize procurement actions with the strongest decision confidence and business impact."
+            }
+            impact={
+              evidencePolicyLocked
+                ? "Command center alignment awaits complete commercial evidence."
+                : "Command center alignment is active."
+            }
             tone="gold"
           />
         </div>
@@ -182,8 +202,9 @@ export function ProcurementCommandCenter({
             </p>
 
             <p className="mt-3 text-xs font-semibold leading-5 text-nexus-muted">
-              Consolidated leadership direction derived from the active command
-              environment.
+              {evidencePolicyLocked
+                ? "Consolidated leadership direction is deferred pending complete commercial evidence."
+                : "Consolidated leadership direction derived from the active command environment."}
             </p>
           </div>
 
@@ -210,7 +231,9 @@ export function ProcurementCommandCenter({
               </p>
 
               <p className="text-[10px] font-black uppercase tracking-[0.15em] text-blue-300">
-                Command alignment active
+                {evidencePolicyLocked
+                  ? "Policy locked"
+                  : "Command alignment active"}
               </p>
             </div>
           </div>

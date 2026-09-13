@@ -1,9 +1,17 @@
 import { ExecutivePanel } from "@/components/executive/executive-panel";
+import type { CommercialEvidenceState } from "@/lib/analytics/commercial/commercial-insights";
 import type { ProcurementInsightMetrics as ProcurementInsightMetricsModel } from "@/lib/analytics/portfolio/portfolio-intelligence";
 
 type ProcurementInsightMetricsProps = {
   metrics: ProcurementInsightMetricsModel;
+  commercialEvidenceState?: CommercialEvidenceState;
 };
+
+function getCommercialEvidenceLabel(state: CommercialEvidenceState): string {
+  if (state === "available") return "";
+  if (state === "access-restricted") return "Access Restricted";
+  return state === "policy-locked" ? "Policy Locked" : "Insufficient Data";
+}
 
 function formatPercentage(value: number | null): string {
   return value == null ? "Insufficient Data" : `${value}%`;
@@ -51,12 +59,18 @@ function EvidenceMetric({
 
 export function ProcurementInsightMetrics({
   metrics,
+  commercialEvidenceState = "available",
 }: ProcurementInsightMetricsProps) {
   const activeAge = metrics.averageActiveRfqAge;
   const submissionCoverage = metrics.rfqSubmissionCoverage;
   const decisionCoverage = metrics.quotationDecisionCoverage;
   const quotationAwardRate = metrics.quotationAwardRate;
   const averageQuotations = metrics.averageQuotationsPerRfq;
+  const commercialEvidenceLabel = getCommercialEvidenceLabel(
+    commercialEvidenceState,
+  );
+  const commercialEvidenceAvailable = commercialEvidenceState === "available";
+  const commercialEvidenceDescription = `${commercialEvidenceLabel}: commercial quotation evidence is unavailable under the current evidence controls.`;
 
   return (
     <ExecutivePanel
@@ -95,23 +109,47 @@ export function ProcurementInsightMetrics({
 
         <EvidenceMetric
           label="Quotation Decision Coverage"
-          value={formatPercentage(decisionCoverage.percentage)}
+          value={
+            commercialEvidenceAvailable
+              ? formatPercentage(decisionCoverage.percentage)
+              : commercialEvidenceLabel
+          }
           definition="Submitted quotation rows with a recorded non-empty decision."
-          evidence={`${decisionCoverage.numerator} quotations with decisions / ${decisionCoverage.denominator} submitted quotations`}
+          evidence={
+            commercialEvidenceAvailable
+              ? `${decisionCoverage.numerator} quotations with decisions / ${decisionCoverage.denominator} submitted quotations`
+              : commercialEvidenceDescription
+          }
         />
 
         <EvidenceMetric
           label="Quotation Award Rate"
-          value={formatPercentage(quotationAwardRate.percentage)}
+          value={
+            commercialEvidenceAvailable
+              ? formatPercentage(quotationAwardRate.percentage)
+              : commercialEvidenceLabel
+          }
           definition="Awarded quotation rows across all submitted quotation rows."
-          evidence={`${quotationAwardRate.numerator} awarded quotations / ${quotationAwardRate.denominator} submitted quotations`}
+          evidence={
+            commercialEvidenceAvailable
+              ? `${quotationAwardRate.numerator} awarded quotations / ${quotationAwardRate.denominator} submitted quotations`
+              : commercialEvidenceDescription
+          }
         />
 
         <EvidenceMetric
           label="Average Quotations per RFQ"
-          value={formatAverage(averageQuotations.value, "quotations")}
+          value={
+            commercialEvidenceAvailable
+              ? formatAverage(averageQuotations.value, "quotations")
+              : commercialEvidenceLabel
+          }
           definition="Submitted quotation rows distributed across all company-scoped RFQs."
-          evidence={`${averageQuotations.numerator} submitted quotations / ${averageQuotations.denominator} total RFQs`}
+          evidence={
+            commercialEvidenceAvailable
+              ? `${averageQuotations.numerator} submitted quotations / ${averageQuotations.denominator} total RFQs`
+              : commercialEvidenceDescription
+          }
         />
 
         <article className="min-w-0 rounded-2xl border border-amber-300/20 bg-amber-300/[0.04] p-5">

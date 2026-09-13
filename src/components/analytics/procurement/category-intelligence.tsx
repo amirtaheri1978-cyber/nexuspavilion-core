@@ -1,11 +1,14 @@
+import type { CommercialEvidenceState } from "@/lib/analytics/commercial/commercial-insights";
+
 type CategoryIntelligenceItem = {
   category: string;
   rfqs: number;
   quotes: number;
-  awards: number;
-  winRate: number;
-  spend: number;
-  opportunityScore: number;
+  commercialEvidenceState: CommercialEvidenceState;
+  awards: number | null;
+  winRate: number | null;
+  spend: number | null;
+  opportunityScore: number | null;
 };
 
 type CategoryIntelligenceProps = {
@@ -155,8 +158,20 @@ export default function CategoryIntelligence({
               </thead>
 
               <tbody>
-                {categoryIntelligence.map((item, index) => (
-                  <tr
+                {categoryIntelligence.map((item, index) => {
+                  const commercialEvidenceLabel =
+                    item.commercialEvidenceState === "available"
+                      ? null
+                      : item.commercialEvidenceState === "access-restricted"
+                        ? "Access Restricted"
+                        : item.commercialEvidenceState === "policy-locked"
+                          ? "Policy Locked"
+                          : "Insufficient Data";
+                  const commercialEvidenceUnavailable =
+                    commercialEvidenceLabel !== null;
+
+                  return (
+                    <tr
                     key={item.category}
                     className="group border-b border-white/5 transition-colors last:border-b-0 hover:bg-white/[0.035]"
                   >
@@ -203,7 +218,9 @@ export default function CategoryIntelligence({
 
                     <td className="px-5 py-5 text-right align-middle">
                       <p className="text-sm font-black tabular-nums text-white">
-                        {item.awards.toLocaleString()}
+                        {commercialEvidenceUnavailable
+                          ? commercialEvidenceLabel
+                          : item.awards?.toLocaleString()}
                       </p>
 
                       <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-nexus-muted">
@@ -212,7 +229,12 @@ export default function CategoryIntelligence({
                     </td>
 
                     <td className="px-5 py-5 align-middle">
-                      <div className="min-w-0">
+                      {commercialEvidenceUnavailable ? (
+                        <p className="text-sm font-black text-white">
+                          {commercialEvidenceLabel}
+                        </p>
+                      ) : (
+                        <div className="min-w-0">
                         <div className="flex items-center justify-between gap-3">
                           <p className="text-sm font-black tabular-nums text-white">
                             {item.winRate}%
@@ -231,18 +253,21 @@ export default function CategoryIntelligence({
                             className="h-full rounded-full bg-emerald-300/75"
                             style={{
                               width: `${Math.min(
-                                Math.max(item.winRate, 0),
+                                Math.max(item.winRate ?? 0, 0),
                                 100,
                               )}%`,
                             }}
                           />
                         </div>
-                      </div>
+                        </div>
+                      )}
                     </td>
 
                     <td className="px-5 py-5 text-right align-middle">
                       <p className="text-sm font-black tabular-nums text-white">
-                        ${item.spend.toLocaleString()}
+                        {commercialEvidenceUnavailable
+                          ? commercialEvidenceLabel
+                          : `$${item.spend?.toLocaleString()}`}
                       </p>
 
                       <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-nexus-muted">
@@ -251,7 +276,12 @@ export default function CategoryIntelligence({
                     </td>
 
                     <td className="px-5 py-5 align-middle">
-                      <div className="min-w-0">
+                      {commercialEvidenceUnavailable ? (
+                        <p className="text-sm font-black text-white">
+                          {commercialEvidenceLabel}
+                        </p>
+                      ) : (
+                        <div className="min-w-0">
                         <div className="flex items-center justify-between gap-3">
                           <span className="inline-flex items-center rounded-full border border-nexus-gold/25 bg-nexus-gold/[0.08] px-3 py-1.5 text-xs font-black tabular-nums text-nexus-gold">
                             {item.opportunityScore}/100
@@ -270,16 +300,18 @@ export default function CategoryIntelligence({
                             className="h-full rounded-full bg-nexus-gold/80"
                             style={{
                               width: `${Math.min(
-                                Math.max(item.opportunityScore, 0),
+                                Math.max(item.opportunityScore ?? 0, 0),
                                 100,
                               )}%`,
                             }}
                           />
                         </div>
-                      </div>
+                        </div>
+                      )}
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>

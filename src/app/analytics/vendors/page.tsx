@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { getActiveMembershipForUserCompany } from "@/lib/auth/membership";
+import { isRfqCommercialOpeningUnlocked } from "@/lib/procurement/rfq-commercial-intelligence";
 import { createClient } from "@/lib/supabase/server";
 import {
   APPROVED_VENDOR_DOMAIN_AVAILABLE,
@@ -21,6 +22,10 @@ import { daysUntil } from "@/components/vendor-intelligence/vendor-display-utils
 type Compliance = VendorWorkspaceCompliance;
 type QuotePerformance = VendorWorkspaceQuote;
 type ApprovedVendor = VendorWorkspaceApprovedVendor;
+type VendorCommercialRfq = {
+  id: string;
+  deadline: string | null;
+};
 
 function getComplianceForVendor(
 complianceList: Compliance[],
@@ -101,7 +106,7 @@ redirect("/analytics");
 
 const companyId = activeMembership.companyId;
 
-const [approvedVendorsResult, complianceResult] = await Promise.all([
+const [approvedVendorsResult, complianceResult, rfqResult] = await Promise.all([
 APPROVED_VENDOR_DOMAIN_AVAILABLE
 ? supabase
 .from("approved_vendors")
@@ -134,10 +139,19 @@ SUPPLIER_COMPLIANCE_DOMAIN_AVAILABLE
 )
 .eq("buyer_company_id", companyId)
 : { data: [] as Compliance[] },
+supabase
+.from("rfqs")
+.select("id, deadline")
+.eq("company_id", companyId),
 ]);
 
 const { data: approvedVendorsData } = approvedVendorsResult;
 const { data: complianceData } = complianceResult;
+const { data: commercialRfqsData, error: commercialRfqsError } = rfqResult;
+
+if (commercialRfqsError) {
+throw new Error("Unable to load buyer RFQ commercial-opening context.");
+}
 
 const vendorCompanyIds = approvedVendorsData
 ? approvedVendorsData
@@ -145,12 +159,25 @@ const vendorCompanyIds = approvedVendorsData
 .filter(Boolean)
 : [];
 
+const commercialAsOf = new Date();
+const commerciallyOpenRfqIds = (
+(commercialRfqsData ?? []) as VendorCommercialRfq[]
+)
+.filter((rfq) =>
+isRfqCommercialOpeningUnlocked({
+deadline: rfq.deadline,
+now: commercialAsOf,
+})
+)
+.map((rfq) => rfq.id);
+
 const { data: quotePerformanceData } =
-vendorCompanyIds.length > 0
+vendorCompanyIds.length > 0 && commerciallyOpenRfqIds.length > 0
 ? await supabase
 .from("quotes")
 .select("id, rfq_id, company_id, amount, decision, created_at, awarded_at")
 .in("company_id", vendorCompanyIds)
+.in("rfq_id", commerciallyOpenRfqIds)
 : { data: [] };
 
 const approvedVendors = (approvedVendorsData ?? []) as unknown as ApprovedVendor[];

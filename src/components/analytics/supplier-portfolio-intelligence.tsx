@@ -1,8 +1,10 @@
 import { ExecutiveMetricCard } from "@/components/executive/executive-metric-card";
 import { ExecutivePanel } from "@/components/executive/executive-panel";
+import type { CommercialEvidenceState } from "@/lib/analytics/commercial/commercial-insights";
 
 type SupplierPortfolioIntelligenceProps = {
-  portfolioHealthIndex: number;
+  commercialEvidenceState: CommercialEvidenceState;
+  portfolioHealthIndex: number | null;
   supplierParticipationCount: number;
   awardHistoryCoverage: number;
   suppliersWithAwardHistory: number;
@@ -14,6 +16,7 @@ type SupplierPortfolioIntelligenceProps = {
 };
 
 export function SupplierPortfolioIntelligence({
+  commercialEvidenceState,
   portfolioHealthIndex,
   supplierParticipationCount,
   awardHistoryCoverage,
@@ -24,6 +27,17 @@ export function SupplierPortfolioIntelligence({
   portfolioStatus,
   portfolioRecommendations,
 }: SupplierPortfolioIntelligenceProps) {
+  const commercialEvidenceLocked =
+    commercialEvidenceState !== "available" || portfolioHealthIndex === null;
+  const lockedValue =
+    commercialEvidenceState === "access-restricted"
+      ? "Access Restricted"
+      : commercialEvidenceState === "policy-locked"
+        ? "Policy Locked"
+        : "Insufficient Data";
+  const lockedDescription =
+    "Supplier identities and commercial history remain sealed until the applicable RFQ submission deadlines pass.";
+
   return (
     <ExecutivePanel
       aria-labelledby="supplier-portfolio-intelligence-heading"
@@ -75,7 +89,7 @@ export function SupplierPortfolioIntelligence({
           </div>
 
           <p className="shrink-0 text-3xl font-black tabular-nums text-nexus-white">
-            {portfolioHealthIndex}/100
+            {commercialEvidenceLocked ? lockedValue : `${portfolioHealthIndex}/100`}
           </p>
         </div>
       </header>
@@ -99,57 +113,57 @@ export function SupplierPortfolioIntelligence({
           </div>
 
           <p className="max-w-xl text-xs font-semibold leading-5 text-nexus-muted sm:text-right">
-            Counts and coverage ratios use the full supplier population with
-            recorded quotation history. Ranking limits do not cap these
-            denominators.
+            {commercialEvidenceLocked
+              ? lockedDescription
+              : "Counts and coverage ratios use the full supplier population with recorded quotation history. Ranking limits do not cap these denominators."}
           </p>
         </div>
 
         <div className="mt-5 grid min-w-0 gap-4 md:grid-cols-2 xl:grid-cols-3">
           <ExecutiveMetricCard
             label="Participating Suppliers"
-            value={supplierParticipationCount.toString()}
-            insight="Full supplier population with recorded quotation history in the scoped portfolio."
+            value={commercialEvidenceLocked ? lockedValue : supplierParticipationCount.toString()}
+            insight={commercialEvidenceLocked ? lockedDescription : "Full supplier population with recorded quotation history in the scoped portfolio."}
             impact="Participation denominator"
             tone="blue"
           />
 
           <ExecutiveMetricCard
             label="Award-History Coverage"
-            value={`${awardHistoryCoverage}%`}
-            insight={`${suppliersWithAwardHistory} of ${supplierParticipationCount} participating suppliers have at least one recorded award.`}
+            value={commercialEvidenceLocked ? lockedValue : `${awardHistoryCoverage}%`}
+            insight={commercialEvidenceLocked ? lockedDescription : `${suppliersWithAwardHistory} of ${supplierParticipationCount} participating suppliers have at least one recorded award.`}
             impact="Defined supplier denominator"
             tone="gold"
           />
 
           <ExecutiveMetricCard
             label="Multiple Awards"
-            value={suppliersWithMultipleAwards.toString()}
-            insight="Suppliers with more than one recorded award across the portfolio."
+            value={commercialEvidenceLocked ? lockedValue : suppliersWithMultipleAwards.toString()}
+            insight={commercialEvidenceLocked ? lockedDescription : "Suppliers with more than one recorded award across the portfolio."}
             impact="Repeat award depth"
             tone="blue"
           />
 
           <ExecutiveMetricCard
             label="Limited Quote History"
-            value={suppliersWithLimitedQuoteHistory.toString()}
-            insight="Participating suppliers with fewer than three recorded quotations."
+            value={commercialEvidenceLocked ? lockedValue : suppliersWithLimitedQuoteHistory.toString()}
+            insight={commercialEvidenceLocked ? lockedDescription : "Participating suppliers with fewer than three recorded quotations."}
             impact="History-depth attention"
             tone="gold"
           />
 
           <ExecutiveMetricCard
             label="Internal Diversification Score"
-            value={`${supplierDiversificationScore}/100`}
-            insight="Participation-breadth threshold score based on participating supplier count; not a participation percentage."
+            value={commercialEvidenceLocked ? lockedValue : `${supplierDiversificationScore}/100`}
+            insight={commercialEvidenceLocked ? lockedDescription : "Participation-breadth threshold score based on participating supplier count; not a participation percentage."}
             impact="Internal breadth signal"
             tone="blue"
           />
 
           <ExecutiveMetricCard
             label="Portfolio Coverage Index"
-            value={`${portfolioHealthIndex}/100`}
-            insight="Composite internal signal from participation breadth and recorded commercial history."
+            value={commercialEvidenceLocked ? lockedValue : `${portfolioHealthIndex}/100`}
+            insight={commercialEvidenceLocked ? lockedDescription : "Composite internal signal from participation breadth and recorded commercial history."}
             impact="Internal coverage signal"
             tone="gold"
           />
@@ -185,39 +199,39 @@ export function SupplierPortfolioIntelligence({
             </p>
 
             <p className="mt-3 break-words text-2xl font-black leading-8 text-nexus-white [overflow-wrap:anywhere] sm:text-3xl">
-              {portfolioStatus}
+              {commercialEvidenceLocked ? lockedValue : portfolioStatus}
             </p>
           </div>
 
           <div className="mt-5 grid min-w-0 gap-3">
             <PortfolioAssessmentSignal
               label="Participation population"
-              value={supplierParticipationCount.toString()}
-              description="Full supplier population with recorded quotation history."
+              value={commercialEvidenceLocked ? lockedValue : supplierParticipationCount.toString()}
+              description={commercialEvidenceLocked ? lockedDescription : "Full supplier population with recorded quotation history."}
             />
 
             <PortfolioAssessmentSignal
               label="Award-history coverage"
-              value={`${awardHistoryCoverage}%`}
-              description={`${suppliersWithAwardHistory} of ${supplierParticipationCount} participating suppliers have recorded award history.`}
+              value={commercialEvidenceLocked ? lockedValue : `${awardHistoryCoverage}%`}
+              description={commercialEvidenceLocked ? lockedDescription : `${suppliersWithAwardHistory} of ${supplierParticipationCount} participating suppliers have recorded award history.`}
             />
 
             <PortfolioAssessmentSignal
               label="Repeat award depth"
-              value={suppliersWithMultipleAwards.toString()}
-              description="Suppliers with multiple recorded awards."
+              value={commercialEvidenceLocked ? lockedValue : suppliersWithMultipleAwards.toString()}
+              description={commercialEvidenceLocked ? lockedDescription : "Suppliers with multiple recorded awards."}
             />
 
             <PortfolioAssessmentSignal
               label="Limited quote history"
-              value={suppliersWithLimitedQuoteHistory.toString()}
-              description="Participating suppliers with fewer than three recorded quotations."
+              value={commercialEvidenceLocked ? lockedValue : suppliersWithLimitedQuoteHistory.toString()}
+              description={commercialEvidenceLocked ? lockedDescription : "Participating suppliers with fewer than three recorded quotations."}
             />
 
             <PortfolioAssessmentSignal
               label="Internal diversification score"
-              value={`${supplierDiversificationScore}/100`}
-              description="Participation-breadth threshold score; not a participation percentage."
+              value={commercialEvidenceLocked ? lockedValue : `${supplierDiversificationScore}/100`}
+              description={commercialEvidenceLocked ? lockedDescription : "Participation-breadth threshold score; not a participation percentage."}
             />
           </div>
         </section>

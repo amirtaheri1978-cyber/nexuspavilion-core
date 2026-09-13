@@ -8,6 +8,7 @@ import {
   isOpenRfqStatus,
   resolveSupplierRfqAccess,
 } from "@/lib/procurement/rfq-access-contract";
+import { isRfqCommercialOpeningUnlocked } from "@/lib/procurement/rfq-commercial-intelligence";
 import {
   type ProcurementExperienceResolution,
   resolveProcurementExperience,
@@ -239,19 +240,29 @@ async function loadSupplierQuotes(
 
 async function loadReceivedQuotes(
   supabase: ServerSupabaseClient,
-  ownedRfqIds: string[],
+  ownedRfqs: ProcurementRfq[],
 ) {
-  if (ownedRfqIds.length === 0) return [];
+  const commercialAsOf = new Date();
+  const commerciallyOpenRfqIds = ownedRfqs
+    .filter((rfq) =>
+      isRfqCommercialOpeningUnlocked({
+        deadline: rfq.deadline,
+        now: commercialAsOf,
+      }),
+    )
+    .map((rfq) => rfq.id);
+
+  if (commerciallyOpenRfqIds.length === 0) return [];
 
   const { data, error } = await supabase
     .from("quotes")
     .select("*")
-    .in("rfq_id", ownedRfqIds)
+    .in("rfq_id", commerciallyOpenRfqIds)
     .order("created_at", { ascending: false });
 
   if (error) {
     throw new ProcurementContextError(
-      "Unable to load quotations received on company RFQs.",
+      "Unable to load quotations received on commercially open company RFQs.",
       error,
     );
   }
@@ -400,7 +411,7 @@ export async function getProcurementContext(): Promise<ProcurementContext> {
 
   const receivedQuotes = await loadReceivedQuotes(
     supabase,
-    ownedRfqs.map((rfq) => rfq.id),
+    ownedRfqs,
   );
 
   const buyer = buildBuyerContext(ownedRfqs, receivedQuotes);

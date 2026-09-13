@@ -42,13 +42,6 @@ logo_url: string | null;
 created_at: string;
 };
 
-type Quote = {
-id: string;
-company_id: string | null;
-amount: number | string | null;
-decision: string | null;
-};
-
 type Profile = {
 company_id: string | null;
 role: string | null;
@@ -62,11 +55,6 @@ rating: number | null;
 
 const DIRECTORY_PAGE_SIZE = 12;
 
-function formatMoney(value: number) {
-if (!Number.isFinite(value)) return "$0";
-
-return `$${value.toLocaleString()}`;
-}
 
 function isSupplierCompany(company: Company) {
 const role = String(company.network_role || "").toLowerCase();
@@ -86,33 +74,21 @@ function canManageAvl(role: string | null | undefined) {
 return ["owner", "admin", "buyer"].includes(String(role || "").toLowerCase());
 }
 
-function getSupplierRank(score: number) {
-if (score >= 90) return "Top Tier";
-if (score >= 80) return "Preferred";
-if (score >= 70) return "Qualified";
-if (score >= 50) return "Developing";
+function getPublicEvidenceTier(score: number) {
+if (score >= 85) return "High Coverage";
+if (score >= 70) return "Established";
+if (score >= 55) return "Developing";
 
-return "Emerging";
+return "Limited Evidence";
 }
 
-function getReliabilitySignal(score: number) {
-if (score >= 90) return "Excellent";
-if (score >= 80) return "Strong";
-if (score >= 70) return "Reliable";
-if (score >= 50) return "Developing";
+function getPublicEvidenceSignal(score: number) {
+if (score >= 85) return "Strong";
+if (score >= 70) return "Established";
+if (score >= 55) return "Developing";
 
-return "Limited Data";
+return "Insufficient Data";
 }
-
-function getRankTone(rank: string) {
-if (rank === "Top Tier") return "success";
-if (rank === "Preferred") return "blue";
-if (rank === "Qualified") return "warning";
-if (rank === "Developing") return "warning";
-
-return "neutral";
-}
-
 function getAvlTone(status: string | null | undefined) {
 if (status === "approved") return "success";
 if (status === "conditional") return "warning";
@@ -131,63 +107,58 @@ if (status === "rejected") return "Rejected";
 return "Not in AVL";
 }
 
-function buildRankedCompanies(companies: Company[], quotes: Quote[]) {
+function buildRankedCompanies(
+companies: Company[],
+capabilitiesByCompany: Map<string, GroupedCompanyCapabilities>,
+qualificationsByCompany: Map<string, GroupedCompanyQualifications>,
+) {
 return companies.map((company) => {
-const companyQuotes = quotes.filter(
-(quote) => quote.company_id === company.id
-);
+const capabilityContext = capabilitiesByCompany.get(company.id);
+const qualificationContext = qualificationsByCompany.get(company.id);
 
-const awards = companyQuotes.filter(
-(quote) => quote.decision === "awarded"
-);
-
-const totalBidValue = companyQuotes.reduce((total, quote) => {
-const amount = Number(quote.amount);
-return total + (Number.isFinite(amount) ? amount : 0);
-}, 0);
-
-const awardedRevenue = awards.reduce((total, quote) => {
-const amount = Number(quote.amount);
-return total + (Number.isFinite(amount) ? amount : 0);
-}, 0);
-
-const quotesSubmitted = companyQuotes.length;
-const awardsWon = awards.length;
-
-const averageBid =
-quotesSubmitted > 0 ? Math.round(totalBidValue / quotesSubmitted) : 0;
-
-const winRate =
-quotesSubmitted > 0 ? Math.round((awardsWon / quotesSubmitted) * 100) : 0;
-
-const supplierScore = Math.min(
-100,
-Math.round(
-winRate * 0.45 +
-awardsWon * 12 +
-Math.min(awardedRevenue / 25000, 25) +
-Math.min(quotesSubmitted * 2, 15)
+const capabilityCount = capabilityContext
+? COMPANY_CAPABILITY_TYPES.reduce(
+(total, capabilityType) =>
+total + capabilityContext[capabilityType].length,
+0
 )
+: 0;
+
+const qualificationCount = qualificationContext
+? COMPANY_QUALIFICATION_TYPES.reduce(
+(total, qualificationType) =>
+total + qualificationContext[qualificationType].length,
+0
+)
+: 0;
+
+const verificationPoints = ["approved", "verified"].includes(
+String(company.status || "").toLowerCase()
+)
+? 50
+: 0;
+
+const publicEvidenceScore = Math.min(
+100,
+verificationPoints +
+Math.min(capabilityCount * 6, 30) +
+Math.min(qualificationCount * 10, 20)
 );
 
 return {
 ...company,
-quotesSubmitted,
-awardsWon,
-awardedRevenue,
-averageBid,
-winRate,
-supplierScore,
-supplierRank: getSupplierRank(supplierScore),
-reliabilitySignal: getReliabilitySignal(supplierScore),
+capabilityCount,
+qualificationCount,
+publicEvidenceScore,
+publicEvidenceTier: getPublicEvidenceTier(publicEvidenceScore),
+publicEvidenceSignal: getPublicEvidenceSignal(publicEvidenceScore),
 };
 });
-}
-export default function PublicDirectoryPage() {
+}export default function PublicDirectoryPage() {
 const supabase = useMemo(() => createClient(), []);
 
 const [companies, setCompanies] = useState<Company[]>([]);
-const [quotes, setQuotes] = useState<Quote[]>([]);
+
 const [capabilityRows, setCapabilityRows] = useState<CompanyCapabilityRecord[]>([]);
 const [qualificationRows, setQualificationRows] = useState<PublicCompanyQualificationRecord[]>([]);
 const [approvedVendors, setApprovedVendors] = useState<ApprovedVendor[]>([]);
@@ -250,7 +221,6 @@ const [
 { data: companiesData, error: companiesError },
 { data: capabilityData, error: capabilityError },
 { data: qualificationData, error: qualificationError },
-{ data: quotesData, error: quotesError },
 { data: approvedVendorData, error: approvedVendorError },
 ] = await Promise.all([
 supabase
@@ -271,7 +241,7 @@ supabase
 .order("sort_order", { ascending: true })
 .order("name", { ascending: true }),
 
-supabase.from("quotes").select("id, company_id, amount, decision"),
+
 
 approvedVendorQueryRequired
 ? supabase
@@ -286,27 +256,20 @@ const directoryLoadMessage =
 if (companiesError) {
 console.error("Company Network directory load failed.", companiesError);
 setCompanies([]);
-setQuotes([]);
 setApprovedVendors([]);
 setLoadError(directoryLoadMessage);
-} else if (quotesError) {
-console.error("Company Network ranking quote load failed.", quotesError);
-setCompanies([]);
-setQuotes([]);
-setApprovedVendors([]);
-setLoadError(directoryLoadMessage);
+
 } else if (approvedVendorQueryRequired && approvedVendorError) {
 console.error(
 "Company Network approved vendor load failed.",
 approvedVendorError,
 );
 setCompanies([]);
-setQuotes([]);
 setApprovedVendors([]);
 setLoadError(directoryLoadMessage);
 } else {
 setCompanies((companiesData ?? []) as Company[]);
-setQuotes((quotesData ?? []) as Quote[]);
+
 setApprovedVendors((approvedVendorData ?? []) as ApprovedVendor[]);
 setLoadError("");
 }
@@ -376,33 +339,32 @@ return groupedByCompany;
 }, [qualificationRows]);
 
 const rankedCompanies = useMemo(() => {
-return buildRankedCompanies(companies, quotes);
-}, [companies, quotes]);
+return buildRankedCompanies(
+companies,
+capabilitiesByCompany,
+qualificationsByCompany
+);
+}, [companies, capabilitiesByCompany, qualificationsByCompany]);
 
 const supplierCompanies = useMemo(() => {
 return rankedCompanies
 .filter((company) => isSupplierCompany(company))
-.sort((a, b) => b.supplierScore - a.supplierScore);
+.sort((a, b) => b.publicEvidenceScore - a.publicEvidenceScore);
 }, [rankedCompanies]);
 
 const topSupplier = supplierCompanies[0];
 
 const networkStats = useMemo(() => {
-const totalAwards = supplierCompanies.reduce(
-(total, company) => total + company.awardsWon,
-0
-);
+const supplierProfilesWithEvidence = supplierCompanies.filter(
+(company) =>
+company.capabilityCount > 0 || company.qualificationCount > 0
+).length;
 
-const totalRevenue = supplierCompanies.reduce(
-(total, company) => total + company.awardedRevenue,
-0
-);
-
-const averageScore =
+const averageEvidenceScore =
 supplierCompanies.length > 0
 ? Math.round(
 supplierCompanies.reduce(
-(total, company) => total + company.supplierScore,
+(total, company) => total + company.publicEvidenceScore,
 0
 ) / supplierCompanies.length
 )
@@ -423,9 +385,8 @@ const suspendedCount = approvedVendors.filter(
 return {
 companies: rankedCompanies.length,
 suppliers: supplierCompanies.length,
-totalAwards,
-totalRevenue,
-averageScore,
+supplierProfilesWithEvidence,
+averageEvidenceScore,
 approvedCount,
 conditionalCount,
 suspendedCount,
@@ -460,8 +421,8 @@ item.name.toLowerCase().includes(query) ||
 const supplierScopedMatch =
 isSupplierCompany(company) &&
 (
-company.supplierRank.toLowerCase().includes(query) ||
-company.reliabilitySignal.toLowerCase().includes(query) ||
+company.publicEvidenceTier.toLowerCase().includes(query) ||
+company.publicEvidenceSignal.toLowerCase().includes(query) ||
 avlStatus.toLowerCase().includes(query)
 );
 
@@ -632,21 +593,21 @@ detail="Approved and verified network companies"
 />
 
 <MetricCard
-title="Supplier Awards"
-value={String(networkStats.totalAwards)}
-detail="Awarded contracts tracked"
+title="Supplier Profiles"
+value={String(networkStats.suppliers)}
+detail="Supplier-scoped companies in the public network"
 />
 
 <MetricCard
-title="Supplier Awarded Value"
-value={formatMoney(networkStats.totalRevenue)}
-detail="Award value tracked for suppliers"
+title="Profiles with Evidence"
+value={String(networkStats.supplierProfilesWithEvidence)}
+detail="Supplier profiles with public capabilities or qualifications"
 />
 
 <MetricCard
-title="Avg Supplier Score"
-value={`${networkStats.averageScore}/100`}
-detail="Supplier intelligence average"
+title="Public Evidence Avg"
+value={`${networkStats.averageEvidenceScore}/100`}
+detail="Coverage score from public profile evidence only"
 />
 </section>
 ) : null}
@@ -667,24 +628,24 @@ Approved Vendor List
 <div className="grid gap-8 lg:grid-cols-[1.2fr_0.8fr]">
 <div>
 <p className="text-xs font-black uppercase tracking-[0.3em] text-[#C8A646]">
-Supplier Intelligence
+Public Supplier Evidence
 </p>
 
 <h2 className="mt-4 text-4xl font-black leading-tight text-white">
-Top ranked supplier: {topSupplier.name}
+Strongest public evidence profile: {topSupplier.name}
 </h2>
 
 <p className="mt-4 max-w-3xl text-sm font-semibold leading-7 text-slate-300">
-Nexus Pavilion ranks suppliers using quote volume, award
-history, win rate, awarded revenue, and network performance
-signals.
+Public evidence coverage is based only on verified company
+status, declared capabilities, and published qualifications.
+Commercial quote history and award-value signals are excluded.
 </p>
 </div>
 
 <div className="grid gap-3 sm:grid-cols-3">
-<DarkSignal title="Score" value={`${topSupplier.supplierScore}/100`} />
-<DarkSignal title="Rank" value={topSupplier.supplierRank} />
-<DarkSignal title="Reliability" value={topSupplier.reliabilitySignal} />
+<DarkSignal title="Coverage" value={`${topSupplier.publicEvidenceScore}/100`} />
+<DarkSignal title="Evidence Tier" value={topSupplier.publicEvidenceTier} />
+<DarkSignal title="Evidence Signal" value={topSupplier.publicEvidenceSignal} />
 </div>
 </div>
 </section>
@@ -806,7 +767,7 @@ isSupplierScopedCompany ? "md:grid-cols-2" : ""
 >
 <InfoBox title="Network Role" value={company.network_role} />
 {isSupplierScopedCompany ? (
-<InfoBox title="Supplier Rank" value={company.supplierRank} />
+<InfoBox title="Public Evidence" value={company.publicEvidenceTier} />
 ) : null}
 </div>
 </Link>
@@ -902,30 +863,30 @@ className="inline-flex max-w-full flex-wrap items-center rounded-full border bor
 {isSupplierScopedCompany ? (
 <div className="mt-5 grid gap-3 md:grid-cols-3">
 <SmallMetric
-title="Score"
-value={`${company.supplierScore}/100`}
+title="Public Evidence Coverage"
+value={`${company.publicEvidenceScore}/100`}
 />
 
 <SmallMetric
-title="Win"
-value={`${company.winRate}%`}
+title="Capabilities"
+value={String(company.capabilityCount)}
 />
 
 <SmallMetric
-title="Awards"
-value={String(company.awardsWon)}
+title="Qualifications"
+value={String(company.qualificationCount)}
 />
 </div>
 ) : null}
 
 {isSupplierScopedCompany ? (
 <div className="mt-5 flex flex-wrap gap-2">
-<StatusPill tone={getRankTone(company.supplierRank)}>
-{company.supplierRank}
+<StatusPill tone="blue">
+{company.publicEvidenceTier}
 </StatusPill>
 
 <StatusPill tone="blue">
-{company.reliabilitySignal}
+{company.publicEvidenceSignal}
 </StatusPill>
 
 {APPROVED_VENDOR_DOMAIN_AVAILABLE ? (
@@ -934,11 +895,7 @@ value={String(company.awardsWon)}
 </StatusPill>
 ) : null}
 
-{company.awardedRevenue > 0 && (
-<StatusPill tone="success">
-{formatMoney(company.awardedRevenue)}
-</StatusPill>
-)}
+
 </div>
 ) : null}
 

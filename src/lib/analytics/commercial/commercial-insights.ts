@@ -1,10 +1,9 @@
-import type { AnalyticsRFQ } from "@/lib/analytics/procurement-utils";
 import {
   buildAnalyticsRfqSourceHref,
-  resolveContractFramework,
-  resolveSourcingMethod,
+  type AnalyticsRFQ,
 } from "@/lib/analytics/procurement-utils";
 import type { AnalyticsQuote } from "@/lib/analytics/source-data/load-analytics-source-data";
+import { isRfqCommercialOpeningUnlocked } from "@/lib/procurement/rfq-commercial-intelligence";
 
 export type CommercialEvidenceState =
   | "access-restricted"
@@ -89,37 +88,14 @@ function getAverage(amounts: number[]): number | null {
   );
 }
 
-function getDeadlineMs(deadline: string | null | undefined): number | null {
-  const normalizedDeadline = deadline?.trim();
-
-  if (!normalizedDeadline) {
-    return null;
-  }
-
-  const deadlineMs = new Date(normalizedDeadline).getTime();
-
-  return Number.isFinite(deadlineMs) ? deadlineMs : null;
-}
-
 export function isAnalyticsCommerciallyUnlocked(
   rfq: AnalyticsRFQ,
   asOf: Date,
 ): boolean {
-  const sourcingMethod =
-    resolveSourcingMethod(rfq.sourcing_method) ?? "invited";
-  const contractFramework =
-    resolveContractFramework(rfq.contract_framework) ?? "project_specific";
-
-  if (
-    sourcingMethod === "open" &&
-    contractFramework !== "framework"
-  ) {
-    return true;
-  }
-
-  const deadlineMs = getDeadlineMs(rfq.deadline);
-
-  return deadlineMs !== null && deadlineMs < asOf.getTime();
+  return isRfqCommercialOpeningUnlocked({
+    deadline: rfq.deadline,
+    now: asOf,
+  });
 }
 
 function groupPositiveAmountsByRfq({
@@ -273,6 +249,7 @@ export function buildCommercialInsights({
   canViewIssuerCommercialAnalytics: boolean;
   asOf?: Date;
 }): CommercialInsights {
+  const hasValidAsOf = Number.isFinite(asOf.getTime());
   const resolvedAsOf = resolveAsOf(asOf);
 
   if (!canViewIssuerCommercialAnalytics) {
@@ -289,6 +266,24 @@ export function buildCommercialInsights({
       estimatedOpportunity: null,
       limitation:
         "Commercial pricing evidence is not available to the current workspace membership. Database row-level security remains authoritative.",
+      rfqEvidence: [],
+    };
+  }
+
+  if (!hasValidAsOf) {
+    return {
+      state: "policy-locked",
+      asOf: resolvedAsOf.toISOString(),
+      reviewThresholdPercentage:
+        HIGH_DEVIATION_REVIEW_THRESHOLD_PERCENTAGE,
+      unlockedRfqCount: 0,
+      lockedRfqCount: rfqList.length,
+      visiblePositiveQuoteCount: 0,
+      comparableRfqCount: 0,
+      highDeviationRfqCount: 0,
+      estimatedOpportunity: null,
+      limitation:
+        "Commercial pricing remains policy locked because the analytics evaluation clock is invalid.",
       rfqEvidence: [],
     };
   }

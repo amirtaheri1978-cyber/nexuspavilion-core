@@ -1,4 +1,5 @@
 import type { RiskComplianceEvidence } from "@/lib/analytics/executive/risk-intelligence";
+import type { CommercialEvidenceState } from "@/lib/analytics/commercial/commercial-insights";
 import { ReportFooter } from "./ReportFooter";
 import { ReportHeader } from "./ReportHeader";
 import { ReportSectionDivider } from "./ReportSectionDivider";
@@ -10,29 +11,34 @@ type Metric = {
   tone?: "gold" | "blue" | "green" | "red";
 };
 
+function formatReportScore(score: number | null) {
+  return score === null ? "Policy Locked" : `${score}/100`;
+}
+
 type BoardExecutiveReportProps = {
   companyName: string;
   generatedAt: string;
   decisionStatement: string;
   recommendation: string;
   boardPriority: string;
-  enterpriseScore: number;
-  boardReadiness: number;
-  decisionReadiness: number;
-  riskIndex: number;
+  enterpriseScore: number | null;
+  boardReadiness: number | null;
+  decisionReadiness: number | null;
+  riskIndex: number | null;
   riskComplianceEvidence: RiskComplianceEvidence;
   opportunityValue: string;
   procurementVolume: string;
   awardedVolume: string;
   awardRate: string;
   supplierCount: number;
-  supplierEngagement: number;
+  supplierEngagement: number | null;
   supplierDiversification: number;
-  portfolioHealth: number;
+  portfolioHealth: number | null;
+  supplierCommercialEvidenceState: CommercialEvidenceState;
   forecastConfidence: string;
   forecastNarrative: string;
   benchmarkPosition: string;
-  benchmarkScore: number;
+  benchmarkScore: number | null;
   findings: string[];
   risks: string[];
   opportunities: string[];
@@ -40,6 +46,23 @@ type BoardExecutiveReportProps = {
 };
 
 export function BoardExecutiveReport(props: BoardExecutiveReportProps) {
+  const commercialEvidenceLabel =
+    props.supplierCommercialEvidenceState === "available"
+      ? null
+      : props.supplierCommercialEvidenceState === "access-restricted"
+        ? "Access Restricted"
+        : props.supplierCommercialEvidenceState === "policy-locked"
+          ? "Policy Locked"
+          : "Insufficient Data";
+  const supplierEvidenceUnavailable = commercialEvidenceLabel !== null;
+  const supplierEvidenceContext =
+    props.supplierCommercialEvidenceState === "policy-locked"
+      ? "Supplier identities remain sealed pending commercial opening"
+      : props.supplierCommercialEvidenceState === "access-restricted"
+        ? "Supplier evidence is restricted for the current workspace membership"
+        : "Supplier evidence is not yet sufficient for this measure";
+  const executiveScore = (score: number | null) =>
+    commercialEvidenceLabel ?? formatReportScore(score);
   const riskEvidenceLabel = props.riskComplianceEvidence.stateLabel;
   const riskIndicators =
     props.riskComplianceEvidence.indicators.length > 0
@@ -90,19 +113,19 @@ export function BoardExecutiveReport(props: BoardExecutiveReportProps) {
           metrics={[
             {
               label: "Enterprise health",
-              value: `${props.enterpriseScore}/100`,
+              value: executiveScore(props.enterpriseScore),
               context: "Consolidated procurement performance",
               tone: "gold",
             },
             {
               label: "Board readiness",
-              value: `${props.boardReadiness}/100`,
+              value: executiveScore(props.boardReadiness),
               context: "Governance and evidence readiness",
               tone: "blue",
             },
             {
               label: "Decision readiness",
-              value: `${props.decisionReadiness}/100`,
+              value: executiveScore(props.decisionReadiness),
               context: "Evidence readiness for executive action",
               tone: "green",
             },
@@ -162,7 +185,7 @@ export function BoardExecutiveReport(props: BoardExecutiveReportProps) {
             },
             {
               label: "Quotation award rate",
-              value: props.awardRate,
+              value: commercialEvidenceLabel ?? props.awardRate,
               context: "Awarded quotations / submitted quotations",
               tone: "blue",
             },
@@ -226,26 +249,42 @@ export function BoardExecutiveReport(props: BoardExecutiveReportProps) {
           metrics={[
             {
               label: "Supplier network",
-              value: String(props.supplierCount),
-              context: "Suppliers with recorded quotation history",
+              value: supplierEvidenceUnavailable
+                ? commercialEvidenceLabel
+                : String(props.supplierCount),
+              context: supplierEvidenceUnavailable
+                ? supplierEvidenceContext
+                : "Suppliers with recorded quotation history",
               tone: "blue",
             },
             {
               label: "Supplier engagement",
-              value: `${props.supplierEngagement}/100`,
-              context: "Internal composite engagement score",
+              value: supplierEvidenceUnavailable
+                ? commercialEvidenceLabel
+                : formatReportScore(props.supplierEngagement),
+              context: supplierEvidenceUnavailable
+                ? supplierEvidenceContext
+                : "Internal composite engagement score",
               tone: "green",
             },
             {
               label: "Internal diversification score",
-              value: `${props.supplierDiversification}/100`,
-              context: "Participation-breadth threshold score",
+              value: supplierEvidenceUnavailable
+                ? commercialEvidenceLabel
+                : `${props.supplierDiversification}/100`,
+              context: supplierEvidenceUnavailable
+                ? supplierEvidenceContext
+                : "Participation-breadth threshold score",
               tone: "gold",
             },
             {
               label: "Portfolio health",
-              value: `${props.portfolioHealth}/100`,
-              context: "Combined supplier resilience",
+              value: supplierEvidenceUnavailable
+                ? commercialEvidenceLabel
+                : formatReportScore(props.portfolioHealth),
+              context: supplierEvidenceUnavailable
+                ? supplierEvidenceContext
+                : "Combined supplier resilience",
               tone: "blue",
             },
           ]}
@@ -290,13 +329,13 @@ export function BoardExecutiveReport(props: BoardExecutiveReportProps) {
           metrics={[
             {
               label: "Internal benchmark readiness",
-              value: `${props.benchmarkScore}/100`,
+              value: executiveScore(props.benchmarkScore),
               context: "Internal evidence and readiness measure",
               tone: "gold",
             },
             {
               label: "Board readiness",
-              value: `${props.boardReadiness}/100`,
+              value: executiveScore(props.boardReadiness),
               context: "Current governance posture",
               tone: "green",
             },

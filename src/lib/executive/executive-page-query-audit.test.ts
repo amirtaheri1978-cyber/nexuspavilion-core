@@ -16,7 +16,7 @@ const vendorAnalyticsPage = readSource(
 );
 
 describe("Task 16-01 executive page query audit", () => {
-  it("loads independent analytics sources concurrently before dependent quote retrieval", () => {
+  it("loads independent analytics sources concurrently before deadline-gated quote retrieval", () => {
     const concurrentStart = analyticsSourceLoader.indexOf(
       "const [companyCompliance, rfqResult, companiesResult] = await Promise.all([",
     );
@@ -38,20 +38,28 @@ describe("Task 16-01 executive page query audit", () => {
     expect(concurrentSection).toContain('.from("rfqs")');
     expect(concurrentSection).toContain('.from("company_directory")');
 
-    const rfqIdsIndex = analyticsSourceLoader.indexOf("const rfqIds =");
+    const commerciallyOpenRfqIdsIndex = analyticsSourceLoader.indexOf(
+      "const commerciallyOpenRfqIds =",
+    );
     const quoteQueryIndex = analyticsSourceLoader.indexOf('.from("quotes")');
 
-    expect(rfqIdsIndex).toBeGreaterThan(concurrentEnd);
-    expect(quoteQueryIndex).toBeGreaterThan(rfqIdsIndex);
+    expect(commerciallyOpenRfqIdsIndex).toBeGreaterThan(concurrentEnd);
+    expect(quoteQueryIndex).toBeGreaterThan(commerciallyOpenRfqIdsIndex);
+    expect(analyticsSourceLoader).toContain(
+      "isRfqCommercialOpeningUnlocked",
+    );
+    expect(analyticsSourceLoader).toContain(
+      '.in("rfq_id", commerciallyOpenRfqIds)',
+    );
 
     expect(analyticsSourceLoader).toContain(
       "const { data: companies, error: companiesError } = companiesResult;",
     );
   });
 
-  it("loads independent vendor governance sources concurrently before quote retrieval", () => {
+  it("loads independent vendor governance and RFQ opening context before deadline-gated quote retrieval", () => {
     const concurrentStart = vendorAnalyticsPage.indexOf(
-      "const [approvedVendorsResult, complianceResult] = await Promise.all([",
+      "const [approvedVendorsResult, complianceResult, rfqResult] = await Promise.all([",
     );
 
     const concurrentEnd = vendorAnalyticsPage.indexOf(
@@ -69,14 +77,26 @@ describe("Task 16-01 executive page query audit", () => {
 
     expect(concurrentSection).toContain('.from("approved_vendors")');
     expect(concurrentSection).toContain('.from("supplier_compliance")');
+    expect(concurrentSection).toContain('.from("rfqs")');
+    expect(concurrentSection).toContain('.select("id, deadline")');
+    expect(concurrentSection).toContain('.eq("company_id", companyId)');
 
     const vendorCompanyIdsIndex =
       vendorAnalyticsPage.indexOf("const vendorCompanyIds");
-
+    const commerciallyOpenRfqIdsIndex = vendorAnalyticsPage.indexOf(
+      "const commerciallyOpenRfqIds =",
+    );
     const quoteQueryIndex = vendorAnalyticsPage.indexOf('.from("quotes")');
 
     expect(vendorCompanyIdsIndex).toBeGreaterThan(concurrentEnd);
-    expect(quoteQueryIndex).toBeGreaterThan(vendorCompanyIdsIndex);
+    expect(commerciallyOpenRfqIdsIndex).toBeGreaterThan(vendorCompanyIdsIndex);
+    expect(quoteQueryIndex).toBeGreaterThan(commerciallyOpenRfqIdsIndex);
+    expect(vendorAnalyticsPage).toContain(
+      "isRfqCommercialOpeningUnlocked",
+    );
+    expect(vendorAnalyticsPage).toContain(
+      '.in("rfq_id", commerciallyOpenRfqIds)',
+    );
 
     expect(vendorAnalyticsPage).toContain(
       "const { data: approvedVendorsData } = approvedVendorsResult;",
@@ -84,6 +104,10 @@ describe("Task 16-01 executive page query audit", () => {
 
     expect(vendorAnalyticsPage).toContain(
       "const { data: complianceData } = complianceResult;",
+    );
+
+    expect(vendorAnalyticsPage).toContain(
+      "const { data: commercialRfqsData, error: commercialRfqsError } = rfqResult;",
     );
   });
 });

@@ -9,6 +9,7 @@ import {
 } from "@/lib/company/compliance";
 import { createClient } from "@/lib/supabase/server";
 import type { AnalyticsRFQ } from "@/lib/analytics/procurement-utils";
+import { isRfqCommercialOpeningUnlocked } from "@/lib/procurement/rfq-commercial-intelligence";
 
 export type AnalyticsQuote = {
   id: string;
@@ -35,6 +36,8 @@ export type AnalyticsSourceData = {
   rfqList: AnalyticsRFQ[];
   quoteList: AnalyticsQuote[];
   companyList: AnalyticsCompany[];
+  commerciallyOpenRfqIds: string[];
+  safeSubmissionCountByRfqId: Record<string, number>;
 };
 
 export function canViewIssuerCommercialAnalytics(
@@ -50,6 +53,15 @@ export function canViewIssuerCommercialAnalytics(
       (membership.workspaceRole === "owner" ||
         membership.workspaceRole === "admin" ||
         membership.procurementFunction === "buyer"),
+  );
+}
+
+function isValidSafeSubmissionCount(value: unknown): value is number {
+  return (
+    typeof value === "number" &&
+    Number.isFinite(value) &&
+    Number.isInteger(value) &&
+    value >= 0
   );
 }
 
@@ -103,15 +115,62 @@ export async function loadAnalyticsSourceData(): Promise<AnalyticsSourceData> {
   }
 
   const rfqList = (rfqs ?? []) as AnalyticsRFQ[];
-  const rfqIds = rfqList.map((rfq) => rfq.id);
+  const commercialAsOf = new Date();
+
+  const commerciallyOpenRfqIds = rfqList
+    .filter((rfq) =>
+      isRfqCommercialOpeningUnlocked({
+        deadline: rfq.deadline,
+        now: commercialAsOf,
+      }),
+    )
+    .map((rfq) => rfq.id);
+
+  const safeSubmissionCountByRfqId =
+    commercialAccess.canViewIssuerCommercialAnalytics && rfqList.length > 0
+      ? Object.fromEntries(
+          await Promise.all(
+            rfqList.map(async (rfq) => {
+              const { data, error } = await supabase.rpc(
+                "count_rfq_quote_submissions",
+                {
+                  p_rfq_id: rfq.id,
+                },
+              );
+
+              if (error) {
+                console.error(
+                  `Analytics safe submission count failed for RFQ ${rfq.id}:`,
+                  error,
+                );
+                throw new Error(
+                  "Unable to load analytics submission participation evidence.",
+                );
+              }
+
+              if (!isValidSafeSubmissionCount(data)) {
+                console.error(
+                  `Analytics safe submission count returned invalid data for RFQ ${rfq.id}.`,
+                  data,
+                );
+                throw new Error(
+                  "Unable to validate analytics submission participation evidence.",
+                );
+              }
+
+              return [rfq.id, data] as const;
+            }),
+          ),
+        )
+      : {};
 
   const { data: quotes, error: quotesError } =
     commercialAccess.canViewIssuerCommercialAnalytics &&
-    rfqIds.length > 0
+    commerciallyOpenRfqIds.length > 0
       ? await supabase
           .from("quotes")
           .select("*")
-          .in("rfq_id", rfqIds)
+          .in("rfq_id", commerciallyOpenRfqIds)
           .order("created_at", { ascending: false })
       : { data: [] as AnalyticsQuote[], error: null };
 
@@ -134,5 +193,7 @@ export async function loadAnalyticsSourceData(): Promise<AnalyticsSourceData> {
     rfqList,
     quoteList: (quotes ?? []) as AnalyticsQuote[],
     companyList: (companies ?? []) as AnalyticsCompany[],
+    commerciallyOpenRfqIds,
+    safeSubmissionCountByRfqId,
   };
 }

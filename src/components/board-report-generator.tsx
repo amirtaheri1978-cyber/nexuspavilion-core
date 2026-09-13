@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import type { CommercialEvidenceState } from "@/lib/analytics/commercial/commercial-insights";
 
 type ReportType = "board" | "ceo" | "cfo" | "procurement";
 type ReportStatus = "ready" | "insufficient-data" | "coming-soon";
@@ -36,6 +37,7 @@ enterpriseProcurementScore: number;
 executiveReadinessScore: number;
 procurementEfficiencyScore: number;
 supplierEngagementScore: number;
+  supplierCommercialEvidenceState?: CommercialEvidenceState;
 digitalMaturityScore: number;
 };
 
@@ -148,6 +150,7 @@ enterpriseProcurementScore,
 executiveReadinessScore,
 procurementEfficiencyScore,
 supplierEngagementScore,
+supplierCommercialEvidenceState = "available",
 digitalMaturityScore,
 }: {
 report: ExecutiveReport;
@@ -181,10 +184,14 @@ body: "Executive decisions should not be generated from placeholder data, mock s
 }
 
 const riskNarrative = getRiskNarrative(procurementRiskIndex);
+const supplierEvidenceNarrative =
+supplierCommercialEvidenceState === "policy-locked"
+? "Supplier commercial evidence is policy locked until the applicable RFQ submission deadlines pass."
+: `Supplier engagement is ${supplierEngagementScore}/100. The supplier dependency signal is ${supplierDependencyRisk}, with supplier concentration marked as ${concentrationLevel}.`;
 
 if (report.id === "ceo") {
 return {
-summary: `Nexus Pavilion is ready to produce a CEO-level executive brief. Executive readiness is ${executiveReadinessScore}/100, enterprise procurement strength is ${enterpriseProcurementScore}/100, and supplier engagement is ${supplierEngagementScore}/100.`,
+summary: `Nexus Pavilion is ready to produce a CEO-level executive brief. Executive readiness is ${executiveReadinessScore}/100 and enterprise procurement strength is ${enterpriseProcurementScore}/100. ${supplierEvidenceNarrative}`,
 sections: [
 {
 title: "Executive Momentum",
@@ -192,7 +199,7 @@ body: `Procurement performance shows an enterprise score of ${enterpriseProcurem
 },
 {
 title: "Supplier Network Health",
-body: `Supplier engagement is currently ${supplierEngagementScore}/100. The supplier dependency signal is ${supplierDependencyRisk}, with supplier concentration marked as ${concentrationLevel}.`,
+body: supplierEvidenceNarrative,
 },
 {
 title: "Risk Visibility",
@@ -216,7 +223,7 @@ body: `Procurement maturity is ${procurementMaturityScore}/100 and efficiency is
 },
 {
 title: "Supplier Participation",
-body: `Supplier engagement is ${supplierEngagementScore}/100. The supplier dependency signal is ${supplierDependencyRisk}, while concentration level is ${concentrationLevel}.`,
+body: supplierEvidenceNarrative,
 },
 {
 title: "Decision Evidence",
@@ -238,11 +245,11 @@ body: `Procurement intelligence has reached a board-reportable threshold. The cu
 },
 {
 title: "Strategic Highlights",
-body: `Procurement maturity is ${procurementMaturityScore}/100, procurement efficiency is ${procurementEfficiencyScore}/100, supplier engagement is ${supplierEngagementScore}/100, and digital maturity is ${digitalMaturityScore}/100.`,
+body: `Procurement maturity is ${procurementMaturityScore}/100, procurement efficiency is ${procurementEfficiencyScore}/100, and digital maturity is ${digitalMaturityScore}/100. ${supplierEvidenceNarrative}`,
 },
 {
 title: "Risk Assessment",
-body: `${riskNarrative} The supplier dependency signal is ${supplierDependencyRisk} and supplier concentration is ${concentrationLevel}.`,
+body: `${riskNarrative} ${supplierEvidenceNarrative}`,
 },
 {
 title: "Decision Evidence",
@@ -274,8 +281,18 @@ enterpriseProcurementScore,
 executiveReadinessScore,
 procurementEfficiencyScore,
 supplierEngagementScore,
+supplierCommercialEvidenceState = "available",
 digitalMaturityScore,
 } = props;
+
+const commercialEvidenceLabel =
+supplierCommercialEvidenceState === "access-restricted"
+? "Access Restricted"
+: supplierCommercialEvidenceState === "policy-locked"
+? "Policy Locked"
+: supplierCommercialEvidenceState === "insufficient-data"
+? "Insufficient Data"
+: null;
 
 const [activeReport, setActiveReport] = useState<ExecutiveReport | null>(null);
 const [activeReportBody, setActiveReportBody] =
@@ -297,6 +314,7 @@ day: "numeric",
 );
 
 const boardReady =
+supplierCommercialEvidenceState === "available" &&
 procurementMaturityScore >= 50 &&
 benchmarkReadinessScore >= 50 &&
 enterpriseProcurementScore >= 50 &&
@@ -305,6 +323,10 @@ decisionSupportReadinessScore >= 50;
 const reportStatusLabel = boardReady ? "Ready" : "Insufficient Data";
 
 const executiveSummary = useMemo(() => {
+if (commercialEvidenceLabel) {
+return `${commercialEvidenceLabel}: executive report generation is unavailable under the current supplier and commercial evidence controls. No incomplete numeric score is serialized.`;
+}
+
 if (!activeReport || !activeReportBody) return "";
 
 return `${activeReport.title}
@@ -328,14 +350,14 @@ Executive Metrics:
 - Procurement Maturity Score: ${procurementMaturityScore}/100
 - Decision-Support Readiness: ${decisionSupportReadinessScore}/100
 - Data Quality: ${dataQualityScore}/100
-- Supplier Dependency Signal: ${supplierDependencyRisk}
-- Supplier Concentration: ${concentrationLevel}
+- Supplier Commercial Evidence: ${commercialEvidenceLabel ?? "Available"}
+${commercialEvidenceLabel ? "" : `- Supplier Dependency Signal: ${supplierDependencyRisk}\n- Supplier Concentration: ${concentrationLevel}`}
 - Benchmark Readiness Score: ${benchmarkReadinessScore}/100
 - Board Health Index: ${boardHealthIndex}/100
 - Enterprise Procurement Score: ${enterpriseProcurementScore}/100
 - Executive Readiness Score: ${executiveReadinessScore}/100
 - Procurement Efficiency Score: ${procurementEfficiencyScore}/100
-- Supplier Engagement Score: ${supplierEngagementScore}/100
+${commercialEvidenceLabel ? "" : `- Supplier Engagement Score: ${supplierEngagementScore}/100`}
 - Digital Maturity Score: ${digitalMaturityScore}/100
 
 Decision Readiness:
@@ -343,6 +365,7 @@ Executive decisions are generated only from validated Nexus Pavilion operating i
 }, [
 activeReport,
 activeReportBody,
+commercialEvidenceLabel,
 reportStatusLabel,
 procurementRiskIndex,
 procurementMaturityScore,
@@ -358,6 +381,18 @@ procurementEfficiencyScore,
 supplierEngagementScore,
 digitalMaturityScore,
 ]);
+
+if (commercialEvidenceLabel) {
+return (
+<section className="mt-8 rounded-[32px] border border-amber-300/15 bg-amber-400/[0.04] p-6 text-white">
+<p className="text-sm font-black">Board Reporting {commercialEvidenceLabel}</p>
+<p className="mt-2 text-sm font-semibold leading-6 text-slate-400">
+Executive report generation is unavailable under the current supplier and
+commercial evidence controls. No incomplete numeric score is serialized.
+</p>
+</section>
+);
+}
 
 async function generateReport(report: ExecutiveReport) {
 setIsGenerating(true);

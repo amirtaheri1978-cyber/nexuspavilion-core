@@ -5,6 +5,7 @@ import type { AnalyticsQuote } from "@/lib/analytics/source-data/load-analytics-
 import {
   buildCommercialInsights,
   calculateObservedQuotationOpportunity,
+  isAnalyticsCommerciallyUnlocked,
 } from "@/lib/analytics/commercial/commercial-insights";
 import { buildTopOpportunityInsight } from "@/lib/analytics/executive/opportunity-intelligence";
 
@@ -13,7 +14,7 @@ function rfq(
   {
     sourcing = "open",
     framework = "project_specific",
-    deadline = null,
+    deadline = "2026-01-01T00:00:00.000Z",
   }: {
     sourcing?: AnalyticsRFQ["sourcing_method"];
     framework?: AnalyticsRFQ["contract_framework"];
@@ -67,6 +68,124 @@ describe("commercial insights", () => {
     expect(result.estimatedOpportunity).toBeNull();
     expect(result.visiblePositiveQuoteCount).toBe(0);
     expect(result.rfqEvidence).toEqual([]);
+  });
+
+  it("uses the canonical deadline lock across every current sourcing and framework combination", () => {
+    const asOf = new Date("2026-01-31T00:00:00.000Z");
+    const lockedDeadline = "2026-02-15T00:00:00.000Z";
+    const openDeadline = "2026-01-01T00:00:00.000Z";
+    const combinations = [
+      ["open", "project_specific"],
+      ["open", "framework"],
+      ["invited", "project_specific"],
+      ["invited", "framework"],
+      ["sealed_bid", "project_specific"],
+      ["sealed_bid", "framework"],
+    ] as const;
+
+    for (const [sourcing, framework] of combinations) {
+      expect(
+        isAnalyticsCommerciallyUnlocked(
+          rfq(`locked-${sourcing}-${framework}`, {
+            sourcing,
+            framework,
+            deadline: lockedDeadline,
+          }),
+          asOf,
+        ),
+      ).toBe(false);
+
+      expect(
+        isAnalyticsCommerciallyUnlocked(
+          rfq(`open-${sourcing}-${framework}`, {
+            sourcing,
+            framework,
+            deadline: openDeadline,
+          }),
+          asOf,
+        ),
+      ).toBe(true);
+    }
+  });
+
+  it("fails closed for missing, invalid, exact-boundary, and invalid-clock opening checks", () => {
+    const deadline = "2026-02-15T00:00:00.000Z";
+    const exactDeadline = new Date(deadline);
+
+    expect(
+      isAnalyticsCommerciallyUnlocked(
+        rfq("missing-deadline", { deadline: null }),
+        exactDeadline,
+      ),
+    ).toBe(false);
+
+    expect(
+      isAnalyticsCommerciallyUnlocked(
+        {
+          ...rfq("undefined-deadline"),
+          deadline: undefined,
+        },
+        exactDeadline,
+      ),
+    ).toBe(false);
+
+    expect(
+      isAnalyticsCommerciallyUnlocked(
+        rfq("invalid-deadline", { deadline: "not-a-date" }),
+        exactDeadline,
+      ),
+    ).toBe(false);
+
+    expect(
+      isAnalyticsCommerciallyUnlocked(
+        rfq("exact-deadline", { deadline }),
+        exactDeadline,
+      ),
+    ).toBe(false);
+
+    expect(
+      isAnalyticsCommerciallyUnlocked(
+        rfq("after-deadline", { deadline }),
+        new Date(exactDeadline.getTime() + 1),
+      ),
+    ).toBe(true);
+
+    expect(
+      isAnalyticsCommerciallyUnlocked(
+        rfq("invalid-clock", {
+          deadline: "2026-01-01T00:00:00.000Z",
+        }),
+        new Date("not-a-date"),
+      ),
+    ).toBe(false);
+  });
+
+  it("keeps buildCommercialInsights policy locked when the evaluation clock is invalid", () => {
+    const result = buildCommercialInsights({
+      rfqList: [
+        rfq("rfq-past-deadline", {
+          sourcing: "open",
+          framework: "project_specific",
+          deadline: "2026-01-01T00:00:00.000Z",
+        }),
+      ],
+      quoteList: [
+        quote("quote-1", "rfq-past-deadline", 100),
+        quote("quote-2", "rfq-past-deadline", 200),
+      ],
+      canViewIssuerCommercialAnalytics: true,
+      asOf: new Date("not-a-date"),
+    });
+
+    expect(result.state).toBe("policy-locked");
+    expect(result.unlockedRfqCount).toBe(0);
+    expect(result.lockedRfqCount).toBe(1);
+    expect(result.visiblePositiveQuoteCount).toBe(0);
+    expect(result.comparableRfqCount).toBe(0);
+    expect(result.highDeviationRfqCount).toBe(0);
+    expect(result.estimatedOpportunity).toBeNull();
+    expect(result.rfqEvidence).toEqual([]);
+    expect(result.limitation).toContain("evaluation clock is invalid");
   });
 
   it("keeps invited commercial evidence policy locked until a valid deadline is in the past", () => {

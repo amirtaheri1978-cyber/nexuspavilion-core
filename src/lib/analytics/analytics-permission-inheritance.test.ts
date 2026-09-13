@@ -40,6 +40,11 @@ type QueryTrace = {
   orders: Array<[string, { ascending?: boolean }]>;
 };
 
+type RpcTrace = {
+  functionName: string;
+  args: Record<string, unknown>;
+};
+
 type FakeQuery = {
   select(columns: string): FakeQuery;
   eq(column: string, value: unknown): FakeQuery;
@@ -66,6 +71,8 @@ type SupabaseHarnessOptions = {
   quotes?: Array<Record<string, unknown>>;
   companies?: Array<Record<string, unknown>>;
   compliance?: Array<Record<string, unknown>>;
+  submissionCountsByRfqId?: Record<string, unknown>;
+  submissionCountErrorsByRfqId?: Record<string, unknown>;
 };
 
 const defaultMembershipRow = {
@@ -84,6 +91,7 @@ const defaultMembershipRow = {
 
 function createSupabaseHarness(options: SupabaseHarnessOptions = {}) {
   const traces: QueryTrace[] = [];
+  const rpcTraces: RpcTrace[] = [];
   const userId = options.userId === undefined ? "user-1" : options.userId;
   const profileCompanyId =
     options.profileCompanyId === undefined
@@ -98,36 +106,57 @@ function createSupabaseHarness(options: SupabaseHarnessOptions = {}) {
   const quotes = options.quotes ?? [];
   const companies = options.companies ?? [];
   const compliance = options.compliance ?? [];
+  const submissionCountsByRfqId = options.submissionCountsByRfqId ?? {};
+  const submissionCountErrorsByRfqId =
+    options.submissionCountErrorsByRfqId ?? {};
 
-  function resolveResult(table: string): QueryResult {
+  function applyFilters(
+    rows: Array<Record<string, unknown>>,
+    trace: QueryTrace,
+  ) {
+    return rows.filter(
+      (row) =>
+        trace.equals.every(([column, value]) => row[column] === value) &&
+        trace.inclusions.every(([column, values]) =>
+          values.includes(row[column]),
+        ),
+    );
+  }
+
+  function resolveResult(table: string, trace: QueryTrace): QueryResult {
     if (table === "profiles") {
+      const rows = profileCompanyId
+        ? [{ id: userId, company_id: profileCompanyId }]
+        : [];
       return {
-        data: profileCompanyId ? { company_id: profileCompanyId } : null,
+        data: applyFilters(rows, trace)[0] ?? null,
         error: null,
       };
     }
 
     if (table === "organization_memberships") {
       return {
-        data: membershipRow,
+        data: membershipRow
+          ? applyFilters([membershipRow], trace)[0] ?? null
+          : null,
         error: membershipError,
       };
     }
 
     if (table === "rfqs") {
-      return { data: rfqs, error: null };
+      return { data: applyFilters(rfqs, trace), error: null };
     }
 
     if (table === "quotes") {
-      return { data: quotes, error: null };
+      return { data: applyFilters(quotes, trace), error: null };
     }
 
     if (table === "company_directory") {
-      return { data: companies, error: null };
+      return { data: applyFilters(companies, trace), error: null };
     }
 
     if (table === "company_compliance") {
-      return { data: compliance, error: null };
+      return { data: applyFilters(compliance, trace), error: null };
     }
 
     return { data: [], error: null };
@@ -166,15 +195,15 @@ function createSupabaseHarness(options: SupabaseHarnessOptions = {}) {
       },
 
       async single() {
-        return resolveResult(table);
+        return resolveResult(table, trace);
       },
 
       async maybeSingle() {
-        return resolveResult(table);
+        return resolveResult(table, trace);
       },
 
       then(onfulfilled, onrejected) {
-        return Promise.resolve(resolveResult(table)).then(
+        return Promise.resolve(resolveResult(table, trace)).then(
           onfulfilled ?? undefined,
           onrejected ?? undefined,
         );
@@ -183,6 +212,27 @@ function createSupabaseHarness(options: SupabaseHarnessOptions = {}) {
 
     return query;
   });
+
+  const rpc = vi.fn(
+    async (functionName: string, args: Record<string, unknown>) => {
+      rpcTraces.push({ functionName, args });
+
+      if (functionName !== "count_rfq_quote_submissions") {
+        return { data: null, error: new Error("Unexpected RPC") };
+      }
+
+      const rfqId = String(args.p_rfq_id ?? "");
+      const hasConfiguredCount = Object.prototype.hasOwnProperty.call(
+        submissionCountsByRfqId,
+        rfqId,
+      );
+
+      return {
+        data: hasConfiguredCount ? submissionCountsByRfqId[rfqId] : 0,
+        error: submissionCountErrorsByRfqId[rfqId] ?? null,
+      };
+    },
+  );
 
   const supabase = {
     auth: {
@@ -193,12 +243,15 @@ function createSupabaseHarness(options: SupabaseHarnessOptions = {}) {
       })),
     },
     from,
+    rpc,
   } as unknown as SupabaseClient;
 
   return {
     supabase,
     from,
     traces,
+    rpc,
+    rpcTraces,
   };
 }
 
@@ -236,6 +289,13 @@ describe("analytics permission inheritance", () => {
     expect(analyticsSourceLoader).toContain(
       "commercialAccess.canViewIssuerCommercialAnalytics &&",
     );
+    expect(analyticsSourceLoader).toContain(
+      "isRfqCommercialOpeningUnlocked",
+    );
+    expect(analyticsSourceLoader).toContain("commerciallyOpenRfqIds");
+    expect(analyticsSourceLoader).toContain(
+      '.in("rfq_id", commerciallyOpenRfqIds)',
+    );
     expect(analyticsSourceLoader).toContain("loadCompanyCompliance");
     expect(analyticsSourceLoader).toContain("companyCompliance");
     expect(analyticsPage).toContain("buildExecutiveHistoricalPatterns");
@@ -254,6 +314,12 @@ describe("analytics permission inheritance", () => {
       "const companyId = activeMembership.companyId",
     );
     expect(analyticsVendors).toContain('.eq("buyer_company_id", companyId)');
+    expect(analyticsVendors).toContain("isRfqCommercialOpeningUnlocked");
+    expect(analyticsVendors).toContain('.from("rfqs")');
+    expect(analyticsVendors).toContain('.eq("company_id", companyId)');
+    expect(analyticsVendors).toContain(
+      '.in("rfq_id", commerciallyOpenRfqIds)',
+    );
     expect(analyticsVendors).not.toContain(
       '.eq("buyer_company_id", profile.company_id)',
     );
@@ -353,6 +419,7 @@ describe("analytics permission inheritance behavior", () => {
     });
     expect(result.rfqList).toEqual([]);
     expect(result.quoteList).toEqual([]);
+    expect(result.safeSubmissionCountByRfqId).toEqual({});
     expect(result.companyCompliance).toEqual({
       insurance: [],
       workers_compensation: [],
@@ -362,30 +429,49 @@ describe("analytics permission inheritance behavior", () => {
     expect(getTrace(harness.traces, "quotes")).toBeUndefined();
     expect(getTrace(harness.traces, "company_compliance")).toBeUndefined();
     expect(getTrace(harness.traces, "company_directory")).toBeDefined();
+    expect(harness.rpc).not.toHaveBeenCalled();
   });
 
-  it("scopes RFQs to active membership company and quotes to the returned RFQ ids", async () => {
+  it("scopes quote loading to commercially open RFQs owned by the active membership company", async () => {
     const harness = createSupabaseHarness({
       rfqs: [
-        { id: "rfq-1", company_id: "company-1" },
-        { id: "rfq-2", company_id: "company-1" },
+        {
+          id: "rfq-open",
+          company_id: "company-1",
+          deadline: "2000-01-01T00:00:00.000Z",
+        },
+        {
+          id: "rfq-locked",
+          company_id: "company-1",
+          deadline: "2999-01-01T00:00:00.000Z",
+        },
+        {
+          id: "rfq-invalid",
+          company_id: "company-1",
+          deadline: "not-a-date",
+        },
       ],
       quotes: [
         {
-          id: "quote-1",
-          rfq_id: "rfq-1",
+          id: "quote-open",
+          rfq_id: "rfq-open",
           company_id: "supplier-1",
           amount: 1000,
-          decision: null,
-        },
-        {
-          id: "quote-2",
-          rfq_id: "rfq-2",
-          company_id: "supplier-2",
-          amount: 1200,
           decision: "awarded",
         },
+        {
+          id: "quote-locked",
+          rfq_id: "rfq-locked",
+          company_id: "supplier-sealed",
+          amount: 9000,
+          decision: null,
+        },
       ],
+      submissionCountsByRfqId: {
+        "rfq-open": 2,
+        "rfq-locked": 1,
+        "rfq-invalid": 0,
+      },
     });
 
     vi.mocked(createClient).mockResolvedValue(harness.supabase as never);
@@ -401,16 +487,186 @@ describe("analytics permission inheritance behavior", () => {
     });
     expect(rfqTrace?.equals).toContainEqual(["company_id", "company-1"]);
     expect(quoteTrace?.inclusions).toEqual([
-      ["rfq_id", ["rfq-1", "rfq-2"]],
+      ["rfq_id", ["rfq-open"]],
     ]);
     expect(result.rfqList.map((rfq) => rfq.id)).toEqual([
-      "rfq-1",
-      "rfq-2",
+      "rfq-open",
+      "rfq-locked",
+      "rfq-invalid",
     ]);
     expect(result.quoteList.map((quote) => quote.id)).toEqual([
-      "quote-1",
-      "quote-2",
+      "quote-open",
     ]);
+    expect(result.safeSubmissionCountByRfqId).toEqual({
+      "rfq-open": 2,
+      "rfq-locked": 1,
+      "rfq-invalid": 0,
+    });
+    expect(harness.rpcTraces).toEqual([
+      {
+        functionName: "count_rfq_quote_submissions",
+        args: { p_rfq_id: "rfq-open" },
+      },
+      {
+        functionName: "count_rfq_quote_submissions",
+        args: { p_rfq_id: "rfq-locked" },
+      },
+      {
+        functionName: "count_rfq_quote_submissions",
+        args: { p_rfq_id: "rfq-invalid" },
+      },
+    ]);
+  });
+
+  it("does not read quote rows when all scoped RFQs remain commercially sealed", async () => {
+    const harness = createSupabaseHarness({
+      rfqs: [
+        {
+          id: "rfq-future",
+          company_id: "company-1",
+          deadline: "2999-01-01T00:00:00.000Z",
+        },
+        {
+          id: "rfq-missing",
+          company_id: "company-1",
+          deadline: null,
+        },
+        {
+          id: "rfq-invalid",
+          company_id: "company-1",
+          deadline: "not-a-date",
+        },
+      ],
+      quotes: [
+        {
+          id: "quote-sealed",
+          rfq_id: "rfq-future",
+          company_id: "supplier-1",
+          amount: 1000,
+          decision: null,
+        },
+      ],
+      submissionCountsByRfqId: {
+        "rfq-future": 1,
+        "rfq-missing": 0,
+        "rfq-invalid": 0,
+      },
+    });
+
+    vi.mocked(createClient).mockResolvedValue(harness.supabase as never);
+
+    const result = await loadAnalyticsSourceData();
+
+    expect(result.companyId).toBe("company-1");
+    expect(result.rfqList).toHaveLength(3);
+    expect(result.quoteList).toEqual([]);
+    expect(result.safeSubmissionCountByRfqId).toEqual({
+      "rfq-future": 1,
+      "rfq-missing": 0,
+      "rfq-invalid": 0,
+    });
+    expect(getTrace(harness.traces, "quotes")).toBeUndefined();
+  });
+
+  it("aggregates one safe count for each owned RFQ", async () => {
+    const harness = createSupabaseHarness({
+      rfqs: [
+        { id: "rfq-1", company_id: "company-1", deadline: null },
+        { id: "rfq-2", company_id: "company-1", deadline: null },
+        { id: "rfq-3", company_id: "company-1", deadline: null },
+      ],
+      submissionCountsByRfqId: {
+        "rfq-1": 1,
+        "rfq-2": 2,
+        "rfq-3": 3,
+      },
+    });
+
+    vi.mocked(createClient).mockResolvedValue(harness.supabase as never);
+
+    const result = await loadAnalyticsSourceData();
+
+    expect(result.safeSubmissionCountByRfqId).toEqual({
+      "rfq-1": 1,
+      "rfq-2": 2,
+      "rfq-3": 3,
+    });
+    expect(harness.rpcTraces.map((trace) => trace.args.p_rfq_id)).toEqual([
+      "rfq-1",
+      "rfq-2",
+      "rfq-3",
+    ]);
+  });
+
+  it("filters out cross-buyer RFQs before aggregate RPC calls", async () => {
+    const harness = createSupabaseHarness({
+      rfqs: [
+        { id: "owned-rfq", company_id: "company-1", deadline: null },
+        { id: "other-rfq", company_id: "company-2", deadline: null },
+      ],
+      submissionCountsByRfqId: {
+        "owned-rfq": 1,
+        "other-rfq": 99,
+      },
+    });
+
+    vi.mocked(createClient).mockResolvedValue(harness.supabase as never);
+
+    const result = await loadAnalyticsSourceData();
+
+    expect(result.rfqList.map((rfq) => rfq.id)).toEqual(["owned-rfq"]);
+    expect(result.safeSubmissionCountByRfqId).toEqual({ "owned-rfq": 1 });
+    expect(harness.rpcTraces).toEqual([
+      {
+        functionName: "count_rfq_quote_submissions",
+        args: { p_rfq_id: "owned-rfq" },
+      },
+    ]);
+  });
+
+  it("rejects the complete aggregate when any RFQ count RPC fails", async () => {
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+    const harness = createSupabaseHarness({
+      rfqs: [
+        { id: "rfq-success", company_id: "company-1", deadline: null },
+        { id: "rfq-error", company_id: "company-1", deadline: null },
+      ],
+      submissionCountsByRfqId: { "rfq-success": 2 },
+      submissionCountErrorsByRfqId: {
+        "rfq-error": new Error("count denied"),
+      },
+    });
+
+    vi.mocked(createClient).mockResolvedValue(harness.supabase as never);
+
+    await expect(loadAnalyticsSourceData()).rejects.toThrow(
+      "Unable to load analytics submission participation evidence.",
+    );
+    expect(getTrace(harness.traces, "quotes")).toBeUndefined();
+    consoleError.mockRestore();
+  });
+
+  it.each([
+    ["null", null],
+    ["numeric string", "1"],
+    ["negative", -1],
+    ["fractional", 1.5],
+    ["NaN", Number.NaN],
+    ["Infinity", Number.POSITIVE_INFINITY],
+  ])("rejects an invalid safe count: %s", async (_label, invalidCount) => {
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+    const harness = createSupabaseHarness({
+      rfqs: [{ id: "rfq-invalid", company_id: "company-1", deadline: null }],
+      submissionCountsByRfqId: { "rfq-invalid": invalidCount },
+    });
+
+    vi.mocked(createClient).mockResolvedValue(harness.supabase as never);
+
+    await expect(loadAnalyticsSourceData()).rejects.toThrow(
+      "Unable to validate analytics submission participation evidence.",
+    );
+    expect(getTrace(harness.traces, "quotes")).toBeUndefined();
+    consoleError.mockRestore();
   });
 
   it("keeps issuer commercial quote rows unavailable for active members without owner, admin, or buyer access", async () => {
@@ -442,7 +698,9 @@ describe("analytics permission inheritance behavior", () => {
     });
     expect(result.rfqList.map((rfq) => rfq.id)).toEqual(["rfq-1"]);
     expect(result.quoteList).toEqual([]);
+    expect(result.safeSubmissionCountByRfqId).toEqual({});
     expect(getTrace(harness.traces, "quotes")).toBeUndefined();
+    expect(harness.rpc).not.toHaveBeenCalled();
   });
 
   it("scopes self-declared company compliance to the exact active membership company", async () => {
@@ -495,6 +753,8 @@ it("does not read quotes when the scoped company has no RFQ ids", async () => {
     ]);
     expect(result.rfqList).toEqual([]);
     expect(result.quoteList).toEqual([]);
+    expect(result.safeSubmissionCountByRfqId).toEqual({});
     expect(getTrace(harness.traces, "quotes")).toBeUndefined();
+    expect(harness.rpc).not.toHaveBeenCalled();
   });
 });

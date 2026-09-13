@@ -2,6 +2,7 @@ import { ExecutiveActionCard } from "@/components/executive/executive-action-car
 import { ExecutiveInsightCard } from "@/components/executive/executive-insight-card";
 import { ExecutiveMetricCard } from "@/components/executive/executive-metric-card";
 import { ExecutivePanel } from "@/components/executive/executive-panel";
+import type { CommercialEvidenceState } from "@/lib/analytics/commercial/commercial-insights";
 
 type CEOAction = {
   phase: string;
@@ -15,6 +16,7 @@ type CEOActionCenterProps = {
   executiveBenchmarkStatus: string;
   executiveCommandRecommendation: string;
   ceoActionCenter: CEOAction[];
+  commercialEvidenceState?: CommercialEvidenceState;
 };
 
 export function CEOActionCenter({
@@ -23,7 +25,19 @@ export function CEOActionCenter({
   executiveBenchmarkStatus,
   executiveCommandRecommendation,
   ceoActionCenter,
+  commercialEvidenceState = "available",
 }: CEOActionCenterProps) {
+  const evidenceLabel =
+    commercialEvidenceState === "access-restricted"
+      ? "Access Restricted"
+      : commercialEvidenceState === "policy-locked"
+        ? "Policy Locked"
+        : commercialEvidenceState === "insufficient-data"
+          ? "Insufficient Data"
+          : "Active and decision-ready";
+  const decisionReady = commercialEvidenceState === "available";
+  const evidencePolicyLocked = commercialEvidenceState === "policy-locked";
+
   return (
     <ExecutivePanel
       variant="boardroom"
@@ -59,10 +73,12 @@ export function CEOActionCenter({
           </p>
         </div>
 
-        <div className="flex items-center gap-3 rounded-2xl border border-emerald-300/15 bg-emerald-400/[0.045] px-4 py-3 xl:justify-end">
+        <div className={`flex items-center gap-3 rounded-2xl px-4 py-3 xl:justify-end ${decisionReady ? "border border-emerald-300/15 bg-emerald-400/[0.045]" : "border border-amber-300/20 bg-amber-300/[0.045]"}`}>
           <span className="relative flex h-2.5 w-2.5 shrink-0">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-300 opacity-30" />
-            <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-300" />
+            {decisionReady ? (
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-300 opacity-30" />
+            ) : null}
+            <span className={`relative inline-flex h-2.5 w-2.5 rounded-full ${decisionReady ? "bg-emerald-300" : "bg-amber-300"}`} />
           </span>
 
           <div className="min-w-0">
@@ -70,8 +86,8 @@ export function CEOActionCenter({
               Decision layer
             </p>
 
-            <p className="mt-1 text-xs font-black uppercase tracking-[0.15em] text-emerald-300">
-              Active and decision-ready
+            <p className={`mt-1 text-xs font-black uppercase tracking-[0.15em] ${decisionReady ? "text-emerald-300" : "text-amber-200"}`}>
+              {evidenceLabel}
             </p>
           </div>
         </div>
@@ -178,7 +194,11 @@ export function CEOActionCenter({
                   description={action.summary}
                   actionLabel={action.phase}
                   priority="high"
-                  impact="Executive priority is ready for review."
+                  impact={
+                    evidencePolicyLocked
+                      ? "Executive review is deferred pending complete commercial evidence."
+                      : "Executive priority is ready for review."
+                  }
                 />
               </article>
             ))}
@@ -202,8 +222,9 @@ export function CEOActionCenter({
             </h3>
 
             <p className="mt-3 text-xs font-semibold leading-5 text-nexus-muted">
-              Final executive interpretation requiring leadership review,
-              authorization, and accountable action ownership.
+              {evidencePolicyLocked
+                ? "Commercial decision review is deferred until governed evidence becomes available."
+                : "Final executive interpretation requiring leadership review, authorization, and accountable action ownership."}
             </p>
           </div>
 
@@ -211,8 +232,16 @@ export function CEOActionCenter({
             <ExecutiveInsightCard
               title={ceoDecisionPosture}
               insight={executiveCommandRecommendation}
-              recommendation="Review top procurement priorities and approve the next executive action sequence."
-              impact="CEO decision layer is active."
+              recommendation={
+                evidencePolicyLocked
+                  ? "Defer commercial decision action until governed evidence becomes available."
+                  : "Review top procurement priorities and approve the next executive action sequence."
+              }
+              impact={
+                evidencePolicyLocked
+                  ? "Decision evidence remains policy locked."
+                  : "CEO decision layer is active."
+              }
               tone="gold"
             />
           </div>

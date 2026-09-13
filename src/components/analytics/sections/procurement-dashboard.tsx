@@ -7,6 +7,7 @@ import { CommercialInsightsPanel } from "@/components/analytics/commercial/comme
 import { ProcurementInsightMetrics } from "@/components/analytics/procurement/procurement-insight-metrics";
 import { SupplierPortfolioIntelligence } from "@/components/analytics/supplier-portfolio-intelligence";
 import type { CommercialInsights } from "@/lib/analytics/commercial/commercial-insights";
+import type { CommercialEvidenceState } from "@/lib/analytics/commercial/commercial-insights";
 import type { ProcurementInsightMetrics as ProcurementInsightMetricsModel } from "@/lib/analytics/portfolio/portfolio-intelligence";
 
 type CommandRoomItem = {
@@ -49,10 +50,11 @@ type CategoryIntelligenceItem = {
   category: string;
   rfqs: number;
   quotes: number;
-  awards: number;
-  winRate: number;
-  spend: number;
-  opportunityScore: number;
+  commercialEvidenceState: CommercialEvidenceState;
+  awards: number | null;
+  winRate: number | null;
+  spend: number | null;
+  opportunityScore: number | null;
 };
 
 type ProcurementDashboardProps = {
@@ -76,7 +78,8 @@ type ProcurementDashboardProps = {
 
   categoryIntelligence: CategoryIntelligenceItem[];
 
-  portfolioHealthIndex: number;
+  supplierCommercialEvidenceState: CommercialEvidenceState;
+  portfolioHealthIndex: number | null;
   supplierParticipationCount: number;
   awardHistoryCoverage: number;
   suppliersWithAwardHistory: number;
@@ -103,6 +106,7 @@ export function ProcurementDashboard({
   sourcingMethodLabels,
   contractFrameworkLabels,
   categoryIntelligence,
+  supplierCommercialEvidenceState,
   portfolioHealthIndex,
   supplierParticipationCount,
   awardHistoryCoverage,
@@ -123,7 +127,10 @@ export function ProcurementDashboard({
         executiveCommandRecommendation={executiveCommandRecommendation}
       />
 
-      <ProcurementInsightMetrics metrics={procurementInsights} />
+      <ProcurementInsightMetrics
+        metrics={procurementInsights}
+        commercialEvidenceState={supplierCommercialEvidenceState}
+      />
 
       <CommercialInsightsPanel insights={commercialInsights} />
 
@@ -144,6 +151,7 @@ export function ProcurementDashboard({
       <CategoryIntelligence categoryIntelligence={categoryIntelligence} />
 
       <SupplierPortfolioIntelligence
+        commercialEvidenceState={supplierCommercialEvidenceState}
         portfolioHealthIndex={portfolioHealthIndex}
         supplierParticipationCount={supplierParticipationCount}
         awardHistoryCoverage={awardHistoryCoverage}

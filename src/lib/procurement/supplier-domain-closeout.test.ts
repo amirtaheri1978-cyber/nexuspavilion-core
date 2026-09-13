@@ -100,7 +100,9 @@ describe("supplier / compliance domain closeout", () => {
 
   it("does not query approved_vendors from the public directory when the domain is absent", () => {
     expect(directory).toContain('.from("company_directory")');
-    expect(directory).toContain('.from("quotes")');
+    expect(directory).not.toContain('.from("quotes")');
+    expect(directory).toContain("Public Supplier Evidence");
+    expect(directory).toContain("Public Evidence Avg");
     expect(directory).toContain("APPROVED_VENDOR_DOMAIN_AVAILABLE");
     expect(
       queryIndex(directory, "APPROVED_VENDOR_DOMAIN_AVAILABLE && currentProfile?.company_id"),

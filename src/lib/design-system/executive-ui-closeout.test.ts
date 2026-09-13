@@ -603,11 +603,14 @@ describe("NP-MASTER-22-B05 launch-critical closeout", () => {
     );
 
     expect(launchCritical.directory).toContain("loadError");
-    expect(launchCritical.directory).toContain("quotesError");
-    expect(launchCritical.directory).toContain("approvedVendorError");
-    expect(launchCritical.directory).toContain(
+    expect(launchCritical.directory).not.toContain('.from("quotes")');
+    expect(launchCritical.directory).not.toContain("quotesError");
+    expect(launchCritical.directory).not.toContain(
       "Company Network ranking quote load failed.",
     );
+    expect(launchCritical.directory).toContain("Public Supplier Evidence");
+    expect(launchCritical.directory).toContain("Public Evidence Avg");
+    expect(launchCritical.directory).toContain("approvedVendorError");
     expect(launchCritical.directory).toContain(
       "Company Network approved vendor load failed.",
     );
@@ -616,9 +619,6 @@ describe("NP-MASTER-22-B05 launch-critical closeout", () => {
       "We couldn't load the company network. Please try again.",
     );
     expect(launchCritical.directory).toContain("!loading && !loadError");
-    expect(launchCritical.directory).toContain(
-      "else if (quotesError)",
-    );
     expect(launchCritical.directory).toContain(
       "approvedVendorQueryRequired && approvedVendorError",
     );
@@ -779,16 +779,11 @@ describe("NP-MASTER-22-B05 launch-critical closeout", () => {
     );
     expect(source).not.toContain("whitespace-nowrap");
 
-    expect(source).toContain(
-      'className="flex flex-col items-start gap-5 sm:flex-row sm:justify-between"',
-    );
-    expect(source).not.toContain(
-      'className="flex items-start justify-between gap-5"',
-    );
-    expect(source).toContain('className="min-w-0"');
-    expect(source).toContain(
-      'className="break-words text-lg font-black text-white"',
-    );
+    expect(source).toContain("Commercial Award Details");
+    expect(source).toContain("Supplier Commercial Evidence");
+    expect(source).toContain("Access Restricted");
+    expect(source).not.toContain("Recent Awards");
+    expect(source).not.toContain('.from("quotes")');
 
     expect(source).toContain("CompanyQualificationsDisplay");
   });

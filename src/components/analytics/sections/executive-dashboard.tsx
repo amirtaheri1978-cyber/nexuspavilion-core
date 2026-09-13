@@ -8,10 +8,11 @@ import { ExecutivePresentationCenter } from "@/components/analytics/executive-pr
 import { ExecutiveScenarioCenter } from "@/components/analytics/executive-scenario-center";
 import type { DecisionSupportReadiness } from "@/lib/analytics/executive/decision-support-readiness";
 import type { RiskComplianceEvidence } from "@/lib/analytics/executive/risk-intelligence";
+import type { CommercialEvidenceState } from "@/lib/analytics/commercial/commercial-insights";
 
 type BenchmarkMatrixItem = {
   title: string;
-  score: number;
+  score: number | null;
 };
 
 type ExecutivePresentationExport = {
@@ -22,7 +23,7 @@ type ExecutivePresentationExport = {
 
 type ExecutiveDashboardProps = {
   ceoMorningBrief: string;
-  ceoReadinessScore: number;
+  ceoReadinessScore: number | null;
   ceoPriorityLevel: string;
   ceoRiskLevel: string;
   ceoOpportunityLevel: string;
@@ -30,16 +31,16 @@ type ExecutiveDashboardProps = {
   ceoCriticalRisks: string[];
   ceoStrategicOpportunities: string[];
 
-  boardHealthIndex: number;
-  benchmarkReadinessScore: number;
+  boardHealthIndex: number | null;
+  benchmarkReadinessScore: number | null;
   enterpriseCommandStatus: string;
   riskCommandStatus: string;
   opportunityCommandStatus: string;
   executiveCommandRecommendation: string;
 
   riskComplianceEvidence: RiskComplianceEvidence;
-  procurementMaturityScore: number;
-  decisionSupportReadiness: DecisionSupportReadiness;
+  procurementMaturityScore: number | null;
+  decisionSupportReadiness: DecisionSupportReadiness | null;
 
   procurementOutlook: string;
   riskTrajectory: string;
@@ -66,7 +67,8 @@ type ExecutiveDashboardProps = {
   benchmarkNarrative: string;
   benchmarkBoardRecommendation: string;
 
-  supplierReliabilityScore: number;
+  supplierReliabilityScore: number | null;
+  supplierCommercialEvidenceState: CommercialEvidenceState;
 };
 
 export function ExecutiveDashboard({
@@ -109,7 +111,42 @@ export function ExecutiveDashboard({
   benchmarkNarrative,
   benchmarkBoardRecommendation,
   supplierReliabilityScore,
+  supplierCommercialEvidenceState,
 }: ExecutiveDashboardProps) {
+  if (
+    supplierCommercialEvidenceState !== "available" ||
+    ceoReadinessScore === null ||
+    boardHealthIndex === null ||
+    benchmarkReadinessScore === null ||
+    procurementMaturityScore === null ||
+    decisionSupportReadiness === null ||
+    supplierReliabilityScore === null ||
+    benchmarkMatrix.some((item) => item.score === null)
+  ) {
+    const evidenceLabel =
+      supplierCommercialEvidenceState === "access-restricted"
+        ? "Access Restricted"
+        : supplierCommercialEvidenceState === "policy-locked"
+          ? "Policy Locked"
+          : "Insufficient Data";
+
+    return (
+      <section className="mt-8 rounded-3xl border border-amber-300/15 bg-amber-400/[0.04] p-6 text-white">
+        <p className="text-sm font-black">Executive Scores {evidenceLabel}</p>
+        <p className="mt-2 text-sm font-semibold leading-6 text-slate-400">
+          Supplier and commercial inputs are unavailable under the current
+          evidence controls. No composite executive score is reported from
+          incomplete evidence.
+        </p>
+      </section>
+    );
+  }
+
+  const availableBenchmarkMatrix = benchmarkMatrix.map((item) => ({
+    ...item,
+    score: item.score as number,
+  }));
+
   return (
     <>
       <CEOMorningBriefing
@@ -163,7 +200,7 @@ export function ExecutiveDashboard({
       />
 
       <ExecutiveBenchmarkEngine
-        benchmarkMatrix={benchmarkMatrix}
+        benchmarkMatrix={availableBenchmarkMatrix}
         benchmarkPeerPosition={benchmarkPeerPosition}
         benchmarkStatus={benchmarkStatus}
         benchmarkConfidence={benchmarkConfidence}

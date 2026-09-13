@@ -52,6 +52,7 @@ export type ProcurementRfq = {
   status: ProcurementRfqStatus;
   company_id: string | null;
   created_at: string | null;
+  deadline?: string | null;
   procurement_scope: string | null;
   sourcing_method: ProcurementSourcingMethod;
   contract_framework: ProcurementContractFramework;

@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import type { CommercialEvidenceState } from "@/lib/analytics/commercial/commercial-insights";
 
 type NarrativeStatus = "ready" | "insufficient-data" | "coming-soon";
 
@@ -33,6 +34,7 @@ enterpriseProcurementScore: number;
 executiveReadinessScore: number;
 procurementRiskIndex: number;
 supplierEngagementScore: number;
+  supplierCommercialEvidenceState?: CommercialEvidenceState;
 benchmarkReadinessScore: number;
 boardRecommendation: string;
 procurementMaturityScore: number;
@@ -136,6 +138,7 @@ executiveStatus,
 executiveReadinessScore,
 enterpriseProcurementScore,
 supplierEngagementScore,
+supplierCommercialEvidenceState = "available",
 procurementRiskIndex,
 }: Pick<
 BoardNarrativeGeneratorProps,
@@ -143,14 +146,21 @@ BoardNarrativeGeneratorProps,
 | "executiveReadinessScore"
 | "enterpriseProcurementScore"
 | "supplierEngagementScore"
+| "supplierCommercialEvidenceState"
 | "procurementRiskIndex"
 >) {
-return `Executive status is currently classified as ${executiveStatus}. The organization shows an executive readiness level of ${executiveReadinessScore}/100 and an enterprise procurement strength of ${enterpriseProcurementScore}/100. Supplier engagement is tracking at ${supplierEngagementScore}/100, while procurement risk exposure is ${procurementRiskIndex}/100.`;
+const supplierEvidence =
+supplierCommercialEvidenceState === "policy-locked"
+? "Supplier commercial evidence is policy locked until the applicable RFQ submission deadlines pass."
+: `Supplier engagement is tracking at ${supplierEngagementScore}/100.`;
+
+return `Executive status is currently classified as ${executiveStatus}. The organization shows an executive readiness level of ${executiveReadinessScore}/100 and an enterprise procurement strength of ${enterpriseProcurementScore}/100. ${supplierEvidence} Procurement risk exposure is ${procurementRiskIndex}/100.`;
 }
 
 function generateProcurementNarrative({
 procurementMaturityScore,
 supplierEngagementScore,
+supplierCommercialEvidenceState,
 decisionSupportReadinessScore,
 decisionSupportReadinessLabel,
 benchmarkReadinessScore,
@@ -159,12 +169,18 @@ procurementRiskIndex,
 BoardNarrativeGeneratorProps,
 | "procurementMaturityScore"
 | "supplierEngagementScore"
+| "supplierCommercialEvidenceState"
 | "decisionSupportReadinessScore"
 | "decisionSupportReadinessLabel"
 | "benchmarkReadinessScore"
 | "procurementRiskIndex"
 >) {
-return `Procurement maturity is currently measured at ${procurementMaturityScore}/100, with supplier engagement at ${supplierEngagementScore}/100. Decision-support readiness is ${decisionSupportReadinessScore}/100 (${decisionSupportReadinessLabel}), and internal benchmark readiness is ${benchmarkReadinessScore}/100. Risk exposure remains visible at ${procurementRiskIndex}/100.`;
+const supplierEvidence =
+supplierCommercialEvidenceState === "policy-locked"
+? "Supplier commercial evidence is policy locked pending commercial opening."
+: `Supplier engagement is ${supplierEngagementScore}/100.`;
+
+return `Procurement maturity is currently measured at ${procurementMaturityScore}/100. ${supplierEvidence} Decision-support readiness is ${decisionSupportReadinessScore}/100 (${decisionSupportReadinessLabel}), and internal benchmark readiness is ${benchmarkReadinessScore}/100. Risk exposure remains visible at ${procurementRiskIndex}/100.`;
 }
 
 function generateBenchmarkNarrative({
@@ -180,11 +196,16 @@ return `Internal benchmark readiness is currently classified as ${executiveBench
 function generateRiskNarrative({
 procurementRiskIndex,
 supplierEngagementScore,
+supplierCommercialEvidenceState,
 enterpriseProcurementScore,
 }: Pick<
 BoardNarrativeGeneratorProps,
-"procurementRiskIndex" | "supplierEngagementScore" | "enterpriseProcurementScore"
+"procurementRiskIndex" | "supplierEngagementScore" | "supplierCommercialEvidenceState" | "enterpriseProcurementScore"
 >) {
+if (supplierCommercialEvidenceState === "policy-locked") {
+return `Procurement risk exposure is ${procurementRiskIndex}/100. Supplier dependency, participation, and engagement evidence remain policy locked until the applicable RFQ submission deadlines pass.`;
+}
+
 if (procurementRiskIndex >= 70) {
 return `Procurement risk exposure is elevated at ${procurementRiskIndex}/100. Supplier engagement is ${supplierEngagementScore}/100 and enterprise procurement strength is ${enterpriseProcurementScore}/100. Board visibility is recommended until supplier participation, quote coverage, and decision evidence improve.`;
 }
@@ -221,12 +242,22 @@ enterpriseProcurementScore,
 executiveReadinessScore,
 procurementRiskIndex,
 supplierEngagementScore,
+supplierCommercialEvidenceState = "available",
 benchmarkReadinessScore,
 boardRecommendation,
 procurementMaturityScore,
 decisionSupportReadinessScore,
 decisionSupportReadinessLabel,
 }: BoardNarrativeGeneratorProps) {
+const commercialEvidenceLabel =
+supplierCommercialEvidenceState === "access-restricted"
+? "Access Restricted"
+: supplierCommercialEvidenceState === "policy-locked"
+? "Policy Locked"
+: supplierCommercialEvidenceState === "insufficient-data"
+? "Insufficient Data"
+: null;
+
 const [generatedPackage, setGeneratedPackage] =
 useState<GeneratedNarrativePackage | null>(null);
 const [isGenerating, setIsGenerating] = useState(false);
@@ -242,6 +273,7 @@ day: "numeric",
 }, []);
 
 const narrativeReady =
+supplierCommercialEvidenceState === "available" &&
 boardHealthIndex >= 55 &&
 enterpriseProcurementScore >= 50 &&
 executiveReadinessScore >= 50 &&
@@ -249,7 +281,9 @@ decisionSupportReadinessScore >= 50;
 
 const narrativeStatusLabel = narrativeReady ? "Ready" : "Insufficient Data";
 
-const boardNarrative = generateBoardNarrative({
+const boardNarrative = commercialEvidenceLabel
+? commercialEvidenceLabel
+: generateBoardNarrative({
 boardHealthIndex,
 enterpriseProcurementScore,
 executiveReadinessScore,
@@ -258,35 +292,48 @@ benchmarkReadinessScore,
 boardRecommendation,
 });
 
-const ceoNarrative = generateCEONarrative({
+const ceoNarrative = commercialEvidenceLabel
+? commercialEvidenceLabel
+: generateCEONarrative({
 executiveStatus,
 executiveReadinessScore,
 enterpriseProcurementScore,
 supplierEngagementScore,
+supplierCommercialEvidenceState,
 procurementRiskIndex,
 });
 
-const procurementNarrative = generateProcurementNarrative({
+const procurementNarrative = commercialEvidenceLabel
+? commercialEvidenceLabel
+: generateProcurementNarrative({
 procurementMaturityScore,
 supplierEngagementScore,
+supplierCommercialEvidenceState,
 decisionSupportReadinessScore,
 decisionSupportReadinessLabel,
 benchmarkReadinessScore,
 procurementRiskIndex,
 });
 
-const benchmarkNarrative = generateBenchmarkNarrative({
+const benchmarkNarrative = commercialEvidenceLabel
+? commercialEvidenceLabel
+: generateBenchmarkNarrative({
 executiveBenchmarkStatus,
 benchmarkReadinessScore,
 });
 
-const riskNarrative = generateRiskNarrative({
+const riskNarrative = commercialEvidenceLabel
+? commercialEvidenceLabel
+: generateRiskNarrative({
 procurementRiskIndex,
 supplierEngagementScore,
+supplierCommercialEvidenceState,
 enterpriseProcurementScore,
 });
 
-const recommendationNarrative = generateRecommendationNarrative({
+const recommendationNarrative = commercialEvidenceLabel
+? commercialEvidenceLabel
+: generateRecommendationNarrative({
 boardRecommendation,
 boardHealthIndex,
 executiveReadinessScore,
@@ -342,6 +389,18 @@ ${generatedPackage.panels
 .map((panel) => `${panel.title}:\n${panel.body}`)
 .join("\n\n")}`;
 }, [generatedPackage, narrativeReady]);
+
+if (commercialEvidenceLabel) {
+return (
+<section className="mt-8 rounded-[32px] border border-amber-300/15 bg-amber-400/[0.04] p-6 text-white">
+<p className="text-sm font-black">Board Narrative {commercialEvidenceLabel}</p>
+<p className="mt-2 text-sm font-semibold leading-6 text-slate-400">
+Executive narrative generation is unavailable under the current supplier and
+commercial evidence controls. No incomplete numeric score is serialized.
+</p>
+</section>
+);
+}
 
 function generateNarrativePackage() {
 if (!narrativeReady) {

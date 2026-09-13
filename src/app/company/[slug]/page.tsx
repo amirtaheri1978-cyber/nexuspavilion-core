@@ -42,15 +42,6 @@ status: string | null;
 created_at: string | null;
 };
 
-type Quote = {
-id: string;
-rfq_id: string;
-company_id: string | null;
-amount: number | string | null;
-decision: string | null;
-created_at: string | null;
-};
-
 type ActivityLog = {
 id: string;
 action: string | null;
@@ -131,41 +122,6 @@ if (action === "MEMBER_ROLE_UPDATED") return "👥";
 if (action === "MEMBER_REMOVED") return "🗑️";
 
 return "⚡";
-}
-
-function getCommercialHistoryStatus(
-submittedQuotes: number,
-awardedQuotes: number,
-): { label: string; detail: string } {
-if (submittedQuotes === 0) {
-return {
-label: "Insufficient Data",
-detail:
-"No submitted quotes have been recorded for this supplier yet.",
-};
-}
-
-if (submittedQuotes < 3) {
-return {
-label: "Limited History",
-detail:
-"Quote volume is limited. Commercial history reflects early participation only.",
-};
-}
-
-if (awardedQuotes === 0) {
-return {
-label: "No Award History",
-detail:
-"Quotes have been submitted, but no contracts have been awarded yet.",
-};
-}
-
-return {
-label: "Recorded Activity",
-detail:
-"Commercial history is based on submitted quotes and awarded contracts recorded in the network.",
-};
 }
 
 function getActivityDetail(log: ActivityLog) {
@@ -289,18 +245,6 @@ const { data: activityLogs } = await supabase
 .limit(10);
 
 const rfqList = (rfqs ?? []) as RFQ[];
-const rfqIds = rfqList.map((rfq) => rfq.id);
-
-const { data: quotes } =
-rfqIds.length > 0
-? await supabase
-.from("quotes")
-.select("*")
-.in("rfq_id", rfqIds)
-.order("created_at", { ascending: false })
-: { data: [] };
-
-const quoteList = (quotes ?? []) as Quote[];
 const activityList = (activityLogs ?? []) as ActivityLog[];
 
 const totalRfqs = rfqList.length;
@@ -313,60 +257,14 @@ const budget = Number(rfq.budget);
 return total + (Number.isNaN(budget) ? 0 : budget);
 }, 0);
 
-const awardedQuotes = quoteList.filter(
-(quote) => quote.decision === "awarded"
-);
-
-const awardedSpend = awardedQuotes.reduce((total, quote) => {
-const amount = Number(quote.amount);
-return total + (Number.isNaN(amount) ? 0 : amount);
-}, 0);
-
-const estimatedSavings = Math.max(totalBudget - awardedSpend, 0);
 const awardRate =
 totalRfqs > 0 ? Math.round((awardedRfqs / totalRfqs) * 100) : 0;
 
 const recentRfqs = rfqList.slice(0, 6);
-const recentAwards = awardedQuotes.slice(0, 5);
-
-const vendorCompanyQuotes = quoteList.filter(
-(quote) => quote.company_id === company.id
-);
-
-const vendorSubmittedQuotes = vendorCompanyQuotes.length;
-
-const vendorAwardedQuotes = vendorCompanyQuotes.filter(
-(quote) => quote.decision === "awarded"
-);
-
-const vendorAwardedRevenue = vendorAwardedQuotes.reduce((total, quote) => {
-const amount = Number(quote.amount);
-return total + (Number.isNaN(amount) ? 0 : amount);
-}, 0);
-
-const vendorTotalBidValue = vendorCompanyQuotes.reduce((total, quote) => {
-const amount = Number(quote.amount);
-return total + (Number.isNaN(amount) ? 0 : amount);
-}, 0);
-
-const vendorAverageBid =
-vendorSubmittedQuotes > 0
-? Math.round(vendorTotalBidValue / vendorSubmittedQuotes)
-: 0;
-
-const vendorWinRate =
-vendorSubmittedQuotes > 0
-? Math.round((vendorAwardedQuotes.length / vendorSubmittedQuotes) * 100)
-: 0;
 
 const isVendorProfile =
 String(company.network_role || "").toLowerCase().includes("vendor") ||
 String(company.network_role || "").toLowerCase().includes("supplier");
-
-const commercialHistoryStatus = getCommercialHistoryStatus(
-vendorSubmittedQuotes,
-vendorAwardedQuotes.length,
-);
 
 return (
 <main className="relative min-h-screen overflow-hidden bg-[#061426] px-4 py-6 text-white sm:px-6 lg:px-10">
@@ -441,8 +339,8 @@ Public Company Profile
 
 <div className="grid min-w-[280px] grid-cols-2 gap-4">
 <MiniMetric title="Active RFQs" value={openRfqs} />
-<MiniMetric title="Awards" value={awardedRfqs} />
-<MiniMetric title="Quotes" value={quoteList.length} />
+<MiniMetric title="Awarded RFQs" value={awardedRfqs} />
+<MiniMetric title="Total RFQs" value={totalRfqs} />
 <MiniMetric title="Award Rate" value={`${awardRate}%`} />
 </div>
 </div>
@@ -468,27 +366,27 @@ Public Company Profile
 
 <section className="mt-8 grid gap-6 md:grid-cols-4">
 <MetricCard
+title="Total RFQs"
+value={String(totalRfqs)}
+detail="Public RFQ portfolio count"
+/>
+
+<MetricCard
+title="Open RFQs"
+value={String(openRfqs)}
+detail="Currently open public procurement opportunities"
+/>
+
+<MetricCard
 title="Procurement Volume"
 value={formatMoney(totalBudget)}
-detail="Total RFQ budget portfolio"
-/>
-
-<MetricCard
-title="Awarded Spend"
-value={formatMoney(awardedSpend)}
-detail="Total awarded contract value"
-/>
-
-<MetricCard
-title="Estimated Savings"
-value={formatMoney(estimatedSavings)}
-detail="Budget less awarded value"
+detail="Published RFQ budget portfolio"
 />
 
 <MetricCard
 title="Award Rate"
 value={`${awardRate}%`}
-detail={`${awardedRfqs} of ${totalRfqs} RFQs awarded`}
+detail={`${awardedRfqs} of ${totalRfqs} RFQs marked awarded`}
 />
 </section>
 <section className="mt-8 grid gap-8 xl:grid-cols-[1.2fr_0.8fr]">
@@ -515,19 +413,6 @@ Open Marketplace
 <div className="mt-7 space-y-5">
 {recentRfqs.length > 0 ? (
 recentRfqs.map((rfq) => {
-const relatedQuotes = quoteList.filter(
-(quote) => quote.rfq_id === rfq.id
-);
-
-const lowestQuote =
-relatedQuotes.length > 0
-? Math.min(
-...relatedQuotes
-.map((quote) => Number(quote.amount))
-.filter((amount) => !Number.isNaN(amount))
-)
-: null;
-
 return (
 <Link
 key={rfq.id}
@@ -565,15 +450,8 @@ Budget {formatMoney(rfq.budget)}
 </InfoPill>
 
 <InfoPill>
-{relatedQuotes.length} Quotes
+Created {formatDate(rfq.created_at)}
 </InfoPill>
-
-{lowestQuote !== null &&
-Number.isFinite(lowestQuote) ? (
-<InfoPill>
-Lowest {formatMoney(lowestQuote)}
-</InfoPill>
-) : null}
 </div>
 </Link>
 );
@@ -586,105 +464,39 @@ Lowest {formatMoney(lowestQuote)}
 
 <aside className="rounded-[34px] border border-white/10 bg-white/[0.055] p-8 shadow-[0_30px_80px_rgba(0,0,0,0.35)]">
 <p className="text-xs font-black uppercase tracking-[0.30em] text-[#C8A646]">
-Award History
+Commercial Award Details
 </p>
 
 <h2 className="mt-3 text-3xl font-black text-white">
-Recent Awards
+Access Restricted
 </h2>
 
-<div className="mt-7 space-y-5">
-{recentAwards.length > 0 ? (
-recentAwards.map((quote) => {
-const relatedRfq = rfqList.find(
-(rfq) => rfq.id === quote.rfq_id
-);
-
-return (
-<div
-key={quote.id}
-className="rounded-[28px] border border-white/10 bg-[#07111F]/80 p-6"
->
-<div className="flex flex-col items-start gap-5 sm:flex-row sm:justify-between">
-<div className="min-w-0">
-<p className="break-words text-lg font-black text-white">
-{relatedRfq?.title || "Awarded RFQ"}
+<p className="mt-5 text-sm font-semibold leading-7 text-slate-400">
+Supplier pricing, award values, quote identity, and other commercial
+submission evidence are not published on public company profiles.
+Authorized procurement users can review commercial evidence only
+through governed issuer workspaces after commercial opening.
 </p>
-
-<p className="mt-2 text-sm font-semibold text-slate-400">
-{relatedRfq?.location || "Location N/A"}
-</p>
-</div>
-
-<StatusPill tone="success">
-Awarded
-</StatusPill>
-</div>
-
-<p className="mt-6 text-3xl font-black text-[#C8A646]">
-{formatMoney(quote.amount)}
-</p>
-
-<p className="mt-3 text-xs font-bold uppercase tracking-[0.18em] text-slate-400">
-{formatDate(quote.created_at)}
-</p>
-</div>
-);
-})
-) : (
-<EmptyState message="No awards have been recorded yet." />
-)}
-</div>
 </aside>
 </section>
 
 {isVendorProfile ? (
 <section className="mt-8 rounded-[36px] border border-[#2CC4E8]/15 bg-gradient-to-br from-[#0B3D91]/30 via-[#07111F] to-[#061426] p-8 shadow-[0_0_80px_rgba(44,196,232,0.12)]">
 <p className="text-xs font-black uppercase tracking-[0.30em] text-[#C8A646]">
-Supplier Performance Evidence
+Supplier Commercial Evidence
 </p>
 
-<div className="mt-6 grid gap-8 xl:grid-cols-[1fr_0.95fr]">
-<div>
-<h2 className="text-4xl font-black text-white">
-Commercial History
+<h2 className="mt-4 text-4xl font-black text-white">
+Access Restricted
 </h2>
 
-<p className="mt-5 max-w-3xl text-sm leading-8 text-slate-300">
-{commercialHistoryStatus.detail}
+<p className="mt-5 max-w-4xl text-sm font-semibold leading-8 text-slate-300">
+Commercial performance data is not published on public company
+profiles. Submitted quote counts, pricing, win rate, awarded revenue,
+average quote value, supplier ranking, and recommendation signals remain
+inside authorized procurement workspaces and are subject to the
+commercial-opening policy.
 </p>
-
-<span className="mt-5 inline-flex rounded-full border border-white/10 bg-white/[0.055] px-4 py-2 text-xs font-black uppercase tracking-[0.18em] text-[#F5D77B]">
-{commercialHistoryStatus.label}
-</span>
-</div>
-
-<div className="grid gap-4 sm:grid-cols-2">
-<MetricCard
-title="Submitted Quotes"
-value={String(vendorSubmittedQuotes)}
-detail="Recorded quote submissions"
-/>
-
-<MetricCard
-title="Awards"
-value={String(vendorAwardedQuotes.length)}
-detail="Contracts won"
-/>
-
-<MetricCard
-title="Win Rate"
-value={`${vendorWinRate}%`}
-detail="Awards vs submitted quotes"
-/>
-
-<MetricCard
-title="Awarded Revenue"
-value={formatMoney(vendorAwardedRevenue)}
-detail="Total won contract value"
-/>
-</div>
-</div>
 </section>
 ) : null}
 <section className="mt-8 rounded-[34px] border border-white/10 bg-white/[0.055] p-8 shadow-[0_30px_80px_rgba(0,0,0,0.35)]">
@@ -754,62 +566,6 @@ className="rounded-[28px] border border-white/10 bg-[#07111F]/80 p-6"
 </div>
 </section>
 
-{isVendorProfile ? (
-<section className="mt-8 rounded-[34px] border border-white/10 bg-white/[0.055] p-8 shadow-[0_30px_80px_rgba(0,0,0,0.35)]">
-<p className="text-xs font-black uppercase tracking-[0.30em] text-[#C8A646]">
-Supplier Performance
-</p>
-
-<h2 className="mt-3 text-3xl font-black text-white">
-Quote History
-</h2>
-
-<p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-400">
-Factual quote and award activity recorded across the Nexus Pavilion
-procurement network, including submitted quotes, win rate, awarded
-revenue, and average quote value.
-</p>
-
-<div className="mt-8 grid gap-6 md:grid-cols-3 xl:grid-cols-6">
-<MetricCard
-title="Quotes"
-value={String(vendorSubmittedQuotes)}
-detail="Submitted quotes"
-/>
-
-<MetricCard
-title="Awards"
-value={String(vendorAwardedQuotes.length)}
-detail="Contracts won"
-/>
-
-<MetricCard
-title="Win Rate"
-value={`${vendorWinRate}%`}
-detail="Awards vs quotes"
-/>
-
-<MetricCard
-title="Awarded Revenue"
-value={formatMoney(vendorAwardedRevenue)}
-detail="Total won value"
-/>
-
-<MetricCard
-title="Average Submitted Quote"
-value={formatMoney(vendorAverageBid)}
-detail="Average submitted quote"
-/>
-
-<MetricCard
-title="Submitted Quote Value"
-value={formatMoney(vendorTotalBidValue)}
-detail="Total quoted value"
-/>
-</div>
-
-</section>
-) : null}
 
 <section className="mt-8 rounded-[34px] border border-white/10 bg-white/[0.055] p-8 shadow-[0_30px_80px_rgba(0,0,0,0.35)]">
 <p className="text-xs font-black uppercase tracking-[0.30em] text-[#C8A646]">
@@ -822,10 +578,11 @@ Network Visibility
 
 <p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-400">
 This verified enterprise profile is publicly visible in the Nexus
-Pavilion supply network. RFQ portfolio metrics, awarded spend, and
-procurement activity are summarized for executive visibility.
-Detailed compliance documents, private supplier submissions, and
-workspace administration require authenticated access.
+Pavilion supply network. Public RFQ context, company capabilities,
+qualifications, and non-commercial network information are available
+here. Supplier submissions, pricing, commercial evaluations, award
+values, and workspace administration require governed authenticated
+access.
 </p>
 </section>
 </div>
