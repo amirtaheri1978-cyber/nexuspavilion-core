@@ -757,25 +757,64 @@ describe("Task 15-05 invitation diagnostics", () => {
 });
 describe("Task 15-03 migration discipline", () => {
   const migrationsDir = resolve(process.cwd(), "supabase/migrations");
+  const archiveV1Dir = resolve(
+    process.cwd(),
+    "supabase/legacy-migrations/pre-baseline",
+  );
   const archiveV2Dir = resolve(
     process.cwd(),
     "supabase/legacy-migrations/pre-baseline-v2",
   );
   const baselineV2Name =
     "20260911000000_launch_candidate_baseline_v2.sql";
+  const baselineV2Timestamp = "20260911000000";
+  const migrationFilenamePattern = /^(\d{14})_.+\.sql$/;
   const historicalSurgeryName =
     "20260904204031_populate_notification_rfq_source_from_trusted_writers.sql";
 
   function migrationFilenames() {
-    return readdirSync(migrationsDir).filter((name) => name.endsWith(".sql"));
+    return readdirSync(migrationsDir)
+      .filter((name) => name.endsWith(".sql"))
+      .sort();
+  }
+
+  function archiveV1Filenames() {
+    return readdirSync(archiveV1Dir).filter((name) => name.endsWith(".sql"));
   }
 
   function archiveV2Filenames() {
     return readdirSync(archiveV2Dir).filter((name) => name.endsWith(".sql"));
   }
 
-  it("keeps Canonical Baseline V2 as the only active migration", () => {
-    expect(migrationFilenames()).toEqual([baselineV2Name]);
+  it("keeps Canonical Baseline V2 first and permits only newer forward migrations", () => {
+    const activeMigrations = migrationFilenames();
+
+    expect(activeMigrations).toContain(baselineV2Name);
+    expect(activeMigrations[0]).toBe(baselineV2Name);
+
+    const activeTimestamps = activeMigrations.map((fileName, index) => {
+      const match = fileName.match(migrationFilenamePattern);
+      expect(match, `invalid active migration filename ${fileName}`).not.toBeNull();
+
+      const timestamp = match?.[1] ?? "";
+      if (index === 0) {
+        expect(timestamp).toBe(baselineV2Timestamp);
+      } else {
+        expect(timestamp > baselineV2Timestamp).toBe(true);
+      }
+
+      return timestamp;
+    });
+
+    expect(new Set(activeTimestamps).size).toBe(activeTimestamps.length);
+
+    const archivedMigrationNames = new Set([
+      ...archiveV1Filenames(),
+      ...archiveV2Filenames(),
+    ]);
+    for (const fileName of activeMigrations) {
+      expect(archivedMigrationNames.has(fileName)).toBe(false);
+    }
 
     const baseline = readSource(`supabase/migrations/${baselineV2Name}`);
     const compact = baseline.replace(/\s+/g, " ");

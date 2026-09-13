@@ -4,6 +4,8 @@ import { describe, expect, it } from "vitest";
 
 const migrationPath =
   "supabase/legacy-migrations/pre-baseline-v2/20260829000000_restrict_issuer_quote_select_until_commercial_unlock.sql";
+const deadlineLockedMigrationPath =
+  "supabase/migrations/20260913072244_enforce_deadline_locked_quote_rls.sql";
 const baselineMigrationPath =
   "supabase/legacy-migrations/pre-baseline-v2/20260822000000_dev_public_baseline.sql";
 const auditMigrationPath =
@@ -26,6 +28,14 @@ const sql = readFileSync(resolve(process.cwd(), migrationPath), "utf8").replace(
   /\r\n/g,
   "\n",
 );
+const deadlineLockedSql = readFileSync(
+  resolve(process.cwd(), deadlineLockedMigrationPath),
+  "utf8",
+).replace(/\r\n/g, "\n");
+const normalizedDeadlineLockedSql = deadlineLockedSql
+  .replace(/\s+/g, " ")
+  .trim()
+  .toLowerCase();
 const normalized = sql.replace(/\s+/g, " ").trim().toLowerCase();
 const sqlWithoutComments = sql
   .replace(/--[^\n]*/g, " ")
@@ -141,6 +151,17 @@ describe("issuer quote SELECT commercial unlock migration", () => {
     expect(normalized).toContain(
       'drop policy if exists "company members can read permitted quotes" on public.quotes',
     );
+    expect(normalizedDeadlineLockedSql).toContain(
+      'drop policy if exists "issuing buyers can read quotes after commercial unlock" on public.quotes',
+    );
+    expect(normalizedDeadlineLockedSql).toContain(
+      'drop policy if exists "workspace administrators can update rfq quote decisions" on public.quotes',
+    );
+    expect(normalizedDeadlineLockedSql).not.toContain("sourcing_method");
+    expect(normalizedDeadlineLockedSql).not.toContain("contract_framework");
+    expect(normalizedDeadlineLockedSql).not.toContain("create or replace function");
+    expect(normalizedDeadlineLockedSql).not.toContain("grant ");
+    expect(normalizedDeadlineLockedSql).not.toContain("revoke ");
   });
 
   it("keeps supplier own-company quote SELECT without a deadline predicate", () => {
@@ -161,9 +182,9 @@ describe("issuer quote SELECT commercial unlock migration", () => {
     expect(normalizedPolicy).not.toContain("from public.rfqs");
   });
 
-  it("does not let issuer membership alone permit quote SELECT", () => {
+  it("requires strict parsed-deadline unlock for issuer quote SELECT", () => {
     const issuer = policyBlock(
-      sql,
+      deadlineLockedSql,
       "Issuing buyers can read quotes after commercial unlock",
     );
     const normalizedIssuer = issuer.replace(/\s+/g, " ").toLowerCase();
@@ -171,26 +192,28 @@ describe("issuer quote SELECT commercial unlock migration", () => {
     expect(normalizedIssuer).toContain("for select");
     expect(normalizedIssuer).toContain("to authenticated");
     expect(normalizedIssuer).toContain("om.company_id = r.company_id");
+    expect(normalizedIssuer).toContain("om.user_id = auth.uid()");
+    expect(normalizedIssuer).toContain(
+      "om.membership_status in ('active', 'archived')",
+    );
     expect(normalizedIssuer).toContain(
       "om.workspace_role in ('owner', 'admin')",
     );
     expect(normalizedIssuer).toContain("om.procurement_function = 'buyer'");
     expect(normalizedIssuer).toContain("r.id = quotes.rfq_id");
-    expect(normalizedIssuer).toContain(
-      "coalesce(r.sourcing_method, 'invited') = 'open'",
-    );
-    expect(normalizedIssuer).toContain(
-      "coalesce(r.contract_framework, 'project_specific') <> 'framework'",
-    );
     expect(normalizedIssuer).toContain(deadlineUnlock);
     expect(normalizedIssuer).not.toContain("r.deadline < now()");
     expect(normalizedIssuer).not.toContain("deadline <= now()");
     expect(normalizedIssuer).not.toContain("deadline is null");
+    expect(normalizedIssuer).not.toContain("sourcing_method");
+    expect(normalizedIssuer).not.toContain("contract_framework");
+    expect(normalizedIssuer).not.toContain("= 'open'");
+    expect(normalizedIssuer).not.toContain("<> 'framework'");
   });
 
-  it("keeps invited, sealed, framework, future, and null deadlines locked", () => {
+  it("keeps every sourcing and framework variant locked until its deadline passes", () => {
     const issuer = policyBlock(
-      sql,
+      deadlineLockedSql,
       "Issuing buyers can read quotes after commercial unlock",
     );
     const normalizedIssuer = issuer.replace(/\s+/g, " ").toLowerCase();
@@ -200,35 +223,22 @@ describe("issuer quote SELECT commercial unlock migration", () => {
     expect(metadata).toContain('contractFramework === "framework"');
     expect(metadata).toContain('return "invited"');
     expect(metadata).toContain('return "project_specific"');
-    expect(normalizedIssuer).toContain(
-      "coalesce(r.sourcing_method, 'invited') = 'open'",
-    );
     expect(normalizedIssuer).toContain(deadlineUnlock);
+    expect(normalizedIssuer).not.toContain("sourcing_method");
+    expect(normalizedIssuer).not.toContain("contract_framework");
     expect(normalizedIssuer).not.toContain("r.deadline < now()");
     expect(normalizedIssuer).not.toContain("status = 'closed'");
     expect(normalizedIssuer).not.toContain("status = 'awarded'");
   });
 
-  it("permits issuer SELECT after a legitimate deadline unlock", () => {
+  it("permits issuer SELECT only after a legitimate deadline unlock", () => {
     const issuer = policyBlock(
-      sql,
+      deadlineLockedSql,
       "Issuing buyers can read quotes after commercial unlock",
     );
     const normalizedIssuer = issuer.replace(/\s+/g, " ").toLowerCase();
 
-    expect(normalizedIssuer).toContain(`or ( ${deadlineUnlock} )`);
-  });
-
-  it("preserves open non-framework issuer quote access without waiting for a deadline", () => {
-    const issuer = policyBlock(
-      sql,
-      "Issuing buyers can read quotes after commercial unlock",
-    );
-    const normalizedIssuer = issuer.replace(/\s+/g, " ").toLowerCase();
-
-    expect(normalizedIssuer).toContain(
-      "coalesce(r.sourcing_method, 'invited') = 'open' and coalesce(r.contract_framework, 'project_specific') <> 'framework'",
-    );
+    expect(normalizedIssuer).toContain(deadlineUnlock);
   });
 
   it("creates an integer-only count RPC with issuer-company authorization", () => {
@@ -283,6 +293,7 @@ describe("issuer quote SELECT commercial unlock migration", () => {
       'drop policy if exists "supplier members can submit company quotes"',
     );
     expect(normalized).not.toContain("for insert");
+    expect(normalizedDeadlineLockedSql).not.toContain("for insert");
     expect(baseline).toContain(
       'CREATE POLICY "Supplier members can submit company quotes"',
     );
@@ -438,7 +449,7 @@ function awardRpcSql() {
 
 describe("issuer quote UPDATE commercial unlock", () => {
   const policy = policyBlock(
-    sql,
+    deadlineLockedSql,
     "Workspace administrators can update RFQ quote decisions",
   );
   const normalizedPolicy = policy.replace(/\s+/g, " ").toLowerCase();
@@ -447,43 +458,49 @@ describe("issuer quote UPDATE commercial unlock", () => {
   it("does not let issuer owner/admin membership alone permit quote UPDATE", () => {
     expect(normalizedPolicy).toContain("for update");
     expect(normalizedPolicy).toContain("to authenticated");
+    expect(normalizedPolicy).toContain("r.id = quotes.rfq_id");
+    expect(normalizedPolicy).toContain("om.company_id = r.company_id");
+    expect(normalizedPolicy).toContain("om.user_id = auth.uid()");
+    expect(normalizedPolicy).toContain("om.membership_status = 'active'");
     expect(normalizedPolicy).toContain("om.workspace_role in ('owner', 'admin')");
-    expect(normalizedPolicy).toContain(unlockPredicate);
     expect(normalizedPolicy).toContain(deadlineUnlock);
-    expect(sql).toContain(
+    expect(deadlineLockedSql).toContain(
       'drop policy if exists "Workspace administrators can update RFQ quote decisions"',
     );
+    expect(normalizedPolicy).not.toContain("sourcing_method");
+    expect(normalizedPolicy).not.toContain("contract_framework");
+    expect(normalizedPolicy).not.toContain("= 'open'");
+    expect(normalizedPolicy).not.toContain("<> 'framework'");
   });
 
-  it("applies the commercial-unlock predicate to UPDATE USING and WITH CHECK", () => {
-    expect(using).toContain(unlockPredicate);
+  it("applies the strict deadline predicate to UPDATE USING and WITH CHECK", () => {
     expect(using).toContain(deadlineUnlock);
-    expect(withCheck).toContain(unlockPredicate);
     expect(withCheck).toContain(deadlineUnlock);
+    expect(using).not.toContain("sourcing_method");
+    expect(using).not.toContain("contract_framework");
+    expect(withCheck).not.toContain("sourcing_method");
+    expect(withCheck).not.toContain("contract_framework");
   });
 
   it("keeps invited, sealed, framework, future, and null deadlines locked for UPDATE", () => {
-    expect(normalizedPolicy).toContain(
-      "coalesce(r.sourcing_method, 'invited') = 'open'",
-    );
     expect(normalizedPolicy).toContain(deadlineUnlock);
+    expect(normalizedPolicy).not.toContain("sourcing_method");
+    expect(normalizedPolicy).not.toContain("contract_framework");
     expect(normalizedPolicy).not.toContain("r.deadline < now()");
     expect(normalizedPolicy).not.toContain("deadline <= now()");
     expect(normalizedPolicy).not.toContain("deadline is null");
   });
 
-  it("permits issuer UPDATE after a legitimate deadline unlock", () => {
-    expect(using).toContain(`or ( ${deadlineUnlock} )`);
-    expect(withCheck).toContain(`or ( ${deadlineUnlock} )`);
+  it("permits issuer UPDATE only after a legitimate deadline unlock", () => {
+    expect(using).toContain(deadlineUnlock);
+    expect(withCheck).toContain(deadlineUnlock);
+    expect(using).not.toContain(" or ");
+    expect(withCheck).not.toContain(" or ");
   });
 
   it("does not grant UPDATE to buyer-only procurement membership", () => {
     expect(normalizedPolicy).not.toContain("procurement_function = 'buyer'");
     expect(normalizedPolicy).not.toContain("om.procurement_function");
-  });
-
-  it("preserves open non-framework issuer quote UPDATE without waiting for a deadline", () => {
-    expect(normalizedPolicy).toContain(unlockPredicate);
   });
 });
 
@@ -725,11 +742,11 @@ describe("text deadline fail-closed commercial unlock parsing", () => {
   const helper = parseDeadlineSql();
   const normalizedHelper = helper.replace(/\s+/g, " ").toLowerCase();
   const issuerSelect = policyBlock(
-    sql,
+    deadlineLockedSql,
     "Issuing buyers can read quotes after commercial unlock",
   ).replace(/\s+/g, " ").toLowerCase();
   const updatePolicy = policyBlock(
-    sql,
+    deadlineLockedSql,
     "Workspace administrators can update RFQ quote decisions",
   );
   const { using, withCheck } = splitUpdateExpressions(updatePolicy);
@@ -815,9 +832,11 @@ describe("text deadline fail-closed commercial unlock parsing", () => {
   });
 
   it("unlocks only a valid past timestamp", () => {
-    expect(issuerSelect).toContain(`or ( ${deadlineUnlock} )`);
-    expect(using).toContain(`or ( ${deadlineUnlock} )`);
-    expect(withCheck).toContain(`or ( ${deadlineUnlock} )`);
+    expect(issuerSelect).toContain(deadlineUnlock);
+    expect(using).toContain(deadlineUnlock);
+    expect(withCheck).toContain(deadlineUnlock);
+    expect(using).not.toContain(" or ");
+    expect(withCheck).not.toContain(" or ");
     expect(awardHelper).toContain(`or ( ${awardDeadlineUnlock} )`);
   });
 
@@ -841,10 +860,16 @@ describe("text deadline fail-closed commercial unlock parsing", () => {
     expect(awardHelper.indexOf("update public.rfqs")).toBeGreaterThan(parseAt);
   });
 
-  it("preserves open non-framework RFQ immediate read/write/award", () => {
-    expect(issuerSelect).toContain(unlockPredicate);
-    expect(using).toContain(unlockPredicate);
-    expect(withCheck).toContain(unlockPredicate);
+  it("removes open non-framework immediate read/write while preserving historical award behavior", () => {
+    expect(issuerSelect).not.toContain(unlockPredicate);
+    expect(using).not.toContain(unlockPredicate);
+    expect(withCheck).not.toContain(unlockPredicate);
+    expect(issuerSelect).not.toContain("sourcing_method");
+    expect(issuerSelect).not.toContain("contract_framework");
+    expect(using).not.toContain("sourcing_method");
+    expect(using).not.toContain("contract_framework");
+    expect(withCheck).not.toContain("sourcing_method");
+    expect(withCheck).not.toContain("contract_framework");
     expect(awardHelper).toContain(
       "coalesce(rfq_row.sourcing_method, 'invited') = 'open' and coalesce(rfq_row.contract_framework, 'project_specific') <> 'framework'",
     );

@@ -91,13 +91,35 @@ function publicTableGrantsTo(role: "anon" | "authenticated" | "service_role") {
 }
 
 describe("NP migration ledger rehearsal baseline (STATIC)", () => {
-  it("keeps Canonical Baseline V2 as the only active migration", () => {
-    expect(activeSqlFiles).toEqual([baselineMigrationName]);
+  it("keeps Canonical Baseline V2 first and permits only newer forward migrations", () => {
+    expect(activeSqlFiles).toContain(baselineMigrationName);
     expect(activeSqlFiles[0]).toBe(baselineMigrationName);
 
-    const match = baselineMigrationName.match(activeMigrationFileNamePattern);
-    expect(match).not.toBeNull();
-    expect(match?.[1]).toBe(baselineMigrationTimestamp);
+    const activeMigrationTimestamps = activeSqlFiles.map((fileName, index) => {
+      const match = fileName.match(activeMigrationFileNamePattern);
+      expect(match, `invalid active migration filename ${fileName}`).not.toBeNull();
+
+      const timestamp = match?.[1] ?? "";
+      if (index === 0) {
+        expect(timestamp).toBe(baselineMigrationTimestamp);
+      } else {
+        expect(timestamp > baselineMigrationTimestamp).toBe(true);
+      }
+
+      return timestamp;
+    });
+
+    expect(new Set(activeMigrationTimestamps).size).toBe(
+      activeMigrationTimestamps.length,
+    );
+
+    const archivedMigrationNames = new Set([
+      ...archivedV1SqlFiles,
+      ...archivedV2SqlFiles,
+    ]);
+    for (const fileName of activeSqlFiles) {
+      expect(archivedMigrationNames.has(fileName)).toBe(false);
+    }
   });
 
   it("archives the prior 33-file chain under pre-baseline-v2 without modifying contents", () => {

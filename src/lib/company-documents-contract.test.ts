@@ -516,18 +516,20 @@ describe("company documents domain boundaries", () => {
       resolve(process.cwd(), "supabase/migrations"),
     ).filter((file) => file.endsWith(".sql"));
 
-    expect(migrationFiles).toEqual([BASELINE_V2_FILENAME]);
+    expect(migrationFiles).toContain(BASELINE_V2_FILENAME);
 
-    const migrationSql = normalizeContractSql(
-      readSource(`supabase/migrations/${BASELINE_V2_FILENAME}`),
-    );
+    for (const migrationFile of migrationFiles) {
+      const migrationSql = normalizeContractSql(
+        readSource(`supabase/migrations/${migrationFile}`),
+      );
 
-    expect(migrationSql).not.toMatch(
-      /create\s+table(?:\s+if\s+not\s+exists)?\s+(?:public\.)?approved_vendors\b/,
-    );
-    expect(migrationSql).not.toMatch(
-      /create\s+table(?:\s+if\s+not\s+exists)?\s+(?:public\.)?supplier_compliance\b/,
-    );
+      expect(migrationSql).not.toMatch(
+        /create\s+table(?:\s+if\s+not\s+exists)?\s+(?:public\.)?approved_vendors\b/,
+      );
+      expect(migrationSql).not.toMatch(
+        /create\s+table(?:\s+if\s+not\s+exists)?\s+(?:public\.)?supplier_compliance\b/,
+      );
+    }
   });
 });
 
