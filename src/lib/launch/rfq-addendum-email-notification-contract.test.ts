@@ -17,8 +17,11 @@ const quotesRoute = readSource("src/app/api/quotes/route.ts");
 const activityFanoutMigration = readSource(
   "supabase/legacy-migrations/pre-baseline-v2/20260836000000_deliver_addendum_respondent_activity.sql",
 );
-const notificationMigration = readSource(
+const historicalNotificationMigration = readSource(
   "supabase/legacy-migrations/pre-baseline-v2/20260909050709_resolve_rfq_addendum_notification_recipients.sql",
+);
+const notificationMigration = readSource(
+  "supabase/migrations/20260913093326_harden_deadline_locked_communications_audit.sql",
 );
 
 describe("14-05 RFQ Addendum email notification contract", () => {
@@ -153,13 +156,31 @@ describe("14-05 RFQ Addendum email notification contract", () => {
     expect(notificationMigration).not.toContain("p_company_id");
     expect(notificationMigration).not.toContain("sourcing_method = 'open'");
     expect(notificationMigration).toContain(
+      "public.parse_rfq_deadline_timestamptz(r.deadline) as parsed_deadline",
+    );
+    expect(
+      notificationMigration.match(/v\.parsed_deadline is not null/g),
+    ).toHaveLength(3);
+    expect(
+      notificationMigration.match(/v\.parsed_deadline < now\(\)/g),
+    ).toHaveLength(3);
+    const inviteBlock = notificationMigration.slice(
+      notificationMigration.indexOf("invite_emails as ("),
+      notificationMigration.indexOf("participant_companies as ("),
+    );
+    expect(inviteBlock).not.toContain("parsed_deadline");
+    expect(notificationMigration).not.toContain("service_role");
+    expect(historicalNotificationMigration).toContain(
       "revoke all\non function public.resolve_rfq_addendum_notification_recipients(uuid)\nfrom public;",
     );
-    expect(notificationMigration).toContain(
+    expect(historicalNotificationMigration).toContain(
       "revoke all\non function public.resolve_rfq_addendum_notification_recipients(uuid)\nfrom anon;",
     );
-    expect(notificationMigration).toContain(
+    expect(historicalNotificationMigration).toContain(
       "grant execute\non function public.resolve_rfq_addendum_notification_recipients(uuid)\nto authenticated;",
+    );
+    expect(notificationMigration.toLowerCase()).not.toMatch(
+      /\b(?:grant|revoke)\b/,
     );
   });
 

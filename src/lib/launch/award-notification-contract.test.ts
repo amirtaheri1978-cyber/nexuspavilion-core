@@ -18,8 +18,11 @@ const awardRoute = readSource("src/app/api/award-contract/route.ts");
 const templateSource = readSource(
   "src/lib/email/templates/award-notification-email.ts",
 );
-const notificationMigration = readSource(
+const historicalNotificationMigration = readSource(
   "supabase/legacy-migrations/pre-baseline-v2/20260909083600_resolve_rfq_award_notification_recipient.sql",
+);
+const notificationMigration = readSource(
+  "supabase/migrations/20260913093326_harden_deadline_locked_communications_audit.sql",
 );
 const workspaceUrl = "https://app.example.test/rfq/harbor-point-package";
 
@@ -152,17 +155,35 @@ describe("14-07 Award notification contract", () => {
       "nullif(lower(btrim(p.email)), '')",
     );
     expect(notificationMigration).toContain("limit 1");
+    expect(notificationMigration).toContain(
+      "public.parse_rfq_deadline_timestamptz(r.deadline) is not null",
+    );
+    expect(notificationMigration).toContain(
+      "public.parse_rfq_deadline_timestamptz(r.deadline) < now()",
+    );
+    expect(notificationMigration).not.toContain(
+      "public.parse_rfq_deadline_timestamptz(r.deadline) <= now()",
+    );
+    expect(notificationMigration).not.toContain(
+      "now() <= public.parse_rfq_deadline_timestamptz(r.deadline)",
+    );
+    expect(notificationMigration).not.toContain("sourcing_method");
+    expect(notificationMigration).not.toContain("contract_framework");
+    expect(notificationMigration).not.toContain("service_role");
     expect(notificationMigration).not.toContain("p_user_id");
     expect(notificationMigration).not.toContain("p_company_id");
     expect(notificationMigration).not.toContain("p_email");
-    expect(notificationMigration).toContain(
+    expect(historicalNotificationMigration).toContain(
       "revoke all\non function public.resolve_rfq_award_notification_recipient(uuid)\nfrom public;",
     );
-    expect(notificationMigration).toContain(
+    expect(historicalNotificationMigration).toContain(
       "revoke all\non function public.resolve_rfq_award_notification_recipient(uuid)\nfrom anon;",
     );
-    expect(notificationMigration).toContain(
+    expect(historicalNotificationMigration).toContain(
       "grant execute\non function public.resolve_rfq_award_notification_recipient(uuid)\nto authenticated;",
+    );
+    expect(notificationMigration.toLowerCase()).not.toMatch(
+      /\b(?:grant|revoke)\b/,
     );
   });
 

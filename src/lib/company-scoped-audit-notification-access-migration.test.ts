@@ -4,6 +4,8 @@ import { describe, expect, it } from "vitest";
 
 const migrationPath =
   "supabase/legacy-migrations/pre-baseline-v2/20260828000000_enable_company_scoped_audit_and_notification_access.sql";
+const currentMigrationPath =
+  "supabase/migrations/20260913093326_harden_deadline_locked_communications_audit.sql";
 const notificationsPagePath = "src/app/notifications/page.tsx";
 const companySettingsPath = "src/app/company/settings/page.tsx";
 const rfqRoutePath = "src/app/api/rfqs/route.ts";
@@ -16,6 +18,11 @@ const sql = readFileSync(resolve(process.cwd(), migrationPath), "utf8").replace(
   "\n",
 );
 const normalized = sql.replace(/\s+/g, " ").trim().toLowerCase();
+const currentSql = readFileSync(
+  resolve(process.cwd(), currentMigrationPath),
+  "utf8",
+).replace(/\r\n/g, "\n");
+const currentNormalized = currentSql.replace(/\s+/g, " ").trim().toLowerCase();
 const functionBody = sql.slice(
   sql.indexOf("create or replace function public.record_procurement_activity"),
   sql.indexOf("comment on function public.record_procurement_activity"),
@@ -35,11 +42,11 @@ const invitationRpcMigration = readFileSync(
   "utf8",
 );
 
-function policyBlock(policyName: string) {
+function policyBlock(source: string, policyName: string) {
   const marker = `create policy "${policyName.toLowerCase()}"`;
-  const start = sql.toLowerCase().indexOf(marker);
+  const start = source.toLowerCase().indexOf(marker);
   expect(start, `missing policy ${policyName}`).toBeGreaterThan(-1);
-  const rest = sql.slice(start);
+  const rest = source.slice(start);
   const lowerRest = rest.toLowerCase();
   const candidates = [
     lowerRest.indexOf("\ndrop policy", marker.length),
@@ -123,7 +130,9 @@ describe("company-scoped audit and notification access migration", () => {
       "Company members can read company notifications",
       "Company members can read company audit logs",
     ]) {
-      const policy = policyBlock(policyName).replace(/\s+/g, " ").toLowerCase();
+      const policy = policyBlock(sql, policyName)
+        .replace(/\s+/g, " ")
+        .toLowerCase();
 
       expect(policy).toContain("for select");
       expect(policy).toContain("to authenticated");
@@ -136,12 +145,12 @@ describe("company-scoped audit and notification access migration", () => {
     }
 
     expect(
-      policyBlock("Company members can read company notifications")
+      policyBlock(sql, "Company members can read company notifications")
         .replace(/\s+/g, " ")
         .toLowerCase(),
     ).toContain("om.company_id = notifications.company_id");
     expect(
-      policyBlock("Company members can read company audit logs")
+      policyBlock(sql, "Company members can read company audit logs")
         .replace(/\s+/g, " ")
         .toLowerCase(),
     ).toContain("om.company_id = audit_logs.company_id");
@@ -210,5 +219,74 @@ describe("company-scoped audit and notification access migration", () => {
     expect(rfqRoute).toContain('"rfq_created"');
     expect(rfqRoute).not.toContain('.from("audit_logs")');
     expect(rfqRoute).not.toContain('.from("notifications")');
+  });
+});
+
+describe("deadline-locked Quote audit visibility", () => {
+  it("preserves company membership scope and non-Quote visibility", () => {
+    const policy = policyBlock(
+      currentSql,
+      "Company members can read company audit logs",
+    )
+      .replace(/\s+/g, " ")
+      .toLowerCase();
+
+    expect(policy).toContain("for select");
+    expect(policy).toContain("to authenticated");
+    expect(policy).toContain("audit_logs.company_id is not null");
+    expect(policy).toContain("om.user_id = auth.uid()");
+    expect(policy).toContain("om.company_id = audit_logs.company_id");
+    expect(policy).toContain("om.membership_status in ('active', 'archived')");
+    expect(policy).toContain("audit_logs.entity_type is distinct from 'quote'");
+  });
+
+  it("resolves Quote audit RFQs safely and gates issuer entries by strict deadline", () => {
+    const policy = policyBlock(
+      currentSql,
+      "Company members can read company audit logs",
+    )
+      .replace(/\s+/g, " ")
+      .toLowerCase();
+
+    expect(policy).toContain("audit_logs.metadata ->> 'rfq_id'");
+    expect(policy).toContain(
+      "r.id::text = nullif(btrim(audit_logs.metadata ->> 'rfq_id'), '')",
+    );
+    expect(policy).not.toContain("::uuid");
+    expect(policy).toContain("join public.quotes as q");
+    expect(policy).toContain("q.id = audit_logs.entity_id");
+    expect(policy).toContain("q.rfq_id = r.id");
+    expect(policy).toContain("q.company_id = audit_logs.company_id");
+    expect(policy).toContain("r.company_id <> audit_logs.company_id");
+    expect(policy).toContain("r.company_id = audit_logs.company_id");
+    expect(policy).toContain(
+      "public.parse_rfq_deadline_timestamptz(r.deadline) is not null",
+    );
+    expect(policy).toContain(
+      "public.parse_rfq_deadline_timestamptz(r.deadline) < now()",
+    );
+    expect(policy).not.toContain("sourcing_method");
+    expect(policy).not.toContain("contract_framework");
+  });
+
+  it("replaces only the audit read policy without changing privileges or data", () => {
+    expect(
+      currentSql.match(
+        /create policy "Company members can read company audit logs"/g,
+      ),
+    ).toHaveLength(1);
+    expect(currentNormalized).toContain(
+      'drop policy if exists "company members can read company audit logs" on public.audit_logs',
+    );
+    expect(currentNormalized).toContain(
+      'comment on policy "company members can read company audit logs" on public.audit_logs',
+    );
+    expect(currentNormalized).not.toMatch(/\b(?:grant|revoke)\b/);
+    expect(currentNormalized).not.toMatch(
+      /(?:insert\s+into|update|delete\s+from)\s+public\./,
+    );
+    expect(currentNormalized).not.toContain(
+      "company members can read company notifications",
+    );
   });
 });
