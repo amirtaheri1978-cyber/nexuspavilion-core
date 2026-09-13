@@ -7,7 +7,10 @@ import { resolveRfqDeadlineForStorage } from "@/lib/datetime/local-date-time-to-
 import { joinPublicSitePath } from "@/lib/ops/public-site-url";
 import { reportCriticalApiFailure } from "@/lib/ops/report-critical-api-failure";
 import { canCreateCompanyRfq } from "@/lib/procurement/procurement-write-authorization";
-import { evaluateRfqRequirements } from "@/lib/procurement/rfq-requirements-completeness";
+import {
+  evaluateRfqRequirements,
+  isRfqPublicationAcknowledged,
+} from "@/lib/procurement/rfq-requirements-completeness";
 import { recordTrustedProcurementActivity } from "@/lib/procurement/record-procurement-activity";
 import { createClient } from "@/lib/supabase/server";
 
@@ -170,15 +173,40 @@ description,
 category,
 location,
 deadline: rawDeadline,
+deadline_timezone: body.deadline_timezone,
+rfi_deadline: body.rfi_deadline,
+rfi_deadline_timezone: body.rfi_deadline_timezone,
+mobilization_date: body.mobilization_date,
+substantial_completion_date: body.substantial_completion_date,
+procurement_scope: normalizeText(body.procurement_scope) || "subcontractor",
+sourcing_method: normalizeText(body.sourcing_method) || "invited",
+contract_framework: normalizeText(body.contract_framework) || "project_specific",
+bid_model: normalizeText(body.bid_model) || "lump_sum",
 });
 
 if (requirementsCompleteness.status === "incomplete") {
 return NextResponse.json(
 {
-error: "Required RFQ inputs are incomplete.",
+error: "RFQ is not ready to publish.",
 requirements: {
 status: requirementsCompleteness.status,
 missing: requirementsCompleteness.missingSignals,
+issues: requirementsCompleteness.blockingIssues,
+},
+},
+{ status: 400 }
+);
+}
+
+if (!isRfqPublicationAcknowledged(body.ready_to_publish_acknowledged)) {
+return NextResponse.json(
+{
+error:
+"Confirm the Ready to Publish acknowledgement after reviewing the final RFQ package.",
+requirements: {
+status: "awaiting_acknowledgement",
+missing: [],
+issues: [],
 },
 },
 { status: 400 }

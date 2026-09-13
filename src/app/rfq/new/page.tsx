@@ -4,6 +4,10 @@ import DeadlineField from "@/components/deadline-field";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState, type ReactNode } from "react";
+import {
+  RfqPublicationReadinessReview,
+  type RfqPublicationReviewSection,
+} from "@/components/rfq-workspace/rfq-publication-readiness-review";
 import { RFQScopeReview } from "@/components/rfq-workspace/rfq-scope-review";
 import { useRFQDraftAutosave } from "@/hooks/use-rfq-draft-autosave";
 import { EXECUTIVE_FOCUS_CYAN } from "@/lib/design-system/executive-contract";
@@ -243,6 +247,8 @@ title: string;
 } | null>(null);
 const [error, setError] = useState("");
 const [validationAttempted, setValidationAttempted] = useState(false);
+const [readyToPublishAcknowledged, setReadyToPublishAcknowledged] =
+useState(false);
 const [formData, setFormData] = useState<RFQFormData>(initialFormData);
 
 const draftValue = useMemo(
@@ -267,6 +273,7 @@ if (!draft) return;
 
 setFormData(draft.formData);
 setActiveStep(draft.activeStep);
+setReadyToPublishAcknowledged(false);
 }
 
 function handleDiscardDraft() {
@@ -281,6 +288,15 @@ const budgetPreview = useMemo(
 const deadlinePreview = useMemo(
 () => formatDeadlinePreview(formData.deadline, formData.deadline_timezone),
 [formData.deadline, formData.deadline_timezone]
+);
+
+const rfiDeadlinePreview = useMemo(
+() =>
+formatDeadlinePreview(
+formData.rfi_deadline,
+formData.rfi_deadline_timezone
+),
+[formData.rfi_deadline, formData.rfi_deadline_timezone]
 );
 
 const selectedScope = PROCUREMENT_SCOPES.find(
@@ -315,6 +331,15 @@ description: formData.description,
 category: formData.category,
 location: formData.location,
 deadline: formData.deadline,
+deadline_timezone: formData.deadline_timezone,
+rfi_deadline: formData.rfi_deadline,
+rfi_deadline_timezone: formData.rfi_deadline_timezone,
+mobilization_date: formData.mobilization_date,
+substantial_completion_date: formData.substantial_completion_date,
+procurement_scope: formData.procurement_scope,
+sourcing_method: formData.sourcing_method,
+contract_framework: formData.contract_framework,
+bid_model: formData.bid_model,
 }),
 [
 formData.title,
@@ -322,6 +347,15 @@ formData.description,
 formData.category,
 formData.location,
 formData.deadline,
+formData.deadline_timezone,
+formData.rfi_deadline,
+formData.rfi_deadline_timezone,
+formData.mobilization_date,
+formData.substantial_completion_date,
+formData.procurement_scope,
+formData.sourcing_method,
+formData.contract_framework,
+formData.bid_model,
 ]
 );
 
@@ -376,6 +410,10 @@ const recommendedScore = Math.round(
 );
 
 const isFormReady = rfqRequirements.status === "ready";
+const publicationReady = isFormReady && readyToPublishAcknowledged;
+const projectStepReady = !rfqRequirements.missingSignals.some(
+(signal) => signal.step === 0
+);
 const validationErrorId = "rfq-new-validation-error";
 const isMissingRequiredField = (key: string) =>
 validationAttempted &&
@@ -388,7 +426,87 @@ rfqRequirements.signals.find(
 (signal) => signal.key === "submission_deadline"
 )?.complete ?? false;
 
+const firstBlockingStep =
+rfqRequirements.missingSignals[0]?.step ??
+rfqRequirements.blockingIssues[0]?.step ??
+4;
+
+const publicationReviewSections = useMemo<RfqPublicationReviewSection[]>(
+() => [
+{
+id: "project-identity",
+title: "Project and RFQ package",
+description:
+"Confirm the supplier-facing package identity and commercial context.",
+step: 0,
+items: [
+{ label: "Project Name", value: formData.project_name.trim() || "Not specified" },
+{ label: "RFQ Title", value: formData.title.trim() || "Pending" },
+{ label: "Category / Trade", value: formData.category.trim() || "Pending" },
+{ label: "Project Location", value: formData.location.trim() || "Pending" },
+{ label: "Scope of Work", value: formData.description.trim() || "Pending" },
+{ label: "Submission Closing", value: deadlinePreview },
+{ label: "Budget", value: formData.budget.trim() ? budgetPreview : "Not specified" },
+],
+},
+{
+id: "strategy",
+title: "Procurement strategy",
+description:
+"Confirm market access, contract structure, and evaluation model.",
+step: 1,
+items: [
+{ label: "Procurement Scope", value: selectedScope?.label || "Pending" },
+{ label: "Sourcing Method", value: selectedSourcing?.label || "Pending" },
+{ label: "Contract Framework", value: selectedFramework?.label || "Pending" },
+{ label: "Evaluation Model", value: selectedBidModel?.label || "Pending" },
+],
+},
+{
+id: "deadlines-schedule",
+title: "Project controls and schedule",
+description:
+"Verify closing controls and delivery dates are internally consistent.",
+step: 2,
+items: [
+{ label: "Owner / Client", value: formData.owner_client.trim() || "Not specified" },
+{ label: "Internal Project ID", value: formData.internal_project_id.trim() || "Not specified" },
+{ label: "RFI / Clarification Deadline", value: rfiDeadlinePreview },
+{ label: "Target Mobilization", value: formData.mobilization_date || "Not specified" },
+{ label: "Substantial Completion", value: formData.substantial_completion_date || "Not specified" },
+],
+},
+{
+id: "enterprise-controls",
+title: "Enterprise requirements",
+description:
+"Confirm confidentiality, bonding, insurance, safety, and prequalification decisions.",
+step: 4,
+items: [
+{ label: "NDA", value: formData.nda_required ? "Required" : "Not required" },
+{ label: "Performance Bond", value: formData.performance_bond_required ? "Required" : "Not required" },
+{ label: "Bid Bond", value: formData.bid_bond_required ? "Required" : "Not required" },
+{ label: "Insurance", value: formData.insurance_required ? "Required" : "Not required" },
+{ label: "Insurance Notes", value: formData.insurance_notes.trim() || "None specified" },
+{ label: "Safety Requirements", value: formData.safety_requirements.trim() || "None specified" },
+{ label: "Prequalification", value: formData.prequalification_notes.trim() || "None specified" },
+],
+},
+],
+[
+budgetPreview,
+deadlinePreview,
+formData,
+rfiDeadlinePreview,
+selectedBidModel?.label,
+selectedFramework?.label,
+selectedScope?.label,
+selectedSourcing?.label,
+]
+);
+
 function updateField(field: keyof RFQFormData, value: string | boolean) {
+setReadyToPublishAcknowledged(false);
 setFormData((current) => ({
 ...current,
 [field]: value,
@@ -399,7 +517,7 @@ function goToNextStep() {
 setError("");
 setValidationAttempted(false);
 
-if (activeStep === 0 && !isFormReady) {
+if (activeStep === 0 && !projectStepReady) {
 setValidationAttempted(true);
 setError("Complete the required project fields before continuing.");
 return;
@@ -420,8 +538,16 @@ if (loading) return;
 
 if (!isFormReady) {
 setValidationAttempted(true);
-setError("Please complete the required RFQ fields before publishing.");
-setActiveStep(0);
+setError("Resolve the publication-readiness blockers before publishing.");
+setActiveStep(firstBlockingStep as WizardStep);
+return;
+}
+
+if (!readyToPublishAcknowledged) {
+setError(
+"Confirm the Ready to Publish acknowledgement after reviewing the final RFQ package."
+);
+setActiveStep(4);
 return;
 }
 
@@ -467,6 +593,7 @@ insurance_notes: formData.insurance_notes.trim(),
 safety_requirements: formData.safety_requirements.trim(),
 prequalification_notes: formData.prequalification_notes.trim(),
 advanced_controls_enabled: formData.advanced_controls_enabled,
+ready_to_publish_acknowledged: readyToPublishAcknowledged,
 }),
 });
 
@@ -546,8 +673,14 @@ optional documents, controls, and enterprise requirements.
 </p>
 
 <div className="mt-6 flex flex-wrap gap-3">
-<ExecutiveBadge tone={isFormReady ? "success" : "warning"}>
-{isFormReady ? "Ready to Publish" : "Draft"}
+<ExecutiveBadge
+tone={publicationReady ? "success" : isFormReady ? "blue" : "warning"}
+>
+{publicationReady
+? "Ready to Publish"
+: isFormReady
+? "Awaiting Sign-Off"
+: "Draft"}
 </ExecutiveBadge>
 
 <ExecutiveBadge tone="blue">RFQ Wizard</ExecutiveBadge>
@@ -598,7 +731,13 @@ Recommended {recommendedScore}%
 <div className="grid min-w-full gap-4 sm:grid-cols-2 xl:min-w-[520px]">
 <MiniMetric
 title="Status"
-value={isFormReady ? "Ready" : "Draft"}
+value={
+publicationReady
+? "Ready"
+: isFormReady
+? "Awaiting Sign-Off"
+: "Draft"
+}
 />
 <MiniMetric title="Budget" value={budgetPreview} />
 <MiniMetric
@@ -1085,9 +1224,9 @@ value="Any file"
 
 {activeStep === 4 ? (
 <ExecutivePanel
-eyebrow="Step 5 · Optional"
-title="Enterprise controls and publish"
-description="Activate NDA, bonding, insurance, safety, and prequalification controls only when the procurement package requires them."
+eyebrow="Step 5 · Publication Gate"
+title="Publication readiness review"
+description="Confirm enterprise controls, resolve any blocking inconsistencies, review the complete procurement package, and explicitly sign off before release."
 >
 <div className="mt-8 grid gap-5">
 <div className="grid gap-4 md:grid-cols-2">
@@ -1169,6 +1308,20 @@ className="w-full resize-none rounded-2xl border border-white/10 bg-[#061426]/80
 />
 </FieldLabel>
 </div>
+
+<RfqPublicationReadinessReview
+readiness={rfqRequirements}
+sections={publicationReviewSections}
+readyToPublishAcknowledged={readyToPublishAcknowledged}
+onReadyToPublishAcknowledgedChange={
+setReadyToPublishAcknowledged
+}
+onEditStep={(step) => {
+setError("");
+setValidationAttempted(false);
+setActiveStep(step);
+}}
+/>
 </ExecutivePanel>
 ) : null}
 
@@ -1214,7 +1367,7 @@ Continue →
 ) : (
 <button
 type="submit"
-disabled={loading || publishSuccess || !isFormReady}
+disabled={loading || publishSuccess || !publicationReady}
 className="rounded-full bg-gradient-to-r from-[#B9902F] via-[#C8A646] to-[#F5D77B] px-7 py-3 text-sm font-black text-slate-950 shadow-[0_18px_55px_rgba(200,166,70,0.22)] transition disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C8A646]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#07111F]"
 >
 {loading ? `Publishing... ${publishProgress}%` : "Publish RFQ"}

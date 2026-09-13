@@ -192,6 +192,7 @@ describe("RFQ create activity and audit write contract", () => {
         location: "Toronto",
         deadline: "2099-09-01T12:00",
         procurement_scope: "material",
+        ready_to_publish_acknowledged: true,
       }),
     );
 
@@ -223,6 +224,7 @@ describe("RFQ create activity and audit write contract", () => {
         category: "Materials",
         location: "Toronto",
         deadline: "2099-09-01T12:00",
+        ready_to_publish_acknowledged: true,
       }),
     );
     const body = (await response.json()) as { success?: boolean };
