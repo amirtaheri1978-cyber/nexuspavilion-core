@@ -26,6 +26,7 @@ type RFQAddendumAcknowledgementCenterProps = ComponentProps<
 type RFQDocumentWorkspaceProps = {
   rfqId: string;
   companyId: string | null;
+  rfqStatus?: string | null;
   isOwner: boolean;
   canAcknowledge?: boolean;
   rfiDeadline?: string | null;
@@ -42,6 +43,7 @@ type RFQDocumentWorkspaceProps = {
 export function RFQDocumentWorkspace({
   rfqId,
   companyId,
+  rfqStatus = "open",
   isOwner,
   canAcknowledge = true,
   rfiDeadline = null,
@@ -124,6 +126,7 @@ export function RFQDocumentWorkspace({
 
         <RFQDocumentRequirements
           rfqId={rfqId}
+          rfqStatus={rfqStatus}
           canManage={isOwner}
           initialRequirements={documentRequirements}
           initialDocuments={documents}
@@ -160,6 +163,7 @@ export function RFQDocumentWorkspace({
             <div className="grid grid-cols-1 gap-5 @4xl:grid-cols-2">
               <RFQDocumentUpload
                 rfqId={rfqId}
+                rfqStatus={rfqStatus}
                 companyId={companyId}
                 attachmentType="drawing"
                 title="Upload Drawings"
@@ -169,6 +173,7 @@ export function RFQDocumentWorkspace({
 
               <RFQDocumentUpload
                 rfqId={rfqId}
+                rfqStatus={rfqStatus}
                 companyId={companyId}
                 attachmentType="specification"
                 title="Upload Specifications"
@@ -180,6 +185,7 @@ export function RFQDocumentWorkspace({
 
               <RFQDocumentUpload
                 rfqId={rfqId}
+                rfqStatus={rfqStatus}
                 companyId={companyId}
                 attachmentType="boq"
                 title="Upload BOQ"
@@ -189,6 +195,7 @@ export function RFQDocumentWorkspace({
 
               <RFQDocumentUpload
                 rfqId={rfqId}
+                rfqStatus={rfqStatus}
                 companyId={companyId}
                 attachmentType="photo"
                 title="Upload Photos"
@@ -198,6 +205,7 @@ export function RFQDocumentWorkspace({
 
               <RFQDocumentUpload
                 rfqId={rfqId}
+                rfqStatus={rfqStatus}
                 companyId={companyId}
                 attachmentType="addenda"
                 title="Upload Addenda"
@@ -207,6 +215,7 @@ export function RFQDocumentWorkspace({
 
               <RFQDocumentUpload
                 rfqId={rfqId}
+                rfqStatus={rfqStatus}
                 companyId={companyId}
                 attachmentType="supporting"
                 title="Upload Supporting Documents"
@@ -245,6 +254,7 @@ export function RFQDocumentWorkspace({
 
           <RFQDocumentLibrary
             rfqId={rfqId}
+            rfqStatus={rfqStatus}
             initialDocuments={documents}
             canManage={isOwner}
           />

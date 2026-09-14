@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 
+import { RFQAmendmentEvidenceFields } from "@/components/rfq-amendment-evidence-fields";
 import {
   RFQ_ATTACHMENT_TYPE_FOLDER_LABELS,
   RFQ_ATTACHMENT_TYPE_LABELS,
@@ -18,10 +19,13 @@ export type RFQAttachment = {
   attachment_type: string;
   revision_label: string | null;
   created_at: string | null;
+  cleanup_pending?: boolean;
+  cleanup_addendum_id?: string | null;
 };
 
 type RFQDocumentLibraryProps = {
   rfqId: string;
+  rfqStatus?: string | null;
   initialDocuments?: RFQAttachment[];
   canManage?: boolean;
 };
@@ -78,6 +82,7 @@ function getAttachmentLabel(type: string) {
 
 export default function RFQDocumentLibrary({
   rfqId,
+  rfqStatus = "open",
   initialDocuments = [],
   canManage = false,
 }: RFQDocumentLibraryProps) {
@@ -86,32 +91,50 @@ export default function RFQDocumentLibrary({
   const [documents, setDocuments] = useState<RFQAttachment[]>(initialDocuments);
   const [loading, setLoading] = useState(false);
   const [deletingId, setDeletingId] = useState("");
+  const [cleanupPendingId, setCleanupPendingId] = useState("");
   const [openingPath, setOpeningPath] = useState("");
   const [error, setError] = useState("");
+  const [addendumTitle, setAddendumTitle] = useState("");
+  const [amendmentReason, setAmendmentReason] = useState("");
+  const isPublished = rfqStatus !== "draft";
 
   const loadDocuments = useCallback(async () => {
     setLoading(true);
     setError("");
 
-    const { data, error: loadError } = await supabase
-      .from("rfq_attachments")
-      .select(
-        "id, file_name, file_path, file_size, attachment_type, revision_label, created_at",
-      )
-      .eq("rfq_id", rfqId)
-      .order("created_at", { ascending: false });
+    try {
+      const response = await fetch(
+        `/api/rfq-attachments?rfqId=${encodeURIComponent(rfqId)}`,
+        { cache: "no-store" },
+      );
+      const result = await response.json();
 
-    if (loadError) {
-      setError(loadError.message || "Failed to load documents.");
+      if (!response.ok) {
+        throw new Error(result.error || "Failed to load documents.");
+      }
+
+      setDocuments(
+        Array.isArray(result.attachments)
+          ? (result.attachments as RFQAttachment[])
+          : [],
+      );
+      setCleanupPendingId("");
+    } catch (loadError) {
+      setError(
+        loadError instanceof Error
+          ? loadError.message
+          : "Failed to load documents.",
+      );
+    } finally {
       setLoading(false);
-      return;
     }
-
-    setDocuments((data || []) as RFQAttachment[]);
-    setLoading(false);
-  }, [rfqId, supabase]);
+  }, [rfqId]);
 
   useEffect(() => {
+    const initialLoadTimer = window.setTimeout(() => {
+      void loadDocuments();
+    }, 0);
+
     function handleDocumentsUpdated() {
       void loadDocuments();
     }
@@ -119,6 +142,7 @@ export default function RFQDocumentLibrary({
     window.addEventListener("rfq-documents-updated", handleDocumentsUpdated);
 
     return () => {
+      window.clearTimeout(initialLoadTimer);
       window.removeEventListener(
         "rfq-documents-updated",
         handleDocumentsUpdated,
@@ -179,8 +203,24 @@ export default function RFQDocumentLibrary({
     async (document: RFQAttachment) => {
       if (!canManage) return;
 
+      const isCleanupRetry =
+        document.cleanup_pending === true || cleanupPendingId === document.id;
+
+      if (
+        isPublished &&
+        !isCleanupRetry &&
+        (!addendumTitle.trim() || !amendmentReason.trim())
+      ) {
+        setError(
+          "Enter an Addendum title and amendment reason before removing a published RFQ document.",
+        );
+        return;
+      }
+
       const confirmed = window.confirm(
-        `Delete ${document.file_name}? This removes the document from this RFQ.`,
+        isCleanupRetry
+          ? `Retry storage cleanup for ${document.file_name}? The governed removal is already recorded and this will not issue another Addendum.`
+          : `Delete ${document.file_name}? This removes the document from this RFQ.`,
       );
 
       if (!confirmed) return;
@@ -188,37 +228,60 @@ export default function RFQDocumentLibrary({
       setDeletingId(document.id);
       setError("");
 
-      const { error: storageError } = await supabase.storage
-        .from("rfq-attachments")
-        .remove([document.file_path]);
+      try {
+        const response = await fetch("/api/rfq-attachments", {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            attachmentId: document.id,
+            ...(isPublished && !isCleanupRetry
+              ? {
+                  addendumTitle: addendumTitle.trim(),
+                  amendmentReason: amendmentReason.trim(),
+                }
+              : {}),
+          }),
+        });
+        const result = await response.json();
 
-      if (storageError) {
-        setError(storageError.message || "Failed to remove storage file.");
-        setDeletingId("");
-        return;
-      }
+        if (!response.ok) {
+          if (result.storageCleanupPending && result.retryable) {
+            setCleanupPendingId(document.id);
+          }
 
-      const { error: dbError } = await supabase
-        .from("rfq_attachments")
-        .delete()
-        .eq("id", document.id);
+          throw new Error(
+            result.error || "The RFQ document could not be removed.",
+          );
+        }
 
-      if (dbError) {
-        setError(
-          dbError.message ||
-            "Storage object removed, but the document record could not be deleted. Refresh and retry if the row remains.",
+        setDocuments((current) =>
+          current.filter((item) => item.id !== document.id),
         );
+        setCleanupPendingId((current) =>
+          current === document.id ? "" : current,
+        );
+        setAddendumTitle("");
+        setAmendmentReason("");
+        window.dispatchEvent(new CustomEvent("rfq-documents-updated"));
+      } catch (deleteError) {
+        setError(
+          deleteError instanceof Error
+            ? deleteError.message
+            : "The RFQ document could not be removed.",
+        );
+      } finally {
         setDeletingId("");
-        return;
       }
-
-      setDocuments((current) =>
-        current.filter((item) => item.id !== document.id),
-      );
-      setDeletingId("");
-      window.dispatchEvent(new CustomEvent("rfq-documents-updated"));
     },
-    [canManage, supabase],
+    [
+      addendumTitle,
+      amendmentReason,
+      canManage,
+      cleanupPendingId,
+      isPublished,
+    ],
   );
 
   const visibleFolders = useMemo(
@@ -230,6 +293,13 @@ export default function RFQDocumentLibrary({
         ),
       })).filter((folder) => folder.documents.length > 0),
     [documents],
+  );
+
+  const hasCleanupPending =
+    Boolean(cleanupPendingId) ||
+    documents.some((document) => document.cleanup_pending === true);
+  const hasLiveDocuments = documents.some(
+    (document) => document.cleanup_pending !== true,
   );
 
   return (
@@ -259,6 +329,31 @@ export default function RFQDocumentLibrary({
         </div>
       ) : null}
 
+      {hasCleanupPending ? (
+        <div
+          className="mt-3 rounded-2xl border border-amber-300/20 bg-amber-300/10 px-4 py-3 text-sm font-bold leading-6 text-amber-100"
+          role="status"
+        >
+          Storage cleanup is pending. The governed removal and Addendum are
+          already recorded. Use Retry cleanup on the retained document; the
+          retry removes only its governed storage object and creates no new
+          Addendum.
+        </div>
+      ) : null}
+
+      {canManage && isPublished && hasLiveDocuments ? (
+        <div className="mt-6">
+          <RFQAmendmentEvidenceFields
+            idPrefix="rfq-document-removal"
+            title={addendumTitle}
+            reason={amendmentReason}
+            disabled={Boolean(deletingId)}
+            onTitleChange={setAddendumTitle}
+            onReasonChange={setAmendmentReason}
+          />
+        </div>
+      ) : null}
+
       {documents.length === 0 ? (
         <div
           className="mt-6 rounded-executive border border-dashed border-white/10 px-5 py-8 text-center"
@@ -282,6 +377,7 @@ export default function RFQDocumentLibrary({
               documents={folder.documents}
               canManage={canManage}
               deletingId={deletingId}
+              cleanupPendingId={cleanupPendingId}
               openingPath={openingPath}
               onOpen={handleOpen}
               onDelete={handleDelete}
@@ -298,6 +394,7 @@ function DocumentFolder({
   documents,
   canManage,
   deletingId,
+  cleanupPendingId,
   openingPath,
   onOpen,
   onDelete,
@@ -306,6 +403,7 @@ function DocumentFolder({
   documents: RFQAttachment[];
   canManage: boolean;
   deletingId: string;
+  cleanupPendingId: string;
   openingPath: string;
   onOpen: (document: RFQAttachment, mode: "preview" | "download") => void;
   onDelete: (document: RFQAttachment) => void;
@@ -331,6 +429,7 @@ function DocumentFolder({
             document={document}
             canManage={canManage}
             deletingId={deletingId}
+            cleanupPendingId={cleanupPendingId}
             openingPath={openingPath}
             onOpen={onOpen}
             onDelete={onDelete}
@@ -345,6 +444,7 @@ function DocumentRow({
   document,
   canManage,
   deletingId,
+  cleanupPendingId,
   openingPath,
   onOpen,
   onDelete,
@@ -352,11 +452,14 @@ function DocumentRow({
   document: RFQAttachment;
   canManage: boolean;
   deletingId: string;
+  cleanupPendingId: string;
   openingPath: string;
   onOpen: (document: RFQAttachment, mode: "preview" | "download") => void;
   onDelete: (document: RFQAttachment) => void;
 }) {
   const isOpening = openingPath === document.file_path;
+  const isCleanupPending =
+    document.cleanup_pending === true || cleanupPendingId === document.id;
 
   return (
     <article className="min-w-0 rounded-executive border border-white/10 bg-black/20 p-4">
@@ -398,23 +501,31 @@ function DocumentRow({
           className="flex min-w-0 flex-wrap gap-3"
           aria-label="Document actions"
         >
-          <button
-            type="button"
-            onClick={() => onOpen(document, "preview")}
-            disabled={isOpening}
-            className="inline-flex min-h-11 items-center justify-center rounded-full border border-[#2CC4E8]/25 bg-[#2CC4E8]/10 px-5 py-3 text-sm font-black text-[#9BE8F8] transition hover:bg-[#2CC4E8]/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2CC4E8]/40 focus-visible:ring-offset-2 focus-visible:ring-offset-[#07111F] disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {isOpening ? "Opening..." : "Preview"}
-          </button>
+          {isCleanupPending ? (
+            <span className="inline-flex min-h-11 items-center justify-center rounded-full border border-amber-300/20 bg-amber-300/10 px-4 py-3 text-xs font-black uppercase tracking-[0.12em] text-amber-100">
+              Cleanup pending
+            </span>
+          ) : (
+            <>
+              <button
+                type="button"
+                onClick={() => onOpen(document, "preview")}
+                disabled={isOpening}
+                className="inline-flex min-h-11 items-center justify-center rounded-full border border-[#2CC4E8]/25 bg-[#2CC4E8]/10 px-5 py-3 text-sm font-black text-[#9BE8F8] transition hover:bg-[#2CC4E8]/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2CC4E8]/40 focus-visible:ring-offset-2 focus-visible:ring-offset-[#07111F] disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {isOpening ? "Opening..." : "Preview"}
+              </button>
 
-          <button
-            type="button"
-            onClick={() => onOpen(document, "download")}
-            disabled={isOpening}
-            className="inline-flex min-h-11 items-center justify-center rounded-full border border-white/10 bg-white/[0.055] px-5 py-3 text-sm font-black text-white transition hover:bg-white/[0.08] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2CC4E8]/40 focus-visible:ring-offset-2 focus-visible:ring-offset-[#07111F] disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {isOpening ? "Opening..." : "Download"}
-          </button>
+              <button
+                type="button"
+                onClick={() => onOpen(document, "download")}
+                disabled={isOpening}
+                className="inline-flex min-h-11 items-center justify-center rounded-full border border-white/10 bg-white/[0.055] px-5 py-3 text-sm font-black text-white transition hover:bg-white/[0.08] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2CC4E8]/40 focus-visible:ring-offset-2 focus-visible:ring-offset-[#07111F] disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {isOpening ? "Opening..." : "Download"}
+              </button>
+            </>
+          )}
 
           {canManage ? (
             <button
@@ -423,7 +534,13 @@ function DocumentRow({
               disabled={deletingId === document.id}
               className="inline-flex min-h-11 items-center justify-center rounded-full border border-red-300/15 bg-red-400/10 px-5 py-3 text-sm font-black text-red-300 transition hover:bg-red-400/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#07111F] disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {deletingId === document.id ? "Deleting..." : "Delete"}
+              {deletingId === document.id
+                ? isCleanupPending
+                  ? "Retrying cleanup..."
+                  : "Deleting..."
+                : isCleanupPending
+                  ? "Retry cleanup"
+                  : "Delete"}
             </button>
           ) : null}
         </div>

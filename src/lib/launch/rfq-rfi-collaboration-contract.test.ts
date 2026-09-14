@@ -12,16 +12,33 @@ function readSource(relativePath: string) {
 const migration = readSource(
   "supabase/legacy-migrations/pre-baseline-v2/20260834000000_rfi_collaboration_persistence_foundation.sql",
 );
+const governedAmendmentMigration = readSource(
+  "supabase/migrations/20260913151319_govern_published_rfq_amendments.sql",
+);
+const attachmentCleanupRetryMigration = readSource(
+  "supabase/migrations/20260914020637_govern_rfq_attachment_cleanup_retry.sql",
+);
+const launchBaseline = readSource(
+  "supabase/migrations/20260911000000_launch_candidate_baseline_v2.sql",
+);
 const rfqCreate = readSource("src/app/api/rfqs/route.ts");
 const addendaApi = readSource("src/app/api/rfq-addenda/route.ts");
+const documentRequirementsApi = readSource(
+  "src/app/api/rfq-document-requirements/route.ts",
+);
 const acknowledgementApi = readSource(
   "src/app/api/rfq-addendum-acknowledgements/route.ts",
 );
 const attachmentsApi = readSource("src/app/api/rfq-attachments/route.ts");
+const attachmentsDeleteApi =
+  attachmentsApi.split("export async function DELETE")[1] || "";
 const quotesApi = readSource("src/app/api/quotes/route.ts");
 const rfiApi = readSource("src/app/api/rfq-rfis/route.ts");
 const upload = readSource("src/components/rfq-document-upload.tsx");
 const library = readSource("src/components/rfq-document-library.tsx");
+const documentRequirements = readSource(
+  "src/components/rfq-workspace/rfq-document-requirements.tsx",
+);
 const addendaManager = readSource("src/components/rfq-addenda-manager.tsx");
 const rfiWorkspace = readSource(
   "src/components/rfq-workspace/rfq-rfi-workspace.tsx",
@@ -142,7 +159,9 @@ describe("Cursor 04C RFI collaboration contract", () => {
     expect(addendaApi).not.toContain("body.companyId");
     expect(addendaApi).not.toContain("body.addendumNumber");
     expect(addendaApi).not.toMatch(/\.insert\(\{[\s\S]*?addendumNumber/);
-    expect(addendaApi).not.toContain("addendum_number:");
+    expect(addendaApi).not.toMatch(
+      /\.insert\(\{[\s\S]*?addendum_number:\s*body\./,
+    );
     expect(addendaApi).toContain("rfq_id: rfqId");
     expect(addendaApi).toContain("title");
     expect(addendaApi).toContain("requires_acknowledgement");
@@ -422,6 +441,558 @@ describe("Cursor 04C RFI collaboration contract", () => {
     );
     expect(notificationMigration).toContain(
       "grant execute\non function public.resolve_rfi_response_notification_recipient(uuid)\nto authenticated;",
+    );
+  });
+});
+
+describe("18-24 governed published RFQ amendment migration", () => {
+  const expectedGovernedFields = [
+    "title",
+    "description",
+    "category",
+    "location",
+    "budget",
+    "project_name",
+    "owner_client",
+    "mobilization_date",
+    "substantial_completion_date",
+    "performance_bond_required",
+    "bid_bond_required",
+    "insurance_required",
+    "insurance_notes",
+    "safety_requirements",
+    "prequalification_notes",
+  ];
+
+  it("reuses legacy Addenda with nullable structured immutable evidence", () => {
+    expect(governedAmendmentMigration).toContain(
+      "alter table public.rfq_addenda",
+    );
+    expect(governedAmendmentMigration).not.toContain(
+      "create table public.rfq_amendments",
+    );
+    expect(governedAmendmentMigration).toContain(
+      "add column if not exists affected_fields text[]",
+    );
+    expect(governedAmendmentMigration).toContain(
+      "add column if not exists amendment_before jsonb",
+    );
+    expect(governedAmendmentMigration).toContain(
+      "add column if not exists amendment_after jsonb",
+    );
+    expect(governedAmendmentMigration).toContain(
+      "add column if not exists amendment_reason text",
+    );
+    expect(governedAmendmentMigration).toContain(
+      "Structured RFQ amendment evidence is immutable.",
+    );
+    expect(governedAmendmentMigration).toContain(
+      "before update or delete on public.rfq_addenda",
+    );
+    expect(governedAmendmentMigration).toContain(
+      "NULL remains valid for legacy Addenda.",
+    );
+  });
+
+  it("routes governed published RFQ field changes through the existing Addendum route", () => {
+    expect(addendaApi).toContain("body.changes");
+    expect(addendaApi).toContain("hasGovernedChanges");
+    expect(addendaApi).toContain('"amend_published_rfq"');
+    expect(addendaApi).toContain("p_changes: governedChanges");
+    expect(addendaApi).toContain("p_title: title");
+    expect(addendaApi).toContain("p_reason: amendmentReason");
+    expect(addendaApi).toContain("p_requires_acknowledgement: true");
+    expect(addendaApi).not.toContain(
+      "p_requires_acknowledgement: requiresAcknowledgement",
+    );
+    expect(addendaApi).toContain(
+      "Published RFQ changes require an Addendum title and amendment reason.",
+    );
+    expect(addendaApi).toContain(
+      "Draft RFQ fields must be edited through the existing draft workflow.",
+    );
+  });
+
+  it("routes published document requirement changes through governed Addenda", () => {
+    expect(documentRequirementsApi).toContain(
+      '.select("id, company_id, status")',
+    );
+    expect(documentRequirementsApi).toContain(
+      'authorization.rfq.status !== "draft"',
+    );
+    expect(documentRequirementsApi).toContain(
+      '"amend_published_rfq_package"',
+    );
+    expect(documentRequirementsApi).toContain(
+      'operation: "add_document_requirement"',
+    );
+    expect(documentRequirementsApi).toContain(
+      'operation: "remove_document_requirement"',
+    );
+    expect(documentRequirementsApi).toContain("p_title: evidence.title");
+    expect(documentRequirementsApi).toContain("p_reason: evidence.reason");
+    expect(documentRequirements).toContain("rfqStatus?: string | null");
+    expect(documentRequirements).toContain("RFQAmendmentEvidenceFields");
+    expect(documentRequirements).toContain("addendumTitle");
+    expect(documentRequirements).toContain("amendmentReason");
+  });
+
+  it("routes published attachment registration and removal through governed Addenda", () => {
+    expect(attachmentsApi).toContain('.select("id, company_id, status")');
+    expect(attachmentsApi).toContain('rfq.status === "draft"');
+    expect(attachmentsApi).toContain('"amend_published_rfq_package"');
+    expect(attachmentsApi).toContain('operation: "add_attachment"');
+    expect(attachmentsApi).toContain('operation: "remove_attachment"');
+    expect(attachmentsApi).toContain("export async function DELETE");
+    expect(upload).toContain("RFQAmendmentEvidenceFields");
+    expect(upload).toContain("addendumTitle");
+    expect(upload).toContain("amendmentReason");
+    expect(upload).toContain("multiple={!isPublished}");
+    expect(upload).toContain("isPublished && files.length > 1");
+    expect(upload).toContain("isPublished && filesToUpload.length > 1");
+    expect(upload).toContain(
+      "Published RFQ attachments must be uploaded one file per governed Addendum.",
+    );
+    expect(library).toContain('fetch("/api/rfq-attachments"');
+    expect(library).toContain('method: "DELETE"');
+    expect(library).toContain("RFQAmendmentEvidenceFields");
+    expect(library).not.toContain(
+      '.from("rfq_attachments")\n        .delete()',
+    );
+  });
+
+  it("limits orphan cleanup visibility to the installed batch-delete operation", () => {
+    expect(attachmentCleanupRetryMigration).toContain(
+      "storage.allow_only_operation('storage.object.delete_many')",
+    );
+    expect(attachmentCleanupRetryMigration).not.toContain(
+      "storage.allow_any_operation",
+    );
+    expect(attachmentCleanupRetryMigration).not.toMatch(
+      /storage\.object\.(?:list|list_v2|get_authenticated|get_signed)/,
+    );
+    expect(attachmentCleanupRetryMigration).toContain(
+      "bucket_id = 'rfq-attachments'",
+    );
+    expect(attachmentCleanupRetryMigration).toContain(
+      "om.membership_status = 'active'",
+    );
+    expect(attachmentCleanupRetryMigration).toContain(
+      "om.workspace_role in ('owner', 'admin')",
+    );
+    expect(attachmentCleanupRetryMigration).toContain(
+      "or om.procurement_function = 'buyer'",
+    );
+    expect(attachmentCleanupRetryMigration).toContain(
+      "addendum.company_id = r.company_id",
+    );
+    expect(attachmentCleanupRetryMigration).toContain(
+      "evidence.value ->> 'file_path' = storage.objects.name",
+    );
+    expect(attachmentCleanupRetryMigration).toContain(
+      "jsonb_typeof(addendum.amendment_after -> evidence.key) = 'null'",
+    );
+  });
+
+  it("keeps governed storage cleanup retryable without caller paths or duplicate Addenda", () => {
+    expect(attachmentsApi).toContain("findGovernedRemovalEvidence");
+    expect(attachmentsApi).toContain(
+      '.contains("affected_fields", [affectedKey])',
+    );
+    expect(attachmentsApi).toContain(
+      "normalizeText(attachmentBefore.file_path)",
+    );
+    expect(attachmentsDeleteApi).not.toContain("body.filePath");
+    expect(attachmentsApi).toContain('operation: "retry_cleanup"');
+    expect(attachmentsApi).toContain("storageCleanupRetried: true");
+    expect(attachmentsApi).toContain("storageCleanupPending: true");
+    expect(attachmentsApi).toContain("{ status: 502 }");
+    expect(library).toContain("Retry cleanup");
+    expect(library).toContain("cleanupPendingId");
+  });
+
+  it("exposes one purpose-bound security-definer amendment command", () => {
+    expect(governedAmendmentMigration).toContain(
+      "create or replace function public.amend_published_rfq(",
+    );
+    expect(governedAmendmentMigration).toContain("p_rfq_id uuid");
+    expect(governedAmendmentMigration).toContain("p_changes jsonb");
+    expect(governedAmendmentMigration).toContain("p_reason text");
+    expect(governedAmendmentMigration).toContain("security definer");
+    expect(governedAmendmentMigration).toContain("set search_path = ''");
+    expect(governedAmendmentMigration).toContain(
+      "actor_user_id uuid := auth.uid()",
+    );
+    expect(governedAmendmentMigration).toContain(
+      "om.membership_status = 'active'",
+    );
+    expect(governedAmendmentMigration).toContain(
+      "om.workspace_role in ('owner', 'admin')",
+    );
+    expect(governedAmendmentMigration).toContain(
+      "or om.procurement_function = 'buyer'",
+    );
+    expect(governedAmendmentMigration).toContain("for update");
+
+    const rfqRpcStart = governedAmendmentMigration.indexOf(
+      "create or replace function public.amend_published_rfq(",
+    );
+    const rfqRpcEnd = governedAmendmentMigration.indexOf(
+      "comment on function public.amend_published_rfq(",
+      rfqRpcStart,
+    );
+    const rfqRpc = governedAmendmentMigration.slice(rfqRpcStart, rfqRpcEnd);
+
+    expect(rfqRpc).toContain("if p_requires_acknowledgement is not true then");
+    expect(rfqRpc).toContain("ACKNOWLEDGEMENT_REQUIRED");
+    expect(rfqRpc).toMatch(
+      /insert into public\.rfq_addenda[\s\S]*?btrim\(p_title\)[\s\S]*?\n\s*true,/,
+    );
+    expect(rfqRpc).not.toContain("coalesce(p_requires_acknowledgement, true)");
+    expect(governedAmendmentMigration).toContain("target_rfq.status <> 'open'");
+    expect(governedAmendmentMigration).toContain(
+      "target_rfq.awarded_quote_id is not null",
+    );
+    expect(governedAmendmentMigration).toContain(
+      "target_rfq.awarded_at is not null",
+    );
+    expect(governedAmendmentMigration).toContain(
+      "public.parse_rfq_deadline_timestamptz(target_rfq.deadline)",
+    );
+    expect(governedAmendmentMigration).toContain(
+      "parsed_deadline is null or now() > parsed_deadline",
+    );
+    expect(governedAmendmentMigration).toContain(
+      "COMMERCIAL_OPENING_UNLOCKED",
+    );
+    expect(governedAmendmentMigration).toContain(
+      "insert into public.rfq_addenda",
+    );
+    expect(
+      governedAmendmentMigration.indexOf("update public.rfqs"),
+    ).toBeLessThan(
+      governedAmendmentMigration.indexOf("insert into public.rfq_addenda"),
+    );
+    expect(governedAmendmentMigration).toContain(
+      "revoke all\non function public.amend_published_rfq(uuid, jsonb, text, text, text, text, boolean)\nfrom public;",
+    );
+    expect(governedAmendmentMigration).toContain(
+      "revoke all\non function public.amend_published_rfq(uuid, jsonb, text, text, text, text, boolean)\nfrom anon;",
+    );
+    expect(governedAmendmentMigration).toContain(
+      "grant execute\non function public.amend_published_rfq(uuid, jsonb, text, text, text, text, boolean)\nto authenticated;",
+    );
+  });
+
+  it("retains the existing locked Addendum numbering and actor-time authority", () => {
+    expect(migration).toMatch(
+      /select r\.company_id\s+into v_company_id\s+from public\.rfqs r\s+where r\.id = new\.rfq_id\s+for update;/,
+    );
+    expect(migration).toMatch(
+      /select coalesce\(max\(a\.addendum_number\), 0\) \+ 1\s+into v_next_number\s+from public\.rfq_addenda a\s+where a\.rfq_id = new\.rfq_id;/,
+    );
+    expect(migration).toContain("new.company_id := v_company_id;");
+    expect(migration).toContain("new.created_by := auth.uid();");
+    expect(migration).toContain("new.created_at := now();");
+    expect(migration).toContain("new.addendum_number := v_next_number;");
+    const governedAddendumColumnLists = [
+      ...governedAmendmentMigration.matchAll(
+        /insert into public\.rfq_addenda \(([\s\S]*?)\n  \)\n  values/g,
+      ),
+    ].map((match) => match[1]);
+
+    expect(governedAddendumColumnLists).toHaveLength(2);
+    for (const columnList of governedAddendumColumnLists) {
+      expect(columnList).not.toMatch(
+        /\b(?:company_id|created_by|created_at|addendum_number)\b/i,
+      );
+    }
+  });
+
+  it("whitelists only the 18-24 respondent-facing amendment fields", () => {
+    const whitelistStart = governedAmendmentMigration.indexOf(
+      "governed_fields constant text[] := array[",
+    );
+    const whitelistEnd = governedAmendmentMigration.indexOf(
+      "];",
+      whitelistStart,
+    );
+    const whitelist = governedAmendmentMigration.slice(
+      whitelistStart,
+      whitelistEnd,
+    );
+
+    expect(whitelistStart).toBeGreaterThan(-1);
+    expect(whitelistEnd).toBeGreaterThan(whitelistStart);
+
+    for (const field of expectedGovernedFields) {
+      expect(whitelist).toContain(`'${field}'`);
+    }
+
+    expect((whitelist.match(/^\s*'[^']+',?$/gm) ?? []).length).toBe(
+      expectedGovernedFields.length,
+    );
+
+    for (const prohibitedField of [
+      "deadline",
+      "deadline_timezone",
+      "rfi_deadline",
+      "rfi_deadline_timezone",
+      "procurement_scope",
+      "sourcing_method",
+      "contract_framework",
+      "bid_model",
+      "nda_required",
+      "advanced_controls_enabled",
+      "status",
+      "awarded_quote_id",
+      "awarded_at",
+      "company_id",
+      "user_id",
+      "slug",
+    ]) {
+      expect(whitelist).not.toContain(`'${prohibitedField}'`);
+    }
+
+    expect(governedAmendmentMigration).toContain("PROHIBITED_FIELDS");
+    expect(governedAmendmentMigration).toContain("INVALID_FIELD_TYPE");
+    expect(governedAmendmentMigration).toContain("NO_CHANGES");
+  });
+
+  it("validates the final amended RFQ against publication invariants", () => {
+    const validationStart = governedAmendmentMigration.indexOf(
+      "if char_length(btrim(coalesce(next_rfq.title, ''))) < 3",
+    );
+    const updateStart = governedAmendmentMigration.indexOf(
+      "update public.rfqs",
+      validationStart,
+    );
+
+    expect(validationStart).toBeGreaterThan(-1);
+    expect(updateStart).toBeGreaterThan(validationStart);
+    expect(governedAmendmentMigration).toContain(
+      "char_length(btrim(coalesce(next_rfq.description, ''))) < 9",
+    );
+    expect(governedAmendmentMigration).toContain(
+      "char_length(btrim(coalesce(next_rfq.category, ''))) < 2",
+    );
+    expect(governedAmendmentMigration).toContain(
+      "char_length(btrim(coalesce(next_rfq.location, ''))) < 2",
+    );
+    expect(governedAmendmentMigration).toContain(
+      "next_rfq.mobilization_date > next_rfq.substantial_completion_date",
+    );
+    expect(governedAmendmentMigration).toContain(
+      "PUBLICATION_INVARIANT_VIOLATION",
+    );
+  });
+
+  it("removes broad client RFQ updates while retaining audited internal metadata", () => {
+    expect(governedAmendmentMigration).toContain(
+      "revoke update on table public.rfqs from authenticated;",
+    );
+    expect(governedAmendmentMigration).toContain(
+      "grant update (internal_project_id) on table public.rfqs to authenticated;",
+    );
+    expect(governedAmendmentMigration).toContain(
+      "create trigger audit_rfq_internal_project_id_update_trigger",
+    );
+    expect(governedAmendmentMigration).toContain(
+      "'RFQ_INTERNAL_METADATA_UPDATED'",
+    );
+    expect(governedAmendmentMigration).not.toContain(
+      "grant update on table public.rfqs to authenticated",
+    );
+    expect(governedAmendmentMigration).not.toContain("set_config(");
+    expect(governedAmendmentMigration).not.toContain("current_setting(");
+  });
+
+  it("does not widen adjacent acknowledgement, award, or notification authority", () => {
+    expect(governedAmendmentMigration).not.toMatch(
+      /grant\s+(?:insert|update|delete)[\s\S]*?public\.rfq_addenda[\s\S]*?authenticated/i,
+    );
+    expect(governedAmendmentMigration).not.toContain(
+      "public.rfq_addendum_acknowledgements",
+    );
+    expect(governedAmendmentMigration).not.toContain(
+      "create or replace function public.award_rfq_quote",
+    );
+    expect(governedAmendmentMigration).not.toContain("public.quotes");
+    expect(governedAmendmentMigration).not.toContain("public.notifications");
+  });
+
+  it("blocks direct post-publication document and attachment package mutations", () => {
+    expect(governedAmendmentMigration).toContain(
+      "create or replace function public.enforce_published_rfq_package_mutation()",
+    );
+    expect(governedAmendmentMigration).toContain("security invoker");
+    expect(governedAmendmentMigration).toContain(
+      "current_user in ('anon', 'authenticated', 'service_role')",
+    );
+    expect(governedAmendmentMigration).toContain(
+      "target_rfq_status <> 'draft'",
+    );
+    expect(governedAmendmentMigration).toContain(
+      "Published RFQ package changes require a governed Addendum.",
+    );
+    expect(governedAmendmentMigration).toContain(
+      "before insert or delete on public.rfq_document_requirements",
+    );
+    expect(governedAmendmentMigration).toContain(
+      "before insert or delete on public.rfq_attachments",
+    );
+    expect(governedAmendmentMigration).not.toContain("set_config(");
+    expect(governedAmendmentMigration).not.toContain("current_setting(");
+  });
+
+  it("allows draft RFQ cascades but prevents authenticated published hard-delete", () => {
+    expect(migration).toMatch(
+      /create table public\.rfq_addenda \([\s\S]*?rfq_id uuid not null references public\.rfqs \(id\) on delete cascade/,
+    );
+    expect(migration).toMatch(
+      /create table public\.rfq_attachments \([\s\S]*?rfq_id uuid not null references public\.rfqs \(id\) on delete cascade/,
+    );
+    expect(launchBaseline).toMatch(
+      /"rfq_document_requirements_rfq_id_fkey" FOREIGN KEY \("rfq_id"\) REFERENCES "public"\."rfqs"\("id"\) ON DELETE CASCADE/,
+    );
+    expect(governedAmendmentMigration).toContain(
+      'drop policy if exists "Workspace administrators can delete company RFQs"',
+    );
+    expect(governedAmendmentMigration).toContain(
+      'create policy "Workspace administrators can delete company RFQs"',
+    );
+    expect(governedAmendmentMigration).toMatch(
+      /create policy "Workspace administrators can delete company RFQs"[\s\S]*?for delete[\s\S]*?to authenticated[\s\S]*?rfqs\.status = 'draft'/,
+    );
+    expect(governedAmendmentMigration).toMatch(
+      /if not found and tg_op = 'DELETE' then[\s\S]*?return old;/,
+    );
+    expect(governedAmendmentMigration).toContain(
+      "RFQ not found for package mutation.",
+    );
+  });
+
+  it("routes each material package operation through one atomic Addendum RPC", () => {
+    expect(governedAmendmentMigration).toContain(
+      "create or replace function public.amend_published_rfq_package(",
+    );
+    expect(governedAmendmentMigration).toContain("p_rfq_id uuid");
+    expect(governedAmendmentMigration).toContain("p_change jsonb");
+    expect(governedAmendmentMigration).toContain("p_reason text");
+    expect(governedAmendmentMigration).toContain("security definer");
+    expect(governedAmendmentMigration).toContain("set search_path = ''");
+    expect(governedAmendmentMigration).toContain("'add_document_requirement'");
+    expect(governedAmendmentMigration).toContain("'remove_document_requirement'");
+    expect(governedAmendmentMigration).toContain("'add_attachment'");
+    expect(governedAmendmentMigration).toContain("'remove_attachment'");
+    expect(governedAmendmentMigration).toContain("INVALID_PACKAGE_CHANGE");
+    expect(governedAmendmentMigration).toContain("PROHIBITED_PACKAGE_FIELDS");
+    expect(governedAmendmentMigration).toContain("NO_PACKAGE_CHANGE");
+    expect(governedAmendmentMigration).toContain("for update");
+    expect(governedAmendmentMigration).toContain("target_rfq.status <> 'open'");
+    expect(governedAmendmentMigration).toContain(
+      "public.parse_rfq_deadline_timestamptz(target_rfq.deadline)",
+    );
+
+    const packageRpcStart = governedAmendmentMigration.indexOf(
+      "create or replace function public.amend_published_rfq_package(",
+    );
+    const packageRpcEnd = governedAmendmentMigration.indexOf(
+      "comment on function public.amend_published_rfq_package(",
+      packageRpcStart,
+    );
+    const packageRpc = governedAmendmentMigration.slice(
+      packageRpcStart,
+      packageRpcEnd,
+    );
+
+    expect(packageRpcStart).toBeGreaterThan(-1);
+    expect(packageRpcEnd).toBeGreaterThan(packageRpcStart);
+    expect(packageRpc).toContain("insert into public.rfq_document_requirements");
+    expect(packageRpc).toContain("delete from public.rfq_document_requirements");
+    expect(packageRpc).toContain("insert into public.rfq_attachments");
+    expect(packageRpc).toContain("delete from public.rfq_attachments");
+    expect(packageRpc).toContain("from storage.objects as stored_object");
+    expect(packageRpc).toContain(
+      "select stored_object.id\n    into locked_storage_object_id",
+    );
+    expect(packageRpc).toMatch(
+      /from storage\.objects as stored_object[\s\S]*?where stored_object\.bucket_id = 'rfq-attachments'[\s\S]*?for update;/,
+    );
+    expect(packageRpc).toContain("ATTACHMENT_OBJECT_NOT_FOUND");
+    expect(packageRpc).toContain("INVALID_ATTACHMENT_PATH");
+    expect(packageRpc).toContain(
+      "if p_requires_acknowledgement is not true then",
+    );
+    expect(packageRpc).toContain("ACKNOWLEDGEMENT_REQUIRED");
+    expect(packageRpc).toMatch(
+      /insert into public\.rfq_addenda[\s\S]*?btrim\(p_title\)[\s\S]*?\n\s*true,/,
+    );
+    expect(packageRpc).not.toContain(
+      "coalesce(p_requires_acknowledgement, true)",
+    );
+    expect(packageRpc).toContain("insert into public.rfq_addenda");
+    expect(packageRpc.lastIndexOf("insert into public.rfq_addenda")).toBeGreaterThan(
+      packageRpc.indexOf("insert into public.rfq_document_requirements"),
+    );
+    expect(packageRpc.lastIndexOf("insert into public.rfq_addenda")).toBeGreaterThan(
+      packageRpc.indexOf("delete from public.rfq_attachments"),
+    );
+  });
+
+  it("keeps draft and legacy package workflows while exposing no bypass grants", () => {
+    expect(governedAmendmentMigration).toContain(
+      "if target_rfq_status <> 'draft' then",
+    );
+    expect(governedAmendmentMigration).not.toContain(
+      'drop policy if exists "Issuer procurement users can declare document requirements"',
+    );
+    expect(governedAmendmentMigration).not.toContain(
+      'drop policy if exists "Issuer procurement users can remove document requirements"',
+    );
+    expect(governedAmendmentMigration).not.toContain(
+      'drop policy if exists "Issuer procurement users can upload attachments"',
+    );
+    expect(governedAmendmentMigration).not.toContain(
+      'drop policy if exists "Issuer procurement users can delete attachments"',
+    );
+    expect(governedAmendmentMigration).toContain(
+      "insert into public.rfq_addenda",
+    );
+    expect(governedAmendmentMigration).toContain("affected_documents");
+    expect(governedAmendmentMigration).toContain(
+      "revoke all\non function public.amend_published_rfq_package(uuid, jsonb, text, text, text, boolean)\nfrom public;",
+    );
+    expect(governedAmendmentMigration).toContain(
+      "revoke all\non function public.amend_published_rfq_package(uuid, jsonb, text, text, text, boolean)\nfrom anon;",
+    );
+    expect(governedAmendmentMigration).toContain(
+      "grant execute\non function public.amend_published_rfq_package(uuid, jsonb, text, text, text, boolean)\nto authenticated;",
+    );
+  });
+
+  it("makes storage visibility follow governed attachment registration", () => {
+    expect(governedAmendmentMigration).toContain(
+      'drop policy if exists "RFQ participants can read rfq-attachments objects"',
+    );
+    expect(governedAmendmentMigration).toContain(
+      'create policy "RFQ participants can read rfq-attachments objects"',
+    );
+    expect(governedAmendmentMigration).toContain(
+      "attachment.file_path = storage.objects.name",
+    );
+    expect(governedAmendmentMigration).toContain(
+      'drop policy if exists "Issuer procurement users can delete rfq-attachments objects"',
+    );
+    expect(governedAmendmentMigration).toContain(
+      'create policy "Issuer procurement users can delete rfq-attachments objects"',
+    );
+    expect(governedAmendmentMigration).toContain("r.status = 'draft'");
+    expect(governedAmendmentMigration).toContain(
+      "or not exists (\n          select 1\n          from public.rfq_attachments as attachment",
+    );
+    expect(governedAmendmentMigration).not.toContain(
+      'drop policy if exists "Issuer procurement users can upload rfq-attachments objects"',
     );
   });
 });

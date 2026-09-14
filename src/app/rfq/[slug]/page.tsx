@@ -1026,6 +1026,7 @@ governance workflow.
 <RFQDocumentWorkspace
   rfqId={rfq.id}
   companyId={rfq.company_id}
+  rfqStatus={rfq.status}
   isOwner={isOwner}
   canAcknowledge={isOpen}
   rfiDeadline={effectiveRfiDeadline}

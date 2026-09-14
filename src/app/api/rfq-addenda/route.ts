@@ -17,6 +17,20 @@ type AddendumEmailDeliverySummary = {
   error: string | null;
 };
 
+type AddendumRecord = {
+  id: string;
+  addendum_number: number | string | null;
+  title: string | null;
+  requires_acknowledgement: boolean | null;
+};
+
+type AmendmentRpcResult = {
+  success?: boolean;
+  error_code?: string;
+  error_message?: string;
+  addendum_id?: string;
+};
+
 function emptyAddendumEmailSummary(
   error: string | null = null,
 ): AddendumEmailDeliverySummary {
@@ -227,6 +241,15 @@ export async function POST(request: Request) {
   const title = normalizeText(body.title);
   const description = normalizeText(body.description);
   const affectedDocuments = normalizeText(body.affectedDocuments);
+  const amendmentReason = normalizeText(body.amendmentReason);
+  const governedChanges =
+    body.changes &&
+    typeof body.changes === "object" &&
+    !Array.isArray(body.changes)
+      ? (body.changes as Record<string, unknown>)
+      : null;
+  const hasGovernedChanges =
+    governedChanges !== null && Object.keys(governedChanges).length > 0;
   const requiresAcknowledgement = normalizeBoolean(
     body.requiresAcknowledgement ?? true,
   );
@@ -240,7 +263,7 @@ export async function POST(request: Request) {
 
   const { data: rfq, error: rfqError } = await supabase
     .from("rfqs")
-    .select("id, company_id, title, slug")
+    .select("id, company_id, title, slug, status")
     .eq("id", rfqId)
     .maybeSingle();
 
@@ -282,30 +305,102 @@ export async function POST(request: Request) {
     );
   }
 
-  const { data, error } = await supabase
-    .from("rfq_addenda")
-    .insert({
-      rfq_id: rfqId,
-      title,
-      description: description || null,
-      affected_documents: affectedDocuments || null,
-      requires_acknowledgement: requiresAcknowledgement,
-    })
-    .select()
-    .single();
+  let data: AddendumRecord | null = null;
+  let persistenceError: { message?: string } | null = null;
 
-  if (error || !data) {
+  if (hasGovernedChanges) {
+    if (rfq.status === "draft") {
+      return NextResponse.json(
+        {
+          error:
+            "Draft RFQ fields must be edited through the existing draft workflow.",
+        },
+        { status: 409 },
+      );
+    }
+
+    if (!title || !amendmentReason) {
+      return NextResponse.json(
+        {
+          error:
+            "Published RFQ changes require an Addendum title and amendment reason.",
+        },
+        { status: 400 },
+      );
+    }
+
+    const { data: rpcData, error: rpcError } = await supabase.rpc(
+      "amend_published_rfq",
+      {
+        p_rfq_id: rfqId,
+        p_changes: governedChanges,
+        p_reason: amendmentReason,
+        p_title: title,
+        p_description: description || null,
+        p_affected_documents: affectedDocuments || null,
+        p_requires_acknowledgement: true,
+      },
+    );
+    const result = rpcData as AmendmentRpcResult | null;
+
+    if (rpcError || !result?.success || !result.addendum_id) {
+      const status =
+        result?.error_code === "UNAUTHENTICATED"
+          ? 401
+          : result?.error_code === "FORBIDDEN"
+            ? 403
+            : result?.error_code === "RFQ_NOT_FOUND"
+              ? 404
+              : 409;
+
+      return NextResponse.json(
+        {
+          error:
+            result?.error_message ||
+            rpcError?.message ||
+            "Failed to amend published RFQ.",
+        },
+        { status },
+      );
+    }
+
+    const addendumResult = await supabase
+      .from("rfq_addenda")
+      .select("*")
+      .eq("id", result.addendum_id)
+      .single();
+
+    data = addendumResult.data as AddendumRecord | null;
+    persistenceError = addendumResult.error;
+  } else {
+    const insertResult = await supabase
+      .from("rfq_addenda")
+      .insert({
+        rfq_id: rfqId,
+        title,
+        description: description || null,
+        affected_documents: affectedDocuments || null,
+        requires_acknowledgement: requiresAcknowledgement,
+      })
+      .select()
+      .single();
+
+    data = insertResult.data as AddendumRecord | null;
+    persistenceError = insertResult.error;
+  }
+
+  if (persistenceError || !data) {
     reportCriticalApiFailure({
       domain: "addendum",
       operation: "create",
       failureStage: "addendum_insert",
       route: "/api/rfq-addenda",
       method: "POST",
-      error: error ?? new Error("AddendumInsertMissing"),
+      error: persistenceError ?? new Error("AddendumInsertMissing"),
     });
 
     return NextResponse.json(
-      { error: error?.message || "Failed to create addendum." },
+      { error: persistenceError?.message || "Failed to create addendum." },
       { status: 500 },
     );
   }

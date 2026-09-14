@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 
+import { RFQAmendmentEvidenceFields } from "@/components/rfq-amendment-evidence-fields";
 import {
   RFQ_ATTACHMENT_TYPE_LABELS,
   RFQ_ATTACHMENT_TYPES,
@@ -20,6 +21,7 @@ export const RFQ_DOCUMENT_REQUIREMENTS_UPDATED_EVENT =
 
 type RFQDocumentRequirementsProps = {
   rfqId: string;
+  rfqStatus?: string | null;
   canManage: boolean;
   initialRequirements: RfqDocumentRequirementRecord[];
   initialDocuments: RfqDocumentAttachmentEvidence[];
@@ -98,6 +100,7 @@ function getUnavailableMessage(reason: RfqDocumentCoverageUnavailableReason) {
 
 export function RFQDocumentRequirements({
   rfqId,
+  rfqStatus = "open",
   canManage,
   initialRequirements,
   initialDocuments,
@@ -116,6 +119,9 @@ export function RFQDocumentRequirements({
     null,
   );
   const [error, setError] = useState("");
+  const [addendumTitle, setAddendumTitle] = useState("");
+  const [amendmentReason, setAmendmentReason] = useState("");
+  const isPublished = rfqStatus !== "draft";
 
   const coverageState = useMemo(
     () =>
@@ -181,6 +187,16 @@ export function RFQDocumentRequirements({
     async (attachmentType: RfqAttachmentType, required: boolean) => {
       if (!canManage || mutatingType) return;
 
+      if (
+        isPublished &&
+        (!addendumTitle.trim() || !amendmentReason.trim())
+      ) {
+        setError(
+          "Enter an Addendum title and amendment reason before changing a published RFQ requirement.",
+        );
+        return;
+      }
+
       setMutatingType(attachmentType);
       setError("");
 
@@ -193,6 +209,12 @@ export function RFQDocumentRequirements({
           body: JSON.stringify({
             rfqId,
             attachmentType,
+            ...(isPublished
+              ? {
+                  addendumTitle: addendumTitle.trim(),
+                  amendmentReason: amendmentReason.trim(),
+                }
+              : {}),
           }),
         });
 
@@ -236,6 +258,11 @@ export function RFQDocumentRequirements({
             },
           }),
         );
+
+        if (isPublished) {
+          setAddendumTitle("");
+          setAmendmentReason("");
+        }
       } catch (mutationError) {
         setError(
           mutationError instanceof Error
@@ -246,7 +273,14 @@ export function RFQDocumentRequirements({
         setMutatingType(null);
       }
     },
-    [canManage, mutatingType, rfqId],
+    [
+      addendumTitle,
+      amendmentReason,
+      canManage,
+      isPublished,
+      mutatingType,
+      rfqId,
+    ],
   );
 
   const coverage =
@@ -319,6 +353,19 @@ export function RFQDocumentRequirements({
           role="alert"
         >
           {error}
+        </div>
+      ) : null}
+
+      {canManage && isPublished ? (
+        <div className="mt-6">
+          <RFQAmendmentEvidenceFields
+            idPrefix="rfq-requirement"
+            title={addendumTitle}
+            reason={amendmentReason}
+            disabled={Boolean(mutatingType)}
+            onTitleChange={setAddendumTitle}
+            onReasonChange={setAmendmentReason}
+          />
         </div>
       ) : null}
 

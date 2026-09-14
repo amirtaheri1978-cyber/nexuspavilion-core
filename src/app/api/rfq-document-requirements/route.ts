@@ -12,6 +12,41 @@ function normalizeText(value: unknown) {
   return String(value ?? "").trim();
 }
 
+type AmendmentRpcResult = {
+  success?: boolean;
+  error_code?: string;
+  error_message?: string;
+  addendum_id?: string;
+};
+
+function getAmendmentEvidence(body: unknown) {
+  const input = (body ?? {}) as Record<string, unknown>;
+
+  return {
+    title: normalizeText(input.addendumTitle),
+    reason: normalizeText(input.amendmentReason),
+  };
+}
+
+function amendmentFailure(
+  result: AmendmentRpcResult | null,
+  fallback: string,
+) {
+  const status =
+    result?.error_code === "UNAUTHENTICATED"
+      ? 401
+      : result?.error_code === "FORBIDDEN"
+        ? 403
+        : result?.error_code === "RFQ_NOT_FOUND"
+          ? 404
+          : 409;
+
+  return NextResponse.json(
+    { error: result?.error_message || fallback },
+    { status },
+  );
+}
+
 async function resolveAuthorizedIssuerContext({
   rfqId,
   userId,
@@ -23,7 +58,7 @@ async function resolveAuthorizedIssuerContext({
 }) {
   const { data: rfq, error: rfqError } = await supabase
     .from("rfqs")
-    .select("id, company_id")
+    .select("id, company_id, status")
     .eq("id", rfqId)
     .maybeSingle();
 
@@ -137,6 +172,71 @@ export async function POST(request: Request) {
 
   if (!authorization.ok) return authorization.response;
 
+  if (authorization.rfq.status !== "draft") {
+    const evidence = getAmendmentEvidence(body);
+
+    if (!evidence.title || !evidence.reason) {
+      return NextResponse.json(
+        {
+          error:
+            "Published RFQ requirement changes require an Addendum title and amendment reason.",
+        },
+        { status: 400 },
+      );
+    }
+
+    const { data: rpcData, error: rpcError } = await supabase.rpc(
+      "amend_published_rfq_package",
+      {
+        p_rfq_id: parsed.rfqId,
+        p_change: {
+          operation: "add_document_requirement",
+          attachment_type: parsed.attachmentType,
+        },
+        p_reason: evidence.reason,
+        p_title: evidence.title,
+        p_description: null,
+        p_requires_acknowledgement: true,
+      },
+    );
+    const result = rpcData as AmendmentRpcResult | null;
+
+    if (rpcError || !result?.success) {
+      return amendmentFailure(
+        result,
+        rpcError?.message || "Failed to declare governed document requirement.",
+      );
+    }
+
+    const { data: requirement, error: requirementError } = await supabase
+      .from("rfq_document_requirements")
+      .select("id, rfq_id, attachment_type, created_by, created_at")
+      .eq("rfq_id", parsed.rfqId)
+      .eq("attachment_type", parsed.attachmentType)
+      .maybeSingle();
+
+    if (requirementError || !requirement) {
+      return NextResponse.json(
+        {
+          error:
+            "The governed requirement was declared, but its record could not be reloaded.",
+        },
+        { status: 500 },
+      );
+    }
+
+    return NextResponse.json(
+      {
+        success: true,
+        changed: true,
+        status: "declared",
+        requirement,
+        addendumId: result.addendum_id,
+      },
+      { status: 201 },
+    );
+  }
+
   const { data, error } = await supabase
     .from("rfq_document_requirements")
     .insert({
@@ -217,6 +317,50 @@ export async function DELETE(request: Request) {
   });
 
   if (!authorization.ok) return authorization.response;
+
+  if (authorization.rfq.status !== "draft") {
+    const evidence = getAmendmentEvidence(body);
+
+    if (!evidence.title || !evidence.reason) {
+      return NextResponse.json(
+        {
+          error:
+            "Published RFQ requirement changes require an Addendum title and amendment reason.",
+        },
+        { status: 400 },
+      );
+    }
+
+    const { data: rpcData, error: rpcError } = await supabase.rpc(
+      "amend_published_rfq_package",
+      {
+        p_rfq_id: parsed.rfqId,
+        p_change: {
+          operation: "remove_document_requirement",
+          attachment_type: parsed.attachmentType,
+        },
+        p_reason: evidence.reason,
+        p_title: evidence.title,
+        p_description: null,
+        p_requires_acknowledgement: true,
+      },
+    );
+    const result = rpcData as AmendmentRpcResult | null;
+
+    if (rpcError || !result?.success) {
+      return amendmentFailure(
+        result,
+        rpcError?.message || "Failed to remove governed document requirement.",
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      changed: true,
+      status: "removed",
+      addendumId: result.addendum_id,
+    });
+  }
 
   const { data, error } = await supabase
     .from("rfq_document_requirements")

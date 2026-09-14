@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 
+import { RFQAmendmentEvidenceFields } from "@/components/rfq-amendment-evidence-fields";
 import { RFQ_DOCUMENT_REQUIREMENTS_UPDATED_EVENT } from "@/components/rfq-workspace/rfq-document-requirements";
 import type { RfqAttachmentType } from "@/lib/procurement/rfq-attachment-types";
 import { createClient } from "@/lib/supabase/client";
@@ -10,6 +11,7 @@ type RequirementDeclarationState = "required" | "not_declared" | "unavailable";
 
 type RFQDocumentUploadProps = {
   rfqId: string;
+  rfqStatus?: string | null;
   companyId: string;
   attachmentType: RfqAttachmentType;
   title: string;
@@ -54,6 +56,7 @@ function getRequirementBadgePresentation(
 
 export default function RFQDocumentUpload({
   rfqId,
+  rfqStatus = "open",
   companyId,
   attachmentType,
   title,
@@ -71,6 +74,9 @@ export default function RFQDocumentUpload({
   const [error, setError] = useState("");
   const [requirementState, setRequirementState] =
     useState<RequirementDeclarationState>(initialRequirementState);
+  const [addendumTitle, setAddendumTitle] = useState("");
+  const [amendmentReason, setAmendmentReason] = useState("");
+  const isPublished = rfqStatus !== "draft";
 
   useEffect(() => {
     function handleRequirementUpdated(event: Event) {
@@ -103,6 +109,20 @@ export default function RFQDocumentUpload({
   function updateSelectedFiles(files: FileList | null) {
     if (!files || files.length === 0) return;
 
+    if (isPublished && files.length > 1) {
+      setSelectedFiles([]);
+      setMessage("");
+      setError(
+        "Published RFQ attachments must be uploaded one file per governed Addendum.",
+      );
+
+      if (inputRef.current) {
+        inputRef.current.value = "";
+      }
+
+      return;
+    }
+
     setSelectedFiles(Array.from(files));
     setMessage("");
     setError("");
@@ -111,6 +131,23 @@ export default function RFQDocumentUpload({
   async function uploadFiles(filesToUpload: File[]) {
     if (filesToUpload.length === 0) {
       setError("Please choose at least one file before uploading.");
+      return;
+    }
+
+    if (isPublished && filesToUpload.length > 1) {
+      setError(
+        "Published RFQ attachments must be uploaded one file per governed Addendum.",
+      );
+      return;
+    }
+
+    if (
+      isPublished &&
+      (!addendumTitle.trim() || !amendmentReason.trim())
+    ) {
+      setError(
+        "Enter an Addendum title and amendment reason before changing a published RFQ package.",
+      );
       return;
     }
 
@@ -150,6 +187,12 @@ export default function RFQDocumentUpload({
               fileSize: file.size,
               attachmentType,
               revisionLabel: normalizedRevision,
+              ...(isPublished
+                ? {
+                    addendumTitle: addendumTitle.trim(),
+                    amendmentReason: amendmentReason.trim(),
+                  }
+                : {}),
             }),
           });
 
@@ -181,6 +224,8 @@ export default function RFQDocumentUpload({
       );
 
       setSelectedFiles([]);
+      setAddendumTitle("");
+      setAmendmentReason("");
 
       if (inputRef.current) {
         inputRef.current.value = "";
@@ -256,7 +301,7 @@ export default function RFQDocumentUpload({
         <input
           ref={inputRef}
           type="file"
-          multiple
+          multiple={!isPublished}
           disabled={uploading}
           onChange={(event) => updateSelectedFiles(event.target.files)}
           className="hidden"
@@ -298,6 +343,19 @@ export default function RFQDocumentUpload({
               </p>
             </div>
           ))}
+        </div>
+      ) : null}
+
+      {isPublished && selectedFiles.length > 0 ? (
+        <div className="mt-4">
+          <RFQAmendmentEvidenceFields
+            idPrefix={`rfq-upload-${attachmentType}`}
+            title={addendumTitle}
+            reason={amendmentReason}
+            disabled={uploading}
+            onTitleChange={setAddendumTitle}
+            onReasonChange={setAmendmentReason}
+          />
         </div>
       ) : null}
 
