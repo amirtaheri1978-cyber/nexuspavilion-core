@@ -1,3 +1,5 @@
+import { createHash } from "node:crypto";
+
 import { NextResponse } from "next/server";
 
 import { getActiveMembershipForUserCompany } from "@/lib/auth/membership";
@@ -8,6 +10,8 @@ import { reportCriticalApiFailure } from "@/lib/ops/report-critical-api-failure"
 import { canCreateCompanyRfq } from "@/lib/procurement/procurement-write-authorization";
 import { recordTrustedProcurementActivity } from "@/lib/procurement/record-procurement-activity";
 import { createClient } from "@/lib/supabase/server";
+
+const ADDENDUM_EMAIL_SAFE_RETRY_WINDOW_MS = 23 * 60 * 60 * 1000;
 
 type AddendumEmailDeliverySummary = {
   recipients: number;
@@ -30,6 +34,19 @@ type AmendmentRpcResult = {
   error_message?: string;
   addendum_id?: string;
 };
+
+function hashAddendumEmailRecipient(recipientEmail: string) {
+  return createHash("sha256").update(recipientEmail).digest("hex");
+}
+
+function buildAddendumEmailIdempotencyKey(
+  addendumId: string,
+  recipientHash: string,
+) {
+  return createHash("sha256")
+    .update(`rfq-addendum-email:v1:${addendumId}:${recipientHash}`)
+    .digest("hex");
+}
 
 function emptyAddendumEmailSummary(
   error: string | null = null,
@@ -138,25 +155,27 @@ async function deliverAddendumNotificationEmails({
   let failed = 0;
 
   for (const recipientEmail of recipientEmails) {
+    const recipientHash = hashAddendumEmailRecipient(recipientEmail);
+
     try {
       const result = await sendEmail({
         to: recipientEmail,
         subject: email.subject,
         html: email.html,
         text: email.text,
+        idempotencyKey: buildAddendumEmailIdempotencyKey(
+          addendumId,
+          recipientHash,
+        ),
       });
 
       if (result.success) {
         sent += 1;
-        continue;
-      }
-
-      if (result.skipped) {
+      } else if (result.skipped) {
         skipped += 1;
-        continue;
+      } else {
+        failed += 1;
       }
-
-      failed += 1;
     } catch {
       failed += 1;
       console.error("RFQ Addendum notification email delivery failed.");
@@ -221,6 +240,151 @@ export async function GET(request: Request) {
   }
 
   return NextResponse.json({ addenda: data || [] });
+}
+
+export async function PATCH(request: Request) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+
+  if (userError || !user) {
+    return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+  }
+
+  const body = await request.json();
+  const addendumId = normalizeText(body.addendumId);
+
+  if (!addendumId) {
+    return NextResponse.json(
+      { error: "Addendum ID is required." },
+      { status: 400 },
+    );
+  }
+
+  const { data: addendum, error: addendumError } = await supabase
+    .from("rfq_addenda")
+    .select(
+      "id, rfq_id, addendum_number, title, requires_acknowledgement, created_at",
+    )
+    .eq("id", addendumId)
+    .maybeSingle();
+
+  if (addendumError || !addendum) {
+    return NextResponse.json({ error: "Addendum not found." }, { status: 404 });
+  }
+
+  const { data: rfq, error: rfqError } = await supabase
+    .from("rfqs")
+    .select("id, company_id, title, slug")
+    .eq("id", addendum.rfq_id)
+    .maybeSingle();
+
+  if (rfqError || !rfq) {
+    return NextResponse.json({ error: "RFQ not found." }, { status: 404 });
+  }
+
+  let membership;
+
+  try {
+    membership = await getActiveMembershipForUserCompany(
+      supabase,
+      user.id,
+      rfq.company_id,
+    );
+  } catch (membershipError) {
+    reportCriticalApiFailure({
+      domain: "addendum",
+      operation: "retry_email_delivery",
+      failureStage: "membership_lookup",
+      route: "/api/rfq-addenda",
+      method: "PATCH",
+      error: membershipError,
+    });
+
+    return NextResponse.json(
+      { error: "Unable to verify organization membership." },
+      { status: 500 },
+    );
+  }
+
+  if (!canCreateCompanyRfq(membership, rfq.company_id)) {
+    return NextResponse.json(
+      {
+        error:
+          "Only owners, admins, and buyers for the issuing company can retry Addendum delivery.",
+      },
+      { status: 403 },
+    );
+  }
+
+  const addendumCreatedAt = new Date(addendum.created_at).getTime();
+  const retryAgeMs = Date.now() - addendumCreatedAt;
+
+  if (
+    !Number.isFinite(addendumCreatedAt) ||
+    retryAgeMs < 0 ||
+    retryAgeMs >= ADDENDUM_EMAIL_SAFE_RETRY_WINDOW_MS
+  ) {
+    return NextResponse.json(
+      {
+        success: false,
+        error_code: "SAFE_RETRY_WINDOW_EXPIRED",
+        error:
+          "Addendum email delivery can no longer be safely retried automatically.",
+      },
+      { status: 409 },
+    );
+  }
+
+  const email = await deliverAddendumNotificationEmails({
+    addendumId: addendum.id,
+    rfqTitle: rfq.title,
+    rfqSlug: rfq.slug,
+    publishedNumber: addendum.addendum_number,
+    publishedTitle: addendum.title,
+    requiresAcknowledgement: Boolean(addendum.requires_acknowledgement),
+    supabase,
+  });
+
+  if (email.failed > 0) {
+    return NextResponse.json(
+      {
+        success: false,
+        error_code: "ADDENDUM_EMAIL_DELIVERY_FAILED",
+        error: "One or more Addendum notification emails could not be delivered.",
+        email,
+      },
+      { status: 502 },
+    );
+  }
+
+  if (email.skipped > 0) {
+    return NextResponse.json(
+      {
+        success: false,
+        error_code: "ADDENDUM_EMAIL_DELIVERY_SKIPPED",
+        error: "One or more Addendum notification emails were skipped.",
+        email,
+      },
+      { status: 503 },
+    );
+  }
+
+  if (email.error) {
+    return NextResponse.json(
+      {
+        success: false,
+        error_code: "ADDENDUM_EMAIL_RETRY_FAILED",
+        error: "Addendum email delivery could not be retried.",
+        email,
+      },
+      { status: 502 },
+    );
+  }
+
+  return NextResponse.json({ success: true, addendumId, email });
 }
 
 export async function POST(request: Request) {

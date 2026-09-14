@@ -113,10 +113,13 @@ describe("sendEmail provider contract", () => {
     });
 
     expect(sendMock).toHaveBeenCalledTimes(1);
-    expect(sendMock.mock.calls[0]?.[0]).toMatchObject({
+    expect(sendMock).toHaveBeenCalledWith({
       from: "Nexus Pavilion <invites@example.test>",
       to: "supplier@example.test",
       subject: "RFQ Invitation: Harbor Package",
+      html: "<p>Invite</p>",
+      text: "Invite",
+      replyTo: undefined,
     });
 
     expect(result).toEqual({
@@ -139,6 +142,42 @@ describe("sendEmail provider contract", () => {
     expect(console.error).not.toHaveBeenCalled();
   });
 
+  it("passes a supplied idempotency key as Resend argument two without changing the payload", async () => {
+    sendMock.mockResolvedValue({
+      data: { id: "re_idempotent_message_id" },
+      error: null,
+    });
+
+    await sendEmail({
+      to: "supplier@example.test",
+      subject: "RFQ Invitation: Harbor Package",
+      html: "<p>Invite</p>",
+      text: "Invite",
+      replyTo: "buyer@example.test",
+      idempotencyKey: "rfq-invitation-123",
+    });
+
+    expect(sendMock).toHaveBeenCalledTimes(1);
+    expect(sendMock).toHaveBeenCalledWith(
+      {
+        from: "Nexus Pavilion <invites@example.test>",
+        to: "supplier@example.test",
+        subject: "RFQ Invitation: Harbor Package",
+        html: "<p>Invite</p>",
+        text: "Invite",
+        replyTo: "buyer@example.test",
+      },
+      { idempotencyKey: "rfq-invitation-123" },
+    );
+
+    const logged = JSON.stringify(vi.mocked(console.info).mock.calls);
+
+    expect(logged).not.toContain("supplier@example.test");
+    expect(logged).not.toContain("Harbor Package");
+    expect(logged).not.toContain("<p>Invite</p>");
+    expect(logged).not.toContain("rfq-invitation-123");
+  });
+
   it("logs a bounded provider rejection without exposing provider or email data", async () => {
     sendMock.mockResolvedValue({
       data: null,
@@ -153,6 +192,7 @@ describe("sendEmail provider contract", () => {
       to: "supplier@example.test",
       subject: "RFQ Invitation: Harbor Package",
       html: "<p>Invite</p>",
+      idempotencyKey: "rfq-invitation-private-key",
     });
 
     expect(result.success).toBe(false);
@@ -179,6 +219,7 @@ describe("sendEmail provider contract", () => {
     expect(logged).not.toContain("from address");
     expect(logged).not.toContain("verified");
     expect(logged).not.toContain("private-provider-token");
+    expect(logged).not.toContain("rfq-invitation-private-key");
   });
 
   it("logs a bounded provider exception without exposing exception or email data", async () => {

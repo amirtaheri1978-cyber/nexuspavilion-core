@@ -30,6 +30,7 @@ export type SendEmailInput = {
   html: string;
   text?: string;
   replyTo?: string;
+  idempotencyKey?: string;
 };
 
 export type SendEmailResult = {
@@ -71,6 +72,7 @@ export async function sendEmail({
   html,
   text,
   replyTo,
+  idempotencyKey,
 }: SendEmailInput): Promise<SendEmailResult> {
   const resendApiKey = process.env.RESEND_API_KEY;
   const emailFrom = getEmailFrom();
@@ -109,15 +111,17 @@ export async function sendEmail({
 
   try {
     const resend = new Resend(resendApiKey);
-
-    const { data, error } = await resend.emails.send({
+    const emailPayload = {
       from: emailFrom,
       to,
       subject,
       html,
       text,
       replyTo,
-    });
+    };
+    const { data, error } = idempotencyKey
+      ? await resend.emails.send(emailPayload, { idempotencyKey })
+      : await resend.emails.send(emailPayload);
 
     if (error) {
       writeEmailDeliveryLog({
