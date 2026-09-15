@@ -1,6 +1,8 @@
 # Nexus Pavilion — Master Action Plan
 
-> Single source of truth for engineering progress.
+> Canonical current launch execution status: `docs/governance/NexusPavilion_Master_Launch_Execution_Plan.xlsx`.
+> This file preserves the earlier detailed engineering and Section 3/4 governance lineage, including unique unsuperseded obligations.
+> If historical status wording here conflicts with current launch status, the canonical Master Launch Execution Plan controls the current execution state.
 > Every completed task is locked and must not be reopened unless explicitly approved.
 
 ---
@@ -169,4 +171,4 @@ Status: ⏳ Pending
    - Build ✅
    - Lint ✅
    - Git Clean ✅
-4. This file is the single source of truth.
+4. This file remains authoritative for its unique unsuperseded historical and Section 3/4 governance obligations; the canonical Master Launch Execution Plan controls current launch execution status.
