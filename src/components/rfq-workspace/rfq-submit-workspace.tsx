@@ -18,7 +18,6 @@ import {
   EXECUTIVE_PAGE_CLASS,
 } from "@/lib/design-system/executive-contract";
 
-
 type RfqStatus = {
   title: string | null;
   deadline: string | null;
@@ -28,7 +27,24 @@ type RfqStatus = {
   awarded_at: string | null;
 };
 
+type ExistingQuoteState = {
+  id: string;
+  amount: number | string | null;
+  timeline: string | null;
+  message: string | null;
+  validity_days: number | null;
+  requiresMaterialRevalidation: boolean;
+  hasOutstandingRequiredAcknowledgement: boolean;
+};
+
 type FieldKey = "amount" | "timeline" | "message" | "form";
+
+const VALIDITY_DAY_OPTIONS = [30, 60, 90, 120] as const;
+
+type QuoteMutationResponse = {
+  error?: string;
+  code?: string;
+};
 
 function detectCurrencyFromSlug(slug: string) {
   const value = slug.toLowerCase();
@@ -67,13 +83,37 @@ function detectCurrencyFromSlug(slug: string) {
 }
 
 function normalizeAmount(value: string) {
-  return value.replace(/[^\d]/g, "");
+  const sanitized = value.replace(/,/g, "").replace(/[^\d.]/g, "");
+  const decimalIndex = sanitized.indexOf(".");
+
+  if (decimalIndex === -1) {
+    return sanitized;
+  }
+
+  const wholePart = sanitized.slice(0, decimalIndex);
+  const decimalPart = sanitized.slice(decimalIndex + 1).replace(/\./g, "");
+
+  return `${wholePart}.${decimalPart}`;
 }
 
 function formatAmount(value: string) {
   const normalized = normalizeAmount(value);
   if (!normalized) return "";
-  return Number(normalized).toLocaleString("en-US");
+
+  const [wholePart, decimalPart] = normalized.split(".");
+  const wholeNumber = Number(wholePart || "0");
+
+  if (!Number.isFinite(wholeNumber)) {
+    return "";
+  }
+
+  const formattedWhole = wholeNumber.toLocaleString("en-US", {
+    maximumFractionDigits: 0,
+  });
+
+  return decimalPart === undefined
+    ? formattedWhole
+    : `${formattedWhole}.${decimalPart}`;
 }
 
 function getAmountNumber(value: string) {
@@ -180,20 +220,31 @@ const RFQ_DEADLINE_RISK_REFRESH_INTERVAL_MS = 60_000;
 type RfqSubmitWorkspaceProps = {
   slug: string;
   initialRfq: RfqStatus;
+  initialQuote?: ExistingQuoteState | null;
 };
 
 export function RfqSubmitWorkspace({
   slug,
   initialRfq,
+  initialQuote = null,
 }: RfqSubmitWorkspaceProps) {
   const router = useRouter();
 
   const currency = useMemo(() => detectCurrencyFromSlug(slug), [slug]);
   const rfq = initialRfq;
+  const quoteRequiresReview = Boolean(initialQuote?.requiresMaterialRevalidation);
+  const quoteCurrent = Boolean(initialQuote) && !quoteRequiresReview;
 
-  const [amount, setAmount] = useState("");
-  const [timeline, setTimeline] = useState("");
-  const [message, setMessage] = useState("");
+  const [amount, setAmount] = useState(
+    initialQuote?.amount === null || initialQuote?.amount === undefined
+      ? ""
+      : String(initialQuote.amount),
+  );
+  const [timeline, setTimeline] = useState(initialQuote?.timeline ?? "");
+  const [message, setMessage] = useState(initialQuote?.message ?? "");
+  const [validityDays, setValidityDays] = useState(
+    Number(initialQuote?.validity_days || 30),
+  );
 
   const [loading, setLoading] = useState(false);
   const submitLock = useRef(false);
@@ -203,6 +254,13 @@ export function RfqSubmitWorkspace({
 
   const amountNumber = getAmountNumber(amount);
   const formattedAmount = formatAmount(amount);
+  const hasRevisedCommercialTerms =
+    quoteRequiresReview && initialQuote
+      ? amountNumber !== Number(initialQuote.amount || 0) ||
+        timeline.trim() !== String(initialQuote.timeline || "").trim() ||
+        message.trim() !== String(initialQuote.message || "").trim() ||
+        validityDays !== Number(initialQuote.validity_days || 30)
+      : false;
   const submissionCompleteness = useMemo(
     () =>
       evaluateQuotationSubmissionCompleteness({
@@ -242,11 +300,104 @@ export function RfqSubmitWorkspace({
     };
   }, []);
 
+  async function parseMutationResponse(response: Response) {
+    try {
+      const text = await response.text();
+      return text ? (JSON.parse(text) as QuoteMutationResponse) : null;
+    } catch {
+      return null;
+    }
+  }
+
+  async function handleReconfirm() {
+    if (
+      submitLock.current ||
+      loading ||
+      !initialQuote ||
+      !quoteRequiresReview
+    ) {
+      return;
+    }
+
+    if (submissionClosed) {
+      setErrorField("form");
+      setError(
+        deadlinePassed
+          ? "Reconfirmation closed. The RFQ deadline has passed."
+          : "Reconfirmation closed. This RFQ is no longer accepting respondent actions.",
+      );
+      return;
+    }
+
+    if (hasRevisedCommercialTerms) {
+      setErrorField("form");
+      setError(
+        "Commercial terms have been edited. Restore the submitted values to reconfirm unchanged terms, or use Resubmit revised quote.",
+      );
+      return;
+    }
+
+    if (initialQuote.hasOutstandingRequiredAcknowledgement) {
+      setErrorField("form");
+      setError(
+        "Required RFQ Addenda must be acknowledged before the quotation can be reconfirmed or resubmitted. Return to the RFQ workspace and complete the required acknowledgement first.",
+      );
+      return;
+    }
+
+    submitLock.current = true;
+    setLoading(true);
+    setError("");
+    setErrorField(null);
+
+    try {
+      const response = await fetch("/api/quotes", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          quoteId: initialQuote.id,
+          action: "reconfirmed",
+        }),
+      });
+
+      const data = await parseMutationResponse(response);
+
+      if (!response.ok) {
+        submitLock.current = false;
+        setLoading(false);
+        setErrorField("form");
+        setError(
+          toWorkspaceError(
+            data?.error || "The quotation could not be reconfirmed.",
+          ),
+        );
+        return;
+      }
+
+      router.push(`/rfq/${slug}`);
+      router.refresh();
+    } catch {
+      submitLock.current = false;
+      setLoading(false);
+      setErrorField("form");
+      setError("The quotation could not be reconfirmed. Please try again.");
+    }
+  }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     if (submitLock.current || loading) {
+      return;
+    }
+
+    if (quoteCurrent) {
+      setErrorField("form");
+      setError(
+        "This quotation is already current against the latest material RFQ amendment basis.",
+      );
       return;
     }
 
@@ -256,6 +407,17 @@ export function RfqSubmitWorkspace({
         deadlinePassed
           ? "Submission closed. The RFQ deadline has passed and late quote submissions are not accepted."
           : "Submission closed. This RFQ is no longer accepting quotes.",
+      );
+      return;
+    }
+
+    if (
+      quoteRequiresReview &&
+      initialQuote?.hasOutstandingRequiredAcknowledgement
+    ) {
+      setErrorField("form");
+      setError(
+        "Required RFQ Addenda must be acknowledged before the quotation can be reconfirmed or resubmitted. Return to the RFQ workspace and complete the required acknowledgement first.",
       );
       return;
     }
@@ -292,38 +454,46 @@ export function RfqSubmitWorkspace({
     }
 
     try {
+      const isResubmission = Boolean(initialQuote && quoteRequiresReview);
       const response = await fetch("/api/quotes", {
-        method: "POST",
+        method: isResubmission ? "PATCH" : "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          slug,
-          amount: amountNumber,
-          currency,
-          timeline: timeline.trim(),
-          message: message.trim(),
-        }),
+        body: JSON.stringify(
+          isResubmission
+            ? {
+                quoteId: initialQuote?.id,
+                action: "resubmitted",
+                amount: amountNumber,
+                timeline: timeline.trim(),
+                message: message.trim(),
+                validity_days: validityDays,
+              }
+            : {
+                slug,
+                amount: amountNumber,
+                currency,
+                timeline: timeline.trim(),
+                message: message.trim(),
+              },
+        ),
       });
 
-      let data: { error?: string } | null = null;
-
-      try {
-        const text = await response.text();
-        data = text ? (JSON.parse(text) as { error?: string }) : null;
-      } catch {
-        submitLock.current = false;
-        setLoading(false);
-        setErrorField("form");
-        setError("The quote could not be submitted. Please try again.");
-        return;
-      }
+      const data = await parseMutationResponse(response);
 
       if (!response.ok) {
         submitLock.current = false;
         setLoading(false);
         setErrorField("form");
-        setError(toWorkspaceError(data?.error || "Failed to submit quote."));
+        setError(
+          toWorkspaceError(
+            data?.error ||
+              (isResubmission
+                ? "Failed to resubmit revised quotation."
+                : "Failed to submit quote."),
+          ),
+        );
         return;
       }
 
@@ -333,18 +503,34 @@ export function RfqSubmitWorkspace({
       submitLock.current = false;
       setLoading(false);
       setErrorField("form");
-      setError("The quote could not be submitted. Please try again.");
+      setError(
+        quoteRequiresReview
+          ? "The revised quotation could not be resubmitted. Please try again."
+          : "The quote could not be submitted. Please try again.",
+      );
     }
   }
 
   const errorId = error ? "quote-submit-error" : undefined;
 
-  const rfqStatusLabel = submissionClosed
-    ? "Submission closed"
-    : "Open for quotes";
-  const governanceLabel = deadlinePassed
-    ? "Hard lock active"
-    : "Deadline enforced";
+  const rfqStatusLabel = quoteRequiresReview
+    ? "Requires Review"
+    : quoteCurrent
+      ? "Quote current"
+      : submissionClosed
+        ? "Submission closed"
+        : "Open for quotes";
+  const governanceLabel = quoteRequiresReview
+    ? "Reconfirmation required"
+    : deadlinePassed
+      ? "Hard lock active"
+      : "Deadline enforced";
+
+  const pageTitle = quoteRequiresReview
+    ? "Review and reconfirm quote"
+    : quoteCurrent
+      ? "Quote submission current"
+      : "Submit quote";
 
   return (
     <div className="min-h-full bg-nexus-navy text-white">
@@ -363,13 +549,20 @@ export function RfqSubmitWorkspace({
           tone="gold"
           className="np-region min-w-0 @container"
           data-rfq-submit-workspace="true"
+          data-rfq-quote-revalidation={
+            quoteRequiresReview ? "requires_review" : quoteCurrent ? "current" : "new"
+          }
         >
           <p className="np-type-eyebrow">Respondent submission</p>
-          <h1 className="np-type-h1 mt-4 min-w-0 text-pretty">Submit quote</h1>
+          <h1 className="np-type-h1 mt-4 min-w-0 text-pretty">{pageTitle}</h1>
           <p className="np-type-body mt-4 max-w-3xl min-w-0 text-pretty">
-            {rfq?.title
-              ? `Quote submission for ${rfq.title}.`
-              : "Submit your quote with a validated contract amount, delivery timeline, and commercial note."}
+            {quoteRequiresReview
+              ? `A material RFQ amendment changed the governing basis for your submitted quotation${rfq?.title ? ` for ${rfq.title}` : ""}. Review the current terms, then reconfirm them unchanged or resubmit revised commercial terms before the deadline.`
+              : quoteCurrent
+                ? `Your organization’s quotation${rfq?.title ? ` for ${rfq.title}` : ""} is current against the latest material RFQ amendment basis.`
+                : rfq?.title
+                  ? `Quote submission for ${rfq.title}.`
+                  : "Submit your quote with a validated contract amount, delivery timeline, and commercial note."}
           </p>
 
           <dl
@@ -413,7 +606,33 @@ export function RfqSubmitWorkspace({
             </p>
           </div>
 
-          {submissionClosed ? (
+          {quoteRequiresReview ? (
+            <div className="mt-8 min-w-0 rounded-executive border border-amber-300/20 bg-amber-300/[0.08] p-5">
+              <ExecutiveBadge tone="warning">
+                Material amendment review required
+              </ExecutiveBadge>
+              <p className="np-type-body mt-3 min-w-0 text-pretty">
+                The existing quotation remains confidential, but it is not eligible
+                for Contract Award until required Addenda are acknowledged and the
+                quotation is reconfirmed or resubmitted against the current RFQ basis.
+              </p>
+              {initialQuote?.hasOutstandingRequiredAcknowledgement ? (
+                <p className="np-type-meta mt-3 min-w-0 text-pretty text-amber-200">
+                  Required RFQ Addenda acknowledgement is still outstanding. Complete
+                  that acknowledgement in the RFQ workspace before reconfirming or
+                  resubmitting this quotation.
+                </p>
+              ) : null}
+            </div>
+          ) : quoteCurrent ? (
+            <div className="mt-8 min-w-0 rounded-executive border border-emerald-300/20 bg-emerald-300/[0.08] p-5">
+              <ExecutiveBadge tone="success">Quote current</ExecutiveBadge>
+              <p className="np-type-body mt-3 min-w-0 text-pretty">
+                This quotation is current against the latest governed material RFQ
+                amendment basis. No reconfirmation or resubmission action is required.
+              </p>
+            </div>
+          ) : submissionClosed ? (
             <div className="mt-8 min-w-0 rounded-executive border border-red-400/20 bg-red-500/10 p-5">
               <ExecutiveBadge tone="risk">Submission closed</ExecutiveBadge>
               <p className="np-type-body mt-3 min-w-0 text-pretty">
@@ -460,7 +679,7 @@ export function RfqSubmitWorkspace({
                     placeholder="7,250,000"
                     value={formattedAmount}
                     onChange={(event) => setAmount(event.target.value)}
-                    disabled={submissionClosed || loading}
+                    disabled={submissionClosed || loading || quoteCurrent}
                     aria-invalid={errorField === "amount"}
                     aria-describedby={
                       errorField === "amount" ? errorId : "quote-amount-hint"
@@ -488,7 +707,7 @@ export function RfqSubmitWorkspace({
                   placeholder="e.g. 16 months or Q3 2027"
                   value={timeline}
                   onChange={(event) => setTimeline(event.target.value)}
-                  disabled={submissionClosed || loading}
+                  disabled={submissionClosed || loading || quoteCurrent}
                   aria-invalid={errorField === "timeline"}
                   aria-describedby={
                     errorField === "timeline" ? errorId : undefined
@@ -496,6 +715,30 @@ export function RfqSubmitWorkspace({
                   className={fieldClassName}
                 />
               </div>
+
+              {quoteRequiresReview ? (
+                <div className="mt-6 min-w-0">
+                  <label htmlFor="quote-validity" className="np-type-meta">
+                    Quote validity
+                  </label>
+                  <select
+                    id="quote-validity"
+                    value={validityDays}
+                    onChange={(event) => setValidityDays(Number(event.target.value))}
+                    disabled={submissionClosed || loading || quoteCurrent}
+                    className={fieldClassName}
+                  >
+                    {VALIDITY_DAY_OPTIONS.map((days) => (
+                      <option key={days} value={days}>
+                        {days} days
+                      </option>
+                    ))}
+                  </select>
+                  <p className="np-type-meta mt-3 min-w-0 text-pretty">
+                    Revised resubmissions may update the quotation validity period.
+                  </p>
+                </div>
+              ) : null}
 
               <div className="mt-6 min-w-0">
                 <label htmlFor="quote-message" className="np-type-meta">
@@ -508,7 +751,7 @@ export function RfqSubmitWorkspace({
                   value={message}
                   onChange={(event) => setMessage(event.target.value)}
                   rows={7}
-                  disabled={submissionClosed || loading}
+                  disabled={submissionClosed || loading || quoteCurrent}
                   aria-invalid={errorField === "message"}
                   aria-describedby={
                     errorField === "message" ? errorId : undefined
@@ -600,7 +843,11 @@ export function RfqSubmitWorkspace({
               data-rfq-submit-summary="true"
             >
               <h3 className="np-type-meta">Submission summary</h3>
-              <dl className="mt-4 grid min-w-0 grid-cols-1 gap-4 @sm:grid-cols-3">
+              <dl
+                className={`mt-4 grid min-w-0 grid-cols-1 gap-4 @sm:grid-cols-2 ${
+                  quoteRequiresReview ? "@4xl:grid-cols-4" : "@4xl:grid-cols-3"
+                }`}
+              >
                 <div className="min-w-0">
                   <dt className="np-type-meta">Amount</dt>
                   <dd className="mt-2 min-w-0 text-pretty text-lg font-black text-nexus-white">
@@ -619,20 +866,55 @@ export function RfqSubmitWorkspace({
                     {timeline.trim() || "Pending"}
                   </dd>
                 </div>
+                {quoteRequiresReview ? (
+                  <div className="min-w-0">
+                    <dt className="np-type-meta">Quote validity</dt>
+                    <dd className="mt-2 min-w-0 text-pretty text-lg font-black text-nexus-white">
+                      {validityDays} days
+                    </dd>
+                  </div>
+                ) : null}
               </dl>
             </div>
 
-            <div className="sticky bottom-4 z-10 flex min-w-0 flex-col gap-3 rounded-executive bg-nexus-navy/90 p-3 @sm:flex-row">
+            <div className="sticky bottom-4 z-10 flex min-w-0 flex-col gap-3 rounded-executive bg-nexus-navy/90 p-3 @sm:flex-row @sm:flex-wrap">
+              {quoteRequiresReview ? (
+                <button
+                  type="button"
+                  onClick={handleReconfirm}
+                  disabled={
+                    loading ||
+                    submissionClosed ||
+                    Boolean(initialQuote?.hasOutstandingRequiredAcknowledgement) ||
+                    hasRevisedCommercialTerms
+                  }
+                  title={
+                    hasRevisedCommercialTerms
+                      ? "Restore the submitted commercial terms to reconfirm unchanged terms, or use Resubmit revised quote."
+                      : undefined
+                  }
+                  className={`${EXECUTIVE_CTA_SECONDARY} w-full @sm:w-auto`}
+                >
+                  {loading ? "Processing..." : "Reconfirm existing quote"}
+                </button>
+              ) : null}
+
               <button
                 type="submit"
-                disabled={loading || submissionClosed}
+                disabled={loading || submissionClosed || quoteCurrent}
                 className={`${EXECUTIVE_CTA_PRIMARY} w-full @sm:w-auto`}
               >
-                {submissionClosed
-                  ? "Submission closed"
-                  : loading
-                    ? "Submitting quote..."
-                    : "Submit quote"}
+                {quoteCurrent
+                  ? "Quote current"
+                  : submissionClosed
+                    ? "Submission closed"
+                    : loading
+                      ? quoteRequiresReview
+                        ? "Resubmitting revised quote..."
+                        : "Submitting quote..."
+                      : quoteRequiresReview
+                        ? "Resubmit revised quote"
+                        : "Submit quote"}
               </button>
               <button
                 type="button"

@@ -16,422 +16,567 @@ import { createClient } from "@/lib/supabase/server";
 
 const VALIDITY_DAY_OPTIONS = [30, 60, 90, 120];
 
+type QuoteRevalidationAction = "reconfirmed" | "resubmitted";
+
+type QuoteRevalidationRpcResult = {
+  success?: boolean;
+  error_code?: string;
+  error_message?: string;
+  quote_id?: string;
+  rfq_id?: string;
+  addendum_id?: string;
+  revalidation_id?: string;
+  action?: QuoteRevalidationAction;
+  created_at?: string;
+};
+
 function calculateScore(amount: number, timeline: string) {
-const timelineValue = timeline.toLowerCase();
+  const timelineValue = timeline.toLowerCase();
 
-let timelineScore = 50;
+  let timelineScore = 50;
 
-if (timelineValue.includes("q1")) timelineScore = 100;
-if (timelineValue.includes("q2")) timelineScore = 85;
-if (timelineValue.includes("q3")) timelineScore = 70;
-if (timelineValue.includes("q4")) timelineScore = 55;
-if (timelineValue.includes("week")) timelineScore = 85;
-if (timelineValue.includes("fast") || timelineValue.includes("quick")) {
-timelineScore = 90;
-}
+  if (timelineValue.includes("q1")) timelineScore = 100;
+  if (timelineValue.includes("q2")) timelineScore = 85;
+  if (timelineValue.includes("q3")) timelineScore = 70;
+  if (timelineValue.includes("q4")) timelineScore = 55;
+  if (timelineValue.includes("week")) timelineScore = 85;
+  if (timelineValue.includes("fast") || timelineValue.includes("quick")) {
+    timelineScore = 90;
+  }
 
-const priceScore = amount > 0 ? 70 : 0;
+  const priceScore = amount > 0 ? 70 : 0;
 
-return Math.min(priceScore + Math.round(timelineScore * 0.3), 100);
+  return Math.min(priceScore + Math.round(timelineScore * 0.3), 100);
 }
 
 function normalizeAmount(value: string | number) {
-const amount = Number(String(value).replace(/[^0-9.]/g, ""));
+  const amount = Number(String(value).replace(/[^0-9.]/g, ""));
 
-if (!Number.isFinite(amount) || amount <= 0) {
-return null;
-}
+  if (!Number.isFinite(amount) || amount <= 0) {
+    return null;
+  }
 
-return amount;
+  return amount;
 }
 
 function normalizeValidityDays(value: unknown) {
-const validityDays = Number(value || 30);
+  const validityDays = Number(value || 30);
 
-if (VALIDITY_DAY_OPTIONS.includes(validityDays)) {
-return validityDays;
+  if (VALIDITY_DAY_OPTIONS.includes(validityDays)) {
+    return validityDays;
+  }
+
+  return 30;
 }
 
-return 30;
+function normalizeRevalidationAction(value: unknown): QuoteRevalidationAction | null {
+  const action = String(value || "").trim().toLowerCase();
+
+  if (action === "reconfirmed" || action === "resubmitted") {
+    return action;
+  }
+
+  return null;
+}
+
+function getRevalidationFailureStatus(errorCode: string | undefined) {
+  switch (errorCode) {
+    case "AUTHENTICATION_REQUIRED":
+      return 401;
+    case "QUOTE_NOT_ELIGIBLE":
+      return 403;
+    case "ADDENDUM_ACKNOWLEDGEMENT_REQUIRED":
+    case "REVALIDATION_NOT_REQUIRED":
+      return 409;
+    case "INVALID_REVALIDATION_ACTION":
+    case "RECONFIRMATION_TERMS_NOT_ALLOWED":
+    case "INVALID_REVISED_COMMERCIAL_TERMS":
+      return 400;
+    default:
+      return 400;
+  }
 }
 
 function hasDeadlinePassed(deadline: string | null | undefined) {
-if (!deadline) return false;
+  if (!deadline) return false;
 
-const deadlineDate = new Date(deadline);
+  const deadlineDate = new Date(deadline);
 
-if (Number.isNaN(deadlineDate.getTime())) {
-return false;
-}
+  if (Number.isNaN(deadlineDate.getTime())) {
+    return false;
+  }
 
-const now = new Date();
+  const now = new Date();
 
-return now.getTime() > deadlineDate.getTime();
+  return now.getTime() > deadlineDate.getTime();
 }
 
 function isOpenForQuotes(rfq: {
-status: string | null;
-awarded_quote_id?: string | null;
-awarded_at?: string | null;
-deadline?: string | null;
+  status: string | null;
+  awarded_quote_id?: string | null;
+  awarded_at?: string | null;
+  deadline?: string | null;
 }) {
-const status = String(rfq.status || "open").toLowerCase();
+  const status = String(rfq.status || "open").toLowerCase();
 
-if (status !== "open") return false;
-if (rfq.awarded_quote_id) return false;
-if (rfq.awarded_at) return false;
-if (hasDeadlinePassed(rfq.deadline)) return false;
+  if (status !== "open") return false;
+  if (rfq.awarded_quote_id) return false;
+  if (rfq.awarded_at) return false;
+  if (hasDeadlinePassed(rfq.deadline)) return false;
 
-return true;
+  return true;
 }
 
-export async function POST(request: Request) {
-try {
-const supabase = await createClient();
+export async function PATCH(request: Request) {
+  try {
+    const supabase = await createClient();
 
-const {
-data: { user },
-error: userError,
-} = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
 
-if (userError || !user) {
-return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-}
+    if (userError || !user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
-const body = await request.json();
+    const body = await request.json();
+    const quoteId = String(body.quoteId || "").trim();
+    const action = normalizeRevalidationAction(body.action);
 
-const slug = String(body.slug || "").trim();
-const rfqId = String(body.rfqId || "").trim();
-const amount = normalizeAmount(body.amount || "");
-const timeline = String(body.timeline || "").trim();
-const message = String(body.message || "").trim();
-const validityDays = normalizeValidityDays(body.validity_days);
+    if (!quoteId || !action) {
+      return NextResponse.json(
+        { error: "Invalid quote revalidation request." },
+        { status: 400 },
+      );
+    }
 
-if ((!slug && !rfqId) || !amount || !timeline || !message) {
-return NextResponse.json(
-{ error: "Invalid quote submission" },
-{ status: 400 }
-);
-}
+    const isResubmission = action === "resubmitted";
+    const amount = isResubmission ? normalizeAmount(body.amount || "") : null;
+    const timeline = isResubmission ? String(body.timeline || "").trim() : null;
+    const message = isResubmission ? String(body.message || "").trim() : null;
+    const validityDays = isResubmission ? Number(body.validity_days) : null;
 
-const { data: profile, error: profileError } = await supabase
-.from("profiles")
-.select("id, company_id, email")
-.eq("id", user.id)
-.single();
+    if (
+      isResubmission &&
+      (!amount ||
+        !timeline ||
+        !message ||
+        !validityDays ||
+        !VALIDITY_DAY_OPTIONS.includes(validityDays))
+    ) {
+      return NextResponse.json(
+        { error: "Complete valid revised commercial terms are required." },
+        { status: 400 },
+      );
+    }
 
-if (profileError || !profile?.company_id) {
-return NextResponse.json(
-{ error: profileError?.message || "No company linked to profile" },
-{ status: 400 }
-);
-}
+    const { data, error } = await supabase.rpc("revalidate_rfq_quote", {
+      p_quote_id: quoteId,
+      p_action: action,
+      p_amount: amount,
+      p_timeline: timeline,
+      p_message: message,
+      p_validity_days: validityDays,
+    });
 
-let membership;
+    if (error) {
+      reportCriticalApiFailure({
+        domain: "quotation",
+        operation: "revalidate",
+        failureStage: "quote_revalidation_rpc",
+        route: "/api/quotes",
+        method: "PATCH",
+        error,
+      });
 
-try {
-membership = await getActiveMembershipForUserCompany(
-supabase,
-user.id,
-profile.company_id
-);
-} catch (membershipError) {
-reportCriticalApiFailure({
-  domain: "quotation",
-  operation: "submit",
-  failureStage: "membership_lookup",
-  route: "/api/quotes",
-  method: "POST",
-  error: membershipError,
-});
+      return NextResponse.json(
+        { error: "Unable to revalidate the quotation." },
+        { status: 500 },
+      );
+    }
 
-return NextResponse.json(
-{ error: "Unable to verify organization membership." },
-{ status: 500 }
-);
-}
+    const result = (data ?? {}) as QuoteRevalidationRpcResult;
 
-if (!canSubmitCompanyQuote(membership, profile.company_id)) {
-  return NextResponse.json(
-    {
-      error:
-        "You must belong to an active company to submit a quotation.",
-    },
-    { status: 403 },
-  );
-}
+    if (!result.success) {
+      return NextResponse.json(
+        {
+          error:
+            result.error_message ||
+            "The quotation could not be revalidated against the current RFQ basis.",
+          code: result.error_code || "QUOTE_REVALIDATION_FAILED",
+        },
+        { status: getRevalidationFailureStatus(result.error_code) },
+      );
+    }
 
-const rfqQuery = supabase
-.from("rfqs")
-.select(
-"id, title, slug, status, company_id, awarded_quote_id, awarded_at, deadline, deadline_timezone, sourcing_method"
-);
-
-const { data: rfq, error: rfqError } = rfqId
-? await rfqQuery.eq("id", rfqId).single()
-: await rfqQuery.eq("slug", slug).single();
-
-if (rfqError || !rfq) {
-return NextResponse.json({ error: "RFQ not found" }, { status: 404 });
-}
-
-if (hasDeadlinePassed(rfq.deadline)) {
-return NextResponse.json(
-{
-error: `This RFQ deadline has passed. Late submissions are not accepted. Deadline: ${formatRfqDeadlineForDisplay(
-rfq.deadline,
-rfq.deadline_timezone,
-)}.`,
-},
-{ status: 403 }
-);
-}
-
-if (!isOpenForQuotes(rfq)) {
-return NextResponse.json(
-{ error: "This RFQ is no longer accepting quotes." },
-{ status: 400 }
-);
-}
-
-if (rfq.company_id === profile.company_id) {
-return NextResponse.json(
-{ error: "Your company cannot submit a quote to its own RFQ." },
-{ status: 403 }
-);
-}
-
-let hasRestrictedRfqAccess = false;
-
-if (!isPublicSourcingMethod(rfq.sourcing_method)) {
-  const { data: restrictedAccess, error: accessError } = await supabase.rpc(
-    "current_user_has_supplier_rfq_access",
-    { p_rfq_id: rfq.id },
-  );
-
-  if (accessError) {
+    return NextResponse.json({
+      success: true,
+      revalidation: result,
+    });
+  } catch (error) {
     reportCriticalApiFailure({
       domain: "quotation",
-      operation: "submit",
-      failureStage: "rfq_access_lookup",
+      operation: "revalidate",
+      failureStage: "outer_catch",
       route: "/api/quotes",
-      method: "POST",
-      error: accessError,
+      method: "PATCH",
+      error,
     });
 
     return NextResponse.json(
-      { error: "Unable to verify RFQ access." },
+      { error: "Internal server error" },
       { status: 500 },
     );
   }
-
-  hasRestrictedRfqAccess = restrictedAccess === true;
 }
 
-if (!canRespondToRfqSourcing(rfq.sourcing_method, hasRestrictedRfqAccess)) {
-  return NextResponse.json(
-    {
-      error: "You do not have access to submit a quotation for this RFQ.",
-    },
-    { status: 403 },
-  );
-}
+export async function POST(request: Request) {
+  try {
+    const supabase = await createClient();
 
-const { data: existingQuote } = await supabase
-.from("quotes")
-.select("id")
-.eq("rfq_id", rfq.id)
-.eq("company_id", profile.company_id)
-.maybeSingle();
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
 
-if (existingQuote) {
-return NextResponse.json(
-{ error: "Your company has already submitted a quote for this RFQ." },
-{ status: 409 }
-);
-}
+    if (userError || !user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
-const { data: requiredAddenda, error: requiredAddendaError } = await supabase
-.from("rfq_addenda")
-.select("id")
-.eq("rfq_id", rfq.id)
-.eq("requires_acknowledgement", true);
+    const body = await request.json();
 
-if (requiredAddendaError) {
-reportCriticalApiFailure({
-  domain: "quotation",
-  operation: "submit",
-  failureStage: "required_addenda_lookup",
-  route: "/api/quotes",
-  method: "POST",
-  error: requiredAddendaError,
-});
+    const slug = String(body.slug || "").trim();
+    const rfqId = String(body.rfqId || "").trim();
+    const amount = normalizeAmount(body.amount || "");
+    const timeline = String(body.timeline || "").trim();
+    const message = String(body.message || "").trim();
+    const validityDays = normalizeValidityDays(body.validity_days);
 
-return NextResponse.json(
-{ error: "Unable to verify required RFQ addenda acknowledgements." },
-{ status: 500 }
-);
-}
+    if ((!slug && !rfqId) || !amount || !timeline || !message) {
+      return NextResponse.json(
+        { error: "Invalid quote submission" },
+        { status: 400 },
+      );
+    }
 
-if ((requiredAddenda || []).length > 0) {
-const requiredIds = (requiredAddenda || []).map((item) => item.id);
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("id, company_id, email")
+      .eq("id", user.id)
+      .single();
 
-const { data: acknowledgements, error: acknowledgementError } =
-await supabase
-.from("rfq_addendum_acknowledgements")
-.select("addendum_id")
-.eq("company_id", profile.company_id)
-.in("addendum_id", requiredIds);
+    if (profileError || !profile?.company_id) {
+      return NextResponse.json(
+        { error: profileError?.message || "No company linked to profile" },
+        { status: 400 },
+      );
+    }
 
-if (acknowledgementError) {
-reportCriticalApiFailure({
-  domain: "quotation",
-  operation: "submit",
-  failureStage: "addendum_acknowledgement_lookup",
-  route: "/api/quotes",
-  method: "POST",
-  error: acknowledgementError,
-});
+    let membership;
 
-return NextResponse.json(
-{ error: "Unable to verify required RFQ addenda acknowledgements." },
-{ status: 500 }
-);
-}
+    try {
+      membership = await getActiveMembershipForUserCompany(
+        supabase,
+        user.id,
+        profile.company_id,
+      );
+    } catch (membershipError) {
+      reportCriticalApiFailure({
+        domain: "quotation",
+        operation: "submit",
+        failureStage: "membership_lookup",
+        route: "/api/quotes",
+        method: "POST",
+        error: membershipError,
+      });
 
-const acknowledgedIds = new Set(
-(acknowledgements || []).map((item) => item.addendum_id)
-);
-const missingRequired = requiredIds.some((id) => !acknowledgedIds.has(id));
+      return NextResponse.json(
+        { error: "Unable to verify organization membership." },
+        { status: 500 },
+      );
+    }
 
-if (missingRequired) {
-return NextResponse.json(
-{
-error:
-"Required RFQ addenda must be acknowledged before submitting a quotation.",
-},
-{ status: 403 }
-);
-}
-}
+    if (!canSubmitCompanyQuote(membership, profile.company_id)) {
+      return NextResponse.json(
+        {
+          error: "You must belong to an active company to submit a quotation.",
+        },
+        { status: 403 },
+      );
+    }
 
-const score = calculateScore(amount, timeline);
+    const rfqQuery = supabase
+      .from("rfqs")
+      .select(
+        "id, title, slug, status, company_id, awarded_quote_id, awarded_at, deadline, deadline_timezone, sourcing_method",
+      );
 
-const { data: quote, error: quoteError } = await supabase
-.from("quotes")
-.insert({
-rfq_id: rfq.id,
-company_id: profile.company_id,
-user_id: user.id,
-amount,
-timeline,
-message,
-validity_days: validityDays,
-status: "submitted",
-decision: "pending",
-score,
-})
-.select()
-.single();
+    const { data: rfq, error: rfqError } = rfqId
+      ? await rfqQuery.eq("id", rfqId).single()
+      : await rfqQuery.eq("slug", slug).single();
 
-if (quoteError || !quote) {
-reportCriticalApiFailure({
-  domain: "quotation",
-  operation: "submit",
-  failureStage: "quote_insert",
-  route: "/api/quotes",
-  method: "POST",
-  error: quoteError ?? new Error("QuoteInsertMissing"),
-});
+    if (rfqError || !rfq) {
+      return NextResponse.json({ error: "RFQ not found" }, { status: 404 });
+    }
 
-return NextResponse.json(
-{ error: quoteError?.message || "Failed to submit quote" },
-{ status: 500 }
-);
-}
+    if (hasDeadlinePassed(rfq.deadline)) {
+      return NextResponse.json(
+        {
+          error: `This RFQ deadline has passed. Late submissions are not accepted. Deadline: ${formatRfqDeadlineForDisplay(
+            rfq.deadline,
+            rfq.deadline_timezone,
+          )}.`,
+        },
+        { status: 403 },
+      );
+    }
 
-await recordTrustedProcurementActivity(
-supabase,
-"quote_submitted",
-quote.id,
-{
-userId: user.id,
-companyId: profile.company_id,
-},
-);
+    if (!isOpenForQuotes(rfq)) {
+      return NextResponse.json(
+        { error: "This RFQ is no longer accepting quotes." },
+        { status: 400 },
+      );
+    }
 
-let email: {
-  sent: boolean;
-  skipped: boolean;
-  id: string | null;
-  error: string | null;
-} = {
-  sent: false,
-  skipped: true,
-  id: null,
-  error: null,
-};
+    if (rfq.company_id === profile.company_id) {
+      return NextResponse.json(
+        { error: "Your company cannot submit a quote to its own RFQ." },
+        { status: 403 },
+      );
+    }
 
-try {
-  const quoteUrl = joinPublicSitePath(`/rfq/${rfq.slug}`);
-  if (user.email && quoteUrl) {
-    const emailResult = await sendEmail({
-      to: user.email,
-      subject: `Quote Submitted: ${rfq.title}`,
-      html: quoteSubmittedEmail({
-        rfqTitle: rfq.title || "RFQ",
-        amount: amount ? String(amount) : "Not specified",
-        timeline: timeline || "Not specified",
-        validityDays: `${validityDays} days`,
-        quoteUrl,
-      }),
-    });
+    let hasRestrictedRfqAccess = false;
 
-    email = {
-      sent: Boolean(emailResult.success),
-      skipped: Boolean(emailResult.skipped),
-      id: emailResult.id ?? null,
-      error: emailResult.error ?? null,
-    };
-  } else {
-    email = {
+    if (!isPublicSourcingMethod(rfq.sourcing_method)) {
+      const { data: restrictedAccess, error: accessError } = await supabase.rpc(
+        "current_user_has_supplier_rfq_access",
+        { p_rfq_id: rfq.id },
+      );
+
+      if (accessError) {
+        reportCriticalApiFailure({
+          domain: "quotation",
+          operation: "submit",
+          failureStage: "rfq_access_lookup",
+          route: "/api/quotes",
+          method: "POST",
+          error: accessError,
+        });
+
+        return NextResponse.json(
+          { error: "Unable to verify RFQ access." },
+          { status: 500 },
+        );
+      }
+
+      hasRestrictedRfqAccess = restrictedAccess === true;
+    }
+
+    if (!canRespondToRfqSourcing(rfq.sourcing_method, hasRestrictedRfqAccess)) {
+      return NextResponse.json(
+        {
+          error: "You do not have access to submit a quotation for this RFQ.",
+        },
+        { status: 403 },
+      );
+    }
+
+    const { data: existingQuote } = await supabase
+      .from("quotes")
+      .select("id")
+      .eq("rfq_id", rfq.id)
+      .eq("company_id", profile.company_id)
+      .maybeSingle();
+
+    if (existingQuote) {
+      return NextResponse.json(
+        { error: "Your company has already submitted a quote for this RFQ." },
+        { status: 409 },
+      );
+    }
+
+    const { data: requiredAddenda, error: requiredAddendaError } = await supabase
+      .from("rfq_addenda")
+      .select("id")
+      .eq("rfq_id", rfq.id)
+      .eq("requires_acknowledgement", true);
+
+    if (requiredAddendaError) {
+      reportCriticalApiFailure({
+        domain: "quotation",
+        operation: "submit",
+        failureStage: "required_addenda_lookup",
+        route: "/api/quotes",
+        method: "POST",
+        error: requiredAddendaError,
+      });
+
+      return NextResponse.json(
+        { error: "Unable to verify required RFQ addenda acknowledgements." },
+        { status: 500 },
+      );
+    }
+
+    if ((requiredAddenda || []).length > 0) {
+      const requiredIds = (requiredAddenda || []).map((item) => item.id);
+
+      const { data: acknowledgements, error: acknowledgementError } =
+        await supabase
+          .from("rfq_addendum_acknowledgements")
+          .select("addendum_id")
+          .eq("company_id", profile.company_id)
+          .in("addendum_id", requiredIds);
+
+      if (acknowledgementError) {
+        reportCriticalApiFailure({
+          domain: "quotation",
+          operation: "submit",
+          failureStage: "addendum_acknowledgement_lookup",
+          route: "/api/quotes",
+          method: "POST",
+          error: acknowledgementError,
+        });
+
+        return NextResponse.json(
+          { error: "Unable to verify required RFQ addenda acknowledgements." },
+          { status: 500 },
+        );
+      }
+
+      const acknowledgedIds = new Set(
+        (acknowledgements || []).map((item) => item.addendum_id),
+      );
+      const missingRequired = requiredIds.some((id) => !acknowledgedIds.has(id));
+
+      if (missingRequired) {
+        return NextResponse.json(
+          {
+            error:
+              "Required RFQ addenda must be acknowledged before submitting a quotation.",
+          },
+          { status: 403 },
+        );
+      }
+    }
+
+    const score = calculateScore(amount, timeline);
+
+    const { data: quote, error: quoteError } = await supabase
+      .from("quotes")
+      .insert({
+        rfq_id: rfq.id,
+        company_id: profile.company_id,
+        user_id: user.id,
+        amount,
+        timeline,
+        message,
+        validity_days: validityDays,
+        status: "submitted",
+        decision: "pending",
+        score,
+      })
+      .select()
+      .single();
+
+    if (quoteError || !quote) {
+      reportCriticalApiFailure({
+        domain: "quotation",
+        operation: "submit",
+        failureStage: "quote_insert",
+        route: "/api/quotes",
+        method: "POST",
+        error: quoteError ?? new Error("QuoteInsertMissing"),
+      });
+
+      return NextResponse.json(
+        { error: quoteError?.message || "Failed to submit quote" },
+        { status: 500 },
+      );
+    }
+
+    await recordTrustedProcurementActivity(
+      supabase,
+      "quote_submitted",
+      quote.id,
+      {
+        userId: user.id,
+        companyId: profile.company_id,
+      },
+    );
+
+    let email: {
+      sent: boolean;
+      skipped: boolean;
+      id: string | null;
+      error: string | null;
+    } = {
       sent: false,
       skipped: true,
       id: null,
-      error: !user.email
-        ? "Quote confirmation recipient was unavailable."
-        : "Public site URL is not configured.",
+      error: null,
     };
+
+    try {
+      const quoteUrl = joinPublicSitePath(`/rfq/${rfq.slug}`);
+      if (user.email && quoteUrl) {
+        const emailResult = await sendEmail({
+          to: user.email,
+          subject: `Quote Submitted: ${rfq.title}`,
+          html: quoteSubmittedEmail({
+            rfqTitle: rfq.title || "RFQ",
+            amount: amount ? String(amount) : "Not specified",
+            timeline: timeline || "Not specified",
+            validityDays: `${validityDays} days`,
+            quoteUrl,
+          }),
+        });
+
+        email = {
+          sent: Boolean(emailResult.success),
+          skipped: Boolean(emailResult.skipped),
+          id: emailResult.id ?? null,
+          error: emailResult.error ?? null,
+        };
+      } else {
+        email = {
+          sent: false,
+          skipped: true,
+          id: null,
+          error: !user.email
+            ? "Quote confirmation recipient was unavailable."
+            : "Public site URL is not configured.",
+        };
+      }
+    } catch (error) {
+      console.error("Quote submitted email failed:", error);
+      email = {
+        sent: false,
+        skipped: false,
+        id: null,
+        error: "Quote submitted, but email delivery failed.",
+      };
+    }
+
+    return NextResponse.json({
+      success: true,
+      quote,
+      redirectTo: `/rfq/${rfq.slug}`,
+      email,
+    });
+  } catch (error) {
+    reportCriticalApiFailure({
+      domain: "quotation",
+      operation: "submit",
+      failureStage: "outer_catch",
+      route: "/api/quotes",
+      method: "POST",
+      error,
+    });
+
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 },
+    );
   }
-} catch (error) {
-  console.error("Quote submitted email failed:", error);
-  email = {
-    sent: false,
-    skipped: false,
-    id: null,
-    error: "Quote submitted, but email delivery failed.",
-  };
-}
-
-return NextResponse.json({
-  success: true,
-  quote,
-  redirectTo: `/rfq/${rfq.slug}`,
-  email,
-});
-} catch (error) {
-reportCriticalApiFailure({
-  domain: "quotation",
-  operation: "submit",
-  failureStage: "outer_catch",
-  route: "/api/quotes",
-  method: "POST",
-  error,
-});
-
-return NextResponse.json(
-{ error: "Internal server error" },
-{ status: 500 }
-);
-}
 }

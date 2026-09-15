@@ -35,7 +35,9 @@ const appShell = readSource("src/components/app-shell.tsx");
 describe("Task 24-RFQ-11 submit page presentation", () => {
   it("keeps quote submit contracts, fields, and gating intact", () => {
     expect(submit).toContain('fetch("/api/quotes"');
-    expect(submit).toContain("method: \"POST\"");
+    expect(submit).toContain(
+      'method: isResubmission ? \"PATCH\" : \"POST\"',
+    );
     expect(submit).toContain("amount: amountNumber");
     expect(submit).toContain("currency");
     expect(submit).toContain("timeline: timeline.trim()");
@@ -57,6 +59,25 @@ describe("Task 24-RFQ-11 submit page presentation", () => {
     expect(submit).toContain("Submitting quote...");
     expect(submit).toContain("Cancel");
     expect(submit.match(/<h1\b/g)?.length).toBe(1);
+  });
+
+  it("adds material-amendment Quote review without creating a duplicate submission path", () => {
+    expect(submit).toContain('method: "PATCH"');
+    expect(submit).toContain('action: "reconfirmed"');
+    expect(submit).toContain('action: "resubmitted"');
+    expect(submit).toContain("Reconfirm existing quote");
+    expect(submit).toContain("Resubmit revised quote");
+    expect(submit).toContain("Quote validity");
+    expect(submit).toContain("validity_days: validityDays");
+    expect(submit).toContain("hasRevisedCommercialTerms");
+    expect(submit).toContain('replace(/[^\\d.]/g, "")');
+    expect(submit).toContain("decimalPart === undefined");
+    expect(submit).toContain("String(initialQuote.amount)");
+    expect(submit).toContain("Material amendment review required");
+    expect(submit).toContain("Requires Review");
+    expect(submit).toContain("initialQuote");
+    expect(submitPage).toContain("attachQuoteMaterialRevalidationState");
+    expect(submitPage).toContain('.from("rfq_quote_revalidations")');
   });
 
   it("uses canonical generic quotation terminology without bid/proposal drift", () => {
@@ -104,28 +125,24 @@ describe("Task 24-RFQ-11 submit page presentation", () => {
     expect(submit).toContain(
       'from "@/lib/datetime/format-rfq-deadline-display"',
     );
-    expect(submit).toContain(
-      'from "@/lib/datetime/rfq-deadline-risk"',
-    );
+    expect(submit).toContain('from "@/lib/datetime/rfq-deadline-risk"');
     expect(submit).toContain("deadline_timezone");
     expect(submit).toContain("getRfqDeadlineRisk");
     expect(submit).toContain(
       "RFQ_DEADLINE_RISK_REFRESH_INTERVAL_MS = 60_000",
     );
-    expect(submit).toContain(
-      'data-rfq-submit-deadline-risk={deadlineRisk.status}',
-    );
+    expect(submit).toContain('data-rfq-submit-deadline-risk={deadlineRisk.status}');
     expect(submit).toContain("Deadline approaching");
     expect(submit).toContain("Deadline urgent");
     expect(submit).toContain("72 hours or less remain");
     expect(submit).toContain(
-      "disabled={loading || submissionClosed}",
+      "disabled={loading || submissionClosed || quoteCurrent}",
     );
     expect(visualQa).toContain('data-rfq-submit-deadline-risk="urgent"');
     expect(visualQa).toContain("Deadline urgent");
   });
 
-  it("surfaces proactive quotation completeness without changing submit governance", () => {
+  it("surfaces proactive quotation completeness without changing governance authority", () => {
     expect(submit).toContain(
       'from "@/lib/procurement/quotation-submission-completeness"',
     );
@@ -139,7 +156,7 @@ describe("Task 24-RFQ-11 submit page presentation", () => {
       "addenda acknowledgement, and duplicate-submission controls are",
     );
     expect(submit).toContain(
-      "disabled={loading || submissionClosed}",
+      "disabled={loading || submissionClosed || quoteCurrent}",
     );
     expect(visualQa).toContain('data-rfq-submit-completeness="true"');
     expect(visualQa).toContain("3/3 required inputs complete.");
@@ -159,40 +176,23 @@ describe("Task 24-RFQ-11 submit page presentation", () => {
     expect(submit).not.toContain("award_rfq_quote");
   });
 
-
   it("projects the RFQ authorization row before the submit client boundary", () => {
     expect(submitPage).toContain("const submitRfq = {");
     expect(submitPage).toContain("title: rfq.title");
     expect(submitPage).toContain("deadline: rfq.deadline");
-    expect(submitPage).toContain(
-      "deadline_timezone: rfq.deadline_timezone",
-    );
+    expect(submitPage).toContain("deadline_timezone: rfq.deadline_timezone");
     expect(submitPage).toContain("status: rfq.status");
-    expect(submitPage).toContain(
-      "awarded_quote_id: rfq.awarded_quote_id",
-    );
+    expect(submitPage).toContain("awarded_quote_id: rfq.awarded_quote_id");
     expect(submitPage).toContain("awarded_at: rfq.awarded_at");
+    expect(submitPage).toContain("initialRfq={submitRfq}");
+    expect(submitPage).not.toContain("initialRfq={rfq}");
 
-    expect(submitPage).toContain(
-      "initialRfq={submitRfq}",
-    );
-
-    expect(submitPage).not.toContain(
-      "initialRfq={rfq}",
-    );
-
-    const projectionStart =
-      submitPage.indexOf("const submitRfq = {");
-
+    const projectionStart = submitPage.indexOf("const submitRfq = {");
     const projectionEnd = submitPage.indexOf(
       "return <RfqSubmitWorkspace",
       projectionStart,
     );
-
-    const projection = submitPage.slice(
-      projectionStart,
-      projectionEnd,
-    );
+    const projection = submitPage.slice(projectionStart, projectionEnd);
 
     expect(projection).not.toContain("company_id");
     expect(projection).not.toContain("sourcing_method");

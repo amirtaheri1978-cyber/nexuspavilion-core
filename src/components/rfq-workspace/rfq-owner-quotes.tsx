@@ -22,6 +22,7 @@ type RFQOwnerQuote = {
   riskLevel: string;
   budgetVariance: number;
   lowestBidVariance: number;
+  requiresMaterialRevalidation?: boolean;
 };
 
 type RFQOwnerQuotesProps = {
@@ -57,9 +58,15 @@ export function RFQOwnerQuotes({
       rfqTitle={rfqTitle}
       awarded={!isOpen || quotes.some((quote) => quote.decision === "awarded")}
       quotes={quotes.map((quote) => {
+        const requiresMaterialRevalidation = Boolean(
+          quote.requiresMaterialRevalidation,
+        );
         const isLowest =
-          lowestAmount !== null && quote.amountNumber === lowestAmount;
+          !requiresMaterialRevalidation &&
+          lowestAmount !== null &&
+          quote.amountNumber === lowestAmount;
         const isHighest =
+          !requiresMaterialRevalidation &&
           highestAmount !== null &&
           highestAmount !== lowestAmount &&
           quote.amountNumber === highestAmount;
@@ -85,11 +92,19 @@ export function RFQOwnerQuotes({
           riskLevel: quote.riskLevel,
           budgetVarianceLabel: formatMoney(quote.budgetVariance),
           lowestBidVarianceLabel: formatMoney(quote.lowestBidVariance),
-          isRecommended: recommendedQuoteId === quote.id,
+          isRecommended:
+            !requiresMaterialRevalidation && recommendedQuoteId === quote.id,
           isLowest,
           isHighest,
-          isBelowAverage: averageBid > 0 && quote.amountNumber <= averageBid,
-          canAward: isOpen && quote.decision !== "awarded",
+          isBelowAverage:
+            !requiresMaterialRevalidation &&
+            averageBid > 0 &&
+            quote.amountNumber <= averageBid,
+          requiresMaterialRevalidation,
+          canAward:
+            isOpen &&
+            quote.decision !== "awarded" &&
+            !requiresMaterialRevalidation,
         };
       })}
     />

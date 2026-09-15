@@ -19,6 +19,10 @@ export type Quote = {
   message: string | null;
   decision: string | null;
   validity_days?: number | null;
+  created_at?: string | null;
+  materialRevalidationStatus?: "current" | "requires_review";
+  requiresMaterialRevalidation?: boolean;
+  latestMaterialAddendumId?: string | null;
 };
 
 export type ScoredQuote = Quote & {
@@ -184,29 +188,65 @@ export function buildCommercialIntelligence({
   commercialEvaluationUnlocked,
   isOwner,
 }: BuildCommercialIntelligenceInput): CommercialIntelligence {
-  const amounts = getCommercialAmounts({
+  const decisionReadyQuoteList = commercialEvaluationUnlocked
+    ? quoteList.filter((quote) => !quote.requiresMaterialRevalidation)
+    : [];
+
+  const reviewRequiredQuoteList = commercialEvaluationUnlocked
+    ? quoteList.filter((quote) => quote.requiresMaterialRevalidation)
+    : [];
+
+  const decisionReadyAmounts = getCommercialAmounts({
+    quoteList: decisionReadyQuoteList,
+    commercialEvaluationUnlocked,
+  });
+
+  const evidenceAmounts = getCommercialAmounts({
     quoteList,
     commercialEvaluationUnlocked,
   });
 
-  const lowestAmount = amounts.length > 0 ? Math.min(...amounts) : null;
-  const highestAmount = amounts.length > 0 ? Math.max(...amounts) : null;
-  const averageBid = getAverageBid(amounts);
+  const lowestAmount =
+    decisionReadyAmounts.length > 0 ? Math.min(...decisionReadyAmounts) : null;
+  const highestAmount =
+    decisionReadyAmounts.length > 0 ? Math.max(...decisionReadyAmounts) : null;
+  const averageBid = getAverageBid(decisionReadyAmounts);
 
-  const scoredQuotesUnranked = commercialEvaluationUnlocked
-    ? quoteList.map((quote) =>
-        buildScoredQuote({
-          quote,
-          budget,
-          lowestAmount,
-        }),
-      )
-    : [];
+  const evidenceLowestAmount =
+    evidenceAmounts.length > 0 ? Math.min(...evidenceAmounts) : null;
 
-  const scoredQuotes = rankScoredQuotes(scoredQuotesUnranked);
+  const decisionReadyScoredQuotes = rankScoredQuotes(
+    decisionReadyQuoteList.map((quote) =>
+      buildScoredQuote({
+        quote,
+        budget,
+        lowestAmount,
+      }),
+    ),
+  );
+
+  const reviewRequiredScoredQuotes = rankScoredQuotes(
+    reviewRequiredQuoteList.map((quote) =>
+      buildScoredQuote({
+        quote,
+        budget,
+        lowestAmount: evidenceLowestAmount,
+      }),
+    ),
+  ).map((quote, index) => ({
+    ...quote,
+    rank: decisionReadyScoredQuotes.length + index + 1,
+  }));
+
+  const scoredQuotes = [
+    ...decisionReadyScoredQuotes,
+    ...reviewRequiredScoredQuotes,
+  ];
 
   const recommendedQuote =
-    isOwner && scoredQuotes.length > 0 ? scoredQuotes[0] : null;
+    isOwner && decisionReadyScoredQuotes.length > 0
+      ? decisionReadyScoredQuotes[0]
+      : null;
 
   const awardedQuote = commercialEvaluationUnlocked
     ? scoredQuotes.find((quote) => quote.decision === "awarded")

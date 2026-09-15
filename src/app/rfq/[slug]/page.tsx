@@ -39,19 +39,23 @@ import {
   getRfqDeadlineRisk,
   type RfqDeadlineRiskStatus,
 } from "@/lib/datetime/rfq-deadline-risk";
-
 import {
   getCopilotSuggestions,
   getExecutiveBrief,
   getNextBestAction,
   getPredictedTimeline,
 } from "@/lib/procurement/rfq-executive-guidance";
-
 import {
   buildCommercialIntelligence,
   isRfqCommercialOpeningUnlocked,
   type Quote,
 } from "@/lib/procurement/rfq-commercial-intelligence";
+import {
+  attachQuoteMaterialRevalidationState,
+  type AddendumAcknowledgementEvidence,
+  type MaterialAddendumEvidence,
+  type QuoteRevalidationEvidence,
+} from "@/lib/procurement/rfq-quote-revalidation-state";
 import {
   buildRfqOwnerSupplierNameById,
   resolveRfqOwnerSupplierLabel,
@@ -81,7 +85,10 @@ import {
 
 import { ExecutiveOpportunityRanking } from "@/components/executive/executive-opportunity-ranking";
 import { ExecutivePanel } from "@/components/executive/executive-panel";
-import { EXECUTIVE_FOCUS_CYAN, EXECUTIVE_PAGE_CLASS } from "@/lib/design-system/executive-contract";
+import {
+  EXECUTIVE_FOCUS_CYAN,
+  EXECUTIVE_PAGE_CLASS,
+} from "@/lib/design-system/executive-contract";
 import { RFQCommandCenter } from "@/components/rfq-workspace/rfq-command-center";
 import { RFQProcurementHealth } from "@/components/rfq-workspace/rfq-procurement-health";
 import { RFQExecutiveRiskMatrix } from "@/components/rfq-workspace/rfq-executive-risk-matrix";
@@ -98,75 +105,78 @@ import {
 } from "@/components/rfq-workspace/rfq-governance-controls";
 
 type PageProps = {
-params: Promise<{ slug: string }>;
+  params: Promise<{ slug: string }>;
 };
+
 type Profile = {
-id: string;
-email: string | null;
-role: string | null;
-company_id: string | null;
+  id: string;
+  email: string | null;
+  role: string | null;
+  company_id: string | null;
 };
+
 type RFQ = {
-id: string;
-slug: string;
-title: string | null;
-description: string | null;
-category: string | null;
-location: string | null;
-budget: number | string | null;
-deadline: string | null;
-deadline_timezone?: string | null;
-rfi_deadline?: string | null;
-rfi_deadline_timezone?: string | null;
-mobilization_date?: string | null;
-substantial_completion_date?: string | null;
-status: string | null;
-company_id: string | null;
-procurement_scope: ProcurementScope | null;
-sourcing_method: SourcingMethod | null;
-contract_framework: ContractFramework | null;
-awarded_quote_id: string | null;
-awarded_at: string | null;
+  id: string;
+  slug: string;
+  title: string | null;
+  description: string | null;
+  category: string | null;
+  location: string | null;
+  budget: number | string | null;
+  deadline: string | null;
+  deadline_timezone?: string | null;
+  rfi_deadline?: string | null;
+  rfi_deadline_timezone?: string | null;
+  mobilization_date?: string | null;
+  substantial_completion_date?: string | null;
+  status: string | null;
+  company_id: string | null;
+  procurement_scope: ProcurementScope | null;
+  sourcing_method: SourcingMethod | null;
+  contract_framework: ContractFramework | null;
+  awarded_quote_id: string | null;
+  awarded_at: string | null;
 };
+
 const RIGHT_TO_REJECT_NOTICE =
-"The Buyer reserves the right to accept or reject any or all submissions, request clarifications, negotiate commercial terms, or cancel the RFQ process at any time without liability or obligation to justify the decision.";
+  "The Buyer reserves the right to accept or reject any or all submissions, request clarifications, negotiate commercial terms, or cancel the RFQ process at any time without liability or obligation to justify the decision.";
+
 function formatMoney(value: number | string | null | undefined) {
-const amount = Number(value);
-if (!Number.isFinite(amount)) {
-return "$0";
-}
-return `$${amount.toLocaleString()}`;
+  const amount = Number(value);
+  if (!Number.isFinite(amount)) {
+    return "$0";
+  }
+  return `$${amount.toLocaleString()}`;
 }
 
 function readQuoteSubmissionCount(value: unknown) {
-const count = Number(value);
+  const count = Number(value);
 
-if (!Number.isFinite(count) || count < 0) {
-return 0;
-}
+  if (!Number.isFinite(count) || count < 0) {
+    return 0;
+  }
 
-return Math.trunc(count);
+  return Math.trunc(count);
 }
 
 function getDaysUntilDeadline(deadline: string | null | undefined) {
-if (!deadline) return null;
+  if (!deadline) return null;
 
-const deadlineDate = new Date(deadline);
+  const deadlineDate = new Date(deadline);
 
-if (Number.isNaN(deadlineDate.getTime())) {
-return null;
+  if (Number.isNaN(deadlineDate.getTime())) {
+    return null;
+  }
+
+  return Math.ceil(
+    (deadlineDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24),
+  );
 }
 
-return Math.ceil(
-(deadlineDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)
-);
-}
-
-function getCurrentRfqDeadlineRisk(
-  deadline: string | null | undefined,
-) {
+function getCurrentRfqDeadlineRisk(deadline: string | null | undefined) {
   return getRfqDeadlineRisk(deadline, new Date());
 }
+
 function getDeadlineMetricPresentation(
   status: RfqDeadlineRiskStatus,
   daysUntilDeadline: number | null,
@@ -213,850 +223,901 @@ function getDeadlineMetricPresentation(
 }
 
 export default async function RFQDetailPage({ params }: PageProps) {
-const { slug } = await params;
-const supabase = await createClient();
+  const { slug } = await params;
+  const supabase = await createClient();
 
-const {
-data: { user },
-} = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-const [profileResult, rfqResult] = await Promise.all([
-user
-? supabase
-.from("profiles")
-.select("id, email, role, company_id")
-.eq("id", user.id)
-.single()
-: Promise.resolve({ data: null }),
-supabase
-.from("rfqs")
-.select("*")
-.eq("slug", slug)
-.single(),
-]);
+  const [profileResult, rfqResult] = await Promise.all([
+    user
+      ? supabase
+          .from("profiles")
+          .select("id, email, role, company_id")
+          .eq("id", user.id)
+          .single()
+      : Promise.resolve({ data: null, error: null }),
+    supabase.from("rfqs").select("*").eq("slug", slug).single(),
+  ]);
 
-const { data: profileData } = profileResult;
-const profile = profileData as Profile | null;
+  const { data: profileData } = profileResult;
+  const profile = profileData as Profile | null;
 
-const { data: rfqData } = rfqResult;
-const rfq = rfqData as RFQ | null;
+  const { data: rfqData } = rfqResult;
+  const rfq = rfqData as RFQ | null;
 
-if (!rfq) {
-return (
-<div className="min-h-full bg-nexus-navy text-white">
-<div className={EXECUTIVE_PAGE_CLASS}>
-<ExecutivePanel padding="lg" tone="risk" className="text-center">
-<p className="np-type-eyebrow">RFQ workspace</p>
-<h1 className="np-type-h1 mt-3">This RFQ workspace could not be found.</h1>
-<Link
-href="/rfq"
-className={`mt-6 inline-flex min-h-11 items-center text-sm font-black text-nexus-cyan-bright ${EXECUTIVE_FOCUS_CYAN}`}
->
-Back to RFQ marketplace
-</Link>
-</ExecutivePanel>
-</div>
-</div>
-);
-}
-
-const participantRole = resolveRfqParticipantRole({
-currentCompanyId: profile?.company_id ?? null,
-rfqCompanyId: rfq.company_id,
-});
-
-const isOwner = participantRole === "issuer";
-
-let sourcingMembership: OrganizationMembership | null = null;
-
-if (isOwner && user && profile?.company_id) {
-  try {
-    sourcingMembership = await getActiveMembershipForUserCompany(
-      supabase,
-      user.id,
-      profile.company_id,
+  if (!rfq) {
+    return (
+      <div className="min-h-full bg-nexus-navy text-white">
+        <div className={EXECUTIVE_PAGE_CLASS}>
+          <ExecutivePanel padding="lg" tone="risk" className="text-center">
+            <p className="np-type-eyebrow">RFQ workspace</p>
+            <h1 className="np-type-h1 mt-3">
+              This RFQ workspace could not be found.
+            </h1>
+            <Link
+              href="/rfq"
+              className={`mt-6 inline-flex min-h-11 items-center text-sm font-black text-nexus-cyan-bright ${EXECUTIVE_FOCUS_CYAN}`}
+            >
+              Back to RFQ marketplace
+            </Link>
+          </ExecutivePanel>
+        </div>
+      </div>
     );
-  } catch (membershipError) {
-    console.error("RFQ supplier invitation membership lookup failed.", {
-      userId: user.id,
-      companyId: profile.company_id,
-      rfqId: rfq.id,
-      error: membershipError,
-    });
   }
-}
 
-const rfqStatus = String(rfq.status || "open");
-const commercialEvaluationUnlocked = isRfqCommercialOpeningUnlocked({
-  deadline: rfq.deadline,
-});
-const deadlinePassed = commercialEvaluationUnlocked;
-const daysUntilDeadline = getDaysUntilDeadline(rfq.deadline);
-const deadlineRisk = getCurrentRfqDeadlineRisk(rfq.deadline);
-const deadlineMetric = getDeadlineMetricPresentation(
-  deadlineRisk.status,
-  daysUntilDeadline,
-);
-const blindBiddingEnabled = shouldEnforceBlindBidding(rfq);
-const isOpen =
-  (!rfq.status || rfqStatus === "open") &&
-  !deadlinePassed &&
-  !rfq.awarded_quote_id &&
-  !rfq.awarded_at;
+  const participantRole = resolveRfqParticipantRole({
+    currentCompanyId: profile?.company_id ?? null,
+    rfqCompanyId: rfq.company_id,
+  });
 
-const loadIssuerQuoteRows = isOwner && commercialEvaluationUnlocked;
-const loadIssuerQuoteCount = isOwner && !commercialEvaluationUnlocked;
+  const isOwner = participantRole === "issuer";
 
-const [
-quotesResult,
-issuerSubmissionCountResult,
-attachmentResult,
-documentRequirementResult,
-addendaResult,
-acknowledgementResult,
-aiReviewResult,
-parsedRfiDeadlineResult,
-] = await Promise.all([
-loadIssuerQuoteRows
-? supabase
-.from("quotes")
-.select("*")
-.eq("rfq_id", rfq.id)
-.order("amount", { ascending: true })
-: !isOwner && profile?.company_id
-? supabase
-.from("quotes")
-.select("*")
-.eq("rfq_id", rfq.id)
-.eq("company_id", profile.company_id)
-.order("created_at", { ascending: false })
-: Promise.resolve({ data: [] }),
-loadIssuerQuoteCount
-? supabase.rpc("count_rfq_quote_submissions", { p_rfq_id: rfq.id })
-: Promise.resolve({ data: null }),
-supabase
-.from("rfq_attachments")
-.select(
-  "id, file_name, file_path, file_size, attachment_type, revision_label, created_at",
-)
-.eq("rfq_id", rfq.id)
-.order("created_at", { ascending: false }),
-supabase
-.from("rfq_document_requirements")
-.select("id, rfq_id, attachment_type")
-.eq("rfq_id", rfq.id)
-.order("created_at", { ascending: true }),
-supabase
-.from("rfq_addenda")
-.select(
-  "id, title, description, addendum_number, affected_documents, requires_acknowledgement, created_at",
-)
-.eq("rfq_id", rfq.id)
-.order("addendum_number", { ascending: false })
-.order("created_at", { ascending: false }),
-!isOwner && profile?.company_id
-? supabase
-.from("rfq_addendum_acknowledgements")
-.select("id, addendum_id, rfq_id, company_id, acknowledged_at")
-.eq("rfq_id", rfq.id)
-.eq("company_id", profile.company_id)
-.order("acknowledged_at", { ascending: false })
-: Promise.resolve({ data: [] }),
-isOwner
-? supabase
-.from("rfq_ai_reviews")
-.select(
-  "id, readiness_score, risk_level, executive_summary, missing_items, recommendations, created_at",
-)
-.eq("rfq_id", rfq.id)
-.order("created_at", { ascending: false })
-.limit(1)
-.maybeSingle()
-: Promise.resolve({ data: null }),
-rfq.rfi_deadline
-? Promise.resolve({ data: null, error: null })
-: supabase.rpc("parse_rfq_deadline_timestamptz", {
-    p_deadline: rfq.deadline ?? null,
-  }),
-]);
+  let sourcingMembership: OrganizationMembership | null = null;
 
-const quoteList = (quotesResult.data ?? []) as Quote[];
-const quoteCount = loadIssuerQuoteCount
-  ? readQuoteSubmissionCount(issuerSubmissionCountResult.data)
-  : quoteList.length;
-const rfqAttachments = attachmentResult.data ?? [];
-const rfqDocumentRequirements = documentRequirementResult.data ?? [];
-const documentCoverageUnavailableReason = documentRequirementResult.error
-  ? "requirements_query_failed"
-  : attachmentResult.error
-    ? "attachments_query_failed"
+  if (isOwner && user && profile?.company_id) {
+    try {
+      sourcingMembership = await getActiveMembershipForUserCompany(
+        supabase,
+        user.id,
+        profile.company_id,
+      );
+    } catch (membershipError) {
+      console.error("RFQ supplier invitation membership lookup failed.", {
+        userId: user.id,
+        companyId: profile.company_id,
+        rfqId: rfq.id,
+        error: membershipError,
+      });
+    }
+  }
+
+  const rfqStatus = String(rfq.status || "open");
+  const commercialEvaluationUnlocked = isRfqCommercialOpeningUnlocked({
+    deadline: rfq.deadline,
+  });
+  const deadlinePassed = commercialEvaluationUnlocked;
+  const daysUntilDeadline = getDaysUntilDeadline(rfq.deadline);
+  const deadlineRisk = getCurrentRfqDeadlineRisk(rfq.deadline);
+  const deadlineMetric = getDeadlineMetricPresentation(
+    deadlineRisk.status,
+    daysUntilDeadline,
+  );
+  const blindBiddingEnabled = shouldEnforceBlindBidding(rfq);
+  const isOpen =
+    (!rfq.status || rfqStatus === "open") &&
+    !deadlinePassed &&
+    !rfq.awarded_quote_id &&
+    !rfq.awarded_at;
+
+  const loadIssuerQuoteRows = isOwner && commercialEvaluationUnlocked;
+  const loadIssuerQuoteCount = isOwner && !commercialEvaluationUnlocked;
+  const loadRespondentQuoteRows = !isOwner && Boolean(profile?.company_id);
+  const loadIssuerQuoteGovernanceEvidence =
+    isOwner && commercialEvaluationUnlocked;
+  const loadRespondentQuoteGovernanceEvidence =
+    !isOwner && Boolean(profile?.company_id);
+
+  const [
+    quotesResult,
+    issuerSubmissionCountResult,
+    attachmentResult,
+    documentRequirementResult,
+    addendaResult,
+    acknowledgementResult,
+    quoteRevalidationResult,
+    quoteBasisAcknowledgementResult,
+    aiReviewResult,
+    parsedRfiDeadlineResult,
+  ] = await Promise.all([
+    loadIssuerQuoteRows
+      ? supabase
+          .from("quotes")
+          .select("*")
+          .eq("rfq_id", rfq.id)
+          .order("amount", { ascending: true })
+      : loadRespondentQuoteRows
+        ? supabase
+            .from("quotes")
+            .select("*")
+            .eq("rfq_id", rfq.id)
+            .eq("company_id", profile!.company_id!)
+            .order("created_at", { ascending: false })
+        : Promise.resolve({ data: [], error: null }),
+    loadIssuerQuoteCount
+      ? supabase.rpc("count_rfq_quote_submissions", { p_rfq_id: rfq.id })
+      : Promise.resolve({ data: null, error: null }),
+    supabase
+      .from("rfq_attachments")
+      .select(
+        "id, file_name, file_path, file_size, attachment_type, revision_label, created_at",
+      )
+      .eq("rfq_id", rfq.id)
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("rfq_document_requirements")
+      .select("id, rfq_id, attachment_type")
+      .eq("rfq_id", rfq.id)
+      .order("created_at", { ascending: true }),
+    supabase
+      .from("rfq_addenda")
+      .select(
+        "id, title, description, addendum_number, affected_documents, requires_acknowledgement, affected_fields, amendment_before, amendment_after, amendment_reason, created_at",
+      )
+      .eq("rfq_id", rfq.id)
+      .order("addendum_number", { ascending: false })
+      .order("created_at", { ascending: false }),
+    loadRespondentQuoteGovernanceEvidence
+      ? supabase
+          .from("rfq_addendum_acknowledgements")
+          .select("id, addendum_id, rfq_id, company_id, acknowledged_at")
+          .eq("rfq_id", rfq.id)
+          .eq("company_id", profile!.company_id!)
+          .order("acknowledged_at", { ascending: false })
+      : Promise.resolve({ data: [], error: null }),
+    loadIssuerQuoteGovernanceEvidence
+      ? supabase
+          .from("rfq_quote_revalidations")
+          .select("quote_id, addendum_id, company_id")
+          .eq("rfq_id", rfq.id)
+      : loadRespondentQuoteGovernanceEvidence
+        ? supabase
+            .from("rfq_quote_revalidations")
+            .select("quote_id, addendum_id, company_id")
+            .eq("rfq_id", rfq.id)
+            .eq("company_id", profile!.company_id!)
+        : Promise.resolve({ data: [], error: null }),
+    loadIssuerQuoteGovernanceEvidence
+      ? supabase
+          .from("rfq_addendum_acknowledgements")
+          .select("addendum_id, company_id, acknowledged_at")
+          .eq("rfq_id", rfq.id)
+      : Promise.resolve({ data: [], error: null }),
+    isOwner
+      ? supabase
+          .from("rfq_ai_reviews")
+          .select(
+            "id, readiness_score, risk_level, executive_summary, missing_items, recommendations, created_at",
+          )
+          .eq("rfq_id", rfq.id)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle()
+      : Promise.resolve({ data: null, error: null }),
+    rfq.rfi_deadline
+      ? Promise.resolve({ data: null, error: null })
+      : supabase.rpc("parse_rfq_deadline_timestamptz", {
+          p_deadline: rfq.deadline ?? null,
+        }),
+  ]);
+
+  const rawQuoteList = (quotesResult.data ?? []) as Quote[];
+  const rfqAttachments = attachmentResult.data ?? [];
+  const rfqDocumentRequirements = documentRequirementResult.data ?? [];
+  const documentCoverageUnavailableReason = documentRequirementResult.error
+    ? "requirements_query_failed"
+    : attachmentResult.error
+      ? "attachments_query_failed"
+      : null;
+  const rfqAddenda = addendaResult.data ?? [];
+  const rfqAcknowledgements = acknowledgementResult.data ?? [];
+  const latestAiReview = aiReviewResult.data ?? null;
+  const parsedRfiDeadline = parsedRfiDeadlineResult.data;
+  const parsedRfiDeadlineError = parsedRfiDeadlineResult.error;
+
+  if (
+    rawQuoteList.length > 0 &&
+    (addendaResult.error ||
+      quoteRevalidationResult.error ||
+      (loadRespondentQuoteGovernanceEvidence && acknowledgementResult.error) ||
+      (loadIssuerQuoteGovernanceEvidence &&
+        quoteBasisAcknowledgementResult.error))
+  ) {
+    console.error("RFQ Quote revalidation evidence lookup failed.", {
+      rfqId: rfq.id,
+      participantRole,
+      addendaError: addendaResult.error ?? null,
+      revalidationError: quoteRevalidationResult.error ?? null,
+      acknowledgementError: acknowledgementResult.error ?? null,
+      quoteBasisAcknowledgementError:
+        quoteBasisAcknowledgementResult.error ?? null,
+    });
+    throw new Error("Unable to verify quotation revalidation status.");
+  }
+
+  const quoteBasisAcknowledgements =
+    (loadIssuerQuoteGovernanceEvidence
+      ? quoteBasisAcknowledgementResult.data ?? []
+      : rfqAcknowledgements) as AddendumAcknowledgementEvidence[];
+
+  const quoteList = attachQuoteMaterialRevalidationState({
+    quotes: rawQuoteList,
+    addenda: rfqAddenda as MaterialAddendumEvidence[],
+    acknowledgements: quoteBasisAcknowledgements,
+    revalidations: (quoteRevalidationResult.data ?? []) as QuoteRevalidationEvidence[],
+  });
+
+  const quoteCount = loadIssuerQuoteCount
+    ? readQuoteSubmissionCount(issuerSubmissionCountResult.data)
+    : quoteList.length;
+
+  let effectiveRfiDeadline: string | null = null;
+  let effectiveRfiDeadlineTimezone: string | null =
+    rfq.rfi_deadline_timezone ?? rfq.deadline_timezone ?? null;
+
+  if (rfq.rfi_deadline) {
+    effectiveRfiDeadline = rfq.rfi_deadline;
+    effectiveRfiDeadlineTimezone = rfq.rfi_deadline_timezone ?? null;
+  } else if (!parsedRfiDeadlineError && parsedRfiDeadline) {
+    effectiveRfiDeadline = String(parsedRfiDeadline);
+    effectiveRfiDeadlineTimezone = rfq.deadline_timezone ?? null;
+  } else {
+    effectiveRfiDeadline = null;
+  }
+
+  const budget = Number(rfq.budget || 0);
+
+  const {
+    scoredQuotes,
+    recommendedQuote,
+    awardedQuote,
+    lowestAmount,
+    highestAmount,
+    averageBid,
+    potentialSavings,
+  } = isOwner
+    ? buildCommercialIntelligence({
+        quoteList,
+        budget,
+        commercialEvaluationUnlocked,
+        isOwner,
+      })
+    : {
+        scoredQuotes: [],
+        recommendedQuote: null,
+        awardedQuote: null,
+        lowestAmount: null,
+        highestAmount: null,
+        averageBid: 0,
+        potentialSavings: 0,
+      };
+
+  const decisionReadyScoredQuotes = scoredQuotes.filter(
+    (quote) => !quote.requiresMaterialRevalidation,
+  );
+
+  const supplierCompanyIds = getRfqSupplierCompanyIds(scoredQuotes);
+
+  const [supplierCompanyResult, priorBuyerRfqResult] = await Promise.all([
+    isOwner && supplierCompanyIds.length > 0
+      ? supabase
+          .from("company_directory")
+          .select("id, name, category, location, network_role")
+          .in("id", supplierCompanyIds)
+      : Promise.resolve({ data: [], error: null }),
+    isOwner && rfq.company_id && supplierCompanyIds.length > 0
+      ? supabase
+          .from("rfqs")
+          .select("id")
+          .eq("company_id", rfq.company_id)
+          .neq("id", rfq.id)
+      : Promise.resolve({ data: [], error: null }),
+  ]);
+
+  const supplierCompanies =
+    (supplierCompanyResult.data ?? []) as RfqSupplierCompany[];
+
+  const supplierNameById = buildRfqOwnerSupplierNameById(supplierCompanies);
+
+  const awardedSupplierLabel = awardedQuote
+    ? resolveRfqOwnerSupplierLabel({
+        companyId: awardedQuote.company_id,
+        rank: awardedQuote.rank,
+        supplierNameById,
+      })
     : null;
-const rfqAddenda = addendaResult.data ?? [];
-const rfqAcknowledgements = acknowledgementResult.data ?? [];
-const latestAiReview = aiReviewResult.data ?? null;
-const parsedRfiDeadline = parsedRfiDeadlineResult.data;
-const parsedRfiDeadlineError = parsedRfiDeadlineResult.error;
 
-let effectiveRfiDeadline: string | null = null;
-let effectiveRfiDeadlineTimezone: string | null =
-  rfq.rfi_deadline_timezone ?? rfq.deadline_timezone ?? null;
+  const awardRecorded = isOwner && rfqStatus === "awarded";
 
-if (rfq.rfi_deadline) {
-  effectiveRfiDeadline = rfq.rfi_deadline;
-  effectiveRfiDeadlineTimezone = rfq.rfi_deadline_timezone ?? null;
-} else if (!parsedRfiDeadlineError && parsedRfiDeadline) {
-  effectiveRfiDeadline = String(parsedRfiDeadline);
-  effectiveRfiDeadlineTimezone = rfq.deadline_timezone ?? null;
-} else {
-  effectiveRfiDeadline = null;
-}
+  const commercialHandoffPath =
+    rfq.contract_framework === "project_specific"
+      ? "Project-specific commercial administration"
+      : rfq.contract_framework === "framework"
+        ? "Framework commercial administration"
+        : null;
 
-const budget = Number(rfq.budget || 0);
-
-const {
-  scoredQuotes,
-  recommendedQuote,
-  awardedQuote,
-  lowestAmount,
-  highestAmount,
-  averageBid,
-  potentialSavings,
-} = isOwner
-  ? buildCommercialIntelligence({
-  quoteList,
-  budget,
-  commercialEvaluationUnlocked,
-  isOwner,
-})
-  : {
-      scoredQuotes: [],
-      recommendedQuote: null,
-      awardedQuote: null,
-      lowestAmount: null,
-      highestAmount: null,
-      averageBid: 0,
-      potentialSavings: 0,
-    };
-
-const supplierCompanyIds =
-  getRfqSupplierCompanyIds(scoredQuotes);
-
-const [supplierCompanyResult, priorBuyerRfqResult] = await Promise.all([
-  isOwner && supplierCompanyIds.length > 0
-    ? supabase
-        .from("company_directory")
-        .select("id, name, category, location, network_role")
-        .in("id", supplierCompanyIds)
-    : Promise.resolve({ data: [] }),
-  isOwner &&
-  rfq.company_id &&
-  supplierCompanyIds.length > 0
-    ? supabase
-        .from("rfqs")
-        .select("id")
-        .eq("company_id", rfq.company_id)
-        .neq("id", rfq.id)
-    : Promise.resolve({ data: [] }),
-]);
-
-const supplierCompanies =
-  (supplierCompanyResult.data ?? []) as RfqSupplierCompany[];
-
-const supplierNameById =
-  buildRfqOwnerSupplierNameById(supplierCompanies);
-
-const awardedSupplierLabel = awardedQuote
-  ? resolveRfqOwnerSupplierLabel({
-      companyId: awardedQuote.company_id,
-      rank: awardedQuote.rank,
-      supplierNameById,
-    })
-  : null;
-
-const awardRecorded = isOwner && rfqStatus === "awarded";
-
-const commercialHandoffPath =
-  rfq.contract_framework === "project_specific"
-    ? "Project-specific commercial administration"
-    : rfq.contract_framework === "framework"
-      ? "Framework commercial administration"
+  const commercialHandoff =
+    isOwner &&
+    awardRecorded &&
+    commercialEvaluationUnlocked &&
+    awardedQuote &&
+    awardedSupplierLabel &&
+    commercialHandoffPath
+      ? {
+          label: "Next Commercial Step",
+          value: commercialHandoffPath,
+          detail:
+            "Use the recorded award outcome as the commercial handoff reference. Contract execution, signatures, purchase-order status, and external-system completion remain outside this RFQ workspace.",
+        }
       : null;
 
-const commercialHandoff =
-  isOwner &&
-  awardRecorded &&
-  commercialEvaluationUnlocked &&
-  awardedQuote &&
-  awardedSupplierLabel &&
-  commercialHandoffPath
-    ? {
-        label: "Next Commercial Step",
-        value: commercialHandoffPath,
-        detail:
-          "Use the recorded award outcome as the commercial handoff reference. Contract execution, signatures, purchase-order status, and external-system completion remain outside this RFQ workspace.",
-      }
-    : null;
+  const priorBuyerRfqData = priorBuyerRfqResult.data;
 
-const priorBuyerRfqData = priorBuyerRfqResult.data;
+  const priorBuyerRfqIds = (priorBuyerRfqData ?? [])
+    .map((priorRfq) => priorRfq.id)
+    .filter((priorRfqId): priorRfqId is string => Boolean(priorRfqId));
 
-const priorBuyerRfqIds = (priorBuyerRfqData ?? [])
-  .map((priorRfq) => priorRfq.id)
-  .filter(
-    (priorRfqId): priorRfqId is string =>
-      Boolean(priorRfqId),
+  const { data: supplierHistoryQuoteData } =
+    priorBuyerRfqIds.length > 0 && supplierCompanyIds.length > 0
+      ? await supabase
+          .from("quotes")
+          .select(
+            "id, rfq_id, company_id, amount, decision, created_at, awarded_at",
+          )
+          .in("rfq_id", priorBuyerRfqIds)
+          .in("company_id", supplierCompanyIds)
+      : { data: [] };
+
+  const supplierHistorySnapshots = buildSupplierHistorySnapshots(
+    (supplierHistoryQuoteData ?? []) as SupplierQuotePerformance[],
   );
 
-const { data: supplierHistoryQuoteData } =
-  priorBuyerRfqIds.length > 0 &&
-  supplierCompanyIds.length > 0
-    ? await supabase
-        .from("quotes")
-        .select(
-          "id, rfq_id, company_id, amount, decision, created_at, awarded_at",
-        )
-        .in("rfq_id", priorBuyerRfqIds)
-        .in("company_id", supplierCompanyIds)
-    : { data: [] };
-
-const supplierHistorySnapshots =
-  buildSupplierHistorySnapshots(
-    (supplierHistoryQuoteData ??
-      []) as SupplierQuotePerformance[],
-  );
-
-const supplierRecommendationInput =
-  buildRfqSupplierRecommendationInput({
+  const supplierRecommendationInput = buildRfqSupplierRecommendationInput({
     rfqSlug: rfq.slug,
     rfqCategory: rfq.category,
     rfqLocation: rfq.location,
     procurementScope: rfq.procurement_scope,
     sourcingMethod: rfq.sourcing_method,
     commercialEvaluationUnlocked,
-    scoredQuotes,
+    scoredQuotes: decisionReadyScoredQuotes,
     companies: supplierCompanies,
     supplierHistorySnapshots,
   });
 
-const hasMyQuote =
-participantRole === "respondent" &&
-quoteList.length > 0;
+  const hasMyQuote = participantRole === "respondent" && quoteList.length > 0;
+  const myQuoteRequiresReview =
+    participantRole === "respondent" &&
+    quoteList.some((quote) => quote.requiresMaterialRevalidation);
 
-const capabilities = buildRfqCapabilities({
-participantRole,
-isOpen,
-blindBiddingEnabled,
-commercialEvaluationUnlocked,
-hasMyQuote,
-hasRecommendedQuote: Boolean(recommendedQuote),
-});
-
-const canInviteSuppliers =
-capabilities.canInviteSuppliers &&
-canInviteCompanySuppliers(sourcingMembership, rfq.company_id ?? "");
-
-const canViewBuyerExecutiveIntelligence =
-  canExposeRfqBuyerExecutiveIntelligence(capabilities);
-
-const canSubmitQuote = capabilities.canSubmitQuote;
-const scopeReview = canViewBuyerExecutiveIntelligence
-  ? evaluateRfqScopeReview({
-      description: rfq.description,
-      attachmentTypes: rfqAttachments.map((attachment) =>
-        typeof attachment?.attachment_type === "string"
-          ? attachment.attachment_type
-          : "",
-      ),
-      mobilizationDate: rfq.mobilization_date,
-      substantialCompletionDate: rfq.substantial_completion_date,
-    })
-  : null;
-
-let healthScore = 0;
-let healthBreakdown: ReturnType<typeof getProcurementHealthBreakdown> | null =
-  null;
-let executiveRiskMatrix: ReturnType<typeof getExecutiveRiskMatrix> | null =
-  null;
-let predictedTimeline: ReturnType<typeof getPredictedTimeline> | null = null;
-let copilotSuggestions: ReturnType<typeof getCopilotSuggestions> | null = null;
-let executiveOpportunities: ReturnType<
-  typeof buildRfqExecutiveOpportunityIntelligence
->["opportunities"] | null = null;
-let executiveOpportunityIntelligence: ReturnType<
-  typeof buildRfqExecutiveOpportunityIntelligence
->["intelligence"] | null = null;
-let executive: ReturnType<typeof buildExecutiveIntelligence> | null = null;
-
-if (canViewBuyerExecutiveIntelligence) {
-  healthScore = getHealthScore({
+  const capabilities = buildRfqCapabilities({
+    participantRole,
     isOpen,
-    deadlinePassed,
-    quoteCount,
-    documentCount: rfqAttachments.length,
-    addendaCount: rfqAddenda.length,
-    hasBudget: budget > 0,
-    hasDescription: Boolean(rfq.description),
     blindBiddingEnabled,
     commercialEvaluationUnlocked,
+    hasMyQuote,
+    hasRecommendedQuote: Boolean(recommendedQuote),
   });
 
-  healthBreakdown = getProcurementHealthBreakdown({
-    quoteCount,
-    documentCount: rfqAttachments.length,
-    addendaCount: rfqAddenda.length,
-    hasBudget: budget > 0,
-    hasDescription: Boolean(rfq.description),
+  const canInviteSuppliers =
+    capabilities.canInviteSuppliers &&
+    canInviteCompanySuppliers(sourcingMembership, rfq.company_id ?? "");
+
+  const canViewBuyerExecutiveIntelligence =
+    canExposeRfqBuyerExecutiveIntelligence(capabilities);
+
+  const canSubmitQuote = capabilities.canSubmitQuote;
+  const scopeReview = canViewBuyerExecutiveIntelligence
+    ? evaluateRfqScopeReview({
+        description: rfq.description,
+        attachmentTypes: rfqAttachments.map((attachment) =>
+          typeof attachment?.attachment_type === "string"
+            ? attachment.attachment_type
+            : "",
+        ),
+        mobilizationDate: rfq.mobilization_date,
+        substantialCompletionDate: rfq.substantial_completion_date,
+      })
+    : null;
+
+  let healthScore = 0;
+  let healthBreakdown: ReturnType<typeof getProcurementHealthBreakdown> | null =
+    null;
+  let executiveRiskMatrix: ReturnType<typeof getExecutiveRiskMatrix> | null = null;
+  let predictedTimeline: ReturnType<typeof getPredictedTimeline> | null = null;
+  let copilotSuggestions: ReturnType<typeof getCopilotSuggestions> | null = null;
+  let executiveOpportunities: ReturnType<
+    typeof buildRfqExecutiveOpportunityIntelligence
+  >["opportunities"] | null = null;
+  let executiveOpportunityIntelligence: ReturnType<
+    typeof buildRfqExecutiveOpportunityIntelligence
+  >["intelligence"] | null = null;
+  let executive: ReturnType<typeof buildExecutiveIntelligence> | null = null;
+
+  if (canViewBuyerExecutiveIntelligence) {
+    healthScore = getHealthScore({
+      isOpen,
+      deadlinePassed,
+      quoteCount,
+      documentCount: rfqAttachments.length,
+      addendaCount: rfqAddenda.length,
+      hasBudget: budget > 0,
+      hasDescription: Boolean(rfq.description),
+      blindBiddingEnabled,
+      commercialEvaluationUnlocked,
+    });
+
+    healthBreakdown = getProcurementHealthBreakdown({
+      quoteCount,
+      documentCount: rfqAttachments.length,
+      addendaCount: rfqAddenda.length,
+      hasBudget: budget > 0,
+      hasDescription: Boolean(rfq.description),
+      blindBiddingEnabled,
+      commercialEvaluationUnlocked,
+    });
+
+    executiveRiskMatrix = getExecutiveRiskMatrix({
+      isOpen,
+      deadlinePassed,
+      deadlineRiskStatus: deadlineRisk.status,
+      quoteCount,
+      documentCount: rfqAttachments.length,
+      addendaCount: rfqAddenda.length,
+      commercialEvaluationUnlocked,
+    });
+
+    predictedTimeline = getPredictedTimeline({
+      awardRecorded,
+      deadlinePassed,
+      daysUntilDeadline,
+      commercialEvaluationUnlocked,
+      recommendedQuote,
+    });
+
+    copilotSuggestions = getCopilotSuggestions({
+      awardRecorded,
+      isOwner,
+      isOpen,
+      quoteCount,
+      documentCount: rfqAttachments.length,
+      addendaCount: rfqAddenda.length,
+      commercialEvaluationUnlocked,
+      recommendedQuote,
+      potentialSavings,
+    });
+
+    const opportunityIntelligence = buildRfqExecutiveOpportunityIntelligence({
+      isOwner,
+      potentialSavings,
+      commercialEvaluationUnlocked,
+      quoteCount,
+      documentCount: rfqAttachments.length,
+      recommendedAwardConfidence: recommendedQuote?.awardConfidence ?? null,
+    });
+    executiveOpportunities = opportunityIntelligence.opportunities;
+    executiveOpportunityIntelligence = opportunityIntelligence.intelligence;
+
+    executive = buildExecutiveIntelligence({
+      rfqSlug: rfq.slug,
+      isOwner,
+      isOpen,
+      commercialEvaluationUnlocked,
+      healthScore,
+      quoteCount,
+      documentCount: rfqAttachments.length,
+      addendaCount: rfqAddenda.length,
+      averageBid,
+      lowestAmount,
+      budget,
+      potentialSavings,
+      recommendedQuote,
+      awardedQuote: awardedQuote
+        ? {
+            amountNumber: awardedQuote.amountNumber,
+          }
+        : null,
+      supplierRecommendationInput,
+    });
+  }
+
+  const executiveBrief = getExecutiveBrief({
+    awardRecorded,
+    isOwner,
+    isOpen,
+    deadlinePassed,
     blindBiddingEnabled,
     commercialEvaluationUnlocked,
-  });
-
-  executiveRiskMatrix = getExecutiveRiskMatrix({
-    isOpen,
-    deadlinePassed,
-    deadlineRiskStatus: deadlineRisk.status,
     quoteCount,
     documentCount: rfqAttachments.length,
     addendaCount: rfqAddenda.length,
-    commercialEvaluationUnlocked,
-  });
-
-  predictedTimeline = getPredictedTimeline({
-    awardRecorded,
-    deadlinePassed,
-    daysUntilDeadline,
-    commercialEvaluationUnlocked,
-    recommendedQuote,
-  });
-
-  copilotSuggestions = getCopilotSuggestions({
-    awardRecorded,
-    isOwner,
-    isOpen,
-    quoteCount,
-    documentCount: rfqAttachments.length,
-    addendaCount: rfqAddenda.length,
-    commercialEvaluationUnlocked,
-    recommendedQuote,
-    potentialSavings,
-  });
-
-  const opportunityIntelligence = buildRfqExecutiveOpportunityIntelligence({
-    isOwner,
-    potentialSavings,
-    commercialEvaluationUnlocked,
-    quoteCount,
-    documentCount: rfqAttachments.length,
-    recommendedAwardConfidence: recommendedQuote?.awardConfidence ?? null,
-  });
-  executiveOpportunities = opportunityIntelligence.opportunities;
-  executiveOpportunityIntelligence = opportunityIntelligence.intelligence;
-
-  executive = buildExecutiveIntelligence({
-    rfqSlug: rfq.slug,
-    isOwner,
-    isOpen,
-    commercialEvaluationUnlocked,
     healthScore,
+    recommendedQuote,
+  });
+
+  const nextBestAction = getNextBestAction({
+    awardRecorded,
+    isOwner,
+    isOpen,
+    canSubmitQuote,
     quoteCount,
     documentCount: rfqAttachments.length,
     addendaCount: rfqAddenda.length,
-    averageBid,
-    lowestAmount,
-    budget,
-    potentialSavings,
+    commercialEvaluationUnlocked,
     recommendedQuote,
-    awardedQuote: awardedQuote
-      ? {
-          amountNumber: awardedQuote.amountNumber,
-        }
-      : null,
-    supplierRecommendationInput,
   });
-}
 
-const executiveBrief = getExecutiveBrief({
-awardRecorded,
-isOwner,
-isOpen,
-deadlinePassed,
-blindBiddingEnabled,
-commercialEvaluationUnlocked,
-quoteCount,
-documentCount: rfqAttachments.length,
-addendaCount: rfqAddenda.length,
-healthScore,
-recommendedQuote,
-});
+  return (
+    <div
+      className="min-h-full min-w-0 bg-nexus-navy text-white"
+      data-rfq-detail-layout="true"
+    >
+      <div className={`${EXECUTIVE_PAGE_CLASS} min-w-0`}>
+        <RFQCommandCenter
+          statusLabel={
+            rfqStatus === "awarded"
+              ? getRFQStatusLabel(rfq.status)
+              : deadlinePassed
+                ? "Submission Closed"
+                : getRFQStatusLabel(rfq.status)
+          }
+          statusTone={
+            rfqStatus === "awarded"
+              ? "awarded"
+              : deadlinePassed || rfqStatus === "closed"
+                ? "locked"
+                : "live"
+          }
+          classificationBadges={[
+            getScopeLabel(rfq.procurement_scope),
+            getSourcingLabel(rfq.sourcing_method),
+            getFrameworkLabel(rfq.contract_framework),
+            ...(blindBiddingEnabled ? ["Blind Bidding"] : []),
+          ]}
+          title={rfq.title || "Untitled RFQ"}
+          description={rfq.description || "No description provided."}
+          commandMetrics={selectRfqDetailCommandMetrics({
+            canViewExecutiveIntelligence: canViewBuyerExecutiveIntelligence,
+            procurementHealthMetric: canViewBuyerExecutiveIntelligence
+              ? {
+                  title: "Procurement Health",
+                  value: `${healthScore}/100`,
+                  detail: getHealthLabel(healthScore),
+                  accentClassName: getHealthTone(healthScore),
+                }
+              : null,
+            sharedMetrics: [
+              {
+                title: "Deadline",
+                value: deadlineMetric.value,
+                detail: formatDateTime(rfq.deadline, rfq.deadline_timezone),
+                accentClassName: deadlineMetric.accentClassName,
+              },
+              {
+                title: isOwner ? "Commercial Status" : "Participation Status",
+                value: isOwner
+                  ? awardRecorded
+                    ? "Award Recorded"
+                    : commercialEvaluationUnlocked
+                      ? "Commercial Evaluation"
+                      : "Commercially Locked"
+                  : myQuoteRequiresReview
+                    ? "Requires Review"
+                    : hasMyQuote
+                      ? "Quote Submitted"
+                      : canSubmitQuote
+                        ? "Ready for Submission"
+                        : "Submission Closed",
+                detail: isOwner
+                  ? awardRecorded
+                    ? "Commercial decision recorded for downstream handoff"
+                    : commercialEvaluationUnlocked
+                      ? "Comparative evaluation available"
+                      : "Commercial submissions protected"
+                  : myQuoteRequiresReview
+                    ? "Material RFQ amendment requires acknowledgement and quote reconfirmation or resubmission"
+                    : "Organization-level confidential access",
+                accentClassName: myQuoteRequiresReview
+                  ? "text-orange-300"
+                  : "text-[#C8A646]",
+              },
+            ],
+          })}
+          executiveBrief={executiveBrief}
+          nextBestAction={nextBestAction}
+          award={
+            isOwner &&
+            rfqStatus === "awarded" &&
+            awardedQuote &&
+            awardedSupplierLabel &&
+            commercialEvaluationUnlocked
+              ? {
+                  label: "Award Complete",
+                  value: `Awarded to ${awardedSupplierLabel} at ${formatMoney(
+                    awardedQuote.amountNumber,
+                  )}`,
+                }
+              : null
+          }
+          handoff={commercialHandoff}
+          stripItems={[
+            {
+              title: "Category",
+              value: rfq.category || "N/A",
+            },
+            {
+              title: "Location",
+              value: rfq.location || "N/A",
+            },
+            {
+              title: "Budget",
+              value: formatMoney(rfq.budget),
+            },
+            {
+              title: "Quotes",
+              value: String(quoteCount),
+            },
+            {
+              title: "Documents",
+              value: String(rfqAttachments.length),
+            },
+            {
+              title: "Addenda",
+              value: String(rfqAddenda.length),
+            },
+          ]}
+        />
 
-const nextBestAction = getNextBestAction({
-awardRecorded,
-isOwner,
-isOpen,
-canSubmitQuote,
-quoteCount,
-documentCount: rfqAttachments.length,
-addendaCount: rfqAddenda.length,
-commercialEvaluationUnlocked,
-recommendedQuote,
-});
+        {canViewBuyerExecutiveIntelligence &&
+        healthBreakdown &&
+        executiveRiskMatrix &&
+        predictedTimeline &&
+        copilotSuggestions ? (
+          <section
+            className="np-region-major grid min-w-0 gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,0.85fr)]"
+            aria-label="Procurement health and executive guidance"
+          >
+            <RFQProcurementHealth
+              healthScore={healthScore}
+              healthLabel={getHealthLabel(healthScore)}
+              healthBreakdown={healthBreakdown}
+            />
+            <div className="grid min-w-0 gap-6">
+              <RFQExecutiveRiskMatrix risks={executiveRiskMatrix} />
 
-return (
-<div
-  className="min-h-full min-w-0 bg-nexus-navy text-white"
-  data-rfq-detail-layout="true"
->
-<div className={`${EXECUTIVE_PAGE_CLASS} min-w-0`}>
-<RFQCommandCenter
-  statusLabel={
-    rfqStatus === "awarded"
-      ? getRFQStatusLabel(rfq.status)
-      : deadlinePassed
-        ? "Submission Closed"
-        : getRFQStatusLabel(rfq.status)
-  }
-  statusTone={
-    rfqStatus === "awarded"
-      ? "awarded"
-      : deadlinePassed || rfqStatus === "closed"
-        ? "locked"
-        : "live"
-  }
-  classificationBadges={[
-    getScopeLabel(rfq.procurement_scope),
-    getSourcingLabel(rfq.sourcing_method),
-    getFrameworkLabel(rfq.contract_framework),
-    ...(blindBiddingEnabled ? ["Blind Bidding"] : []),
-  ]}
-  title={rfq.title || "Untitled RFQ"}
-  description={rfq.description || "No description provided."}
-  commandMetrics={selectRfqDetailCommandMetrics({
-    canViewExecutiveIntelligence: canViewBuyerExecutiveIntelligence,
-    procurementHealthMetric: canViewBuyerExecutiveIntelligence
-      ? {
-          title: "Procurement Health",
-          value: `${healthScore}/100`,
-          detail: getHealthLabel(healthScore),
-          accentClassName: getHealthTone(healthScore),
-        }
-      : null,
-    sharedMetrics: [
-      {
-        title: "Deadline",
-        value: deadlineMetric.value,
-        detail: formatDateTime(rfq.deadline, rfq.deadline_timezone),
-        accentClassName: deadlineMetric.accentClassName,
-      },
-      {
-        title: isOwner ? "Commercial Status" : "Participation Status",
-        value: isOwner
-          ? awardRecorded
-            ? "Award Recorded"
-            : commercialEvaluationUnlocked
-              ? "Commercial Evaluation"
-              : "Commercially Locked"
-          : hasMyQuote
-            ? "Quote Submitted"
-            : canSubmitQuote
-              ? "Ready for Submission"
-              : "Submission Closed",
-        detail: isOwner
-          ? awardRecorded
-            ? "Commercial decision recorded for downstream handoff"
-            : commercialEvaluationUnlocked
-              ? "Comparative evaluation available"
-              : "Commercial submissions protected"
-          : "Organization-level confidential access",
-        accentClassName: "text-[#C8A646]",
-      },
-    ],
-  })}
-  executiveBrief={executiveBrief}
-  nextBestAction={nextBestAction}
-  award={
-    isOwner &&
-    rfqStatus === "awarded" &&
-    awardedQuote &&
-    awardedSupplierLabel &&
-    commercialEvaluationUnlocked
-      ? {
-          label: "Award Complete",
-          value: `Awarded to ${awardedSupplierLabel} at ${formatMoney(
-            awardedQuote.amountNumber
-          )}`,
-        }
-      : null
-  }
-  handoff={commercialHandoff}
-  stripItems={[
-    {
-      title: "Category",
-      value: rfq.category || "N/A",
-    },
-    {
-      title: "Location",
-      value: rfq.location || "N/A",
-    },
-    {
-      title: "Budget",
-      value: formatMoney(rfq.budget),
-    },
-    {
-      title: "Quotes",
-      value: String(quoteCount),
-    },
-    {
-      title: "Documents",
-      value: String(rfqAttachments.length),
-    },
-    {
-      title: "Addenda",
-      value: String(rfqAddenda.length),
-    },
-  ]}
-/>
-{canViewBuyerExecutiveIntelligence &&
-healthBreakdown &&
-executiveRiskMatrix &&
-predictedTimeline &&
-copilotSuggestions ? (
-<section
-  className="np-region-major grid min-w-0 gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,0.85fr)]"
-  aria-label="Procurement health and executive guidance"
->
-<RFQProcurementHealth
-  healthScore={healthScore}
-  healthLabel={getHealthLabel(healthScore)}
-  healthBreakdown={healthBreakdown}
-/>
-<div className="grid min-w-0 gap-6">
-  <RFQExecutiveRiskMatrix risks={executiveRiskMatrix} />
+              <RFQExecutiveGuidance
+                timeline={predictedTimeline}
+                recommendations={copilotSuggestions}
+              />
+            </div>
+          </section>
+        ) : null}
 
-  <RFQExecutiveGuidance
-    timeline={predictedTimeline}
-    recommendations={copilotSuggestions}
-  />
-</div>
-</section>
-) : null}
+        <div className="np-region-major min-w-0" id="procurement-context">
+          <RFQProcurementContext
+            description={getProcurementFitMessage(rfq)}
+            sourcingLabel={getSourcingLabel(rfq.sourcing_method)}
+            frameworkLabel={getFrameworkLabel(rfq.contract_framework)}
+            blindBiddingEnabled={blindBiddingEnabled}
+          />
+        </div>
 
-<div className="np-region-major min-w-0" id="procurement-context">
-  <RFQProcurementContext
-    description={getProcurementFitMessage(rfq)}
-    sourcingLabel={getSourcingLabel(rfq.sourcing_method)}
-    frameworkLabel={getFrameworkLabel(rfq.contract_framework)}
-    blindBiddingEnabled={blindBiddingEnabled}
-  />
-</div>
+        {canViewBuyerExecutiveIntelligence && scopeReview ? (
+          <div className="np-region-major min-w-0">
+            <RFQScopeReview review={scopeReview} />
+          </div>
+        ) : null}
 
-{canViewBuyerExecutiveIntelligence && scopeReview ? (
-  <div className="np-region-major min-w-0">
-    <RFQScopeReview review={scopeReview} />
-  </div>
-) : null}
+        {canViewBuyerExecutiveIntelligence &&
+        executiveOpportunities &&
+        executiveOpportunityIntelligence ? (
+          <div className="np-region-major min-w-0">
+            <ExecutiveOpportunityRanking
+              opportunities={executiveOpportunities}
+              intelligence={executiveOpportunityIntelligence}
+            />
+          </div>
+        ) : null}
 
-{canViewBuyerExecutiveIntelligence &&
-executiveOpportunities &&
-executiveOpportunityIntelligence ? (
-  <div className="np-region-major min-w-0">
-    <ExecutiveOpportunityRanking
-      opportunities={executiveOpportunities}
-      intelligence={executiveOpportunityIntelligence}
-    />
-  </div>
-) : null}
+        <div className="np-region-major min-w-0">
+          <RFQExecutiveActions
+            rfqSlug={rfq.slug}
+            isOwner={isOwner}
+            isOpen={isOpen}
+            canSubmitQuote={canSubmitQuote}
+            hasCompany={Boolean(rfq.company_id)}
+            hasMyQuote={hasMyQuote}
+            quoteRequiresReview={myQuoteRequiresReview}
+            deadlinePassed={deadlinePassed}
+            commercialEvaluationUnlocked={commercialEvaluationUnlocked}
+          />
+        </div>
 
-<div className="np-region-major min-w-0">
-  <RFQExecutiveActions
-    rfqSlug={rfq.slug}
-    isOwner={isOwner}
-    isOpen={isOpen}
-    canSubmitQuote={canSubmitQuote}
-    hasCompany={Boolean(rfq.company_id)}
-    hasMyQuote={hasMyQuote}
-    deadlinePassed={deadlinePassed}
-    commercialEvaluationUnlocked={commercialEvaluationUnlocked}
-  />
-</div>
+        {capabilities.canViewBlindBiddingControl ? (
+          <section className="np-region-major min-w-0">
+            <RFQBlindBiddingNotice
+              message={getBlindBiddingMessage(rfq)}
+              quoteCount={quoteCount}
+            />
+          </section>
+        ) : null}
 
-{capabilities.canViewBlindBiddingControl ? (
-  <section className="np-region-major min-w-0">
-    <RFQBlindBiddingNotice
-      message={getBlindBiddingMessage(rfq)}
-      quoteCount={quoteCount}
-    />
-  </section>
-) : null}
+        <section className="np-region-major min-w-0">
+          <RFQGovernanceNotice reservationNotice={RIGHT_TO_REJECT_NOTICE} />
+        </section>
 
-<section className="np-region-major min-w-0">
-  <RFQGovernanceNotice
-    reservationNotice={RIGHT_TO_REJECT_NOTICE}
-  />
-</section>
+        {canViewBuyerExecutiveIntelligence ? (
+          <>
+            {capabilities.canViewExecutiveIntelligence ? (
+              <RFQAIAdvisor rfqId={rfq.id} initialReview={latestAiReview} />
+            ) : null}
+            {executive ? (
+              <ExecutiveIntelligenceProvider executive={executive}>
+                <ExecutiveDecisionCenter
+                  rfqSlug={rfq.slug}
+                  isOwner={isOwner}
+                  isOpen={isOpen}
+                  commercialEvaluationUnlocked={commercialEvaluationUnlocked}
+                  healthScore={healthScore}
+                  quoteCount={quoteCount}
+                  documentCount={rfqAttachments.length}
+                  addendaCount={rfqAddenda.length}
+                  potentialSavings={potentialSavings}
+                  recommendedQuote={recommendedQuote}
+                  executive={executive}
+                />
 
-{canViewBuyerExecutiveIntelligence ? (
-<>
-{capabilities.canViewExecutiveIntelligence ? (
-<RFQAIAdvisor rfqId={rfq.id} initialReview={latestAiReview} />
-) : null}
-{executive ? (
-<ExecutiveIntelligenceProvider executive={executive}>
+                <ExecutiveActionQueue executive={executive} />
 
-<ExecutiveDecisionCenter
-  rfqSlug={rfq.slug}
-  isOwner={isOwner}
-  isOpen={isOpen}
-  commercialEvaluationUnlocked={commercialEvaluationUnlocked}
-  healthScore={healthScore}
-  quoteCount={quoteCount}
-  documentCount={rfqAttachments.length}
-  addendaCount={rfqAddenda.length}
-  potentialSavings={potentialSavings}
-  recommendedQuote={recommendedQuote}
-  executive={executive}
-/>
+                <ExecutiveDecisionTimeline
+                  isOwner={isOwner}
+                  isOpen={isOpen}
+                  commercialEvaluationUnlocked={commercialEvaluationUnlocked}
+                  quoteCount={quoteCount}
+                  documentCount={rfqAttachments.length}
+                  addendaCount={rfqAddenda.length}
+                  recommendedQuote={recommendedQuote}
+                  awardedQuote={
+                    awardedQuote
+                      ? {
+                          amountNumber: awardedQuote.amountNumber,
+                        }
+                      : null
+                  }
+                  executive={executive}
+                />
 
-<ExecutiveActionQueue
-  executive={executive}
-/>
+                <ExecutiveReadinessMeter
+                  healthScore={healthScore}
+                  quoteCount={quoteCount}
+                  documentCount={rfqAttachments.length}
+                  addendaCount={rfqAddenda.length}
+                  commercialEvaluationUnlocked={commercialEvaluationUnlocked}
+                  recommendedQuote={recommendedQuote}
+                />
 
-<ExecutiveDecisionTimeline
-  isOwner={isOwner}
-  isOpen={isOpen}
-  commercialEvaluationUnlocked={commercialEvaluationUnlocked}
-  quoteCount={quoteCount}
-  documentCount={rfqAttachments.length}
-  addendaCount={rfqAddenda.length}
-  recommendedQuote={recommendedQuote}
-  awardedQuote={
-    awardedQuote
-      ? {
-          amountNumber: awardedQuote.amountNumber,
-        }
-      : null
-  }
-  executive={executive}
-/>
+                <ExecutiveAIExplainability
+                  isOwner={isOwner}
+                  commercialEvaluationUnlocked={commercialEvaluationUnlocked}
+                  recommendedQuote={recommendedQuote}
+                  quoteCount={quoteCount}
+                  executive={executive}
+                />
 
-<ExecutiveReadinessMeter
-healthScore={healthScore}
-quoteCount={quoteCount}
-documentCount={rfqAttachments.length}
-addendaCount={rfqAddenda.length}
-commercialEvaluationUnlocked={commercialEvaluationUnlocked}
-recommendedQuote={recommendedQuote}
-/>
+                <ExecutiveSupplierDNA
+                  isOwner={isOwner}
+                  commercialEvaluationUnlocked={commercialEvaluationUnlocked}
+                  recommendedQuote={recommendedQuote}
+                  averageBid={averageBid}
+                  lowestAmount={lowestAmount}
+                  quoteCount={quoteCount}
+                  executive={executive}
+                />
 
-<ExecutiveAIExplainability
-    isOwner={isOwner}
-    commercialEvaluationUnlocked={commercialEvaluationUnlocked}
-    recommendedQuote={recommendedQuote}
-       quoteCount={quoteCount}
-          executive={executive}
-/>
+                <ExecutiveNegotiationIntelligence
+                  isOwner={isOwner}
+                  commercialEvaluationUnlocked={commercialEvaluationUnlocked}
+                  recommendedQuote={recommendedQuote}
+                  averageBid={averageBid}
+                  lowestAmount={lowestAmount}
+                  quoteCount={quoteCount}
+                  budget={budget}
+                  executive={executive}
+                />
 
-<ExecutiveSupplierDNA
-  isOwner={isOwner}
-  commercialEvaluationUnlocked={commercialEvaluationUnlocked}
-  recommendedQuote={recommendedQuote}
-  averageBid={averageBid}
-  lowestAmount={lowestAmount}
-  quoteCount={quoteCount}
-  executive={executive}
-/>
+                <AwardScenarioSimulator
+                  isOwner={isOwner}
+                  commercialEvaluationUnlocked={commercialEvaluationUnlocked}
+                  recommendedQuote={recommendedQuote}
+                  quoteCount={quoteCount}
+                  executive={executive}
+                />
+              </ExecutiveIntelligenceProvider>
+            ) : null}
+          </>
+        ) : null}
 
-<ExecutiveNegotiationIntelligence
-  isOwner={isOwner}
-  commercialEvaluationUnlocked={commercialEvaluationUnlocked}
-  recommendedQuote={recommendedQuote}
-  averageBid={averageBid}
-  lowestAmount={lowestAmount}
-  quoteCount={quoteCount}
-  budget={budget}
-  executive={executive}
-/>
+        {capabilities.canViewRecommendedAwardPath && recommendedQuote ? (
+          <RFQRecommendedAwardPath
+            recommendation={recommendedQuote}
+            scopeLabel={getScopeLabel(rfq.procurement_scope)}
+          />
+        ) : null}
 
-<AwardScenarioSimulator
-  isOwner={isOwner}
-  commercialEvaluationUnlocked={commercialEvaluationUnlocked}
-  recommendedQuote={recommendedQuote}
-  quoteCount={quoteCount}
-  executive={executive}
-/>
-</ExecutiveIntelligenceProvider>
-) : null}
-</>
-) : null}
+        {canInviteSuppliers ? (
+          <ExecutivePanel
+            id="supplier-invitations"
+            className="mt-8 min-w-0 scroll-mt-24 @container lg:scroll-mt-0"
+            padding="lg"
+            tone="blue"
+            data-rfq-supplier-invitations="true"
+          >
+            <p className="text-xs font-black uppercase tracking-[0.3em] text-nexus-gold">
+              Respondent invitation
+            </p>
 
-{capabilities.canViewRecommendedAwardPath && recommendedQuote ? (
-  <RFQRecommendedAwardPath
-    recommendation={recommendedQuote}
-    scopeLabel={getScopeLabel(rfq.procurement_scope)}
-  />
-) : null}
+            <h2
+              id="rfq-supplier-invitation-heading"
+              className="mt-3 min-w-0 text-pretty text-2xl font-black tracking-tight text-nexus-white sm:text-3xl"
+            >
+              Build competitive quote coverage
+            </h2>
 
-{canInviteSuppliers ? (
-<ExecutivePanel
-id="supplier-invitations"
-className="mt-8 min-w-0 scroll-mt-24 @container lg:scroll-mt-0"
-padding="lg"
-tone="blue"
-data-rfq-supplier-invitations="true"
->
-<p className="text-xs font-black uppercase tracking-[0.3em] text-nexus-gold">
-Respondent invitation
-</p>
+            <p className="mt-3 max-w-3xl min-w-0 text-pretty text-sm font-semibold leading-7 text-nexus-muted">
+              Invite qualified respondents directly into this RFQ workspace while
+              preserving issuer-side control, commercial confidentiality, and the
+              current governance workflow.
+            </p>
 
-<h2
-id="rfq-supplier-invitation-heading"
-className="mt-3 min-w-0 text-pretty text-2xl font-black tracking-tight text-nexus-white sm:text-3xl"
->
-Build competitive quote coverage
-</h2>
+            <div className="mt-6 min-w-0">
+              <InviteVendorForm embedded rfqId={rfq.id} />
+            </div>
+          </ExecutivePanel>
+        ) : null}
 
-<p className="mt-3 max-w-3xl min-w-0 text-pretty text-sm font-semibold leading-7 text-nexus-muted">
-Invite qualified respondents directly into this RFQ workspace while
-preserving issuer-side control, commercial confidentiality, and the current
-governance workflow.
-</p>
+        <RFQDocumentWorkspace
+          rfqId={rfq.id}
+          companyId={rfq.company_id}
+          rfqStatus={rfq.status}
+          isOwner={isOwner}
+          canAcknowledge={isOpen}
+          rfiDeadline={effectiveRfiDeadline}
+          rfiDeadlineTimezone={effectiveRfiDeadlineTimezone}
+          documents={rfqAttachments}
+          documentRequirements={rfqDocumentRequirements}
+          documentCoverageUnavailableReason={documentCoverageUnavailableReason}
+          addenda={rfqAddenda}
+          acknowledgements={rfqAcknowledgements}
+        />
 
-<div className="mt-6 min-w-0">
-<InviteVendorForm embedded rfqId={rfq.id} />
-</div>
-</ExecutivePanel>
-) : null}
-<RFQDocumentWorkspace
-  rfqId={rfq.id}
-  companyId={rfq.company_id}
-  rfqStatus={rfq.status}
-  isOwner={isOwner}
-  canAcknowledge={isOpen}
-  rfiDeadline={effectiveRfiDeadline}
-  rfiDeadlineTimezone={effectiveRfiDeadlineTimezone}
-  documents={rfqAttachments}
-  documentRequirements={rfqDocumentRequirements}
-  documentCoverageUnavailableReason={documentCoverageUnavailableReason}
-  addenda={rfqAddenda}
-  acknowledgements={rfqAcknowledgements}
-/>
-
-<RFQQuoteWorkspace
-  rfqSlug={rfq.slug}
-  rfqTitle={rfq.title || "Untitled RFQ"}
-  isOwner={isOwner}
-  isOpen={isOpen}
-  canSubmitQuote={canSubmitQuote}
-  commercialEvaluationUnlocked={commercialEvaluationUnlocked}
-  quoteList={quoteList}
-  submissionCount={quoteCount}
-  scoredQuotes={scoredQuotes}
-  recommendedQuoteId={recommendedQuote?.id ?? null}
-  lowestAmount={lowestAmount}
-  highestAmount={highestAmount}
-  averageBid={averageBid}
-  supplierCompanies={supplierCompanies}
-/>
-
-
-</div>
-</div>
-);
+        <RFQQuoteWorkspace
+          rfqSlug={rfq.slug}
+          rfqTitle={rfq.title || "Untitled RFQ"}
+          isOwner={isOwner}
+          isOpen={isOpen}
+          canSubmitQuote={canSubmitQuote}
+          commercialEvaluationUnlocked={commercialEvaluationUnlocked}
+          quoteList={quoteList}
+          submissionCount={quoteCount}
+          scoredQuotes={scoredQuotes}
+          recommendedQuoteId={recommendedQuote?.id ?? null}
+          lowestAmount={lowestAmount}
+          highestAmount={highestAmount}
+          averageBid={averageBid}
+          supplierCompanies={supplierCompanies}
+        />
+      </div>
+    </div>
+  );
 }

@@ -40,6 +40,7 @@ function quote(partial: Partial<RfqQuoteComparisonItem> & Pick<RfqQuoteCompariso
     isHighest: false,
     isBelowAverage: true,
     canAward: true,
+    requiresMaterialRevalidation: false,
     ...partial,
   };
 }
@@ -511,6 +512,7 @@ export default function RfqVisualQaPage() {
               canSubmitQuote={false}
               hasCompany
               hasMyQuote={false}
+              quoteRequiresReview={false}
               deadlinePassed={false}
               commercialEvaluationUnlocked
             />

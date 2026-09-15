@@ -16,6 +16,7 @@ import {
   isPublicSourcingMethod,
   resolveRfqParticipantRole,
 } from "@/lib/procurement/rfq-access-contract";
+import { attachQuoteMaterialRevalidationState } from "@/lib/procurement/rfq-quote-revalidation-state";
 import { createClient } from "@/lib/supabase/server";
 
 type PageProps = {
@@ -124,7 +125,9 @@ export default async function SubmitQuotePage({ params }: PageProps) {
 
   const { data: rfq, error: rfqError } = await supabase
     .from("rfqs")
-    .select("id, slug, company_id, sourcing_method, title, deadline, deadline_timezone, status, awarded_quote_id, awarded_at")
+    .select(
+      "id, slug, company_id, sourcing_method, title, deadline, deadline_timezone, status, awarded_quote_id, awarded_at",
+    )
     .eq("slug", slug)
     .maybeSingle();
 
@@ -172,6 +175,102 @@ export default async function SubmitQuotePage({ params }: PageProps) {
     return <SubmitAccessBlocked slug={slug} reason="sourcing" />;
   }
 
+  const { data: existingQuote, error: existingQuoteError } = await supabase
+    .from("quotes")
+    .select("id, company_id, amount, timeline, message, validity_days, created_at")
+    .eq("rfq_id", rfq.id)
+    .eq("company_id", profile.company_id)
+    .maybeSingle();
+
+  if (existingQuoteError) {
+    console.error("RFQ submit existing Quote lookup failed:", {
+      rfqId: rfq.id,
+      companyId: profile.company_id,
+      error: existingQuoteError,
+    });
+    throw new Error("Unable to verify quotation state.");
+  }
+
+  let initialQuote:
+    | {
+        id: string;
+        amount: number | string | null;
+        timeline: string | null;
+        message: string | null;
+        validity_days: number | null;
+        requiresMaterialRevalidation: boolean;
+        hasOutstandingRequiredAcknowledgement: boolean;
+      }
+    | null = null;
+
+  if (existingQuote) {
+    const [addendaResult, acknowledgementResult, revalidationResult] =
+      await Promise.all([
+        supabase
+          .from("rfq_addenda")
+          .select(
+            "id, addendum_number, requires_acknowledgement, affected_fields, amendment_before, amendment_after, amendment_reason, created_at",
+          )
+          .eq("rfq_id", rfq.id),
+        supabase
+          .from("rfq_addendum_acknowledgements")
+          .select("addendum_id, company_id, acknowledged_at")
+          .eq("rfq_id", rfq.id)
+          .eq("company_id", profile.company_id),
+        supabase
+          .from("rfq_quote_revalidations")
+          .select("quote_id, addendum_id, company_id")
+          .eq("rfq_id", rfq.id)
+          .eq("quote_id", existingQuote.id)
+          .eq("company_id", profile.company_id),
+      ]);
+
+    if (
+      addendaResult.error ||
+      acknowledgementResult.error ||
+      revalidationResult.error
+    ) {
+      console.error("RFQ submit Quote revalidation state lookup failed:", {
+        rfqId: rfq.id,
+        quoteId: existingQuote.id,
+        addendaError: addendaResult.error,
+        acknowledgementError: acknowledgementResult.error,
+        revalidationError: revalidationResult.error,
+      });
+      throw new Error("Unable to verify quotation revalidation state.");
+    }
+
+    const [quoteWithRevalidationState] = attachQuoteMaterialRevalidationState({
+      quotes: [existingQuote],
+      addenda: addendaResult.data ?? [],
+      acknowledgements: acknowledgementResult.data ?? [],
+      revalidations: revalidationResult.data ?? [],
+    });
+
+    const acknowledgedAddendumIds = new Set(
+      (acknowledgementResult.data ?? []).map((item) => item.addendum_id),
+    );
+
+    const hasOutstandingRequiredAcknowledgement = (
+      addendaResult.data ?? []
+    ).some(
+      (addendum) =>
+        addendum.requires_acknowledgement === true &&
+        !acknowledgedAddendumIds.has(addendum.id),
+    );
+
+    initialQuote = {
+      id: existingQuote.id,
+      amount: existingQuote.amount,
+      timeline: existingQuote.timeline,
+      message: existingQuote.message,
+      validity_days: Number(existingQuote.validity_days || 30),
+      requiresMaterialRevalidation:
+        quoteWithRevalidationState.requiresMaterialRevalidation,
+      hasOutstandingRequiredAcknowledgement,
+    };
+  }
+
   const submitRfq = {
     title: rfq.title,
     deadline: rfq.deadline,
@@ -181,5 +280,11 @@ export default async function SubmitQuotePage({ params }: PageProps) {
     awarded_at: rfq.awarded_at,
   };
 
-  return <RfqSubmitWorkspace slug={slug} initialRfq={submitRfq} />;
+  return (
+    <RfqSubmitWorkspace
+      slug={slug}
+      initialRfq={submitRfq}
+      initialQuote={initialQuote}
+    />
+  );
 }

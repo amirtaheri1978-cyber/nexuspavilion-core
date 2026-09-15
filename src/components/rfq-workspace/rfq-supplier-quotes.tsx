@@ -9,6 +9,7 @@ type RFQSupplierQuote = {
   validity_days?: number | null;
   decision: string | null;
   message: string | null;
+  requiresMaterialRevalidation?: boolean;
 };
 
 type RFQSupplierQuotesProps = {
@@ -26,6 +27,10 @@ export function RFQSupplierQuotes({
   rfqSlug,
   canSubmitQuote,
 }: RFQSupplierQuotesProps) {
+  const requiresMaterialReview = quotes.some(
+    (quote) => quote.requiresMaterialRevalidation,
+  );
+
   return (
     <section
       className="mt-6 min-w-0 @container"
@@ -35,6 +40,29 @@ export function RFQSupplierQuotes({
       <h3 id="rfq-supplier-quotes-title" className="sr-only">
         Supplier Quote Submission
       </h3>
+
+      {requiresMaterialReview ? (
+        <div
+          className="mb-5 min-w-0 rounded-executive border border-amber-300/20 bg-amber-300/[0.08] p-5"
+          data-rfq-quote-revalidation="requires_review"
+          role="status"
+        >
+          <ExecutiveBadge tone="warning">Requires Review</ExecutiveBadge>
+          <p className="np-type-body mt-3 min-w-0 text-pretty">
+            A governed material RFQ amendment changed the basis of your submitted
+            quotation. Review the current commercial terms and reconfirm them
+            unchanged or resubmit revised terms before the deadline.
+          </p>
+          {isOpen ? (
+            <Link
+              href={`/rfq/${rfqSlug}/submit`}
+              className="mt-5 inline-flex min-h-11 items-center justify-center rounded-full border border-amber-300/30 bg-amber-300/10 px-5 py-2 text-sm font-black text-amber-100 transition hover:bg-amber-300/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-200/70 focus-visible:ring-offset-2 focus-visible:ring-offset-nexus-navy"
+            >
+              Review and reconfirm quote
+            </Link>
+          ) : null}
+        </div>
+      ) : null}
 
       {quotes.length === 0 ? (
         <SupplierQuoteEmptyState
@@ -112,6 +140,13 @@ export function RFQSupplierQuotes({
                           <ExecutiveBadge tone={getDecisionTone(quote.decision)}>
                             {decisionLabel}
                           </ExecutiveBadge>
+                          {quote.requiresMaterialRevalidation ? (
+                            <div className="mt-2">
+                              <ExecutiveBadge tone="warning">
+                                Requires Review
+                              </ExecutiveBadge>
+                            </div>
+                          ) : null}
                         </td>
                         <td className="min-w-0 px-3 py-4 align-top">
                           <p className="np-type-body min-w-0 text-pretty">
@@ -148,10 +183,13 @@ export function RFQSupplierQuotes({
                         {formatMoney(quote.amount)}
                       </p>
                     </div>
-                    <div className="min-w-0">
+                    <div className="flex min-w-0 flex-wrap gap-2">
                       <ExecutiveBadge tone={getDecisionTone(quote.decision)}>
                         {decisionLabel}
                       </ExecutiveBadge>
+                      {quote.requiresMaterialRevalidation ? (
+                        <ExecutiveBadge tone="warning">Requires Review</ExecutiveBadge>
+                      ) : null}
                     </div>
                   </header>
 

@@ -30,6 +30,7 @@ export type RfqQuoteComparisonItem = {
   isLowest: boolean;
   isHighest: boolean;
   isBelowAverage: boolean;
+  requiresMaterialRevalidation: boolean;
   canAward: boolean;
 };
 
@@ -165,7 +166,9 @@ export function RfqQuoteComparison({
 
       <p className="np-type-body mt-3 max-w-4xl min-w-0 text-pretty">
         Ranked commercial evidence for this RFQ. The recommended quote is the
-        highest current evaluation score, not a guaranteed award.
+        highest current evaluation score among decision-eligible quotations, not
+        a guaranteed award. Quotations requiring material-amendment reconfirmation
+        remain visible after opening but are excluded from award eligibility.
       </p>
 
       <div className="mt-6 grid min-w-0 gap-3">
@@ -277,12 +280,24 @@ export function RfqQuoteComparison({
                         scope="row"
                         className="min-w-0 px-3 py-4 align-top"
                       >
-                        <p className="np-type-kpi text-xl">#{quote.rank}</p>
+                        <p className="np-type-kpi text-xl">
+                          {quote.requiresMaterialRevalidation
+                            ? "Review"
+                            : `#${quote.rank}`}
+                        </p>
 
                         {quote.isRecommended ? (
                           <div className="mt-2">
                             <ExecutiveBadge tone="recommended">
                               Recommended
+                            </ExecutiveBadge>
+                          </div>
+                        ) : null}
+
+                        {quote.requiresMaterialRevalidation ? (
+                          <div className="mt-2">
+                            <ExecutiveBadge tone="warning">
+                              Requires Review
                             </ExecutiveBadge>
                           </div>
                         ) : null}
@@ -319,16 +334,30 @@ export function RfqQuoteComparison({
                       </td>
 
                       <td className="min-w-0 px-3 py-4 align-top">
-                        <p className="np-type-kpi text-lg">
-                          {quote.evaluationScore}/100
-                        </p>
+                        {quote.requiresMaterialRevalidation ? (
+                          <>
+                            <ExecutiveBadge tone="warning">
+                              Not decision-ready
+                            </ExecutiveBadge>
+                            <p className="np-type-meta mt-2 min-w-0 text-pretty">
+                              Reconfirm or resubmit against the current RFQ basis
+                              before comparative evaluation is used for decisioning.
+                            </p>
+                          </>
+                        ) : (
+                          <>
+                            <p className="np-type-kpi text-lg">
+                              {quote.evaluationScore}/100
+                            </p>
 
-                        <p className="np-type-meta mt-1 min-w-0 text-pretty">
-                          Price {quote.priceScore} · Timeline{" "}
-                          {quote.timelineScore} · Performance{" "}
-                          {quote.performanceScore} · Risk readiness{" "}
-                          {quote.riskScore}
-                        </p>
+                            <p className="np-type-meta mt-1 min-w-0 text-pretty">
+                              Price {quote.priceScore} · Timeline{" "}
+                              {quote.timelineScore} · Performance{" "}
+                              {quote.performanceScore} · Risk readiness{" "}
+                              {quote.riskScore}
+                            </p>
+                          </>
+                        )}
                       </td>
 
                       <td className="min-w-0 px-3 py-4 align-top">
@@ -376,7 +405,11 @@ export function RfqQuoteComparison({
               >
                 <header className="flex min-w-0 flex-col gap-3 @md:flex-row @md:items-start @md:justify-between">
                   <div className="min-w-0">
-                    <p className="np-type-meta">Rank #{quote.rank}</p>
+                    <p className="np-type-meta">
+                      {quote.requiresMaterialRevalidation
+                        ? "Decision status · Requires Review"
+                        : `Rank #${quote.rank}`}
+                    </p>
 
                     <h3 className="np-type-h3 mt-2 min-w-0 whitespace-normal text-pretty">
                       {quote.supplierLabel}
@@ -397,6 +430,10 @@ export function RfqQuoteComparison({
                         {decisionLabel(quote.decision)}
                       </ExecutiveBadge>
                     )}
+
+                    {quote.requiresMaterialRevalidation ? (
+                      <ExecutiveBadge tone="warning">Requires Review</ExecutiveBadge>
+                    ) : null}
 
                     {quote.isLowest ? (
                       <ExecutiveBadge tone="success">
@@ -438,12 +475,20 @@ export function RfqQuoteComparison({
                   <dl className="mt-3 grid grid-cols-1 gap-3 @sm:grid-cols-2">
                     <ComparisonField
                       label="Evaluation"
-                      value={`${quote.evaluationScore}/100`}
+                      value={
+                        quote.requiresMaterialRevalidation
+                          ? "Requires Review"
+                          : `${quote.evaluationScore}/100`
+                      }
                     />
 
                     <ComparisonField
                       label="Price / timeline / performance / risk readiness"
-                      value={`P ${quote.priceScore} · T ${quote.timelineScore} · E ${quote.performanceScore} · R ${quote.riskScore}`}
+                      value={
+                        quote.requiresMaterialRevalidation
+                          ? "Excluded pending quotation revalidation"
+                          : `P ${quote.priceScore} · T ${quote.timelineScore} · E ${quote.performanceScore} · R ${quote.riskScore}`
+                      }
                     />
 
                     <ComparisonField
@@ -583,17 +628,21 @@ function ExceptionBadges({
 }) {
   return (
     <div className="flex flex-wrap gap-2">
-      {quote.isBelowAverage ? (
+      {quote.requiresMaterialRevalidation ? (
+        <ExecutiveBadge tone="warning">Reconfirmation required</ExecutiveBadge>
+      ) : null}
+
+      {!quote.requiresMaterialRevalidation && quote.isBelowAverage ? (
         <ExecutiveBadge tone="blue">Below average</ExecutiveBadge>
       ) : null}
 
-      {quote.timelineScore >= 84 ? (
+      {!quote.requiresMaterialRevalidation && quote.timelineScore >= 84 ? (
         <ExecutiveBadge tone="success">
           Strong timeline
         </ExecutiveBadge>
       ) : null}
 
-      {quote.isHighest ? (
+      {!quote.requiresMaterialRevalidation && quote.isHighest ? (
         <ExecutiveBadge tone="warning">
           Highest quote
         </ExecutiveBadge>
@@ -615,6 +664,14 @@ function QuoteAction({
     return (
       <ExecutiveBadge tone="awarded">
         Contract awarded
+      </ExecutiveBadge>
+    );
+  }
+
+  if (quote.requiresMaterialRevalidation) {
+    return (
+      <ExecutiveBadge tone="warning">
+        Reconfirmation required
       </ExecutiveBadge>
     );
   }

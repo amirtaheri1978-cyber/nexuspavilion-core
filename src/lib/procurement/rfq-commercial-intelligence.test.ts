@@ -59,9 +59,7 @@ describe("buildCommercialIntelligence", () => {
     expect(result.highestAmount).toBe(100_000);
     expect(result.averageBid).toBe(100_000);
     expect(result.potentialSavings).toBe(0);
-
     expect(result.scoredQuotes).toHaveLength(1);
-
     expect(result.scoredQuotes[0]).toMatchObject({
       id: "quote-1",
       amountNumber: 100_000,
@@ -76,25 +74,15 @@ describe("buildCommercialIntelligence", () => {
       budgetVariance: -10_000,
       lowestBidVariance: 0,
     });
-
     expect(result.recommendedQuote?.id).toBe("quote-1");
   });
 
   it("calculates lowest, highest, and average bid values", () => {
     const result = buildCommercialIntelligence({
       quoteList: [
-        createQuote({
-          id: "quote-1",
-          amount: 90_000,
-        }),
-        createQuote({
-          id: "quote-2",
-          amount: 100_000,
-        }),
-        createQuote({
-          id: "quote-3",
-          amount: 120_000,
-        }),
+        createQuote({ id: "quote-1", amount: 90_000 }),
+        createQuote({ id: "quote-2", amount: 100_000 }),
+        createQuote({ id: "quote-3", amount: 120_000 }),
       ],
       budget: 110_000,
       commercialEvaluationUnlocked: true,
@@ -133,7 +121,6 @@ describe("buildCommercialIntelligence", () => {
     });
 
     expect(result.scoredQuotes).toHaveLength(2);
-
     expect(result.scoredQuotes[0]).toMatchObject({
       id: "strong-supplier",
       rank: 1,
@@ -143,7 +130,6 @@ describe("buildCommercialIntelligence", () => {
       riskScore: 85,
       totalScore: 90,
     });
-
     expect(result.scoredQuotes[1]).toMatchObject({
       id: "lowest-price-supplier",
       rank: 2,
@@ -153,8 +139,89 @@ describe("buildCommercialIntelligence", () => {
       riskScore: 70,
       totalScore: 77,
     });
-
     expect(result.recommendedQuote?.id).toBe("strong-supplier");
+  });
+
+  it("keeps stale commercial evidence visible without contaminating decision-ready metrics or ranking", () => {
+    const result = buildCommercialIntelligence({
+      quoteList: [
+        createQuote({
+          id: "lowest-stale-quote",
+          company_id: "stale-company",
+          amount: 90_000,
+          timeline: "6 months",
+          requiresMaterialRevalidation: true,
+          materialRevalidationStatus: "requires_review",
+        }),
+        createQuote({
+          id: "current-quote-1",
+          company_id: "current-company-1",
+          amount: 105_000,
+          timeline: "8 months",
+          requiresMaterialRevalidation: false,
+          materialRevalidationStatus: "current",
+        }),
+        createQuote({
+          id: "current-quote-2",
+          company_id: "current-company-2",
+          amount: 115_000,
+          timeline: "12 months",
+          requiresMaterialRevalidation: false,
+          materialRevalidationStatus: "current",
+        }),
+      ],
+      budget: 120_000,
+      commercialEvaluationUnlocked: true,
+      isOwner: true,
+    });
+
+    expect(result.scoredQuotes).toHaveLength(3);
+    expect(result.lowestAmount).toBe(105_000);
+    expect(result.highestAmount).toBe(115_000);
+    expect(result.averageBid).toBe(110_000);
+
+    const firstCurrent = result.scoredQuotes.find(
+      (quote) => quote.id === "current-quote-1",
+    );
+    const stale = result.scoredQuotes.find(
+      (quote) => quote.id === "lowest-stale-quote",
+    );
+
+    expect(firstCurrent).toMatchObject({
+      rank: 1,
+      priceScore: 100,
+    });
+    expect(stale?.rank).toBeGreaterThan(2);
+    expect(result.recommendedQuote?.id).toBe("current-quote-1");
+  });
+
+  it("returns no decision-ready metrics or recommendation when every opened quote requires material-amendment review", () => {
+    const result = buildCommercialIntelligence({
+      quoteList: [
+        createQuote({
+          id: "stale-quote-1",
+          requiresMaterialRevalidation: true,
+          materialRevalidationStatus: "requires_review",
+        }),
+        createQuote({
+          id: "stale-quote-2",
+          company_id: "company-2",
+          amount: 95_000,
+          requiresMaterialRevalidation: true,
+          materialRevalidationStatus: "requires_review",
+        }),
+      ],
+      budget: 110_000,
+      commercialEvaluationUnlocked: true,
+      isOwner: true,
+    });
+
+    expect(result.scoredQuotes).toHaveLength(2);
+    expect(result.recommendedQuote).toBeNull();
+    expect(result.lowestAmount).toBeNull();
+    expect(result.highestAmount).toBeNull();
+    expect(result.averageBid).toBe(0);
+    expect(result.potentialSavings).toBe(0);
   });
 
   it("exposes the recommendation only to the RFQ owner", () => {
@@ -164,7 +231,6 @@ describe("buildCommercialIntelligence", () => {
       commercialEvaluationUnlocked: true,
       isOwner: true,
     });
-
     const nonOwnerResult = buildCommercialIntelligence({
       quoteList: [createQuote()],
       budget: 110_000,
@@ -180,10 +246,7 @@ describe("buildCommercialIntelligence", () => {
   it("returns the supplier with an awarded decision", () => {
     const result = buildCommercialIntelligence({
       quoteList: [
-        createQuote({
-          id: "recommended-quote",
-          decision: null,
-        }),
+        createQuote({ id: "recommended-quote", decision: null }),
         createQuote({
           id: "awarded-quote",
           amount: 120_000,
@@ -207,41 +270,28 @@ describe("buildCommercialIntelligence", () => {
       commercialEvaluationUnlocked: true,
       isOwner: true,
     });
-
     expect(result.awardedQuote).toBeUndefined();
   });
 
   it("calculates budget and lowest-bid variances for every supplier", () => {
     const result = buildCommercialIntelligence({
       quoteList: [
-        createQuote({
-          id: "lowest-quote",
-          amount: 90_000,
-        }),
-        createQuote({
-          id: "higher-quote",
-          amount: 115_000,
-        }),
+        createQuote({ id: "lowest-quote", amount: 90_000 }),
+        createQuote({ id: "higher-quote", amount: 115_000 }),
       ],
       budget: 100_000,
       commercialEvaluationUnlocked: true,
       isOwner: true,
     });
 
-    const lowestQuote = result.scoredQuotes.find(
-      (quote) => quote.id === "lowest-quote",
-    );
-
-    const higherQuote = result.scoredQuotes.find(
-      (quote) => quote.id === "higher-quote",
-    );
+    const lowestQuote = result.scoredQuotes.find((quote) => quote.id === "lowest-quote");
+    const higherQuote = result.scoredQuotes.find((quote) => quote.id === "higher-quote");
 
     expect(lowestQuote).toMatchObject({
       amountNumber: 90_000,
       budgetVariance: -10_000,
       lowestBidVariance: 0,
     });
-
     expect(higherQuote).toMatchObject({
       amountNumber: 115_000,
       budgetVariance: 15_000,
@@ -252,11 +302,7 @@ describe("buildCommercialIntelligence", () => {
   it("calculates potential savings against the recommended supplier", () => {
     const result = buildCommercialIntelligence({
       quoteList: [
-        createQuote({
-          id: "recommended-quote",
-          amount: 90_000,
-          timeline: "6 months",
-        }),
+        createQuote({ id: "recommended-quote", amount: 90_000, timeline: "6 months" }),
         createQuote({
           id: "higher-quote",
           amount: 110_000,
@@ -278,14 +324,8 @@ describe("buildCommercialIntelligence", () => {
   it("returns zero potential savings when recommendation visibility is unavailable", () => {
     const result = buildCommercialIntelligence({
       quoteList: [
-        createQuote({
-          id: "quote-1",
-          amount: 90_000,
-        }),
-        createQuote({
-          id: "quote-2",
-          amount: 110_000,
-        }),
+        createQuote({ id: "quote-1", amount: 90_000 }),
+        createQuote({ id: "quote-2", amount: 110_000 }),
       ],
       budget: 120_000,
       commercialEvaluationUnlocked: true,
@@ -298,15 +338,8 @@ describe("buildCommercialIntelligence", () => {
   });
 
   it("preserves input order when suppliers have equal total scores", () => {
-    const firstQuote = createQuote({
-      id: "first-quote",
-      company_id: "first-company",
-    });
-
-    const secondQuote = createQuote({
-      id: "second-quote",
-      company_id: "second-company",
-    });
+    const firstQuote = createQuote({ id: "first-quote", company_id: "first-company" });
+    const secondQuote = createQuote({ id: "second-quote", company_id: "second-company" });
 
     const result = buildCommercialIntelligence({
       quoteList: [firstQuote, secondQuote],
@@ -319,15 +352,11 @@ describe("buildCommercialIntelligence", () => {
       "first-quote",
       "second-quote",
     ]);
-
     expect(result.scoredQuotes.map((quote) => quote.rank)).toEqual([1, 2]);
   });
 
   it("uses thirty days as the default quote-validity period", () => {
-    const quoteWithoutValidity = createQuote({
-      validity_days: null,
-    });
-
+    const quoteWithoutValidity = createQuote({ validity_days: null });
     const quoteWithThirtyDayValidity = createQuote({
       id: "thirty-day-quote",
       validity_days: 30,
@@ -339,7 +368,6 @@ describe("buildCommercialIntelligence", () => {
       commercialEvaluationUnlocked: true,
       isOwner: true,
     });
-
     const resultWithThirtyDays = buildCommercialIntelligence({
       quoteList: [quoteWithThirtyDayValidity],
       budget: 110_000,
@@ -371,6 +399,7 @@ describe("buildCommercialIntelligence", () => {
     });
   });
 });
+
 describe("isRfqCommercialOpeningUnlocked", () => {
   const deadline = "2026-09-22T20:00:00.000Z";
 
@@ -385,10 +414,7 @@ describe("isRfqCommercialOpeningUnlocked", () => {
 
   it("keeps commercial evaluation locked at the exact submission deadline", () => {
     expect(
-      isRfqCommercialOpeningUnlocked({
-        deadline,
-        now: new Date(deadline),
-      }),
+      isRfqCommercialOpeningUnlocked({ deadline, now: new Date(deadline) }),
     ).toBe(false);
   });
 

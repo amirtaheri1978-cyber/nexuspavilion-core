@@ -9,6 +9,7 @@ type RFQExecutiveActionsProps = {
   canSubmitQuote: boolean;
   hasCompany: boolean;
   hasMyQuote: boolean;
+  quoteRequiresReview: boolean;
   deadlinePassed: boolean;
   commercialEvaluationUnlocked: boolean;
 };
@@ -43,7 +44,10 @@ function buildIssuerLifecycleStages(): LifecycleStage[] {
 function buildRespondentLifecycleStages(
   rfqSlug: string,
   canSubmitQuote: boolean,
+  quoteRequiresReview: boolean,
 ): LifecycleStage[] {
+  const quoteActionAvailable = canSubmitQuote || quoteRequiresReview;
+
   return [
     {
       label: "RFQ Review & Scoping",
@@ -54,11 +58,11 @@ function buildRespondentLifecycleStages(
       href: "#clarifications-addenda",
     },
     {
-      label: "Quote Preparation",
-      href: canSubmitQuote
+      label: quoteRequiresReview ? "Quote Review & Reconfirmation" : "Quote Preparation",
+      href: quoteActionAvailable
         ? `/rfq/${rfqSlug}/submit`
         : "#quote-intelligence",
-      external: canSubmitQuote,
+      external: quoteActionAvailable,
     },
     {
       label: "Submission & Award Tracking",
@@ -90,12 +94,17 @@ export function RFQExecutiveActions({
   canSubmitQuote,
   hasCompany,
   hasMyQuote,
+  quoteRequiresReview,
   deadlinePassed,
   commercialEvaluationUnlocked,
 }: RFQExecutiveActionsProps) {
   const lifecycleStages = isOwner
     ? buildIssuerLifecycleStages()
-    : buildRespondentLifecycleStages(rfqSlug, canSubmitQuote);
+    : buildRespondentLifecycleStages(
+        rfqSlug,
+        canSubmitQuote,
+        quoteRequiresReview,
+      );
 
   return (
     <ExecutivePanel
@@ -142,6 +151,13 @@ export function RFQExecutiveActions({
           />
         ) : null}
 
+        {!isOwner && quoteRequiresReview ? (
+          <ExecutiveActionLink
+            href={`/rfq/${rfqSlug}/submit`}
+            label="Review and reconfirm quote"
+          />
+        ) : null}
+
         {isOwner && isOpen ? (
           <ExecutiveActionAnchor
             href="#supplier-invitations"
@@ -176,7 +192,14 @@ export function RFQExecutiveActions({
           </ExecutivePanel>
         ) : null}
 
-        {!isOwner && hasMyQuote ? (
+        {!isOwner && quoteRequiresReview ? (
+          <ExecutivePanel variant="operational" padding="sm" tone="gold">
+            <p className="text-sm font-black leading-6 text-amber-200">
+              Your submitted quotation requires review and reconfirmation after a
+              material RFQ amendment.
+            </p>
+          </ExecutivePanel>
+        ) : !isOwner && hasMyQuote ? (
           <ExecutivePanel variant="operational" padding="sm" tone="success">
             <p className="text-sm font-black leading-6 text-emerald-300">
               Your company has submitted a quote.
