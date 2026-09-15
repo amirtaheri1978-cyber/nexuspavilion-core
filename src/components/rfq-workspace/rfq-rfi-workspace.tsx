@@ -20,6 +20,7 @@ type PrivateRfi = {
 type RFQRfiWorkspaceProps = {
   rfqId: string;
   isOwner: boolean;
+  canParticipate?: boolean;
   rfiDeadline?: string | null;
   rfiDeadlineTimezone?: string | null;
 };
@@ -77,6 +78,7 @@ function getDeadlineAwarenessPresentation(
 export function RFQRfiWorkspace({
   rfqId,
   isOwner,
+  canParticipate = true,
   rfiDeadline = null,
   rfiDeadlineTimezone = null,
 }: RFQRfiWorkspaceProps) {
@@ -182,7 +184,7 @@ export function RFQRfiWorkspace({
   ) {
     event.preventDefault();
 
-    if (isOwner || submitting || deadlineClosed) return;
+    if (isOwner || submitting || deadlineClosed || !canParticipate) return;
 
     if (!question.trim()) {
       setValidationTarget("question");
@@ -224,7 +226,7 @@ export function RFQRfiWorkspace({
   }
 
   async function handleAnswerRfi(rfiId: string) {
-    if (!isOwner || answeringId) return;
+    if (!isOwner || answeringId || !canParticipate) return;
 
     const responseText = (responseDrafts[rfiId] || "").trim();
 
@@ -342,7 +344,7 @@ export function RFQRfiWorkspace({
         </div>
       ) : null}
 
-      {!isOwner ? (
+      {!isOwner && canParticipate ? (
         <form
           onSubmit={handleSubmitQuestion}
           className="mt-7 min-w-0 border-t border-white/10 pt-7"
@@ -458,7 +460,7 @@ export function RFQRfiWorkspace({
                   </div>
                 ) : null}
 
-                {isOwner && rfi.status === "open" ? (
+                {isOwner && canParticipate && rfi.status === "open" ? (
                   <div className="mt-5 min-w-0 border-t border-white/10 pt-4">
                     <label className="grid min-w-0 gap-2 text-xs font-black uppercase tracking-[0.18em] text-nexus-muted">
                       Response

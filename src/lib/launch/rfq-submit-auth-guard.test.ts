@@ -124,7 +124,9 @@ describe("anonymous RFQ submit auth continuation", () => {
   });
 
   it("keeps authenticated submit on the existing quote workspace and POST /api/quotes", () => {
-    expect(submitPage).toContain("<RfqSubmitWorkspace slug={slug} initialRfq={submitRfq} />");
+    expect(submitPage).toMatch(
+      /<RfqSubmitWorkspace[\s\S]*?slug=\{slug\}[\s\S]*?initialRfq=\{submitRfq\}[\s\S]*?initialQuote=\{initialQuote\}[\s\S]*?\/>/,
+    );
     expect(submitPage).toContain("canRespondToRfqSourcing");
     expect(submitPage).toContain("resolveRfqParticipantRole");
     expect(submitPage).toContain("data-rfq-submit-access-blocked={reason}");
@@ -133,7 +135,9 @@ describe("anonymous RFQ submit auth continuation", () => {
     expect(submitWorkspace).toContain('"use client"');
     expect(submitWorkspace).toContain('data-rfq-submit-workspace="true"');
     expect(submitWorkspace).toContain('fetch("/api/quotes"');
-    expect(submitWorkspace).toContain('method: "POST"');
+    expect(submitWorkspace).toContain(
+      'method: isResubmission ? "PATCH" : "POST"',
+    );
     expect(submitPage).not.toContain("getProcurementContext(");
     expect(submitPage).not.toContain("canSubmitCompanyQuote");
     expect(submitPage).not.toContain("bootstrap_owned_company_workspace");
@@ -141,9 +145,7 @@ describe("anonymous RFQ submit auth continuation", () => {
 
   it("aligns submit-page UX with existing RFQ sourcing access before rendering the form", () => {
     const profileGateIndex = submitPage.indexOf("if (!profile?.company_id)");
-    const rfqLookupIndex = submitPage.indexOf(
-      '.select("id, slug, company_id, sourcing_method, title, deadline, deadline_timezone, status, awarded_quote_id, awarded_at")',
-    );
+    const rfqLookupIndex = submitPage.indexOf('.from("rfqs")');
     const participantRoleIndex = submitPage.indexOf(
       "const participantRole = resolveRfqParticipantRole",
     );
@@ -154,10 +156,11 @@ describe("anonymous RFQ submit auth continuation", () => {
     );
     const sourcingBlockIndex = submitPage.indexOf('reason="sourcing"');
     const submitRfqIndex = submitPage.indexOf("const submitRfq = {");
-    const workspaceIndex = submitPage.indexOf(
-      "<RfqSubmitWorkspace slug={slug} initialRfq={submitRfq} />",
-    );
+    const workspaceIndex = submitPage.indexOf("<RfqSubmitWorkspace");
 
+    expect(submitPage).toContain(
+      '"id, slug, company_id, sourcing_method, title, deadline, deadline_timezone, status, awarded_quote_id, awarded_at"',
+    );
     expect(rfqLookupIndex).toBeGreaterThan(profileGateIndex);
     expect(participantRoleIndex).toBeGreaterThan(rfqLookupIndex);
     expect(issuerBlockIndex).toBeGreaterThan(participantRoleIndex);

@@ -319,8 +319,8 @@ describe("issuer quote SELECT commercial unlock migration", () => {
     expect(detail).toContain(
       'supabase.rpc("count_rfq_quote_submissions", { p_rfq_id: rfq.id })',
     );
-    expect(detail).toContain(
-      '.eq("company_id", profile.company_id)',
+    expect(detail).toMatch(
+      /\.eq\("company_id",\s*profile!?\s*\.company_id!?\)/,
     );
     expect(detail).toContain("shouldEnforceBlindBidding");
     expect(detail).toContain("submissionCount={quoteCount}");
@@ -343,8 +343,8 @@ describe("issuer quote SELECT commercial unlock migration", () => {
     expect(compare).toContain("if (commercialEvaluationUnlocked)");
     expect(compare).toContain('.from("quotes")');
     expect(compare).toContain('.select("*")');
-    expect(compare).toContain(
-      'rpc(\n"count_rfq_quote_submissions"',
+    expect(compare).toMatch(
+      /rpc\(\s*"count_rfq_quote_submissions"/,
     );
     expect(compare).toContain("value={`${quoteCount} received`}");
     expect(compare).toContain(
@@ -367,10 +367,13 @@ describe("issuer quote SELECT commercial unlock migration", () => {
     expect(detail).toContain("quoteList,");
     expect(compare).toContain("buildCommercialIntelligence({");
     expect(commercialIntelligence).toContain(
-      "const scoredQuotesUnranked = commercialEvaluationUnlocked",
+      "const decisionReadyScoredQuotes = rankScoredQuotes(",
+    );
+    expect(commercialIntelligence).toContain(
+      "const reviewRequiredScoredQuotes = rankScoredQuotes(",
     );
     expect(compare.indexOf("supplierCompanyIds")).toBeGreaterThan(
-      compare.indexOf("quoteList = (quotes ?? []) as Quote[]"),
+      compare.indexOf("quoteList = attachQuoteMaterialRevalidationState({"),
     );
   });
 
@@ -384,7 +387,10 @@ describe("issuer quote SELECT commercial unlock migration", () => {
       "getSupplierEvaluationScore({",
     );
     expect(commercialIntelligence).toContain(
-      "rankScoredQuotes(scoredQuotesUnranked)",
+      "const decisionReadyScoredQuotes = rankScoredQuotes(",
+    );
+    expect(commercialIntelligence).toContain(
+      "const reviewRequiredScoredQuotes = rankScoredQuotes(",
     );
     expect(compare).toContain("<RfqQuoteComparison");
   });

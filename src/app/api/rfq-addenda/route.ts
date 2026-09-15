@@ -3,6 +3,7 @@ import { createHash } from "node:crypto";
 import { NextResponse } from "next/server";
 
 import { getActiveMembershipForUserCompany } from "@/lib/auth/membership";
+import { resolveRfqDeadlineForStorage } from "@/lib/datetime/local-date-time-to-utc";
 import { sendEmail } from "@/lib/email/send-email";
 import { buildRfqAddendumEmail } from "@/lib/email/templates/rfq-addendum-email";
 import { joinPublicSitePath } from "@/lib/ops/public-site-url";
@@ -34,6 +35,22 @@ type AmendmentRpcResult = {
   error_message?: string;
   addendum_id?: string;
 };
+
+function governedAmendmentStatus(errorCode: string | undefined) {
+  if (errorCode === "UNAUTHENTICATED") return 401;
+  if (errorCode === "FORBIDDEN") return 403;
+  if (errorCode === "RFQ_NOT_FOUND") return 404;
+  if (errorCode?.startsWith("INVALID_")) return 400;
+  if (
+    errorCode === "CANCEL_REISSUE_REQUIRED" ||
+    errorCode === "RFQ_NOT_AMENDABLE" ||
+    errorCode === "COMMERCIAL_OPENING_UNLOCKED" ||
+    errorCode === "NO_CHANGES"
+  ) {
+    return 409;
+  }
+  return 409;
+}
 
 function hashAddendumEmailRecipient(recipientEmail: string) {
   return createHash("sha256").update(recipientEmail).digest("hex");
@@ -493,6 +510,49 @@ export async function POST(request: Request) {
       );
     }
 
+    const hasDeadline = Object.prototype.hasOwnProperty.call(
+      governedChanges,
+      "deadline",
+    );
+    const hasDeadlineTimezone = Object.prototype.hasOwnProperty.call(
+      governedChanges,
+      "deadline_timezone",
+    );
+
+    if (hasDeadline !== hasDeadlineTimezone) {
+      return NextResponse.json(
+        {
+          error_code: "INVALID_DEADLINE",
+          error:
+            "Submission deadline and deadline timezone must be provided together.",
+        },
+        { status: 400 },
+      );
+    }
+
+    if (hasDeadline && hasDeadlineTimezone) {
+      try {
+        const resolvedDeadline = resolveRfqDeadlineForStorage({
+          deadline: normalizeText(governedChanges.deadline),
+          deadline_timezone: governedChanges.deadline_timezone,
+        });
+
+        governedChanges.deadline = resolvedDeadline.deadline;
+        governedChanges.deadline_timezone = resolvedDeadline.deadline_timezone;
+      } catch (deadlineError) {
+        return NextResponse.json(
+          {
+            error_code: "INVALID_DEADLINE",
+            error:
+              deadlineError instanceof Error
+                ? deadlineError.message
+                : "Invalid submission deadline or timezone.",
+          },
+          { status: 400 },
+        );
+      }
+    }
+
     const { data: rpcData, error: rpcError } = await supabase.rpc(
       "amend_published_rfq",
       {
@@ -507,24 +567,32 @@ export async function POST(request: Request) {
     );
     const result = rpcData as AmendmentRpcResult | null;
 
-    if (rpcError || !result?.success || !result.addendum_id) {
-      const status =
-        result?.error_code === "UNAUTHENTICATED"
-          ? 401
-          : result?.error_code === "FORBIDDEN"
-            ? 403
-            : result?.error_code === "RFQ_NOT_FOUND"
-              ? 404
-              : 409;
+    if (result && !result.success) {
+      const status = governedAmendmentStatus(result.error_code);
+      const safeErrorMessage = result.error_message;
 
       return NextResponse.json(
         {
-          error:
-            result?.error_message ||
-            rpcError?.message ||
-            "Failed to amend published RFQ.",
+          error_code: result.error_code,
+          error: safeErrorMessage || "Published RFQ amendment was rejected.",
         },
         { status },
+      );
+    }
+
+    if (rpcError || !result?.success || !result.addendum_id) {
+      reportCriticalApiFailure({
+        domain: "addendum",
+        operation: "create",
+        failureStage: "amendment_rpc",
+        route: "/api/rfq-addenda",
+        method: "POST",
+        error: rpcError ?? new Error("AmendmentRpcResultMissing"),
+      });
+
+      return NextResponse.json(
+        { error: "Failed to amend published RFQ." },
+        { status: 500 },
       );
     }
 

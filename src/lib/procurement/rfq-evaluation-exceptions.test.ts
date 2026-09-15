@@ -83,10 +83,10 @@ describe("Master Plan 8-09 evaluation exception lifecycle contract", () => {
 
   it("keeps respondent quote access limited to its own organization and excludes issuer evaluation computation", () => {
     expect(normalizedDetailPage).toContain(
-      "!isowner && profile?.company_id ? supabase .from(\"quotes\")",
+      "const loadrespondentquoterows = !isowner && boolean(profile?.company_id);",
     );
     expect(normalizedDetailPage).toContain(
-      '.eq("company_id", profile.company_id)',
+      '.eq("company_id", profile!.company_id!)',
     );
     expect(normalizedDetailPage).toContain(
       "} = isowner ? buildcommercialintelligence({",

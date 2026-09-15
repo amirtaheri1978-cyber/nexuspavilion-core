@@ -61,7 +61,18 @@ describe("Task 24-RFQ-08 document workspace density", () => {
     expect(documents).toContain("RFQDocumentLibrary");
     expect(documents).toContain("RFQAddendaManager");
     expect(documents).toContain("RFQAddendumAcknowledgementCenter");
-    expect(documents).toContain("canManage={isOwner}");
+    expect(documents).toContain("canManage={canManagePackage}");
+    expect(documents).toContain("{isOwner ? (");
+    expect(documents).toContain(
+      'isOwner && canManageIssuerActions && lifecycleStatus === "open"',
+    );
+    expect(documents).toContain(
+      'lifecycleStatus === "open" && (!isOwner || canManageIssuerActions)',
+    );
+    expect(documents).toContain("canManageIssuerActions = false");
+    expect(detail).toContain(
+      "canManageIssuerActions={canManageLifecycle}",
+    );
     expect(documents).toContain("Issuing Organization");
     expect(documents).toContain("Responding Organization");
     expect(documents).toContain("ExecutiveBadge");
@@ -71,7 +82,7 @@ describe("Task 24-RFQ-08 document workspace density", () => {
     expect(upload).toContain("rfq-documents-updated");
     expect(upload).not.toContain("fileUrl");
     expect(upload).not.toContain("createSignedUrl");
-    expect(library).toContain(".from(\"rfq_attachments\")");
+    expect(library).toContain("/api/rfq-attachments?rfqId=");
     expect(library).toContain(".from(\"rfq-attachments\")");
     expect(library).toContain("createSignedUrl");
     expect(library).toContain("window.confirm");
@@ -204,7 +215,7 @@ describe("Task 24-RFQ-08 document workspace density", () => {
     );
 
     expect(detail).toMatch(
-      /\.from\("rfq_addenda"\)\s*\.select\(\s*"id, title, description, addendum_number, affected_documents, requires_acknowledgement, created_at",\s*\)/,
+      /\.from\("rfq_addenda"\)\s*\.select\(\s*"id, title, description, addendum_number, affected_documents, requires_acknowledgement, affected_fields, amendment_before, amendment_after, amendment_reason, created_at",\s*\)/,
     );
 
     expect(detail).toMatch(

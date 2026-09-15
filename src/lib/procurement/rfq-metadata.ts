@@ -99,12 +99,14 @@ export function getBlindBiddingMessage(rfq: RfqMetadata): string {
 
 export function getRFQStatusClass(status: string | null): string {
   if (status === "awarded") return "bg-green-100 text-green-700";
+  if (status === "cancelled") return "bg-red-100 text-red-700";
   if (status === "closed") return "bg-slate-200 text-slate-600";
   return "bg-orange-100 text-orange-700";
 }
 
 export function getRFQStatusLabel(status: string | null): string {
   if (status === "awarded") return "Awarded";
+  if (status === "cancelled") return "Cancelled";
   if (status === "closed") return "Closed";
   return "Open";
 }

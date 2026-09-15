@@ -28,6 +28,7 @@ type RFQDocumentWorkspaceProps = {
   companyId: string | null;
   rfqStatus?: string | null;
   isOwner: boolean;
+  canManageIssuerActions?: boolean;
   canAcknowledge?: boolean;
   rfiDeadline?: string | null;
   rfiDeadlineTimezone?: string | null;
@@ -45,6 +46,7 @@ export function RFQDocumentWorkspace({
   companyId,
   rfqStatus = "open",
   isOwner,
+  canManageIssuerActions = false,
   canAcknowledge = true,
   rfiDeadline = null,
   rfiDeadlineTimezone = null,
@@ -54,6 +56,11 @@ export function RFQDocumentWorkspace({
   addenda,
   acknowledgements,
 }: RFQDocumentWorkspaceProps) {
+  const lifecycleStatus = rfqStatus || "open";
+  const canManagePackage =
+    isOwner && canManageIssuerActions && lifecycleStatus === "open";
+  const canUseActiveRfiControls =
+    lifecycleStatus === "open" && (!isOwner || canManageIssuerActions);
   const participantRoleLabel = isOwner
     ? "Issuing Organization"
     : "Responding Organization";
@@ -127,13 +134,13 @@ export function RFQDocumentWorkspace({
         <RFQDocumentRequirements
           rfqId={rfqId}
           rfqStatus={rfqStatus}
-          canManage={isOwner}
+          canManage={canManagePackage}
           initialRequirements={documentRequirements}
           initialDocuments={documents}
           initialUnavailableReason={documentCoverageUnavailableReason}
         />
 
-        {isOwner && companyId ? (
+        {canManagePackage && companyId ? (
           <section
             className="mt-8 min-w-0 border-t border-white/10 pt-8"
             aria-labelledby="rfq-document-upload-title"
@@ -256,7 +263,7 @@ export function RFQDocumentWorkspace({
             rfqId={rfqId}
             rfqStatus={rfqStatus}
             initialDocuments={documents}
-            canManage={isOwner}
+            canManage={canManagePackage}
           />
         </section>
 
@@ -289,15 +296,16 @@ export function RFQDocumentWorkspace({
             <RFQRfiWorkspace
               rfqId={rfqId}
               isOwner={isOwner}
+              canParticipate={canUseActiveRfiControls}
               rfiDeadline={rfiDeadline}
               rfiDeadlineTimezone={rfiDeadlineTimezone}
             />
 
-            {isOwner && companyId ? (
+            {isOwner ? (
               <RFQAddendaManager
                 rfqId={rfqId}
                 initialAddenda={addenda}
-                canManage
+                canManage={canManagePackage}
               />
             ) : (
               <RFQAddendumAcknowledgementCenter

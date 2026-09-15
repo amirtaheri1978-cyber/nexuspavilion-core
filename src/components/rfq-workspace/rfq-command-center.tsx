@@ -33,7 +33,7 @@ type RFQCommandCenterHandoff = {
 type RFQCommandCenterProps = {
   backHref?: string;
   statusLabel: string;
-  statusTone?: "success" | "warning" | "neutral" | "live" | "awarded" | "locked";
+  statusTone?: "success" | "warning" | "neutral" | "live" | "awarded" | "locked" | "risk";
   statusClassName?: string;
   classificationBadges: string[];
   title: string;

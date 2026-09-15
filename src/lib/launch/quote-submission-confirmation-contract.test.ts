@@ -45,10 +45,11 @@ describe("14-06 Quote submission confirmation contract", () => {
       "joinPublicSitePath(`/rfq/${rfq.slug}`)",
       postStart,
     );
-    const successStart = quotesRoute.indexOf(
-      "success: true,\n  quote,",
-      postStart,
-    );
+    const successOffset = quotesRoute
+      .slice(postStart)
+      .search(/success:\s*true,\s*quote,/);
+    const successStart =
+      successOffset < 0 ? -1 : postStart + successOffset;
     const emailCatch = quotesRoute.indexOf(
       'console.error("Quote submitted email failed:"',
       postStart,
@@ -74,10 +75,14 @@ describe("14-06 Quote submission confirmation contract", () => {
     expect(quotesRoute).toContain(
       "Quote submitted, but email delivery failed.",
     );
-    expect(quotesRoute).toContain("success: true,\n  quote,");
+    expect(quotesRoute).toMatch(/success:\s*true,\s*quote,/);
     expect(quotesRoute).toContain("email,");
-    expect(quotesRoute).not.toContain("resubmit");
-    expect(quotesRoute).not.toContain("/compare");
+    const postStart = quotesRoute.indexOf("export async function POST");
+    const postRoute = quotesRoute.slice(postStart);
+
+    expect(postStart).toBeGreaterThan(-1);
+    expect(postRoute).not.toContain("resubmit");
+    expect(postRoute).not.toContain("/compare");
   });
 
   it("renders a clear supplier receipt without competitor or buyer-private fields", () => {

@@ -35,7 +35,8 @@ describe("Task 16-02 RFQ page query audit", () => {
   });
 
   it("folds conditional RFI deadline parsing into the RFQ detail parallel batch", () => {
-    const loadStart = detail.indexOf("const [\nquotesResult,");
+    const quotesResultIndex = detail.indexOf("quotesResult,");
+    const loadStart = detail.lastIndexOf("const [", quotesResultIndex);
     const parseResultIndex = detail.indexOf(
       "parsedRfiDeadlineResult,",
       loadStart,
@@ -62,8 +63,8 @@ describe("Task 16-02 RFQ page query audit", () => {
   it("reuses the server RFQ row in the submit workspace instead of rereading it in the browser", () => {
     expect(submitPage).toContain("deadline_timezone");
     expect(submitPage).toContain("awarded_quote_id");
-    expect(submitPage).toContain(
-      "<RfqSubmitWorkspace slug={slug} initialRfq={submitRfq} />",
+    expect(submitPage).toMatch(
+      /<RfqSubmitWorkspace[\s\S]*?slug=\{slug\}[\s\S]*?initialRfq=\{submitRfq\}[\s\S]*?initialQuote=\{initialQuote\}[\s\S]*?\/>/,
     );
 
     expect(submitWorkspace).toContain("initialRfq: RfqStatus;");

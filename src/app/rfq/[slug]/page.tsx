@@ -25,7 +25,10 @@ import {
   canExposeRfqBuyerExecutiveIntelligence,
   selectRfqDetailCommandMetrics,
 } from "@/lib/procurement/rfq-detail-intelligence-boundary";
-import { canInviteCompanySuppliers } from "@/lib/procurement/procurement-write-authorization";
+import {
+  canCreateCompanyRfq,
+  canInviteCompanySuppliers,
+} from "@/lib/procurement/procurement-write-authorization";
 import {
   getExecutiveRiskMatrix,
   getHealthLabel,
@@ -97,6 +100,7 @@ import { RFQExecutiveActions } from "@/components/rfq-workspace/rfq-executive-ac
 import { RFQProcurementContext } from "@/components/rfq-workspace/rfq-procurement-context";
 import { RFQScopeReview } from "@/components/rfq-workspace/rfq-scope-review";
 import { RFQDocumentWorkspace } from "@/components/rfq-workspace/rfq-document-workspace";
+import { RFQLifecycleGovernance } from "@/components/rfq-workspace/rfq-lifecycle-governance";
 import { RFQQuoteWorkspace } from "@/components/rfq-workspace/rfq-quote-workspace";
 import { RFQRecommendedAwardPath } from "@/components/rfq-workspace/rfq-recommended-award-path";
 import {
@@ -136,6 +140,17 @@ type RFQ = {
   contract_framework: ContractFramework | null;
   awarded_quote_id: string | null;
   awarded_at: string | null;
+  cancelled_at?: string | null;
+  cancellation_reason?: string | null;
+  cancelled_by_user_id?: string | null;
+  reissued_from_rfq_id?: string | null;
+};
+
+type ReplacementRfq = {
+  id: string;
+  slug: string;
+  title: string | null;
+  status: string | null;
 };
 
 const RIGHT_TO_REJECT_NOTICE =
@@ -295,6 +310,22 @@ export default async function RFQDetailPage({ params }: PageProps) {
   }
 
   const rfqStatus = String(rfq.status || "open");
+  const canManageLifecycle = canCreateCompanyRfq(
+    sourcingMembership,
+    rfq.company_id ?? "",
+  );
+  const replacementResult =
+    isOwner && rfqStatus === "cancelled"
+      ? await supabase
+          .from("rfqs")
+          .select("id, slug, title, status")
+          .eq("reissued_from_rfq_id", rfq.id)
+          .maybeSingle()
+      : { data: null, error: null };
+  const replacementRfq = replacementResult.error
+    ? null
+    : (replacementResult.data as ReplacementRfq | null);
+  const replacementLookupUnavailable = Boolean(replacementResult.error);
   const commercialEvaluationUnlocked = isRfqCommercialOpeningUnlocked({
     deadline: rfq.deadline,
   });
@@ -766,14 +797,18 @@ export default async function RFQDetailPage({ params }: PageProps) {
       <div className={`${EXECUTIVE_PAGE_CLASS} min-w-0`}>
         <RFQCommandCenter
           statusLabel={
-            rfqStatus === "awarded"
+            rfqStatus === "cancelled"
               ? getRFQStatusLabel(rfq.status)
-              : deadlinePassed
-                ? "Submission Closed"
-                : getRFQStatusLabel(rfq.status)
+              : rfqStatus === "awarded"
+                ? getRFQStatusLabel(rfq.status)
+                : deadlinePassed
+                  ? "Submission Closed"
+                  : getRFQStatusLabel(rfq.status)
           }
           statusTone={
-            rfqStatus === "awarded"
+            rfqStatus === "cancelled"
+              ? "risk"
+              : rfqStatus === "awarded"
               ? "awarded"
               : deadlinePassed || rfqStatus === "closed"
                 ? "locked"
@@ -957,6 +992,22 @@ export default async function RFQDetailPage({ params }: PageProps) {
           <RFQGovernanceNotice reservationNotice={RIGHT_TO_REJECT_NOTICE} />
         </section>
 
+        {isOwner ? (
+          <RFQLifecycleGovernance
+            rfqId={rfq.id}
+            canManage={canManageLifecycle}
+            status={rfqStatus}
+            deadline={rfq.deadline}
+            deadlineTimezone={rfq.deadline_timezone ?? null}
+            commercialEvaluationUnlocked={commercialEvaluationUnlocked}
+            awarded={Boolean(rfq.awarded_quote_id || rfq.awarded_at)}
+            cancelledAt={rfq.cancelled_at ?? null}
+            cancellationReason={rfq.cancellation_reason ?? null}
+            replacementRfq={replacementRfq}
+            replacementLookupUnavailable={replacementLookupUnavailable}
+          />
+        ) : null}
+
         {canViewBuyerExecutiveIntelligence ? (
           <>
             {capabilities.canViewExecutiveIntelligence ? (
@@ -1055,7 +1106,7 @@ export default async function RFQDetailPage({ params }: PageProps) {
           />
         ) : null}
 
-        {canInviteSuppliers ? (
+        {canInviteSuppliers && rfqStatus === "open" ? (
           <ExecutivePanel
             id="supplier-invitations"
             className="mt-8 min-w-0 scroll-mt-24 @container lg:scroll-mt-0"
@@ -1091,6 +1142,7 @@ export default async function RFQDetailPage({ params }: PageProps) {
           companyId={rfq.company_id}
           rfqStatus={rfq.status}
           isOwner={isOwner}
+          canManageIssuerActions={canManageLifecycle}
           canAcknowledge={isOpen}
           rfiDeadline={effectiveRfiDeadline}
           rfiDeadlineTimezone={effectiveRfiDeadlineTimezone}

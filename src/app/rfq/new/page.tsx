@@ -2,8 +2,8 @@
 
 import DeadlineField from "@/components/deadline-field";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useMemo, useState, type ReactNode } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useMemo, useState, type ReactNode } from "react";
 import {
   RfqPublicationReadinessReview,
   type RfqPublicationReviewSection,
@@ -232,8 +232,10 @@ value: T
 return options.find((item) => item.value === value)?.label || "Pending";
 }
 
-export default function NewRFQPage() {
+function NewRFQPageContent() {
 const router = useRouter();
+const searchParams = useSearchParams();
+const reissueFrom = searchParams.get("reissueFrom")?.trim() || "";
 
 const [activeStep, setActiveStep] = useState<WizardStep>(0);
 const [loading, setLoading] = useState(false);
@@ -594,6 +596,7 @@ safety_requirements: formData.safety_requirements.trim(),
 prequalification_notes: formData.prequalification_notes.trim(),
 advanced_controls_enabled: formData.advanced_controls_enabled,
 ready_to_publish_acknowledged: readyToPublishAcknowledged,
+...(reissueFrom ? { reissued_from_rfq_id: reissueFrom } : {}),
 }),
 });
 
@@ -656,6 +659,21 @@ className="inline-flex rounded-full border border-white/10 bg-white/[0.045] px-5
 </Link>
 
 <section className="mt-6 rounded-[38px] border border-white/10 bg-white/[0.045] p-6 shadow-[0_32px_110px_rgba(0,0,0,0.42)] backdrop-blur-2xl sm:p-8 lg:p-10">
+{reissueFrom ? (
+<div
+className="mb-8 rounded-[28px] border border-[#C8A646]/30 bg-[#C8A646]/10 p-5"
+data-rfq-replacement-procurement="true"
+>
+<p className="np-type-eyebrow text-[#F5D77B]">
+Replacement Procurement
+</p>
+<p className="np-type-body mt-3 max-w-4xl text-slate-200">
+This wizard creates a new RFQ identity. Quotes, invitations, Addenda,
+acknowledgements, evaluations, and award state are not carried forward.
+Only governed lineage to the cancelled predecessor is recorded.
+</p>
+</div>
+) : null}
 <div className="flex flex-col gap-8 xl:flex-row xl:items-start xl:justify-between">
 <div>
 <p className="np-type-eyebrow text-[#C8A646]">
@@ -1614,6 +1632,14 @@ Executive Procurement Intelligence
 </div>
 )}
 </main>
+);
+}
+
+export default function NewRFQPage() {
+return (
+<Suspense fallback={null}>
+<NewRFQPageContent />
+</Suspense>
 );
 }
 

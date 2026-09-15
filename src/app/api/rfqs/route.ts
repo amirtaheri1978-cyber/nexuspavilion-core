@@ -98,6 +98,196 @@ if (value === "framework") return "Master / Framework RFQ";
 return "Project-Specific RFQ";
 }
 
+type CancelRfqRpcResult = {
+success?: boolean;
+error_code?: string;
+error_message?: string;
+rfq_id?: string;
+cancelled_at?: string;
+};
+
+function cancellationStatus(errorCode: string | undefined) {
+if (errorCode === "UNAUTHENTICATED") return 401;
+if (errorCode === "FORBIDDEN") return 403;
+if (errorCode === "RFQ_NOT_FOUND") return 404;
+if (errorCode?.startsWith("INVALID_")) return 400;
+return 409;
+}
+
+function isPlainJsonObject(value: unknown): value is Record<string, unknown> {
+return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
+function isRfqReissueLineageConflict(error: unknown) {
+if (!isPlainJsonObject(error)) return false;
+
+const code = normalizeText(error.code);
+const message = normalizeText(error.message);
+const details = normalizeText(error.details);
+const hint = normalizeText(error.hint);
+const databaseText = `${message}\n${details}\n${hint}`;
+
+if (
+code === "23503" &&
+(
+message === "Reissue source RFQ was not found." ||
+databaseText.includes("rfqs_reissued_from_rfq_id_fkey")
+)
+) {
+return true;
+}
+
+if (
+code === "23514" &&
+(
+message === "An RFQ cannot be reissued from itself." ||
+message ===
+"A reissued RFQ must reference a cancelled, unawarded predecessor." ||
+message ===
+"A reissued RFQ must begin as a new open, unawarded procurement." ||
+databaseText.includes("rfqs_reissue_not_self_check")
+)
+) {
+return true;
+}
+
+if (
+code === "42501" &&
+message === "RFQ reissue lineage cannot cross issuing companies."
+) {
+return true;
+}
+
+return (
+code === "23505" &&
+databaseText.includes("rfqs_one_reissue_per_source_idx")
+);
+}
+
+export async function PATCH(request: Request) {
+try {
+const supabase = await createClient();
+const {
+data: { user },
+error: userError,
+} = await supabase.auth.getUser();
+
+if (userError || !user) {
+return NextResponse.json(
+{ success: false, error_code: "UNAUTHENTICATED", error: "Unauthorized." },
+{ status: 401 }
+);
+}
+
+let parsedBody: unknown;
+
+try {
+parsedBody = await request.json();
+} catch {
+return NextResponse.json(
+{ success: false, error_code: "INVALID_REQUEST", error: "A valid request body is required." },
+{ status: 400 }
+);
+}
+
+if (!isPlainJsonObject(parsedBody)) {
+return NextResponse.json(
+{ success: false, error_code: "INVALID_REQUEST", error: "A valid request body is required." },
+{ status: 400 }
+);
+}
+
+const allowedKeys = new Set(["action", "rfqId", "reason"]);
+if (Object.keys(parsedBody).some((key) => !allowedKeys.has(key))) {
+return NextResponse.json(
+{ success: false, error_code: "INVALID_REQUEST", error: "The request contains unsupported fields." },
+{ status: 400 }
+);
+}
+
+const body = parsedBody;
+
+const action = normalizeText(body.action);
+const rfqId = normalizeText(body.rfqId);
+const reason = normalizeText(body.reason);
+
+if (action !== "cancel" || !rfqId) {
+return NextResponse.json(
+{
+success: false,
+error_code: "INVALID_REQUEST",
+error: 'Action "cancel" and RFQ ID are required.',
+},
+{ status: 400 }
+);
+}
+
+if (!reason) {
+return NextResponse.json(
+{
+success: false,
+error_code: "INVALID_CANCELLATION_REASON",
+error: "A cancellation reason is required.",
+},
+{ status: 400 }
+);
+}
+
+const { data: rpcData, error: rpcError } = await supabase.rpc("cancel_rfq", {
+p_rfq_id: rfqId,
+p_reason: reason,
+});
+const result = rpcData as CancelRfqRpcResult | null;
+
+if (result && !result.success) {
+return NextResponse.json(
+{
+success: false,
+error_code: result.error_code,
+error: result.error_message || "RFQ cancellation was rejected.",
+},
+{ status: cancellationStatus(result.error_code) }
+);
+}
+
+if (rpcError || !result?.success || !result.rfq_id) {
+reportCriticalApiFailure({
+domain: "rfq",
+operation: "cancel",
+failureStage: "cancellation_rpc",
+route: "/api/rfqs",
+method: "PATCH",
+error: rpcError ?? new Error("CancelRfqRpcResultMissing"),
+});
+
+return NextResponse.json(
+{ success: false, error: "Failed to cancel RFQ." },
+{ status: 500 }
+);
+}
+
+return NextResponse.json({
+success: true,
+rfqId: result.rfq_id,
+cancelledAt: result.cancelled_at ?? null,
+});
+} catch (error) {
+reportCriticalApiFailure({
+domain: "rfq",
+operation: "cancel",
+failureStage: "outer_catch",
+route: "/api/rfqs",
+method: "PATCH",
+error,
+});
+
+return NextResponse.json(
+{ success: false, error: "Internal server error." },
+{ status: 500 }
+);
+}
+}
+
 export async function POST(request: Request) {
 try {
 const supabase = await createClient();
@@ -166,6 +356,7 @@ const category = normalizeText(body.category);
 const location = normalizeText(body.location);
 const budget = normalizeText(body.budget);
 const rawDeadline = normalizeText(body.deadline);
+const reissuedFromRfqId = normalizeText(body.reissued_from_rfq_id) || null;
 
 const requirementsCompleteness = evaluateRfqRequirements({
 title,
@@ -312,11 +503,26 @@ advanced_controls_enabled: normalizeBoolean(body.advanced_controls_enabled),
 status: "open",
 company_id: profile.company_id,
 user_id: user.id,
+reissued_from_rfq_id: reissuedFromRfqId,
 })
 .select()
 .single();
 
 if (error || !rfq) {
+if (
+reissuedFromRfqId &&
+error &&
+isRfqReissueLineageConflict(error)
+) {
+return NextResponse.json(
+{
+error:
+"This RFQ cannot be published as a replacement for the selected source RFQ.",
+},
+{ status: 409 }
+);
+}
+
 reportCriticalApiFailure({
   domain: "rfq",
   operation: "create",
@@ -327,7 +533,7 @@ reportCriticalApiFailure({
 });
 
 return NextResponse.json(
-{ error: error?.message || "Failed to create RFQ." },
+{ error: "Failed to create RFQ." },
 { status: 500 }
 );
 }
