@@ -232,6 +232,31 @@ describe("Cursor Corp 02 Slice A corporate root contract", () => {
     expect(rootPage).not.toContain("NexusPavilion Marketplace");
   });
 
+  it("renders the approved corporate vision without unsupported claims", () => {
+    const visionStart = rootPage.indexOf('id="corporate-vision"');
+    const visionEnd = rootPage.indexOf("</section>", visionStart);
+
+    expect(visionStart).toBeGreaterThan(-1);
+    expect(visionEnd).toBeGreaterThan(visionStart);
+    expect(rootPage.indexOf('id="corporate-vision"')).toBe(
+      rootPage.lastIndexOf('id="corporate-vision"'),
+    );
+    expect(visionStart).toBeGreaterThan(rootPage.indexOf('id="products-projects"'));
+
+    const vision = rootPage.slice(visionStart, visionEnd);
+
+    expect(vision).toContain("A LONGER HORIZON");
+    expect(vision).toContain(
+      "Building intelligence that earns its place in the systems people rely on.",
+    );
+    expect(vision).toContain(
+      "Progress is not capability alone. It is capability shaped by context, judgment, and consequence.",
+    );
+    expect(vision).not.toMatch(
+      /market[- ]leading|world[- ]leading|revolutionary|autonomous intelligence|sustainable|sustainability|futur(?:e|ist|ism)/i,
+    );
+  });
+
   it("uses only valid corporate routes and anchors", () => {
     expect(rootPage).toContain('href: "/about"');
     expect(rootPage).toContain('href: "/contact"');

@@ -7,6 +7,7 @@ import CorporateHeroVisual from "@/components/corporate/corporate-hero-visual";
 import CorporateIndustriesMotion from "@/components/corporate/corporate-industries-motion";
 import CorporateProductsMotion from "@/components/corporate/corporate-products-motion";
 import CorporateTechnologyMotion from "@/components/corporate/corporate-technology-motion";
+import CorporateVisionMotion from "@/components/corporate/corporate-vision-motion";
 import styles from "@/components/corporate/corporate-home.module.css";
 
 const instrumentSans = Instrument_Sans({ subsets: ["latin"], variable: "--font-corporate-display", display: "swap" });
@@ -264,6 +265,38 @@ export default function HomePage() {
           </article>
 
           <p className={styles.productsClosing}>We build products around the problem—not technology for its own sake.</p>
+        </div>
+      </section>
+
+      <section
+        id="corporate-vision"
+        className={styles.vision}
+        aria-labelledby="corporate-vision-heading"
+        data-vision-section
+      >
+        <CorporateVisionMotion />
+        <div className={styles.visionPlanes} aria-hidden="true">
+          <span />
+          <span />
+          <span />
+        </div>
+        <div className={styles.visionInner}>
+          <header className={styles.visionEditorial}>
+            <p className={styles.visionEyebrow}>A LONGER HORIZON</p>
+            <h2 id="corporate-vision-heading">Building intelligence that earns its place in the systems people rely on.</h2>
+          </header>
+
+          <div className={styles.visionBody}>
+            <span className={styles.visionMeasure} aria-hidden="true">HORIZON / 01</span>
+            <p className={styles.visionCopy}>Nexus Pavilion Inc. takes a long view of technology. We design systems to become more capable without becoming less legible; more adaptive without losing context; and more consequential without separating judgment from responsibility. Our ambition is to build products that remain useful as conditions change—because they are grounded in evidence, domain expertise, and the realities they are designed to serve.</p>
+          </div>
+
+          <div className={styles.visionHorizon} aria-hidden="true">
+            <span />
+            <i />
+          </div>
+
+          <p className={styles.visionClosing}>Progress is not capability alone. It is capability shaped by context, judgment, and consequence.</p>
         </div>
       </section>
     </main>
