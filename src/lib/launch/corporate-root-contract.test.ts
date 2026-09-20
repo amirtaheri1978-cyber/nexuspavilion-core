@@ -181,6 +181,42 @@ describe("Cursor Corp 02 Slice A corporate root contract", () => {
   it("contains the product destination anchor", () => {
     expect(rootPage).toContain('id="products-projects"');
     expect(rootPage).toContain('href="#products-projects"');
+    expect(rootPage.indexOf('id="products-projects"')).toBe(
+      rootPage.lastIndexOf('id="products-projects"'),
+    );
+    expect(rootPage.indexOf('id="products-projects"')).toBeGreaterThan(
+      rootPage.indexOf('id="industries"'),
+    );
+  });
+
+  it("renders one factual flagship product without unsupported availability claims", () => {
+    const productsStart = rootPage.indexOf('id="products-projects"');
+    const productsEnd = rootPage.indexOf("</section>", productsStart);
+
+    expect(productsStart).toBeGreaterThan(-1);
+    expect(productsEnd).toBeGreaterThan(productsStart);
+
+    const products = rootPage.slice(productsStart, productsEnd);
+
+    expect(products).toContain("FOCUSED PRODUCTS. REAL OPERATING PROBLEMS.");
+    expect(products).toContain(
+      "Purpose-built intelligence for decisions that matter.",
+    );
+    expect(products).toContain("INTELLIGENT PROCUREMENT");
+    expect(products).toContain("IN DEVELOPMENT");
+    expect(products).toContain(
+      "An AI-assisted procurement intelligence product designed to help teams structure sourcing workflows, evaluate commercial information, and make consequential procurement decisions with greater context and control.",
+    );
+    expect(products).toContain(
+      "SOURCING · EVALUATION · GOVERNANCE · DECISION INTELLIGENCE",
+    );
+    expect(products).toContain(
+      "We build products around the problem—not technology for its own sake.",
+    );
+    expect(products.match(/INTELLIGENT PROCUREMENT/g)).toHaveLength(1);
+    expect(products).not.toMatch(
+      /available now|live product|launched|our customers|trusted by|pricing/i,
+    );
   });
 
   it("does not make unsupported product-status claims", () => {

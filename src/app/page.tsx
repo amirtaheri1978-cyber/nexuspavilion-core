@@ -5,6 +5,7 @@ import Link from "next/link";
 import { NexusPavilionLogo } from "@/components/branding/nexus-pavilion-logo";
 import CorporateHeroVisual from "@/components/corporate/corporate-hero-visual";
 import CorporateIndustriesMotion from "@/components/corporate/corporate-industries-motion";
+import CorporateProductsMotion from "@/components/corporate/corporate-products-motion";
 import CorporateTechnologyMotion from "@/components/corporate/corporate-technology-motion";
 import styles from "@/components/corporate/corporate-home.module.css";
 
@@ -77,7 +78,6 @@ export default function HomePage() {
               <div className={styles.topics}><span>Industries</span><span>People</span><span>Planet</span><span>Progress</span></div>
             </div>
           </div>
-          <span id="products-projects" className={styles.anchorTarget} />
         </div>
       </section>
 
@@ -220,6 +220,50 @@ export default function HomePage() {
           </div>
 
           <p className={styles.industriesStatement}>The value of intelligence is determined by how well it understands the world it is meant to serve.</p>
+        </div>
+      </section>
+
+      <section
+        id="products-projects"
+        className={styles.products}
+        aria-labelledby="corporate-products-heading"
+        data-products-section
+      >
+        <CorporateProductsMotion />
+        <div className={styles.productsAtmosphere} aria-hidden="true" />
+        <div className={styles.productsInner}>
+          <header className={styles.productsEditorial}>
+            <p className={styles.productsEyebrow}>FOCUSED PRODUCTS. REAL OPERATING PROBLEMS.</p>
+            <h2 id="corporate-products-heading">Purpose-built intelligence for decisions that matter.</h2>
+          </header>
+
+          <article className={styles.productStage} aria-labelledby="intelligent-procurement-heading">
+            <div className={styles.productIdentity}>
+              <p className={styles.productOrdinal}>01 / FLAGSHIP PRODUCT</p>
+              <p className={styles.productStatus}>IN DEVELOPMENT</p>
+              <h3 id="intelligent-procurement-heading">INTELLIGENT PROCUREMENT</h3>
+              <p className={styles.productStatement}>An AI-assisted procurement intelligence product designed to help teams structure sourcing workflows, evaluate commercial information, and make consequential procurement decisions with greater context and control.</p>
+              <p className={styles.productCapabilities}>SOURCING · EVALUATION · GOVERNANCE · DECISION INTELLIGENCE</p>
+            </div>
+
+            <div className={styles.productField} aria-hidden="true">
+              <span className={styles.productFieldLabel}>DECISION SYSTEM / 01</span>
+              <div className={styles.productFieldPlane}>
+                <span />
+                <span />
+                <span />
+                <span />
+              </div>
+              <div className={styles.productFieldCore}>
+                <i />
+                <i />
+                <i />
+              </div>
+              <span className={styles.productFieldOutcome}>CONTEXT → CONTROL</span>
+            </div>
+          </article>
+
+          <p className={styles.productsClosing}>We build products around the problem—not technology for its own sake.</p>
         </div>
       </section>
     </main>
