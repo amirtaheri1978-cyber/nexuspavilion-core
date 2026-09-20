@@ -148,6 +148,36 @@ describe("Cursor Corp 02 Slice A corporate root contract", () => {
     );
   });
 
+  it("renders the approved corporate industries narrative without unsupported claims", () => {
+    const industriesStart = rootPage.indexOf('id="industries"');
+    const industriesEnd = rootPage.indexOf("</section>", industriesStart);
+
+    expect(industriesStart).toBeGreaterThan(-1);
+    expect(industriesEnd).toBeGreaterThan(industriesStart);
+    expect(rootPage.indexOf('id="industries"')).toBe(
+      rootPage.lastIndexOf('id="industries"'),
+    );
+
+    const industries = rootPage.slice(industriesStart, industriesEnd);
+
+    expect(industries).toContain("WHERE INTELLIGENCE MEETS THE REAL WORLD");
+    expect(industries).toContain(
+      "Built for environments where complexity has consequence.",
+    );
+    expect(industries).toContain("BUILT ENVIRONMENT");
+    expect(industries).toContain("INDUSTRIAL SYSTEMS");
+    expect(industries).toContain("INFRASTRUCTURE");
+    expect(industries).toContain("PROFESSIONAL SYSTEMS");
+    expect(industries).toContain(
+      "The value of intelligence is determined by how well it understands the world it is meant to serve.",
+    );
+    expect(industries).not.toMatch(/customer logos?|our customers|trusted by/i);
+    expect(industries).not.toMatch(
+      /market[- ]leading|industry[- ]leading|world[- ]leading|available now|live product|revolutionary|game[- ]changing/i,
+    );
+    expect(industries).not.toMatch(/RFQ|supplier|quote|award|procurement-only/i);
+  });
+
   it("contains the product destination anchor", () => {
     expect(rootPage).toContain('id="products-projects"');
     expect(rootPage).toContain('href="#products-projects"');

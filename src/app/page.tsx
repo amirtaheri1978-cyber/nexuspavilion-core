@@ -4,6 +4,7 @@ import Link from "next/link";
 
 import { NexusPavilionLogo } from "@/components/branding/nexus-pavilion-logo";
 import CorporateHeroVisual from "@/components/corporate/corporate-hero-visual";
+import CorporateIndustriesMotion from "@/components/corporate/corporate-industries-motion";
 import CorporateTechnologyMotion from "@/components/corporate/corporate-technology-motion";
 import styles from "@/components/corporate/corporate-home.module.css";
 
@@ -73,7 +74,7 @@ export default function HomePage() {
 
             <div className={styles.bottom} aria-hidden="true">
               <div className={styles.pager}><span>01 / 04</span><span className={styles.line} /></div>
-              <div id="industries" className={styles.topics}><span>Industries</span><span>People</span><span>Planet</span><span>Progress</span></div>
+              <div className={styles.topics}><span>Industries</span><span>People</span><span>Planet</span><span>Progress</span></div>
             </div>
           </div>
           <span id="products-projects" className={styles.anchorTarget} />
@@ -177,6 +178,48 @@ export default function HomePage() {
           </div>
 
           <p className={styles.technologyStatement}>From signal to context. From context to consequence.</p>
+        </div>
+      </section>
+
+      <section
+        id="industries"
+        className={styles.industries}
+        aria-labelledby="corporate-industries-heading"
+        data-industries-section
+      >
+        <CorporateIndustriesMotion />
+        <div className={styles.industriesAtmosphere} aria-hidden="true" />
+        <div className={styles.industriesInner}>
+          <header className={styles.industriesEditorial}>
+            <p className={styles.industriesEyebrow}>WHERE INTELLIGENCE MEETS THE REAL WORLD</p>
+            <h2 id="corporate-industries-heading">Built for environments where complexity has consequence.</h2>
+            <p className={styles.industriesCopy}>Nexus Pavilion Inc. builds for complex real-world environments where data, infrastructure, operations, and human judgment converge. We focus on domains in which context matters, trade-offs are material, and better decisions depend on understanding the system as a whole—not merely its individual signals.</p>
+          </header>
+
+          <div className={styles.industryTerritories}>
+            <article className={styles.industryTerritory}>
+              <p>01 / BUILT ENVIRONMENT</p>
+              <h3>BUILT ENVIRONMENT</h3>
+              <span>Where physical assets, capital, coordination, and execution come together across complex project lifecycles.</span>
+            </article>
+            <article className={styles.industryTerritory}>
+              <p>02 / INDUSTRIAL SYSTEMS</p>
+              <h3>INDUSTRIAL SYSTEMS</h3>
+              <span>Where reliability, dependencies, constraints, and operating conditions shape what decisions can achieve.</span>
+            </article>
+            <article className={styles.industryTerritory}>
+              <p>03 / INFRASTRUCTURE</p>
+              <h3>INFRASTRUCTURE</h3>
+              <span>Where continuity, resilience, and long-term performance depend on clear understanding across interconnected systems.</span>
+            </article>
+            <article className={styles.industryTerritory}>
+              <p>04 / PROFESSIONAL SYSTEMS</p>
+              <h3>PROFESSIONAL SYSTEMS</h3>
+              <span>Where expertise, evidence, and judgment must remain visible, accountable, and usable throughout the decision process.</span>
+            </article>
+          </div>
+
+          <p className={styles.industriesStatement}>The value of intelligence is determined by how well it understands the world it is meant to serve.</p>
         </div>
       </section>
     </main>
