@@ -114,6 +114,40 @@ describe("Cursor Corp 02 Slice A corporate root contract", () => {
     );
   });
 
+  it("renders the locked corporate technology narrative without unsupported claims", () => {
+    const technologyStart = rootPage.indexOf('id="corporate-technology"');
+    const technologyEnd = rootPage.indexOf("</section>", technologyStart);
+
+    expect(technologyStart).toBeGreaterThan(-1);
+    expect(technologyEnd).toBeGreaterThan(technologyStart);
+
+    const technology = rootPage.slice(technologyStart, technologyEnd);
+
+    expect(technology).toContain("HOW INTELLIGENCE TAKES SHAPE");
+    expect(technology).toContain(
+      "Context before computation. Intelligence before action.",
+    );
+    expect(technology).toContain(
+      "Understand the system before interpreting the signal.",
+    );
+    expect(technology).toContain(
+      "Turn relationships into decision-grade understanding.",
+    );
+    expect(technology).toContain(
+      "Make intelligence usable at the moment of decision.",
+    );
+    expect(technology).toContain(
+      "From signal to context. From context to consequence.",
+    );
+    expect(technology).toContain("SIGNALS");
+    expect(technology).toContain("RELATIONSHIPS");
+    expect(technology).toContain("CONTEXT");
+    expect(technology).toContain("DECISION");
+    expect(technology).not.toMatch(
+      /proprietary model|autonomous agents?|patents?|\d+(?:\.\d+)?% accurate|market[- ]leading|industry[- ]leading|world[- ]leading|revolutionary|game[- ]changing/i,
+    );
+  });
+
   it("contains the product destination anchor", () => {
     expect(rootPage).toContain('id="products-projects"');
     expect(rootPage).toContain('href="#products-projects"');

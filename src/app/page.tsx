@@ -4,6 +4,7 @@ import Link from "next/link";
 
 import { NexusPavilionLogo } from "@/components/branding/nexus-pavilion-logo";
 import CorporateHeroVisual from "@/components/corporate/corporate-hero-visual";
+import CorporateTechnologyMotion from "@/components/corporate/corporate-technology-motion";
 import styles from "@/components/corporate/corporate-home.module.css";
 
 const instrumentSans = Instrument_Sans({ subsets: ["latin"], variable: "--font-corporate-display", display: "swap" });
@@ -104,6 +105,78 @@ export default function HomePage() {
             <div className={styles.systemOutcome}>DECISION INTELLIGENCE</div>
             <figcaption id="system-caption">EVIDENCE → CONTEXT → ACTION</figcaption>
           </figure>
+        </div>
+      </section>
+
+      <section
+        id="corporate-technology"
+        className={styles.technology}
+        aria-labelledby="corporate-technology-heading"
+        data-technology-section
+      >
+        <CorporateTechnologyMotion />
+        <div className={styles.technologyInner}>
+          <div className={styles.technologyEditorial}>
+            <p className={styles.technologyEyebrow}>HOW INTELLIGENCE TAKES SHAPE</p>
+            <h2 id="corporate-technology-heading">Context before computation. Intelligence before action.</h2>
+            <p className={styles.technologyCopy}>Nexus Pavilion Inc. designs AI and software systems around the realities in which decisions are made. We begin with context—how signals relate to operations, constraints, infrastructure, and domain expertise—then structure those relationships into intelligence that can be examined, understood, and acted upon. The objective is not simply to produce more information, but to create decision systems that preserve meaning, expose consequence, and support deliberate action.</p>
+          </div>
+
+          <figure className={styles.technologyField} aria-labelledby="technology-progression-caption">
+            <div className={styles.fieldCoordinates} aria-hidden="true">
+              <span>43.07° N</span>
+              <span>FIELD 03</span>
+            </div>
+            <svg className={styles.fieldDrawing} viewBox="0 0 760 590" aria-hidden="true">
+              <defs>
+                <linearGradient id="technology-path" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0" stopColor="#70dff5" stopOpacity=".72" />
+                  <stop offset=".63" stopColor="#dce9ee" stopOpacity=".38" />
+                  <stop offset="1" stopColor="#d8b96f" stopOpacity=".74" />
+                </linearGradient>
+                <filter id="technology-glow" x="-40%" y="-40%" width="180%" height="180%">
+                  <feGaussianBlur stdDeviation="4" />
+                </filter>
+              </defs>
+              <path className={styles.fieldPlane} d="M70 104 545 42 700 175 218 238Z" />
+              <path className={styles.fieldPlane} d="M126 344 518 265 670 410 275 501Z" />
+              <path className={styles.fieldGuide} d="M74 104 126 344M545 42 518 265M700 175 670 410M218 238 275 501" />
+              <path className={styles.fieldPath} d="M92 152 C226 78 250 257 365 212 S510 289 626 203 S650 358 607 432" />
+              <path className={styles.fieldGlow} d="M92 152 C226 78 250 257 365 212 S510 289 626 203 S650 358 607 432" />
+              <circle className={styles.fieldNode} cx="92" cy="152" r="4" />
+              <circle className={styles.fieldNode} cx="365" cy="212" r="4" />
+              <circle className={styles.fieldNode} cx="626" cy="203" r="4" />
+              <circle className={styles.fieldDecisionNode} cx="607" cy="432" r="5" />
+              <circle className={styles.fieldPulse} cx="92" cy="152" r="4" />
+            </svg>
+            <ol className={styles.fieldStages}>
+              <li><span>01</span><strong>SIGNALS</strong><small>Observed conditions</small></li>
+              <li><span>02</span><strong>RELATIONSHIPS</strong><small>Dependencies preserved</small></li>
+              <li><span>03</span><strong>CONTEXT</strong><small>Meaning structured</small></li>
+              <li><span>04</span><strong>DECISION</strong><small>Consequence made legible</small></li>
+            </ol>
+            <figcaption id="technology-progression-caption">SIGNALS → RELATIONSHIPS → CONTEXT → DECISION</figcaption>
+          </figure>
+
+          <div className={styles.technologyPrinciples}>
+            <article>
+              <p>01 / CONTEXT</p>
+              <h3>Understand the system before interpreting the signal.</h3>
+              <span>Data becomes useful when its relationships, constraints, and operating conditions are preserved.</span>
+            </article>
+            <article>
+              <p>02 / INTELLIGENCE</p>
+              <h3>Turn relationships into decision-grade understanding.</h3>
+              <span>Evidence, uncertainty, dependencies, and domain knowledge are structured into a coherent view of what matters.</span>
+            </article>
+            <article>
+              <p>03 / ACTION</p>
+              <h3>Make intelligence usable at the moment of decision.</h3>
+              <span>Outputs are designed to be examined, challenged, and applied—not merely observed.</span>
+            </article>
+          </div>
+
+          <p className={styles.technologyStatement}>From signal to context. From context to consequence.</p>
         </div>
       </section>
     </main>
