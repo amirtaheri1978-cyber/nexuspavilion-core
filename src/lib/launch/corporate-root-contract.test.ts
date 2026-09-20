@@ -73,39 +73,44 @@ describe("Cursor Corp 02 Slice A corporate root contract", () => {
     expect(rootPage).toContain("<h1");
   });
 
-  it("contains a Products / Projects section with the required anchor", () => {
+  it("renders the approved v23 corporate hero copy and scoped visual", () => {
+    expect(rootPage).toContain(
+      "Turning complexity into decisive intelligence.",
+    );
+    expect(rootPage).toContain("Real systems · brighter tomorrows");
+    expect(rootPage).toContain("Explore Technology");
+    expect(rootPage).toContain("View Products");
+    expect(rootPage).toContain("CorporateHeroVisual");
+    expect(rootPage).toContain("Instrument_Sans");
+    expect(rootPage).toContain("Manrope");
+    expect(rootPage).not.toContain('"use client"');
+  });
+
+  it("contains the product destination anchor", () => {
     expect(rootPage).toContain('id="products-projects"');
-    expect(rootPage).toContain("Products / Projects");
     expect(rootPage).toContain('href="#products-projects"');
   });
 
-  it("represents only NexusPavilion Intelligent Procurement as the live product", () => {
-    expect(rootPage).toContain("NexusPavilion Intelligent Procurement");
-    expect(rootPage).toContain("Live");
-    expect(rootPage).toContain("Available Now");
+  it("does not make unsupported product-status claims", () => {
+    expect(rootPage).not.toContain(">Live<");
+    expect(rootPage).not.toContain("Available Now");
+    expect(rootPage).not.toContain("primary live product");
     expect(rootPage).not.toMatch(/coming soon/i);
     expect(rootPage).not.toMatch(/placeholder/i);
     expect(rootPage).not.toContain("/products");
     expect(rootPage).not.toContain("ExecutiveActionCard");
-    expect(rootPage).toContain("ExecutivePanel");
-    expect(rootPage).toContain("ExecutiveBadge");
-
-    const liveProductHeadings = rootPage.match(
-      /NexusPavilion Intelligent Procurement/g,
-    );
-    expect(liveProductHeadings?.length).toBeGreaterThan(0);
-
     expect(rootPage).not.toContain("NexusPavilion Cloud");
     expect(rootPage).not.toContain("NexusPavilion Analytics Platform");
     expect(rootPage).not.toContain("NexusPavilion Marketplace");
   });
 
-  it("sends product entry to /login and onboarding entry to /signup", () => {
-    expect(rootPage).toContain("Open Intelligent Procurement");
-    expect(rootPage).toContain('href="/login"');
-    expect(rootPage).toContain("New to Intelligent Procurement? Get started");
-    expect(rootPage).toContain('href="/signup"');
+  it("uses only valid corporate routes and anchors", () => {
+    expect(rootPage).toContain('href: "/about"');
+    expect(rootPage).toContain('href: "/contact"');
+    expect(rootPage).toContain('href: "#technology"');
+    expect(rootPage).toContain('href: "#industries"');
     expect(rootPage).not.toContain('href="/create-company"');
+    expect(rootPage).not.toContain('href="#"');
   });
 
   it("keeps public footer destinations real and omits dead legal/status links", () => {
