@@ -456,6 +456,33 @@ describe("Cursor Corp 02 Slice C metadata indexing contract", () => {
     expect(contactPage).toContain('siteName: "NexusPavilion Inc."');
   });
 
+  it("renders the approved corporate contact narrative without legacy procurement positioning", () => {
+    const contactForm = readSource("src/components/contact-form.tsx");
+
+    expect(contactPage).toContain("START A CONVERSATION");
+    expect(contactPage).toContain("Start with what matters.");
+    expect(contactPage).toContain("Nexus Pavilion Inc. welcomes corporate, product, partnership, and business inquiries.");
+    expect(contactPage).toContain("CORPORATE CONTACT");
+    expect(contactPage).toContain("contact@thenexuspavilion.com");
+    expect(contactPage).toContain("Toronto, Ontario, Canada");
+    expect(contactPage).toContain("YOUR INQUIRY");
+    expect(contactPage).toContain("Tell us what you’re working through.");
+    expect(contactPage).toContain("Clear conversations are where useful systems begin.");
+
+    expect(contactForm).toContain('"General Inquiry"');
+    expect(contactForm).toContain('"Product Inquiry"');
+    expect(contactForm).toContain('"Partnership"');
+    expect(contactForm).toContain('"Business Inquiry"');
+    expect(contactForm).toContain('"Technical Support"');
+    expect(contactForm).toContain('fetch("/api/contact"');
+    expect(contactForm).toContain('name: trimmedName');
+    expect(contactForm).toContain('website: trimmedWebsite');
+    expect(contactForm).toContain("Send inquiry");
+
+    const publicContact = `${contactPage}\n${contactForm}`;
+    expect(publicContact).not.toMatch(/gmail\.com|Executive procurement consultation|Supplier Network|RFQ Governance|Board Reporting|Executive Response Framework|Join Network|View Directory|Request Executive Consultation/i);
+  });
+
   it("indexes product pricing with self-canonical", () => {
     expect(pricingPage).toContain(
       'const PRICING_TITLE = "Pricing | NexusPavilion Intelligent Procurement"',
