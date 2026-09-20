@@ -86,6 +86,34 @@ describe("Cursor Corp 02 Slice A corporate root contract", () => {
     expect(rootPage).not.toContain('"use client"');
   });
 
+  it("renders the locked corporate thesis without procurement-only or unsupported claims", () => {
+    const thesisStart = rootPage.indexOf('id="corporate-thesis"');
+    const thesisEnd = rootPage.indexOf("</section>", thesisStart);
+
+    expect(thesisStart).toBeGreaterThan(-1);
+    expect(thesisEnd).toBeGreaterThan(thesisStart);
+
+    const thesis = rootPage.slice(thesisStart, thesisEnd);
+
+    expect(thesis).toContain("OUR OPERATING IDEA");
+    expect(thesis).toContain(
+      "Digital intelligence should move with the physical world.",
+    );
+    expect(thesis).toContain(
+      "Intelligence matters when it improves what happens next.",
+    );
+    expect(thesis).toContain("DATA");
+    expect(thesis).toContain("OPERATIONS");
+    expect(thesis).toContain("INFRASTRUCTURE");
+    expect(thesis).toContain("DOMAIN EXPERTISE");
+    expect(thesis).toContain("DECISION INTELLIGENCE");
+    expect(thesis).toContain("EVIDENCE → CONTEXT → ACTION");
+    expect(thesis).not.toMatch(/procurement|RFQ|supplier|quote|award/i);
+    expect(thesis).not.toMatch(
+      /customer logos?|market[- ]leading|industry[- ]leading|world[- ]leading|available now|live product/i,
+    );
+  });
+
   it("contains the product destination anchor", () => {
     expect(rootPage).toContain('id="products-projects"');
     expect(rootPage).toContain('href="#products-projects"');
