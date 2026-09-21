@@ -16,8 +16,8 @@ export const metadata: Metadata = {
   description: CONTACT_DESCRIPTION,
   alternates: { canonical: "/contact" },
   robots: { index: true, follow: true },
-  openGraph: { title: CONTACT_TITLE, description: CONTACT_DESCRIPTION, url: "/contact", siteName: "Nexus Pavilion Inc.", type: "website", locale: "en_US" },
-  twitter: { card: "summary_large_image", title: CONTACT_TITLE, description: CONTACT_DESCRIPTION },
+  openGraph: { title: CONTACT_TITLE, description: CONTACT_DESCRIPTION, url: "/contact", siteName: "Nexus Pavilion Inc.", type: "website", locale: "en_US", images: [{ url: "/branding/og-image.png", width: 1200, height: 630, alt: "Nexus Pavilion Inc. — Turning complexity into decisive intelligence." }] },
+  twitter: { card: "summary_large_image", title: CONTACT_TITLE, description: CONTACT_DESCRIPTION, images: ["/branding/og-image.png"] },
 };
 
 export default function ContactPage() {
