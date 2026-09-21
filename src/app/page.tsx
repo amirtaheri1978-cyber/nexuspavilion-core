@@ -51,7 +51,7 @@ export default function HomePage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
       />
-      <section className={styles.heroChapter} aria-label="NexusPavilion Inc. introduction">
+      <section className={styles.heroChapter} aria-label="Nexus Pavilion Inc. introduction">
         <CorporateHeroVisual />
         <div className={styles.aurora} aria-hidden="true" />
         <div className={styles.scan} aria-hidden="true" />
@@ -60,11 +60,11 @@ export default function HomePage() {
 
         <div className={styles.shell}>
           <header className={styles.header}>
-            <Link href="/" className={styles.brand} aria-label="NexusPavilion Inc. home">
+            <Link href="/" className={styles.brand} aria-label="Nexus Pavilion Inc. home">
               <span className={styles.logoWrap}>
                 <NexusPavilionLogo variant="icon" size={48} priority />
               </span>
-              <span className={styles.brandName}>NexusPavilion Inc.</span>
+              <span className={styles.brandName}>Nexus Pavilion Inc.</span>
             </Link>
             <nav className={styles.navigation} aria-label="Corporate">
               {navigation.map((item) => <Link key={item.label} href={item.href}>{item.label}</Link>)}

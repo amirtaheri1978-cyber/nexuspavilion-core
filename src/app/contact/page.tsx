@@ -26,7 +26,7 @@ export default function ContactPage() {
       <div className={styles.architecture} aria-hidden="true"><span /><span /><span /></div>
       <div className={styles.shell}>
         <header className={styles.header}>
-          <Link href="/" className={styles.homeLink}><span aria-hidden="true">←</span>NexusPavilion Inc.</Link>
+          <Link href="/" className={styles.homeLink}><span aria-hidden="true">←</span>Nexus Pavilion Inc.</Link>
           <span className={styles.chapter}>CORPORATE CONTACT / 01</span>
         </header>
 
