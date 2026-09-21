@@ -167,7 +167,7 @@
 }
 
 .primaryNavigation li > span {
-  color: #4f6c7b;
+  color: #5a7b9d;
   font-size: 8px;
   letter-spacing: 0.12em;
 }
@@ -257,7 +257,7 @@
 
 .closing > span {
   flex: none;
-  color: #536c79;
+  color: #5e7a97;
   font-size: 8px;
   font-weight: 600;
   letter-spacing: 0.22em;
