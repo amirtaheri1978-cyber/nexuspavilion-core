@@ -311,4 +311,6 @@
   .address a,
   .link,
   .link::after { transition: none; }
+  .link:hover { transform: none; }
+  .link:hover::after { transform: none; }
 }
