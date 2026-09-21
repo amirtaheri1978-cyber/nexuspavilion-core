@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   description: CORPORATE_DESCRIPTION,
   alternates: { canonical: "/" },
   robots: { index: true, follow: true },
-  openGraph: { title: CORPORATE_TITLE, description: CORPORATE_DESCRIPTION, url: "/", siteName: "NexusPavilion Inc.", type: "website", locale: "en_US" },
+  openGraph: { title: CORPORATE_TITLE, description: CORPORATE_DESCRIPTION, url: "/", siteName: "Nexus Pavilion Inc.", type: "website", locale: "en_US" },
   twitter: { card: "summary_large_image", title: CORPORATE_TITLE, description: CORPORATE_DESCRIPTION },
 };
 

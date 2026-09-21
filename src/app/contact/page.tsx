@@ -16,7 +16,7 @@ export const metadata: Metadata = {
   description: CONTACT_DESCRIPTION,
   alternates: { canonical: "/contact" },
   robots: { index: true, follow: true },
-  openGraph: { title: CONTACT_TITLE, description: CONTACT_DESCRIPTION, url: "/contact", siteName: "NexusPavilion Inc.", type: "website", locale: "en_US" },
+  openGraph: { title: CONTACT_TITLE, description: CONTACT_DESCRIPTION, url: "/contact", siteName: "Nexus Pavilion Inc.", type: "website", locale: "en_US" },
   twitter: { card: "summary_large_image", title: CONTACT_TITLE, description: CONTACT_DESCRIPTION },
 };
 
