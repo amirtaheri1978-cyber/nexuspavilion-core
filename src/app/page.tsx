@@ -13,7 +13,7 @@ import styles from "@/components/corporate/corporate-home.module.css";
 const instrumentSans = Instrument_Sans({ subsets: ["latin"], variable: "--font-corporate-display", display: "swap" });
 const manrope = Manrope({ subsets: ["latin"], variable: "--font-corporate-body", display: "swap" });
 
-const CORPORATE_TITLE = "NexusPavilion Inc. | Corporate Home";
+const CORPORATE_TITLE = "Nexus Pavilion Inc. | AI & Decision Intelligence";
 const CORPORATE_DESCRIPTION =
   "NexusPavilion Inc. is the parent company of NexusPavilion Intelligent Procurement and builds focused AI products that turn complexity into decisive intelligence.";
 

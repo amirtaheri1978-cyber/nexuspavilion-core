@@ -8,7 +8,7 @@ import styles from "@/components/corporate/corporate-contact.module.css";
 const instrumentSans = Instrument_Sans({ subsets: ["latin"], variable: "--font-corporate-display", display: "swap" });
 const manrope = Manrope({ subsets: ["latin"], variable: "--font-corporate-body", display: "swap" });
 
-const CONTACT_TITLE = "Contact | NexusPavilion Inc.";
+const CONTACT_TITLE = "Contact | Nexus Pavilion Inc.";
 const CONTACT_DESCRIPTION = "Contact NexusPavilion Inc. for corporate and product inquiries.";
 
 export const metadata: Metadata = {
