@@ -1,84 +1,85 @@
 import Link from "next/link";
-import type { ReactNode } from "react";
 
 import { NexusPavilionLogo } from "@/components/branding/nexus-pavilion-logo";
-import { EXECUTIVE_FOCUS_CYAN } from "@/lib/design-system/executive-contract";
+import styles from "@/components/corporate/corporate-footer.module.css";
+
+const corporateNavigation = [
+  { label: "Company", href: "/about" },
+  { label: "Technology", href: "/#corporate-technology" },
+  { label: "Industries", href: "/#industries" },
+  { label: "Products", href: "/#products-projects" },
+  { label: "Contact", href: "/contact" },
+] as const;
+
+const legalNavigation = [
+  { label: "Privacy", href: "/privacy" },
+  { label: "Terms", href: "/terms" },
+] as const;
 
 export default function Footer() {
   return (
-    <footer className="mt-20 border-t border-nexus-border bg-nexus-dark text-nexus-white">
-      <div className="mx-auto max-w-7xl px-6 py-14 sm:px-8 lg:py-16">
-        <div className="grid gap-12 lg:grid-cols-[1.25fr_0.75fr_0.75fr_0.75fr_0.75fr]">
-          <div>
-            <NexusPavilionLogo variant="footer" size={90} />
-
-            <p className="mt-8 text-sm font-black text-nexus-white">
-              NexusPavilion Inc.
-            </p>
-
-            <p className="mt-3 max-w-md text-sm font-semibold leading-7 text-nexus-muted">
-              NexusPavilion Intelligent Procurement — a NexusPavilion Inc. product
-            </p>
-          </div>
-
-          <FooterColumn title="Company">
-            <FooterLink href="/about">About</FooterLink>
-            <FooterLink href="/contact">Contact</FooterLink>
-          </FooterColumn>
-
-          <FooterColumn title="Products / Projects">
-            <FooterLink href="/login">Intelligent Procurement</FooterLink>
-            <FooterLink href="/#products-projects">
-              Products / Projects
-            </FooterLink>
-          </FooterColumn>
-
-          <FooterColumn title="Resources">
-            <FooterLink href="/pricing">
-              Intelligent Procurement Pricing
-            </FooterLink>
-          </FooterColumn>
-
-          <FooterColumn title="Legal">
-            <FooterLink href="/privacy">Privacy</FooterLink>
-            <FooterLink href="/terms">Terms</FooterLink>
-          </FooterColumn>
+    <footer className={styles.footer} aria-labelledby="corporate-footer-title">
+      <div className={styles.ambient} aria-hidden="true" />
+      <div className={styles.frame}>
+        <div className={styles.topRule} aria-hidden="true">
+          <span />
+          <span />
         </div>
 
-        <div className="mt-12 flex flex-col gap-6 border-t border-white/10 pt-8 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex items-center gap-4">
-            <NexusPavilionLogo variant="icon" size={56} />
+        <div className={styles.primaryGrid}>
+          <section className={styles.identity} aria-labelledby="corporate-footer-title">
+            <NexusPavilionLogo className={styles.logo} variant="icon" size={78} />
+            <p className={styles.ordinal}>NEXUS PAVILION / CORPORATE</p>
+            <h2 id="corporate-footer-title">Nexus Pavilion Inc.</h2>
+            <p className={styles.mission}>
+              Focused AI and software systems for complex real-world environments.
+            </p>
+            <address className={styles.address}>
+              <span>Ontario, Canada</span>
+              <a href="mailto:contact@nexuspavilion.com">
+                contact@nexuspavilion.com
+              </a>
+            </address>
+          </section>
 
-            <div>
-              <p className="text-sm font-black text-nexus-white">
-                NexusPavilion Inc.
-              </p>
-              <p className="mt-1 text-xs font-semibold text-nexus-muted">
-                NexusPavilion Intelligent Procurement — a NexusPavilion Inc. product
-              </p>
-            </div>
+          <div className={styles.navigationArchitecture}>
+            <nav className={styles.primaryNavigation} aria-label="Corporate">
+              <p>Corporate</p>
+              <ol>
+                {corporateNavigation.map((item, index) => (
+                  <li key={item.label}>
+                    <span aria-hidden="true">0{index + 1}</span>
+                    <FooterLink href={item.href}>{item.label}</FooterLink>
+                  </li>
+                ))}
+              </ol>
+            </nav>
+
+            <nav className={styles.secondaryNavigation} aria-label="Legal">
+              <p>Legal</p>
+              <div>
+                {legalNavigation.map((item) => (
+                  <FooterLink key={item.label} href={item.href}>
+                    {item.label}
+                  </FooterLink>
+                ))}
+              </div>
+            </nav>
           </div>
+        </div>
+
+        <aside className={styles.product} aria-labelledby="footer-product-title">
+          <p className={styles.productEyebrow}>Product / 01</p>
+          <h2 id="footer-product-title">Intelligent Procurement</h2>
+          <p>A Nexus Pavilion Inc. product · In Development</p>
+        </aside>
+
+        <div className={styles.closing}>
+          <p>Built with a long view of technology, context, and consequence.</p>
+          <span aria-hidden="true">ONTARIO, CANADA</span>
         </div>
       </div>
     </footer>
-  );
-}
-
-function FooterColumn({
-  title,
-  children,
-}: {
-  title: string;
-  children: ReactNode;
-}) {
-  return (
-    <nav aria-label={title}>
-      <h2 className="text-xs font-black uppercase tracking-[0.25em] text-slate-500">
-        {title}
-      </h2>
-
-      <div className="mt-5 flex flex-col gap-1">{children}</div>
-    </nav>
   );
 }
 
@@ -87,17 +88,10 @@ function FooterLink({
   children,
 }: {
   href: string;
-  children: ReactNode;
+  children: React.ReactNode;
 }) {
   return (
-    <Link
-      href={href}
-      className={[
-        "inline-flex min-h-11 items-center text-sm font-bold text-nexus-muted",
-        "transition-[color] duration-200 hover:text-nexus-white",
-        EXECUTIVE_FOCUS_CYAN,
-      ].join(" ")}
-    >
+    <Link href={href} className={styles.link}>
       {children}
     </Link>
   );
