@@ -3,7 +3,7 @@ import { Instrument_Sans, Manrope } from "next/font/google";
 import Link from "next/link";
 
 import { NexusPavilionLogo } from "@/components/branding/nexus-pavilion-logo";
-import CorporateHeroVisual from "@/components/corporate/corporate-hero-visual";
+import CorporateHeroVisual from "@/components/corporate/corporate-hero-visual-lazy";
 import CorporateIndustriesMotion from "@/components/corporate/corporate-industries-motion";
 import CorporateProductsMotion from "@/components/corporate/corporate-products-motion";
 import CorporateTechnologyMotion from "@/components/corporate/corporate-technology-motion";
