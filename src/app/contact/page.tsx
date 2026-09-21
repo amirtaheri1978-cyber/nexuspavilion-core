@@ -37,7 +37,7 @@ export default function ContactPage() {
             <p className={styles.supporting}>Nexus Pavilion Inc. welcomes corporate, product, partnership, and business inquiries. Share the context, the objective, and the problem you are working through. We will route your message to the appropriate part of the company and respond with the next useful step.</p>
             <address className={styles.directContact}>
               <p>CORPORATE CONTACT</p>
-              <a href="mailto:contact@thenexuspavilion.com">contact@thenexuspavilion.com</a>
+              <a href="mailto:contact@nexuspavilion.com">contact@nexuspavilion.com</a>
               <span>Toronto, Ontario, Canada</span>
             </address>
           </div>
