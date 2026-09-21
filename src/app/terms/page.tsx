@@ -1,147 +1,105 @@
 import type { Metadata } from "next";
+import { Instrument_Sans, Manrope } from "next/font/google";
 import Link from "next/link";
 
-const TERMS_TITLE = "Terms | NexusPavilion";
+import { NexusPavilionLogo } from "@/components/branding/nexus-pavilion-logo";
+import styles from "@/components/corporate/corporate-terms.module.css";
+
+const instrumentSans = Instrument_Sans({ subsets: ["latin"], variable: "--font-corporate-display", display: "swap" });
+const manrope = Manrope({ subsets: ["latin"], variable: "--font-corporate-body", display: "swap" });
+
+const TERMS_TITLE = "Terms | Nexus Pavilion Inc.";
+const TERMS_DESCRIPTION = "Terms for Nexus Pavilion Inc. services and its Intelligent Procurement product.";
 
 export const metadata: Metadata = {
-  title: {
-    absolute: TERMS_TITLE,
-  },
-  description: "Terms of use for NexusPavilion services.",
-  robots: {
-    index: false,
-    follow: true,
-  },
+  title: { absolute: TERMS_TITLE },
+  description: TERMS_DESCRIPTION,
+  robots: { index: false, follow: true },
 };
 
-const sections = [
-{
-title: "Platform Usage",
-content:
-"Users are responsible for maintaining accurate company information, protecting account credentials, and ensuring that only authorized personnel access company workspaces.",
-},
-{
-title: "Procurement Activities",
-content:
-"RFQs, supplier quotes, evaluations, negotiations, procurement decisions, and contract awards remain the sole responsibility of participating organizations. Nexus Pavilion provides collaboration and intelligence tools but does not participate in commercial decisions.",
-},
-{
-title: "Company Accounts",
-content:
-"Organizations are responsible for user management, invitations, role assignments, approval workflows, and maintaining the security of their procurement workspace.",
-},
-{
-title: "Supplier Intelligence",
-content:
-"Supplier rankings, executive insights, procurement scores, analytics, forecasts, and AI-generated recommendations are intended to support decision making and should not replace professional judgment.",
-},
-{
-title: "Data Accuracy",
-content:
-"Users are responsible for the accuracy of submitted RFQs, supplier information, quotations, budgets, and procurement records. Platform analytics depend on the quality of available data.",
-},
-{
-title: "Service Availability",
-content:
-"Platform features may evolve, be updated, or become temporarily unavailable during maintenance, security improvements, or infrastructure upgrades.",
-},
-{
-title: "Limitation of Liability",
-content:
-"To the maximum extent permitted by applicable law, Nexus Pavilion shall not be liable for indirect, incidental, special, consequential, or business losses arising from use of the platform or procurement decisions made by users.",
-},
-];
+const clauses = [
+  {
+    number: "01", id: "scope", label: "Scope and acceptance",
+    content: <><p>These Terms describe the operating boundaries for the applicable website and services provided by Nexus Pavilion Inc. References to Intelligent Procurement identify a Nexus Pavilion Inc. product currently in development.</p><p>Provisions concerning procurement workspaces, RFQs, suppliers, quotations, analytics, and related workflows apply specifically to Intelligent Procurement. They do not describe every activity or future product of Nexus Pavilion Inc.</p></>,
+  },
+  {
+    number: "02", id: "accounts-access", label: "Accounts and authorized access",
+    content: <><p>Users are responsible for protecting their account credentials and for using the services only through access they are authorized to hold.</p><p>Organizations are responsible for managing their users, invitations, memberships, and role assignments, and for ensuring that access remains appropriate for their work.</p></>,
+  },
+  {
+    number: "03", id: "product-workspaces", label: "Intelligent Procurement workspaces",
+    content: <><p>Intelligent Procurement supports organization workspaces and procurement workflows involving RFQs, supplier participation, quotations, documents, evaluation activity, communications, and related records.</p><p>Access to workspace records and actions depends on organization context, membership, role, lifecycle state, and the authorization rules applicable to the relevant workflow.</p></>,
+  },
+  {
+    number: "04", id: "commercial-decisions", label: "Procurement and commercial decisions",
+    content: <><p>RFQs, supplier submissions, evaluations, negotiations, procurement decisions, and contract awards remain the responsibility of the participating organizations.</p><p>Intelligent Procurement provides workflow and intelligence support. It does not make an organization&apos;s commercial, procurement, or award decision for it.</p></>,
+  },
+  {
+    number: "05", id: "information-accuracy", label: "Information and data accuracy",
+    content: <><p>Users and organizations are responsible for the accuracy and appropriateness of the information they submit, including company information, procurement requirements, supplier information, quotations, budgets, and related records.</p><p>Views and outputs produced by the services depend on the information and evidence available for the relevant purpose.</p></>,
+  },
+  {
+    number: "06", id: "intelligent-outputs", label: "Analytics and intelligent outputs",
+    content: <><p>Intelligent Procurement may present analytics, forecasts, scores, evidence summaries, reports, and AI-assisted narratives based on information available to an authorized user.</p><p>These outputs support—and do not replace—professional judgment. Their relevance and usefulness depend on the scope, quality, and availability of the underlying evidence.</p></>,
+  },
+  {
+    number: "07", id: "service-evolution", label: "Service evolution and availability",
+    content: <><p>Features and workflows may evolve as Nexus Pavilion Inc. develops its services and products. A service or feature may also be temporarily unavailable during maintenance, security work, infrastructure changes, or other operational activity.</p><p>This section describes how the services may evolve; it does not create an uptime or availability commitment.</p></>,
+  },
+  {
+    number: "08", id: "responsibility-boundary", label: "Responsibility and liability boundary",
+    content: <p>To the maximum extent permitted by applicable law, Nexus Pavilion Inc. shall not be liable for indirect, incidental, special, consequential, or business losses arising from use of the applicable services or procurement decisions made by users.</p>,
+  },
+  {
+    number: "09", id: "terms-changes", label: "Terms changes and contact",
+    content: <><p>These Terms may be revised as the corporate website, Intelligent Procurement, and their supporting operations evolve. The current published version of this page describes the applicable operating boundaries.</p><p>Questions about these Terms may be directed through the Nexus Pavilion Inc. corporate contact channel.</p></>,
+  },
+] as const;
 
 export default function TermsPage() {
-return (
-<main className="relative min-h-screen overflow-hidden bg-[#061426] px-4 py-6 text-white sm:px-6 lg:px-10">
-<div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(circle_at_top_left,rgba(44,196,232,0.18),transparent_34%),radial-gradient(circle_at_top_right,rgba(200,166,70,0.15),transparent_30%),linear-gradient(180deg,#061426_0%,#07111F_45%,#020617_100%)]" />
+  return (
+    <main className={`${styles.page} ${instrumentSans.variable} ${manrope.variable}`}>
+      <div className={styles.architecture} aria-hidden="true"><span /><span /><i /></div>
+      <div className={styles.shell}>
+        <header className={styles.header}>
+          <Link href="/" className={styles.brand} aria-label="Nexus Pavilion Inc. home">
+            <NexusPavilionLogo variant="icon" size={42} priority />
+            <span>Nexus Pavilion Inc.</span>
+          </Link>
+          <span className={styles.chapter}>LEGAL / TERMS</span>
+        </header>
 
-<div className="mx-auto w-full max-w-[1600px]">
-<Link
-href="/"
-className="inline-flex rounded-full border border-white/10 bg-white/[0.05] px-5 py-3 text-sm font-black text-slate-300 transition hover:bg-white/[0.08] hover:text-white"
->
-← Back to Home
-</Link>
+        <section className={styles.introduction} aria-labelledby="terms-heading">
+          <div className={styles.agreementIdentity}><p>AGREEMENT / 01</p><span>OPERATING BOUNDARIES</span></div>
+          <div className={styles.introductionMain}>
+            <p className={styles.eyebrow}>TERMS</p>
+            <h1 id="terms-heading">Terms, precisely framed.</h1>
+            <p className={styles.lead}>These Terms set out the operating boundaries for applicable services provided by Nexus Pavilion Inc. Product-specific provisions are identified as relating to Intelligent Procurement, a Nexus Pavilion Inc. product currently in development.</p>
+          </div>
+        </section>
 
-<section className="mt-6 rounded-[40px] border border-white/10 bg-white/[0.06] p-8 shadow-[0_36px_120px_rgba(0,0,0,0.45)] backdrop-blur-xl lg:p-10">
-<p className="text-xs font-black uppercase tracking-[0.35em] text-[#C8A646]">
-Terms of Service
-</p>
+        <div className={styles.agreementLayout}>
+          <aside className={styles.agreementRail} aria-label="Terms clause index">
+            <p>CLAUSE INDEX</p>
+            <ol>{clauses.map((clause) => <li key={clause.number}><span>{clause.number}</span><a href={`#${clause.id}`}>{clause.label}</a></li>)}</ol>
+            <div className={styles.productContext}><p>PRODUCT CONTEXT</p><strong>Intelligent Procurement</strong><span>IN DEVELOPMENT</span></div>
+          </aside>
 
-<h1 className="mt-4 text-5xl font-black tracking-[-0.05em] text-white sm:text-6xl">
-Nexus Pavilion Terms
-</h1>
+          <article className={styles.agreement} aria-label="Terms of service">
+            {clauses.map((clause) => (
+              <section key={clause.number} id={clause.id} className={styles.clause} aria-labelledby={`${clause.id}-heading`}>
+                <div className={styles.clauseMarker}><span>{clause.number}</span><i aria-hidden="true" /></div>
+                <div><h2 id={`${clause.id}-heading`}>{clause.label}</h2><div className={styles.clauseCopy}>{clause.content}</div></div>
+              </section>
+            ))}
+          </article>
+        </div>
 
-<p className="mt-6 max-w-4xl text-base font-semibold leading-8 text-slate-300">
-By accessing or using Nexus Pavilion, you agree to these Terms of
-Service. These terms govern platform usage, company accounts,
-procurement activities, supplier participation, executive
-intelligence, and related services.
-</p>
-
-<div className="mt-8 flex flex-wrap gap-3">
-<StatusPill>Enterprise SaaS</StatusPill>
-<StatusPill>Procurement Governance</StatusPill>
-<StatusPill>Supplier Network</StatusPill>
-<StatusPill>Executive Intelligence</StatusPill>
-</div>
-</section>
-
-<section className="mt-8 space-y-6">
-{sections.map((section) => (
-<Section
-key={section.title}
-title={section.title}
-content={section.content}
-/>
-))}
-</section>
-
-<section className="mt-8 rounded-[34px] border border-[#C8A646]/25 bg-[#C8A646]/10 p-8">
-<p className="text-xs font-black uppercase tracking-[0.25em] text-[#F5D77B]">
-Notice
-</p>
-
-<h2 className="mt-3 text-3xl font-black text-white">
-Continuous platform improvement.
-</h2>
-
-<p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-300">
-Nexus Pavilion continues to evolve through regular feature releases,
-security enhancements, executive reporting improvements, and
-procurement intelligence capabilities. Updated Terms may be
-published as the platform expands.
-</p>
-</section>
-</div>
-</main>
-);
-}
-
-function Section({
-title,
-content,
-}: {
-title: string;
-content: string;
-}) {
-return (
-<section className="rounded-[34px] border border-white/10 bg-white/[0.055] p-8 shadow-[0_24px_80px_rgba(0,0,0,0.25)]">
-<h2 className="text-2xl font-black text-white">{title}</h2>
-
-<p className="mt-4 text-sm font-semibold leading-7 text-slate-400">
-{content}
-</p>
-</section>
-);
-}
-
-function StatusPill({ children }: { children: React.ReactNode }) {
-return (
-<span className="inline-flex rounded-full border border-[#2CC4E8]/25 bg-[#2CC4E8]/10 px-4 py-2 text-xs font-black uppercase tracking-[0.18em] text-[#9BE8F8]">
-{children}
-</span>
-);
+        <section className={styles.contactClose} aria-labelledby="terms-contact-heading">
+          <div><p>CORPORATE CONTACT</p><h2 id="terms-contact-heading">A clear boundary begins with a clear question.</h2></div>
+          <div className={styles.contactAction}><p>Use the corporate contact channel for questions about these Terms or the services to which they apply.</p><Link href="/contact">Contact Nexus Pavilion <span aria-hidden="true">→</span></Link></div>
+        </section>
+      </div>
+    </main>
+  );
 }
