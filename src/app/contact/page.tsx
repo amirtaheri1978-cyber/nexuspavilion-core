@@ -9,7 +9,7 @@ const instrumentSans = Instrument_Sans({ subsets: ["latin"], variable: "--font-c
 const manrope = Manrope({ subsets: ["latin"], variable: "--font-corporate-body", display: "swap" });
 
 const CONTACT_TITLE = "Contact | Nexus Pavilion Inc.";
-const CONTACT_DESCRIPTION = "Contact NexusPavilion Inc. for corporate and product inquiries.";
+const CONTACT_DESCRIPTION = "Contact Nexus Pavilion Inc. for corporate, partnership, and product inquiries.";
 
 export const metadata: Metadata = {
   title: { absolute: CONTACT_TITLE },

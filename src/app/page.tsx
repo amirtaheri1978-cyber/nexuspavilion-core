@@ -15,7 +15,7 @@ const manrope = Manrope({ subsets: ["latin"], variable: "--font-corporate-body",
 
 const CORPORATE_TITLE = "Nexus Pavilion Inc. | AI & Decision Intelligence";
 const CORPORATE_DESCRIPTION =
-  "NexusPavilion Inc. is the parent company of NexusPavilion Intelligent Procurement and builds focused AI products that turn complexity into decisive intelligence.";
+  "Nexus Pavilion Inc. builds focused AI and software systems for complex real-world environments, including Intelligent Procurement, its procurement intelligence product.";
 
 export const metadata: Metadata = {
   title: { absolute: CORPORATE_TITLE },
