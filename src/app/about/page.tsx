@@ -1,228 +1,114 @@
 import type { Metadata } from "next";
+import { Instrument_Sans, Manrope } from "next/font/google";
 import Link from "next/link";
 
-const ABOUT_TITLE = "About | NexusPavilion Inc.";
-const ABOUT_DESCRIPTION =
-  "Learn about NexusPavilion Inc., the parent company of NexusPavilion Intelligent Procurement.";
+import { NexusPavilionLogo } from "@/components/branding/nexus-pavilion-logo";
+import styles from "@/components/corporate/corporate-about.module.css";
+
+const instrumentSans = Instrument_Sans({ subsets: ["latin"], variable: "--font-corporate-display", display: "swap" });
+const manrope = Manrope({ subsets: ["latin"], variable: "--font-corporate-body", display: "swap" });
+
+const ABOUT_TITLE = "Company | Nexus Pavilion Inc.";
+const ABOUT_DESCRIPTION = "Nexus Pavilion Inc. builds focused AI and software systems for complex real-world environments.";
 
 export const metadata: Metadata = {
-  title: {
-    absolute: ABOUT_TITLE,
-  },
+  title: { absolute: ABOUT_TITLE },
   description: ABOUT_DESCRIPTION,
-  alternates: {
-    canonical: "/about",
-  },
-  robots: {
-    index: true,
-    follow: true,
-  },
-  openGraph: {
-    title: ABOUT_TITLE,
-    description: ABOUT_DESCRIPTION,
-    url: "/about",
-    siteName: "NexusPavilion Inc.",
-    type: "website",
-    locale: "en_US",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: ABOUT_TITLE,
-    description: ABOUT_DESCRIPTION,
-  },
+  alternates: { canonical: "/about" },
+  robots: { index: true, follow: true },
+  openGraph: { title: ABOUT_TITLE, description: ABOUT_DESCRIPTION, url: "/about", siteName: "Nexus Pavilion Inc.", type: "website", locale: "en_US" },
+  twitter: { card: "summary_large_image", title: ABOUT_TITLE, description: ABOUT_DESCRIPTION },
 };
 
-const intelligenceCards = [
-{
-title: "RFQ Intelligence",
-description:
-"Create, publish, compare, and award RFQs with structured supplier quote intelligence.",
-},
-{
-title: "Supplier Performance",
-description:
-"Track supplier activity, award history, win rates, procurement scores, and supplier risk signals.",
-},
-{
-title: "Executive Analytics",
-description:
-"View procurement health, savings opportunities, competition levels, forecasts, and strategic recommendations.",
-},
-];
-
-const buyerItems = [
-"Manage company RFQs and supplier quotes",
-"Compare quotes using price, timeline, risk, and award probability",
-"Track procurement volume, savings, and award decisions",
-"Manage team members, roles, invitations, and access",
-];
-
-const supplierItems = [
-"Participate in procurement opportunities",
-"Track submitted quotes and awarded contracts",
-"Monitor supplier performance and ranking signals",
-"Build verified company visibility across the network",
-];
+const buildingPrinciples = [
+  { index: "01", title: "Context", detail: "Understand the environment before defining the system." },
+  { index: "02", title: "Domain expertise", detail: "Ground technology in the realities of professional work." },
+  { index: "03", title: "Systems", detail: "Connect evidence, operations, and infrastructure deliberately." },
+  { index: "04", title: "Consequence", detail: "Measure intelligence by the quality of the decisions it supports." },
+] as const;
 
 export default function AboutPage() {
-return (
-<main className="relative min-h-screen overflow-hidden bg-[#061426] px-4 py-6 text-white sm:px-6 lg:px-10">
-<div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(circle_at_top_left,rgba(44,196,232,0.18),transparent_34%),radial-gradient(circle_at_top_right,rgba(200,166,70,0.15),transparent_30%),linear-gradient(180deg,#061426_0%,#07111F_45%,#020617_100%)]" />
+  return (
+    <main className={`${styles.page} ${instrumentSans.variable} ${manrope.variable}`}>
+      <div className={styles.architecture} aria-hidden="true"><span /><span /><span /></div>
+      <div className={styles.shell}>
+        <header className={styles.header}>
+          <Link href="/" className={styles.brand} aria-label="Nexus Pavilion Inc. home">
+            <NexusPavilionLogo variant="icon" size={42} priority />
+            <span>Nexus Pavilion Inc.</span>
+          </Link>
+          <span className={styles.chapter}>COMPANY / 01</span>
+        </header>
 
-<div className="mx-auto w-full max-w-[1680px]">
-<Link
-href="/"
-className="inline-flex w-fit rounded-full border border-white/10 bg-white/[0.045] px-5 py-3 text-sm font-black text-slate-300 transition hover:bg-white/[0.08] hover:text-white"
->
-← Back to Home
-</Link>
+        <section className={styles.introduction} aria-labelledby="company-heading">
+          <p className={styles.eyebrow}>NEXUS PAVILION INC.</p>
+          <h1 id="company-heading">Intelligence shaped for the systems that shape the world.</h1>
+          <div className={styles.introductionCopy}>
+            <p>Nexus Pavilion Inc. builds focused AI and software systems for complex real-world environments—where information, operations, infrastructure, and professional judgment must work together.</p>
+            <span>Ontario, Canada</span>
+          </div>
+        </section>
 
-<section className="mt-6 rounded-[40px] border border-white/10 bg-white/[0.065] p-7 shadow-[0_36px_120px_rgba(0,0,0,0.52)] backdrop-blur-2xl sm:p-10">
-<p className="text-xs font-black uppercase tracking-[0.35em] text-[#C8A646]">
-About Nexus Pavilion
-</p>
+        <section className={styles.operatingIdea} aria-labelledby="operating-idea-heading">
+          <SectionMarker index="02">OPERATING IDEA</SectionMarker>
+          <div className={styles.operatingEditorial}>
+            <h2 id="operating-idea-heading">Context is not background. It is part of the system.</h2>
+            <div className={styles.operatingCopy}>
+              <p>Useful intelligence begins before abstraction. It starts by understanding how data relates to operations, physical infrastructure, domain expertise, and the people accountable for a decision.</p>
+              <p>We design for that whole environment. Evidence should remain legible, judgment should remain present, and technology should clarify consequence rather than conceal it.</p>
+            </div>
+          </div>
+        </section>
 
-<h1 className="mt-4 max-w-5xl text-5xl font-black leading-tight tracking-[-0.05em] text-white sm:text-6xl">
-Enterprise procurement intelligence for construction and supplier
-networks.
-</h1>
+        <section className={styles.building} aria-labelledby="building-heading">
+          <header className={styles.buildingHeader}>
+            <SectionMarker index="03">HOW WE BUILD</SectionMarker>
+            <h2 id="building-heading">From situated knowledge to consequential action.</h2>
+          </header>
+          <ol className={styles.principles}>
+            {buildingPrinciples.map((principle) => (
+              <li key={principle.title}>
+                <span>{principle.index}</span>
+                <h3>{principle.title}</h3>
+                <p>{principle.detail}</p>
+              </li>
+            ))}
+          </ol>
+        </section>
 
-<p className="mt-6 max-w-4xl text-base font-semibold leading-8 text-slate-300">
-Nexus Pavilion is a procurement intelligence platform designed to
-help buyers, suppliers, and enterprise teams manage RFQs, supplier
-quotes, award decisions, company workspaces, and procurement
-performance from one secure platform.
-</p>
+        <section className={styles.productArchitecture} aria-labelledby="product-heading">
+          <div className={styles.productParent}>
+            <p>CORPORATE ARCHITECTURE / 01</p>
+            <h2>Nexus Pavilion Inc.</h2>
+            <span>Focused AI and software systems</span>
+          </div>
+          <div className={styles.productLine} aria-hidden="true"><span /><i /></div>
+          <div className={styles.product}>
+            <p>PRODUCT / 01</p>
+            <div className={styles.productStatus}>IN DEVELOPMENT</div>
+            <h2 id="product-heading">Intelligent Procurement</h2>
+            <p className={styles.productStatement}>An AI-assisted procurement intelligence product designed to help teams structure sourcing workflows, evaluate commercial information, and make consequential procurement decisions with greater context and control.</p>
+          </div>
+        </section>
 
-<div className="mt-8 flex flex-wrap gap-3">
-<StatusPill>RFQ Governance</StatusPill>
-<StatusPill>Supplier Intelligence</StatusPill>
-<StatusPill>Executive Analytics</StatusPill>
-<StatusPill>Board Reporting</StatusPill>
-</div>
-</section>
+        <section className={styles.direction} aria-labelledby="direction-heading">
+          <SectionMarker index="05">LONG-TERM DIRECTION</SectionMarker>
+          <div>
+            <h2 id="direction-heading">Build carefully. Expand only where understanding is earned.</h2>
+            <p>Our longer horizon is not defined by adding technology everywhere. It is defined by finding the environments where context, evidence, and professional judgment can be made more coherent—and building focused systems worthy of the decisions they inform.</p>
+          </div>
+        </section>
 
-<section className="mt-8 grid gap-6 md:grid-cols-3">
-{intelligenceCards.map((card) => (
-<InfoCard
-key={card.title}
-title={card.title}
-description={card.description}
-/>
-))}
-</section>
-
-<section className="mt-8 rounded-[34px] border border-white/10 bg-white/[0.055] p-8 shadow-[0_30px_80px_rgba(0,0,0,0.35)]">
-<p className="text-xs font-black uppercase tracking-[0.3em] text-[#C8A646]">
-Platform Mission
-</p>
-
-<h2 className="mt-3 text-3xl font-black text-white">
-Turning procurement data into confident decisions.
-</h2>
-
-<p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-400">
-Traditional procurement workflows often rely on spreadsheets,
-emails, disconnected supplier lists, and manual quote comparison. Nexus
-Pavilion centralizes the procurement lifecycle and adds intelligence
-on top of RFQs, quotes, awards, supplier performance, and executive
-reporting.
-</p>
-</section>
-
-<section className="mt-8 grid gap-6 md:grid-cols-2">
-<FeatureBlock title="For Buyers" items={buyerItems} />
-
-<FeatureBlock title="For Suppliers" items={supplierItems} />
-</section>
-
-<section className="mt-8 rounded-[34px] border border-[#2CC4E8]/15 bg-gradient-to-br from-[#0B3D91]/35 via-[#07111F]/92 to-[#061426] p-8 shadow-[0_0_70px_rgba(44,196,232,0.10)]">
-<p className="text-xs font-black uppercase tracking-[0.3em] text-[#C8A646]">
-Soft Launch
-</p>
-
-<h2 className="mt-3 text-3xl font-black text-white">
-Built for modern procurement teams.
-</h2>
-
-<p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-300">
-Nexus Pavilion is being developed as an enterprise-ready SaaS
-platform for procurement visibility, supplier intelligence, and
-smarter award decisions.
-</p>
-
-<div className="mt-7 flex flex-col gap-3 sm:flex-row">
-<Link
-href="/signup"
-className="inline-flex h-[54px] items-center justify-center rounded-2xl bg-gradient-to-r from-[#B9902F] via-[#C8A646] to-[#F5D77B] px-6 text-sm font-black uppercase tracking-[0.12em] text-slate-950 transition hover:scale-[1.01]"
->
-Join Network
-</Link>
-
-<Link
-href="/contact"
-className="inline-flex h-[54px] items-center justify-center rounded-2xl border border-white/10 bg-white/[0.045] px-6 text-sm font-black text-white transition hover:bg-white/[0.08]"
->
-Contact Team
-</Link>
-</div>
-</section>
-</div>
-</main>
-);
+        <section className={styles.contactClose} aria-labelledby="contact-close-heading">
+          <p>START A CONVERSATION</p>
+          <h2 id="contact-close-heading">Complex work deserves a clear beginning.</h2>
+          <Link href="/contact">Contact Nexus Pavilion <span aria-hidden="true">→</span></Link>
+        </section>
+      </div>
+    </main>
+  );
 }
 
-function InfoCard({
-title,
-description,
-}: {
-title: string;
-description: string;
-}) {
-return (
-<div className="rounded-3xl border border-white/10 bg-white/[0.055] p-7 shadow-[0_24px_80px_rgba(0,0,0,0.26)]">
-<h2 className="text-2xl font-black text-white">{title}</h2>
-
-<p className="mt-3 text-sm font-semibold leading-7 text-slate-400">
-{description}
-</p>
-</div>
-);
-}
-
-function FeatureBlock({
-title,
-items,
-}: {
-title: string;
-items: string[];
-}) {
-return (
-<div className="rounded-[34px] border border-white/10 bg-white/[0.055] p-8 shadow-[0_24px_80px_rgba(0,0,0,0.26)]">
-<h2 className="text-3xl font-black text-white">{title}</h2>
-
-<div className="mt-5 space-y-3">
-{items.map((item) => (
-<div
-key={item}
-className="flex items-center gap-3 rounded-2xl border border-white/10 bg-[#07111F]/75 px-4 py-3 text-sm font-bold text-slate-300"
->
-<span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-[#C8A646]/30 bg-[#C8A646]/10 text-xs text-[#F5D77B]">
-✓
-</span>
-
-<span>{item}</span>
-</div>
-))}
-</div>
-</div>
-);
-}
-
-function StatusPill({ children }: { children: React.ReactNode }) {
-return (
-<span className="inline-flex rounded-full border border-[#2CC4E8]/25 bg-[#2CC4E8]/10 px-4 py-2 text-xs font-black uppercase tracking-[0.16em] text-[#9BE8F8]">
-{children}
-</span>
-);
+function SectionMarker({ index, children }: { index: string; children: React.ReactNode }) {
+  return <div className={styles.sectionMarker}><span>{index}</span><p>{children}</p></div>;
 }
