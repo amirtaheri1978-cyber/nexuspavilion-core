@@ -34,9 +34,23 @@ const navigation = [
   { label: "Contact", href: "/contact" },
 ] as const;
 
+const organizationJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  name: "Nexus Pavilion Inc.",
+  url: "https://nexuspavilion.com",
+  logo: "https://nexuspavilion.com/branding/logo-icon-1024.png",
+  description:
+    "Nexus Pavilion Inc. builds focused AI and software systems for complex real-world environments.",
+};
+
 export default function HomePage() {
   return (
     <main className={`${styles.page} ${instrumentSans.variable} ${manrope.variable}`}>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
+      />
       <section className={styles.heroChapter} aria-label="NexusPavilion Inc. introduction">
         <CorporateHeroVisual />
         <div className={styles.aurora} aria-hidden="true" />
