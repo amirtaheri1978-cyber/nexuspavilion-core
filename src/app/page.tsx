@@ -55,6 +55,20 @@ export default function HomePage() {
             <nav className={styles.navigation} aria-label="Corporate">
               {navigation.map((item) => <Link key={item.label} href={item.href}>{item.label}</Link>)}
             </nav>
+            <details className={styles.mobileNavigation}>
+              <summary aria-label="Corporate navigation menu">
+                <span>Menu</span>
+                <span className={styles.mobileNavigationIcon} aria-hidden="true" />
+              </summary>
+              <nav aria-label="Corporate mobile navigation">
+                {navigation.map((item, index) => (
+                  <Link key={item.label} href={item.href}>
+                    <span aria-hidden="true">0{index + 1}</span>
+                    {item.label}
+                  </Link>
+                ))}
+              </nav>
+            </details>
           </header>
 
           <div className={styles.hero}>
