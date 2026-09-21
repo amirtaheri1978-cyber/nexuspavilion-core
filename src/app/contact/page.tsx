@@ -38,7 +38,7 @@ export default function ContactPage() {
             <address className={styles.directContact}>
               <p>CORPORATE CONTACT</p>
               <a href="mailto:contact@nexuspavilion.com">contact@nexuspavilion.com</a>
-              <span>Toronto, Ontario, Canada</span>
+              <span>Ontario, Canada</span>
             </address>
           </div>
 

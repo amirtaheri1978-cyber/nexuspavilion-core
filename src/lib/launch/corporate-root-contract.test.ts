@@ -482,7 +482,7 @@ describe("Cursor Corp 02 Slice C metadata indexing contract", () => {
     expect(contactPage).toContain("Nexus Pavilion Inc. welcomes corporate, product, partnership, and business inquiries.");
     expect(contactPage).toContain("CORPORATE CONTACT");
     expect(contactPage).toContain("contact@nexuspavilion.com");
-    expect(contactPage).toContain("Toronto, Ontario, Canada");
+    expect(contactPage).toContain("Ontario, Canada");
     expect(contactPage).toContain("YOUR INQUIRY");
     expect(contactPage).toContain("Tell us what you’re working through.");
     expect(contactPage).toContain("Clear conversations are where useful systems begin.");
