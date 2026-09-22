@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { NexusPavilionLogo } from "@/components/branding/nexus-pavilion-logo";
 import styles from "@/components/corporate/corporate-footer.module.css";
+import { corporateSocialProfiles } from "@/components/corporate/corporate-social-profiles";
 
 const corporateNavigation = [
   { label: "Company", href: "/about" },
@@ -40,6 +41,24 @@ export default function Footer() {
                 contact@nexuspavilion.com
               </a>
             </address>
+            <nav className={styles.social} aria-label="Nexus Pavilion Inc. on social media">
+              <p className={styles.socialEyebrow}>Connect</p>
+              <ul className={styles.socialList}>
+                {corporateSocialProfiles.map((profile) => (
+                  <li key={profile.href}>
+                    <a
+                      href={profile.href}
+                      className={styles.socialLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={profile.accessibleName}
+                    >
+                      {profile.label}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </nav>
           </section>
 
           <div className={styles.navigationArchitecture}>

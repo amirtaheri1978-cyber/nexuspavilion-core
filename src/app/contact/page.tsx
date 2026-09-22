@@ -4,6 +4,7 @@ import Link from "next/link";
 
 import ContactForm from "@/components/contact-form";
 import styles from "@/components/corporate/corporate-contact.module.css";
+import { corporateSocialProfiles } from "@/components/corporate/corporate-social-profiles";
 
 const instrumentSans = Instrument_Sans({ subsets: ["latin"], variable: "--font-corporate-display", display: "swap" });
 const manrope = Manrope({ subsets: ["latin"], variable: "--font-corporate-body", display: "swap" });
@@ -40,6 +41,23 @@ export default function ContactPage() {
               <a href="mailto:contact@nexuspavilion.com">contact@nexuspavilion.com</a>
               <span>Ontario, Canada</span>
             </address>
+            <nav className={styles.connect} aria-label="Nexus Pavilion Inc. on social media">
+              <p>CONNECT</p>
+              <ul>
+                {corporateSocialProfiles.map((profile) => (
+                  <li key={profile.href}>
+                    <a
+                      href={profile.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={profile.accessibleName}
+                    >
+                      {profile.label}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </nav>
           </div>
 
           <section className={styles.formPlane} aria-labelledby="inquiry-heading">
