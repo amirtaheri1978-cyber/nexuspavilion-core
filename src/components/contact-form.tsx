@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 
 import styles from "@/components/corporate/corporate-contact.module.css";
 
@@ -123,6 +124,10 @@ export default function ContactForm() {
       </FormField>
 
       {statusMessage ? <div id="contact-form-status" role={submissionState === "error" ? "alert" : "status"} className={submissionState === "success" ? styles.successMessage : styles.errorMessage}>{statusMessage}</div> : null}
+      <p className={styles.collectionNotice}>
+        By submitting this form, you acknowledge that Nexus Pavilion Inc. will use the information provided to review and respond to your inquiry.{" "}
+        <Link href="/privacy" className={styles.privacyLink}>Privacy</Link>
+      </p>
       <button type="submit" disabled={loading} className={styles.submit}>{loading ? "Sending inquiry…" : "Send inquiry"}<span aria-hidden="true">↗</span></button>
     </form>
   );

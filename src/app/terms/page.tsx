@@ -40,19 +40,35 @@ const clauses = [
   },
   {
     number: "06", id: "intelligent-outputs", label: "Analytics and intelligent outputs",
-    content: <><p>Intelligent Procurement may present analytics, forecasts, scores, evidence summaries, reports, and AI-assisted narratives based on information available to an authorized user.</p><p>These outputs support—and do not replace—professional judgment. Their relevance and usefulness depend on the scope, quality, and availability of the underlying evidence.</p></>,
+    content: <><p>Intelligent Procurement may present analytics, forecasts, scores, evidence summaries, reports, and AI-assisted narratives based on information available to an authorized user.</p><p>These outputs support—and do not replace—professional judgment. They may be incomplete, inaccurate, or unsuitable for a particular decision and should be reviewed against the underlying evidence and professional judgment. Their relevance and usefulness depend on the scope, quality, and availability of that evidence. The services do not make autonomous decisions on behalf of an organization.</p></>,
   },
   {
-    number: "07", id: "service-evolution", label: "Service evolution and availability",
+    number: "07", id: "acceptable-use", label: "Acceptable use",
+    content: <p>Users must not use the applicable website or services for unlawful purposes; attempt unauthorized access; circumvent security or access controls; introduce malicious code; interfere with or disrupt the services; or attempt to obtain procurement or workspace information they are not authorized to access.</p>,
+  },
+  {
+    number: "08", id: "intellectual-property", label: "Intellectual property",
+    content: <><p>Nexus Pavilion Inc. retains applicable rights in its website, services, software, branding, and first-party materials, subject to third-party and open-source rights.</p><p>Nexus Pavilion Inc. does not acquire ownership of customer or user procurement data merely because that data is submitted to the service. Users and organizations provide only the limited rights reasonably necessary for Nexus Pavilion Inc. to host, process, transmit, secure, and operate submitted content for the applicable service.</p></>,
+  },
+  {
+    number: "09", id: "confidential-information", label: "Confidential and authorized information",
+    content: <p>Users must use confidential, procurement, and workspace information only within their authorized relationship and workflow. This obligation does not shift all platform-security responsibility to users.</p>,
+  },
+  {
+    number: "10", id: "service-evolution", label: "Service evolution and availability",
     content: <><p>Features and workflows may evolve as Nexus Pavilion Inc. develops its services and products. A service or feature may also be temporarily unavailable during maintenance, security work, infrastructure changes, or other operational activity.</p><p>This section describes how the services may evolve; it does not create an uptime or availability commitment.</p></>,
   },
   {
-    number: "08", id: "responsibility-boundary", label: "Responsibility and liability boundary",
-    content: <p>To the maximum extent permitted by applicable law, Nexus Pavilion Inc. shall not be liable for indirect, incidental, special, consequential, or business losses arising from use of the applicable services or procurement decisions made by users.</p>,
+    number: "11", id: "responsibility-boundary", label: "Responsibility and liability boundary",
+    content: <><p>To the maximum extent permitted by applicable law, Nexus Pavilion Inc. shall not be liable for indirect, incidental, special, consequential, or business losses arising from use of the applicable services or procurement decisions made by users.</p><p>Nothing in these Terms excludes or limits any right or remedy that cannot lawfully be excluded or limited.</p></>,
   },
   {
-    number: "09", id: "terms-changes", label: "Terms changes and contact",
-    content: <><p>These Terms may be revised as the corporate website, Intelligent Procurement, and their supporting operations evolve. The current published version of this page describes the applicable operating boundaries.</p><p>Questions about these Terms may be directed through the Nexus Pavilion Inc. corporate contact channel.</p></>,
+    number: "12", id: "governing-law", label: "Governing law",
+    content: <p>These Terms are governed by the laws of the Province of Ontario and the applicable federal laws of Canada.</p>,
+  },
+  {
+    number: "13", id: "terms-changes", label: "Terms changes and contact",
+    content: <><p>These Terms may be revised as the corporate website, Intelligent Procurement, and their supporting operations evolve. Publishing an updated version of this page does not, by itself, constitute acceptance of every material contractual change.</p><p>Material changes affecting registered or service users may require additional notice or acceptance where appropriate or required by law. Questions about these Terms may be directed through the Nexus Pavilion Inc. corporate contact channel.</p></>,
   },
 ] as const;
 
@@ -70,7 +86,12 @@ export default function TermsPage() {
         </header>
 
         <section className={styles.introduction} aria-labelledby="terms-heading">
-          <div className={styles.agreementIdentity}><p>AGREEMENT / 01</p><span>OPERATING BOUNDARIES</span></div>
+          <div className={styles.agreementIdentity}>
+            <p>AGREEMENT / 01</p>
+            <span>OPERATING BOUNDARIES</span>
+            <span>Effective September 22, 2026</span>
+            <span>Last updated September 22, 2026</span>
+          </div>
           <div className={styles.introductionMain}>
             <p className={styles.eyebrow}>TERMS</p>
             <h1 id="terms-heading">Terms, precisely framed.</h1>

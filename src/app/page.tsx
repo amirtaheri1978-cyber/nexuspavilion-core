@@ -89,7 +89,7 @@ export default function HomePage() {
             <section id="technology" className={styles.copy} aria-labelledby="corporate-hero-heading">
               <p className={styles.kicker}>Real systems · brighter tomorrows</p>
               <h1 id="corporate-hero-heading">Turning complexity into decisive intelligence.</h1>
-              <p className={styles.lead}>We build focused AI products that transform complex data, operations, infrastructure, and human expertise into clearer decisions and measurable real-world outcomes.</p>
+              <p className={styles.lead}>We build focused AI products that transform complex data, operations, infrastructure, and human expertise into clearer decisions and meaningful real-world outcomes.</p>
               <div className={styles.actions}>
                 <Link className={styles.primary} href="#technology">Explore Technology</Link>
                 <Link className={styles.secondary} href="#products-projects">View Products</Link>

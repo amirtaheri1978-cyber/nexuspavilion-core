@@ -94,7 +94,10 @@ export default function Footer() {
         </aside>
 
         <div className={styles.closing}>
-          <p>Built with a long view of technology, context, and consequence.</p>
+          <div className={styles.closingCopy}>
+            <p>Built with a long view of technology, context, and consequence.</p>
+            <p className={styles.copyright}>© 2026 Nexus Pavilion Inc. All rights reserved.</p>
+          </div>
           <span aria-hidden="true">ONTARIO, CANADA</span>
         </div>
       </div>

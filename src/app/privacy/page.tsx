@@ -28,8 +28,12 @@ const documentIndex = [
   ["05", "Operational processing"],
   ["06", "Security and access"],
   ["07", "Analytics and intelligent outputs"],
-  ["08", "Organization responsibilities"],
-  ["09", "Policy changes"],
+  ["08", "Cookies, storage, and tracking"],
+  ["09", "Retention"],
+  ["10", "Access, correction, and complaints"],
+  ["11", "Accountability"],
+  ["12", "Organization responsibilities"],
+  ["13", "Policy changes"],
 ] as const;
 
 const policySections = [
@@ -84,6 +88,7 @@ const policySections = [
     content: (
       <>
         <p>The current service uses hosted authentication and data infrastructure, transactional email delivery, and limited error monitoring to operate supported workflows.</p>
+        <p>Nexus Pavilion Inc. uses third-party service providers, including an email-delivery provider (currently Resend), to transmit and process contact inquiries on its behalf.</p>
         <p>Contact messages are routed through the configured email-delivery service. Product sessions use authentication cookies required to maintain signed-in access. Error monitoring is configured to exclude default personal information, user information, cookies, request and response headers and bodies, URL query parameters, AI inputs and outputs, and database-query data.</p>
       </>
     ),
@@ -112,6 +117,44 @@ const policySections = [
   },
   {
     number: "08",
+    id: "cookies-storage-tracking",
+    title: "Cookies, browser storage, and tracking",
+    content: (
+      <>
+        <p>On the anonymous Corporate website, advertising or analytics cookies or similar tracking technologies are not currently used.</p>
+        <p>Within Intelligent Procurement, strictly necessary authentication technologies may be used to maintain signed-in sessions and secure access to product workspaces.</p>
+        <p>Submitting the corporate contact form does not create a marketing or analytics cookie. Submitted information is transmitted through the configured email-delivery provider.</p>
+        <p>Limited technical error monitoring may operate when errors occur, under the existing privacy-preserving configuration described in this policy.</p>
+        <p>Any future addition of optional analytics, advertising, profiling, or similar tracking must trigger a new privacy and consent review before activation.</p>
+      </>
+    ),
+  },
+  {
+    number: "09",
+    id: "retention",
+    title: "Retention",
+    content: (
+      <p>Personal information is retained only for as long as reasonably necessary for the purposes for which it was collected, subject to applicable legal, security, dispute-resolution, and record-keeping requirements.</p>
+    ),
+  },
+  {
+    number: "10",
+    id: "access-correction-complaints",
+    title: "Access, correction, and complaints",
+    content: (
+      <p>Individuals may contact Nexus Pavilion Inc. to request access to personal information held about them, request correction of inaccurate or incomplete information, or raise a privacy concern or complaint, subject to applicable law.</p>
+    ),
+  },
+  {
+    number: "11",
+    id: "accountability",
+    title: "Accountability",
+    content: (
+      <p>Privacy matters for Nexus Pavilion Inc. may be directed to the Privacy Officer — Nexus Pavilion Inc. at contact@nexuspavilion.com.</p>
+    ),
+  },
+  {
+    number: "12",
     id: "responsibilities",
     title: "Organization and user responsibilities",
     content: (
@@ -119,7 +162,7 @@ const policySections = [
     ),
   },
   {
-    number: "09",
+    number: "13",
     id: "policy-changes",
     title: "Policy changes",
     content: (
@@ -145,6 +188,8 @@ export default function PrivacyPage() {
           <div className={styles.documentIdentity}>
             <p>DOCUMENT / 01</p>
             <span>CORPORATE POLICY</span>
+            <span>Effective September 22, 2026</span>
+            <span>Last updated September 22, 2026</span>
           </div>
           <div className={styles.introductionMain}>
             <p className={styles.eyebrow}>PRIVACY</p>
@@ -187,7 +232,7 @@ export default function PrivacyPage() {
             <h2 id="privacy-contact-heading">Questions deserve a clear route.</h2>
           </div>
           <div className={styles.contactAction}>
-            <p>Use the corporate contact channel for privacy questions, access concerns, or unexpected information exposure.</p>
+            <p>Privacy Officer — Nexus Pavilion Inc. · contact@nexuspavilion.com. Use the corporate contact channel for privacy questions, access concerns, or unexpected information exposure.</p>
             <Link href="/contact">Contact Nexus Pavilion <span aria-hidden="true">→</span></Link>
           </div>
         </section>
