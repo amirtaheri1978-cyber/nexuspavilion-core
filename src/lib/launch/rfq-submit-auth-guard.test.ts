@@ -226,9 +226,15 @@ describe("anonymous RFQ submit auth continuation", () => {
     );
   });
 
-  it("does not middleware-lock /rfq and keeps quote POST unauthenticated-protected", () => {
-    expect(middleware).not.toContain('"/rfq"');
-    expect(middleware).not.toContain('"/rfq/:path*"');
+  it("protects RFQ workspace in middleware while keeping submit page-owned and quote POST auth-guarded", () => {
+    expect(middleware).toContain('"/rfq"');
+    expect(middleware).toContain('"/rfq/:path*"');
+    expect(middleware).toContain("isRfqSubmitPageOwnedPath");
+    expect(middleware).toContain("isRfqInvitePublicPath");
+    expect(middleware).toContain("isRfqWorkspaceProtectedPath");
+    expect(middleware).toContain(
+      "return /^\\/rfq\\/[^/]+\\/submit\\/?$/.test(pathname);",
+    );
     expect(quotesRoute).toContain("supabase.auth.getUser()");
     expect(quotesRoute).toContain("if (userError || !user)");
     expect(quotesRoute).toContain(

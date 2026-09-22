@@ -314,15 +314,25 @@ describe("RFQ submit continuation path detection", () => {
 });
 
 describe("active runtime RFQ invitation and submit continuation architecture", () => {
-  it("keeps active root middleware outside the /rfq tree", () => {
+  it("protects RFQ workspace routes while keeping invite public and submit page-owned", () => {
     const matcherStart = activeMiddleware.indexOf("matcher: [");
     const matcherEnd = activeMiddleware.indexOf("],", matcherStart) + 2;
     const matcherBlock = activeMiddleware.slice(matcherStart, matcherEnd);
 
-    expect(matcherBlock).not.toContain('"/rfq"');
-    expect(matcherBlock).not.toContain('"/rfq/:path*"');
-    expect(matcherBlock).not.toContain('"/rfq/invite"');
-    expect(activeMiddleware).not.toContain('"/rfq"');
+    expect(matcherBlock).toContain('"/rfq"');
+    expect(matcherBlock).toContain('"/rfq/:path*"');
+    expect(activeMiddleware).toContain("isRfqInvitePublicPath");
+    expect(activeMiddleware).toContain("isRfqSubmitPageOwnedPath");
+    expect(activeMiddleware).toContain("isRfqWorkspaceProtectedPath");
+    expect(activeMiddleware).toContain(
+      'pathname === "/rfq/invite" || pathname.startsWith("/rfq/invite/")',
+    );
+    expect(activeMiddleware).toContain(
+      "return /^\\/rfq\\/[^/]+\\/submit\\/?$/.test(pathname);",
+    );
+    expect(activeMiddleware).toContain("redirectToLoginWithNext");
+    expect(activeMiddleware).toContain("loginUrl.searchParams.set(");
+    expect(activeMiddleware).toContain('"next"');
   });
 
   it("keeps the RFQ invite token landing directly renderable before authentication", () => {

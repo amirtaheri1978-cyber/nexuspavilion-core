@@ -162,13 +162,16 @@ describe("signup confirmation session continuation", () => {
     expect(protectedRoutesBlock).not.toContain('"/rfq/');
   });
 
-  it("keeps RFQ routes outside the active middleware matcher", () => {
+  it("matches RFQ tree in middleware while classifying invite public and submit page-owned", () => {
     const matcherStart = activeMiddleware.indexOf("matcher: [");
     const matcherEnd = activeMiddleware.indexOf("],", matcherStart) + 2;
     const matcherBlock = activeMiddleware.slice(matcherStart, matcherEnd);
 
-    expect(matcherBlock).not.toContain('"/rfq"');
-    expect(matcherBlock).not.toContain('"/rfq/:path*"');
+    expect(matcherBlock).toContain('"/rfq"');
+    expect(matcherBlock).toContain('"/rfq/:path*"');
+    expect(activeMiddleware).toContain("isRfqInvitePublicPath");
+    expect(activeMiddleware).toContain("isRfqSubmitPageOwnedPath");
+    expect(activeMiddleware).toContain("isRfqWorkspaceProtectedPath");
   });
 
   it("does not introduce a corporate-root detour in active middleware", () => {
