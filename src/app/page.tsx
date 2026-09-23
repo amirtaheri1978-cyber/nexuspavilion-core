@@ -28,7 +28,7 @@ export const metadata: Metadata = {
 
 const navigation = [
   { label: "Company", href: "/about" },
-  { label: "Technology", href: "#technology" },
+  { label: "Technology", href: "#corporate-technology" },
   { label: "Industries", href: "#industries" },
   { label: "Products", href: "#products-projects" },
   { label: "Contact", href: "/contact" },
@@ -91,7 +91,7 @@ export default function HomePage() {
               <h1 id="corporate-hero-heading">Turning complexity into decisive intelligence.</h1>
               <p className={styles.lead}>We build focused AI products that transform complex data, operations, infrastructure, and human expertise into clearer decisions and meaningful real-world outcomes.</p>
               <div className={styles.actions}>
-                <Link className={styles.primary} href="#technology">Explore Technology</Link>
+                <Link className={styles.primary} href="#corporate-technology">Explore Technology</Link>
                 <Link className={styles.secondary} href="#products-projects">View Products</Link>
               </div>
             </section>
