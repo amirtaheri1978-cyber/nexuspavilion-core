@@ -14,7 +14,7 @@ export const metadata: Metadata = {
     canonical: "/pricing",
   },
   robots: {
-    index: true,
+    index: false,
     follow: true,
   },
   openGraph: {
