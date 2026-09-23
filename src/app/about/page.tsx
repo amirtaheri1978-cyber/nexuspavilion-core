@@ -34,6 +34,7 @@ export default function AboutPage() {
       <div className={styles.shell}>
         <header className={styles.header}>
           <Link href="/" className={styles.brand} aria-label="Nexus Pavilion Inc. home">
+            <span className={styles.brandReturn} aria-hidden="true">←</span>
             <NexusPavilionLogo variant="icon" size={42} priority />
             <span>Nexus Pavilion Inc.</span>
           </Link>
