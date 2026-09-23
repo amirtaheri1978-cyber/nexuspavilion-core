@@ -121,11 +121,11 @@ const policySections = [
     title: "Cookies, browser storage, and tracking",
     content: (
       <>
-        <p>On the anonymous Corporate website, advertising or analytics cookies or similar tracking technologies are not currently used.</p>
-        <p>Within Intelligent Procurement, strictly necessary authentication technologies may be used to maintain signed-in sessions and secure access to product workspaces.</p>
+        <p>On the anonymous Corporate website, Google Analytics 4 may be used only after you choose to accept optional analytics. Analytics is non-essential and is used to understand aggregate traffic and usage on corporate pages. If you decline, analytics remains disabled. Advertising cookies and marketing pixels are not used.</p>
+        <p>Within Intelligent Procurement, strictly necessary authentication technologies may be used to maintain signed-in sessions and secure access to product workspaces. Product and authenticated workspace routes do not use this corporate analytics tag.</p>
         <p>Submitting the corporate contact form does not create a marketing or analytics cookie. Submitted information is transmitted through the configured email-delivery provider.</p>
         <p>Limited technical error monitoring may operate when errors occur, under the existing privacy-preserving configuration described in this policy.</p>
-        <p>Any future addition of optional analytics, advertising, profiling, or similar tracking must trigger a new privacy and consent review before activation.</p>
+        <p>Any future addition of advertising, profiling, or similar tracking beyond the optional corporate analytics described here must trigger a new privacy and consent review before activation.</p>
       </>
     ),
   },

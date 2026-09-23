@@ -1,0 +1,123 @@
+.banner {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 60;
+  display: grid;
+  gap: 18px;
+  width: min(440px, calc(100vw - 40px));
+  padding: 20px 20px 18px;
+  border: 1px solid rgb(126 198 220 / 14%);
+  border-radius: 2px;
+  background:
+    linear-gradient(160deg, rgb(8 22 34 / 96%), rgb(3 10 17 / 94%));
+  box-shadow: 0 24px 70px rgb(0 0 0 / 35%);
+  color: #e8eef2;
+}
+
+.title {
+  margin: 0;
+  color: #7bc9df;
+  font-family: var(--font-corporate-display), system-ui, sans-serif;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+.body {
+  margin: 10px 0 0;
+  color: #9aadb6;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  line-height: 1.65;
+}
+
+.privacyLink {
+  color: #9ecfe0;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.privacyLink:hover {
+  color: #c5e7f1;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.decline,
+.accept {
+  display: inline-flex;
+  min-height: 42px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 16px;
+  border-radius: 2px;
+  font-family: var(--font-corporate-display), system-ui, sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.decline {
+  border: 1px solid rgb(128 183 203 / 18%);
+  background: transparent;
+  color: #b7c6ce;
+}
+
+.decline:hover {
+  border-color: rgb(128 183 203 / 34%);
+  color: #e5eef3;
+}
+
+.accept {
+  border: 1px solid rgb(115 213 237 / 31%);
+  background: rgb(78 182 211 / 10%);
+  color: #e9f3f6;
+}
+
+.accept:hover {
+  border-color: rgb(115 213 237 / 54%);
+  background: rgb(78 182 211 / 16%);
+}
+
+.decline:focus-visible,
+.accept:focus-visible,
+.privacyLink:focus-visible {
+  outline: 2px solid #75d5eb;
+  outline-offset: 4px;
+}
+
+@media (max-width: 600px) {
+  .banner {
+    right: 14px;
+    bottom: 14px;
+    left: 14px;
+    width: auto;
+  }
+
+  .actions {
+    justify-content: stretch;
+  }
+
+  .decline,
+  .accept {
+    flex: 1 1 auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .decline,
+  .accept {
+    transition: none;
+  }
+}

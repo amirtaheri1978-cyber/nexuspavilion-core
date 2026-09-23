@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { usePathname } from "next/navigation";
 
 import ApplicationFooter from "@/components/application-footer";
 import AppPageContext from "@/components/app-page-context";
 import AppTopbar from "@/components/common/AppTopbar";
+import CorporateAnalytics from "@/components/corporate/corporate-analytics";
 import Footer from "@/components/footer";
 import Sidebar from "@/components/sidebar";
 import { getAppShellKind } from "@/lib/navigation/application-nav";
@@ -36,12 +37,16 @@ export default function AppShell({
   /*
    * Public marketing and legal routes retain the public footer but do not
    * render authenticated workspace navigation.
+   * Corporate analytics (optional GA4) is scoped to this shell only.
    */
   if (shellKind === "public") {
     return (
       <div className="min-h-screen bg-[#07111F] text-white">
         {children}
         <Footer />
+        <Suspense fallback={null}>
+          <CorporateAnalytics />
+        </Suspense>
       </div>
     );
   }
