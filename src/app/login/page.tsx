@@ -34,7 +34,7 @@ function getFriendlyAuthError(message: string) {
       "invalid login credentials",
     )
   ) {
-    return "The email or password entered does not match an active Nexus Pavilion account.";
+    return "The email or password entered does not match an active Intelligent Procurement account.";
   }
 
   if (normalized.includes("email not confirmed")) {
@@ -226,7 +226,7 @@ function LoginScreen({
 
             <div className="mt-10">
               <p className="text-xs font-black uppercase tracking-[0.3em] text-[#F2D778]">
-                Enterprise Procurement Intelligence
+                Intelligent Procurement
               </p>
 
               <h1 className="mt-5 max-w-2xl text-4xl font-black tracking-[-0.05em] text-white sm:text-5xl xl:text-[64px] xl:leading-[0.98]">
@@ -274,7 +274,7 @@ function LoginScreen({
           <section className="flex h-full min-h-0 w-full flex-col rounded-[40px] border border-white/10 bg-white/[0.065] p-7 shadow-[0_36px_120px_rgba(0,0,0,0.52)] backdrop-blur-2xl sm:p-10 lg:p-12 xl:p-14">
             <div>
               <p className="text-xs font-black uppercase tracking-[0.3em] text-[#F2D778]">
-                Secure Enterprise Access
+                Intelligent Procurement Access
               </p>
 
               <h2 className="mt-5 text-4xl font-black tracking-[-0.05em] text-white sm:text-5xl xl:text-[58px]">
@@ -411,7 +411,7 @@ function LoginScreen({
 
             <div className="mt-8 rounded-3xl border border-[#F2D778]/35 bg-[#C8A646]/10 p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] lg:mt-auto">
               <p className="text-xs font-black uppercase tracking-[0.2em] text-[#FFE9A3]">
-                New to Nexus Pavilion?
+                New to Intelligent Procurement?
               </p>
 
               <p className="mt-3 text-base font-bold leading-7 text-white">
@@ -448,8 +448,7 @@ function LoginScreen({
 
             <p className="mt-5 flex items-center justify-center gap-2 text-center text-xs font-bold leading-5 text-slate-100">
               <span aria-hidden="true">🔒</span>
-              Enterprise authentication protected by
-              Nexus Pavilion Security.
+              Secure sign-in for Intelligent Procurement.
             </p>
           </section>
         </section>

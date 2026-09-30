@@ -13,9 +13,9 @@ import styles from "@/components/corporate/corporate-home.module.css";
 const instrumentSans = Instrument_Sans({ subsets: ["latin"], variable: "--font-corporate-display", display: "swap" });
 const manrope = Manrope({ subsets: ["latin"], variable: "--font-corporate-body", display: "swap" });
 
-const CORPORATE_TITLE = "Nexus Pavilion Inc. | AI & Decision Intelligence";
+const CORPORATE_TITLE = "Nexus Pavilion Inc. | Software & Decision Intelligence";
 const CORPORATE_DESCRIPTION =
-  "Nexus Pavilion Inc. builds focused AI and software systems for complex real-world environments, including Intelligent Procurement, its procurement intelligence product.";
+  "Nexus Pavilion Inc. builds focused software and decision-intelligence systems for complex real-world environments, including Intelligent Procurement, its procurement intelligence product.";
 
 export const metadata: Metadata = {
   title: { absolute: CORPORATE_TITLE },
@@ -41,7 +41,7 @@ const organizationJsonLd = {
   url: "https://nexuspavilion.com",
   logo: "https://nexuspavilion.com/branding/logo-icon-1024.png",
   description:
-    "Nexus Pavilion Inc. builds focused AI and software systems for complex real-world environments.",
+    "Nexus Pavilion Inc. builds focused software and decision-intelligence systems for complex real-world environments.",
 };
 
 export default function HomePage() {
@@ -89,7 +89,7 @@ export default function HomePage() {
             <section id="technology" className={styles.copy} aria-labelledby="corporate-hero-heading">
               <p className={styles.kicker}>Real systems · brighter tomorrows</p>
               <h1 id="corporate-hero-heading">Turning complexity into decisive intelligence.</h1>
-              <p className={styles.lead}>We build focused AI products that transform complex data, operations, infrastructure, and human expertise into clearer decisions and meaningful real-world outcomes.</p>
+              <p className={styles.lead}>We build focused software products that transform complex data, operations, infrastructure, and domain expertise into clearer decisions and meaningful real-world outcomes.</p>
               <div className={styles.actions}>
                 <Link className={styles.primary} href="#corporate-technology">Explore Technology</Link>
                 <Link className={styles.secondary} href="#products-projects">View Products</Link>
@@ -115,7 +115,7 @@ export default function HomePage() {
           <div className={styles.thesisEditorial}>
             <p className={styles.thesisEyebrow}>OUR OPERATING IDEA</p>
             <h2 id="corporate-thesis-heading">Digital intelligence should move with the physical world.</h2>
-            <p className={styles.thesisCopy}>Nexus Pavilion Inc. builds focused AI and software systems for complex real-world environments. We connect data, operations, infrastructure, and domain expertise into coherent decision systems—preserving context, causality, and professional judgment rather than reducing them to isolated signals. Our role is to make complexity more legible, strengthen the path from evidence to action, and create products whose intelligence is measured by the quality of decisions and outcomes they enable.</p>
+            <p className={styles.thesisCopy}>Nexus Pavilion Inc. builds focused software and decision-intelligence systems for complex real-world environments. We connect data, operations, infrastructure, and domain expertise into coherent decision systems—preserving context, causality, and professional judgment rather than reducing them to isolated signals. Our role is to make complexity more legible, strengthen the path from evidence to action, and create products whose intelligence is measured by the quality of decisions and outcomes they enable.</p>
             <p className={styles.thesisStatement}>Intelligence matters when it improves what happens next.</p>
           </div>
 
@@ -149,7 +149,7 @@ export default function HomePage() {
           <div className={styles.technologyEditorial}>
             <p className={styles.technologyEyebrow}>HOW INTELLIGENCE TAKES SHAPE</p>
             <h2 id="corporate-technology-heading">Context before computation. Intelligence before action.</h2>
-            <p className={styles.technologyCopy}>Nexus Pavilion Inc. designs AI and software systems around the realities in which decisions are made. We begin with context—how signals relate to operations, constraints, infrastructure, and domain expertise—then structure those relationships into intelligence that can be examined, understood, and acted upon. The objective is not simply to produce more information, but to create decision systems that preserve meaning, expose consequence, and support deliberate action.</p>
+            <p className={styles.technologyCopy}>Nexus Pavilion Inc. designs software and decision-intelligence systems around the realities in which decisions are made. We begin with context—how signals relate to operations, constraints, infrastructure, and domain expertise—then structure those relationships into intelligence that can be examined, understood, and acted upon. The objective is not simply to produce more information, but to create decision systems that preserve meaning, expose consequence, and support deliberate action.</p>
           </div>
 
           <figure className={styles.technologyField} aria-labelledby="technology-progression-caption">
@@ -271,7 +271,7 @@ export default function HomePage() {
               <p className={styles.productOrdinal}>01 / FLAGSHIP PRODUCT</p>
               <p className={styles.productStatus}>IN DEVELOPMENT</p>
               <h3 id="intelligent-procurement-heading">INTELLIGENT PROCUREMENT</h3>
-              <p className={styles.productStatement}>An AI-assisted procurement intelligence product designed to help teams structure sourcing workflows, evaluate commercial information, and make consequential procurement decisions with greater context and control.</p>
+              <p className={styles.productStatement}>An intelligent procurement product designed to help teams structure sourcing workflows, evaluate commercial information, and make consequential procurement decisions with greater context and control.</p>
               <p className={styles.productCapabilities}>SOURCING · EVALUATION · GOVERNANCE · DECISION INTELLIGENCE</p>
             </div>
 

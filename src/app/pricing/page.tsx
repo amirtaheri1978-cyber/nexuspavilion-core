@@ -1,177 +1,147 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-const PRICING_TITLE = "Pricing | NexusPavilion Intelligent Procurement";
-const PRICING_DESCRIPTION =
-  "Pricing for NexusPavilion Intelligent Procurement workspace plans and procurement workflows.";
+const PAGE_TITLE = "Intelligent Procurement Early Access | Nexus Pavilion";
+const PAGE_DESCRIPTION =
+  "Explore the limited early access and founding customer program for Intelligent Procurement by Nexus Pavilion.";
 
 export const metadata: Metadata = {
-  title: {
-    absolute: PRICING_TITLE,
-  },
-  description: PRICING_DESCRIPTION,
-  alternates: {
-    canonical: "/pricing",
-  },
-  robots: {
-    index: false,
-    follow: true,
-  },
+  title: { absolute: PAGE_TITLE },
+  description: PAGE_DESCRIPTION,
+  robots: { index: false, follow: true },
   openGraph: {
-    title: PRICING_TITLE,
-    description: PRICING_DESCRIPTION,
-    url: "/pricing",
-    siteName: "NexusPavilion Intelligent Procurement",
+    title: PAGE_TITLE,
+    description: PAGE_DESCRIPTION,
+    siteName: "Nexus Pavilion",
     type: "website",
     locale: "en_US",
   },
   twitter: {
     card: "summary_large_image",
-    title: PRICING_TITLE,
-    description: PRICING_DESCRIPTION,
+    title: PAGE_TITLE,
+    description: PAGE_DESCRIPTION,
   },
 };
 
-const plans = [
-{
-name: "Starter",
-price: "$49",
-description: "For small teams starting structured procurement workflows.",
-features: [
-"Company workspace",
-"RFQ creation",
-"Supplier invitations",
-"Quote submission",
-"Basic analytics",
-],
-cta: "Start Free",
-href: "/signup",
-},
-{
-name: "Professional",
-price: "$149",
-description: "For growing procurement teams managing active supplier pipelines.",
-features: [
-"Everything in Starter",
-"Quote comparison",
-"Award workflow",
-"Supplier intelligence",
-"Executive analytics",
-],
-cta: "Start Professional",
-href: "/signup",
-highlighted: true,
-},
-{
-name: "Enterprise",
-price: "Custom",
-description: "For organizations needing executive reporting and advanced controls.",
-features: [
-"Everything in Professional",
-"Board reports",
-"AI procurement copilot",
-"Role-based workspace controls",
-"Priority onboarding",
-],
-cta: "Contact Sales",
-href: "/contact",
-},
-];
+const valueAreas = [
+  ["01", "Focused Deployment", "Start with procurement workflows where the platform can create clear operational value."],
+  ["02", "Guided Onboarding", "Establish the organization, access model, and initial procurement environment with direct support."],
+  ["03", "Flexible Commercial Structure", "Early-access terms are structured around organizational requirements, deployment scope, and intended use."],
+  ["04", "Real-World Feedback", "Early customers provide practical operating insight that helps refine the product around actual procurement conditions."],
+] as const;
+
+const capabilities = [
+  "Structured RFQ workflows",
+  "Supplier invitations and submissions",
+  "Procurement governance",
+  "Commercial evaluation",
+  "Contract award workflows",
+  "Supplier intelligence",
+  "Executive decision support",
+] as const;
 
 export default function PricingPage() {
-return (
-<main className="relative min-h-screen overflow-hidden bg-[#061426] px-4 py-6 text-white sm:px-6 lg:px-10">
-<div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(circle_at_top_left,rgba(44,196,232,0.18),transparent_34%),radial-gradient(circle_at_top_right,rgba(200,166,70,0.15),transparent_30%),linear-gradient(180deg,#061426_0%,#07111F_45%,#020617_100%)]" />
+  return (
+    <main className="relative min-h-screen overflow-hidden bg-[#020b16] text-white">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_78%_8%,rgba(48,190,221,0.12),transparent_26%),radial-gradient(circle_at_16%_46%,rgba(183,146,57,0.08),transparent_28%),linear-gradient(180deg,#061426_0%,#030c18_58%,#020711_100%)]" />
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-cyan-300/40 to-transparent" />
 
-<div className="mx-auto w-full max-w-[1680px]">
-<section className="rounded-[40px] border border-white/10 bg-white/[0.065] p-7 shadow-[0_36px_120px_rgba(0,0,0,0.52)] backdrop-blur-2xl sm:p-10">
-<p className="text-xs font-black uppercase tracking-[0.35em] text-[#C8A646]">
-Pricing
-</p>
+      <div className="relative mx-auto w-full max-w-[1500px] px-5 py-8 sm:px-8 lg:px-12 lg:py-12">
+        <section className="relative border-y border-white/10 py-16 sm:py-20 lg:grid lg:grid-cols-[minmax(0,1.25fr)_minmax(300px,0.75fr)] lg:gap-16 lg:py-28">
+          <div>
+            <p className="text-[0.68rem] font-bold uppercase tracking-[0.38em] text-[#e0bd63]">
+              Limited Early Access
+            </p>
+            <h1 className="mt-7 max-w-5xl text-5xl font-semibold leading-[0.98] tracking-[-0.055em] text-white sm:text-6xl lg:text-[5.35rem]">
+              Early access, structured around real procurement.
+            </h1>
+            <p className="mt-8 max-w-3xl text-lg leading-8 text-slate-300 sm:text-xl sm:leading-9">
+              Intelligent Procurement is opening to a limited number of
+              organizations for real-world deployment.
+            </p>
+            <div className="mt-10 flex flex-col gap-4 sm:flex-row">
+              <Link href="/contact" className="inline-flex min-h-12 items-center justify-center border border-[#d9b85d]/60 bg-[#d9b85d] px-7 text-sm font-bold text-[#06101d] transition-colors hover:bg-[#efd17a] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#efd17a]">
+                Explore Early Access
+              </Link>
+              <Link href="/login" className="inline-flex min-h-12 items-center justify-center border border-white/15 px-7 text-sm font-semibold text-white transition-colors hover:border-cyan-200/45 hover:bg-white/[0.04] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cyan-200">
+                Existing customer? Sign in
+              </Link>
+            </div>
+          </div>
 
-<h1 className="mt-4 max-w-5xl text-5xl font-black leading-tight tracking-[-0.05em] text-white sm:text-6xl">
-Procurement intelligence plans for every team.
-</h1>
+          <div className="mt-12 border-l border-cyan-200/20 pl-6 lg:mt-16 lg:self-end lg:pl-9">
+            <p className="text-sm leading-7 text-slate-300">
+              Each engagement is structured around the organization&apos;s
+              sourcing workflows, supplier relationships, governance
+              requirements, and deployment priorities.
+            </p>
+            <p className="mt-5 text-sm leading-7 text-slate-300">
+              Rather than a predefined public plan, early engagements establish
+              the appropriate scope, onboarding approach, and commercial
+              structure.
+            </p>
+          </div>
+        </section>
 
-<p className="mt-5 max-w-3xl text-sm font-semibold leading-7 text-slate-300">
-Start with structured RFQs, supplier invitations, quote workflows,
-and executive analytics. Upgrade as your procurement operations
-grow.
-</p>
-</section>
+        <section className="py-20 sm:py-24 lg:py-32" aria-labelledby="program-heading">
+          <div className="grid gap-10 lg:grid-cols-[0.55fr_1.45fr] lg:gap-20">
+            <div>
+              <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-cyan-200/80">
+                Founding Customer Program
+              </p>
+              <h2 id="program-heading" className="mt-5 max-w-md text-3xl font-semibold leading-tight tracking-[-0.035em] text-white sm:text-4xl">
+                A focused path to real-world adoption.
+              </h2>
+            </div>
 
-<section className="mt-8 grid gap-6 lg:grid-cols-3">
-{plans.map((plan) => (
-<div
-key={plan.name}
-className={`rounded-[34px] border p-8 shadow-[0_24px_80px_rgba(0,0,0,0.26)] ${
-plan.highlighted
-? "border-[#C8A646]/35 bg-gradient-to-br from-[#0B3D91]/30 via-[#07111F] to-[#061426]"
-: "border-white/10 bg-white/[0.055]"
-}`}
->
-<p className="text-xs font-black uppercase tracking-[0.25em] text-[#C8A646]">
-{plan.name}
-</p>
+            <div className="border-t border-white/10">
+              {valueAreas.map(([index, title, description]) => (
+                <article key={title} className="grid gap-4 border-b border-white/10 py-8 sm:grid-cols-[3.5rem_0.8fr_1.2fr] sm:items-start sm:gap-7">
+                  <span className="text-xs font-semibold tracking-[0.22em] text-[#e0bd63]">{index}</span>
+                  <h3 className="text-lg font-semibold tracking-[-0.02em] text-white">{title}</h3>
+                  <p className="max-w-xl text-sm leading-7 text-slate-400">{description}</p>
+                </article>
+              ))}
+            </div>
+          </div>
+        </section>
 
-<div className="mt-5 flex items-end gap-2">
-<h2 className="text-5xl font-black text-white">{plan.price}</h2>
+        <section className="border-y border-white/10 py-16 sm:py-20 lg:grid lg:grid-cols-[0.8fr_1.2fr] lg:gap-20 lg:py-24">
+          <div>
+            <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#e0bd63]">Current Product Scope</p>
+            <h2 className="mt-5 max-w-xl text-3xl font-semibold leading-tight tracking-[-0.035em] text-white sm:text-4xl">
+              Capabilities grounded in consequential procurement work.
+            </h2>
+          </div>
 
-{plan.price !== "Custom" ? (
-<p className="pb-2 text-sm font-bold text-slate-400">
-/ month
-</p>
-) : null}
-</div>
+          <ul className="mt-10 grid gap-x-10 sm:grid-cols-2 lg:mt-0">
+            {capabilities.map((capability) => (
+              <li key={capability} className="flex min-h-16 items-center border-b border-white/10 py-4 text-sm font-medium text-slate-200">
+                <span className="mr-4 h-px w-5 shrink-0 bg-cyan-300/60" />
+                {capability}
+              </li>
+            ))}
+          </ul>
+        </section>
 
-<p className="mt-4 text-sm font-semibold leading-7 text-slate-300">
-{plan.description}
-</p>
+        <section className="py-20 sm:py-24 lg:flex lg:items-end lg:justify-between lg:gap-16 lg:py-32">
+          <div>
+            <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-cyan-200/80">Begin the Conversation</p>
+            <h2 className="mt-5 max-w-3xl text-4xl font-semibold leading-tight tracking-[-0.045em] text-white sm:text-5xl">
+              Define the right starting point for your organization.
+            </h2>
+          </div>
 
-<div className="mt-8 space-y-3">
-{plan.features.map((feature) => (
-<div key={feature} className="flex items-center gap-3">
-<span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-[#C8A646]/30 bg-[#C8A646]/10 text-xs font-black text-[#F5D77B]">
-✓
-</span>
-
-<p className="text-sm font-semibold text-slate-200">
-{feature}
-</p>
-</div>
-))}
-</div>
-
-<Link
-href={plan.href}
-className={`mt-8 flex h-[54px] items-center justify-center rounded-2xl px-6 text-center text-sm font-black transition ${
-plan.highlighted
-? "bg-gradient-to-r from-[#B9902F] via-[#C8A646] to-[#F5D77B] uppercase tracking-[0.12em] text-slate-950 hover:scale-[1.01]"
-: "border border-white/10 bg-white/[0.045] text-white hover:bg-white/[0.08]"
-}`}
->
-{plan.cta}
-</Link>
-</div>
-))}
-</section>
-
-<section className="mt-8 rounded-[34px] border border-[#C8A646]/25 bg-[#C8A646]/10 p-8">
-<p className="text-xs font-black uppercase tracking-[0.25em] text-[#F5D77B]">
-Soft Launch Billing
-</p>
-
-<h2 className="mt-3 text-3xl font-black text-white">
-Stripe checkout coming next.
-</h2>
-
-<p className="mt-3 max-w-4xl text-sm font-semibold leading-7 text-slate-300">
-Pricing is ready for soft launch positioning. Subscription checkout,
-customer portal, plan limits, and billing automation will be
-connected in the next billing phase.
-</p>
-</section>
-</div>
-</main>
-);
+          <div className="mt-10 flex flex-col gap-4 sm:flex-row lg:mt-0 lg:shrink-0">
+            <Link href="/contact" className="inline-flex min-h-12 items-center justify-center border border-[#d9b85d]/60 bg-[#d9b85d] px-7 text-sm font-bold text-[#06101d] transition-colors hover:bg-[#efd17a] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#efd17a]">
+              Explore Early Access
+            </Link>
+            <Link href="/login" className="inline-flex min-h-12 items-center justify-center border border-white/15 px-7 text-sm font-semibold text-white transition-colors hover:border-cyan-200/45 hover:bg-white/[0.04] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cyan-200">
+              Existing customer? Sign in
+            </Link>
+          </div>
+        </section>
+      </div>
+    </main>
+  );
 }

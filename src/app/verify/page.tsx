@@ -31,7 +31,7 @@ success: {
 eyebrow: "Email Verified",
 title: "Your enterprise identity is verified.",
 description:
-"Your email has been confirmed successfully. You can now continue setting up your Nexus Pavilion workspace.",
+"Your email has been confirmed successfully. You can now continue setting up your Intelligent Procurement company workspace.",
 icon: "✓",
 primaryLabel: "Continue to Company Setup",
 primaryHref: "/create-company",
@@ -130,7 +130,7 @@ return (
 <BrandTile />
 
 <p className="mt-10 text-xs font-black uppercase tracking-[0.34em] text-[#C8A646]">
-Enterprise Email Verification
+Intelligent Procurement Email Verification
 </p>
 
 <h1 className="mt-5 max-w-2xl text-4xl font-black tracking-[-0.05em] text-white sm:text-5xl xl:text-[64px] xl:leading-[0.98]">
@@ -139,8 +139,8 @@ Confirm your secure enterprise identity.
 
 <p className="mt-7 max-w-2xl text-base font-semibold leading-8 text-slate-300 xl:text-lg">
 Email verification protects company workspaces, procurement data,
-RFQ access, supplier collaboration, and executive reporting across
-Nexus Pavilion.
+RFQ access, supplier collaboration, and executive reporting within
+Intelligent Procurement.
 </p>
 
 <div className="mt-9 grid gap-3 sm:grid-cols-2">
@@ -213,7 +213,7 @@ in again or create a new account request using your work email.
 
 <div className="mt-5 rounded-2xl border border-white/10 bg-white/[0.035] px-4 py-3">
 <p className="text-xs font-bold leading-5 text-slate-400">
-🔒 Email verification protected by Nexus Pavilion Security.
+🔒 Secure email verification for Intelligent Procurement.
 </p>
 </div>
 </section>

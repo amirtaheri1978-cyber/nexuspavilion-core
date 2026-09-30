@@ -9,7 +9,7 @@ const instrumentSans = Instrument_Sans({ subsets: ["latin"], variable: "--font-c
 const manrope = Manrope({ subsets: ["latin"], variable: "--font-corporate-body", display: "swap" });
 
 const ABOUT_TITLE = "Company | Nexus Pavilion Inc.";
-const ABOUT_DESCRIPTION = "Nexus Pavilion Inc. builds focused AI and software systems for complex real-world environments.";
+const ABOUT_DESCRIPTION = "Nexus Pavilion Inc. builds focused software and decision-intelligence systems for complex real-world environments.";
 
 export const metadata: Metadata = {
   title: { absolute: ABOUT_TITLE },
@@ -45,7 +45,7 @@ export default function AboutPage() {
           <p className={styles.eyebrow}>NEXUS PAVILION INC.</p>
           <h1 id="company-heading">Intelligence shaped for the systems that shape the world.</h1>
           <div className={styles.introductionCopy}>
-            <p>Nexus Pavilion Inc. builds focused AI and software systems for complex real-world environments—where information, operations, infrastructure, and professional judgment must work together.</p>
+            <p>Nexus Pavilion Inc. builds focused software and decision-intelligence systems for complex real-world environments—where information, operations, infrastructure, and professional judgment must work together.</p>
             <span>Ontario, Canada</span>
           </div>
         </section>
@@ -81,14 +81,14 @@ export default function AboutPage() {
           <div className={styles.productParent}>
             <p>CORPORATE ARCHITECTURE / 01</p>
             <h2>Nexus Pavilion Inc.</h2>
-            <span>Focused AI and software systems</span>
+            <span>Focused software and decision-intelligence systems</span>
           </div>
           <div className={styles.productLine} aria-hidden="true"><span /><i /></div>
           <div className={styles.product}>
             <p>PRODUCT / 01</p>
             <div className={styles.productStatus}>IN DEVELOPMENT</div>
             <h2 id="product-heading">Intelligent Procurement</h2>
-            <p className={styles.productStatement}>An AI-assisted procurement intelligence product designed to help teams structure sourcing workflows, evaluate commercial information, and make consequential procurement decisions with greater context and control.</p>
+            <p className={styles.productStatement}>An intelligent procurement product designed to help teams structure sourcing workflows, evaluate commercial information, and make consequential procurement decisions with greater context and control.</p>
           </div>
         </section>
 

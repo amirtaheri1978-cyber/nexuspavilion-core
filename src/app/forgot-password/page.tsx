@@ -139,7 +139,7 @@ export default function ForgotPasswordPage() {
             <BrandLogo />
 
             <p className="mt-10 text-xs font-black uppercase tracking-[0.32em] text-[#D8B84E]">
-              Secure account recovery
+              Intelligent Procurement account recovery
             </p>
 
             <h1 className="mt-5 max-w-xl text-4xl font-black leading-[1.03] tracking-[-0.045em] text-white sm:text-5xl xl:text-[58px]">
@@ -319,7 +319,7 @@ export default function ForgotPasswordPage() {
                   </p>
 
                   <div className="mt-4 space-y-3">
-                    <RecoveryStep label="Open the newest Nexus Pavilion recovery email" />
+                    <RecoveryStep label="Open your newest password recovery email" />
                     <RecoveryStep label="Follow the secure, time-limited link" />
                     <RecoveryStep label="Create and confirm your new password" />
                   </div>

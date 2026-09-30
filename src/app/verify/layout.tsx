@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 
 export const metadata: Metadata = {
   title: {
-    absolute: "Verify Account | NexusPavilion Intelligent Procurement",
+    absolute: "Verify Account | Intelligent Procurement",
   },
   robots: {
     index: false,

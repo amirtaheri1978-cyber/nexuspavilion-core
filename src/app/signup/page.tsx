@@ -32,11 +32,11 @@ const BRAND_LOGO_SRC = "/branding/logo-horizontal-512.png";
 
 const platformCapabilities = [
   "Company Workspace",
-  "Marketplace Network",
-  "Executive Intelligence",
-  "Procurement Governance",
+  "Company Network",
+  "RFQ & Award Governance",
   "Supplier Collaboration",
-  "AI Procurement Foundation",
+  "Supplier Intelligence",
+  "Executive Decision Support",
 ];
 
 const setupSteps = [
@@ -322,7 +322,7 @@ function SignupScreen({ nextPath }: { nextPath: string }) {
           <BrandTile />
 
           <p className="mt-10 text-xs font-black uppercase tracking-[0.34em] text-[#C8A646]">
-            Nexus Pavilion Access
+            Intelligent Procurement Access
           </p>
 
           <h1 className="mt-5 max-w-2xl text-4xl font-black tracking-[-0.05em] text-white sm:text-5xl xl:text-[64px] xl:leading-[0.98]">
@@ -330,10 +330,9 @@ function SignupScreen({ nextPath }: { nextPath: string }) {
           </h1>
 
           <p className="mt-7 max-w-2xl text-base font-semibold leading-8 text-slate-300 xl:text-lg">
-            Build your organization&apos;s secure procurement
-            workspace with verified access, company identity,
-            marketplace readiness, and enterprise procurement
-            intelligence.
+            Build your organization&apos;s Intelligent Procurement
+            company workspace with governed access, supplier collaboration,
+            and decision-support capabilities.
           </p>
 
           <div className="mt-9 grid gap-3 sm:grid-cols-2">
@@ -390,7 +389,7 @@ function SignupScreen({ nextPath }: { nextPath: string }) {
             </h2>
 
             <p className="mt-5 text-base font-semibold leading-8 text-slate-300">
-              Create your account first. Company setup,
+              Create your Intelligent Procurement account first. Company setup,
               organization type, and permissions are assigned in
               the next step.
             </p>
@@ -703,8 +702,7 @@ function SignupScreen({ nextPath }: { nextPath: string }) {
 
           <div className="mt-5 rounded-2xl border border-white/10 bg-white/[0.035] px-4 py-3">
             <p className="text-xs font-bold leading-5 text-slate-400">
-              🔒 Enterprise account creation protected by Nexus
-              Pavilion Security.
+              🔒 Secure account creation for Intelligent Procurement.
             </p>
           </div>
         </section>

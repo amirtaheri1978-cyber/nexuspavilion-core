@@ -15,7 +15,7 @@ export default function ApplicationFooter() {
       <div className="mx-auto flex w-full max-w-[1680px] flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0 text-xs font-semibold leading-5">
           <p className="text-slate-300">
-            Intelligent Procurement · A NexusPavilion Inc. product
+            Intelligent Procurement · A Nexus Pavilion Inc. product
           </p>
           <p className="mt-1 text-[11px] text-slate-500">
             Company Workspace · Confidential procurement workspace

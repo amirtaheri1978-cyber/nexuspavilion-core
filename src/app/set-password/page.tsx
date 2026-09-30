@@ -188,7 +188,7 @@ return (
 <BrandTile />
 
 <p className="mt-10 text-xs font-black uppercase tracking-[0.34em] text-[#C8A646]">
-Enterprise Password Reset
+Intelligent Procurement Password Reset
 </p>
 
 <h1 className="mt-5 max-w-2xl text-4xl font-black tracking-[-0.05em] text-white sm:text-5xl xl:text-[64px] xl:leading-[0.98]">
@@ -220,7 +220,7 @@ className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[
 Secure Password Policy
 </p>
 <p className="mt-3 text-sm font-semibold leading-6 text-slate-300">
-Use a strong password that is unique to Nexus Pavilion. You will be
+Use a strong password that is unique to Intelligent Procurement. You will be
 signed out after the update and asked to sign in again securely.
 </p>
 </div>
@@ -357,7 +357,7 @@ className="h-[60px] w-full rounded-2xl bg-gradient-to-r from-[#B9902F] via-[#C8A
 
 <div className="mt-5 rounded-2xl border border-white/10 bg-white/[0.035] px-4 py-3">
 <p className="text-xs font-bold leading-5 text-slate-400">
-🔒 Password update protected by Nexus Pavilion Security.
+🔒 Secure password update for Intelligent Procurement.
 </p>
 </div>
 </>

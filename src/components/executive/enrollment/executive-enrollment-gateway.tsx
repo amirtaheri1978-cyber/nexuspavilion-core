@@ -144,7 +144,7 @@ export function ExecutiveEnrollmentGateway({
         <section className="grid flex-1 gap-8 py-9 lg:grid-cols-[minmax(0,1.02fr)_minmax(430px,0.98fr)] lg:items-start lg:gap-9 lg:py-11">
           <div className="min-w-0">
             <div className="inline-flex items-center gap-2 rounded-full border border-[#c9a35d]/25 bg-[#c9a35d]/10 px-4 py-2 text-[11px] font-bold uppercase tracking-[0.24em] text-[#e4c98f]">
-              Nexus Pavilion · Executive Enrollment
+              Intelligent Procurement · Workspace Enrollment
             </div>
 
             <div className="mt-7">

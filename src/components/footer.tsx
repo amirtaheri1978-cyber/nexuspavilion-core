@@ -33,7 +33,7 @@ export default function Footer() {
             <p className={styles.ordinal}>NEXUS PAVILION / CORPORATE</p>
             <h2 id="corporate-footer-title">Nexus Pavilion Inc.</h2>
             <p className={styles.mission}>
-              Focused AI and software systems for complex real-world environments.
+              Focused software and decision-intelligence systems for complex real-world environments.
             </p>
             <address className={styles.address}>
               <span>Ontario, Canada</span>

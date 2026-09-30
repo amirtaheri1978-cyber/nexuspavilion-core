@@ -110,7 +110,7 @@ const policySections = [
     title: "Analytics and intelligent outputs",
     content: (
       <>
-        <p>Intelligent Procurement may generate analytics, evidence summaries, reports, and AI-assisted narratives from information that is available to an authorized workspace user. Product controls separate operational evidence, commercial evidence, and completed-procurement evidence.</p>
+        <p>Intelligent Procurement may generate analytics, evidence summaries, reports, and decision-support narratives from information that is available to an authorized workspace user. Product controls separate operational evidence, commercial evidence, and completed-procurement evidence.</p>
         <p>These outputs are intended to support—not replace—professional judgment. Their scope and usefulness depend on the evidence available for the relevant population and purpose.</p>
       </>
     ),

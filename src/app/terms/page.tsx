@@ -40,7 +40,7 @@ const clauses = [
   },
   {
     number: "06", id: "intelligent-outputs", label: "Analytics and intelligent outputs",
-    content: <><p>Intelligent Procurement may present analytics, forecasts, scores, evidence summaries, reports, and AI-assisted narratives based on information available to an authorized user.</p><p>These outputs support—and do not replace—professional judgment. They may be incomplete, inaccurate, or unsuitable for a particular decision and should be reviewed against the underlying evidence and professional judgment. Their relevance and usefulness depend on the scope, quality, and availability of that evidence. The services do not make autonomous decisions on behalf of an organization.</p></>,
+    content: <><p>Intelligent Procurement may present analytics, forecasts, scores, evidence summaries, reports, and decision-support narratives based on information available to an authorized user.</p><p>These outputs support—and do not replace—professional judgment. They may be incomplete, inaccurate, or unsuitable for a particular decision and should be reviewed against the underlying evidence and professional judgment. Their relevance and usefulness depend on the scope, quality, and availability of that evidence. The services do not make autonomous decisions on behalf of an organization.</p></>,
   },
   {
     number: "07", id: "acceptable-use", label: "Acceptable use",

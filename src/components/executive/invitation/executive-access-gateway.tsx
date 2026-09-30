@@ -75,7 +75,7 @@ export function ExecutiveAccessGateway({
               <div className="max-w-4xl">
                 <div className="flex flex-wrap items-center gap-3">
                   <ExecutiveBadge tone="blue" size="md">
-                    Nexus Pavilion
+                    Intelligent Procurement
                   </ExecutiveBadge>
                   <ExecutiveBadge tone="board" size="md">
                     Executive Access Gateway
@@ -207,7 +207,7 @@ export function ExecutiveAccessGateway({
                 workspace role.
               </p>
               <p className="font-semibold text-nexus-text-secondary">
-                Nexus Pavilion Secure Access Protocol
+                Secure Intelligent Procurement Access
               </p>
             </div>
           </footer>

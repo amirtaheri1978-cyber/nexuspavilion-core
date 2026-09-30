@@ -543,7 +543,7 @@ function CreateCompanyWizard() {
             <p className="mt-7 max-w-2xl text-base font-semibold leading-8 text-slate-300 xl:text-lg">
               Configure your company identity, organization type,
               access model, and procurement workspace foundation
-              before entering Nexus Pavilion.
+              before entering Intelligent Procurement.
             </p>
 
             <div className="mt-9 rounded-[32px] border border-[#2CC4E8]/15 bg-[#2CC4E8]/[0.055] p-6">
@@ -681,7 +681,7 @@ function CreateCompanyWizard() {
 
                     <p className="mt-3 text-sm font-semibold leading-7 text-slate-300">
                       Start with the minimum required details.
-                      Company branding, marketplace visibility,
+                      Company branding, company-network visibility,
                       services, products, and certifications can be
                       completed in the Company Command Center.
                     </p>
@@ -710,8 +710,8 @@ function CreateCompanyWizard() {
 
                     <p className="mt-2 text-xs font-semibold leading-5 text-slate-500">
                       This name will be visible to procurement
-                      teams, suppliers, and project partners across
-                      Nexus Pavilion.
+                      teams, suppliers, and project partners within
+                      Intelligent Procurement.
                     </p>
                   </label>
 
@@ -750,7 +750,7 @@ function CreateCompanyWizard() {
 
                     <p className="mt-3 text-sm font-semibold leading-7 text-slate-300">
                       Select the organization type that best
-                      represents your business. Nexus Pavilion will
+                      represents your business. Intelligent Procurement will
                       configure the correct workspace behavior.
                     </p>
                   </div>
@@ -1028,13 +1028,13 @@ function CreateCompanyWizard() {
                       <NextStep
                         number="01"
                         title="Create your workspace"
-                        description="Nexus Pavilion creates your company command center."
+                        description="Intelligent Procurement creates your company workspace."
                       />
 
                       <NextStep
                         number="02"
                         title="Complete your company profile"
-                        description="Add logo, profile details, service coverage, products, certifications, and marketplace visibility."
+                        description="Add logo, profile details, service coverage, products, certifications, and company-network visibility."
                       />
 
                       <NextStep
