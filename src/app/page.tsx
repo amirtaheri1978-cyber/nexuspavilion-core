@@ -271,7 +271,7 @@ export default function HomePage() {
               <p className={styles.productOrdinal}>01 / FLAGSHIP PRODUCT</p>
               <p className={styles.productStatus}>IN DEVELOPMENT</p>
               <h3 id="intelligent-procurement-heading">INTELLIGENT PROCUREMENT</h3>
-              <p className={styles.productStatement}>An intelligent procurement product designed to help teams structure sourcing workflows, evaluate commercial information, and make consequential procurement decisions with greater context and control.</p>
+              <p className={styles.productStatement}>Intelligent Procurement is organized around a Company Workspace for company identity, access, and operating context, and a Procurement Center where authorized participants manage RFQs, supplier responses, commercial evaluation, and governed award decisions.</p>
               <p className={styles.productCapabilities}>SOURCING · EVALUATION · GOVERNANCE · DECISION INTELLIGENCE</p>
             </div>
 
