@@ -165,4 +165,22 @@ describe("NP-MASTER-22-B01 executive design contract", () => {
     expect(EXECUTIVE_CTA_PRIMARY).not.toContain("hover:scale");
     expect(EXECUTIVE_CTA_PRIMARY).not.toContain("hover:-translate");
   });
+
+  it("renders executive focus and CTA colors from semantic theme tokens", () => {
+    expect(contract).toContain("ring-nexus-gold/70");
+    expect(contract).toContain("ring-nexus-cyan/40");
+    expect(contract).toContain("ring-offset-nexus-navy");
+    expect(contract).toContain(
+      "from-nexus-gold-deep via-nexus-gold to-nexus-gold-bright",
+    );
+    expect(contract).toContain("hover:border-nexus-cyan/25");
+    expect(contract).toContain("shadow-cta-gold");
+    expect(contract).not.toMatch(/\[#[0-9A-Fa-f]{3,8}\]/);
+    expect(globals).toContain(
+      "--shadow-cta-gold: 0 18px 55px color-mix(in srgb, var(--nexus-gold) 30%, transparent);",
+    );
+    expect(globals).toContain("color-mix(in srgb, var(--nexus-cyan) 18%, transparent)");
+    expect(globals).not.toContain("rgba(44, 196, 232");
+    expect(globals).not.toContain("rgba(200, 166, 70");
+  });
 });
