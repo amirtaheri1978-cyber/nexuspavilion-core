@@ -1,6 +1,65 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+import { NextRequest } from "next/server";
+import { createServerClient, type CookieMethodsServer } from "@supabase/ssr";
+
+vi.mock("@supabase/ssr", () => ({ createServerClient: vi.fn(() => ({})) }));
+vi.mock("@/lib/auth/workspace-context", async (importOriginal) => ({
+  ...await importOriginal<typeof import("@/lib/auth/workspace-context")>(),
+  getCurrentWorkspaceContext: vi.fn(),
+}));
+import { getCurrentWorkspaceContext } from "@/lib/auth/workspace-context";
+import { middleware as runMiddleware } from "../../../middleware";
+
+describe("existing workspace onboarding guard", () => {
+  it.each([null, "northline"])("propagates refreshed cookies and cache headers for company=%s", async (companyId) => {
+    const request = new NextRequest("http://localhost:3000/create-company", {
+      headers: { cookie: "sb-test=old-session" },
+    });
+    vi.mocked(getCurrentWorkspaceContext).mockImplementationOnce(async () => {
+      const options = vi.mocked(createServerClient).mock.calls.at(-1)![2];
+      const cookies = options.cookies as CookieMethodsServer;
+      await cookies.setAll!([
+        { name: "sb-test", value: "refreshed-session", options: { path: "/", httpOnly: true, sameSite: "lax" } },
+      ], { "Cache-Control": "private, no-store", Expires: "0", Pragma: "no-cache" });
+      expect(request.cookies.get("sb-test")?.value).toBe("refreshed-session");
+      return { companyId } as Awaited<ReturnType<typeof getCurrentWorkspaceContext>>;
+    });
+    const response = await runMiddleware(request);
+    expect(response.cookies.get("sb-test")).toMatchObject({ value: "refreshed-session", path: "/", httpOnly: true, sameSite: "lax" });
+    expect(response.headers.get("cache-control")).toBe("private, no-store");
+    expect(response.headers.get("expires")).toBe("0");
+    expect(response.headers.get("pragma")).toBe("no-cache");
+    if (companyId) {
+      expect(response.headers.get("location")).toBe("http://localhost:3000/dashboard");
+    } else {
+      expect(response.headers.get("x-middleware-request-cookie")).toContain("sb-test=refreshed-session");
+    }
+  });
+
+  it.each([
+    [null, "/dashboard"],
+    ["/rfq/existing/submit?source=invite", "/rfq/existing/submit?source=invite"],
+    ["https://evil.example", "/dashboard"],
+    ["//evil.example", "/dashboard"],
+    ["/create-company?next=/dashboard", "/dashboard"],
+  ])("redirects connected users safely for next=%s", async (next, expected) => {
+    vi.mocked(getCurrentWorkspaceContext).mockResolvedValue({ companyId: "northline" } as Awaited<ReturnType<typeof getCurrentWorkspaceContext>>);
+    const url = new URL("http://localhost:3000/create-company");
+    if (next) url.searchParams.set("next", next);
+    const response = await runMiddleware(new NextRequest(url, { headers: { cookie: "sb-test=existing-session" } }));
+    expect(response.status).toBe(307);
+    expect(response.headers.get("location")).toBe(`http://localhost:3000${expected}`);
+  });
+
+  it("keeps authenticated no-company users on onboarding", async () => {
+    vi.mocked(getCurrentWorkspaceContext).mockResolvedValue({ companyId: null } as Awaited<ReturnType<typeof getCurrentWorkspaceContext>>);
+    const response = await runMiddleware(new NextRequest("http://localhost:3000/create-company?next=/rfq/existing/submit", { headers: { cookie: "sb-test=existing-session" } }));
+    expect(response.headers.get("location")).toBeNull();
+    expect(response.headers.get("x-middleware-next")).toBe("1");
+  });
+});
 
 import {
   DEFAULT_POST_COMPANY_CREATE_PATH,

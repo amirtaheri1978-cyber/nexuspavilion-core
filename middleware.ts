@@ -1,6 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { createServerClient } from "@supabase/ssr";
 
-import { isInternalNextPath } from "@/lib/auth/login-continuation";
+import { getSafeNextPath, isInternalNextPath } from "@/lib/auth/login-continuation";
+import { getCurrentWorkspaceContext, WorkspaceContextError } from "@/lib/auth/workspace-context";
 
 const protectedRoutes = [
 "/dashboard",
@@ -65,7 +67,7 @@ isInternalNextPath(destination) ? destination : RFQ_WORKSPACE_FALLBACK
 return NextResponse.redirect(loginUrl);
 }
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
 const { pathname } = request.nextUrl;
 
 if (isCompanySetupRoute(pathname) && !hasSupabaseSessionCookie(request)) {
@@ -78,6 +80,59 @@ isInternalNextPath(setupDestination)
 : COMPANY_SETUP_ROUTE
 );
 return NextResponse.redirect(loginUrl);
+}
+
+if (isCompanySetupRoute(pathname)) {
+let response = NextResponse.next({ request });
+const authHeaders = new Headers();
+const supabase = createServerClient(
+process.env.NEXT_PUBLIC_SUPABASE_URL!,
+process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+{
+cookies: {
+getAll: () => request.cookies.getAll(),
+setAll: (cookiesToSet, headers) => {
+for (const { name, value } of cookiesToSet) {
+request.cookies.set(name, value);
+}
+const previousCookies = response.cookies.getAll();
+response = NextResponse.next({ request });
+for (const cookie of previousCookies) {
+response.cookies.set(cookie);
+}
+for (const { name, value, options } of cookiesToSet) {
+response.cookies.set(name, value, options);
+}
+for (const [name, value] of Object.entries(headers)) {
+authHeaders.set(name, value);
+}
+authHeaders.forEach((value, name) => response.headers.set(name, value));
+},
+},
+}
+);
+let companyId: string | null = null;
+try {
+companyId = (await getCurrentWorkspaceContext(supabase)).companyId;
+} catch (error) {
+if (!(error instanceof WorkspaceContextError) ||
+!['UNAUTHENTICATED', 'AUTH_LOOKUP_FAILED', 'PROFILE_NOT_FOUND'].includes(error.code)) {
+throw error;
+}
+}
+if (companyId) {
+const destination = new URL(getSafeNextPath(request.nextUrl.searchParams.get("next")), request.url);
+if (destination.origin !== request.nextUrl.origin || isCompanySetupRoute(destination.pathname)) {
+destination.href = new URL("/dashboard", request.url).href;
+}
+const redirect = NextResponse.redirect(destination);
+for (const cookie of response.cookies.getAll()) {
+redirect.cookies.set(cookie);
+}
+authHeaders.forEach((value, name) => redirect.headers.set(name, value));
+return redirect;
+}
+return response;
 }
 
 if (
