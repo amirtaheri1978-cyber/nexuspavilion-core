@@ -75,6 +75,64 @@ export const EXECUTIVE_CTA_SECONDARY = [
   EXECUTIVE_FOCUS_CYAN,
 ].join(" ");
 
+const EXECUTIVE_BUTTON_DISABLED = [
+  "disabled:cursor-not-allowed disabled:opacity-60",
+  "aria-disabled:cursor-not-allowed aria-disabled:opacity-60",
+].join(" ");
+
+export const EXECUTIVE_BUTTON_ROLES = [
+  "primary",
+  "secondary",
+  "tertiary",
+  "destructive",
+  "icon",
+] as const;
+
+export type ExecutiveButtonRole = (typeof EXECUTIVE_BUTTON_ROLES)[number];
+
+export const EXECUTIVE_BUTTON_PRIMARY = [
+  EXECUTIVE_CTA_PRIMARY,
+  EXECUTIVE_BUTTON_DISABLED,
+].join(" ");
+
+export const EXECUTIVE_BUTTON_SECONDARY = [
+  EXECUTIVE_CTA_SECONDARY,
+  "aria-pressed:border-nexus-cyan/25 aria-pressed:bg-nexus-cyan/10",
+  EXECUTIVE_BUTTON_DISABLED,
+].join(" ");
+
+export const EXECUTIVE_BUTTON_TERTIARY = [
+  "inline-flex min-h-14 items-center justify-center rounded-2xl bg-transparent px-6",
+  "text-sm font-black text-nexus-text-secondary",
+  "transition-[background-color,color] duration-200 hover:bg-white/[0.08] hover:text-white",
+  "aria-pressed:bg-nexus-cyan/10 aria-pressed:text-nexus-text-primary",
+  EXECUTIVE_FOCUS_CYAN,
+  EXECUTIVE_BUTTON_DISABLED,
+].join(" ");
+
+export const EXECUTIVE_BUTTON_DESTRUCTIVE = [
+  "inline-flex min-h-14 items-center justify-center rounded-2xl",
+  "border border-status-risk/25 bg-status-risk/10 px-6 text-sm font-black text-status-risk",
+  "transition-[background-color] duration-200 hover:bg-status-risk/15",
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-status-risk/40 focus-visible:ring-offset-2 focus-visible:ring-offset-nexus-navy",
+  EXECUTIVE_BUTTON_DISABLED,
+].join(" ");
+
+export const EXECUTIVE_BUTTON_ICON = [
+  "inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl",
+  "border border-white/10 bg-white/[0.045] text-white",
+  "transition-[border-color,background-color] duration-200",
+  "hover:border-nexus-cyan/25 hover:bg-white/[0.08]",
+  "aria-pressed:border-nexus-cyan/25 aria-pressed:bg-nexus-cyan/10",
+  EXECUTIVE_FOCUS_CYAN,
+  EXECUTIVE_BUTTON_DISABLED,
+].join(" ");
+
+export const EXECUTIVE_BUTTON_LOADING = [
+  EXECUTIVE_BUTTON_DISABLED,
+  "aria-busy:cursor-wait",
+].join(" ");
+
 export const EXECUTIVE_PAGE_CLASS = "np-page";
 
 export const EXECUTIVE_TYPE_ROLES = [

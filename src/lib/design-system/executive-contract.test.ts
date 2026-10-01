@@ -5,11 +5,20 @@ import { describe, expect, it } from "vitest";
 import {
   EXECUTIVE_BADGE_TONES,
   EXECUTIVE_BORDER_ROLES,
+  EXECUTIVE_BUTTON_DESTRUCTIVE,
+  EXECUTIVE_BUTTON_ICON,
+  EXECUTIVE_BUTTON_LOADING,
+  EXECUTIVE_BUTTON_PRIMARY,
+  EXECUTIVE_BUTTON_ROLES,
+  EXECUTIVE_BUTTON_SECONDARY,
+  EXECUTIVE_BUTTON_TERTIARY,
   EXECUTIVE_CONTENT_MAX_WIDTH_PX,
   EXECUTIVE_CONTROL_CLASS,
   EXECUTIVE_CTA_PRIMARY,
+  EXECUTIVE_CTA_SECONDARY,
   EXECUTIVE_CYAN,
   EXECUTIVE_DEPTH_ROLES,
+  EXECUTIVE_FOCUS_CYAN,
   EXECUTIVE_GOLD,
   EXECUTIVE_INTELLIGENCE_ACCENT_CLASS,
   EXECUTIVE_INTELLIGENCE_MARK_CLASS,
@@ -530,5 +539,42 @@ describe("NP-MASTER-22-B01 executive design contract", () => {
     expect(darkLogo).toContain("object-fit: contain;");
     expect(darkLogo).toContain("background: transparent;");
     expect(darkLogo).not.toMatch(/filter|drop-shadow|box-shadow/);
+  });
+
+  it("defines one executive button system from the existing CTA contract", () => {
+    expect(EXECUTIVE_BUTTON_ROLES).toEqual([
+      "primary",
+      "secondary",
+      "tertiary",
+      "destructive",
+      "icon",
+    ]);
+    expect(EXECUTIVE_BUTTON_PRIMARY).toContain(EXECUTIVE_CTA_PRIMARY);
+    expect(EXECUTIVE_BUTTON_SECONDARY).toContain(EXECUTIVE_CTA_SECONDARY);
+    expect(EXECUTIVE_BUTTON_PRIMARY).toContain("disabled:cursor-not-allowed");
+    expect(EXECUTIVE_BUTTON_PRIMARY).toContain("disabled:opacity-60");
+    expect(EXECUTIVE_BUTTON_SECONDARY).toContain("aria-pressed:bg-nexus-cyan/10");
+    expect(EXECUTIVE_BUTTON_TERTIARY).toContain("bg-transparent");
+    expect(EXECUTIVE_BUTTON_TERTIARY).not.toContain("from-nexus-gold-deep");
+    expect(EXECUTIVE_BUTTON_DESTRUCTIVE).toContain("border-status-risk/25");
+    expect(EXECUTIVE_BUTTON_DESTRUCTIVE).toContain("focus-visible:ring-status-risk/40");
+    expect(EXECUTIVE_BUTTON_ICON).toContain("h-11 w-11");
+    expect(EXECUTIVE_BUTTON_ICON).toContain(EXECUTIVE_FOCUS_CYAN);
+    expect(EXECUTIVE_BUTTON_LOADING).toContain("disabled:opacity-60");
+    expect(EXECUTIVE_BUTTON_LOADING).toContain("aria-busy:cursor-wait");
+    expect(EXECUTIVE_BUTTON_LOADING).not.toContain("animate-");
+
+    for (const button of [
+      EXECUTIVE_BUTTON_PRIMARY,
+      EXECUTIVE_BUTTON_SECONDARY,
+      EXECUTIVE_BUTTON_TERTIARY,
+      EXECUTIVE_BUTTON_DESTRUCTIVE,
+      EXECUTIVE_BUTTON_ICON,
+    ]) {
+      expect(button).toContain("focus-visible:ring-2");
+      expect(button).toContain("disabled:opacity-60");
+      expect(button).not.toContain("hover:scale");
+      expect(button).not.toContain("animate-");
+    }
   });
 });
