@@ -17,6 +17,10 @@ import {
   EXECUTIVE_CTA_PRIMARY,
   EXECUTIVE_CTA_SECONDARY,
   EXECUTIVE_CYAN,
+  EXECUTIVE_DATE_CONTROL_ROLES,
+  EXECUTIVE_DATE_FIELD,
+  EXECUTIVE_DATE_TIMEZONE,
+  EXECUTIVE_DATE_TIMEZONE_BADGE,
   EXECUTIVE_DEPTH_ROLES,
   EXECUTIVE_FOCUS_CYAN,
   EXECUTIVE_FOCUS_GOLD,
@@ -643,5 +647,31 @@ describe("NP-MASTER-22-B01 executive design contract", () => {
       expect(control).not.toContain("hover:scale");
       expect(control).not.toContain("animate-");
     }
+  });
+
+  it("defines the shared deadline control from the form contract", () => {
+    expect(EXECUTIVE_DATE_CONTROL_ROLES).toEqual(["datetime", "timezone"]);
+    expect(EXECUTIVE_DATE_FIELD).toContain(EXECUTIVE_FORM_INPUT);
+    expect(EXECUTIVE_DATE_FIELD).toContain("scheme-dark");
+    expect(EXECUTIVE_DATE_FIELD).toContain(EXECUTIVE_FORM_DISABLED);
+    expect(EXECUTIVE_DATE_FIELD).toContain(EXECUTIVE_FORM_READONLY);
+    expect(EXECUTIVE_DATE_FIELD).toContain("aria-invalid:border-status-risk");
+    expect(EXECUTIVE_DATE_TIMEZONE).toBe(EXECUTIVE_FORM_SELECT);
+    expect(EXECUTIVE_DATE_TIMEZONE_BADGE).toContain("border-status-info/25");
+    expect(EXECUTIVE_DATE_TIMEZONE_BADGE).toContain("text-nexus-cyan-bright");
+
+    const deadlineField = readSource("src/components/deadline-field.tsx");
+    expect(deadlineField).toContain("type=\"datetime-local\"");
+    expect(deadlineField).toContain("className={EXECUTIVE_DATE_FIELD}");
+    expect(deadlineField).toContain("className={EXECUTIVE_DATE_TIMEZONE}");
+    expect(deadlineField).toContain("className={EXECUTIVE_DATE_TIMEZONE_BADGE}");
+    expect(deadlineField).toContain("aria-invalid={ariaInvalid}");
+    expect(deadlineField).toContain("aria-describedby={ariaDescribedBy}");
+    expect(deadlineField).toContain("onDateTimeChange(event.target.value)");
+    expect(deadlineField).toContain("onTimezoneChange(event.target.value)");
+    expect(deadlineField).toContain('value: "America/Toronto"');
+    expect(deadlineField).toContain('value: "UTC"');
+    expect(deadlineField).not.toContain("toISOString");
+    expect(deadlineField).not.toContain("timeZone:");
   });
 });

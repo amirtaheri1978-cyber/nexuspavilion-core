@@ -201,6 +201,23 @@ export const EXECUTIVE_FORM_DISABLED =
 export const EXECUTIVE_FORM_READONLY =
   "readonly:bg-black/15 readonly:text-slate-400";
 
+export const EXECUTIVE_DATE_CONTROL_ROLES = ["datetime", "timezone"] as const;
+
+export type ExecutiveDateControlRole =
+  (typeof EXECUTIVE_DATE_CONTROL_ROLES)[number];
+
+export const EXECUTIVE_DATE_FIELD = [
+  EXECUTIVE_FORM_INPUT,
+  "scheme-dark",
+].join(" ");
+
+export const EXECUTIVE_DATE_TIMEZONE = EXECUTIVE_FORM_SELECT;
+
+export const EXECUTIVE_DATE_TIMEZONE_BADGE = [
+  "w-fit rounded-full border border-status-info/25 bg-status-info/10 px-3 py-1",
+  "text-xs font-black uppercase tracking-[0.12em] text-nexus-cyan-bright",
+].join(" ");
+
 export const EXECUTIVE_PAGE_CLASS = "np-page";
 
 export const EXECUTIVE_TYPE_ROLES = [

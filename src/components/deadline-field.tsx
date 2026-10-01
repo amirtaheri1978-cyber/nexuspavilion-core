@@ -1,5 +1,13 @@
 "use client";
 
+import {
+  EXECUTIVE_DATE_FIELD,
+  EXECUTIVE_DATE_TIMEZONE,
+  EXECUTIVE_DATE_TIMEZONE_BADGE,
+  EXECUTIVE_FORM_HELPER,
+  EXECUTIVE_FORM_LABEL,
+} from "@/lib/design-system/executive-contract";
+
 type DeadlineFieldProps = {
 label: string;
 dateTimeValue: string;
@@ -62,24 +70,24 @@ return (
 <div>
 <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">
 {label}
-{required ? <span className="text-[#F5D77B]"> *</span> : null}
+{required ? <span className="text-nexus-gold-bright"> *</span> : null}
 </p>
 
 {helperText ? (
-<p className="mt-2 text-xs font-semibold leading-5 text-slate-500">
+<p className={`mt-2 leading-5 ${EXECUTIVE_FORM_HELPER}`}>
 {helperText}
 </p>
 ) : null}
 </div>
 
-<span className="w-fit rounded-full border border-[#2CC4E8]/25 bg-[#2CC4E8]/10 px-3 py-1 text-xs font-black uppercase tracking-[0.12em] text-[#9BE8F8]">
+<span className={EXECUTIVE_DATE_TIMEZONE_BADGE}>
 Date + Time Zone
 </span>
 </div>
 
 <div className="mt-5 grid gap-4 md:grid-cols-[1fr_0.85fr]">
 <label className="block">
-<span className="mb-2 block text-[10px] font-black uppercase tracking-[0.18em] text-slate-600">
+<span className={`mb-2 block ${EXECUTIVE_FORM_LABEL}`}>
 Date & Time
 </span>
 
@@ -91,12 +99,12 @@ onChange={(event) => onDateTimeChange(event.target.value)}
 disabled={disabled}
 aria-invalid={ariaInvalid}
 aria-describedby={ariaDescribedBy}
-className="w-full rounded-2xl border border-white/10 bg-[#07111F] px-4 py-4 text-sm font-bold text-white outline-none transition focus:border-[#2CC4E8]/40 disabled:cursor-not-allowed disabled:opacity-60"
+className={EXECUTIVE_DATE_FIELD}
 />
 </label>
 
 <label className="block">
-<span className="mb-2 block text-[10px] font-black uppercase tracking-[0.18em] text-slate-600">
+<span className={`mb-2 block ${EXECUTIVE_FORM_LABEL}`}>
 Time Zone
 </span>
 
@@ -104,7 +112,7 @@ Time Zone
 value={timezoneValue}
 onChange={(event) => onTimezoneChange(event.target.value)}
 disabled={disabled}
-className="w-full rounded-2xl border border-white/10 bg-[#07111F] px-4 py-4 text-sm font-bold text-white outline-none transition focus:border-[#2CC4E8]/40 disabled:cursor-not-allowed disabled:opacity-60"
+className={EXECUTIVE_DATE_TIMEZONE}
 >
 {TIMEZONES.map((timezone) => (
 <option
