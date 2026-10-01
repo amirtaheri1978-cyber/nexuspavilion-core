@@ -62,8 +62,7 @@ export const EXECUTIVE_CTA_SECONDARY = [
   EXECUTIVE_FOCUS_CYAN,
 ].join(" ");
 
-export const EXECUTIVE_PAGE_CLASS =
-  "np-page mx-auto w-full max-w-[1680px] px-4 py-6 sm:px-8 lg:px-10 lg:py-8";
+export const EXECUTIVE_PAGE_CLASS = "np-page";
 
 export const EXECUTIVE_TYPE_ROLES = [
   "eyebrow",
@@ -76,3 +75,13 @@ export const EXECUTIVE_TYPE_ROLES = [
 ] as const;
 
 export type ExecutiveTypeRole = (typeof EXECUTIVE_TYPE_ROLES)[number];
+
+export const EXECUTIVE_LAYOUT_ROLES = [
+  "content",
+  "sidebar",
+  "page",
+  "region",
+  "region-major",
+] as const;
+
+export type ExecutiveLayoutRole = (typeof EXECUTIVE_LAYOUT_ROLES)[number];

@@ -8,7 +8,9 @@ import {
   EXECUTIVE_CTA_PRIMARY,
   EXECUTIVE_CYAN,
   EXECUTIVE_GOLD,
+  EXECUTIVE_LAYOUT_ROLES,
   EXECUTIVE_NAVY,
+  EXECUTIVE_PAGE_CLASS,
   EXECUTIVE_TYPE_ROLES,
   EXECUTIVE_PANEL_RADIUS_PX,
   EXECUTIVE_SIDEBAR_WIDTH_PX,
@@ -217,5 +219,34 @@ describe("NP-MASTER-22-B01 executive design contract", () => {
     expect(globals).not.toMatch(
       /@media \(min-width: 640px\) \{\s*\.np-type-h1/,
     );
+  });
+
+  it("defines one application spacing and grid scale from shared layout tokens", () => {
+    expect(EXECUTIVE_LAYOUT_ROLES).toEqual([
+      "content",
+      "sidebar",
+      "page",
+      "region",
+      "region-major",
+    ]);
+    expect(EXECUTIVE_PAGE_CLASS).toBe("np-page");
+    expect(EXECUTIVE_PAGE_CLASS).not.toContain("1680");
+    expect(EXECUTIVE_PAGE_CLASS).not.toContain("px-");
+    expect(cssVariableValue(globals, "--layout-content-max")).toBe("1680px");
+    expect(cssVariableValue(globals, "--layout-sidebar-width")).toBe("330px");
+    expect(cssVariableValue(globals, "--spacing-region")).toBe("24px");
+    expect(cssVariableValue(globals, "--spacing-region-major")).toBe("32px");
+    expect(cssVariableValue(globals, "--np-page-pad-inline")).toBe("1rem");
+    expect(cssVariableValue(globals, "--np-page-pad-block")).toBe("1.5rem");
+    expect(globals).toContain("--np-page-pad-inline: 2rem;");
+    expect(globals).toContain("--np-page-pad-inline: 2.5rem;");
+    expect(globals).toContain("--np-page-pad-block: 2rem;");
+    expect(globals).toContain("max-width: var(--layout-content-max);");
+    expect(globals).toContain("padding-inline: var(--np-page-pad-inline);");
+    expect(globals).toContain("padding-block: var(--np-page-pad-block);");
+    expect(globals).toContain("margin-top: var(--spacing-region);");
+    expect(globals).toContain("margin-top: var(--spacing-region-major);");
+    expect(globals).not.toMatch(/@media \(min-width: 640px\) \{\s*\.np-page/);
+    expect(globals).not.toMatch(/@media \(min-width: 1024px\) \{\s*\.np-page/);
   });
 });

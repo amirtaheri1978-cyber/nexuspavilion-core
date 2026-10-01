@@ -49,6 +49,8 @@
   --layout-sidebar-width: 330px;
   --spacing-region: 24px;
   --spacing-region-major: 32px;
+  --np-page-pad-inline: 1rem;
+  --np-page-pad-block: 1.5rem;
 
   --np-type-display-weight: 800;
   --np-type-copy-weight: 600;
@@ -260,6 +262,14 @@ body {
     --np-type-h1-size: 2.25rem;
     --np-type-h2-size: 1.875rem;
     --np-type-h3-size: 1.25rem;
+    --np-page-pad-inline: 2rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --np-page-pad-inline: 2.5rem;
+    --np-page-pad-block: 2rem;
   }
 }
 
@@ -273,19 +283,8 @@ body {
   width: 100%;
   max-width: var(--layout-content-max);
   margin-inline: auto;
-  padding: 1.5rem 1rem;
-}
-
-@media (min-width: 640px) {
-  .np-page {
-    padding-inline: 2rem;
-  }
-}
-
-@media (min-width: 1024px) {
-  .np-page {
-    padding: 2rem 2.5rem;
-  }
+  padding-inline: var(--np-page-pad-inline);
+  padding-block: var(--np-page-pad-block);
 }
 
 .np-region {
