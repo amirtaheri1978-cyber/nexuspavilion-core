@@ -36,6 +36,12 @@
   --intelligence-accent-bright: var(--nexus-cyan-bright);
   --intelligence-surface: var(--nexus-surface-elevated);
   --intelligence-border: color-mix(in srgb, var(--nexus-cyan) 15%, transparent);
+  --interaction-hover-fill: color-mix(in srgb, var(--nexus-white) 8%, transparent);
+  --interaction-hover-border: color-mix(in srgb, var(--nexus-cyan) 25%, transparent);
+  --interaction-selected-fill: color-mix(in srgb, var(--nexus-cyan) 10%, transparent);
+  --interaction-selected-border: color-mix(in srgb, var(--nexus-cyan) 25%, transparent);
+  --interaction-focus: color-mix(in srgb, var(--nexus-cyan) 40%, transparent);
+  --interaction-disabled-opacity: 0.6;
 
   --nexus-white: #ffffff;
   --nexus-muted: #94a3b8;
@@ -352,6 +358,30 @@ body {
 .np-focus-cyan:focus-visible {
   outline: 2px solid color-mix(in srgb, var(--nexus-cyan) 40%, transparent);
   outline-offset: 2px;
+}
+
+.np-control:hover:not(:disabled):not([aria-disabled="true"]):not([aria-current="page"]):not([aria-selected="true"]):not([aria-pressed="true"]) {
+  background-color: var(--interaction-hover-fill);
+  border-color: var(--interaction-hover-border);
+}
+
+.np-control[aria-current="page"],
+.np-control[aria-selected="true"],
+.np-control[aria-pressed="true"] {
+  background-color: var(--interaction-selected-fill);
+  border-color: var(--interaction-selected-border);
+  color: var(--nexus-text-primary);
+}
+
+.np-control:focus-visible {
+  outline: 2px solid var(--interaction-focus);
+  outline-offset: 2px;
+}
+
+.np-control:disabled,
+.np-control[aria-disabled="true"] {
+  cursor: not-allowed;
+  opacity: var(--interaction-disabled-opacity);
 }
 
 @media (prefers-reduced-motion: reduce) {

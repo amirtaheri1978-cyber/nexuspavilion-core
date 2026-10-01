@@ -6,6 +6,7 @@ import {
   EXECUTIVE_BADGE_TONES,
   EXECUTIVE_BORDER_ROLES,
   EXECUTIVE_CONTENT_MAX_WIDTH_PX,
+  EXECUTIVE_CONTROL_CLASS,
   EXECUTIVE_CTA_PRIMARY,
   EXECUTIVE_CYAN,
   EXECUTIVE_DEPTH_ROLES,
@@ -14,6 +15,7 @@ import {
   EXECUTIVE_INTELLIGENCE_MARK_CLASS,
   EXECUTIVE_INTELLIGENCE_ROLES,
   EXECUTIVE_INTELLIGENCE_SURFACE_CLASS,
+  EXECUTIVE_INTERACTION_ROLES,
   EXECUTIVE_LAYOUT_ROLES,
   EXECUTIVE_MODAL_RADIUS_PX,
   EXECUTIVE_NAVY,
@@ -369,5 +371,55 @@ describe("NP-MASTER-22-B01 executive design contract", () => {
     expect(intelligence).not.toContain("gradient");
     expect(intelligence).not.toContain("box-shadow");
     expect(intelligence).not.toMatch(/\p{Extended_Pictographic}/u);
+  });
+
+  it("defines one shared control interaction contract from existing semantic states", () => {
+    expect(EXECUTIVE_INTERACTION_ROLES).toEqual([
+      "focus",
+      "hover",
+      "selected",
+      "disabled",
+    ]);
+    expect(EXECUTIVE_CONTROL_CLASS).toBe("np-control");
+    expect(cssVariableValue(globals, "--interaction-hover-fill")).toBe(
+      "color-mix(insrgb,var(--nexus-white)8%,transparent)",
+    );
+    expect(cssVariableValue(globals, "--interaction-hover-border")).toBe(
+      "color-mix(insrgb,var(--nexus-cyan)25%,transparent)",
+    );
+    expect(cssVariableValue(globals, "--interaction-selected-fill")).toBe(
+      "color-mix(insrgb,var(--nexus-cyan)10%,transparent)",
+    );
+    expect(cssVariableValue(globals, "--interaction-selected-border")).toBe(
+      "color-mix(insrgb,var(--nexus-cyan)25%,transparent)",
+    );
+    expect(cssVariableValue(globals, "--interaction-focus")).toBe(
+      "color-mix(insrgb,var(--nexus-cyan)40%,transparent)",
+    );
+    expect(cssVariableValue(globals, "--interaction-disabled-opacity")).toBe(
+      "0.6",
+    );
+    expect(cssVariableValue(globals, "--interaction-hover-fill")).not.toBe(
+      cssVariableValue(globals, "--interaction-selected-fill"),
+    );
+
+    const control = globals.slice(
+      globals.indexOf(".np-control:hover"),
+      globals.indexOf("@media (prefers-reduced-motion: reduce)"),
+    );
+    expect(control).toContain(".np-control:focus-visible");
+    expect(control).toContain("outline: 2px solid var(--interaction-focus);");
+    expect(control).toContain("background-color: var(--interaction-hover-fill);");
+    expect(control).toContain(
+      "background-color: var(--interaction-selected-fill);",
+    );
+    expect(control).toContain("cursor: not-allowed;");
+    expect(control).toContain("opacity: var(--interaction-disabled-opacity);");
+    expect(control).toContain(':not([aria-current="page"])');
+    expect(control).toContain(':not([aria-selected="true"])');
+    expect(control).not.toMatch(/\.np-control:focus\s*\{/);
+    expect(control).not.toContain("transition");
+    expect(control).not.toContain("animation");
+    expect(control).not.toContain("hover:scale");
   });
 });

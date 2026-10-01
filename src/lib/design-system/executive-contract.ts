@@ -123,3 +123,15 @@ export type ExecutiveIntelligenceRole =
 export const EXECUTIVE_INTELLIGENCE_SURFACE_CLASS = "np-intelligence";
 export const EXECUTIVE_INTELLIGENCE_ACCENT_CLASS = "np-intelligence-accent";
 export const EXECUTIVE_INTELLIGENCE_MARK_CLASS = "np-intelligence-mark";
+
+export const EXECUTIVE_INTERACTION_ROLES = [
+  "focus",
+  "hover",
+  "selected",
+  "disabled",
+] as const;
+
+export type ExecutiveInteractionRole =
+  (typeof EXECUTIVE_INTERACTION_ROLES)[number];
+
+export const EXECUTIVE_CONTROL_CLASS = "np-control";
