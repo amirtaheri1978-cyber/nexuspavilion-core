@@ -312,6 +312,59 @@ export const EXECUTIVE_INTELLIGENCE_SURFACE_CLASS = "np-intelligence";
 export const EXECUTIVE_INTELLIGENCE_ACCENT_CLASS = "np-intelligence-accent";
 export const EXECUTIVE_INTELLIGENCE_MARK_CLASS = "np-intelligence-mark";
 
+export const EXECUTIVE_CARD_ROLES = [
+  "status",
+  "metric",
+  "action",
+  "intelligence",
+  "summary",
+] as const;
+
+export type ExecutiveCardRole = (typeof EXECUTIVE_CARD_ROLES)[number];
+
+/** Tile radius for compact roles; panel radius for composition roles. */
+export const EXECUTIVE_CARD_ROLE_DEPTH: Record<
+  ExecutiveCardRole,
+  ExecutiveDepthRole
+> = {
+  status: "tile",
+  metric: "tile",
+  action: "panel",
+  intelligence: "panel",
+  summary: "panel",
+};
+
+export const EXECUTIVE_CARD_ROLE_SURFACE: Record<
+  ExecutiveCardRole,
+  ExecutiveSurfaceRole
+> = {
+  status: "muted",
+  metric: "elevated",
+  action: "elevated",
+  intelligence: "elevated",
+  summary: "base",
+};
+
+export const EXECUTIVE_CARD_ROLE_RADIUS: Record<ExecutiveCardRole, string> = {
+  status: "rounded-executive",
+  metric: "rounded-executive",
+  action: "rounded-panel",
+  intelligence: "rounded-panel",
+  summary: "rounded-panel",
+};
+
+export const EXECUTIVE_CARD_ROLE_ELEVATION: Record<ExecutiveCardRole, string> =
+  {
+    status: "shadow-inner-executive",
+    metric: "shadow-inner-executive",
+    action: "shadow-executive",
+    intelligence: "shadow-executive",
+    summary: "shadow-executive",
+  };
+
+export const EXECUTIVE_CARD_INTELLIGENCE_CLASS =
+  EXECUTIVE_INTELLIGENCE_SURFACE_CLASS;
+
 export const EXECUTIVE_INTERACTION_ROLES = [
   "focus",
   "hover",

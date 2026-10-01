@@ -15,6 +15,12 @@ import {
   EXECUTIVE_BUTTON_ROLES,
   EXECUTIVE_BUTTON_SECONDARY,
   EXECUTIVE_BUTTON_TERTIARY,
+  EXECUTIVE_CARD_INTELLIGENCE_CLASS,
+  EXECUTIVE_CARD_ROLE_DEPTH,
+  EXECUTIVE_CARD_ROLE_ELEVATION,
+  EXECUTIVE_CARD_ROLE_RADIUS,
+  EXECUTIVE_CARD_ROLE_SURFACE,
+  EXECUTIVE_CARD_ROLES,
   EXECUTIVE_CONTENT_MAX_WIDTH_PX,
   EXECUTIVE_CONTROL_CLASS,
   EXECUTIVE_CTA_PRIMARY,
@@ -449,6 +455,42 @@ describe("NP-MASTER-22-B01 executive design contract", () => {
     expect(intelligence).not.toContain("gradient");
     expect(intelligence).not.toContain("box-shadow");
     expect(intelligence).not.toMatch(/\p{Extended_Pictographic}/u);
+  });
+
+  it("defines five canonical card roles from the existing panel and intelligence contracts", () => {
+    expect(EXECUTIVE_CARD_ROLES).toEqual([
+      "status",
+      "metric",
+      "action",
+      "intelligence",
+      "summary",
+    ]);
+    expect(EXECUTIVE_CARD_ROLE_DEPTH.status).toBe("tile");
+    expect(EXECUTIVE_CARD_ROLE_RADIUS.status).toBe("rounded-executive");
+    expect(EXECUTIVE_CARD_ROLE_ELEVATION.status).toBe("shadow-inner-executive");
+    expect(EXECUTIVE_CARD_ROLE_SURFACE.status).toBe("muted");
+    expect(EXECUTIVE_CARD_ROLE_DEPTH.metric).toBe("tile");
+    expect(EXECUTIVE_CARD_ROLE_RADIUS.metric).toBe("rounded-executive");
+    expect(EXECUTIVE_CARD_ROLE_ELEVATION.metric).toBe("shadow-inner-executive");
+    expect(EXECUTIVE_CARD_ROLE_SURFACE.metric).toBe("elevated");
+    expect(metric).toContain('radius="tile"');
+    expect(EXECUTIVE_CARD_ROLE_DEPTH.action).toBe("panel");
+    expect(EXECUTIVE_CARD_ROLE_RADIUS.action).toBe("rounded-panel");
+    expect(EXECUTIVE_CARD_ROLE_ELEVATION.action).toBe("shadow-executive");
+    expect(EXECUTIVE_CARD_ROLE_SURFACE.action).toBe("elevated");
+    expect(EXECUTIVE_CARD_ROLE_DEPTH.intelligence).toBe("panel");
+    expect(EXECUTIVE_CARD_ROLE_RADIUS.intelligence).toBe("rounded-panel");
+    expect(EXECUTIVE_CARD_ROLE_ELEVATION.intelligence).toBe("shadow-executive");
+    expect(EXECUTIVE_CARD_ROLE_SURFACE.intelligence).toBe("elevated");
+    expect(EXECUTIVE_CARD_INTELLIGENCE_CLASS).toBe(
+      EXECUTIVE_INTELLIGENCE_SURFACE_CLASS,
+    );
+    expect(EXECUTIVE_CARD_ROLE_DEPTH.summary).toBe("panel");
+    expect(EXECUTIVE_CARD_ROLE_RADIUS.summary).toBe("rounded-panel");
+    expect(EXECUTIVE_CARD_ROLE_ELEVATION.summary).toBe("shadow-executive");
+    expect(EXECUTIVE_CARD_ROLE_SURFACE.summary).toBe("base");
+    expect(panel).toContain('panel: "rounded-panel"');
+    expect(panel).toContain('tile: "rounded-executive"');
   });
 
   it("defines one shared control interaction contract from existing semantic states", () => {
