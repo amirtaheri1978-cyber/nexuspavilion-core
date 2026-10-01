@@ -133,6 +133,74 @@ export const EXECUTIVE_BUTTON_LOADING = [
   "aria-busy:cursor-wait",
 ].join(" ");
 
+const EXECUTIVE_FORM_FIELD = [
+  "w-full rounded-2xl border border-white/10 bg-white/[0.045] px-4 py-3.5 text-sm font-medium text-white outline-none",
+  "placeholder:text-slate-400",
+  "transition-[border-color,background-color] duration-200 hover:border-white/20",
+  "aria-invalid:border-status-risk",
+  "readonly:bg-black/15 readonly:text-slate-400",
+  EXECUTIVE_FOCUS_GOLD,
+  "disabled:cursor-not-allowed disabled:opacity-60",
+].join(" ");
+
+export const EXECUTIVE_FORM_CONTROL_ROLES = [
+  "input",
+  "textarea",
+  "select",
+  "checkbox",
+  "radio",
+] as const;
+
+export type ExecutiveFormControlRole =
+  (typeof EXECUTIVE_FORM_CONTROL_ROLES)[number];
+
+export const EXECUTIVE_FORM_STATE_ROLES = [
+  "label",
+  "helper",
+  "error",
+  "disabled",
+  "read-only",
+] as const;
+
+export type ExecutiveFormStateRole =
+  (typeof EXECUTIVE_FORM_STATE_ROLES)[number];
+
+export const EXECUTIVE_FORM_INPUT = EXECUTIVE_FORM_FIELD;
+
+export const EXECUTIVE_FORM_TEXTAREA = [EXECUTIVE_FORM_FIELD, "min-h-28"].join(
+  " ",
+);
+
+export const EXECUTIVE_FORM_SELECT = [EXECUTIVE_FORM_FIELD, "scheme-dark"].join(
+  " ",
+);
+
+export const EXECUTIVE_FORM_CHECKBOX = [
+  "mt-1 h-5 w-5 shrink-0 rounded border border-white/20 bg-white/[0.045] accent-nexus-gold",
+  EXECUTIVE_FOCUS_GOLD,
+  "disabled:cursor-not-allowed disabled:opacity-60",
+].join(" ");
+
+export const EXECUTIVE_FORM_RADIO = [
+  "mt-1 h-5 w-5 shrink-0 rounded-full border border-white/20 bg-white/[0.045] accent-nexus-gold",
+  EXECUTIVE_FOCUS_GOLD,
+  "disabled:cursor-not-allowed disabled:opacity-60",
+].join(" ");
+
+export const EXECUTIVE_FORM_LABEL =
+  "text-[11px] font-black uppercase tracking-[0.18em] text-slate-500";
+
+export const EXECUTIVE_FORM_HELPER =
+  "text-xs font-semibold text-nexus-text-secondary";
+
+export const EXECUTIVE_FORM_ERROR = "text-sm font-semibold text-status-risk";
+
+export const EXECUTIVE_FORM_DISABLED =
+  "disabled:cursor-not-allowed disabled:opacity-60";
+
+export const EXECUTIVE_FORM_READONLY =
+  "readonly:bg-black/15 readonly:text-slate-400";
+
 export const EXECUTIVE_PAGE_CLASS = "np-page";
 
 export const EXECUTIVE_TYPE_ROLES = [

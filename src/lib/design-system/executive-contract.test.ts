@@ -19,6 +19,19 @@ import {
   EXECUTIVE_CYAN,
   EXECUTIVE_DEPTH_ROLES,
   EXECUTIVE_FOCUS_CYAN,
+  EXECUTIVE_FOCUS_GOLD,
+  EXECUTIVE_FORM_CHECKBOX,
+  EXECUTIVE_FORM_CONTROL_ROLES,
+  EXECUTIVE_FORM_DISABLED,
+  EXECUTIVE_FORM_ERROR,
+  EXECUTIVE_FORM_HELPER,
+  EXECUTIVE_FORM_INPUT,
+  EXECUTIVE_FORM_LABEL,
+  EXECUTIVE_FORM_RADIO,
+  EXECUTIVE_FORM_READONLY,
+  EXECUTIVE_FORM_SELECT,
+  EXECUTIVE_FORM_STATE_ROLES,
+  EXECUTIVE_FORM_TEXTAREA,
   EXECUTIVE_GOLD,
   EXECUTIVE_INTELLIGENCE_ACCENT_CLASS,
   EXECUTIVE_INTELLIGENCE_MARK_CLASS,
@@ -575,6 +588,60 @@ describe("NP-MASTER-22-B01 executive design contract", () => {
       expect(button).toContain("disabled:opacity-60");
       expect(button).not.toContain("hover:scale");
       expect(button).not.toContain("animate-");
+    }
+  });
+
+  it("defines one executive form-control system from existing field patterns", () => {
+    expect(EXECUTIVE_FORM_CONTROL_ROLES).toEqual([
+      "input",
+      "textarea",
+      "select",
+      "checkbox",
+      "radio",
+    ]);
+    expect(EXECUTIVE_FORM_STATE_ROLES).toEqual([
+      "label",
+      "helper",
+      "error",
+      "disabled",
+      "read-only",
+    ]);
+    expect(EXECUTIVE_FORM_INPUT).toContain("border-white/10");
+    expect(EXECUTIVE_FORM_INPUT).toContain("bg-white/[0.045]");
+    expect(EXECUTIVE_FORM_INPUT).toContain(EXECUTIVE_FOCUS_GOLD);
+    expect(EXECUTIVE_FORM_INPUT).toContain("aria-invalid:border-status-risk");
+    expect(EXECUTIVE_FORM_INPUT).toContain(EXECUTIVE_FORM_READONLY);
+    expect(EXECUTIVE_FORM_INPUT).toContain(EXECUTIVE_FORM_DISABLED);
+    expect(EXECUTIVE_FORM_TEXTAREA).toContain(EXECUTIVE_FORM_INPUT);
+    expect(EXECUTIVE_FORM_TEXTAREA).toContain("min-h-28");
+    expect(EXECUTIVE_FORM_SELECT).toContain(EXECUTIVE_FORM_INPUT);
+    expect(EXECUTIVE_FORM_SELECT).toContain("scheme-dark");
+    expect(EXECUTIVE_FORM_CHECKBOX).toContain("h-5 w-5");
+    expect(EXECUTIVE_FORM_CHECKBOX).toContain("accent-nexus-gold");
+    expect(EXECUTIVE_FORM_CHECKBOX).toContain(EXECUTIVE_FOCUS_GOLD);
+    expect(EXECUTIVE_FORM_CHECKBOX).not.toContain("appearance-none");
+    expect(EXECUTIVE_FORM_RADIO).toContain("rounded-full");
+    expect(EXECUTIVE_FORM_RADIO).toContain("accent-nexus-gold");
+    expect(EXECUTIVE_FORM_LABEL).toContain("uppercase");
+    expect(EXECUTIVE_FORM_HELPER).toContain("text-nexus-text-secondary");
+    expect(EXECUTIVE_FORM_ERROR).toContain("text-status-risk");
+    expect(EXECUTIVE_FORM_DISABLED).toContain("disabled:opacity-60");
+    expect(EXECUTIVE_FORM_DISABLED).toContain("disabled:cursor-not-allowed");
+    expect(EXECUTIVE_FORM_READONLY).toContain("readonly:bg-black/15");
+    expect(EXECUTIVE_FORM_READONLY).not.toContain("opacity-60");
+
+    for (const control of [
+      EXECUTIVE_FORM_INPUT,
+      EXECUTIVE_FORM_TEXTAREA,
+      EXECUTIVE_FORM_SELECT,
+      EXECUTIVE_FORM_CHECKBOX,
+      EXECUTIVE_FORM_RADIO,
+    ]) {
+      expect(control).toContain("focus-visible:ring-2");
+      expect(control).toContain("disabled:opacity-60");
+      expect(control).not.toContain("pointer-events-none");
+      expect(control).not.toContain("hover:scale");
+      expect(control).not.toContain("animate-");
     }
   });
 });
