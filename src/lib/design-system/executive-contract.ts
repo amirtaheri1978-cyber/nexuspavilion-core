@@ -365,6 +365,48 @@ export const EXECUTIVE_CARD_ROLE_ELEVATION: Record<ExecutiveCardRole, string> =
 export const EXECUTIVE_CARD_INTELLIGENCE_CLASS =
   EXECUTIVE_INTELLIGENCE_SURFACE_CLASS;
 
+export const EXECUTIVE_TABLE_ROLES = [
+  "container",
+  "header",
+  "cell",
+  "numeric",
+  "sort",
+  "filter",
+] as const;
+
+export type ExecutiveTableRole = (typeof EXECUTIVE_TABLE_ROLES)[number];
+
+export const EXECUTIVE_TABLE_CONTAINER =
+  "min-w-0 overflow-x-auto rounded-executive border border-white/10";
+
+export const EXECUTIVE_TABLE = "w-full min-w-full border-collapse text-left";
+
+export const EXECUTIVE_TABLE_HEADER = [
+  "sticky top-0 z-10 bg-nexus-navy",
+  "np-type-meta px-3 py-3 text-left align-middle",
+].join(" ");
+
+export const EXECUTIVE_TABLE_NUMERIC_HEADER = [
+  "sticky top-0 z-10 bg-nexus-navy",
+  "np-type-meta px-3 py-3 text-right align-middle",
+].join(" ");
+
+export const EXECUTIVE_TABLE_CELL =
+  "px-3 py-3 text-left align-middle text-sm font-medium text-nexus-text-primary";
+
+export const EXECUTIVE_TABLE_NUMERIC =
+  "px-3 py-3 text-right align-middle text-sm font-medium tabular-nums text-nexus-text-primary";
+
+const EXECUTIVE_TABLE_ACTIVE = [
+  "bg-nexus-cyan/10 text-nexus-cyan-bright",
+  EXECUTIVE_FOCUS_CYAN,
+].join(" ");
+
+export const EXECUTIVE_TABLE_SORT_ACTIVE = EXECUTIVE_TABLE_ACTIVE;
+export const EXECUTIVE_TABLE_FILTER_ACTIVE = EXECUTIVE_TABLE_ACTIVE;
+
+export const EXECUTIVE_TABLE_CAPTION = "sr-only";
+
 export const EXECUTIVE_INTERACTION_ROLES = [
   "focus",
   "hover",

@@ -72,6 +72,16 @@ import {
   EXECUTIVE_SIDEBAR_WIDTH_PX,
   EXECUTIVE_STATUS_ROLES,
   EXECUTIVE_SURFACE_ROLES,
+  EXECUTIVE_TABLE,
+  EXECUTIVE_TABLE_CAPTION,
+  EXECUTIVE_TABLE_CELL,
+  EXECUTIVE_TABLE_CONTAINER,
+  EXECUTIVE_TABLE_FILTER_ACTIVE,
+  EXECUTIVE_TABLE_HEADER,
+  EXECUTIVE_TABLE_NUMERIC,
+  EXECUTIVE_TABLE_NUMERIC_HEADER,
+  EXECUTIVE_TABLE_ROLES,
+  EXECUTIVE_TABLE_SORT_ACTIVE,
   EXECUTIVE_TILE_RADIUS_PX,
 } from "@/lib/design-system/executive-contract";
 
@@ -491,6 +501,49 @@ describe("NP-MASTER-22-B01 executive design contract", () => {
     expect(EXECUTIVE_CARD_ROLE_SURFACE.summary).toBe("base");
     expect(panel).toContain('panel: "rounded-panel"');
     expect(panel).toContain('tile: "rounded-executive"');
+  });
+
+  it("defines one enterprise table contract from existing overflow and alignment patterns", () => {
+    expect(EXECUTIVE_TABLE_ROLES).toEqual([
+      "container",
+      "header",
+      "cell",
+      "numeric",
+      "sort",
+      "filter",
+    ]);
+    expect(EXECUTIVE_TABLE_CONTAINER).toContain("min-w-0");
+    expect(EXECUTIVE_TABLE_CONTAINER).toContain("overflow-x-auto");
+    expect(EXECUTIVE_TABLE_CONTAINER).not.toContain("overflow-y-hidden");
+    expect(EXECUTIVE_TABLE).toContain("border-collapse");
+    expect(EXECUTIVE_TABLE).toContain("text-left");
+    expect(EXECUTIVE_TABLE_HEADER).toContain("sticky top-0");
+    expect(EXECUTIVE_TABLE_HEADER).toContain("np-type-meta");
+    expect(EXECUTIVE_TABLE_HEADER).toContain("text-left");
+    expect(EXECUTIVE_TABLE_HEADER).toContain("px-3 py-3");
+    expect(EXECUTIVE_TABLE_NUMERIC_HEADER).toContain("sticky top-0");
+    expect(EXECUTIVE_TABLE_NUMERIC_HEADER).toContain("text-right");
+    expect(EXECUTIVE_TABLE_CELL).toContain("text-left");
+    expect(EXECUTIVE_TABLE_CELL).toContain("px-3 py-3");
+    expect(EXECUTIVE_TABLE_NUMERIC).toContain("text-right");
+    expect(EXECUTIVE_TABLE_NUMERIC).toContain("tabular-nums");
+    expect(EXECUTIVE_TABLE_SORT_ACTIVE).toBe(EXECUTIVE_TABLE_FILTER_ACTIVE);
+    expect(EXECUTIVE_TABLE_SORT_ACTIVE).toContain("bg-nexus-cyan/10");
+    expect(EXECUTIVE_TABLE_SORT_ACTIVE).toContain(EXECUTIVE_FOCUS_CYAN);
+    expect(EXECUTIVE_TABLE_SORT_ACTIVE).not.toContain("hover:scale");
+    expect(EXECUTIVE_TABLE_CAPTION).toBe("sr-only");
+
+    for (const part of [
+      EXECUTIVE_TABLE_CONTAINER,
+      EXECUTIVE_TABLE,
+      EXECUTIVE_TABLE_HEADER,
+      EXECUTIVE_TABLE_CELL,
+      EXECUTIVE_TABLE_NUMERIC,
+      EXECUTIVE_TABLE_SORT_ACTIVE,
+    ]) {
+      expect(part).not.toContain("onClick");
+      expect(part).not.toContain("pointer-events-none");
+    }
   });
 
   it("defines one shared control interaction contract from existing semantic states", () => {
