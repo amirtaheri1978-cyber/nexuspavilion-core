@@ -42,6 +42,10 @@
   --interaction-selected-border: color-mix(in srgb, var(--nexus-cyan) 25%, transparent);
   --interaction-focus: color-mix(in srgb, var(--nexus-cyan) 40%, transparent);
   --interaction-disabled-opacity: 0.6;
+  --motion-duration-fast: 140ms;
+  --motion-duration-standard: 220ms;
+  --motion-duration-context: 300ms;
+  --motion-duration-milestone: 650ms;
 
   --nexus-white: #ffffff;
   --nexus-muted: #94a3b8;

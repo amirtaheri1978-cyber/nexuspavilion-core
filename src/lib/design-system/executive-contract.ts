@@ -135,3 +135,17 @@ export type ExecutiveInteractionRole =
   (typeof EXECUTIVE_INTERACTION_ROLES)[number];
 
 export const EXECUTIVE_CONTROL_CLASS = "np-control";
+
+export const EXECUTIVE_MOTION_ROLES = [
+  "fast",
+  "standard",
+  "context",
+  "milestone",
+] as const;
+
+export type ExecutiveMotionRole = (typeof EXECUTIVE_MOTION_ROLES)[number];
+
+export const EXECUTIVE_MOTION_FAST_MS = 140;
+export const EXECUTIVE_MOTION_STANDARD_MS = 220;
+export const EXECUTIVE_MOTION_CONTEXT_MS = 300;
+export const EXECUTIVE_MOTION_MILESTONE_MS = 650;

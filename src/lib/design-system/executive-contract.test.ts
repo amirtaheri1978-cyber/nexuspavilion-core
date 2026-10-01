@@ -18,6 +18,11 @@ import {
   EXECUTIVE_INTERACTION_ROLES,
   EXECUTIVE_LAYOUT_ROLES,
   EXECUTIVE_MODAL_RADIUS_PX,
+  EXECUTIVE_MOTION_CONTEXT_MS,
+  EXECUTIVE_MOTION_FAST_MS,
+  EXECUTIVE_MOTION_MILESTONE_MS,
+  EXECUTIVE_MOTION_ROLES,
+  EXECUTIVE_MOTION_STANDARD_MS,
   EXECUTIVE_NAVY,
   EXECUTIVE_PAGE_CLASS,
   EXECUTIVE_TYPE_ROLES,
@@ -421,5 +426,39 @@ describe("NP-MASTER-22-B01 executive design contract", () => {
     expect(control).not.toContain("transition");
     expect(control).not.toContain("animation");
     expect(control).not.toContain("hover:scale");
+  });
+
+  it("defines canonical application motion durations without changing reduced motion", () => {
+    expect(EXECUTIVE_MOTION_ROLES).toEqual([
+      "fast",
+      "standard",
+      "context",
+      "milestone",
+    ]);
+    expect(EXECUTIVE_MOTION_FAST_MS).toBe(140);
+    expect(EXECUTIVE_MOTION_STANDARD_MS).toBe(220);
+    expect(EXECUTIVE_MOTION_CONTEXT_MS).toBe(300);
+    expect(EXECUTIVE_MOTION_MILESTONE_MS).toBe(650);
+    expect(cssVariableValue(globals, "--motion-duration-fast")).toBe("140ms");
+    expect(cssVariableValue(globals, "--motion-duration-standard")).toBe(
+      "220ms",
+    );
+    expect(cssVariableValue(globals, "--motion-duration-context")).toBe(
+      "300ms",
+    );
+    expect(cssVariableValue(globals, "--motion-duration-milestone")).toBe(
+      "650ms",
+    );
+    expect(EXECUTIVE_CTA_PRIMARY).toContain("duration-200");
+    expect(globals).toContain("animation-duration: 0.01ms !important;");
+    expect(globals).toContain("transition-duration: 0.01ms !important;");
+
+    const durations = globals.slice(
+      globals.indexOf("--motion-duration-fast"),
+      globals.indexOf("--nexus-white"),
+    );
+    expect(durations).not.toContain("cubic-bezier");
+    expect(durations).not.toContain("ease");
+    expect(durations).not.toContain("prefers-reduced-motion");
   });
 });
