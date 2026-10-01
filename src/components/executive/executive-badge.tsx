@@ -1,6 +1,10 @@
 import type { ReactNode } from "react";
 
-import { EXECUTIVE_BADGE_TONES } from "@/lib/design-system/executive-contract";
+import {
+  EXECUTIVE_BADGE_SEMANTIC_CLASSES,
+  EXECUTIVE_BADGE_TONE_ALIASES,
+  EXECUTIVE_BADGE_TONES,
+} from "@/lib/design-system/executive-contract";
 
 export type ExecutiveBadgeTone = (typeof EXECUTIVE_BADGE_TONES)[number];
 
@@ -11,42 +15,6 @@ type ExecutiveBadgeProps = {
   tone?: ExecutiveBadgeTone;
   size?: ExecutiveBadgeSize;
   className?: string;
-};
-
-type CanonicalBadgeTone =
-  | "neutral"
-  | "blue"
-  | "gold"
-  | "risk"
-  | "success"
-  | "warning"
-  | "board";
-
-const toneAliases: Record<ExecutiveBadgeTone, CanonicalBadgeTone> = {
-  neutral: "neutral",
-  locked: "neutral",
-  blue: "blue",
-  gold: "gold",
-  recommended: "gold",
-  risk: "risk",
-  success: "success",
-  awarded: "success",
-  warning: "warning",
-  pending: "warning",
-  board: "board",
-  live: "board",
-};
-
-const toneClasses: Record<CanonicalBadgeTone, string> = {
-  neutral:
-    "border-nexus-border-subtle bg-white/[0.06] text-status-neutral",
-  blue: "border-status-info/25 bg-status-info/10 text-nexus-cyan-bright",
-  gold: "border-nexus-gold/25 bg-nexus-gold/10 text-nexus-gold-bright",
-  risk: "border-status-risk/25 bg-status-risk/10 text-status-risk",
-  success: "border-status-success/25 bg-status-success/10 text-status-success",
-  warning:
-    "border-status-warning/25 bg-status-warning/10 text-status-warning",
-  board: "border-nexus-gold/30 bg-nexus-gold/10 text-nexus-gold",
 };
 
 const sizeClasses: Record<ExecutiveBadgeSize, string> = {
@@ -60,7 +28,7 @@ export function ExecutiveBadge({
   size = "sm",
   className = "",
 }: ExecutiveBadgeProps) {
-  const canonicalTone = toneAliases[tone];
+  const canonicalTone = EXECUTIVE_BADGE_TONE_ALIASES[tone];
 
   return (
     <span
@@ -68,7 +36,7 @@ export function ExecutiveBadge({
         "inline-flex shrink-0 items-center whitespace-nowrap rounded-full border",
         "font-semibold uppercase leading-none tracking-[0.12em]",
         "transition-colors duration-200",
-        toneClasses[canonicalTone],
+        EXECUTIVE_BADGE_SEMANTIC_CLASSES[canonicalTone],
         sizeClasses[size],
         className,
       ]

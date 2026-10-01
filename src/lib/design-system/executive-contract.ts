@@ -52,6 +52,51 @@ export const EXECUTIVE_STATUS_ROLES = [
 
 export type ExecutiveStatusRole = (typeof EXECUTIVE_STATUS_ROLES)[number];
 
+export const EXECUTIVE_BADGE_ROLES = [
+  "success",
+  "warning",
+  "risk",
+  "info",
+  "neutral",
+  "gold",
+  "board",
+] as const;
+
+export type ExecutiveBadgeRole = (typeof EXECUTIVE_BADGE_ROLES)[number];
+
+export const EXECUTIVE_BADGE_TONE_ALIASES: Record<
+  ExecutiveContractBadgeTone,
+  ExecutiveBadgeRole
+> = {
+  neutral: "neutral",
+  locked: "neutral",
+  blue: "info",
+  gold: "gold",
+  recommended: "gold",
+  risk: "risk",
+  success: "success",
+  awarded: "success",
+  warning: "warning",
+  pending: "warning",
+  board: "board",
+  live: "board",
+};
+
+export const EXECUTIVE_BADGE_SEMANTIC_CLASSES: Record<
+  ExecutiveBadgeRole,
+  string
+> = {
+  success:
+    "border-status-success/25 bg-status-success/10 text-status-success",
+  warning:
+    "border-status-warning/25 bg-status-warning/10 text-status-warning",
+  risk: "border-status-risk/25 bg-status-risk/10 text-status-risk",
+  info: "border-status-info/25 bg-status-info/10 text-nexus-cyan-bright",
+  neutral: "border-nexus-border-subtle bg-white/[0.06] text-status-neutral",
+  gold: "border-nexus-gold/25 bg-nexus-gold/10 text-nexus-gold-bright",
+  board: "border-nexus-gold/30 bg-nexus-gold/10 text-nexus-gold",
+};
+
 export const EXECUTIVE_FOCUS_GOLD =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-nexus-gold/70 focus-visible:ring-offset-2 focus-visible:ring-offset-nexus-navy";
 

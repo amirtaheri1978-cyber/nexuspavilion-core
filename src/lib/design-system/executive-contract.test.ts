@@ -3,6 +3,9 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
 import {
+  EXECUTIVE_BADGE_ROLES,
+  EXECUTIVE_BADGE_SEMANTIC_CLASSES,
+  EXECUTIVE_BADGE_TONE_ALIASES,
   EXECUTIVE_BADGE_TONES,
   EXECUTIVE_BORDER_ROLES,
   EXECUTIVE_BUTTON_DESTRUCTIVE,
@@ -161,11 +164,24 @@ describe("NP-MASTER-22-B01 executive design contract", () => {
         "live",
       ]),
     );
-    expect(badge).toContain('awarded: "success"');
-    expect(badge).toContain('pending: "warning"');
-    expect(badge).toContain('locked: "neutral"');
-    expect(badge).toContain('recommended: "gold"');
-    expect(badge).toContain('live: "board"');
+    expect(EXECUTIVE_BADGE_ROLES).toEqual([
+      "success",
+      "warning",
+      "risk",
+      "info",
+      "neutral",
+      "gold",
+      "board",
+    ]);
+    expect(EXECUTIVE_BADGE_TONE_ALIASES.awarded).toBe("success");
+    expect(EXECUTIVE_BADGE_TONE_ALIASES.pending).toBe("warning");
+    expect(EXECUTIVE_BADGE_TONE_ALIASES.locked).toBe("neutral");
+    expect(EXECUTIVE_BADGE_TONE_ALIASES.recommended).toBe("gold");
+    expect(EXECUTIVE_BADGE_TONE_ALIASES.live).toBe("board");
+    expect(EXECUTIVE_BADGE_TONE_ALIASES.blue).toBe("info");
+    expect(badge).toContain("EXECUTIVE_BADGE_TONE_ALIASES");
+    expect(badge).toContain("EXECUTIVE_BADGE_SEMANTIC_CLASSES");
+    expect(badge).toContain("{children}");
     expect(EXECUTIVE_STATUS_ROLES).toEqual([
       "success",
       "warning",
@@ -189,14 +205,38 @@ describe("NP-MASTER-22-B01 executive design contract", () => {
     expect(cssVariableValue(globals, "--nexus-success")).toBe("#22c55e");
     expect(cssVariableValue(globals, "--nexus-warning")).toBe("#f59e0b");
     expect(cssVariableValue(globals, "--nexus-danger")).toBe("#ef4444");
-    expect(badge).toContain("border-status-success/25");
-    expect(badge).toContain("border-status-warning/25");
-    expect(badge).toContain("border-status-risk/25");
-    expect(badge).toContain("border-status-info/25");
-    expect(badge).toContain("text-status-neutral");
+    expect(EXECUTIVE_BADGE_SEMANTIC_CLASSES.success).toContain(
+      "border-status-success/25",
+    );
+    expect(EXECUTIVE_BADGE_SEMANTIC_CLASSES.warning).toContain(
+      "border-status-warning/25",
+    );
+    expect(EXECUTIVE_BADGE_SEMANTIC_CLASSES.risk).toContain(
+      "border-status-risk/25",
+    );
+    expect(EXECUTIVE_BADGE_SEMANTIC_CLASSES.info).toContain(
+      "border-status-info/25",
+    );
+    expect(EXECUTIVE_BADGE_SEMANTIC_CLASSES.neutral).toContain(
+      "text-status-neutral",
+    );
+    expect(EXECUTIVE_BADGE_SEMANTIC_CLASSES.gold).toContain(
+      "text-nexus-gold-bright",
+    );
+    expect(EXECUTIVE_BADGE_SEMANTIC_CLASSES.board).toContain("text-nexus-gold");
     expect(badge).not.toContain("emerald-");
     expect(badge).not.toContain("orange-");
     expect(badge).not.toContain("red-");
+
+    const statusBadge = readSource(
+      "src/components/rfq-workspace/shared/executive-status-badge.tsx",
+    );
+    expect(statusBadge).toContain("EXECUTIVE_BADGE_SEMANTIC_CLASSES");
+    expect(statusBadge).toContain("{children}");
+    expect(statusBadge).not.toContain("emerald-");
+    expect(statusBadge).not.toContain("orange-");
+    expect(statusBadge).not.toContain("red-");
+    expect(statusBadge).not.toContain("cyan-300");
   });
 
   it("keeps ExecutiveMetricCard accessible labeling and tabular KPI style", () => {

@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
 
+import { EXECUTIVE_BADGE_SEMANTIC_CLASSES } from "@/lib/design-system/executive-contract";
+
 export type ExecutiveStatusTone =
   | "success"
   | "info"
@@ -14,20 +16,11 @@ export type ExecutiveStatusBadgeProps = {
 };
 
 const toneClasses: Record<ExecutiveStatusTone, string> = {
-  success:
-    "border-emerald-300/25 bg-emerald-400/10 text-emerald-200",
-
-  info:
-    "border-cyan-300/25 bg-cyan-400/10 text-cyan-200",
-
-  warning:
-    "border-orange-300/25 bg-orange-400/10 text-orange-200",
-
-  risk:
-    "border-red-300/25 bg-red-400/10 text-red-200",
-
-  neutral:
-    "border-white/10 bg-white/10 text-white",
+  success: EXECUTIVE_BADGE_SEMANTIC_CLASSES.success,
+  info: EXECUTIVE_BADGE_SEMANTIC_CLASSES.info,
+  warning: EXECUTIVE_BADGE_SEMANTIC_CLASSES.warning,
+  risk: EXECUTIVE_BADGE_SEMANTIC_CLASSES.risk,
+  neutral: EXECUTIVE_BADGE_SEMANTIC_CLASSES.neutral,
 };
 
 export function ExecutiveStatusBadge({
