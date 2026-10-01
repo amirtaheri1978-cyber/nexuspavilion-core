@@ -47,6 +47,8 @@
   --motion-duration-context: 300ms;
   --motion-duration-milestone: 650ms;
   --motion-ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --logo-min-size: 32px;
+  --logo-clear-space: 0.75rem;
 
   --nexus-white: #ffffff;
   --nexus-muted: #94a3b8;
@@ -387,6 +389,21 @@ body {
 .np-control[aria-disabled="true"] {
   cursor: not-allowed;
   opacity: var(--interaction-disabled-opacity);
+}
+
+.np-logo-dark {
+  box-sizing: border-box;
+  min-width: var(--logo-min-size);
+  min-height: var(--logo-min-size);
+  padding: var(--logo-clear-space);
+  background: transparent;
+}
+
+.np-logo-dark img {
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  object-fit: contain;
 }
 
 @media (prefers-reduced-motion: reduce) {

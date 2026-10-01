@@ -158,3 +158,12 @@ export type ExecutiveMotionEaseRole =
 export const EXECUTIVE_MOTION_EASE_STANDARD = "cubic-bezier(0.2, 0, 0, 1)";
 
 export const EXECUTIVE_MOTION_REDUCE_DURATION = "0.01ms";
+
+export const EXECUTIVE_LOGO_DARK_VARIANTS = ["icon", "horizontal"] as const;
+
+export type ExecutiveLogoDarkVariant =
+  (typeof EXECUTIVE_LOGO_DARK_VARIANTS)[number];
+
+export const EXECUTIVE_LOGO_DARK_MIN_SIZE_PX = 32;
+export const EXECUTIVE_LOGO_CLEAR_SPACE_PX = 12;
+export const EXECUTIVE_LOGO_DARK_CLASS = "np-logo-dark";

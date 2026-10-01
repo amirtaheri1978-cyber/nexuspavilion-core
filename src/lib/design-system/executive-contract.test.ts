@@ -17,6 +17,10 @@ import {
   EXECUTIVE_INTELLIGENCE_SURFACE_CLASS,
   EXECUTIVE_INTERACTION_ROLES,
   EXECUTIVE_LAYOUT_ROLES,
+  EXECUTIVE_LOGO_CLEAR_SPACE_PX,
+  EXECUTIVE_LOGO_DARK_CLASS,
+  EXECUTIVE_LOGO_DARK_MIN_SIZE_PX,
+  EXECUTIVE_LOGO_DARK_VARIANTS,
   EXECUTIVE_MODAL_RADIUS_PX,
   EXECUTIVE_MOTION_CONTEXT_MS,
   EXECUTIVE_MOTION_EASE_ROLES,
@@ -496,5 +500,35 @@ describe("NP-MASTER-22-B01 executive design contract", () => {
     expect(reduced).not.toContain("transform: none");
     expect(reduced).not.toContain("cubic-bezier");
     expect(EXECUTIVE_CTA_PRIMARY).not.toContain("cubic-bezier");
+  });
+
+  it("defines the dark-surface logo contract from the official logo component", () => {
+    const logo = readSource("src/components/branding/nexus-pavilion-logo.tsx");
+
+    expect(EXECUTIVE_LOGO_DARK_VARIANTS).toEqual(["icon", "horizontal"]);
+    expect(EXECUTIVE_LOGO_DARK_MIN_SIZE_PX).toBe(32);
+    expect(EXECUTIVE_LOGO_CLEAR_SPACE_PX).toBe(12);
+    expect(EXECUTIVE_LOGO_DARK_CLASS).toBe("np-logo-dark");
+    expect(cssVariableValue(globals, "--logo-min-size")).toBe("32px");
+    expect(cssVariableValue(globals, "--logo-clear-space")).toBe("0.75rem");
+    expect(logo).toContain('horizontal: "/branding/logo-horizontal-1024.png"');
+    expect(logo).toContain('icon: "/branding/logo-icon-512.png"');
+    expect(logo).toContain('stacked: "/branding/logo-stacked-1024.png"');
+    expect(logo).toContain('alt="NexusPavilion"');
+    expect(logo).toContain("width: size * 3, height: size");
+    expect(logo).toContain("width: size, height: size * 1.25");
+    expect(logo).toContain("object-contain");
+    expect(logo).toContain('surface === "dark" ? "np-logo-dark"');
+    expect(logo).not.toContain("filter");
+    expect(logo).not.toContain("drop-shadow");
+    const darkLogo = globals.slice(
+      globals.indexOf(".np-logo-dark {"),
+      globals.indexOf("@media (prefers-reduced-motion: reduce)"),
+    );
+    expect(darkLogo).toContain("padding: var(--logo-clear-space);");
+    expect(darkLogo).toContain("min-width: var(--logo-min-size);");
+    expect(darkLogo).toContain("object-fit: contain;");
+    expect(darkLogo).toContain("background: transparent;");
+    expect(darkLogo).not.toMatch(/filter|drop-shadow|box-shadow/);
   });
 });

@@ -11,6 +11,7 @@ variant?:
 | "stacked";
 size?: number;
 priority?: boolean;
+surface?: "dark";
 };
 
 const logoMap = {
@@ -28,9 +29,11 @@ className = "",
 variant = "horizontal",
 size = 104,
 priority = false,
+surface,
 ...props
 }: NexusPavilionLogoProps) {
 const src = logoMap[variant];
+const surfaceClass = surface === "dark" ? "np-logo-dark" : "";
 
 const dimensions =
 variant === "horizontal" ||
@@ -43,7 +46,7 @@ variant === "full"
 
 return (
 <div
-className={`flex items-center justify-center bg-transparent ${className}`}
+className={`flex items-center justify-center bg-transparent ${surfaceClass} ${className}`}
 {...props}
 >
 <Image
