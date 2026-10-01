@@ -9,6 +9,7 @@ import {
   EXECUTIVE_CYAN,
   EXECUTIVE_GOLD,
   EXECUTIVE_NAVY,
+  EXECUTIVE_TYPE_ROLES,
   EXECUTIVE_PANEL_RADIUS_PX,
   EXECUTIVE_SIDEBAR_WIDTH_PX,
   EXECUTIVE_TILE_RADIUS_PX,
@@ -182,5 +183,39 @@ describe("NP-MASTER-22-B01 executive design contract", () => {
     expect(globals).toContain("color-mix(in srgb, var(--nexus-cyan) 18%, transparent)");
     expect(globals).not.toContain("rgba(44, 196, 232");
     expect(globals).not.toContain("rgba(200, 166, 70");
+  });
+
+  it("defines one application typography hierarchy from shared scale tokens", () => {
+    expect(EXECUTIVE_TYPE_ROLES).toEqual([
+      "eyebrow",
+      "h1",
+      "h2",
+      "h3",
+      "body",
+      "meta",
+      "kpi",
+    ]);
+
+    for (const role of EXECUTIVE_TYPE_ROLES) {
+      expect(globals).toContain(`.np-type-${role}`);
+    }
+
+    expect(cssVariableValue(globals, "--np-type-display-weight")).toBe("800");
+    expect(cssVariableValue(globals, "--np-type-copy-weight")).toBe("600");
+    expect(cssVariableValue(globals, "--np-type-eyebrow-size")).toBe("0.6875rem");
+    expect(cssVariableValue(globals, "--np-type-h1-size")).toBe("1.875rem");
+    expect(cssVariableValue(globals, "--np-type-h2-size")).toBe("1.5rem");
+    expect(cssVariableValue(globals, "--np-type-h3-size")).toBe("1.125rem");
+    expect(cssVariableValue(globals, "--np-type-body-size")).toBe("0.875rem");
+    expect(cssVariableValue(globals, "--np-type-meta-size")).toBe("0.75rem");
+    expect(globals).toContain("--np-type-h1-size: 2.25rem;");
+    expect(globals).toContain("--np-type-h2-size: 1.875rem;");
+    expect(globals).toContain("--np-type-h3-size: 1.25rem;");
+    expect(globals).toContain("--np-type-h1-size: 3rem;");
+    expect(globals).toContain("font-size: var(--np-type-h1-size);");
+    expect(globals).not.toMatch(/\.np-type-kpi\s*\{[^}]*font-size:/);
+    expect(globals).not.toMatch(
+      /@media \(min-width: 640px\) \{\s*\.np-type-h1/,
+    );
   });
 });

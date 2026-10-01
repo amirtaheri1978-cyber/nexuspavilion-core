@@ -64,3 +64,15 @@ export const EXECUTIVE_CTA_SECONDARY = [
 
 export const EXECUTIVE_PAGE_CLASS =
   "np-page mx-auto w-full max-w-[1680px] px-4 py-6 sm:px-8 lg:px-10 lg:py-8";
+
+export const EXECUTIVE_TYPE_ROLES = [
+  "eyebrow",
+  "h1",
+  "h2",
+  "h3",
+  "body",
+  "meta",
+  "kpi",
+] as const;
+
+export type ExecutiveTypeRole = (typeof EXECUTIVE_TYPE_ROLES)[number];
