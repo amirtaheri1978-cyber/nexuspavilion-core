@@ -17,6 +17,7 @@ import {
   EXECUTIVE_TYPE_ROLES,
   EXECUTIVE_PANEL_RADIUS_PX,
   EXECUTIVE_SIDEBAR_WIDTH_PX,
+  EXECUTIVE_STATUS_ROLES,
   EXECUTIVE_SURFACE_ROLES,
   EXECUTIVE_TILE_RADIUS_PX,
 } from "@/lib/design-system/executive-contract";
@@ -121,6 +122,37 @@ describe("NP-MASTER-22-B01 executive design contract", () => {
     expect(badge).toContain('locked: "neutral"');
     expect(badge).toContain('recommended: "gold"');
     expect(badge).toContain('live: "board"');
+    expect(EXECUTIVE_STATUS_ROLES).toEqual([
+      "success",
+      "warning",
+      "risk",
+      "info",
+      "neutral",
+    ]);
+    expect(cssVariableValue(globals, "--status-success")).toBe(
+      "var(--nexus-success)",
+    );
+    expect(cssVariableValue(globals, "--status-warning")).toBe(
+      "var(--nexus-warning)",
+    );
+    expect(cssVariableValue(globals, "--status-risk")).toBe(
+      "var(--nexus-danger)",
+    );
+    expect(cssVariableValue(globals, "--status-info")).toBe("var(--nexus-info)");
+    expect(cssVariableValue(globals, "--status-neutral")).toBe(
+      "var(--nexus-text-secondary)",
+    );
+    expect(cssVariableValue(globals, "--nexus-success")).toBe("#22c55e");
+    expect(cssVariableValue(globals, "--nexus-warning")).toBe("#f59e0b");
+    expect(cssVariableValue(globals, "--nexus-danger")).toBe("#ef4444");
+    expect(badge).toContain("border-status-success/25");
+    expect(badge).toContain("border-status-warning/25");
+    expect(badge).toContain("border-status-risk/25");
+    expect(badge).toContain("border-status-info/25");
+    expect(badge).toContain("text-status-neutral");
+    expect(badge).not.toContain("emerald-");
+    expect(badge).not.toContain("orange-");
+    expect(badge).not.toContain("red-");
   });
 
   it("keeps ExecutiveMetricCard accessible labeling and tabular KPI style", () => {

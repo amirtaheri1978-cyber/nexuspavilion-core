@@ -39,12 +39,13 @@ const toneAliases: Record<ExecutiveBadgeTone, CanonicalBadgeTone> = {
 
 const toneClasses: Record<CanonicalBadgeTone, string> = {
   neutral:
-    "border-nexus-border-subtle bg-white/[0.06] text-nexus-text-secondary",
-  blue: "border-nexus-cyan/25 bg-nexus-cyan/10 text-nexus-cyan-bright",
+    "border-nexus-border-subtle bg-white/[0.06] text-status-neutral",
+  blue: "border-status-info/25 bg-status-info/10 text-nexus-cyan-bright",
   gold: "border-nexus-gold/25 bg-nexus-gold/10 text-nexus-gold-bright",
-  risk: "border-red-400/25 bg-red-500/10 text-red-300",
-  success: "border-emerald-400/25 bg-emerald-500/10 text-emerald-300",
-  warning: "border-orange-400/25 bg-orange-500/10 text-orange-300",
+  risk: "border-status-risk/25 bg-status-risk/10 text-status-risk",
+  success: "border-status-success/25 bg-status-success/10 text-status-success",
+  warning:
+    "border-status-warning/25 bg-status-warning/10 text-status-warning",
   board: "border-nexus-gold/30 bg-nexus-gold/10 text-nexus-gold",
 };
 

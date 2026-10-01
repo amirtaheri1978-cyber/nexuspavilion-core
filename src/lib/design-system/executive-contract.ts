@@ -42,6 +42,16 @@ export const EXECUTIVE_BADGE_TONES = [
 
 export type ExecutiveContractBadgeTone = (typeof EXECUTIVE_BADGE_TONES)[number];
 
+export const EXECUTIVE_STATUS_ROLES = [
+  "success",
+  "warning",
+  "risk",
+  "info",
+  "neutral",
+] as const;
+
+export type ExecutiveStatusRole = (typeof EXECUTIVE_STATUS_ROLES)[number];
+
 export const EXECUTIVE_FOCUS_GOLD =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-nexus-gold/70 focus-visible:ring-offset-2 focus-visible:ring-offset-nexus-navy";
 

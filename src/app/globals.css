@@ -27,6 +27,11 @@
   --nexus-success: #22c55e;
   --nexus-warning: #f59e0b;
   --nexus-danger: #ef4444;
+  --status-success: var(--nexus-success);
+  --status-warning: var(--nexus-warning);
+  --status-risk: var(--nexus-danger);
+  --status-info: var(--nexus-info);
+  --status-neutral: var(--nexus-text-secondary);
 
   --nexus-white: #ffffff;
   --nexus-muted: #94a3b8;
@@ -114,6 +119,11 @@
   --color-nexus-warning: var(--nexus-warning);
   --color-nexus-danger: var(--nexus-danger);
   --color-nexus-info: var(--nexus-info);
+  --color-status-success: var(--status-success);
+  --color-status-warning: var(--status-warning);
+  --color-status-risk: var(--status-risk);
+  --color-status-info: var(--status-info);
+  --color-status-neutral: var(--status-neutral);
 
   --color-nexus-white: var(--nexus-white);
   --color-nexus-muted: var(--nexus-muted);
