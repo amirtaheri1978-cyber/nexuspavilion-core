@@ -32,6 +32,10 @@
   --status-risk: var(--nexus-danger);
   --status-info: var(--nexus-info);
   --status-neutral: var(--nexus-text-secondary);
+  --intelligence-accent: var(--nexus-cyan);
+  --intelligence-accent-bright: var(--nexus-cyan-bright);
+  --intelligence-surface: var(--nexus-surface-elevated);
+  --intelligence-border: color-mix(in srgb, var(--nexus-cyan) 15%, transparent);
 
   --nexus-white: #ffffff;
   --nexus-muted: #94a3b8;
@@ -124,6 +128,10 @@
   --color-status-risk: var(--status-risk);
   --color-status-info: var(--status-info);
   --color-status-neutral: var(--status-neutral);
+  --color-intelligence-accent: var(--intelligence-accent);
+  --color-intelligence-accent-bright: var(--intelligence-accent-bright);
+  --color-intelligence-surface: var(--intelligence-surface);
+  --color-intelligence-border: var(--intelligence-border);
 
   --color-nexus-white: var(--nexus-white);
   --color-nexus-muted: var(--nexus-muted);
@@ -304,6 +312,28 @@ body {
   margin-inline: auto;
   padding-inline: var(--np-page-pad-inline);
   padding-block: var(--np-page-pad-block);
+}
+
+.np-intelligence {
+  background: var(--intelligence-surface);
+  border: 1px solid var(--intelligence-border);
+  color: var(--nexus-text-primary);
+}
+
+.np-intelligence-accent {
+  color: var(--intelligence-accent-bright);
+}
+
+.np-intelligence-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  flex-shrink: 0;
+  border-radius: 9999px;
+  border: 1px solid var(--intelligence-border);
+  color: var(--intelligence-accent-bright);
 }
 
 .np-region {

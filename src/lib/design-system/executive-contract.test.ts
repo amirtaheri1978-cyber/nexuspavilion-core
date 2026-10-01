@@ -10,6 +10,10 @@ import {
   EXECUTIVE_CYAN,
   EXECUTIVE_DEPTH_ROLES,
   EXECUTIVE_GOLD,
+  EXECUTIVE_INTELLIGENCE_ACCENT_CLASS,
+  EXECUTIVE_INTELLIGENCE_MARK_CLASS,
+  EXECUTIVE_INTELLIGENCE_ROLES,
+  EXECUTIVE_INTELLIGENCE_SURFACE_CLASS,
   EXECUTIVE_LAYOUT_ROLES,
   EXECUTIVE_MODAL_RADIUS_PX,
   EXECUTIVE_NAVY,
@@ -325,5 +329,45 @@ describe("NP-MASTER-22-B01 executive design contract", () => {
     expect(globals).toContain("box-shadow: var(--elevation-panel);");
     expect(globals).toContain("box-shadow: var(--elevation-tile);");
     expect(globals).not.toContain("--radius-executive: 24px");
+  });
+
+  it("defines one restrained Nexus Intelligence treatment from existing cyan roles", () => {
+    expect(EXECUTIVE_INTELLIGENCE_ROLES).toEqual(["accent", "surface", "mark"]);
+    expect(EXECUTIVE_INTELLIGENCE_SURFACE_CLASS).toBe("np-intelligence");
+    expect(EXECUTIVE_INTELLIGENCE_ACCENT_CLASS).toBe("np-intelligence-accent");
+    expect(EXECUTIVE_INTELLIGENCE_MARK_CLASS).toBe("np-intelligence-mark");
+    expect(cssVariableValue(globals, "--intelligence-accent")).toBe(
+      "var(--nexus-cyan)",
+    );
+    expect(cssVariableValue(globals, "--intelligence-accent-bright")).toBe(
+      "var(--nexus-cyan-bright)",
+    );
+    expect(cssVariableValue(globals, "--intelligence-surface")).toBe(
+      "var(--nexus-surface-elevated)",
+    );
+    expect(cssVariableValue(globals, "--intelligence-border")).toBe(
+      "color-mix(insrgb,var(--nexus-cyan)15%,transparent)",
+    );
+    expect(cssVariableValue(globals, "--intelligence-accent")).not.toBe(
+      "var(--nexus-success)",
+    );
+    expect(cssVariableValue(globals, "--intelligence-accent")).not.toBe(
+      "var(--nexus-warning)",
+    );
+    expect(cssVariableValue(globals, "--intelligence-accent")).not.toBe(
+      "var(--nexus-danger)",
+    );
+
+    const intelligence = globals.slice(
+      globals.indexOf(".np-intelligence {"),
+      globals.indexOf(".np-region {"),
+    );
+    expect(intelligence).toContain("background: var(--intelligence-surface);");
+    expect(intelligence).toContain("border: 1px solid var(--intelligence-border);");
+    expect(intelligence).toContain("color: var(--intelligence-accent-bright);");
+    expect(intelligence).toContain("border-radius: 9999px;");
+    expect(intelligence).not.toContain("gradient");
+    expect(intelligence).not.toContain("box-shadow");
+    expect(intelligence).not.toMatch(/\p{Extended_Pictographic}/u);
   });
 });

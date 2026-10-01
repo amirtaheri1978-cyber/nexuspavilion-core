@@ -110,3 +110,16 @@ export type ExecutiveBorderRole = (typeof EXECUTIVE_BORDER_ROLES)[number];
 export const EXECUTIVE_DEPTH_ROLES = ["tile", "panel", "modal"] as const;
 
 export type ExecutiveDepthRole = (typeof EXECUTIVE_DEPTH_ROLES)[number];
+
+export const EXECUTIVE_INTELLIGENCE_ROLES = [
+  "accent",
+  "surface",
+  "mark",
+] as const;
+
+export type ExecutiveIntelligenceRole =
+  (typeof EXECUTIVE_INTELLIGENCE_ROLES)[number];
+
+export const EXECUTIVE_INTELLIGENCE_SURFACE_CLASS = "np-intelligence";
+export const EXECUTIVE_INTELLIGENCE_ACCENT_CLASS = "np-intelligence-accent";
+export const EXECUTIVE_INTELLIGENCE_MARK_CLASS = "np-intelligence-mark";
