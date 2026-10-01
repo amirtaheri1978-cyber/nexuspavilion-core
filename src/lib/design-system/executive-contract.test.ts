@@ -4,16 +4,20 @@ import { describe, expect, it } from "vitest";
 
 import {
   EXECUTIVE_BADGE_TONES,
+  EXECUTIVE_BORDER_ROLES,
   EXECUTIVE_CONTENT_MAX_WIDTH_PX,
   EXECUTIVE_CTA_PRIMARY,
   EXECUTIVE_CYAN,
+  EXECUTIVE_DEPTH_ROLES,
   EXECUTIVE_GOLD,
   EXECUTIVE_LAYOUT_ROLES,
+  EXECUTIVE_MODAL_RADIUS_PX,
   EXECUTIVE_NAVY,
   EXECUTIVE_PAGE_CLASS,
   EXECUTIVE_TYPE_ROLES,
   EXECUTIVE_PANEL_RADIUS_PX,
   EXECUTIVE_SIDEBAR_WIDTH_PX,
+  EXECUTIVE_SURFACE_ROLES,
   EXECUTIVE_TILE_RADIUS_PX,
 } from "@/lib/design-system/executive-contract";
 
@@ -84,8 +88,11 @@ describe("NP-MASTER-22-B01 executive design contract", () => {
   it("freezes ExecutivePanel to the panel/tile radius hierarchy", () => {
     expect(EXECUTIVE_PANEL_RADIUS_PX).toBe(32);
     expect(EXECUTIVE_TILE_RADIUS_PX).toBe(24);
+    expect(EXECUTIVE_MODAL_RADIUS_PX).toBe(EXECUTIVE_PANEL_RADIUS_PX);
+    expect(cssVariableValue(globals, "--radius-tile")).toBe("24px");
     expect(cssVariableValue(globals, "--radius-panel")).toBe("32px");
-    expect(cssVariableValue(globals, "--radius-executive")).toBe("24px");
+    expect(cssVariableValue(globals, "--radius-modal")).toBe("var(--radius-panel)");
+    expect(cssVariableValue(globals, "--radius-executive")).toBe("var(--radius-tile)");
     expect(panel).toContain('radius?: ExecutivePanelRadius');
     expect(panel).toContain('panel: "rounded-panel"');
     expect(panel).toContain('tile: "rounded-executive"');
@@ -248,5 +255,43 @@ describe("NP-MASTER-22-B01 executive design contract", () => {
     expect(globals).toContain("margin-top: var(--spacing-region-major);");
     expect(globals).not.toMatch(/@media \(min-width: 640px\) \{\s*\.np-page/);
     expect(globals).not.toMatch(/@media \(min-width: 1024px\) \{\s*\.np-page/);
+  });
+
+  it("defines one application surface, border, radius, and elevation scale", () => {
+    expect(EXECUTIVE_SURFACE_ROLES).toEqual(["base", "elevated", "muted"]);
+    expect(EXECUTIVE_BORDER_ROLES).toEqual(["subtle", "strong"]);
+    expect(EXECUTIVE_DEPTH_ROLES).toEqual(["tile", "panel", "modal"]);
+    expect(cssVariableValue(globals, "--nexus-surface-base")).toBe(
+      "var(--nexus-navy)",
+    );
+    expect(cssVariableValue(globals, "--nexus-surface-elevated")).toBe(
+      "var(--nexus-deep)",
+    );
+    expect(cssVariableValue(globals, "--nexus-surface-muted")).toBe(
+      "var(--nexus-slate)",
+    );
+    expect(cssVariableValue(globals, "--nexus-border-subtle")).toBe(
+      "rgba(255,255,255,0.1)",
+    );
+    expect(cssVariableValue(globals, "--nexus-border-strong")).toBe(
+      "var(--nexus-border)",
+    );
+    expect(cssVariableValue(globals, "--elevation-tile")).toBe(
+      "var(--shadow-inner-executive)",
+    );
+    expect(cssVariableValue(globals, "--elevation-panel")).toBe(
+      "var(--shadow-executive)",
+    );
+    expect(cssVariableValue(globals, "--elevation-modal")).toBe(
+      "var(--shadow-executive)",
+    );
+    expect(globals).toContain(
+      "--shadow-executive: 0 30px 90px rgba(0, 0, 0, 0.35);",
+    );
+    expect(globals).toContain("border-radius: var(--radius-tile);");
+    expect(globals).toContain("border-radius: var(--radius-panel);");
+    expect(globals).toContain("box-shadow: var(--elevation-panel);");
+    expect(globals).toContain("box-shadow: var(--elevation-tile);");
+    expect(globals).not.toContain("--radius-executive: 24px");
   });
 });

@@ -15,8 +15,11 @@ export const EXECUTIVE_CYAN = "#2CC4E8";
 export const EXECUTIVE_CYAN_BRIGHT = "#9BE8F8";
 export const EXECUTIVE_TEXT_MUTED = "#94A3B8";
 
-export const EXECUTIVE_PANEL_RADIUS_PX = 32;
+/** Tile radius. `rounded-executive` and `rounded-tile` read `--radius-tile`. */
 export const EXECUTIVE_TILE_RADIUS_PX = 24;
+/** Panel radius. `rounded-panel` and `rounded-modal` read `--radius-panel`. */
+export const EXECUTIVE_PANEL_RADIUS_PX = 32;
+export const EXECUTIVE_MODAL_RADIUS_PX = EXECUTIVE_PANEL_RADIUS_PX;
 export const EXECUTIVE_CONTENT_MAX_WIDTH_PX = 1680;
 export const EXECUTIVE_SIDEBAR_WIDTH_PX = 330;
 export const EXECUTIVE_REGION_GAP_PX = 24;
@@ -85,3 +88,15 @@ export const EXECUTIVE_LAYOUT_ROLES = [
 ] as const;
 
 export type ExecutiveLayoutRole = (typeof EXECUTIVE_LAYOUT_ROLES)[number];
+
+export const EXECUTIVE_SURFACE_ROLES = ["base", "elevated", "muted"] as const;
+
+export type ExecutiveSurfaceRole = (typeof EXECUTIVE_SURFACE_ROLES)[number];
+
+export const EXECUTIVE_BORDER_ROLES = ["subtle", "strong"] as const;
+
+export type ExecutiveBorderRole = (typeof EXECUTIVE_BORDER_ROLES)[number];
+
+export const EXECUTIVE_DEPTH_ROLES = ["tile", "panel", "modal"] as const;
+
+export type ExecutiveDepthRole = (typeof EXECUTIVE_DEPTH_ROLES)[number];

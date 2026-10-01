@@ -42,8 +42,10 @@
   --nexus-text-secondary: #cbd5e1;
   --nexus-text-muted: var(--nexus-muted);
 
-  --radius-executive: 24px;
+  --radius-tile: 24px;
   --radius-panel: 32px;
+  --radius-modal: var(--radius-panel);
+  --radius-executive: var(--radius-tile);
 
   --layout-content-max: 1680px;
   --layout-sidebar-width: 330px;
@@ -80,6 +82,9 @@
 
   --shadow-executive: 0 30px 90px rgba(0, 0, 0, 0.35);
   --shadow-inner-executive: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  --elevation-tile: var(--shadow-inner-executive);
+  --elevation-panel: var(--shadow-executive);
+  --elevation-modal: var(--shadow-executive);
   --shadow-nexus: 0 24px 70px color-mix(in srgb, var(--nexus-cyan) 18%, transparent);
   --shadow-gold: 0 24px 70px color-mix(in srgb, var(--nexus-gold) 18%, transparent);
   --shadow-cta-gold: 0 18px 55px color-mix(in srgb, var(--nexus-gold) 30%, transparent);
@@ -124,8 +129,10 @@
   --color-nexus-text-secondary: var(--nexus-text-secondary);
   --color-nexus-text-muted: var(--nexus-text-muted);
 
+  --radius-tile: var(--radius-tile);
   --radius-executive: var(--radius-executive);
   --radius-panel: var(--radius-panel);
+  --radius-modal: var(--radius-modal);
 
   --shadow-executive: var(--shadow-executive);
   --shadow-inner-executive: var(--shadow-inner-executive);
@@ -179,20 +186,22 @@ body {
   );
 }
 
-.rounded-executive {
-  border-radius: var(--radius-executive);
+.rounded-executive,
+.rounded-tile {
+  border-radius: var(--radius-tile);
 }
 
-.rounded-panel {
+.rounded-panel,
+.rounded-modal {
   border-radius: var(--radius-panel);
 }
 
 .shadow-executive {
-  box-shadow: var(--shadow-executive);
+  box-shadow: var(--elevation-panel);
 }
 
 .shadow-inner-executive {
-  box-shadow: var(--shadow-inner-executive);
+  box-shadow: var(--elevation-tile);
 }
 
 .shadow-nexus {
