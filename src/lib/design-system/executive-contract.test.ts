@@ -19,8 +19,11 @@ import {
   EXECUTIVE_LAYOUT_ROLES,
   EXECUTIVE_MODAL_RADIUS_PX,
   EXECUTIVE_MOTION_CONTEXT_MS,
+  EXECUTIVE_MOTION_EASE_ROLES,
+  EXECUTIVE_MOTION_EASE_STANDARD,
   EXECUTIVE_MOTION_FAST_MS,
   EXECUTIVE_MOTION_MILESTONE_MS,
+  EXECUTIVE_MOTION_REDUCE_DURATION,
   EXECUTIVE_MOTION_ROLES,
   EXECUTIVE_MOTION_STANDARD_MS,
   EXECUTIVE_NAVY,
@@ -455,10 +458,43 @@ describe("NP-MASTER-22-B01 executive design contract", () => {
 
     const durations = globals.slice(
       globals.indexOf("--motion-duration-fast"),
-      globals.indexOf("--nexus-white"),
+      globals.indexOf("--motion-ease-standard"),
     );
     expect(durations).not.toContain("cubic-bezier");
     expect(durations).not.toContain("ease");
     expect(durations).not.toContain("prefers-reduced-motion");
+  });
+
+  it("defines restrained easing and keeps reduced motion on the existing instant rule", () => {
+    expect(EXECUTIVE_MOTION_EASE_ROLES).toEqual(["standard"]);
+    expect(EXECUTIVE_MOTION_EASE_STANDARD).toBe("cubic-bezier(0.2, 0, 0, 1)");
+    expect(EXECUTIVE_MOTION_REDUCE_DURATION).toBe("0.01ms");
+    expect(cssVariableValue(globals, "--motion-ease-standard")).toBe(
+      "cubic-bezier(0.2,0,0,1)",
+    );
+    expect(cssVariableValue(globals, "--motion-duration-fast")).toBe("140ms");
+    expect(cssVariableValue(globals, "--motion-duration-standard")).toBe(
+      "220ms",
+    );
+    expect(cssVariableValue(globals, "--motion-duration-context")).toBe(
+      "300ms",
+    );
+    expect(cssVariableValue(globals, "--motion-duration-milestone")).toBe(
+      "650ms",
+    );
+
+    const reduced = globals.slice(
+      globals.indexOf("@media (prefers-reduced-motion: reduce)"),
+      globals.indexOf("@media print"),
+    );
+    expect(reduced).toContain("scroll-behavior: auto !important;");
+    expect(reduced).toContain("animation-name: none !important;");
+    expect(reduced).toContain("animation-duration: 0.01ms !important;");
+    expect(reduced).toContain("animation-iteration-count: 1 !important;");
+    expect(reduced).toContain("transition-property: none !important;");
+    expect(reduced).toContain("transition-duration: 0.01ms !important;");
+    expect(reduced).not.toContain("transform: none");
+    expect(reduced).not.toContain("cubic-bezier");
+    expect(EXECUTIVE_CTA_PRIMARY).not.toContain("cubic-bezier");
   });
 });

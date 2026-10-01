@@ -149,3 +149,12 @@ export const EXECUTIVE_MOTION_FAST_MS = 140;
 export const EXECUTIVE_MOTION_STANDARD_MS = 220;
 export const EXECUTIVE_MOTION_CONTEXT_MS = 300;
 export const EXECUTIVE_MOTION_MILESTONE_MS = 650;
+
+export const EXECUTIVE_MOTION_EASE_ROLES = ["standard"] as const;
+
+export type ExecutiveMotionEaseRole =
+  (typeof EXECUTIVE_MOTION_EASE_ROLES)[number];
+
+export const EXECUTIVE_MOTION_EASE_STANDARD = "cubic-bezier(0.2, 0, 0, 1)";
+
+export const EXECUTIVE_MOTION_REDUCE_DURATION = "0.01ms";

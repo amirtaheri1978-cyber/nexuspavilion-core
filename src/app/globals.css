@@ -46,6 +46,7 @@
   --motion-duration-standard: 220ms;
   --motion-duration-context: 300ms;
   --motion-duration-milestone: 650ms;
+  --motion-ease-standard: cubic-bezier(0.2, 0, 0, 1);
 
   --nexus-white: #ffffff;
   --nexus-muted: #94a3b8;
@@ -393,8 +394,10 @@ body {
   *::before,
   *::after {
     scroll-behavior: auto !important;
+    animation-name: none !important;
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
+    transition-property: none !important;
     transition-duration: 0.01ms !important;
   }
 }
