@@ -31,6 +31,15 @@ import {
   EXECUTIVE_DATE_TIMEZONE,
   EXECUTIVE_DATE_TIMEZONE_BADGE,
   EXECUTIVE_DEPTH_ROLES,
+  EXECUTIVE_DIALOG_ACTIONS,
+  EXECUTIVE_DIALOG_BODY,
+  EXECUTIVE_DIALOG_CANCEL,
+  EXECUTIVE_DIALOG_CONFIRM,
+  EXECUTIVE_DIALOG_DESTRUCTIVE,
+  EXECUTIVE_DIALOG_OVERLAY,
+  EXECUTIVE_DIALOG_ROLES,
+  EXECUTIVE_DIALOG_SURFACE,
+  EXECUTIVE_DIALOG_TITLE,
   EXECUTIVE_FOCUS_CYAN,
   EXECUTIVE_FOCUS_GOLD,
   EXECUTIVE_FORM_CHECKBOX,
@@ -691,6 +700,46 @@ describe("NP-MASTER-22-B01 executive design contract", () => {
     expect(darkLogo).toContain("object-fit: contain;");
     expect(darkLogo).toContain("background: transparent;");
     expect(darkLogo).not.toMatch(/filter|drop-shadow|box-shadow/);
+  });
+
+  it("defines the shared confirmation dialog from existing surface and button contracts", () => {
+    expect(EXECUTIVE_DIALOG_ROLES).toEqual([
+      "overlay",
+      "surface",
+      "title",
+      "body",
+      "actions",
+      "confirm",
+      "cancel",
+      "destructive",
+    ]);
+    expect(EXECUTIVE_DIALOG_OVERLAY).toContain("bg-black/70");
+    expect(EXECUTIVE_DIALOG_SURFACE).toContain("rounded-panel");
+    expect(EXECUTIVE_DIALOG_SURFACE).toContain("shadow-executive");
+    expect(EXECUTIVE_DIALOG_SURFACE).toContain("bg-nexus-navy");
+    expect(EXECUTIVE_DIALOG_TITLE).toBe("np-type-h2");
+    expect(EXECUTIVE_DIALOG_BODY).toContain("np-type-body");
+    expect(EXECUTIVE_DIALOG_ACTIONS).toContain("sm:justify-end");
+    expect(EXECUTIVE_DIALOG_CONFIRM).toBe(EXECUTIVE_BUTTON_PRIMARY);
+    expect(EXECUTIVE_DIALOG_CANCEL).toBe(EXECUTIVE_BUTTON_SECONDARY);
+    expect(EXECUTIVE_DIALOG_DESTRUCTIVE).toBe(EXECUTIVE_BUTTON_DESTRUCTIVE);
+    expect(EXECUTIVE_DIALOG_DESTRUCTIVE).toContain("text-status-risk");
+
+    const dialog = readSource(
+      "src/components/executive/executive-confirm-dialog.tsx",
+    );
+    expect(dialog).toContain('role="dialog"');
+    expect(dialog).toContain('aria-modal="true"');
+    expect(dialog).toContain("aria-labelledby={titleId}");
+    expect(dialog).toContain("aria-describedby={descriptionId}");
+    expect(dialog).toContain('event.key === "Escape"');
+    expect(dialog).toContain("last.focus()");
+    expect(dialog).toContain("onClick={onConfirm}");
+    expect(dialog).toContain("onClick={onClose}");
+    expect(dialog).toContain('tone = "confirm"');
+    expect(dialog).toContain("EXECUTIVE_DIALOG_DESTRUCTIVE");
+    expect(dialog).toContain('{busy ? "Awarding..." : confirmLabel}');
+    expect(dialog).not.toContain("window.confirm");
   });
 
   it("defines one executive button system from the existing CTA contract", () => {

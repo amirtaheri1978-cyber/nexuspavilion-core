@@ -10,8 +10,14 @@ import {
 import { createPortal } from "react-dom";
 
 import {
-  EXECUTIVE_CTA_PRIMARY,
-  EXECUTIVE_CTA_SECONDARY,
+  EXECUTIVE_DIALOG_ACTIONS,
+  EXECUTIVE_DIALOG_BODY,
+  EXECUTIVE_DIALOG_CANCEL,
+  EXECUTIVE_DIALOG_CONFIRM,
+  EXECUTIVE_DIALOG_DESTRUCTIVE,
+  EXECUTIVE_DIALOG_OVERLAY,
+  EXECUTIVE_DIALOG_SURFACE,
+  EXECUTIVE_DIALOG_TITLE,
 } from "@/lib/design-system/executive-contract";
 
 type ExecutiveConfirmDialogProps = {
@@ -21,6 +27,7 @@ type ExecutiveConfirmDialogProps = {
   confirmLabel: string;
   cancelLabel?: string;
   busy?: boolean;
+  tone?: "confirm" | "destructive";
   onConfirm: () => void;
   onClose: () => void;
 };
@@ -35,6 +42,7 @@ export function ExecutiveConfirmDialog({
   confirmLabel,
   cancelLabel = "Cancel",
   busy = false,
+  tone = "confirm",
   onConfirm,
   onClose,
 }: ExecutiveConfirmDialogProps) {
@@ -97,7 +105,7 @@ export function ExecutiveConfirmDialog({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[80] flex items-end justify-center bg-black/70 p-4 sm:items-center"
+      className={EXECUTIVE_DIALOG_OVERLAY}
       onMouseDown={(event) => {
         if (event.target === event.currentTarget && !busy) {
           onClose();
@@ -111,21 +119,21 @@ export function ExecutiveConfirmDialog({
         aria-labelledby={titleId}
         aria-describedby={descriptionId}
         onKeyDown={handlePanelKeyDown}
-        className="w-full max-w-lg rounded-panel border border-white/10 bg-nexus-navy p-6 shadow-executive sm:p-8"
+        className={EXECUTIVE_DIALOG_SURFACE}
       >
-        <h2 id={titleId} className="np-type-h2">
+        <h2 id={titleId} className={EXECUTIVE_DIALOG_TITLE}>
           {title}
         </h2>
-        <div id={descriptionId} className="np-type-body mt-4">
+        <div id={descriptionId} className={EXECUTIVE_DIALOG_BODY}>
           {description}
         </div>
-        <div className="mt-8 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+        <div className={EXECUTIVE_DIALOG_ACTIONS}>
           <button
             ref={cancelRef}
             type="button"
             onClick={onClose}
             disabled={busy}
-            className={EXECUTIVE_CTA_SECONDARY}
+            className={EXECUTIVE_DIALOG_CANCEL}
           >
             {cancelLabel}
           </button>
@@ -133,7 +141,11 @@ export function ExecutiveConfirmDialog({
             type="button"
             onClick={onConfirm}
             disabled={busy}
-            className={EXECUTIVE_CTA_PRIMARY}
+            className={
+              tone === "destructive"
+                ? EXECUTIVE_DIALOG_DESTRUCTIVE
+                : EXECUTIVE_DIALOG_CONFIRM
+            }
           >
             {busy ? "Awarding..." : confirmLabel}
           </button>

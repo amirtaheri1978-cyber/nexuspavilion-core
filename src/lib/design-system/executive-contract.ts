@@ -178,6 +178,38 @@ export const EXECUTIVE_BUTTON_LOADING = [
   "aria-busy:cursor-wait",
 ].join(" ");
 
+export const EXECUTIVE_DIALOG_ROLES = [
+  "overlay",
+  "surface",
+  "title",
+  "body",
+  "actions",
+  "confirm",
+  "cancel",
+  "destructive",
+] as const;
+
+export type ExecutiveDialogRole = (typeof EXECUTIVE_DIALOG_ROLES)[number];
+
+export const EXECUTIVE_DIALOG_OVERLAY =
+  "fixed inset-0 z-[80] flex items-end justify-center bg-black/70 p-4 sm:items-center";
+
+export const EXECUTIVE_DIALOG_SURFACE =
+  "w-full max-w-lg rounded-panel border border-white/10 bg-nexus-navy p-6 shadow-executive sm:p-8";
+
+export const EXECUTIVE_DIALOG_TITLE = "np-type-h2";
+
+export const EXECUTIVE_DIALOG_BODY = "np-type-body mt-4";
+
+export const EXECUTIVE_DIALOG_ACTIONS =
+  "mt-8 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end";
+
+export const EXECUTIVE_DIALOG_CONFIRM = EXECUTIVE_BUTTON_PRIMARY;
+
+export const EXECUTIVE_DIALOG_CANCEL = EXECUTIVE_BUTTON_SECONDARY;
+
+export const EXECUTIVE_DIALOG_DESTRUCTIVE = EXECUTIVE_BUTTON_DESTRUCTIVE;
+
 const EXECUTIVE_FORM_FIELD = [
   "w-full rounded-2xl border border-white/10 bg-white/[0.045] px-4 py-3.5 text-sm font-medium text-white outline-none",
   "placeholder:text-slate-400",
