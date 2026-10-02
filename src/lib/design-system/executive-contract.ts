@@ -537,6 +537,60 @@ export const EXECUTIVE_POPOVER_PLACEMENT = "absolute top-full left-0 z-20 mt-2";
 
 export const EXECUTIVE_POPOVER_MOTION = EXECUTIVE_TOOLTIP_MOTION;
 
+export const EXECUTIVE_FEEDBACK_ROLES = [
+  "success",
+  "warning",
+  "error",
+  "info",
+] as const;
+
+export type ExecutiveFeedbackRole = (typeof EXECUTIVE_FEEDBACK_ROLES)[number];
+
+const EXECUTIVE_FEEDBACK_SHELL =
+  "rounded-executive border px-4 py-3 shadow-inner-executive";
+
+export const EXECUTIVE_FEEDBACK_SUCCESS = [
+  EXECUTIVE_FEEDBACK_SHELL,
+  "border-status-success/25 bg-status-success/10 text-status-success",
+].join(" ");
+
+export const EXECUTIVE_FEEDBACK_WARNING = [
+  EXECUTIVE_FEEDBACK_SHELL,
+  "border-status-warning/25 bg-status-warning/10 text-status-warning",
+].join(" ");
+
+export const EXECUTIVE_FEEDBACK_ERROR = [
+  EXECUTIVE_FEEDBACK_SHELL,
+  "border-status-risk/25 bg-status-risk/10 text-status-risk",
+].join(" ");
+
+export const EXECUTIVE_FEEDBACK_INFO = [
+  EXECUTIVE_FEEDBACK_SHELL,
+  "border-status-info/25 bg-status-info/10 text-nexus-cyan-bright",
+].join(" ");
+
+export const EXECUTIVE_FEEDBACK_TITLE = "np-type-meta";
+
+export const EXECUTIVE_FEEDBACK_BODY = "mt-1 np-type-body text-nexus-text-primary";
+
+export const EXECUTIVE_FEEDBACK_ICON = "mt-0.5 h-4 w-4 shrink-0";
+
+export const EXECUTIVE_FEEDBACK_ACTION = EXECUTIVE_BUTTON_TERTIARY;
+
+export const EXECUTIVE_FEEDBACK_DISMISS = EXECUTIVE_BUTTON_ICON;
+
+export const EXECUTIVE_FEEDBACK_PLACEMENT =
+  "fixed bottom-4 right-4 z-40 flex w-full max-w-sm flex-col gap-3";
+
+export const EXECUTIVE_FEEDBACK_MOTION = EXECUTIVE_TOOLTIP_MOTION;
+
+export const EXECUTIVE_FEEDBACK_LIVE: Record<ExecutiveFeedbackRole, string> = {
+  success: "polite",
+  warning: "polite",
+  error: "assertive",
+  info: "polite",
+};
+
 export const EXECUTIVE_LOGO_DARK_VARIANTS = ["icon", "horizontal"] as const;
 
 export type ExecutiveLogoDarkVariant =

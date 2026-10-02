@@ -49,6 +49,19 @@ import {
   EXECUTIVE_DRAWER_ROLES,
   EXECUTIVE_DRAWER_SURFACE,
   EXECUTIVE_DRAWER_TITLE,
+  EXECUTIVE_FEEDBACK_ACTION,
+  EXECUTIVE_FEEDBACK_BODY,
+  EXECUTIVE_FEEDBACK_DISMISS,
+  EXECUTIVE_FEEDBACK_ERROR,
+  EXECUTIVE_FEEDBACK_ICON,
+  EXECUTIVE_FEEDBACK_INFO,
+  EXECUTIVE_FEEDBACK_LIVE,
+  EXECUTIVE_FEEDBACK_MOTION,
+  EXECUTIVE_FEEDBACK_PLACEMENT,
+  EXECUTIVE_FEEDBACK_ROLES,
+  EXECUTIVE_FEEDBACK_SUCCESS,
+  EXECUTIVE_FEEDBACK_TITLE,
+  EXECUTIVE_FEEDBACK_WARNING,
   EXECUTIVE_FOCUS_CYAN,
   EXECUTIVE_FOCUS_GOLD,
   EXECUTIVE_FORM_CHECKBOX,
@@ -813,6 +826,49 @@ describe("NP-MASTER-22-B01 executive design contract", () => {
     expect(EXECUTIVE_POPOVER_SURFACE).not.toContain("aria-hidden");
     expect(contract).not.toContain("function Tooltip");
     expect(contract).not.toContain("function Popover");
+  });
+
+  it("defines the shared feedback contract from the existing status palette", () => {
+    expect(EXECUTIVE_FEEDBACK_ROLES).toEqual([
+      "success",
+      "warning",
+      "error",
+      "info",
+    ]);
+    expect(EXECUTIVE_FEEDBACK_SUCCESS).toContain("border-status-success/25");
+    expect(EXECUTIVE_FEEDBACK_WARNING).toContain("border-status-warning/25");
+    expect(EXECUTIVE_FEEDBACK_ERROR).toContain("border-status-risk/25");
+    expect(EXECUTIVE_FEEDBACK_ERROR).toContain("text-status-risk");
+    expect(EXECUTIVE_FEEDBACK_INFO).toContain("border-status-info/25");
+    expect(EXECUTIVE_FEEDBACK_INFO).toContain("text-nexus-cyan-bright");
+    expect(EXECUTIVE_FEEDBACK_TITLE).toBe("np-type-meta");
+    expect(EXECUTIVE_FEEDBACK_BODY).toContain("np-type-body");
+    expect(EXECUTIVE_FEEDBACK_ICON).toContain("h-4 w-4");
+    expect(EXECUTIVE_FEEDBACK_ICON).not.toContain("aria-hidden");
+    expect(EXECUTIVE_FEEDBACK_ACTION).toBe(EXECUTIVE_BUTTON_TERTIARY);
+    expect(EXECUTIVE_FEEDBACK_DISMISS).toBe(EXECUTIVE_BUTTON_ICON);
+    expect(EXECUTIVE_FEEDBACK_PLACEMENT).toContain("bottom-4");
+    expect(EXECUTIVE_FEEDBACK_PLACEMENT).not.toContain("pointer-events-none");
+    expect(EXECUTIVE_FEEDBACK_MOTION).toBe(EXECUTIVE_TOOLTIP_MOTION);
+    expect(EXECUTIVE_FEEDBACK_LIVE).toEqual({
+      success: "polite",
+      warning: "polite",
+      error: "assertive",
+      info: "polite",
+    });
+    for (const tone of [
+      EXECUTIVE_FEEDBACK_SUCCESS,
+      EXECUTIVE_FEEDBACK_WARNING,
+      EXECUTIVE_FEEDBACK_ERROR,
+      EXECUTIVE_FEEDBACK_INFO,
+    ]) {
+      expect(tone).toContain("rounded-executive");
+      expect(tone).toContain("shadow-inner-executive");
+      expect(tone).not.toContain("aria-hidden");
+      expect(tone).not.toContain("emerald-");
+      expect(tone).not.toContain("red-");
+    }
+    expect(contract).not.toContain("function Toast");
   });
 
   it("defines one executive button system from the existing CTA contract", () => {
