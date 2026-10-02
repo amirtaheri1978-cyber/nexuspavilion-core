@@ -4,8 +4,10 @@ import { useDeferredValue, useMemo, useState } from "react";
 
 import AwardContractButton from "@/components/award-contract-button";
 import { ExecutiveBadge } from "@/components/executive/executive-badge";
+import { ExecutiveGuidanceCard } from "@/components/executive/executive-guidance-card";
 import { ExecutivePanel } from "@/components/executive/executive-panel";
 import { EXECUTIVE_FOCUS_CYAN } from "@/lib/design-system/executive-contract";
+import { resolveEvaluationExceptionGuidance } from "@/lib/guidance/evaluation-exception-guidance";
 
 export type RfqQuoteComparisonItem = {
   id: string;
@@ -72,6 +74,10 @@ function riskTone(riskLevel: string) {
   return "warning" as const;
 }
 
+function isHighRiskLevel(riskLevel: string) {
+  return riskLevel === "High" || riskLevel === "High Risk";
+}
+
 export function RfqQuoteComparison({
   rfqTitle,
   quotes,
@@ -81,6 +87,32 @@ export function RfqQuoteComparison({
   const [search, setSearch] = useState("");
   const deferredSearch = useDeferredValue(search);
   const [currentPage, setCurrentPage] = useState(1);
+
+  const evaluationExceptionGuidance = useMemo(() => {
+    let requiresMaterialRevalidationCount = 0;
+    let highRiskCount = 0;
+    let highestQuoteCount = 0;
+
+    for (const quote of quotes) {
+      if (quote.requiresMaterialRevalidation) {
+        requiresMaterialRevalidationCount += 1;
+      }
+
+      if (isHighRiskLevel(quote.riskLevel)) {
+        highRiskCount += 1;
+      }
+
+      if (quote.isHighest) {
+        highestQuoteCount += 1;
+      }
+    }
+
+    return resolveEvaluationExceptionGuidance({
+      requiresMaterialRevalidationCount,
+      highRiskCount,
+      highestQuoteCount,
+    });
+  }, [quotes]);
 
   const filteredQuotes = useMemo(() => {
     const query = deferredSearch.trim().toLowerCase();
@@ -170,6 +202,15 @@ export function RfqQuoteComparison({
         a guaranteed award. Quotations requiring material-amendment reconfirmation
         remain visible after opening but are excluded from award eligibility.
       </p>
+
+      {evaluationExceptionGuidance ? (
+        <div className="mt-6 min-w-0" data-rfq-evaluation-exception-guidance="true">
+          <ExecutiveGuidanceCard
+            title={evaluationExceptionGuidance.title}
+            description={evaluationExceptionGuidance.description}
+          />
+        </div>
+      ) : null}
 
       <div className="mt-6 grid min-w-0 gap-3">
         <label

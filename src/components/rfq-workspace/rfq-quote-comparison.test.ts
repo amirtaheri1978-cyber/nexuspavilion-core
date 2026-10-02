@@ -204,3 +204,40 @@ describe("Task 24-RFQ-06 owner quote comparison density", () => {
     );
   });
 });
+
+describe("evaluation exception guidance on quote comparison", () => {
+  it("derives exception counts only from existing quote fields and renders one card", () => {
+    expect(comparison).toContain("resolveEvaluationExceptionGuidance");
+    expect(comparison).toContain("ExecutiveGuidanceCard");
+    expect(comparison).toContain("quote.requiresMaterialRevalidation");
+    expect(comparison).toContain("isHighRiskLevel(quote.riskLevel)");
+    expect(comparison).toContain("quote.isHighest");
+    expect(comparison).toContain(
+      "title={evaluationExceptionGuidance.title}",
+    );
+    expect(comparison).toContain(
+      "description={evaluationExceptionGuidance.description}",
+    );
+    expect(comparison.match(/<ExecutiveGuidanceCard/g)).toHaveLength(1);
+    expect(comparison).toContain(
+      "requiresMaterialRevalidationCount,\n      highRiskCount,\n      highestQuoteCount,",
+    );
+  });
+
+  it("preserves exception badges, award controls, and avoids new data access", () => {
+    expect(comparison).toContain("function ExceptionBadges");
+    expect(comparison).toContain("Reconfirmation required");
+    expect(comparison).toContain("Highest quote");
+    expect(comparison).toContain("Below average");
+    expect(comparison).toContain("Strong timeline");
+    expect(comparison).toContain("quote.isBelowAverage");
+    expect(comparison).toContain("quote.timelineScore >= 84");
+    expect(comparison).toContain("AwardContractButton");
+    expect(comparison).toContain("quote.canAward");
+    expect(comparison).not.toContain("fetch(");
+    expect(comparison).not.toContain("createClient");
+    expect(comparison).not.toContain("supabase");
+    expect(comparison).not.toContain("buildCommercialIntelligence");
+    expect(comparison).not.toContain("recommendedQuoteId");
+  });
+});
