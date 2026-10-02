@@ -38,3 +38,36 @@ describe("RFI submitted completion moment", () => {
     expect(workspace).not.toContain("href=");
   });
 });
+
+describe("RFI contextual guidance", () => {
+  it("reuses ExecutiveGuidanceCard for at most one truthful guidance card", () => {
+    expect(workspace).toContain("ExecutiveGuidanceCard");
+    expect(workspace).toContain("resolveRfiContextualGuidance");
+    expect(workspace).toContain("openRfiCount");
+    expect(workspace).toContain("deadlineStatus: deadlineAwareness.status");
+    expect(workspace).toContain("title={rfiGuidance.title}");
+    expect(workspace).toContain("description={rfiGuidance.description}");
+    expect(workspace.match(/<ExecutiveGuidanceCard/g)).toHaveLength(1);
+    expect(workspace).not.toContain("ambiguityDetected");
+    expect(workspace).not.toContain("addendumImpactDetected");
+  });
+
+  it("preserves confidentiality wording and does not alter API submit/answer paths", () => {
+    expect(workspace).toContain(
+      "Private RFIs are visible only to the issuing procurement team and",
+    );
+    expect(workspace).toContain(
+      "the originating respondent company. Material clarifications",
+    );
+    expect(workspace).toContain(
+      "Your question remains confidential to your company and the issuing",
+    );
+    expect(workspace).toContain('method: "POST"');
+    expect(workspace).toContain('method: "PATCH"');
+    expect(workspace).toContain("rfiId,");
+    expect(workspace).toContain("responseText,");
+    expect(workspace).not.toContain("includes(");
+    expect(workspace).not.toContain("openai");
+    expect(workspace).not.toContain("matchMedia");
+  });
+});

@@ -3,11 +3,13 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { ExecutiveCompletionMoment } from "@/components/executive/executive-completion-moment";
+import { ExecutiveGuidanceCard } from "@/components/executive/executive-guidance-card";
 import { formatRfqDeadlineForDisplay } from "@/lib/datetime/format-rfq-deadline-display";
 import {
   getRfiDeadlineAwareness,
   type RfiDeadlineAwareness,
 } from "@/lib/datetime/rfi-deadline-awareness";
+import { resolveRfiContextualGuidance } from "@/lib/guidance/rfi-contextual-guidance";
 
 type PrivateRfi = {
   id: string;
@@ -134,6 +136,21 @@ export function RFQRfiWorkspace({
   const deadlineLabel = useMemo(
     () => formatRfqDeadlineForDisplay(rfiDeadline, rfiDeadlineTimezone),
     [rfiDeadline, rfiDeadlineTimezone],
+  );
+
+  const openRfiCount = useMemo(
+    () => rfis.filter((rfi) => rfi.status === "open").length,
+    [rfis],
+  );
+
+  const rfiGuidance = useMemo(
+    () =>
+      resolveRfiContextualGuidance({
+        isOwner,
+        deadlineStatus: deadlineAwareness.status,
+        openRfiCount,
+      }),
+    [deadlineAwareness.status, isOwner, openRfiCount],
   );
 
   useEffect(() => {
@@ -354,6 +371,15 @@ export function RFQRfiWorkspace({
           </button>
         </div>
       </div>
+
+      {rfiGuidance ? (
+        <div className="mt-6 min-w-0" data-rfq-rfi-guidance="true">
+          <ExecutiveGuidanceCard
+            title={rfiGuidance.title}
+            description={rfiGuidance.description}
+          />
+        </div>
+      ) : null}
 
       {submittedRfi ? (
         <div className="mt-6 min-w-0">
