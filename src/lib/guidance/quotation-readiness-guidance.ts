@@ -51,7 +51,7 @@ export function resolveQuotationReadinessGuidance(
       kind: "addendum-acknowledgement",
       title: "Acknowledge required Addenda before submitting",
       description:
-        "Return to the RFQ workspace and acknowledge every required Addendum before reconfirming or resubmitting this quotation.",
+        "Acknowledge every required Addendum in the RFQ workspace before reconfirming or resubmitting this quotation.",
     };
   }
 
@@ -75,18 +75,18 @@ export function resolveQuotationReadinessGuidance(
   if (input.complianceIncomplete === true) {
     return {
       kind: "compliance",
-      title: "Complete the required compliance review",
+      title: "Complete required compliance review",
       description:
-        "Review and complete the explicitly identified compliance requirements before submitting the quotation.",
+        "Complete the identified compliance requirements before submitting the quotation.",
     };
   }
 
   if (input.documentsIncomplete === true) {
     return {
       kind: "documents",
-      title: "Complete the required quotation documents",
+      title: "Complete required quotation documents",
       description:
-        "Review and provide the explicitly identified required documents before submitting the quotation.",
+        "Provide the identified required documents before submitting the quotation.",
     };
   }
 

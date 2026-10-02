@@ -38,7 +38,7 @@ export function resolveActivityAttentionGuidance(
       return {
         kind: "addendum_action_required",
         description:
-          "Required Addendum acknowledgement may affect quotation readiness and governance until it is completed in the RFQ workspace.",
+          "Required Addendum acknowledgement can block quotation readiness until completed in the RFQ workspace.",
         actionLabel: sourceHref ? "Open RFQ Workspace" : null,
         sourceHref,
       };
@@ -46,7 +46,7 @@ export function resolveActivityAttentionGuidance(
       return {
         kind: "rfi",
         description:
-          "A private RFI needs issuer review and response in its source RFQ workflow. Private correspondence remains limited to the originating respondent company.",
+          "Review and respond to this Private RFI in the source RFQ workspace. Correspondence remains limited to the originating respondent company.",
         actionLabel: sourceHref ? "Open RFQ Workspace" : null,
         sourceHref,
       };
@@ -54,7 +54,7 @@ export function resolveActivityAttentionGuidance(
       return {
         kind: "rfi_response",
         description:
-          "An RFI response has changed the clarification state. Review the response in its source RFQ workflow for the originating respondent company.",
+          "Review the Private RFI response in the source RFQ workspace. The clarification state has changed for the originating respondent company.",
         actionLabel: sourceHref ? "Open RFQ Workspace" : null,
         sourceHref,
       };
@@ -62,7 +62,7 @@ export function resolveActivityAttentionGuidance(
       return {
         kind: "quote",
         description:
-          "New quotation activity requires review in the current RFQ workflow. Commercial evaluation evidence remains governed by that RFQ workspace.",
+          "Review new quotation activity in the RFQ workspace. Commercial evaluation evidence remains governed by that workspace.",
         actionLabel: sourceHref ? "Open RFQ Workspace" : null,
         sourceHref,
       };

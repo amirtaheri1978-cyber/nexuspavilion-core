@@ -33,7 +33,7 @@ describe("activity attention guidance", () => {
         type: "rfi",
         sourceHref: "/rfq/demo",
       })?.description,
-    ).toContain("private RFI");
+    ).toContain("Private RFI");
 
     expect(
       resolveActivityAttentionGuidance({
@@ -109,5 +109,26 @@ describe("activity attention guidance", () => {
     expect(guidanceSource).not.toContain("match(");
     expect(guidanceSource).not.toContain("openai");
     expect(guidanceSource).not.toContain("fetch(");
+  });
+
+  it("keeps concise professional tone without patronizing language", () => {
+    const lower = guidanceSource.toLowerCase();
+    for (const phrase of [
+      "be ready",
+      "make sure",
+      "don't forget",
+      "you should",
+      "simply",
+      "obviously",
+      "critical",
+      "urgent",
+    ]) {
+      expect(lower).not.toContain(phrase);
+    }
+    expect(lower).not.toMatch(/\bjust\b/);
+    expect(guidanceSource).toContain("Private RFI");
+    expect(guidanceSource).toContain("Addendum");
+    expect(guidanceSource).toContain("RFQ workspace");
+    expect(guidanceSource).toContain("Open RFQ Workspace");
   });
 });

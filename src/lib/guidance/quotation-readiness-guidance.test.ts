@@ -1,6 +1,13 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
 import { resolveQuotationReadinessGuidance } from "@/lib/guidance/quotation-readiness-guidance";
+
+const guidanceSource = readFileSync(
+  resolve(process.cwd(), "src/lib/guidance/quotation-readiness-guidance.ts"),
+  "utf8",
+).replace(/\r\n/g, "\n");
 
 describe("quotation readiness guidance", () => {
   it("prioritizes an outstanding required Addendum acknowledgement", () => {
@@ -80,5 +87,26 @@ describe("quotation readiness guidance", () => {
         hasOutstandingRequiredAcknowledgement: false,
       }),
     ).toBeNull();
+  });
+
+  it("keeps concise professional tone without patronizing language", () => {
+    const lower = guidanceSource.toLowerCase();
+    for (const phrase of [
+      "be ready",
+      "make sure",
+      "don't forget",
+      "you should",
+      "simply",
+      "obviously",
+      "critical",
+      "urgent",
+    ]) {
+      expect(lower).not.toContain(phrase);
+    }
+    expect(lower).not.toMatch(/\bjust\b/);
+    expect(guidanceSource).toContain("quotation");
+    expect(guidanceSource).toContain("Addendum");
+    expect(guidanceSource).toContain("RFQ workspace");
+    expect(guidanceSource).toContain("before submitting the quotation");
   });
 });

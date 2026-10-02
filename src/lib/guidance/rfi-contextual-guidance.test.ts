@@ -148,4 +148,24 @@ describe("rfi contextual guidance", () => {
     expect(guidanceSource).toContain("ambiguityDetected === true");
     expect(guidanceSource).toContain("addendumImpactDetected === true");
   });
+
+  it("keeps concise professional tone without patronizing language", () => {
+    const lower = guidanceSource.toLowerCase();
+    for (const phrase of [
+      "be ready",
+      "make sure",
+      "don't forget",
+      "you should",
+      "simply",
+      "obviously",
+      "critical",
+      "urgent",
+    ]) {
+      expect(lower).not.toContain(phrase);
+    }
+    expect(lower).not.toMatch(/\bjust\b/);
+    expect(guidanceSource).toContain("Private RFI");
+    expect(guidanceSource).toContain("Addendum");
+    expect(guidanceSource).toContain("Review and respond");
+  });
 });

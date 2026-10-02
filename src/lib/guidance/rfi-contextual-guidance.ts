@@ -38,9 +38,9 @@ export function resolveRfiContextualGuidance(
   if (input.addendumImpactDetected === true) {
     return {
       kind: "addendum-impact",
-      title: "Use the formal Addendum workflow for shared clarifications",
+      title: "Issue shared clarifications through Addendum",
       description:
-        "When a clarification affects all respondents, issue it through the formal Addendum workflow. Private RFI answers remain limited to the originating respondent company and do not replace a shared Addendum.",
+        "Clarifications that affect all respondents belong in the formal Addendum workflow. Private RFI responses remain limited to the originating respondent company.",
     };
   }
 
@@ -48,17 +48,17 @@ export function resolveRfiContextualGuidance(
     if (input.isOwner) {
       return {
         kind: "ambiguity",
-        title: "Clarify through the private RFI thread",
+        title: "Respond in the Private RFI thread",
         description:
-          "Respond to the reported ambiguity in this private RFI thread for the originating respondent company. If the clarification must apply to every respondent, use the formal Addendum workflow instead.",
+          "Address the reported ambiguity for the originating respondent company in this Private RFI thread. Use the formal Addendum workflow when the clarification must apply to all respondents.",
       };
     }
 
     return {
       kind: "ambiguity",
-      title: "Ask for private clarification",
+      title: "Submit Private RFI clarification",
       description:
-        "Use this private RFI thread for company-specific clarification. Your inquiry remains confidential to your company and the issuing procurement team, and is not shared with competing respondents.",
+        "Use this Private RFI thread for company-specific clarification. The inquiry remains confidential to your company and the issuing procurement team.",
     };
   }
 
@@ -66,28 +66,28 @@ export function resolveRfiContextualGuidance(
     if (input.isOwner) {
       return {
         kind: "deadline-approaching",
-        title: "Private RFI window is nearing close",
+        title: "Private RFI window closing soon",
         description:
           openCount > 0
-            ? "Review and respond to open private RFIs while the inquiry window remains open. Private answers stay with the originating respondent company."
-            : "The private inquiry window is nearing close. Be ready to review any private RFIs before it ends.",
+            ? "Review and respond to open Private RFIs while the inquiry window remains open. Responses remain confidential to the originating respondent company."
+            : "Review Private RFIs that arrive before the inquiry window closes.",
       };
     }
 
     return {
       kind: "deadline-approaching",
-      title: "Private RFI window is nearing close",
+      title: "Private RFI window closing soon",
       description:
-        "Submit any remaining private clarification inquiries before the inquiry window closes. Your inquiries remain confidential to your company and the issuing procurement team.",
+        "Submit remaining Private RFI clarifications before the inquiry window closes. Inquiries remain confidential to your company and the issuing procurement team.",
     };
   }
 
   if (input.isOwner && openCount > 0 && input.deadlineStatus === "open") {
     return {
       kind: "owner-open-rfis",
-      title: "Open private RFIs need a response",
+      title: "Respond to open Private RFIs",
       description:
-        "Review and respond to open private RFIs before the inquiry window closes. Responses remain confidential to the originating respondent company.",
+        "Review and respond to open Private RFIs before the inquiry window closes. Responses remain confidential to the originating respondent company.",
     };
   }
 

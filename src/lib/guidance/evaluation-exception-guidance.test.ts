@@ -1,6 +1,13 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
 import { resolveEvaluationExceptionGuidance } from "@/lib/guidance/evaluation-exception-guidance";
+
+const guidanceSource = readFileSync(
+  resolve(process.cwd(), "src/lib/guidance/evaluation-exception-guidance.ts"),
+  "utf8",
+).replace(/\r\n/g, "\n");
 
 describe("evaluation exception guidance", () => {
   it("prioritizes material revalidation exceptions over other evidence", () => {
@@ -87,5 +94,26 @@ describe("evaluation exception guidance", () => {
         highestQuoteCount: 0,
       })?.description,
     ).toContain("1 quotation requires");
+  });
+
+  it("keeps concise professional tone without patronizing language", () => {
+    const lower = guidanceSource.toLowerCase();
+    for (const phrase of [
+      "be ready",
+      "make sure",
+      "don't forget",
+      "you should",
+      "simply",
+      "obviously",
+      "critical",
+      "urgent",
+      "recommended action",
+    ]) {
+      expect(lower).not.toContain(phrase);
+    }
+    expect(lower).not.toMatch(/\bjust\b/);
+    expect(guidanceSource).toContain("quotation");
+    expect(guidanceSource).toContain("Review the highlighted");
+    expect(guidanceSource).toContain("award eligibility");
   });
 });

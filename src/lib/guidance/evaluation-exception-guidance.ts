@@ -39,38 +39,38 @@ export function resolveEvaluationExceptionGuidance(
   if (requiresMaterialRevalidationCount > 0) {
     return {
       kind: "material-revalidation",
-      title: "Material reconfirmation exceptions need review",
+      title: "Review material reconfirmation exceptions",
       description: `${countLabel(
         requiresMaterialRevalidationCount,
         "quotation requires",
         "quotations require",
       )} material-amendment reconfirmation and ${
         requiresMaterialRevalidationCount === 1 ? "remains" : "remain"
-      } excluded from award eligibility. Review the highlighted evidence below before advancing any award decision.`,
+      } excluded from award eligibility. Review the highlighted evidence below.`,
     };
   }
 
   if (highRiskCount > 0) {
     return {
       kind: "high-risk",
-      title: "High-risk quotation evidence needs review",
+      title: "Review high-risk quotation evidence",
       description: `${countLabel(
         highRiskCount,
         "decision-ready quotation carries",
         "decision-ready quotations carry",
-      )} high-risk evidence in the comparison. Review the highlighted risk evidence below before advancing any award decision.`,
+      )} high-risk evidence. Review the highlighted risk evidence below.`,
     };
   }
 
   if (highestQuoteCount > 0) {
     return {
       kind: "highest-quote",
-      title: "Highest-price quotation evidence needs review",
+      title: "Review highest-price quotation evidence",
       description: `${countLabel(
         highestQuoteCount,
         "quotation is marked",
         "quotations are marked",
-      )} as the highest current commercial offer. Review the highlighted commercial evidence below before advancing any award decision.`,
+      )} as the highest current commercial offer. Review the highlighted commercial evidence below.`,
     };
   }
 
