@@ -1,13 +1,28 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import type { ReactNode } from "react";
 
 import { ExecutiveBadge } from "@/components/executive/executive-badge";
+import { ExecutiveMetricCard } from "@/components/executive/executive-metric-card";
+import { ExecutivePanel } from "@/components/executive/executive-panel";
 import { getSafeNextPath } from "@/lib/auth/login-continuation";
 import {
   getActiveMembershipForUserCompany,
   type OrganizationMembership,
 } from "@/lib/auth/membership";
+import {
+  EXECUTIVE_BUTTON_PRIMARY,
+  EXECUTIVE_BUTTON_SECONDARY,
+  EXECUTIVE_BUTTON_TERTIARY,
+  EXECUTIVE_EMPTY_ACTION,
+  EXECUTIVE_EMPTY_BODY,
+  EXECUTIVE_EMPTY_EYEBROW,
+  EXECUTIVE_EMPTY_FULL,
+  EXECUTIVE_EMPTY_LIVE,
+  EXECUTIVE_EMPTY_ROLE,
+  EXECUTIVE_EMPTY_TITLE,
+  EXECUTIVE_FOCUS_CYAN,
+  EXECUTIVE_PAGE_CLASS,
+} from "@/lib/design-system/executive-contract";
 import type {
   ProcurementContractFramework,
   ProcurementRfq,
@@ -279,27 +294,31 @@ export default async function RFQMarketplacePage({
         : "unavailable";
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-[#061426] px-4 py-6 text-white sm:px-6 lg:px-10">
-      <div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(circle_at_top_left,rgba(44,196,232,0.18),transparent_34%),radial-gradient(circle_at_top_right,rgba(200,166,70,0.15),transparent_30%),linear-gradient(180deg,#061426_0%,#07111F_45%,#020617_100%)]" />
-      <div className="pointer-events-none fixed inset-0 -z-10 bg-[linear-gradient(120deg,rgba(255,255,255,0.055),transparent_32%,rgba(200,166,70,0.05)_66%,transparent)]" />
-
-      <div className="mx-auto w-full max-w-[1680px]">
-        <section className="rounded-[32px] border border-white/10 bg-white/[0.045] p-6 shadow-[0_32px_110px_rgba(0,0,0,0.42)] backdrop-blur-2xl sm:p-8 lg:p-10">
-          <div className="flex flex-col gap-8 xl:flex-row xl:items-start xl:justify-between">
+    <main className="min-h-screen bg-nexus-navy text-white">
+      <div className={EXECUTIVE_PAGE_CLASS}>
+        <ExecutivePanel
+          variant="executive"
+          padding="lg"
+          tone="gold"
+          className="np-region-major"
+          aria-labelledby="procurement-center-heading"
+        >
+          <div className="flex flex-col gap-6 xl:flex-row xl:items-start xl:justify-between">
             <div className="min-w-0">
-              <p className="np-type-eyebrow text-[#C8A646]">
-                Procurement Center
-              </p>
+              <p className="np-type-eyebrow">Procurement Center</p>
 
-              <h1 className="np-type-h1 mt-4 max-w-5xl">
+              <h1
+                id="procurement-center-heading"
+                className="np-type-h1 mt-3 max-w-5xl text-pretty"
+              >
                 {marketplace.title}
               </h1>
 
-              <p className="np-type-body mt-5 max-w-4xl">
+              <p className="np-type-body mt-4 max-w-4xl text-pretty text-nexus-text-secondary">
                 {marketplace.description}
               </p>
 
-              <div className="mt-6 flex flex-wrap gap-3">
+              <div className="mt-5 flex flex-wrap gap-2">
                 <ExecutiveBadge tone="blue">
                   {marketplace.experienceLabel}
                 </ExecutiveBadge>
@@ -320,69 +339,72 @@ export default async function RFQMarketplacePage({
               </div>
             </div>
 
-            <div className="grid min-w-full gap-4 sm:grid-cols-2 xl:min-w-[520px]">
-              <HeroMetric
-                title={marketplace.hero.primaryLabel}
+            <div className="grid min-w-0 w-full gap-3 sm:grid-cols-2 xl:max-w-xl">
+              <ExecutiveMetricCard
+                label={marketplace.hero.primaryLabel}
                 value={marketplace.hero.primaryValue}
+                tone="gold"
               />
-
-              <HeroMetric
-                title="Procurement Health"
+              <ExecutiveMetricCard
+                label="Procurement Health"
                 value={marketplace.hero.health}
+                tone="blue"
               />
-
-              <HeroMetric
-                title={marketplace.hero.openLabel}
+              <ExecutiveMetricCard
+                label={marketplace.hero.openLabel}
                 value={marketplace.hero.openValue}
+                tone="neutral"
               />
-
-              <HeroMetric
-                title={marketplace.hero.budgetLabel}
+              <ExecutiveMetricCard
+                label={marketplace.hero.budgetLabel}
                 value={marketplace.hero.budgetValue}
+                tone="neutral"
               />
             </div>
           </div>
 
-          <div className="mt-8 flex flex-wrap gap-3">
+          <div className="mt-6 flex flex-wrap gap-3">
             {marketplace.canCreateRfq ? (
-              <Link
-                href="/rfq/new"
-                className="rounded-full bg-gradient-to-r from-[#B9902F] via-[#C8A646] to-[#F5D77B] px-6 py-3 text-sm font-black text-slate-950 shadow-[0_18px_55px_rgba(200,166,70,0.24)] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C8A646]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#07111F]"
-              >
+              <Link href="/rfq/new" className={EXECUTIVE_BUTTON_PRIMARY}>
                 Create RFQ
               </Link>
             ) : null}
 
-            <Link
-              href="/dashboard"
-              className="rounded-full border border-white/10 bg-white/[0.055] px-6 py-3 text-sm font-black text-white transition hover:bg-white/[0.08] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2CC4E8]/40 focus-visible:ring-offset-2 focus-visible:ring-offset-[#07111F]"
-            >
+            <Link href="/dashboard" className={EXECUTIVE_BUTTON_SECONDARY}>
               Dashboard
             </Link>
 
-            <Link
-              href="/analytics"
-              className="rounded-full border border-[#2CC4E8]/25 bg-[#2CC4E8]/10 px-6 py-3 text-sm font-black text-[#9BE8F8] transition hover:bg-[#2CC4E8]/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2CC4E8]/40 focus-visible:ring-offset-2 focus-visible:ring-offset-[#07111F]"
-            >
+            <Link href="/analytics" className={EXECUTIVE_BUTTON_TERTIARY}>
               Executive Analytics
             </Link>
           </div>
-        </section>
+        </ExecutivePanel>
 
         {invitationRoutingStatus ? (
-          <section
+          <ExecutivePanel
             id="network-invitation-routing"
-            className="mt-8 rounded-[30px] border border-[#2CC4E8]/20 bg-[#2CC4E8]/[0.06] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.24)] sm:p-8"
+            variant="operational"
+            padding="lg"
+            tone={
+              invitationRoutingStatus === "ready"
+                ? "blue"
+                : invitationRoutingStatus === "unauthorized"
+                  ? "risk"
+                  : "gold"
+            }
+            className="np-region"
             data-network-invitation-routing={invitationRoutingStatus}
+            aria-labelledby="network-invitation-routing-heading"
           >
-            <p className="np-type-eyebrow text-[#C8A646]">
-              Network Invitation Handoff
-            </p>
+            <p className="np-type-eyebrow">Network Invitation Handoff</p>
 
             {invitationRoutingStatus === "ready" && invitationTarget ? (
               <>
                 <div className="mt-3 flex flex-wrap items-center gap-3">
-                  <h2 className="np-type-h2">
+                  <h2
+                    id="network-invitation-routing-heading"
+                    className="np-type-h2 min-w-0 text-pretty"
+                  >
                     Select a company-managed RFQ for {invitationTarget.name}
                   </h2>
                   <ExecutiveBadge tone="blue">
@@ -390,14 +412,14 @@ export default async function RFQMarketplacePage({
                   </ExecutiveBadge>
                 </div>
 
-                <p className="np-type-body mt-3 max-w-4xl">
+                <p className="np-type-body mt-3 max-w-4xl text-pretty text-nexus-text-secondary">
                   Choose a company-managed RFQ below. Selecting an RFQ opens
                   its workspace; the existing secure email invitation form is
                   shown only while the RFQ remains open under its deadline and
                   governance controls. No invitation is sent from Company Network.
                 </p>
 
-                <div className="mt-4 flex flex-wrap gap-3">
+                <div className="mt-4 flex flex-wrap gap-2">
                   <ExecutiveBadge tone="success">
                     {context.buyer.openOwnedRfqs.length} Open-Status Company RFQs
                   </ExecutiveBadge>
@@ -408,10 +430,13 @@ export default async function RFQMarketplacePage({
               </>
             ) : invitationRoutingStatus === "unauthorized" ? (
               <>
-                <h2 className="np-type-h2 mt-3">
+                <h2
+                  id="network-invitation-routing-heading"
+                  className="np-type-h2 mt-3 text-pretty"
+                >
                   Sourcing authorization required
                 </h2>
-                <p className="np-type-body mt-3 max-w-4xl">
+                <p className="np-type-body mt-3 max-w-4xl text-pretty text-nexus-text-secondary">
                   Supplier invitations are available only to active organization
                   owners, administrators, or non-viewer users assigned the buyer
                   procurement function.
@@ -419,52 +444,133 @@ export default async function RFQMarketplacePage({
               </>
             ) : (
               <>
-                <h2 className="np-type-h2 mt-3">
+                <h2
+                  id="network-invitation-routing-heading"
+                  className="np-type-h2 mt-3 text-pretty"
+                >
                   Invitation target unavailable
                 </h2>
-                <p className="np-type-body mt-3 max-w-4xl">
+                <p className="np-type-body mt-3 max-w-4xl text-pretty text-nexus-text-secondary">
                   The selected network company is unavailable for this handoff.
                   Return to Company Network and select another relevant company.
                 </p>
               </>
             )}
-          </section>
+          </ExecutivePanel>
         ) : null}
 
-        <MetricGrid metrics={marketplace.statusMetrics} />
+        <ExecutivePanel
+          variant="operational"
+          padding="lg"
+          className="np-region"
+          aria-labelledby="operating-snapshot-heading"
+        >
+          <div className="min-w-0">
+            <p className="np-type-eyebrow">Operating Snapshot</p>
+            <h2
+              id="operating-snapshot-heading"
+              className="np-type-h2 mt-2 text-pretty"
+            >
+              Current procurement mix
+            </h2>
+            <p className="np-type-body mt-2 max-w-3xl text-pretty text-nexus-text-secondary">
+              Recorded status, scope, and sourcing totals for the current
+              accessible portfolio.
+            </p>
+          </div>
 
-        <MetricGrid
-          metrics={marketplace.scopeMetrics}
-          compact
-        />
+          <section
+            className="mt-5"
+            aria-labelledby="status-metrics-heading"
+          >
+            <h3 id="status-metrics-heading" className="np-type-h3 text-pretty">
+              Current work / status
+            </h3>
+            <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              {marketplace.statusMetrics.map((metric) => (
+                <ExecutiveMetricCard
+                  key={metric.label}
+                  label={metric.label}
+                  value={String(metric.value)}
+                  tone="neutral"
+                />
+              ))}
+            </div>
+          </section>
 
-        <MetricGrid
-          metrics={marketplace.sourcingMetrics}
-          compact
-        />
+          <section
+            className="mt-5 border-t border-white/10 pt-5"
+            aria-labelledby="scope-metrics-heading"
+          >
+            <h3 id="scope-metrics-heading" className="np-type-h3 text-pretty">
+              Procurement scope mix
+            </h3>
+            <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              {marketplace.scopeMetrics.map((metric) => (
+                <ExecutiveMetricCard
+                  key={metric.label}
+                  label={metric.label}
+                  value={String(metric.value)}
+                  tone="blue"
+                />
+              ))}
+            </div>
+          </section>
 
-        <section className="mt-10 rounded-[36px] border border-white/10 bg-white/[0.045] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.28)] backdrop-blur-xl sm:p-8">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <section
+            className="mt-5 border-t border-white/10 pt-5"
+            aria-labelledby="sourcing-metrics-heading"
+          >
+            <h3
+              id="sourcing-metrics-heading"
+              className="np-type-h3 text-pretty"
+            >
+              Sourcing / framework mix
+            </h3>
+            <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              {marketplace.sourcingMetrics.map((metric) => (
+                <ExecutiveMetricCard
+                  key={metric.label}
+                  label={metric.label}
+                  value={String(metric.value)}
+                  tone="gold"
+                />
+              ))}
+            </div>
+          </section>
+        </ExecutivePanel>
+
+        <ExecutivePanel
+          variant="boardroom"
+          padding="lg"
+          tone="blue"
+          className="np-region-major"
+          aria-labelledby="procurement-pipeline-heading"
+        >
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
             <div className="min-w-0">
-              <p className="np-type-eyebrow text-[#C8A646]">
-                Procurement Pipeline
-              </p>
+              <p className="np-type-eyebrow">Procurement Pipeline</p>
 
-              <h2 className="np-type-h2 mt-3">
+              <h2
+                id="procurement-pipeline-heading"
+                className="np-type-h2 mt-2 text-pretty"
+              >
                 {marketplace.pipelineTitle}
               </h2>
 
-              <p className="np-type-body mt-3 max-w-3xl">
+              <p className="np-type-body mt-2 max-w-3xl text-pretty text-nexus-text-secondary">
                 {marketplace.pipelineDescription}
               </p>
             </div>
 
-            <ExecutiveBadge tone="blue">
-              {marketplace.records.length} Records
-            </ExecutiveBadge>
+            <div className="shrink-0">
+              <ExecutiveBadge tone="blue">
+                {marketplace.records.length} Records
+              </ExecutiveBadge>
+            </div>
           </div>
 
-          <div className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+          <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {marketplace.records.length > 0 ? (
               marketplace.records.map((record) => (
                 <MarketplaceCard
@@ -490,7 +596,7 @@ export default async function RFQMarketplacePage({
               </div>
             )}
           </div>
-        </section>
+        </ExecutivePanel>
       </div>
     </main>
   );
@@ -518,10 +624,16 @@ function MarketplaceCard({
   return (
     <Link
       href={href}
-      className={`group min-w-0 rounded-[30px] border border-white/10 bg-[#061426]/72 p-6 shadow-[0_22px_70px_rgba(0,0,0,0.22)] transition hover:border-[#2CC4E8]/25 hover:bg-[#07111F] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2CC4E8]/40 focus-visible:ring-offset-2 focus-visible:ring-offset-[#07111F]`}
+      className={[
+        "group flex h-full min-h-11 min-w-0 flex-col rounded-executive border border-white/10 bg-white/[0.045] p-5",
+        "transition-[border-color,background-color] duration-200",
+        "hover:border-nexus-cyan/25 hover:bg-white/[0.06]",
+        "motion-reduce:transition-none",
+        EXECUTIVE_FOCUS_CYAN,
+      ].join(" ")}
     >
-      <div className="flex items-start justify-between gap-4">
-        <p className="np-type-meta min-w-0 break-words text-[#C8A646]!">
+      <div className="flex items-start justify-between gap-3">
+        <p className="np-type-meta min-w-0 break-words text-nexus-gold-bright">
           {rfq.category || "Procurement"}
         </p>
 
@@ -532,43 +644,47 @@ function MarketplaceCard({
         </div>
       </div>
 
-      <h2 className="np-type-h3 mt-4 break-words">
+      <h3 className="np-type-h3 mt-3 min-w-0 text-pretty break-words">
         {rfq.title || "Untitled RFQ"}
-      </h2>
+      </h3>
 
-      <div className="mt-4 flex flex-wrap gap-2">
-        <Badge>{getScopeLabel(rfq.procurement_scope)}</Badge>
+      <div className="mt-3 flex flex-wrap gap-2">
+        <ExecutiveBadge tone="neutral" size="sm">
+          {getScopeLabel(rfq.procurement_scope)}
+        </ExecutiveBadge>
 
-        <Badge>
+        <ExecutiveBadge tone="neutral" size="sm">
           {getSourcingLabel(rfq.sourcing_method)}
-        </Badge>
+        </ExecutiveBadge>
 
-        <Badge>
+        <ExecutiveBadge tone="neutral" size="sm">
           {getFrameworkLabel(rfq.contract_framework)}
-        </Badge>
+        </ExecutiveBadge>
       </div>
 
-      <p className="np-type-body mt-4 line-clamp-3">
+      <p className="np-type-body mt-3 line-clamp-3 text-pretty text-nexus-text-muted">
         {rfq.description || "No description provided."}
       </p>
 
-      <div className="mt-6 grid grid-cols-2 gap-4 text-sm">
-        <SignalBlock
-          label="Location"
-          value={rfq.location || "N/A"}
-        />
+      <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <div className="min-w-0 rounded-executive border border-white/10 bg-black/20 p-3">
+          <p className="np-type-meta">Location</p>
+          <p className="np-type-kpi mt-2 break-words text-sm">
+            {rfq.location || "N/A"}
+          </p>
+        </div>
 
-        <SignalBlock
-          label="Budget"
-          value={
-            record.canViewBudget
+        <div className="min-w-0 rounded-executive border border-white/10 bg-black/20 p-3">
+          <p className="np-type-meta">Budget</p>
+          <p className="np-type-kpi mt-2 break-words text-sm">
+            {record.canViewBudget
               ? getBudgetLabel(rfq.budget)
-              : "Commercially Sealed"
-          }
-        />
+              : "Commercially Sealed"}
+          </p>
+        </div>
       </div>
 
-      <div className="mt-6 flex flex-wrap items-center gap-2">
+      <div className="mt-4 flex flex-wrap items-center gap-2">
         <ExecutiveBadge
           tone={getParticipantRoleTone(
             record.participantRole,
@@ -577,114 +693,19 @@ function MarketplaceCard({
           {getParticipantRoleLabel(record.participantRole)}
         </ExecutiveBadge>
 
-        <span className="rounded-full border border-white/10 bg-white/[0.055] px-3 py-1 text-xs font-black text-slate-300">
+        <ExecutiveBadge tone="neutral" size="sm">
           {getAccessLabel(record.accessReason, mode)}
-        </span>
+        </ExecutiveBadge>
       </div>
 
-      <div className="mt-6 flex items-center justify-end">
-        <span className="text-sm font-black text-[#9BE8F8] transition group-hover:translate-x-1">
+      <div className="mt-auto flex items-center justify-end pt-4">
+        <span className="inline-flex min-h-11 items-center text-sm font-black text-nexus-cyan-bright transition-transform duration-200 group-hover:translate-x-0.5 motion-reduce:transition-none motion-reduce:group-hover:translate-x-0">
           {canSelectForInvitation
             ? "Open RFQ workspace →"
             : getActionLabel(rfq.status)}
         </span>
       </div>
     </Link>
-  );
-}
-
-function MetricGrid({
-  metrics,
-  compact = false,
-}: {
-  metrics: {
-    label: string;
-    value: number;
-  }[];
-  compact?: boolean;
-}) {
-  return (
-    <section
-      className={`grid gap-4 md:grid-cols-2 xl:grid-cols-4 ${
-        compact ? "mt-6" : "mt-8"
-      }`}
-    >
-      {metrics.map((metric) => (
-        <StatusCard
-          key={metric.label}
-          title={metric.label}
-          value={metric.value}
-        />
-      ))}
-    </section>
-  );
-}
-
-function HeroMetric({
-  title,
-  value,
-}: {
-  title: string;
-  value: string;
-}) {
-  return (
-    <div className="rounded-[26px] border border-white/10 bg-[#061426]/75 p-5">
-      <p className="np-type-meta">
-        {title}
-      </p>
-
-      <p className="np-type-kpi mt-2 break-words text-2xl">
-        {value}
-      </p>
-    </div>
-  );
-}
-
-function StatusCard({
-  title,
-  value,
-}: {
-  title: string;
-  value: number;
-}) {
-  return (
-    <div className="rounded-[28px] border border-white/10 bg-white/[0.045] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.26)] backdrop-blur-xl">
-      <p className="np-type-meta">
-        {title}
-      </p>
-
-      <p className="np-type-kpi mt-3 text-4xl">
-        {value}
-      </p>
-    </div>
-  );
-}
-
-function Badge({ children }: { children: ReactNode }) {
-  return (
-    <span className="rounded-full border border-white/10 bg-white/[0.055] px-3 py-1 text-xs font-black text-slate-300">
-      {children}
-    </span>
-  );
-}
-
-function SignalBlock({
-  label,
-  value,
-}: {
-  label: string;
-  value: string;
-}) {
-  return (
-    <div className="min-w-0 rounded-[22px] border border-white/10 bg-white/[0.035] p-4">
-      <p className="np-type-meta">
-        {label}
-      </p>
-
-      <p className="np-type-kpi mt-2 break-words text-sm">
-        {value}
-      </p>
-    </div>
   );
 }
 
@@ -698,23 +719,27 @@ function EmptyState({
   canCreate: boolean;
 }) {
   return (
-    <div className="rounded-[30px] border border-dashed border-white/15 bg-white/[0.035] p-10 text-center">
-      <p className="np-type-eyebrow text-[#C8A646]">
+    <div
+      className={EXECUTIVE_EMPTY_FULL}
+      role={EXECUTIVE_EMPTY_ROLE}
+      aria-live={EXECUTIVE_EMPTY_LIVE}
+    >
+      <p className={EXECUTIVE_EMPTY_EYEBROW}>
         Procurement Pipeline
       </p>
 
-      <h2 className="np-type-h2 mt-4">
+      <h3 className={EXECUTIVE_EMPTY_TITLE}>
         {title}
-      </h2>
+      </h3>
 
-      <p className="np-type-body mx-auto mt-3 max-w-2xl">
+      <p className={EXECUTIVE_EMPTY_BODY}>
         {description}
       </p>
 
       {canCreate ? (
         <Link
           href="/rfq/new"
-          className="mt-7 inline-flex rounded-full bg-gradient-to-r from-[#B9902F] via-[#C8A646] to-[#F5D77B] px-6 py-3 text-sm font-black text-slate-950 shadow-[0_18px_55px_rgba(200,166,70,0.24)] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C8A646]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#07111F]"
+          className={EXECUTIVE_EMPTY_ACTION}
         >
           Create RFQ
         </Link>
