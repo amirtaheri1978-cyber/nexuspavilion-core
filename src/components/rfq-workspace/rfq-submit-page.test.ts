@@ -163,6 +163,34 @@ describe("Task 24-RFQ-11 submit page presentation", () => {
     expect(visualQa).toContain("Inputs complete");
   });
 
+  it("adds one contextual readiness card from existing completeness and acknowledgement evidence", () => {
+    expect(submit).toContain(
+      'from "@/components/executive/executive-guidance-card"',
+    );
+    expect(submit).toContain(
+      'from "@/lib/guidance/quotation-readiness-guidance"',
+    );
+    expect(submit).toContain(
+      "submissionCompleteness.missingSignals.map((signal) => signal.key)",
+    );
+    expect(submit).toContain("missingRequirementKeys");
+    expect(submit).toContain(
+      "initialQuote?.hasOutstandingRequiredAcknowledgement",
+    );
+    expect(submit.match(/<ExecutiveGuidanceCard/g)).toHaveLength(1);
+    expect(submit).not.toContain("complianceIncomplete:");
+    expect(submit).not.toContain("documentsIncomplete:");
+  });
+
+  it("keeps submission mutation and completeness contracts unchanged", () => {
+    expect(submit).toContain('method: isResubmission ? "PATCH" : "POST"');
+    expect(submit).toContain('action: "reconfirmed"');
+    expect(submit).toContain('action: "resubmitted"');
+    expect(submit).toContain('fetch("/api/quotes"');
+    expect(submit).toContain('data-rfq-submit-completeness="true"');
+    expect(submit).toContain("submissionCompleteness.signals.map");
+  });
+
   it("does not alter frozen Task 23 or RFQ-01 through RFQ-10 regions", () => {
     expect(appShell).toContain("lg:ml-[330px]");
     expect(sidebar).toContain("w-[330px]");

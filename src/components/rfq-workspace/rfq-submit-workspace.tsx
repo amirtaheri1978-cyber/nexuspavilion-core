@@ -4,12 +4,14 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { ExecutiveBadge } from "@/components/executive/executive-badge";
+import { ExecutiveGuidanceCard } from "@/components/executive/executive-guidance-card";
 import { ExecutivePanel } from "@/components/executive/executive-panel";
 import { formatRfqDeadlineForDisplay } from "@/lib/datetime/format-rfq-deadline-display";
 import {
   getRfqDeadlineRisk,
   type RfqDeadlineRiskStatus,
 } from "@/lib/datetime/rfq-deadline-risk";
+import { resolveQuotationReadinessGuidance } from "@/lib/guidance/quotation-readiness-guidance";
 import { evaluateQuotationSubmissionCompleteness } from "@/lib/procurement/quotation-submission-completeness";
 import {
   EXECUTIVE_CTA_PRIMARY,
@@ -269,6 +271,23 @@ export function RfqSubmitWorkspace({
         message,
       }),
     [amountNumber, timeline, message],
+  );
+  const missingRequirementKeys = useMemo(
+    () => submissionCompleteness.missingSignals.map((signal) => signal.key),
+    [submissionCompleteness.missingSignals],
+  );
+  const readinessGuidance = useMemo(
+    () =>
+      resolveQuotationReadinessGuidance({
+        missingRequirementKeys,
+        hasOutstandingRequiredAcknowledgement: Boolean(
+          initialQuote?.hasOutstandingRequiredAcknowledgement,
+        ),
+      }),
+    [
+      initialQuote?.hasOutstandingRequiredAcknowledgement,
+      missingRequirementKeys,
+    ],
   );
 
   const submissionClosed = isSubmissionClosed(rfq);
@@ -769,6 +788,13 @@ export function RfqSubmitWorkspace({
               >
                 {error}
               </p>
+            ) : null}
+
+            {readinessGuidance ? (
+              <ExecutiveGuidanceCard
+                title={readinessGuidance.title}
+                description={readinessGuidance.description}
+              />
             ) : null}
 
             <section
