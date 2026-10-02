@@ -619,6 +619,45 @@ export const EXECUTIVE_LOADING_LABEL = "sr-only";
 
 export const EXECUTIVE_LOADING_LIVE = "polite";
 
+export const EXECUTIVE_EMPTY_VARIANTS = ["compact", "full"] as const;
+
+export type ExecutiveEmptyVariant = (typeof EXECUTIVE_EMPTY_VARIANTS)[number];
+
+export const EXECUTIVE_EMPTY_CONTENT_ROLES = [
+  "icon",
+  "eyebrow",
+  "title",
+  "body",
+  "action",
+] as const;
+
+export type ExecutiveEmptyContentRole =
+  (typeof EXECUTIVE_EMPTY_CONTENT_ROLES)[number];
+
+const EXECUTIVE_EMPTY_SURFACE =
+  "rounded-executive border border-dashed border-white/15 bg-white/[0.025] text-center";
+
+export const EXECUTIVE_EMPTY_COMPACT = `${EXECUTIVE_EMPTY_SURFACE} px-5 py-8`;
+
+export const EXECUTIVE_EMPTY_FULL = `${EXECUTIVE_EMPTY_SURFACE} p-8 sm:p-10`;
+
+export const EXECUTIVE_EMPTY_ICON =
+  "mx-auto flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-white/[0.03]";
+
+export const EXECUTIVE_EMPTY_ICON_HIDDEN = "true";
+
+export const EXECUTIVE_EMPTY_EYEBROW = "np-type-eyebrow mt-5";
+
+export const EXECUTIVE_EMPTY_TITLE = "np-type-h2 mt-4";
+
+export const EXECUTIVE_EMPTY_BODY = "np-type-body mx-auto mt-3 max-w-2xl";
+
+export const EXECUTIVE_EMPTY_ACTION = `mt-7 ${EXECUTIVE_BUTTON_PRIMARY}`;
+
+export const EXECUTIVE_EMPTY_ROLE = "status";
+
+export const EXECUTIVE_EMPTY_LIVE = "polite";
+
 export const EXECUTIVE_LOGO_DARK_VARIANTS = ["icon", "horizontal"] as const;
 
 export type ExecutiveLogoDarkVariant =

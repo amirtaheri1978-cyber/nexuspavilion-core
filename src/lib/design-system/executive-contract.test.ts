@@ -49,6 +49,18 @@ import {
   EXECUTIVE_DRAWER_ROLES,
   EXECUTIVE_DRAWER_SURFACE,
   EXECUTIVE_DRAWER_TITLE,
+  EXECUTIVE_EMPTY_ACTION,
+  EXECUTIVE_EMPTY_BODY,
+  EXECUTIVE_EMPTY_COMPACT,
+  EXECUTIVE_EMPTY_CONTENT_ROLES,
+  EXECUTIVE_EMPTY_EYEBROW,
+  EXECUTIVE_EMPTY_FULL,
+  EXECUTIVE_EMPTY_ICON,
+  EXECUTIVE_EMPTY_ICON_HIDDEN,
+  EXECUTIVE_EMPTY_LIVE,
+  EXECUTIVE_EMPTY_ROLE,
+  EXECUTIVE_EMPTY_TITLE,
+  EXECUTIVE_EMPTY_VARIANTS,
   EXECUTIVE_FEEDBACK_ACTION,
   EXECUTIVE_FEEDBACK_BODY,
   EXECUTIVE_FEEDBACK_DISMISS,
@@ -908,6 +920,37 @@ describe("NP-MASTER-22-B01 executive design contract", () => {
     expect(progress).not.toContain("setTimeout");
     expect(progress).not.toContain("animate-pulse");
     expect(contract).not.toContain("function Skeleton");
+  });
+
+  it("defines the shared empty-state contract from existing local layouts", () => {
+    expect(EXECUTIVE_EMPTY_VARIANTS).toEqual(["compact", "full"]);
+    expect(EXECUTIVE_EMPTY_CONTENT_ROLES).toEqual([
+      "icon",
+      "eyebrow",
+      "title",
+      "body",
+      "action",
+    ]);
+    expect(EXECUTIVE_EMPTY_COMPACT).toContain("rounded-executive");
+    expect(EXECUTIVE_EMPTY_COMPACT).toContain("border-dashed");
+    expect(EXECUTIVE_EMPTY_COMPACT).toContain("border-white/15");
+    expect(EXECUTIVE_EMPTY_COMPACT).toContain("bg-white/[0.025]");
+    expect(EXECUTIVE_EMPTY_COMPACT).toContain("px-5 py-8");
+    expect(EXECUTIVE_EMPTY_FULL).toContain("border-dashed");
+    expect(EXECUTIVE_EMPTY_FULL).toContain("p-8");
+    expect(EXECUTIVE_EMPTY_FULL).toContain("sm:p-10");
+    expect(EXECUTIVE_EMPTY_ICON).toContain("h-12 w-12");
+    expect(EXECUTIVE_EMPTY_ICON).toContain("rounded-full");
+    expect(EXECUTIVE_EMPTY_ICON_HIDDEN).toBe("true");
+    expect(EXECUTIVE_EMPTY_EYEBROW).toContain("np-type-eyebrow");
+    expect(EXECUTIVE_EMPTY_TITLE).toContain("np-type-h2");
+    expect(EXECUTIVE_EMPTY_BODY).toContain("np-type-body");
+    expect(EXECUTIVE_EMPTY_ACTION).toContain(EXECUTIVE_BUTTON_PRIMARY);
+    expect(EXECUTIVE_EMPTY_ACTION).not.toContain("href");
+    expect(EXECUTIVE_EMPTY_ROLE).toBe("status");
+    expect(EXECUTIVE_EMPTY_LIVE).toBe("polite");
+    expect(contract).not.toContain("function EmptyState");
+    expect(contract).not.toContain("function ExecutiveEmpty");
   });
 
   it("defines one executive button system from the existing CTA contract", () => {
