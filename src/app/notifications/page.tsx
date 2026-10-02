@@ -8,6 +8,7 @@ import {
   EXECUTIVE_FOCUS_CYAN,
   EXECUTIVE_PAGE_CLASS,
 } from "@/lib/design-system/executive-contract";
+import { resolveActivityAttentionGuidance } from "@/lib/guidance/activity-attention-guidance";
 import {
   classifyActivityView,
   prioritizeAttentionRows,
@@ -339,6 +340,13 @@ export default async function NotificationsPage({
                 const hasDeclaredRfqSource = Boolean(
                   notification.source_rfq_id,
                 );
+                const attentionGuidance =
+                  view === "attention"
+                    ? resolveActivityAttentionGuidance({
+                        type: notification.type,
+                        sourceHref,
+                      })
+                    : null;
 
                 return (
                   <li key={notification.id} className="px-5 py-4 sm:px-6">
@@ -354,7 +362,32 @@ export default async function NotificationsPage({
                           {notification.message}
                         </p>
 
-                        {sourceHref ? (
+                        {attentionGuidance ? (
+                          <div className="mt-3 min-w-0">
+                            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">
+                              Why this matters
+                            </p>
+                            <p className="mt-2 max-w-4xl text-sm font-semibold leading-6 text-slate-300">
+                              {attentionGuidance.description}
+                            </p>
+                            {attentionGuidance.sourceHref &&
+                            attentionGuidance.actionLabel ? (
+                              <div className="mt-3">
+                                <Link
+                                  href={attentionGuidance.sourceHref}
+                                  className={`inline-flex min-h-10 items-center rounded-xl border border-cyan-300/20 bg-cyan-300/[0.06] px-3 text-xs font-black text-cyan-100 transition-colors hover:bg-cyan-300/[0.1] ${EXECUTIVE_FOCUS_CYAN}`}
+                                >
+                                  {attentionGuidance.actionLabel}
+                                </Link>
+                              </div>
+                            ) : hasDeclaredRfqSource ? (
+                              <p className="mt-3 text-xs font-bold text-slate-400">
+                                RFQ source is not available under the current
+                                workspace access.
+                              </p>
+                            ) : null}
+                          </div>
+                        ) : sourceHref ? (
                           <div className="mt-3">
                             <Link
                               href={sourceHref}

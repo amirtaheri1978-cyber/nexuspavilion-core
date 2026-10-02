@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
 import {
@@ -5,6 +7,18 @@ import {
   prioritizeAttentionRows,
   resolveRfqSourceHref,
 } from "./activity-center-prioritization";
+
+function readSource(relativePath: string) {
+  return readFileSync(resolve(process.cwd(), relativePath), "utf8").replace(
+    /\r\n/g,
+    "\n",
+  );
+}
+
+const notificationsPage = readSource("src/app/notifications/page.tsx");
+const prioritization = readSource(
+  "src/lib/procurement/activity-center-prioritization.ts",
+);
 
 describe("Activity Center prioritization", () => {
   it("classifies attention, updates, and history without changing business domains", () => {
@@ -104,5 +118,37 @@ describe("Activity Center prioritization", () => {
     );
     expect(resolveRfqSourceHref("rfq-2", sourceMap)).toBeNull();
     expect(resolveRfqSourceHref(null, sourceMap)).toBeNull();
+  });
+});
+
+describe("Activity Center attention guidance integration", () => {
+  it("invokes attention guidance only for Needs Attention rows", () => {
+    expect(notificationsPage).toContain("resolveActivityAttentionGuidance");
+    expect(notificationsPage).toContain('view === "attention"');
+    expect(notificationsPage).toContain("Why this matters");
+    expect(notificationsPage).toContain("attentionGuidance.description");
+    expect(notificationsPage).toContain("attentionGuidance.sourceHref");
+    expect(notificationsPage).toContain("attentionGuidance.actionLabel");
+    expect(notificationsPage).toContain("resolveRfqSourceHref(");
+    expect(notificationsPage).toContain(
+      "RFQ source is not available under the current",
+    );
+    expect(notificationsPage).toContain("Source &middot; Open RFQ Workspace");
+  });
+
+  it("preserves priority ordering and avoids duplicate or invented source routes", () => {
+    expect(prioritization).toContain("addendum_action_required: 0");
+    expect(prioritization).toContain("rfi: 1");
+    expect(prioritization).toContain("rfi_response: 2");
+    expect(prioritization).toContain("quote: 3");
+    expect(notificationsPage).not.toContain("`/rfq/${notification");
+    expect(notificationsPage).not.toContain("source_rfq_id}/");
+    expect(notificationsPage.match(/resolveActivityAttentionGuidance/g)).toHaveLength(
+      2,
+    );
+    expect(notificationsPage).not.toContain("fetch(");
+    expect(notificationsPage.match(/\.from\("notifications"\)/g)?.length).toBe(
+      1,
+    );
   });
 });
