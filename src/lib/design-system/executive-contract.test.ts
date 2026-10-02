@@ -40,6 +40,15 @@ import {
   EXECUTIVE_DIALOG_ROLES,
   EXECUTIVE_DIALOG_SURFACE,
   EXECUTIVE_DIALOG_TITLE,
+  EXECUTIVE_DRAWER_BODY,
+  EXECUTIVE_DRAWER_CLOSE,
+  EXECUTIVE_DRAWER_FOOTER,
+  EXECUTIVE_DRAWER_HEADER,
+  EXECUTIVE_DRAWER_INTELLIGENCE,
+  EXECUTIVE_DRAWER_OVERLAY,
+  EXECUTIVE_DRAWER_ROLES,
+  EXECUTIVE_DRAWER_SURFACE,
+  EXECUTIVE_DRAWER_TITLE,
   EXECUTIVE_FOCUS_CYAN,
   EXECUTIVE_FOCUS_GOLD,
   EXECUTIVE_FORM_CHECKBOX,
@@ -740,6 +749,39 @@ describe("NP-MASTER-22-B01 executive design contract", () => {
     expect(dialog).toContain("EXECUTIVE_DIALOG_DESTRUCTIVE");
     expect(dialog).toContain('{busy ? "Awarding..." : confirmLabel}');
     expect(dialog).not.toContain("window.confirm");
+  });
+
+  it("defines the shared drawer contract without a second drawer component", () => {
+    expect(EXECUTIVE_DRAWER_ROLES).toEqual([
+      "overlay",
+      "surface",
+      "header",
+      "body",
+      "footer",
+      "close",
+      "intelligence",
+    ]);
+    expect(EXECUTIVE_DRAWER_OVERLAY).toContain("bg-black/70");
+    expect(EXECUTIVE_DRAWER_OVERLAY).toContain("justify-end");
+    expect(EXECUTIVE_DRAWER_OVERLAY).not.toContain("pointer-events-none");
+    expect(EXECUTIVE_DRAWER_SURFACE).toContain(
+      "max-w-[var(--layout-sidebar-width)]",
+    );
+    expect(EXECUTIVE_DRAWER_SURFACE).toContain("var(--radius-panel)");
+    expect(EXECUTIVE_DRAWER_SURFACE).toContain("shadow-executive");
+    expect(EXECUTIVE_DRAWER_SURFACE).toContain("border-white/10");
+    expect(EXECUTIVE_DRAWER_HEADER).toContain("justify-between");
+    expect(EXECUTIVE_DRAWER_TITLE).toBe("np-type-h2");
+    expect(EXECUTIVE_DRAWER_BODY).toContain("overflow-y-auto");
+    expect(EXECUTIVE_DRAWER_BODY).toContain("np-type-body");
+    expect(EXECUTIVE_DRAWER_FOOTER).toContain("border-t");
+    expect(EXECUTIVE_DRAWER_CLOSE).toBe(EXECUTIVE_BUTTON_ICON);
+    expect(EXECUTIVE_DRAWER_CLOSE).toContain(EXECUTIVE_FOCUS_CYAN);
+    expect(EXECUTIVE_DRAWER_CLOSE).not.toContain("aria-hidden");
+    expect(EXECUTIVE_DRAWER_INTELLIGENCE).toBe(
+      EXECUTIVE_CARD_INTELLIGENCE_CLASS,
+    );
+    expect(contract).not.toContain("function ExecutiveDrawer");
   });
 
   it("defines one executive button system from the existing CTA contract", () => {

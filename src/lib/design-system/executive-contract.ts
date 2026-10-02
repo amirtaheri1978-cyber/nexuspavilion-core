@@ -397,6 +397,39 @@ export const EXECUTIVE_CARD_ROLE_ELEVATION: Record<ExecutiveCardRole, string> =
 export const EXECUTIVE_CARD_INTELLIGENCE_CLASS =
   EXECUTIVE_INTELLIGENCE_SURFACE_CLASS;
 
+export const EXECUTIVE_DRAWER_ROLES = [
+  "overlay",
+  "surface",
+  "header",
+  "body",
+  "footer",
+  "close",
+  "intelligence",
+] as const;
+
+export type ExecutiveDrawerRole = (typeof EXECUTIVE_DRAWER_ROLES)[number];
+
+export const EXECUTIVE_DRAWER_OVERLAY =
+  "fixed inset-0 z-[80] flex justify-end bg-black/70";
+
+export const EXECUTIVE_DRAWER_SURFACE = [
+  "flex h-full w-full max-w-[var(--layout-sidebar-width)] flex-col",
+  "rounded-l-[var(--radius-panel)] border-l border-white/10 bg-nexus-navy shadow-executive",
+].join(" ");
+
+export const EXECUTIVE_DRAWER_HEADER =
+  "flex items-start justify-between gap-4 border-b border-white/10 p-6";
+
+export const EXECUTIVE_DRAWER_TITLE = "np-type-h2";
+
+export const EXECUTIVE_DRAWER_BODY = "min-h-0 flex-1 overflow-y-auto p-6 np-type-body";
+
+export const EXECUTIVE_DRAWER_FOOTER = "border-t border-white/10 p-6";
+
+export const EXECUTIVE_DRAWER_CLOSE = EXECUTIVE_BUTTON_ICON;
+
+export const EXECUTIVE_DRAWER_INTELLIGENCE = EXECUTIVE_CARD_INTELLIGENCE_CLASS;
+
 export const EXECUTIVE_TABLE_ROLES = [
   "container",
   "header",
