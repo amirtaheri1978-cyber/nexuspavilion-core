@@ -108,4 +108,32 @@ describe("Task 23 enterprise application shell", () => {
       expect(source).not.toContain("hover:-translate");
     }
   });
+
+  it("gives authenticated content one dark page foundation", () => {
+    const chromeless = appShell.slice(
+      appShell.indexOf('shellKind === "chromeless"'),
+      appShell.indexOf('shellKind === "public"'),
+    );
+    const publicShell = appShell.slice(
+      appShell.indexOf('shellKind === "public"'),
+      appShell.indexOf("authenticated application shell"),
+    );
+    const authenticated = appShell.slice(
+      appShell.indexOf("authenticated application shell"),
+    );
+
+    expect(chromeless).not.toContain("EXECUTIVE_PAGE_CLASS");
+    expect(publicShell).not.toContain("EXECUTIVE_PAGE_CLASS");
+    expect(authenticated).toContain("bg-nexus-navy");
+    expect(authenticated).toContain("overflow-x-clip");
+    expect(authenticated).toContain("min-w-0");
+    expect(authenticated).toContain(
+      "<div className={EXECUTIVE_PAGE_CLASS}>{children}</div>",
+    );
+    expect(authenticated).toContain("<AppTopbar />");
+    expect(authenticated).toContain("<Sidebar");
+    expect(authenticated).toContain(
+      'sidebarCollapsed ? "lg:ml-[96px]" : "lg:ml-[330px]"',
+    );
+  });
 });

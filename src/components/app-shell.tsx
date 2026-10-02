@@ -9,6 +9,7 @@ import AppTopbar from "@/components/common/AppTopbar";
 import CorporateAnalytics from "@/components/corporate/corporate-analytics";
 import Footer from "@/components/footer";
 import Sidebar from "@/components/sidebar";
+import { EXECUTIVE_PAGE_CLASS } from "@/lib/design-system/executive-contract";
 import { getAppShellKind } from "@/lib/navigation/application-nav";
 
 export default function AppShell({
@@ -56,7 +57,7 @@ export default function AppShell({
    * Hidden navigation is not an authorization boundary.
    */
   return (
-    <div className="min-h-screen bg-[#07111F] text-white">
+    <div className="min-h-screen overflow-x-clip bg-nexus-navy text-white">
       <Sidebar
         collapsed={sidebarCollapsed}
         onCollapsedChange={setSidebarCollapsed}
@@ -64,7 +65,7 @@ export default function AppShell({
 
       <div
         className={[
-          "min-h-screen bg-[radial-gradient(circle_at_top_right,rgba(44,196,232,0.08),transparent_34%),radial-gradient(circle_at_bottom_left,rgba(200,166,70,0.055),transparent_38%),#07111F]",
+          "min-h-screen min-w-0 max-w-full overflow-x-clip bg-[radial-gradient(circle_at_top_right,rgba(44,196,232,0.08),transparent_34%),radial-gradient(circle_at_bottom_left,rgba(200,166,70,0.055),transparent_38%),#07111F]",
           sidebarCollapsed ? "lg:ml-[96px]" : "lg:ml-[330px]",
         ].join(" ")}
       >
@@ -72,7 +73,7 @@ export default function AppShell({
 
         <main className="min-h-[calc(100vh-76px)] min-w-0">
           <AppPageContext />
-          {children}
+          <div className={EXECUTIVE_PAGE_CLASS}>{children}</div>
         </main>
 
         <ApplicationFooter />
