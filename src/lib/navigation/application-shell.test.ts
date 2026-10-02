@@ -89,6 +89,9 @@ describe("Task 23 enterprise application shell", () => {
     expect(topbar).toContain('href="/analytics"');
     expect(topbar).toContain("hidden h-[76px]");
     expect(topbar).toContain("lg:flex lg:px-8");
+    expect(topbar).toContain("<ExecutiveBadge");
+    expect(topbar).not.toContain("<h1");
+    expect(topbar).not.toContain("ExecutivePageHeader");
     expect(topbar).not.toContain("hover:scale");
     expect(topbar).not.toContain("hover:-translate");
   });
@@ -97,6 +100,8 @@ describe("Task 23 enterprise application shell", () => {
     expect(pageContext).toContain('aria-label="Breadcrumb"');
     expect(pageContext).toContain("getAppBreadcrumbs");
     expect(pageContext).toContain('aria-current="page"');
+    expect(pageContext).toContain("max-w-[var(--layout-content-max)]");
+    expect(pageContext).toContain("px-[var(--np-page-pad-inline)]");
     expect(nav).toContain('label: "Opportunity"');
     expect(nav).not.toContain("user.id");
     expect(nav).not.toContain("first_name");
