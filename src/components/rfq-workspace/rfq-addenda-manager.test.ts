@@ -71,6 +71,31 @@ describe("Task 24-RFQ-10 addenda manager presentation", () => {
     expect(acknowledgement).toContain("Clear");
   });
 
+  it("shows truthful addendum publication completion from the returned record", () => {
+    expect(manager).toContain("<ExecutiveCompletionMoment");
+    expect(manager).toContain("readPublicationNotice(data)");
+    expect(manager).toContain("data.addendum.addendum_number");
+    expect(manager).toContain("data.addendum.requires_acknowledgement");
+    expect(manager).toContain("readEmailSummary(data.email)");
+    expect(manager).toContain("email.recipients");
+    expect(manager).toContain("email.sent");
+    expect(manager).toContain("email.skipped");
+    expect(manager).toContain("email.failed");
+    expect(manager).toContain("email.error");
+    expect(manager).toContain('state="confirmed"');
+    expect(manager).toContain(
+      "This publication does not record that acknowledgement has occurred.",
+    );
+    expect(manager).toContain(
+      "setAddenda((current) => [data.addendum, ...current])",
+    );
+    expect(manager).toContain("setPublishedNotice(null)");
+    expect(manager).not.toContain("nextAction=");
+    expect(manager).not.toContain("router.push");
+    expect(manager).not.toContain("href=");
+    expect(manager).not.toContain("all suppliers");
+  });
+
   it("flattens nested addenda cards and uses container-aware layout", () => {
     expect(manager).toContain('data-rfq-addenda-manager="true"');
     expect(manager).toContain("@container");

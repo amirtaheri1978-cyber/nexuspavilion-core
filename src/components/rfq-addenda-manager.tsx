@@ -2,6 +2,8 @@
 
 import { useCallback, useMemo, useRef, useState } from "react";
 
+import { ExecutiveCompletionMoment } from "@/components/executive/executive-completion-moment";
+
 type Addendum = {
   id: string;
   title: string;
@@ -12,11 +14,116 @@ type Addendum = {
   created_at: string | null;
 };
 
+type AddendumEmailSummary = {
+  recipients: number;
+  sent: number;
+  skipped: number;
+  failed: number;
+  error: string | null;
+};
+
+type AddendumPublicationNotice = {
+  addendumNumber: number | null;
+  requiresAcknowledgement: boolean | null;
+  email: AddendumEmailSummary | null;
+};
+
 type RFQAddendaManagerProps = {
   rfqId: string;
   initialAddenda?: Addendum[];
   canManage?: boolean;
 };
+
+function countOrNull(value: unknown) {
+  return typeof value === "number" && Number.isFinite(value) ? value : null;
+}
+
+function readEmailSummary(value: unknown): AddendumEmailSummary | null {
+  if (!value || typeof value !== "object") return null;
+
+  const email = value as {
+    recipients?: unknown;
+    sent?: unknown;
+    skipped?: unknown;
+    failed?: unknown;
+    error?: unknown;
+  };
+  const recipients = countOrNull(email.recipients);
+  const sent = countOrNull(email.sent);
+  const skipped = countOrNull(email.skipped);
+  const failed = countOrNull(email.failed);
+
+  if (
+    recipients === null ||
+    sent === null ||
+    skipped === null ||
+    failed === null
+  ) {
+    return null;
+  }
+
+  return {
+    recipients,
+    sent,
+    skipped,
+    failed,
+    error: typeof email.error === "string" ? email.error : null,
+  };
+}
+
+function readPublicationNotice(data: {
+  addendum?: {
+    addendum_number?: unknown;
+    requires_acknowledgement?: unknown;
+  };
+  email?: unknown;
+}): AddendumPublicationNotice | null {
+  if (!data.addendum || typeof data.addendum !== "object") return null;
+
+  const addendumNumber = data.addendum.addendum_number;
+  const requiresAcknowledgement = data.addendum.requires_acknowledgement;
+
+  return {
+    addendumNumber:
+      typeof addendumNumber === "number" && Number.isFinite(addendumNumber)
+        ? addendumNumber
+        : null,
+    requiresAcknowledgement:
+      typeof requiresAcknowledgement === "boolean"
+        ? requiresAcknowledgement
+        : null,
+    email: readEmailSummary(data.email),
+  };
+}
+
+function acknowledgementImplication(required: boolean | null) {
+  if (required === true) {
+    return "Acknowledgement is required. This publication does not record that acknowledgement has occurred.";
+  }
+
+  if (required === false) {
+    return "Acknowledgement is not required for this Addendum.";
+  }
+
+  return "";
+}
+
+function notificationOutcome(email: AddendumEmailSummary | null) {
+  if (!email) return "";
+
+  const outcome =
+    "Notification outcome: " +
+    email.sent +
+    " sent, " +
+    email.skipped +
+    " skipped, and " +
+    email.failed +
+    " failed out of " +
+    email.recipients +
+    " returned recipients.";
+
+  return email.error ? outcome + " " + email.error : outcome;
+}
 
 function formatDate(value: string | null) {
   if (!value) return "N/A";
@@ -42,6 +149,8 @@ export default function RFQAddendaManager({
   const createLock = useRef(false);
   const [refreshing, setRefreshing] = useState(false);
   const [message, setMessage] = useState("");
+  const [publishedNotice, setPublishedNotice] =
+    useState<AddendumPublicationNotice | null>(null);
   const [error, setError] = useState("");
   const [titleValidationError, setTitleValidationError] = useState(false);
   const errorId = "rfq-addenda-error";
@@ -87,6 +196,7 @@ export default function RFQAddendaManager({
     createLock.current = true;
     setLoading(true);
     setMessage("");
+    setPublishedNotice(null);
     setError("");
     setTitleValidationError(false);
 
@@ -117,7 +227,8 @@ export default function RFQAddendaManager({
       setDescription("");
       setAffectedDocuments("");
       setRequiresAcknowledgement(true);
-      setMessage(`Addendum #${data.addendum.addendum_number} issued.`);
+      setPublishedNotice(readPublicationNotice(data));
+      setMessage("");
     } catch (createError) {
       console.error(createError);
       setError("Request failed. Please try again.");
@@ -160,6 +271,25 @@ export default function RFQAddendaManager({
           </button>
         </div>
       </div>
+
+      {publishedNotice ? (
+        <div className="mt-6 min-w-0">
+          <ExecutiveCompletionMoment
+            state="confirmed"
+            title={
+              publishedNotice.addendumNumber === null
+                ? "Addendum issued."
+                : `Addendum #${publishedNotice.addendumNumber} issued.`
+            }
+            summary={
+              acknowledgementImplication(
+                publishedNotice.requiresAcknowledgement,
+              ) || "The Addendum is published."
+            }
+            detail={notificationOutcome(publishedNotice.email)}
+          />
+        </div>
+      ) : null}
 
       {message ? (
         <div
