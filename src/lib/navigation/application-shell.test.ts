@@ -101,7 +101,9 @@ describe("Task 23 enterprise application shell", () => {
     expect(topbar).toContain("getAppSectionTitle");
     expect(topbar).toContain('href="/notifications"');
     expect(topbar).toContain('href="/analytics"');
-    expect(topbar).toContain("hidden h-[76px]");
+    expect(topbar).toContain("hidden min-h-[76px]");
+    expect(topbar).toContain("flex-wrap");
+    expect(topbar).toContain("overflow-x-clip");
     expect(topbar).toContain("lg:flex lg:px-8");
     expect(topbar).toContain("<ExecutiveBadge");
     expect(topbar).not.toContain("<h1");
@@ -116,6 +118,15 @@ describe("Task 23 enterprise application shell", () => {
     expect(pageContext).toContain('aria-current="page"');
     expect(pageContext).toContain("max-w-[var(--layout-content-max)]");
     expect(pageContext).toContain("px-[var(--np-page-pad-inline)]");
+    expect(pageContext).toContain("flex-wrap");
+    expect(pageContext).toContain("max-w-full");
+    expect(pageContext).toContain("min-w-0");
+    expect(pageContext).toContain("truncate");
+    expect(sidebar).toContain("lg:hidden");
+    expect(sidebar).toContain("overflow-x-clip");
+    expect(sidebar).toContain('aria-expanded={mobileOpen}');
+    expect(sidebar).toContain("min-h-11");
+    expect(sidebar).toContain("motion-reduce:transition-none");
     expect(nav).toContain('label: "Opportunity"');
     expect(nav).not.toContain("user.id");
     expect(nav).not.toContain("first_name");

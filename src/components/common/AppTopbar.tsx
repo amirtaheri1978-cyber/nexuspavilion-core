@@ -27,8 +27,8 @@ export default function AppTopbar() {
   const title = getAppSectionTitle(pathname) || BOARDROOM_INTELLIGENCE_TITLE;
 
   return (
-    <header className="hidden h-[76px] min-w-0 items-center justify-between gap-4 overflow-x-clip border-b border-white/10 bg-nexus-navy/95 px-4 text-white backdrop-blur sm:px-6 lg:flex lg:px-8">
-      <div className="flex min-w-0 items-center gap-4">
+    <header className="hidden min-h-[76px] min-w-0 flex-wrap items-center justify-between gap-x-4 gap-y-3 overflow-x-clip border-b border-white/10 bg-nexus-navy/95 px-4 text-white backdrop-blur sm:px-6 lg:flex lg:px-8">
+      <div className="flex min-w-0 max-w-full items-center gap-4">
         <NexusPavilionLogo
           className="hidden shrink-0 xl:flex"
           variant="icon"
@@ -46,7 +46,7 @@ export default function AppTopbar() {
         </div>
       </div>
 
-      <div className="flex min-w-0 flex-wrap items-center justify-end gap-3">
+      <div className="flex max-w-full shrink-0 flex-wrap items-center justify-end gap-3">
         <Link
           href="/notifications"
           className={`${TOPBAR_ACTION} border-nexus-gold/25 bg-nexus-gold/10 text-nexus-gold-bright hover:bg-nexus-gold/15 ${EXECUTIVE_FOCUS_GOLD}`}

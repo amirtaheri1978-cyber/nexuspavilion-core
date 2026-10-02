@@ -245,8 +245,8 @@ export default function Sidebar({
 
   return (
     <>
-      <header className="sticky top-0 z-30 border-b border-white/10 bg-[#07111F]/95 px-4 py-3 text-white backdrop-blur lg:hidden">
-        <div className="flex items-center justify-between gap-3">
+      <header className="sticky top-0 z-30 min-w-0 overflow-x-clip border-b border-white/10 bg-[#07111F]/95 px-4 py-3 text-white backdrop-blur lg:hidden">
+        <div className="flex min-w-0 items-center justify-between gap-3">
           <Link
             href="/dashboard"
             className={`flex min-w-0 items-center gap-3 rounded-xl ${EXECUTIVE_FOCUS_CYAN}`}
@@ -259,7 +259,7 @@ export default function Sidebar({
             />
 
             <div className="min-w-0">
-              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[#C8A646]">
+              <p className="truncate text-[10px] font-black uppercase tracking-[0.3em] text-[#C8A646]">
                 NexusPavilion
               </p>
 
@@ -290,7 +290,7 @@ export default function Sidebar({
           <nav
             id="np-mobile-nav"
             aria-label="Workspace navigation"
-            className="mt-3 space-y-1.5 border-t border-white/10 pt-3"
+            className="mt-3 min-w-0 space-y-1.5 overflow-x-clip border-t border-white/10 pt-3"
           >
             {navItems.map((item) => renderNavItem(item))}
           </nav>

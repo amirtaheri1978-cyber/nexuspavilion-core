@@ -24,21 +24,21 @@ export default function AppPageContext() {
           const last = index === crumbs.length - 1;
 
           return (
-            <li key={`${crumb.href}-${crumb.label}`} className="flex min-w-0 items-center gap-2">
+            <li key={`${crumb.href}-${crumb.label}`} className="flex max-w-full min-w-0 items-center gap-2">
               {index > 0 ? (
-                <span aria-hidden="true" className="np-type-meta">
+                <span aria-hidden="true" className="np-type-meta shrink-0">
                   /
                 </span>
               ) : null}
 
               {last ? (
-                <span className="min-w-0 truncate text-sm font-semibold text-nexus-text-primary" aria-current="page">
+                <span className="min-w-0 max-w-full truncate text-sm font-semibold text-nexus-text-primary" aria-current="page">
                   {crumb.label}
                 </span>
               ) : (
                 <Link
                   href={crumb.href}
-                  className={`np-type-meta truncate rounded-md hover:text-nexus-text-primary ${EXECUTIVE_FOCUS_CYAN}`}
+                  className={`np-type-meta max-w-full min-w-0 truncate rounded-md hover:text-nexus-text-primary ${EXECUTIVE_FOCUS_CYAN}`}
                 >
                   {crumb.label}
                 </Link>
