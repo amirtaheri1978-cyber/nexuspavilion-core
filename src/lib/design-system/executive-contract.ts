@@ -591,6 +591,34 @@ export const EXECUTIVE_FEEDBACK_LIVE: Record<ExecutiveFeedbackRole, string> = {
   info: "polite",
 };
 
+export const EXECUTIVE_LOADING_ROLES = [
+  "skeleton",
+  "progress",
+  "label",
+] as const;
+
+export type ExecutiveLoadingRole = (typeof EXECUTIVE_LOADING_ROLES)[number];
+
+export const EXECUTIVE_SKELETON =
+  "rounded-executive bg-white/[0.06]";
+
+export const EXECUTIVE_SKELETON_LINE = "h-3 rounded-full bg-white/10";
+
+export const EXECUTIVE_PROGRESS_TRACK =
+  "h-2 overflow-hidden rounded-full bg-white/10";
+
+export const EXECUTIVE_PROGRESS_VALUE = [
+  "h-full rounded-full bg-nexus-gold",
+  "transition-[width] duration-[var(--motion-duration-context)]",
+  "motion-reduce:transition-none",
+].join(" ");
+
+export const EXECUTIVE_PROGRESS_MOTION_MS = EXECUTIVE_MOTION_CONTEXT_MS;
+
+export const EXECUTIVE_LOADING_LABEL = "sr-only";
+
+export const EXECUTIVE_LOADING_LIVE = "polite";
+
 export const EXECUTIVE_LOGO_DARK_VARIANTS = ["icon", "horizontal"] as const;
 
 export type ExecutiveLogoDarkVariant =

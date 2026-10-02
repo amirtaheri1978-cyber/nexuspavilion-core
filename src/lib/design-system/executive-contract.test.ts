@@ -105,7 +105,15 @@ import {
   EXECUTIVE_TOOLTIP_ROLES,
   EXECUTIVE_TOOLTIP_SURFACE,
   EXECUTIVE_NAVY,
+  EXECUTIVE_LOADING_LABEL,
+  EXECUTIVE_LOADING_LIVE,
+  EXECUTIVE_LOADING_ROLES,
   EXECUTIVE_PAGE_CLASS,
+  EXECUTIVE_PROGRESS_MOTION_MS,
+  EXECUTIVE_PROGRESS_TRACK,
+  EXECUTIVE_PROGRESS_VALUE,
+  EXECUTIVE_SKELETON,
+  EXECUTIVE_SKELETON_LINE,
   EXECUTIVE_TYPE_ROLES,
   EXECUTIVE_PANEL_RADIUS_PX,
   EXECUTIVE_SIDEBAR_WIDTH_PX,
@@ -869,6 +877,37 @@ describe("NP-MASTER-22-B01 executive design contract", () => {
       expect(tone).not.toContain("red-");
     }
     expect(contract).not.toContain("function Toast");
+  });
+
+  it("defines the shared loading contract from existing progress and skeleton patterns", () => {
+    expect(EXECUTIVE_LOADING_ROLES).toEqual(["skeleton", "progress", "label"]);
+    expect(EXECUTIVE_SKELETON).toContain("rounded-executive");
+    expect(EXECUTIVE_SKELETON).toContain("bg-white/[0.06]");
+    expect(EXECUTIVE_SKELETON).not.toContain("animate-pulse");
+    expect(EXECUTIVE_SKELETON_LINE).toContain("rounded-full");
+    expect(EXECUTIVE_SKELETON_LINE).toContain("bg-white/10");
+    expect(EXECUTIVE_PROGRESS_TRACK).toContain("h-2");
+    expect(EXECUTIVE_PROGRESS_TRACK).toContain("bg-white/10");
+    expect(EXECUTIVE_PROGRESS_VALUE).toContain("bg-nexus-gold");
+    expect(EXECUTIVE_PROGRESS_VALUE).toContain("var(--motion-duration-context)");
+    expect(EXECUTIVE_PROGRESS_VALUE).toContain("motion-reduce:transition-none");
+    expect(EXECUTIVE_PROGRESS_MOTION_MS).toBe(EXECUTIVE_MOTION_CONTEXT_MS);
+    expect(EXECUTIVE_LOADING_LABEL).toBe("sr-only");
+    expect(EXECUTIVE_LOADING_LIVE).toBe("polite");
+
+    const progress = readSource(
+      "src/components/executive/executive-progress.tsx",
+    );
+    expect(progress).toContain('role="progressbar"');
+    expect(progress).toContain("aria-valuemin={0}");
+    expect(progress).toContain("aria-valuemax={100}");
+    expect(progress).toContain("aria-valuenow={safeValue}");
+    expect(progress).toContain("EXECUTIVE_PROGRESS_TRACK");
+    expect(progress).toContain("EXECUTIVE_PROGRESS_VALUE");
+    expect(progress).toContain('style={{ width: `${safeValue}%` }}');
+    expect(progress).not.toContain("setTimeout");
+    expect(progress).not.toContain("animate-pulse");
+    expect(contract).not.toContain("function Skeleton");
   });
 
   it("defines one executive button system from the existing CTA contract", () => {

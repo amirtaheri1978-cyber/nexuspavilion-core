@@ -1,3 +1,8 @@
+import {
+  EXECUTIVE_PROGRESS_TRACK,
+  EXECUTIVE_PROGRESS_VALUE,
+} from "@/lib/design-system/executive-contract";
+
 type ExecutiveProgressProps = {
   value: number;
   className?: string;
@@ -21,11 +26,11 @@ export function ExecutiveProgress({
       aria-valuemax={100}
       aria-valuenow={safeValue}
       aria-valuetext={`${safeValue}%`}
-      className={`h-2 overflow-hidden rounded-full bg-white/10 ${className}`}
+      className={`${EXECUTIVE_PROGRESS_TRACK} ${className}`}
     >
       <div
         aria-hidden="true"
-        className="h-full rounded-full bg-[#C8A646] transition-[width] duration-300 motion-reduce:transition-none"
+        className={EXECUTIVE_PROGRESS_VALUE}
         style={{ width: `${safeValue}%` }}
       />
     </div>
