@@ -1,25 +1,35 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 
+import packageMetadata from "../../package.json";
 import { EXECUTIVE_FOCUS_CYAN } from "@/lib/design-system/executive-contract";
 
 const footerLinkClass = [
-  "inline-flex min-h-11 items-center px-1 text-xs font-semibold text-slate-300",
-  "underline-offset-4 hover:text-white hover:underline",
+  "inline-flex min-h-11 items-center px-1 text-xs font-semibold",
+  "text-nexus-text-muted underline-offset-4",
+  "hover:text-nexus-text-primary hover:underline",
   EXECUTIVE_FOCUS_CYAN,
 ].join(" ");
 
+const releaseVersion = packageMetadata.version.trim();
+const runtimeEnvironment = process.env.NODE_ENV?.trim() ?? "";
+
 export default function ApplicationFooter() {
+  const releaseLabel = [releaseVersion ? `Version ${releaseVersion}` : "", runtimeEnvironment]
+    .filter(Boolean)
+    .join(" · ");
+
   return (
-    <footer className="border-t border-white/10 px-4 py-4 text-slate-400 sm:px-8 lg:px-10">
-      <div className="mx-auto flex w-full max-w-[1680px] flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="min-w-0 text-xs font-semibold leading-5">
-          <p className="text-slate-300">
+    <footer className="border-t border-white/10 px-4 py-4 sm:px-8 lg:px-10">
+      <div className="mx-auto flex w-full min-w-0 max-w-[var(--layout-content-max)] flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+        <div className="min-w-0">
+          <p className="np-type-meta">
             Intelligent Procurement · A Nexus Pavilion Inc. product
           </p>
-          <p className="mt-1 text-[11px] text-slate-500">
+          <p className="np-type-meta mt-1">
             Company Workspace · Confidential procurement workspace
           </p>
+          {releaseLabel ? <p className="np-type-meta mt-1">{releaseLabel}</p> : null}
         </div>
 
         <nav aria-label="Product trust" className="min-w-0">

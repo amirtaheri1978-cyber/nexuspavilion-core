@@ -35,6 +35,20 @@ describe("Task 23 enterprise application shell", () => {
 
   it("replaces marketing footer duplication on authenticated chrome only", () => {
     expect(applicationFooter).toContain("Confidential procurement workspace");
+    expect(applicationFooter).toContain('href="/privacy"');
+    expect(applicationFooter).toContain(">Privacy<");
+    expect(applicationFooter).toContain('href="/terms"');
+    expect(applicationFooter).toContain('href="/contact"');
+    expect(applicationFooter).toContain(">Support<");
+    expect(applicationFooter).toContain('import packageMetadata from "../../package.json"');
+    expect(applicationFooter).toContain("packageMetadata.version");
+    expect(applicationFooter).toContain("process.env.NODE_ENV");
+    expect(applicationFooter).toContain("EXECUTIVE_FOCUS_CYAN");
+    expect(applicationFooter).toContain("flex-wrap");
+    expect(applicationFooter).toContain("np-type-meta");
+    expect(applicationFooter).not.toContain('href="/security"');
+    expect(applicationFooter).not.toContain('href="/help"');
+    expect(applicationFooter).not.toContain('href="/status"');
     expect(applicationFooter).not.toContain("/pricing");
     expect(applicationFooter).not.toContain("/about");
     expect(appShell).toMatch(/if \(shellKind === "public"\)[\s\S]*<Footer \/>/);
