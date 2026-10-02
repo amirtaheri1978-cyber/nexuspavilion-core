@@ -756,3 +756,13 @@ export const EXECUTIVE_LOGO_CLEAR_SPACE_PX = 12;
 export const EXECUTIVE_LOGO_DARK_CLASS = "np-logo-dark";
 
 export const EXECUTIVE_ATTENTION_CLASS = "np-attention";
+
+export const EXECUTIVE_MOTION_PERFORMANCE_PROPERTIES = [
+  "opacity",
+  "transform",
+] as const;
+
+export type ExecutiveMotionPerformanceProperty =
+  (typeof EXECUTIVE_MOTION_PERFORMANCE_PROPERTIES)[number];
+
+export const EXECUTIVE_MOTION_OVERLAY_POINTER = "none";

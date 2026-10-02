@@ -92,17 +92,21 @@ describe("executive error recovery", () => {
 
   it("highlights the error once and keeps reduced motion on the global rule", () => {
     const highlight = globals.slice(globals.indexOf(".np-error-recovery {"));
+    const fade = globals.slice(globals.indexOf("@keyframes np-motion-fade"));
 
-    expect(highlight).toContain(
-      "animation-name: np-error-recovery-wash, np-error-recovery-edge;",
-    );
-    expect(highlight).toContain("animation-iteration-count: 1, 1;");
-    expect(highlight).toContain("animation-fill-mode: none, none;");
+    expect(highlight).toContain("animation-name: np-motion-fade;");
+    expect(highlight).toContain("animation-iteration-count: 1;");
+    expect(highlight).toContain("animation-fill-mode: none;");
+    expect(highlight).toContain("pointer-events: none;");
+    expect(highlight).toContain("opacity: 0;");
     expect(highlight).toContain("var(--motion-duration-context)");
     expect(highlight).toContain("var(--motion-duration-milestone)");
     expect(highlight).toContain("var(--motion-ease-standard)");
     expect(highlight).toContain("var(--status-risk)");
-    expect(highlight).toContain("background-color: transparent;");
+    expect(fade).toContain("opacity: 1;");
+    expect(fade).not.toMatch(
+      /background-color|box-shadow|width:|height:|\btop:|\bleft:|\bright:|\bbottom:|transform:/,
+    );
     expect(highlight).not.toContain("infinite");
     expect(highlight).not.toContain("shake");
     expect(highlight).not.toContain("bounce");

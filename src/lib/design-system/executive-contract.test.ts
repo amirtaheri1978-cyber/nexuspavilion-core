@@ -23,6 +23,8 @@ import {
   EXECUTIVE_CARD_ROLES,
   EXECUTIVE_CONTENT_MAX_WIDTH_PX,
   EXECUTIVE_ATTENTION_CLASS,
+  EXECUTIVE_MOTION_OVERLAY_POINTER,
+  EXECUTIVE_MOTION_PERFORMANCE_PROPERTIES,
   EXECUTIVE_CONTROL_CLASS,
   EXECUTIVE_CTA_PRIMARY,
   EXECUTIVE_CTA_SECONDARY,
@@ -1179,17 +1181,29 @@ describe("NP-MASTER-22-B01 executive design contract", () => {
     expect(EXECUTIVE_ATTENTION_CLASS).toBe("np-attention");
     expect(contract).toContain('export const EXECUTIVE_ATTENTION_CLASS = "np-attention"');
 
-    const attention = globals.slice(globals.indexOf(".np-attention {"));
-    expect(attention).toContain("animation-name: np-attention-wash, np-attention-edge;");
-    expect(attention).toContain("animation-iteration-count: 1, 1;");
-    expect(attention).toContain("animation-fill-mode: none, none;");
+    const attention = globals.slice(globals.indexOf(".np-attention,"));
+    const fade = globals.slice(globals.indexOf("@keyframes np-motion-fade"));
+    expect(EXECUTIVE_MOTION_PERFORMANCE_PROPERTIES).toEqual([
+      "opacity",
+      "transform",
+    ]);
+    expect(EXECUTIVE_MOTION_OVERLAY_POINTER).toBe("none");
+    expect(attention).toContain("animation-name: np-motion-fade;");
+    expect(attention).toContain("animation-iteration-count: 1;");
+    expect(attention).toContain("animation-fill-mode: none;");
+    expect(attention).toContain("pointer-events: none;");
+    expect(attention).toContain("opacity: 0;");
     expect(attention).toContain("var(--motion-duration-context)");
     expect(attention).toContain("var(--motion-duration-milestone)");
     expect(attention).toContain("var(--motion-ease-standard)");
     expect(attention).toContain("var(--status-warning)");
     expect(attention).toContain("var(--nexus-gold)");
     expect(attention).toContain("var(--nexus-cyan)");
-    expect(attention).toContain("background-color: transparent;");
+    expect(fade).toContain("opacity: 1;");
+    expect(fade).toContain("opacity: 0;");
+    expect(fade).not.toMatch(
+      /background-color|box-shadow|width:|height:|\btop:|\bleft:|\bright:|\bbottom:|transform:/,
+    );
     expect(attention).not.toContain("infinite");
     expect(attention).not.toContain("scale");
     expect(attention).not.toContain("bounce");
