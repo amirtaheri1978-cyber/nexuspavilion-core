@@ -684,6 +684,8 @@ export const EXECUTIVE_ERROR_ROLE = "alert";
 
 export const EXECUTIVE_ERROR_LIVE = EXECUTIVE_FEEDBACK_LIVE.error;
 
+export const EXECUTIVE_ERROR_HIGHLIGHT_CLASS = "np-error-recovery";
+
 export const EXECUTIVE_STEPPER_STATES = [
   "completed",
   "current",
