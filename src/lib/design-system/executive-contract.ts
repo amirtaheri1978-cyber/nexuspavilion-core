@@ -658,6 +658,32 @@ export const EXECUTIVE_EMPTY_ROLE = "status";
 
 export const EXECUTIVE_EMPTY_LIVE = "polite";
 
+export const EXECUTIVE_ERROR_CONTENT_ROLES = [
+  "icon",
+  "problem",
+  "impact",
+  "recovery",
+] as const;
+
+export type ExecutiveErrorContentRole =
+  (typeof EXECUTIVE_ERROR_CONTENT_ROLES)[number];
+
+export const EXECUTIVE_ERROR_SURFACE = EXECUTIVE_FEEDBACK_ERROR;
+
+export const EXECUTIVE_ERROR_ICON = `${EXECUTIVE_FEEDBACK_ICON} text-status-risk`;
+
+export const EXECUTIVE_ERROR_ICON_HIDDEN = "true";
+
+export const EXECUTIVE_ERROR_PROBLEM = "text-sm font-black leading-6 text-status-risk";
+
+export const EXECUTIVE_ERROR_IMPACT = "mt-1 np-type-body text-nexus-text-primary";
+
+export const EXECUTIVE_ERROR_RECOVERY = `mt-4 ${EXECUTIVE_BUTTON_PRIMARY}`;
+
+export const EXECUTIVE_ERROR_ROLE = "alert";
+
+export const EXECUTIVE_ERROR_LIVE = EXECUTIVE_FEEDBACK_LIVE.error;
+
 export const EXECUTIVE_LOGO_DARK_VARIANTS = ["icon", "horizontal"] as const;
 
 export type ExecutiveLogoDarkVariant =

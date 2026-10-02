@@ -61,6 +61,15 @@ import {
   EXECUTIVE_EMPTY_ROLE,
   EXECUTIVE_EMPTY_TITLE,
   EXECUTIVE_EMPTY_VARIANTS,
+  EXECUTIVE_ERROR_CONTENT_ROLES,
+  EXECUTIVE_ERROR_ICON,
+  EXECUTIVE_ERROR_ICON_HIDDEN,
+  EXECUTIVE_ERROR_IMPACT,
+  EXECUTIVE_ERROR_LIVE,
+  EXECUTIVE_ERROR_PROBLEM,
+  EXECUTIVE_ERROR_RECOVERY,
+  EXECUTIVE_ERROR_ROLE,
+  EXECUTIVE_ERROR_SURFACE,
   EXECUTIVE_FEEDBACK_ACTION,
   EXECUTIVE_FEEDBACK_BODY,
   EXECUTIVE_FEEDBACK_DISMISS,
@@ -951,6 +960,33 @@ describe("NP-MASTER-22-B01 executive design contract", () => {
     expect(EXECUTIVE_EMPTY_LIVE).toBe("polite");
     expect(contract).not.toContain("function EmptyState");
     expect(contract).not.toContain("function ExecutiveEmpty");
+  });
+
+  it("defines the shared error-state contract from existing alert patterns", () => {
+    expect(EXECUTIVE_ERROR_CONTENT_ROLES).toEqual([
+      "icon",
+      "problem",
+      "impact",
+      "recovery",
+    ]);
+    expect(EXECUTIVE_ERROR_SURFACE).toBe(EXECUTIVE_FEEDBACK_ERROR);
+    expect(EXECUTIVE_ERROR_SURFACE).toContain("border-status-risk/25");
+    expect(EXECUTIVE_ERROR_SURFACE).toContain("bg-status-risk/10");
+    expect(EXECUTIVE_ERROR_SURFACE).toContain("rounded-executive");
+    expect(EXECUTIVE_ERROR_ICON).toContain(EXECUTIVE_FEEDBACK_ICON);
+    expect(EXECUTIVE_ERROR_ICON).toContain("text-status-risk");
+    expect(EXECUTIVE_ERROR_ICON_HIDDEN).toBe("true");
+    expect(EXECUTIVE_ERROR_PROBLEM).toContain("text-status-risk");
+    expect(EXECUTIVE_ERROR_IMPACT).toContain("np-type-body");
+    expect(EXECUTIVE_ERROR_RECOVERY).toContain(EXECUTIVE_BUTTON_PRIMARY);
+    expect(EXECUTIVE_ERROR_RECOVERY).toContain(EXECUTIVE_FOCUS_GOLD);
+    expect(EXECUTIVE_ERROR_RECOVERY).not.toContain("href");
+    expect(EXECUTIVE_ERROR_RECOVERY).not.toContain("onClick");
+    expect(EXECUTIVE_ERROR_ROLE).toBe("alert");
+    expect(EXECUTIVE_ERROR_LIVE).toBe("assertive");
+    expect(EXECUTIVE_ERROR_LIVE).toBe(EXECUTIVE_FEEDBACK_LIVE.error);
+    expect(contract).not.toContain("function ErrorState");
+    expect(contract).not.toContain("function ExecutiveError");
   });
 
   it("defines one executive button system from the existing CTA contract", () => {
