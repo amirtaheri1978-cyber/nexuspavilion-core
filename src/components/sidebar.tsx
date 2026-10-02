@@ -37,6 +37,7 @@ export default function Sidebar({
 
   const [mobileOpen, setMobileOpen] = useState(false);
   const [stats, setStats] = useState<ApplicationNavStats>(defaultStats);
+  const [contextReady, setContextReady] = useState(false);
   const [context, setContext] = useState<ApplicationUserContext>({
     role: null,
     networkRole: null,
@@ -144,6 +145,8 @@ export default function Sidebar({
             companyStatus: null,
           });
         }
+      } finally {
+        if (!cancelled) setContextReady(true);
       }
     }
 
@@ -158,9 +161,13 @@ export default function Sidebar({
   function renderNavItem(item: ApplicationNavItem, compact = false) {
     const isActive = isActivePath(pathname, item.href);
     const hasBadge = Boolean(item.badge && item.badge !== "0");
-    const compactAriaLabel = hasBadge
-      ? `${item.label}, ${item.badge}. ${item.description}`
-      : `${item.label}. ${item.description}`;
+    const compactAriaLabel = !contextReady
+      ? hasBadge
+        ? `${item.label}, ${item.badge}`
+        : item.label
+      : hasBadge
+        ? `${item.label}, ${item.badge}. ${item.description}`
+        : `${item.label}. ${item.description}`;
 
     return (
       <Link
@@ -171,11 +178,12 @@ export default function Sidebar({
         title={compact ? item.label : undefined}
         onClick={() => setMobileOpen(false)}
         className={[
-          "group relative flex min-h-11 items-center rounded-[14px] text-sm transition",
+          "group relative flex min-h-11 min-w-0 items-center rounded-[14px] text-sm",
+          "transition-[background-color,color] duration-[var(--motion-duration-fast)] motion-reduce:transition-none",
           compact ? "justify-center px-2 py-2.5" : "gap-3 px-3 py-3",
           isActive
-            ? "bg-gradient-to-r from-[#0B3D91]/45 to-[#2CC4E8]/10 text-white ring-1 ring-[#2CC4E8]/25"
-            : "text-slate-300 hover:bg-white/[0.045] hover:text-white",
+            ? "bg-nexus-cyan/10 text-nexus-text-primary"
+            : "text-nexus-text-secondary hover:bg-white/[0.08] hover:text-nexus-text-primary",
           EXECUTIVE_FOCUS_CYAN,
         ].join(" ")}
       >
@@ -185,8 +193,8 @@ export default function Sidebar({
             "flex shrink-0 items-center justify-center rounded-[10px] border text-[13px] font-black",
             compact ? "h-10 w-10" : "h-8 w-8",
             isActive
-              ? "border-[#2CC4E8]/30 bg-[#2CC4E8]/12 text-[#9BE8F8]"
-              : "border-white/10 bg-[#061426]/80 text-slate-400 group-hover:text-[#C8A646]",
+              ? "border-nexus-cyan/25 bg-nexus-cyan/10 text-nexus-cyan-bright"
+              : "border-white/10 bg-nexus-navy text-nexus-text-secondary group-hover:text-nexus-text-primary",
           ].join(" ")}
         >
           {getNavGlyph(item.key)}
@@ -197,9 +205,11 @@ export default function Sidebar({
             <span className="block truncate font-semibold leading-5">
               {item.label}
             </span>
-            <span className="mt-0.5 block break-words text-[11px] font-medium leading-4 text-slate-400">
-              {item.description}
-            </span>
+            {contextReady ? (
+              <span className="mt-0.5 block break-words text-[11px] font-medium leading-4 text-slate-400">
+                {item.description}
+              </span>
+            ) : null}
           </span>
         )}
 
@@ -357,9 +367,9 @@ export default function Sidebar({
             <div key={section.title} className={index > 0 ? "mt-6" : undefined}>
               <p
                 className={
-                  collapsed
-                    ? "sr-only"
-                    : "mb-3 px-3 text-[10px] font-black uppercase tracking-[0.28em] text-[#C8A646]"
+                collapsed
+                  ? "sr-only"
+                  : "np-type-meta mb-3 px-3"
                 }
               >
                 {section.title}
@@ -501,6 +511,7 @@ function getNavGlyph(key: string) {
     analytics: "◇",
     directory: "☷",
     rfq: "▣",
+    projects: "▦",
     notifications: "!",
     company: "◼",
     "vendor-dashboard": "◷",

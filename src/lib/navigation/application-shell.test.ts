@@ -71,6 +71,16 @@ describe("Task 23 enterprise application shell", () => {
     expect(sidebar).toContain("aria-label={compactWorkspaceLabel}");
   });
 
+  it("keeps experience sublabels off the first server and client render", () => {
+    expect(sidebar).toContain("const [contextReady, setContextReady] = useState(false)");
+    expect(sidebar).toContain("if (!cancelled) setContextReady(true)");
+    expect(sidebar).toContain("{contextReady ? (");
+    expect(sidebar).toContain("{item.description}");
+    expect(sidebar).not.toContain("Procurement command center");
+    expect(sidebar).not.toContain("Company operating view");
+    expect(sidebar).toContain('title={compact ? item.label : undefined}');
+  });
+
   it("keeps AppTopbar as context, not a page h1, with frozen action placement", () => {
     expect(topbar).not.toMatch(/<h1[\s>]/);
     expect(topbar).toContain("BOARDROOM_INTELLIGENCE_TITLE");
