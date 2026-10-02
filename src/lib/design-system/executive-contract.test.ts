@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
@@ -22,6 +22,7 @@ import {
   EXECUTIVE_CARD_ROLE_SURFACE,
   EXECUTIVE_CARD_ROLES,
   EXECUTIVE_CONTENT_MAX_WIDTH_PX,
+  EXECUTIVE_ATTENTION_CLASS,
   EXECUTIVE_CONTROL_CLASS,
   EXECUTIVE_CTA_PRIMARY,
   EXECUTIVE_CTA_SECONDARY,
@@ -166,6 +167,29 @@ import {
 
 function readSource(relativePath: string) {
   return readFileSync(resolve(process.cwd(), relativePath), "utf8");
+}
+
+function sourceFiles(relativeDir: string): string[] {
+  const entries = readdirSync(resolve(process.cwd(), relativeDir), {
+    withFileTypes: true,
+  });
+  const files: string[] = [];
+
+  for (const entry of entries) {
+    const relativePath = `${relativeDir}/${entry.name}`;
+
+    if (entry.isDirectory()) {
+      files.push(...sourceFiles(relativePath));
+      continue;
+    }
+
+    if (relativePath === "src/app/globals.css") continue;
+    if (!/\.(tsx|ts|css)$/.test(entry.name)) continue;
+
+    files.push(relativePath);
+  }
+
+  return files;
 }
 
 function normalizeColor(value: string) {
@@ -1149,5 +1173,53 @@ describe("NP-MASTER-22-B01 executive design contract", () => {
     expect(deadlineField).toContain('value: "UTC"');
     expect(deadlineField).not.toContain("toISOString");
     expect(deadlineField).not.toContain("timeZone:");
+  });
+
+  it("defines a one-shot attention motion from existing tokens", () => {
+    expect(EXECUTIVE_ATTENTION_CLASS).toBe("np-attention");
+    expect(contract).toContain('export const EXECUTIVE_ATTENTION_CLASS = "np-attention"');
+
+    const attention = globals.slice(globals.indexOf(".np-attention {"));
+    expect(attention).toContain("animation-name: np-attention-wash, np-attention-edge;");
+    expect(attention).toContain("animation-iteration-count: 1, 1;");
+    expect(attention).toContain("animation-fill-mode: none, none;");
+    expect(attention).toContain("var(--motion-duration-context)");
+    expect(attention).toContain("var(--motion-duration-milestone)");
+    expect(attention).toContain("var(--motion-ease-standard)");
+    expect(attention).toContain("var(--status-warning)");
+    expect(attention).toContain("var(--nexus-gold)");
+    expect(attention).toContain("var(--nexus-cyan)");
+    expect(attention).toContain("background-color: transparent;");
+    expect(attention).not.toContain("infinite");
+    expect(attention).not.toContain("scale");
+    expect(attention).not.toContain("bounce");
+    expect(attention).not.toContain("confetti");
+    expect(attention).not.toContain("prefers-reduced-motion");
+
+    expect(cssVariableValue(globals, "--motion-duration-context")).toBe(
+      "300ms",
+    );
+    expect(cssVariableValue(globals, "--motion-duration-milestone")).toBe(
+      "650ms",
+    );
+    expect(cssVariableValue(globals, "--motion-ease-standard")).toBe(
+      "cubic-bezier(0.2,0,0,1)",
+    );
+
+    const reduced = globals.slice(
+      globals.indexOf("@media (prefers-reduced-motion: reduce)"),
+      globals.indexOf("@media print"),
+    );
+    expect(reduced).toContain("animation-name: none !important;");
+    expect(reduced).toContain("animation-duration: 0.01ms !important;");
+    expect(reduced).toContain("animation-iteration-count: 1 !important;");
+    expect(reduced).toContain("transition-property: none !important;");
+
+    for (const file of [
+      ...sourceFiles("src/app"),
+      ...sourceFiles("src/components"),
+    ]) {
+      expect(readSource(file), file).not.toContain(EXECUTIVE_ATTENTION_CLASS);
+    }
   });
 });

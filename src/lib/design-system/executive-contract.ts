@@ -752,3 +752,5 @@ export type ExecutiveLogoDarkVariant =
 export const EXECUTIVE_LOGO_DARK_MIN_SIZE_PX = 32;
 export const EXECUTIVE_LOGO_CLEAR_SPACE_PX = 12;
 export const EXECUTIVE_LOGO_DARK_CLASS = "np-logo-dark";
+
+export const EXECUTIVE_ATTENTION_CLASS = "np-attention";

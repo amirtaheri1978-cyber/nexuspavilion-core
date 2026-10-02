@@ -533,3 +533,41 @@ body {
     overflow: visible;
   }
 }
+
+.np-attention {
+  animation-name: np-attention-wash, np-attention-edge;
+  animation-duration:
+    var(--motion-duration-context), var(--motion-duration-milestone);
+  animation-timing-function:
+    var(--motion-ease-standard), var(--motion-ease-standard);
+  animation-iteration-count: 1, 1;
+  animation-fill-mode: none, none;
+}
+
+@keyframes np-attention-wash {
+  from {
+    background-color: color-mix(
+      in srgb,
+      var(--status-warning) 12%,
+      transparent
+    );
+  }
+
+  to {
+    background-color: transparent;
+  }
+}
+
+@keyframes np-attention-edge {
+  from {
+    box-shadow:
+      inset 0 0 0 1px color-mix(in srgb, var(--nexus-cyan) 28%, transparent),
+      inset 3px 0 0 color-mix(in srgb, var(--nexus-gold) 42%, transparent);
+  }
+
+  to {
+    box-shadow:
+      inset 0 0 0 1px transparent,
+      inset 3px 0 0 transparent;
+  }
+}
