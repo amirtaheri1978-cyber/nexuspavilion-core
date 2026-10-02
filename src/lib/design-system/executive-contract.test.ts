@@ -70,6 +70,17 @@ import {
   EXECUTIVE_ERROR_RECOVERY,
   EXECUTIVE_ERROR_ROLE,
   EXECUTIVE_ERROR_SURFACE,
+  EXECUTIVE_STEPPER_CURRENT,
+  EXECUTIVE_STEPPER_DISABLED,
+  EXECUTIVE_STEPPER_FOCUS,
+  EXECUTIVE_STEPPER_LABEL,
+  EXECUTIVE_STEPPER_LAYOUTS,
+  EXECUTIVE_STEPPER_LIST_COMPACT,
+  EXECUTIVE_STEPPER_LIST_HORIZONTAL,
+  EXECUTIVE_STEPPER_MARKER_STATE,
+  EXECUTIVE_STEPPER_STATES,
+  EXECUTIVE_STEPPER_SURFACE,
+  EXECUTIVE_STEPPER_SURFACE_STATE,
   EXECUTIVE_FEEDBACK_ACTION,
   EXECUTIVE_FEEDBACK_BODY,
   EXECUTIVE_FEEDBACK_DISMISS,
@@ -987,6 +998,40 @@ describe("NP-MASTER-22-B01 executive design contract", () => {
     expect(EXECUTIVE_ERROR_LIVE).toBe(EXECUTIVE_FEEDBACK_LIVE.error);
     expect(contract).not.toContain("function ErrorState");
     expect(contract).not.toContain("function ExecutiveError");
+  });
+
+  it("defines the shared workflow stepper presentation contract", () => {
+    expect(EXECUTIVE_STEPPER_STATES).toEqual([
+      "completed",
+      "current",
+      "upcoming",
+    ]);
+    expect(EXECUTIVE_STEPPER_LAYOUTS).toEqual(["horizontal", "compact"]);
+    expect(EXECUTIVE_STEPPER_LIST_HORIZONTAL).toContain("overflow-x-auto");
+    expect(EXECUTIVE_STEPPER_LIST_HORIZONTAL).toContain("min-w-0");
+    expect(EXECUTIVE_STEPPER_LIST_COMPACT).toContain("flex-col");
+    expect(EXECUTIVE_STEPPER_SURFACE).toContain("rounded-executive");
+    expect(EXECUTIVE_STEPPER_SURFACE).toContain("var(--motion-duration-standard)");
+    expect(EXECUTIVE_STEPPER_SURFACE).toContain("motion-reduce:transition-none");
+    expect(EXECUTIVE_STEPPER_SURFACE_STATE.completed).toContain("status-success");
+    expect(EXECUTIVE_STEPPER_SURFACE_STATE.current).toContain("status-info");
+    expect(EXECUTIVE_STEPPER_SURFACE_STATE.upcoming).toContain("bg-white/[0.045]");
+    expect(EXECUTIVE_STEPPER_MARKER_STATE.completed).toBe(
+      EXECUTIVE_BADGE_SEMANTIC_CLASSES.success,
+    );
+    expect(EXECUTIVE_STEPPER_MARKER_STATE.current).toBe(
+      EXECUTIVE_BADGE_SEMANTIC_CLASSES.info,
+    );
+    expect(EXECUTIVE_STEPPER_MARKER_STATE.upcoming).toBe(
+      EXECUTIVE_BADGE_SEMANTIC_CLASSES.neutral,
+    );
+    expect(EXECUTIVE_STEPPER_LABEL).toContain("break-words");
+    expect(EXECUTIVE_STEPPER_DISABLED).toContain("opacity-60");
+    expect(EXECUTIVE_STEPPER_DISABLED).toContain("cursor-not-allowed");
+    expect(EXECUTIVE_STEPPER_DISABLED).not.toContain("pointer-events-none");
+    expect(EXECUTIVE_STEPPER_FOCUS).toBe(EXECUTIVE_FOCUS_GOLD);
+    expect(EXECUTIVE_STEPPER_CURRENT).toBe("step");
+    expect(contract).not.toContain("function ExecutiveWorkflowStepper");
   });
 
   it("defines one executive button system from the existing CTA contract", () => {

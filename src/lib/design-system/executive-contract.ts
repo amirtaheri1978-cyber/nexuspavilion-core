@@ -684,6 +684,66 @@ export const EXECUTIVE_ERROR_ROLE = "alert";
 
 export const EXECUTIVE_ERROR_LIVE = EXECUTIVE_FEEDBACK_LIVE.error;
 
+export const EXECUTIVE_STEPPER_STATES = [
+  "completed",
+  "current",
+  "upcoming",
+] as const;
+
+export type ExecutiveStepperState = (typeof EXECUTIVE_STEPPER_STATES)[number];
+
+export const EXECUTIVE_STEPPER_LAYOUTS = ["horizontal", "compact"] as const;
+
+export type ExecutiveStepperLayout =
+  (typeof EXECUTIVE_STEPPER_LAYOUTS)[number];
+
+export const EXECUTIVE_STEPPER_LIST_HORIZONTAL =
+  "flex min-w-0 gap-3 overflow-x-auto";
+
+export const EXECUTIVE_STEPPER_LIST_COMPACT = "flex min-w-0 flex-col gap-3";
+
+export const EXECUTIVE_STEPPER_ITEM_HORIZONTAL = "min-w-0 w-48 shrink-0";
+
+export const EXECUTIVE_STEPPER_ITEM_COMPACT = "min-w-0 w-full";
+
+export const EXECUTIVE_STEPPER_SURFACE = [
+  "flex min-w-0 items-start gap-3 rounded-executive border p-4 text-left",
+  "transition-[border-color,background-color] duration-[var(--motion-duration-standard)]",
+  "motion-reduce:transition-none",
+].join(" ");
+
+export const EXECUTIVE_STEPPER_SURFACE_STATE: Record<
+  ExecutiveStepperState,
+  string
+> = {
+  completed: "border-status-success/25 bg-status-success/10",
+  current: "border-status-info/25 bg-status-info/10",
+  upcoming: "border-white/10 bg-white/[0.045]",
+};
+
+export const EXECUTIVE_STEPPER_MARKER =
+  "flex h-11 w-11 shrink-0 items-center justify-center rounded-full border text-sm font-black";
+
+export const EXECUTIVE_STEPPER_MARKER_STATE: Record<
+  ExecutiveStepperState,
+  string
+> = {
+  completed: EXECUTIVE_BADGE_SEMANTIC_CLASSES.success,
+  current: EXECUTIVE_BADGE_SEMANTIC_CLASSES.info,
+  upcoming: EXECUTIVE_BADGE_SEMANTIC_CLASSES.neutral,
+};
+
+export const EXECUTIVE_STEPPER_LABEL =
+  "mt-1 block break-words text-sm font-black text-nexus-text-primary";
+
+export const EXECUTIVE_STEPPER_DESCRIPTION = "mt-1 block break-words np-type-body";
+
+export const EXECUTIVE_STEPPER_DISABLED = "cursor-not-allowed opacity-60";
+
+export const EXECUTIVE_STEPPER_FOCUS = EXECUTIVE_FOCUS_GOLD;
+
+export const EXECUTIVE_STEPPER_CURRENT = "step";
+
 export const EXECUTIVE_LOGO_DARK_VARIANTS = ["icon", "horizontal"] as const;
 
 export type ExecutiveLogoDarkVariant =
