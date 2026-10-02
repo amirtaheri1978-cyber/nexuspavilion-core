@@ -83,6 +83,14 @@ import {
   EXECUTIVE_MOTION_REDUCE_DURATION,
   EXECUTIVE_MOTION_ROLES,
   EXECUTIVE_MOTION_STANDARD_MS,
+  EXECUTIVE_POPOVER_MOTION,
+  EXECUTIVE_POPOVER_PLACEMENT,
+  EXECUTIVE_POPOVER_SURFACE,
+  EXECUTIVE_TOOLTIP_MOTION,
+  EXECUTIVE_TOOLTIP_MOTION_MS,
+  EXECUTIVE_TOOLTIP_PLACEMENT,
+  EXECUTIVE_TOOLTIP_ROLES,
+  EXECUTIVE_TOOLTIP_SURFACE,
   EXECUTIVE_NAVY,
   EXECUTIVE_PAGE_CLASS,
   EXECUTIVE_TYPE_ROLES,
@@ -782,6 +790,29 @@ describe("NP-MASTER-22-B01 executive design contract", () => {
       EXECUTIVE_CARD_INTELLIGENCE_CLASS,
     );
     expect(contract).not.toContain("function ExecutiveDrawer");
+  });
+
+  it("defines the shared tooltip and popover contract from existing surface and motion tokens", () => {
+    expect(EXECUTIVE_TOOLTIP_ROLES).toEqual(["surface", "placement", "timing"]);
+    expect(EXECUTIVE_TOOLTIP_SURFACE).toContain("bg-nexus-surface-elevated");
+    expect(EXECUTIVE_TOOLTIP_SURFACE).toContain("rounded-executive");
+    expect(EXECUTIVE_TOOLTIP_SURFACE).toContain("shadow-inner-executive");
+    expect(EXECUTIVE_TOOLTIP_SURFACE).toContain("np-type-meta");
+    expect(EXECUTIVE_TOOLTIP_SURFACE).toContain("px-3 py-2");
+    expect(EXECUTIVE_TOOLTIP_PLACEMENT).toContain("bottom-full");
+    expect(EXECUTIVE_TOOLTIP_PLACEMENT).toContain("mb-2");
+    expect(EXECUTIVE_TOOLTIP_MOTION_MS).toBe(EXECUTIVE_MOTION_FAST_MS);
+    expect(EXECUTIVE_TOOLTIP_MOTION).toContain("var(--motion-duration-fast)");
+    expect(EXECUTIVE_POPOVER_SURFACE).toContain("rounded-panel");
+    expect(EXECUTIVE_POPOVER_SURFACE).toContain("shadow-executive");
+    expect(EXECUTIVE_POPOVER_SURFACE).toContain("np-type-body");
+    expect(EXECUTIVE_POPOVER_PLACEMENT).toContain("top-full");
+    expect(EXECUTIVE_POPOVER_PLACEMENT).toContain("mt-2");
+    expect(EXECUTIVE_POPOVER_MOTION).toBe(EXECUTIVE_TOOLTIP_MOTION);
+    expect(EXECUTIVE_TOOLTIP_SURFACE).not.toContain("aria-hidden");
+    expect(EXECUTIVE_POPOVER_SURFACE).not.toContain("aria-hidden");
+    expect(contract).not.toContain("function Tooltip");
+    expect(contract).not.toContain("function Popover");
   });
 
   it("defines one executive button system from the existing CTA contract", () => {

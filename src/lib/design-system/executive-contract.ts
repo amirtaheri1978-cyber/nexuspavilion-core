@@ -507,6 +507,36 @@ export const EXECUTIVE_MOTION_EASE_STANDARD = "cubic-bezier(0.2, 0, 0, 1)";
 
 export const EXECUTIVE_MOTION_REDUCE_DURATION = "0.01ms";
 
+export const EXECUTIVE_TOOLTIP_ROLES = [
+  "surface",
+  "placement",
+  "timing",
+] as const;
+
+export type ExecutiveTooltipRole = (typeof EXECUTIVE_TOOLTIP_ROLES)[number];
+
+export const EXECUTIVE_TOOLTIP_MOTION_MS = EXECUTIVE_MOTION_FAST_MS;
+
+export const EXECUTIVE_TOOLTIP_SURFACE = [
+  "rounded-executive border border-white/10 bg-nexus-surface-elevated",
+  "px-3 py-2 np-type-meta text-nexus-text-primary shadow-inner-executive",
+].join(" ");
+
+export const EXECUTIVE_TOOLTIP_PLACEMENT =
+  "absolute bottom-full left-1/2 z-20 mb-2 -translate-x-1/2";
+
+export const EXECUTIVE_TOOLTIP_MOTION =
+  "transition-opacity duration-[var(--motion-duration-fast)]";
+
+export const EXECUTIVE_POPOVER_SURFACE = [
+  "rounded-panel border border-white/10 bg-nexus-surface-elevated",
+  "p-4 np-type-body text-nexus-text-primary shadow-executive",
+].join(" ");
+
+export const EXECUTIVE_POPOVER_PLACEMENT = "absolute top-full left-0 z-20 mt-2";
+
+export const EXECUTIVE_POPOVER_MOTION = EXECUTIVE_TOOLTIP_MOTION;
+
 export const EXECUTIVE_LOGO_DARK_VARIANTS = ["icon", "horizontal"] as const;
 
 export type ExecutiveLogoDarkVariant =
