@@ -91,8 +91,18 @@ describe("executive error recovery", () => {
   });
 
   it("highlights the error once and keeps reduced motion on the global rule", () => {
-    const highlight = globals.slice(globals.indexOf(".np-error-recovery {"));
-    const fade = globals.slice(globals.indexOf("@keyframes np-motion-fade"));
+    const fallbackStart = globals.lastIndexOf(
+      "@media (prefers-reduced-motion: reduce)",
+    );
+    const highlight = globals.slice(
+      globals.indexOf(".np-error-recovery {"),
+      fallbackStart,
+    );
+    const fade = globals.slice(
+      globals.indexOf("@keyframes np-motion-fade"),
+      fallbackStart,
+    );
+    const staticRecovery = globals.slice(fallbackStart);
 
     expect(highlight).toContain("animation-name: np-motion-fade;");
     expect(highlight).toContain("animation-iteration-count: 1;");
@@ -113,6 +123,18 @@ describe("executive error recovery", () => {
     expect(highlight).not.toContain("scale");
     expect(highlight).not.toContain("confetti");
     expect(highlight).not.toContain("prefers-reduced-motion");
+    expect(staticRecovery).toContain(".np-error-recovery::before");
+    expect(staticRecovery).toContain(".np-error-recovery::after");
+    expect(staticRecovery).toContain("opacity: 1;");
+    expect(staticRecovery).not.toContain("animation-name:");
+    expect(staticRecovery).not.toContain("transition");
+    expect(recovery).toContain("EXECUTIVE_ERROR_SURFACE");
+    expect(recovery).toContain("{title}");
+    expect(recovery).toContain("{problem}");
+    expect(recovery).toContain("{recovery}");
+    expect(recovery).toContain("{recoveryAction}");
+    expect(recovery).not.toContain("matchMedia");
+    expect(recovery).not.toContain("requestAnimationFrame");
     expect(globals).toContain("animation-name: none !important;");
     expect(globals).toContain("@media (prefers-reduced-motion: reduce)");
     expect(cssUnchanged(globals, "--motion-duration-milestone")).toBe("650ms");

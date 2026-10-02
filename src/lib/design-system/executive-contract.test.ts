@@ -1181,8 +1181,16 @@ describe("NP-MASTER-22-B01 executive design contract", () => {
     expect(EXECUTIVE_ATTENTION_CLASS).toBe("np-attention");
     expect(contract).toContain('export const EXECUTIVE_ATTENTION_CLASS = "np-attention"');
 
-    const attention = globals.slice(globals.indexOf(".np-attention,"));
-    const fade = globals.slice(globals.indexOf("@keyframes np-motion-fade"));
+    const motionStart = globals.indexOf(".np-attention,");
+    const fallbackStart = globals.lastIndexOf(
+      "@media (prefers-reduced-motion: reduce)",
+    );
+    const attention = globals.slice(motionStart, fallbackStart);
+    const fade = globals.slice(
+      globals.indexOf("@keyframes np-motion-fade"),
+      fallbackStart,
+    );
+    const staticAttention = globals.slice(fallbackStart);
     expect(EXECUTIVE_MOTION_PERFORMANCE_PROPERTIES).toEqual([
       "opacity",
       "transform",
@@ -1209,6 +1217,12 @@ describe("NP-MASTER-22-B01 executive design contract", () => {
     expect(attention).not.toContain("bounce");
     expect(attention).not.toContain("confetti");
     expect(attention).not.toContain("prefers-reduced-motion");
+    expect(staticAttention).toContain(".np-attention::before");
+    expect(staticAttention).toContain(".np-attention::after");
+    expect(staticAttention).toContain("opacity: 1;");
+    expect(staticAttention).not.toContain("animation-name:");
+    expect(staticAttention).not.toContain("transition");
+    expect(fallbackStart).toBeGreaterThan(motionStart);
 
     expect(cssVariableValue(globals, "--motion-duration-context")).toBe(
       "300ms",

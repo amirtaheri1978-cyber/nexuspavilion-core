@@ -596,3 +596,12 @@ body {
     opacity: 0;
   }
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .np-attention::before,
+  .np-attention::after,
+  .np-error-recovery::before,
+  .np-error-recovery::after {
+    opacity: 1;
+  }
+}

@@ -64,4 +64,21 @@ describe("executive completion moment", () => {
     expect(completion).not.toContain("award");
     expect(completion).not.toContain("membership");
   });
+
+  it("keeps completion feedback available without motion", () => {
+    expect(completion).toContain("{title}");
+    expect(completion).toContain("{summary}");
+    expect(completion).toContain("{detail}");
+    expect(completion).toContain("{nextAction}");
+    expect(completion).toContain("{secondaryAction}");
+    expect(completion).toContain('role="status"');
+    expect(completion).toContain('case "processing"');
+    expect(completion).toContain('case "confirmed"');
+    expect(completion).not.toContain(["np", "attention"].join("-"));
+    expect(completion).not.toContain(["np", "motion", "fade"].join("-"));
+    expect(completion).not.toContain("@keyframes");
+    expect(completion).not.toContain("prefers-reduced-motion");
+    expect(completion).not.toContain("matchMedia");
+    expect(completion).not.toContain("requestAnimationFrame");
+  });
 });
