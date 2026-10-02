@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 
+import { ExecutiveCompletionMoment } from "@/components/executive/executive-completion-moment";
 import { formatRfqDeadlineForDisplay } from "@/lib/datetime/format-rfq-deadline-display";
 import {
   getRfiDeadlineAwareness,
@@ -24,6 +25,29 @@ type RFQRfiWorkspaceProps = {
   rfiDeadline?: string | null;
   rfiDeadlineTimezone?: string | null;
 };
+
+function isSubmittedRfi(value: unknown): value is PrivateRfi {
+  if (!value || typeof value !== "object") return false;
+  return typeof (value as { id?: unknown }).id === "string";
+}
+
+function displayedRfiStatus(status: string) {
+  return status === "answered" ? "Answered" : "Open";
+}
+
+function submissionStateSummary(rfi: PrivateRfi) {
+  const parts: string[] = [];
+
+  if (rfi.created_at) {
+    parts.push(`Submitted ${formatTimestamp(rfi.created_at)}.`);
+  }
+
+  if (rfi.status) {
+    parts.push(`Status: ${displayedRfiStatus(rfi.status)}.`);
+  }
+
+  return parts.join(" ");
+}
 
 function formatTimestamp(value: string | null) {
   if (!value) return "N/A";
@@ -91,6 +115,7 @@ export function RFQRfiWorkspace({
   const [submitting, setSubmitting] = useState(false);
   const [answeringId, setAnsweringId] = useState("");
   const [message, setMessage] = useState("");
+  const [submittedRfi, setSubmittedRfi] = useState<PrivateRfi | null>(null);
   const [error, setError] = useState("");
   const [validationTarget, setValidationTarget] = useState<
     "question" | `response:${string}` | null
@@ -194,6 +219,7 @@ export function RFQRfiWorkspace({
 
     setSubmitting(true);
     setMessage("");
+    setSubmittedRfi(null);
     setError("");
     setValidationTarget(null);
 
@@ -216,7 +242,12 @@ export function RFQRfiWorkspace({
 
       setRfis((current) => [data.rfi, ...current]);
       setQuestion("");
-      setMessage("Private RFI submitted.");
+      if (isSubmittedRfi(data.rfi)) {
+        setSubmittedRfi(data.rfi);
+        setMessage("");
+      } else {
+        setMessage("Private RFI submitted.");
+      }
     } catch (submitError) {
       console.error(submitError);
       setError("Request failed. Please try again.");
@@ -238,6 +269,7 @@ export function RFQRfiWorkspace({
 
     setAnsweringId(rfiId);
     setMessage("");
+    setSubmittedRfi(null);
     setError("");
     setValidationTarget(null);
 
@@ -322,6 +354,16 @@ export function RFQRfiWorkspace({
           </button>
         </div>
       </div>
+
+      {submittedRfi ? (
+        <div className="mt-6 min-w-0">
+          <ExecutiveCompletionMoment
+            state="confirmed"
+            title="Private RFI submitted."
+            summary={submissionStateSummary(submittedRfi)}
+          />
+        </div>
+      ) : null}
 
       {message ? (
         <div
