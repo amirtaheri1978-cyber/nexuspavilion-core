@@ -1,6 +1,10 @@
 "use client";
 
 import DeadlineField from "@/components/deadline-field";
+import { ExecutiveBadge } from "@/components/executive/executive-badge";
+import { ExecutiveMetricCard } from "@/components/executive/executive-metric-card";
+import { ExecutivePanel } from "@/components/executive/executive-panel";
+import { ExecutiveProgress } from "@/components/executive/executive-progress";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useMemo, useState, type ReactNode } from "react";
@@ -10,11 +14,36 @@ import {
 } from "@/components/rfq-workspace/rfq-publication-readiness-review";
 import { RFQScopeReview } from "@/components/rfq-workspace/rfq-scope-review";
 import { useRFQDraftAutosave } from "@/hooks/use-rfq-draft-autosave";
-import { EXECUTIVE_FOCUS_CYAN } from "@/lib/design-system/executive-contract";
+import {
+  EXECUTIVE_BUTTON_PRIMARY,
+  EXECUTIVE_BUTTON_SECONDARY,
+  EXECUTIVE_BUTTON_TERTIARY,
+  EXECUTIVE_DIALOG_BODY,
+  EXECUTIVE_DIALOG_OVERLAY,
+  EXECUTIVE_DIALOG_SURFACE,
+  EXECUTIVE_DIALOG_TITLE,
+  EXECUTIVE_FEEDBACK_ERROR,
+  EXECUTIVE_FEEDBACK_INFO,
+  EXECUTIVE_FEEDBACK_WARNING,
+  EXECUTIVE_FOCUS_CYAN,
+  EXECUTIVE_FORM_HELPER,
+  EXECUTIVE_FORM_INPUT,
+  EXECUTIVE_FORM_LABEL,
+  EXECUTIVE_FORM_SELECT,
+  EXECUTIVE_FORM_TEXTAREA,
+  EXECUTIVE_PAGE_CLASS,
+  EXECUTIVE_STEPPER_FOCUS,
+  EXECUTIVE_STEPPER_MARKER,
+  EXECUTIVE_STEPPER_MARKER_STATE,
+  EXECUTIVE_STEPPER_SURFACE,
+  EXECUTIVE_STEPPER_SURFACE_STATE,
+  type ExecutiveStepperState,
+} from "@/lib/design-system/executive-contract";
 import { formatRfqDeadlineForDisplay } from "@/lib/datetime/format-rfq-deadline-display";
 import { resolveRfqDeadlineForStorage } from "@/lib/datetime/local-date-time-to-utc";
 import { evaluateRfqRequirements } from "@/lib/procurement/rfq-requirements-completeness";
 import { evaluateRfqScopeReview } from "@/lib/procurement/rfq-scope-review";
+
 type ProcurementScope =
 | "material"
 | "subcontractor"
@@ -645,78 +674,8 @@ setPublishStage("");
 }
 }
 
-return (
-<main className="relative min-h-screen overflow-hidden bg-[#061426] px-4 py-6 text-white sm:px-6 lg:px-10">
-<div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(circle_at_top_left,rgba(44,196,232,0.18),transparent_34%),radial-gradient(circle_at_top_right,rgba(200,166,70,0.15),transparent_30%),linear-gradient(180deg,#061426_0%,#07111F_45%,#020617_100%)]" />
-<div className="pointer-events-none fixed inset-0 -z-10 bg-[linear-gradient(120deg,rgba(255,255,255,0.055),transparent_32%,rgba(200,166,70,0.05)_66%,transparent)]" />
-
-<div className="mx-auto w-full max-w-[1680px]">
-<Link
-href="/rfq"
-className="inline-flex rounded-full border border-white/10 bg-white/[0.045] px-5 py-3 text-sm font-black text-slate-300 transition hover:bg-white/[0.08] hover:text-white"
->
-← Back to RFQ Command Center
-</Link>
-
-<section className="mt-6 rounded-[38px] border border-white/10 bg-white/[0.045] p-6 shadow-[0_32px_110px_rgba(0,0,0,0.42)] backdrop-blur-2xl sm:p-8 lg:p-10">
-{reissueFrom ? (
-<div
-className="mb-8 rounded-[28px] border border-[#C8A646]/30 bg-[#C8A646]/10 p-5"
-data-rfq-replacement-procurement="true"
->
-<p className="np-type-eyebrow text-[#F5D77B]">
-Replacement Procurement
-</p>
-<p className="np-type-body mt-3 max-w-4xl text-slate-200">
-This wizard creates a new RFQ identity. Quotes, invitations, Addenda,
-acknowledgements, evaluations, and award state are not carried forward.
-Only governed lineage to the cancelled predecessor is recorded.
-</p>
-</div>
-) : null}
-<div className="flex flex-col gap-8 xl:flex-row xl:items-start xl:justify-between">
-<div>
-<p className="np-type-eyebrow text-[#C8A646]">
-Buyer Procurement Portal
-</p>
-
-<h1 className="np-type-h1 mt-4 max-w-4xl text-white">
-Create Construction RFQ
-</h1>
-
-<p className="np-type-body mt-5 max-w-4xl text-slate-300">
-Move through a guided RFQ workflow. Small projects can publish
-quickly with required fields only, while larger tenders can add
-optional documents, controls, and enterprise requirements.
-</p>
-
-<div className="mt-6 flex flex-wrap gap-3">
-<ExecutiveBadge
-tone={publicationReady ? "success" : isFormReady ? "blue" : "warning"}
->
-{publicationReady
-? "Ready to Publish"
-: isFormReady
-? "Awaiting Sign-Off"
-: "Draft"}
-</ExecutiveBadge>
-
-<ExecutiveBadge tone="blue">RFQ Wizard</ExecutiveBadge>
-
-<ExecutiveBadge
-tone={
-draftAutosave.status === "saved" ||
-draftAutosave.status === "restored" ||
-draftAutosave.status === "cleared"
-? "success"
-: draftAutosave.status === "saving"
-? "blue"
-: draftAutosave.status === "dirty"
-? "warning"
-: "neutral"
-}
->
-{draftAutosave.status === "saved"
+const draftStatusLabel =
+draftAutosave.status === "saved"
 ? draftAutosave.lastSavedAt
 ? `Draft Saved · ${new Date(
 draftAutosave.lastSavedAt
@@ -733,7 +692,95 @@ minute: "2-digit",
 ? "Draft Restored"
 : draftAutosave.status === "cleared"
 ? "Draft Cleared"
-: "Auto Save"}
+: "Auto Save";
+
+const draftStatusTone =
+draftAutosave.status === "saved" ||
+draftAutosave.status === "restored" ||
+draftAutosave.status === "cleared"
+? "success"
+: draftAutosave.status === "saving"
+? "blue"
+: draftAutosave.status === "dirty"
+? "warning"
+: "neutral";
+
+const publishStatusLabel = publicationReady
+? "Ready to Publish"
+: isFormReady
+? "Awaiting Sign-Off"
+: "Draft";
+
+const publishStatusTone = publicationReady
+? "success"
+: isFormReady
+? "blue"
+: "warning";
+
+const heroStatusValue = publicationReady
+? "Ready"
+: isFormReady
+? "Awaiting Sign-Off"
+: "Draft";
+
+return (
+<main className="min-h-screen bg-nexus-navy text-white">
+<div className={EXECUTIVE_PAGE_CLASS}>
+<Link href="/rfq" className={EXECUTIVE_BUTTON_TERTIARY}>
+← Back to RFQ Command Center
+</Link>
+
+<ExecutivePanel
+variant="executive"
+padding="lg"
+tone="gold"
+className="np-region-major mt-6"
+aria-labelledby="rfq-drafting-heading"
+>
+{reissueFrom ? (
+<div
+className={`${EXECUTIVE_FEEDBACK_WARNING} mb-8`}
+data-rfq-replacement-procurement="true"
+>
+<p className="np-type-eyebrow text-[#F5D77B]!">
+Replacement Procurement
+</p>
+<p className="np-type-body mt-3 max-w-4xl text-nexus-text-primary">
+This wizard creates a new RFQ identity. Quotes, invitations, Addenda,
+acknowledgements, evaluations, and award state are not carried forward.
+Only governed lineage to the cancelled predecessor is recorded.
+</p>
+</div>
+) : null}
+
+<div className="flex flex-col gap-8 xl:flex-row xl:items-start xl:justify-between">
+<div className="min-w-0">
+<p className="np-type-eyebrow text-nexus-gold">
+Buyer Procurement Portal
+</p>
+
+<h1
+id="rfq-drafting-heading"
+className="np-type-h1 mt-4 max-w-4xl text-pretty"
+>
+Create Construction RFQ
+</h1>
+
+<p className="np-type-body mt-5 max-w-4xl text-pretty text-nexus-text-secondary">
+Move through a guided RFQ workflow. Small projects can publish
+quickly with required fields only, while larger tenders can add
+optional documents, controls, and enterprise requirements.
+</p>
+
+<div className="mt-6 flex flex-wrap gap-2">
+<ExecutiveBadge tone={publishStatusTone}>
+{publishStatusLabel}
+</ExecutiveBadge>
+
+<ExecutiveBadge tone="blue">RFQ Wizard</ExecutiveBadge>
+
+<ExecutiveBadge tone={draftStatusTone}>
+{draftStatusLabel}
 </ExecutiveBadge>
 
 <ExecutiveBadge tone="neutral">
@@ -746,55 +793,64 @@ Recommended {recommendedScore}%
 </div>
 </div>
 
-<div className="grid min-w-full gap-4 sm:grid-cols-2 xl:min-w-[520px]">
-<MiniMetric
-title="Status"
-value={
-publicationReady
-? "Ready"
-: isFormReady
-? "Awaiting Sign-Off"
-: "Draft"
-}
+<div className="grid min-w-0 w-full gap-3 sm:grid-cols-2 xl:max-w-xl">
+<ExecutiveMetricCard
+label="Status"
+value={heroStatusValue}
+tone={publicationReady ? "success" : isFormReady ? "blue" : "gold"}
 />
-<MiniMetric title="Budget" value={budgetPreview} />
-<MiniMetric
-title="Scope"
+<ExecutiveMetricCard
+label="Budget"
+value={budgetPreview}
+tone="neutral"
+/>
+<ExecutiveMetricCard
+label="Scope"
 value={selectedScope?.label || "Pending"}
+tone="neutral"
 />
-<MiniMetric title="Deadline" value={deadlinePreview} />
+<ExecutiveMetricCard
+label="Deadline"
+value={deadlinePreview}
+tone="neutral"
+/>
 </div>
 </div>
-</section>
-{draftAutosave.hasStoredDraft && (
-<section className="mt-8 rounded-[30px] border border-[#C8A646]/25 bg-[#C8A646]/10 p-6 shadow-[0_20px_70px_rgba(200,166,70,0.18)]">
+</ExecutivePanel>
 
+{draftAutosave.hasStoredDraft ? (
+<ExecutivePanel
+variant="operational"
+padding="lg"
+tone="gold"
+className="np-region mt-8"
+aria-labelledby="draft-recovery-heading"
+>
 <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
-
-<div>
-
+<div className="min-w-0">
 <p className="np-type-eyebrow text-[#F5D77B]!">
 Draft Recovery
 </p>
 
-<h3 className="np-type-h3 mt-2 text-white">
+<h3
+id="draft-recovery-heading"
+className="np-type-h3 mt-2 text-pretty"
+>
 Continue your previous RFQ draft?
 </h3>
 
-<p className="np-type-body mt-2 max-w-2xl text-slate-300">
+<p className="np-type-body mt-2 max-w-2xl text-pretty text-nexus-text-secondary">
 A previously saved draft was found on this device.
 You can continue where you left off or discard it and
 start a new RFQ.
 </p>
-
 </div>
 
 <div className="flex flex-wrap gap-3">
-
 <button
 type="button"
 onClick={handleResumeDraft}
-className="rounded-full bg-gradient-to-r from-[#B9902F] via-[#C8A646] to-[#F5D77B] px-6 py-3 text-sm font-black text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C8A646]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#07111F]"
+className={EXECUTIVE_BUTTON_PRIMARY}
 >
 Resume Draft
 </button>
@@ -802,51 +858,66 @@ Resume Draft
 <button
 type="button"
 onClick={handleDiscardDraft}
-className="rounded-full border border-white/10 bg-white/[0.05] px-6 py-3 text-sm font-black text-white hover:bg-white/[0.08]"
+className={EXECUTIVE_BUTTON_SECONDARY}
 >
 Discard Draft
 </button>
-
 </div>
-
 </div>
+</ExecutivePanel>
+) : null}
 
-</section>
-)}
-
-
-<section className="mt-8 rounded-[32px] border border-white/10 bg-white/[0.045] p-5 shadow-[0_24px_80px_rgba(0,0,0,0.25)] backdrop-blur-xl sm:p-6">
+<ExecutivePanel
+variant="operational"
+padding="md"
+className="np-region mt-8"
+aria-label="RFQ drafting steps"
+>
 <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
-{WIZARD_STEPS.map((step, index) => (
+{WIZARD_STEPS.map((step, index) => {
+const stepState: ExecutiveStepperState =
+index < activeStep
+? "completed"
+: index === activeStep
+? "current"
+: "upcoming";
+
+return (
 <button
 key={step}
 type="button"
 onClick={() => setActiveStep(index as WizardStep)}
 aria-current={activeStep === index ? "step" : undefined}
-className={`min-h-11 rounded-[22px] border p-4 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C8A646]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#07111F] ${
-activeStep === index
-? "border-[#C8A646]/35 bg-[#C8A646]/10"
-: "border-white/10 bg-[#061426]/55 hover:border-[#2CC4E8]/25 hover:bg-[#07111F]"
-}`}
+className={`${EXECUTIVE_STEPPER_SURFACE} ${EXECUTIVE_STEPPER_SURFACE_STATE[stepState]} ${EXECUTIVE_STEPPER_FOCUS}`}
 >
-<p className="text-[10px] font-black uppercase tracking-[0.22em] text-slate-400">
+<span
+aria-hidden="true"
+className={`${EXECUTIVE_STEPPER_MARKER} ${EXECUTIVE_STEPPER_MARKER_STATE[stepState]}`}
+>
+{stepState === "completed" ? "✓" : index + 1}
+</span>
+<span className="min-w-0">
+<p className="np-type-meta">
 Step {index + 1}
 {activeStep === index ? " · Current" : ""}
 </p>
-
-<p className="mt-2 break-words text-sm font-black text-white">{step}</p>
+<p className="mt-1 break-words text-sm font-black text-nexus-text-primary">
+{step}
+</p>
+</span>
 </button>
-))}
+);
+})}
 </div>
-</section>
+</ExecutivePanel>
 
 <form
 onSubmit={handleSubmit}
-className="mt-8 grid gap-8 lg:grid-cols-[1.5fr_0.85fr]"
+className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,0.85fr)]"
 >
-<section className="space-y-8">
+<section className="min-w-0 space-y-8">
 {activeStep === 0 ? (
-<ExecutivePanel
+<StepSection
 eyebrow="Step 1 · Required"
 title="Basic project information"
 description="These fields are the minimum required to publish a clear RFQ."
@@ -859,7 +930,7 @@ value={formData.project_name}
 onChange={(event) =>
 updateField("project_name", event.target.value)
 }
-className="w-full rounded-2xl border border-white/10 bg-[#061426]/80 px-4 py-4 text-sm font-bold text-white outline-none transition placeholder:text-slate-400 focus:border-[#2CC4E8]/40 focus:bg-[#07111F]"
+className={EXECUTIVE_FORM_INPUT}
 />
 </FieldLabel>
 
@@ -875,7 +946,7 @@ aria-invalid={isMissingRequiredField("title")}
 aria-describedby={
 isMissingRequiredField("title") ? validationErrorId : undefined
 }
-className="w-full rounded-2xl border border-white/10 bg-[#061426]/80 px-4 py-4 text-sm font-bold text-white outline-none transition placeholder:text-slate-400 focus:border-[#2CC4E8]/40 focus:bg-[#07111F]"
+className={EXECUTIVE_FORM_INPUT}
 />
 </FieldLabel>
 
@@ -892,7 +963,7 @@ aria-invalid={isMissingRequiredField("description")}
 aria-describedby={
 isMissingRequiredField("description") ? validationErrorId : undefined
 }
-className="w-full resize-none rounded-2xl border border-white/10 bg-[#061426]/80 px-4 py-4 text-sm font-bold text-white outline-none transition placeholder:text-slate-400 focus:border-[#2CC4E8]/40 focus:bg-[#07111F]"
+className={`${EXECUTIVE_FORM_TEXTAREA} resize-y`}
 />
 </FieldLabel>
 
@@ -909,7 +980,7 @@ aria-invalid={isMissingRequiredField("category")}
 aria-describedby={
 isMissingRequiredField("category") ? validationErrorId : undefined
 }
-className="w-full rounded-2xl border border-white/10 bg-[#061426]/80 px-4 py-4 text-sm font-bold text-white outline-none transition placeholder:text-slate-400 focus:border-[#2CC4E8]/40 focus:bg-[#07111F]"
+className={EXECUTIVE_FORM_INPUT}
 />
 </FieldLabel>
 
@@ -925,7 +996,7 @@ aria-invalid={isMissingRequiredField("location")}
 aria-describedby={
 isMissingRequiredField("location") ? validationErrorId : undefined
 }
-className="w-full rounded-2xl border border-white/10 bg-[#061426]/80 px-4 py-4 text-sm font-bold text-white outline-none transition placeholder:text-slate-400 focus:border-[#2CC4E8]/40 focus:bg-[#07111F]"
+className={EXECUTIVE_FORM_INPUT}
 />
 </FieldLabel>
 </div>
@@ -942,7 +1013,7 @@ updateField(
 event.target.value.replace(/[^0-9.]/g, "")
 )
 }
-className="w-full rounded-2xl border border-white/10 bg-[#061426]/80 px-4 py-4 text-sm font-bold text-white outline-none transition placeholder:text-slate-400 focus:border-[#2CC4E8]/40 focus:bg-[#07111F]"
+className={EXECUTIVE_FORM_INPUT}
 />
 </FieldLabel>
 
@@ -967,11 +1038,11 @@ helperText="The official closing date and time for supplier submissions."
 />
 </div>
 </div>
-</ExecutivePanel>
+</StepSection>
 ) : null}
 
 {activeStep === 1 ? (
-<ExecutivePanel
+<StepSection
 eyebrow="Step 2 · Required"
 title="Procurement strategy"
 description="Choose how the RFQ should go to market and how the procurement package should be classified."
@@ -996,39 +1067,33 @@ aria-pressed={selected}
 onClick={() =>
 updateField("procurement_scope", item.value)
 }
-className={`rounded-[28px] border p-5 text-left transition disabled:cursor-not-allowed disabled:opacity-60 ${EXECUTIVE_FOCUS_CYAN} ${
+className={`min-h-11 rounded-executive border p-5 text-left transition disabled:cursor-not-allowed disabled:opacity-60 ${EXECUTIVE_FOCUS_CYAN} ${
 selected
-? "border-[#C8A646]/35 bg-[#C8A646]/10 text-white shadow-[0_18px_55px_rgba(200,166,70,0.12)]"
-: "border-white/10 bg-[#061426]/70 text-white hover:border-[#2CC4E8]/25 hover:bg-[#07111F]"
+? "border-nexus-gold/35 bg-nexus-gold/10 text-white"
+: "border-white/10 bg-white/[0.045] text-white hover:border-nexus-cyan/25 hover:bg-white/[0.08]"
 }`}
 >
 <div className="flex items-start justify-between gap-4">
-<div>
-<p className="text-lg font-black">
+<div className="min-w-0">
+<p className="text-lg font-black text-pretty">
 {item.label}
 </p>
 
-<p className="mt-2 text-sm font-semibold leading-6 text-slate-400">
+<p className="mt-2 text-sm font-semibold leading-6 text-nexus-text-secondary">
 {item.description}
 </p>
 </div>
 
-<span
-className={`shrink-0 rounded-full border px-3 py-1 text-xs font-black uppercase tracking-[0.12em] ${
-selected
-? "border-[#C8A646]/30 bg-[#C8A646]/15 text-[#F5D77B]"
-: "border-white/10 bg-white/[0.055] text-slate-300"
-}`}
->
+<ExecutiveBadge tone={selected ? "gold" : "neutral"}>
 {selected ? "Selected" : "Select"}
-</span>
+</ExecutiveBadge>
 </div>
 
 <div className="mt-4 flex flex-wrap gap-2">
 {item.examples.map((example) => (
 <span
 key={example}
-className="rounded-full border border-white/10 bg-white/[0.055] px-3 py-1 text-xs font-bold text-slate-300"
+className="rounded-full border border-white/10 bg-white/[0.055] px-3 py-1 text-xs font-bold text-nexus-text-secondary"
 >
 {example}
 </span>
@@ -1048,20 +1113,20 @@ onChange={(event) =>
 updateField("sourcing_method", event.target.value)
 }
 disabled={loading}
-className="w-full rounded-2xl border border-white/10 bg-[#061426]/80 px-4 py-4 text-sm font-bold text-white outline-none transition focus:border-[#2CC4E8]/40 focus:bg-[#07111F] disabled:cursor-not-allowed disabled:opacity-60"
+className={EXECUTIVE_FORM_SELECT}
 >
 {SOURCING_METHODS.map((item) => (
 <option
 key={item.value}
 value={item.value}
-className="bg-[#061426] text-white"
+className="bg-nexus-navy text-white"
 >
 {item.label}
 </option>
 ))}
 </select>
 
-<p className="mt-2 text-xs font-semibold leading-5 text-slate-400">
+<p className={`mt-2 ${EXECUTIVE_FORM_HELPER}`}>
 {selectedSourcing?.description}
 </p>
 </FieldLabel>
@@ -1074,20 +1139,20 @@ onChange={(event) =>
 updateField("contract_framework", event.target.value)
 }
 disabled={loading}
-className="w-full rounded-2xl border border-white/10 bg-[#061426]/80 px-4 py-4 text-sm font-bold text-white outline-none transition focus:border-[#2CC4E8]/40 focus:bg-[#07111F] disabled:cursor-not-allowed disabled:opacity-60"
+className={EXECUTIVE_FORM_SELECT}
 >
 {CONTRACT_FRAMEWORKS.map((item) => (
 <option
 key={item.value}
 value={item.value}
-className="bg-[#061426] text-white"
+className="bg-nexus-navy text-white"
 >
 {item.label}
 </option>
 ))}
 </select>
 
-<p className="mt-2 text-xs font-semibold leading-5 text-slate-400">
+<p className={`mt-2 ${EXECUTIVE_FORM_HELPER}`}>
 {selectedFramework?.description}
 </p>
 </FieldLabel>
@@ -1100,29 +1165,29 @@ onChange={(event) =>
 updateField("bid_model", event.target.value)
 }
 disabled={loading}
-className="w-full rounded-2xl border border-white/10 bg-[#061426]/80 px-4 py-4 text-sm font-bold text-white outline-none transition focus:border-[#2CC4E8]/40 focus:bg-[#07111F] disabled:cursor-not-allowed disabled:opacity-60"
+className={EXECUTIVE_FORM_SELECT}
 >
 {BID_MODELS.map((item) => (
 <option
 key={item.value}
 value={item.value}
-className="bg-[#061426] text-white"
+className="bg-nexus-navy text-white"
 >
 {item.label}
 </option>
 ))}
 </select>
 
-<p className="mt-2 text-xs font-semibold leading-5 text-slate-400">
+<p className={`mt-2 ${EXECUTIVE_FORM_HELPER}`}>
 {selectedBidModel?.description}
 </p>
 </FieldLabel>
 </div>
-</ExecutivePanel>
+</StepSection>
 ) : null}
 
 {activeStep === 2 ? (
-<ExecutivePanel
+<StepSection
 eyebrow="Step 3 · Recommended"
 title="Project controls"
 description="These fields improve supplier clarity for larger projects, but they remain optional for smaller RFQs."
@@ -1136,7 +1201,7 @@ value={formData.owner_client}
 onChange={(event) =>
 updateField("owner_client", event.target.value)
 }
-className="w-full rounded-2xl border border-white/10 bg-[#061426]/80 px-4 py-4 text-sm font-bold text-white outline-none transition placeholder:text-slate-400 focus:border-[#2CC4E8]/40 focus:bg-[#07111F]"
+className={EXECUTIVE_FORM_INPUT}
 />
 </FieldLabel>
 
@@ -1147,9 +1212,19 @@ value={formData.internal_project_id}
 onChange={(event) =>
 updateField("internal_project_id", event.target.value)
 }
-className="w-full rounded-2xl border border-white/10 bg-[#061426]/80 px-4 py-4 text-sm font-bold text-white outline-none transition placeholder:text-slate-400 focus:border-[#2CC4E8]/40 focus:bg-[#07111F]"
+className={EXECUTIVE_FORM_INPUT}
 />
 </FieldLabel>
+</div>
+
+<div className="rounded-executive border border-status-info/20 bg-status-info/10 p-5">
+<p className="np-type-meta text-nexus-cyan-bright">
+Schedule controls
+</p>
+<p className="np-type-body mt-2 text-nexus-text-secondary">
+RFI clarification timing and delivery milestones remain optional,
+but improve supplier response quality when set.
+</p>
 </div>
 
 <DeadlineField
@@ -1173,7 +1248,7 @@ value={formData.mobilization_date}
 onChange={(event) =>
 updateField("mobilization_date", event.target.value)
 }
-className="w-full rounded-2xl border border-white/10 bg-[#061426]/80 px-4 py-4 text-sm font-bold text-white outline-none transition focus:border-[#2CC4E8]/40 focus:bg-[#07111F]"
+className={EXECUTIVE_FORM_INPUT}
 />
 </FieldLabel>
 
@@ -1187,27 +1262,27 @@ updateField(
 event.target.value
 )
 }
-className="w-full rounded-2xl border border-white/10 bg-[#061426]/80 px-4 py-4 text-sm font-bold text-white outline-none transition focus:border-[#2CC4E8]/40 focus:bg-[#07111F]"
+className={EXECUTIVE_FORM_INPUT}
 />
 </FieldLabel>
 </div>
 </div>
-</ExecutivePanel>
+</StepSection>
 ) : null}
 
 {activeStep === 3 ? (
-<ExecutivePanel
+<StepSection
 eyebrow="Step 4 · Optional"
 title="Construction documents"
 description="Drawings, specifications, BOQ, photos, addenda, and supporting documents are optional. Small RFQs can publish without uploads; larger RFQs can become complete procurement packages immediately after publishing."
 >
-<div className="mt-8 rounded-[24px] border border-[#2CC4E8]/20 bg-[#2CC4E8]/10 p-5">
-<p className="text-sm font-black leading-6 text-[#9BE8F8]">
-ℹ️ Document uploads become available immediately after your
+<div className={`${EXECUTIVE_FEEDBACK_INFO} mt-8`}>
+<p className="text-sm font-black leading-6 text-nexus-cyan-bright">
+Document uploads become available immediately after your
 RFQ is published.
 </p>
 
-<p className="mt-2 text-sm font-semibold leading-6 text-slate-400">
+<p className="mt-2 text-sm font-semibold leading-6 text-nexus-text-secondary">
 After publishing, you can upload drawings, specifications,
 BOQs, photos, addenda, and supporting documents from the RFQ
 workspace.
@@ -1237,11 +1312,11 @@ title="Supporting Docs"
 value="Any file"
 />
 </div>
-</ExecutivePanel>
+</StepSection>
 ) : null}
 
 {activeStep === 4 ? (
-<ExecutivePanel
+<StepSection
 eyebrow="Step 5 · Publication Gate"
 title="Publication readiness review"
 description="Confirm enterprise controls, resolve any blocking inconsistencies, review the complete procurement package, and explicitly sign off before release."
@@ -1298,7 +1373,7 @@ value={formData.insurance_notes}
 onChange={(event) =>
 updateField("insurance_notes", event.target.value)
 }
-className="w-full resize-none rounded-2xl border border-white/10 bg-[#061426]/80 px-4 py-4 text-sm font-bold text-white outline-none transition placeholder:text-slate-400 focus:border-[#2CC4E8]/40 focus:bg-[#07111F]"
+className={`${EXECUTIVE_FORM_TEXTAREA} resize-y`}
 />
 </FieldLabel>
 
@@ -1310,7 +1385,7 @@ value={formData.safety_requirements}
 onChange={(event) =>
 updateField("safety_requirements", event.target.value)
 }
-className="w-full resize-none rounded-2xl border border-white/10 bg-[#061426]/80 px-4 py-4 text-sm font-bold text-white outline-none transition placeholder:text-slate-400 focus:border-[#2CC4E8]/40 focus:bg-[#07111F]"
+className={`${EXECUTIVE_FORM_TEXTAREA} resize-y`}
 />
 </FieldLabel>
 
@@ -1322,7 +1397,7 @@ value={formData.prequalification_notes}
 onChange={(event) =>
 updateField("prequalification_notes", event.target.value)
 }
-className="w-full resize-none rounded-2xl border border-white/10 bg-[#061426]/80 px-4 py-4 text-sm font-bold text-white outline-none transition placeholder:text-slate-400 focus:border-[#2CC4E8]/40 focus:bg-[#07111F]"
+className={`${EXECUTIVE_FORM_TEXTAREA} resize-y`}
 />
 </FieldLabel>
 </div>
@@ -1340,25 +1415,26 @@ setValidationAttempted(false);
 setActiveStep(step);
 }}
 />
-</ExecutivePanel>
+</StepSection>
 ) : null}
 
 {error ? (
 <div
 id={validationErrorId}
 role="alert"
-className="rounded-2xl border border-red-300/20 bg-red-400/10 px-4 py-3 text-sm font-bold leading-6 text-red-200"
+className={EXECUTIVE_FEEDBACK_ERROR}
 >
 {error}
 </div>
 ) : null}
 
-<div className="flex flex-wrap items-center justify-between gap-4 rounded-[30px] border border-white/10 bg-white/[0.045] p-5">
+<ExecutivePanel variant="operational" padding="md" className="np-region">
+<div className="flex flex-wrap items-center justify-between gap-4">
 <button
 type="button"
 onClick={goToPreviousStep}
 disabled={activeStep === 0 || loading || publishSuccess}
-className="rounded-full border border-white/10 bg-white/[0.055] px-6 py-3 text-sm font-black text-white transition hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-40"
+className={EXECUTIVE_BUTTON_SECONDARY}
 >
 Back
 </button>
@@ -1367,7 +1443,7 @@ Back
 {!publishSuccess && (
 <Link
 href="/rfq"
-className="rounded-full border border-white/10 bg-white/[0.055] px-6 py-3 text-sm font-black text-white transition hover:bg-white/[0.08]"
+className={EXECUTIVE_BUTTON_TERTIARY}
 >
 Cancel
 </Link>
@@ -1378,7 +1454,7 @@ Cancel
 type="button"
 onClick={goToNextStep}
 disabled={loading}
-className="rounded-full bg-gradient-to-r from-[#B9902F] via-[#C8A646] to-[#F5D77B] px-7 py-3 text-sm font-black text-slate-950 shadow-[0_18px_55px_rgba(200,166,70,0.22)] transition disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C8A646]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#07111F]"
+className={EXECUTIVE_BUTTON_PRIMARY}
 >
 Continue →
 </button>
@@ -1386,21 +1462,22 @@ Continue →
 <button
 type="submit"
 disabled={loading || publishSuccess || !publicationReady}
-className="rounded-full bg-gradient-to-r from-[#B9902F] via-[#C8A646] to-[#F5D77B] px-7 py-3 text-sm font-black text-slate-950 shadow-[0_18px_55px_rgba(200,166,70,0.22)] transition disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C8A646]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#07111F]"
+className={EXECUTIVE_BUTTON_PRIMARY}
 >
 {loading ? `Publishing... ${publishProgress}%` : "Publish RFQ"}
 </button>
-
 )}
 </div>
 </div>
+</ExecutivePanel>
 </section>
 
-<aside className="space-y-8">
-<ExecutivePanel
+<aside className="min-w-0 space-y-6" aria-label="Publication readiness">
+<StepSection
 eyebrow="RFQ Health"
 title={`${requiredScore}% Required`}
 description="Required readiness controls whether the RFQ can be published."
+tone={isFormReady ? "success" : "gold"}
 >
 <div className="mt-6 space-y-3">
 {requiredChecklist.map((item) => (
@@ -1413,11 +1490,11 @@ context={item.context}
 />
 ))}
 </div>
-</ExecutivePanel>
+</StepSection>
 
 <RFQScopeReview review={scopeReview} />
 
-<ExecutivePanel
+<StepSection
 eyebrow="Recommended Strength"
 title={`${recommendedScore}% Enhanced`}
 description="Recommended fields improve supplier response quality but remain optional."
@@ -1431,14 +1508,14 @@ complete={item.complete}
 />
 ))}
 </div>
-</ExecutivePanel>
+</StepSection>
 
-<ExecutivePanel
+<StepSection
 eyebrow="Procurement Summary"
 title="RFQ Setup"
 description="Live summary of the procurement package."
 >
-<div className="mt-6 space-y-4">
+<div className="mt-6 space-y-3">
 <SummaryRow title="Classification" value={rfqClassification} />
 <SummaryRow
 title="Evaluation Model"
@@ -1451,16 +1528,30 @@ value={formData.category || "Pending"}
 />
 <SummaryRow title="Deadline" value={deadlinePreview} />
 </div>
-</ExecutivePanel>
+</StepSection>
 
-<section className="rounded-[32px] border border-[#2CC4E8]/15 bg-[#2CC4E8]/[0.055] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.28)] backdrop-blur-xl sm:p-8">
-<p className="np-type-eyebrow text-[#9BE8F8]!">
+<ExecutivePanel
+variant="operational"
+padding="lg"
+tone="blue"
+className="np-region"
+aria-labelledby="supplier-preview-heading"
+>
+<p className="np-type-eyebrow text-nexus-cyan-bright">
 Supplier Experience Preview
 </p>
 
-<h2 className="np-type-h2 mt-3 text-white">
+<h2
+id="supplier-preview-heading"
+className="np-type-h2 mt-3 text-pretty"
+>
 What Suppliers Will See
 </h2>
+
+<p className="np-type-body mt-3 text-nexus-text-secondary">
+Preview only. Publication readiness remains controlled by required
+fields and acknowledgement.
+</p>
 
 <div className="mt-6 space-y-3">
 <PreviewRow label="RFQ Summary" ready={isFormReady} />
@@ -1480,27 +1571,29 @@ ready={formData.advanced_controls_enabled}
 optional
 />
 </div>
-</section>
+</ExecutivePanel>
 </aside>
 </form>
 </div>
+
 {(loading || publishSuccess) && (
-<div className="fixed inset-0 z-[200] flex items-center justify-center bg-[#020617]/80 backdrop-blur-md">
-<div className="w-full max-w-md rounded-[32px] border border-[#C8A646]/20 bg-[#07111F] p-8 shadow-[0_40px_120px_rgba(0,0,0,0.55)]">
-
+<div
+className={`${EXECUTIVE_DIALOG_OVERLAY} z-[200] backdrop-blur-md`}
+role="status"
+aria-live="polite"
+>
+<div className={EXECUTIVE_DIALOG_SURFACE}>
 <div className="flex justify-center">
-
 {publishSuccess ? (
-
-<div className="flex h-20 w-20 items-center justify-center rounded-full border border-emerald-300/20 bg-emerald-400/10 shadow-[0_0_40px_rgba(34,197,94,0.18)]">
-
+<div className="flex h-20 w-20 items-center justify-center rounded-full border border-status-success/25 bg-status-success/10">
 <svg
 xmlns="http://www.w3.org/2000/svg"
-className="h-10 w-10 text-emerald-300"
+className="h-10 w-10 text-status-success"
 fill="none"
 viewBox="0 0 24 24"
 stroke="currentColor"
 strokeWidth={3}
+aria-hidden="true"
 >
 <path
 strokeLinecap="round"
@@ -1508,126 +1601,90 @@ strokeLinejoin="round"
 d="M5 13l4 4L19 7"
 />
 </svg>
-
 </div>
-
 ) : (
-
-<div className="h-16 w-16 animate-spin rounded-full border-4 border-[#2CC4E8]/20 border-t-[#C8A646]" />
-
+<div
+className="h-16 w-16 animate-spin rounded-full border-4 border-nexus-cyan/20 border-t-nexus-gold motion-reduce:animate-none"
+aria-hidden="true"
+/>
 )}
-
 </div>
 
-<h2 className="np-type-h2 mt-8 text-center text-white">
+<h2 className={`${EXECUTIVE_DIALOG_TITLE} mt-8 text-center`}>
 {publishSuccess ? "RFQ Published Successfully" : "Publishing RFQ"}
 </h2>
 
-<p className="np-type-body mt-4 text-center text-slate-400">
+<p className={`${EXECUTIVE_DIALOG_BODY} text-center text-nexus-text-secondary`}>
 {publishStage}
 </p>
+
 {publishSuccess && createdRFQ ? (
 <p className="np-type-body mt-3 text-center text-[#F5D77B]!">
 {createdRFQ.title}
 </p>
 ) : null}
-{publishSuccess && (
-<div className="mt-8 rounded-[24px] border border-emerald-300/20 bg-emerald-400/5 p-5">
 
+{publishSuccess ? (
+<div className="mt-8 rounded-executive border border-status-success/25 bg-status-success/10 p-5">
 <p className="np-type-h3 text-center text-white!">
 Workspace Created Successfully
 </p>
 
-<p className="np-type-body mt-2 text-center text-slate-400">
+<p className="np-type-body mt-2 text-center text-nexus-text-secondary">
 Executive procurement intelligence has been initialized.
 </p>
 
 <div className="mt-6 space-y-3">
-
-<div className="flex items-center gap-3 text-sm font-semibold text-slate-300">
-<span className="text-emerald-300">✓</span>
+<div className="flex items-center gap-3 text-sm font-semibold text-nexus-text-primary">
+<span className="text-status-success" aria-hidden="true">✓</span>
 Supplier Workspace Ready
 </div>
 
-<div className="flex items-center gap-3 text-sm font-semibold text-slate-300">
-<span className="text-emerald-300">✓</span>
+<div className="flex items-center gap-3 text-sm font-semibold text-nexus-text-primary">
+<span className="text-status-success" aria-hidden="true">✓</span>
 Executive Dashboard Ready
 </div>
-<div className="mt-8 border-t border-white/10 pt-5">
-<p className="text-center text-xs font-black uppercase tracking-[0.24em] text-slate-400">
-Opening RFQ Workspace
-</p>
 
-<div className="mt-3 flex items-center justify-center gap-3">
-<div className="h-2 w-2 animate-pulse rounded-full bg-emerald-400" />
-
-<p className="np-type-kpi text-[#F5D77B]!">
-{redirectCountdown}
-</p>
-
-<div className="h-2 w-2 animate-pulse rounded-full bg-emerald-400" />
-</div>
-</div>
-
-<div className="flex items-center gap-3 text-sm font-semibold text-slate-300">
-<span className="text-emerald-300">✓</span>
+<div className="flex items-center gap-3 text-sm font-semibold text-nexus-text-primary">
+<span className="text-status-success" aria-hidden="true">✓</span>
 Procurement Analytics Ready
 </div>
+</div>
 
-<div className="flex items-center gap-3 text-sm font-semibold text-slate-300">
-<span className="text-emerald-300">✓</span>
-Executive Dashboard Ready
 <div className="mt-8 border-t border-white/10 pt-5">
-
-<p className="text-center text-xs font-black uppercase tracking-[0.24em] text-slate-400">
+<p className="text-center text-xs font-black uppercase tracking-[0.24em] text-nexus-text-secondary">
 Opening RFQ Workspace
 </p>
 
 <div className="mt-3 flex items-center justify-center gap-3">
-
-<div className="h-2 w-2 animate-pulse rounded-full bg-emerald-400" />
-
+<div className="h-2 w-2 animate-pulse rounded-full bg-status-success motion-reduce:animate-none" />
 <p className="np-type-kpi text-[#F5D77B]!">
 {redirectCountdown}
 </p>
-
-<div className="h-2 w-2 animate-pulse rounded-full bg-emerald-400" />
-
+<div className="h-2 w-2 animate-pulse rounded-full bg-status-success motion-reduce:animate-none" />
 </div>
 
-
-</div>
-
-<p className="np-type-body mt-3 text-center text-slate-400">
+<p className="np-type-body mt-3 text-center text-nexus-text-secondary">
 Redirecting to your executive procurement workspace...
 </p>
-
 </div>
-
 </div>
+) : null}
 
-</div>
-)}
-
-<div className="mt-8 h-2 overflow-hidden rounded-full bg-white/10">
-
-<div
-className="h-full rounded-full bg-gradient-to-r from-[#2CC4E8] via-[#C8A646] to-[#F5D77B] transition-all duration-500"
-style={{
-width: `${publishProgress}%`,
-}}
+<div className="mt-8">
+<ExecutiveProgress
+value={publishProgress}
+label="Publication progress"
 />
-
 </div>
 
-<p className="mt-3 text-center text-xs font-bold text-slate-400">
+<p className="mt-3 text-center text-xs font-bold text-nexus-text-secondary">
 {publishProgress}% Complete
 </p>
 
-<p className="mt-6 text-center text-xs font-bold uppercase tracking-[0.22em] text-[#9BE8F8]">
+<p className="mt-6 text-center text-xs font-bold uppercase tracking-[0.22em] text-nexus-cyan-bright">
 Executive Procurement Intelligence
 </p>
-
 </div>
 </div>
 )}
@@ -1643,33 +1700,35 @@ return (
 );
 }
 
-function ExecutivePanel({
+function StepSection({
 eyebrow,
 title,
 description,
 children,
+tone = "neutral",
 }: {
 eyebrow: string;
 title: string;
 description?: string;
 children: ReactNode;
+tone?: "neutral" | "blue" | "gold" | "risk" | "success";
 }) {
 return (
-<section className="rounded-[32px] border border-white/10 bg-white/[0.045] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.28)] backdrop-blur-xl sm:p-8">
-<p className="np-type-eyebrow text-[#C8A646]">
-{eyebrow}
-</p>
-
-<h2 className="np-type-h2 mt-3 text-white">{title}</h2>
-
+<ExecutivePanel
+variant="operational"
+padding="lg"
+tone={tone}
+className="np-region min-w-0"
+>
+<p className="np-type-eyebrow text-nexus-gold">{eyebrow}</p>
+<h2 className="np-type-h2 mt-3 text-pretty">{title}</h2>
 {description ? (
-<p className="np-type-body mt-3 max-w-3xl text-slate-400">
+<p className="np-type-body mt-3 max-w-3xl text-pretty text-nexus-text-secondary">
 {description}
 </p>
 ) : null}
-
 {children}
-</section>
+</ExecutivePanel>
 );
 }
 
@@ -1683,37 +1742,23 @@ required?: boolean;
 children: ReactNode;
 }) {
 return (
-<label className="block">
-<span className="np-type-meta mb-2 block text-slate-400">
+<label className="block min-w-0">
+<span className={`${EXECUTIVE_FORM_LABEL} mb-2 block`}>
 {label}
 {required ? <span className="text-[#F5D77B]"> *</span> : null}
 </span>
-
 {children}
 </label>
 );
 }
 
-function MiniMetric({ title, value }: { title: string; value: string }) {
-return (
-<div className="rounded-[26px] border border-white/10 bg-[#061426]/75 p-5">
-<p className="np-type-meta text-slate-400">
-{title}
-</p>
-
-<p className="np-type-kpi mt-2 truncate text-xl text-white">{value}</p>
-</div>
-);
-}
-
 function SummaryRow({ title, value }: { title: string; value: string }) {
 return (
-<div className="rounded-[22px] border border-white/10 bg-[#061426]/70 p-4">
-<p className="np-type-meta text-slate-400">
-{title}
+<div className="rounded-executive border border-white/10 bg-white/[0.045] p-4">
+<p className="np-type-meta text-nexus-text-secondary">{title}</p>
+<p className="np-type-body mt-2 break-words text-nexus-text-primary">
+{value}
 </p>
-
-<p className="np-type-body mt-2 text-white">{value}</p>
 </div>
 );
 }
@@ -1730,58 +1775,24 @@ source?: string;
 context?: string;
 }) {
 return (
-<div className="flex items-start justify-between gap-4 rounded-[22px] border border-white/10 bg-[#061426]/70 px-4 py-3">
+<div className="flex items-start justify-between gap-4 rounded-executive border border-white/10 bg-white/[0.045] px-4 py-3">
 <div className="min-w-0">
-<span className="text-sm font-bold text-slate-300">{label}</span>
-
+<span className="text-sm font-bold text-nexus-text-primary">{label}</span>
 {!complete && source ? (
-<p className="mt-1 text-[10px] font-black uppercase tracking-[0.14em] text-[#9BE8F8]">
+<p className="mt-1 text-[10px] font-black uppercase tracking-[0.14em] text-nexus-cyan-bright">
 Source: {source}
 </p>
 ) : null}
-
 {!complete && context ? (
-<p className="mt-1 text-xs font-semibold leading-5 text-slate-400">
+<p className="mt-1 text-xs font-semibold leading-5 text-nexus-text-secondary">
 {context}
 </p>
 ) : null}
 </div>
-
-<span
-className={`shrink-0 rounded-full border px-3 py-1 text-xs font-black uppercase tracking-[0.12em] ${
-complete
-? "border-emerald-300/20 bg-emerald-400/10 text-emerald-300"
-: "border-white/10 bg-white/[0.055] text-slate-400"
-}`}
->
+<ExecutiveBadge tone={complete ? "success" : "pending"}>
 {complete ? "Ready" : "Pending"}
-</span>
+</ExecutiveBadge>
 </div>
-);
-}
-
-function ExecutiveBadge({
-children,
-tone = "neutral",
-}: {
-children: ReactNode;
-tone?: "success" | "warning" | "blue" | "neutral";
-}) {
-const toneClass =
-tone === "success"
-? "border-emerald-300/20 bg-emerald-400/10 text-emerald-300"
-: tone === "warning"
-? "border-orange-300/20 bg-orange-400/10 text-orange-300"
-: tone === "blue"
-? "border-[#2CC4E8]/25 bg-[#2CC4E8]/10 text-[#9BE8F8]"
-: "border-white/10 bg-white/[0.055] text-slate-300";
-
-return (
-<span
-className={`inline-flex rounded-full border px-3 py-1 text-xs font-black uppercase tracking-[0.16em] ${toneClass}`}
->
-{children}
-</span>
 );
 }
 
@@ -1793,23 +1804,18 @@ title: string;
 value: string;
 }) {
 return (
-<div className="rounded-[24px] border border-white/10 bg-[#061426]/70 p-5">
-<div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-[#2CC4E8]/20 bg-[#2CC4E8]/10 text-lg">
-📎
+<div className="rounded-executive border border-white/10 bg-white/[0.045] p-5">
+<div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-status-info/25 bg-status-info/10 text-nexus-cyan-bright">
+<span className="sr-only">Document placeholder</span>
+<span aria-hidden="true">📎</span>
 </div>
-
-<p className="np-type-h3 mt-5 text-white">{title}</p>
-
-<p className="np-type-body mt-2 text-slate-400">
-{value}
-</p>
-
-<div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.055] px-4 py-3">
-<p className="text-xs font-black uppercase tracking-[0.14em] text-[#9BE8F8]">
+<p className="np-type-h3 mt-5 text-pretty">{title}</p>
+<p className="np-type-body mt-2 text-nexus-text-secondary">{value}</p>
+<div className="mt-4 rounded-executive border border-white/10 bg-white/[0.055] px-4 py-3">
+<p className="text-xs font-black uppercase tracking-[0.14em] text-nexus-cyan-bright">
 Available After Publish
 </p>
-
-<p className="mt-2 text-xs font-semibold leading-5 text-slate-400">
+<p className="mt-2 text-xs font-semibold leading-5 text-nexus-text-secondary">
 This upload becomes available as soon as your RFQ is published.
 </p>
 </div>
@@ -1833,30 +1839,22 @@ return (
 type="button"
 aria-pressed={checked}
 onClick={onChange}
-className={`rounded-[24px] border p-5 text-left transition ${EXECUTIVE_FOCUS_CYAN} ${
+className={`min-h-11 rounded-executive border p-5 text-left transition ${EXECUTIVE_FOCUS_CYAN} ${
 checked
-? "border-[#C8A646]/35 bg-[#C8A646]/10"
-: "border-white/10 bg-[#061426]/70 hover:border-[#2CC4E8]/25 hover:bg-[#07111F]"
+? "border-nexus-gold/35 bg-nexus-gold/10"
+: "border-white/10 bg-white/[0.045] hover:border-nexus-cyan/25 hover:bg-white/[0.08]"
 }`}
 >
 <div className="flex items-start justify-between gap-4">
-<div>
-<p className="np-type-h3 text-white">{title}</p>
-
-<p className="np-type-body mt-2 text-slate-400">
+<div className="min-w-0">
+<p className="np-type-h3 text-pretty">{title}</p>
+<p className="np-type-body mt-2 text-nexus-text-secondary">
 {description}
 </p>
 </div>
-
-<span
-className={`shrink-0 rounded-full border px-3 py-1 text-xs font-black uppercase tracking-[0.12em] ${
-checked
-? "border-[#C8A646]/30 bg-[#C8A646]/15 text-[#F5D77B]"
-: "border-white/10 bg-white/[0.055] text-slate-400"
-}`}
->
+<ExecutiveBadge tone={checked ? "gold" : "neutral"}>
 {checked ? "On" : "Off"}
-</span>
+</ExecutiveBadge>
 </div>
 </button>
 );
@@ -1872,20 +1870,15 @@ ready: boolean;
 optional?: boolean;
 }) {
 return (
-<div className="flex items-center justify-between gap-4 rounded-[20px] border border-white/10 bg-[#061426]/70 px-4 py-3">
-<span className="text-sm font-bold text-slate-300">{label}</span>
-
-<span
-className={`rounded-full border px-3 py-1 text-xs font-black uppercase tracking-[0.12em] ${
-ready
-? "border-emerald-300/20 bg-emerald-400/10 text-emerald-300"
-: optional
-? "border-[#2CC4E8]/25 bg-[#2CC4E8]/10 text-[#9BE8F8]"
-: "border-orange-300/20 bg-orange-400/10 text-orange-300"
-}`}
+<div className="flex items-center justify-between gap-4 rounded-executive border border-white/10 bg-white/[0.045] px-4 py-3">
+<span className="min-w-0 text-sm font-bold text-nexus-text-primary">
+{label}
+</span>
+<ExecutiveBadge
+tone={ready ? "success" : optional ? "blue" : "warning"}
 >
 {ready ? "Ready" : optional ? "Optional" : "Needed"}
-</span>
+</ExecutiveBadge>
 </div>
 );
 }
