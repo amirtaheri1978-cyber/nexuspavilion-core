@@ -65,6 +65,10 @@ import { BoardExecutiveReport } from "@/components/report-engine/BoardExecutiveR
 import { ReportEndPage } from "@/components/report-engine/ReportEndPage";
 import { ReportSectionDivider } from "@/components/report-engine/ReportSectionDivider";
 import { TableOfContents } from "@/components/report-engine/TableOfContents";
+import {
+  EXECUTIVE_FOCUS_CYAN,
+  EXECUTIVE_FOCUS_GOLD,
+} from "@/lib/design-system/executive-contract";
 
 type ExecutiveAlert = {
   level: "opportunity" | "healthy" | "warning";
@@ -2299,10 +2303,10 @@ remains ${ceoRiskLevel.toLowerCase()}.
           generatedAt={reportGeneratedAt}
         />
 
-        <div className="flex min-h-10 items-center justify-between gap-4">
+        <div className="flex min-h-11 flex-wrap items-center justify-between gap-3">
           <Link
             href="/dashboard"
-            className="group inline-flex min-h-10 items-center gap-2 rounded-lg text-sm font-semibold text-slate-400 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C8A646]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#07111F]"
+            className={`group inline-flex min-h-11 items-center gap-2 rounded-xl px-1 text-sm font-semibold text-nexus-text-secondary transition-colors hover:text-nexus-white ${EXECUTIVE_FOCUS_GOLD}`}
           >
             <span
               aria-hidden="true"
@@ -2313,42 +2317,42 @@ remains ${ceoRiskLevel.toLowerCase()}.
             Back to Dashboard
           </Link>
 
-          <p className="np-type-meta hidden sm:block">
-            Boardroom intelligence workspace
+          <p className="np-type-meta text-nexus-muted">
+            Strategic Insights | decision evidence
           </p>
         </div>
 
-        <header className="relative mt-3 overflow-hidden rounded-3xl border border-white/10 bg-[#061426]/88 shadow-executive">
+        <header className="relative mt-4 overflow-hidden rounded-[1.75rem] border border-white/10 bg-nexus-navy/80 shadow-executive">
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#C8A646]/70 to-transparent"
+            className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-nexus-gold/70 to-transparent"
           />
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute -right-24 -top-32 h-80 w-80 rounded-full bg-[#2CC4E8]/[0.055] blur-3xl"
+            className="pointer-events-none absolute -right-24 -top-32 h-80 w-80 rounded-full bg-nexus-cyan/[0.055] blur-3xl"
           />
 
           <div className="relative px-5 py-5 sm:px-6 lg:px-7">
-            <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(520px,0.82fr)] xl:items-center">
+            <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(420px,0.9fr)] xl:items-end">
               <div className="min-w-0 max-w-4xl">
-                <div className="flex flex-wrap items-center gap-3">
-                  <p className="np-type-eyebrow">
-                    Nexus Pavilion Executive Intelligence
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+                  <p className="np-type-eyebrow text-nexus-gold">
+                    Executive Procurement Intelligence
                   </p>
                   <span className="hidden h-1 w-1 rounded-full bg-white/20 sm:block" />
-                  <p className="np-type-meta">
-                    Current operating posture
+                  <p className="np-type-meta text-nexus-muted">
+                    Strategic procurement insight
                   </p>
                 </div>
 
-                <h1 className="np-type-h1 mt-2.5 max-w-4xl">
-                  Executive Procurement Operating System
+                <h1 className="np-type-h1 mt-3 max-w-4xl min-w-0 text-pretty text-nexus-white">
+                  Strategic Insights
                 </h1>
 
-                <p className="np-type-body mt-2.5 max-w-3xl">
-                  A decision-first command environment for procurement
-                  performance, risk exposure, supplier resilience, opportunity
-                  capture, and board-level readiness.
+                <p className="np-type-body mt-3 max-w-3xl text-pretty text-nexus-muted">
+                  Decision evidence for procurement performance, risk exposure,
+                  opportunity posture, and board readiness — presented under
+                  current commercial governance controls.
                 </p>
               </div>
 
@@ -2356,24 +2360,24 @@ remains ${ceoRiskLevel.toLowerCase()}.
                 aria-label="Executive operating posture"
                 className="min-w-0"
               >
-                <div className="mb-2.5 flex items-center justify-between gap-4">
-                  <p className="np-type-meta">
+                <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                  <p className="np-type-meta text-nexus-muted">
                     Operating posture
                   </p>
-                  <p className="np-type-meta text-[#9BE8F8]!">
-                    Validated intelligence
+                  <p className="np-type-meta text-nexus-cyan">
+                    Current decision evidence
                   </p>
                 </div>
 
-                <div className="grid grid-cols-2 overflow-hidden rounded-2xl border border-white/10 bg-black/10 sm:grid-cols-4">
+                <div className="grid grid-cols-2 overflow-hidden rounded-2xl border border-white/10 bg-black/15 sm:grid-cols-4">
                   {[
                     ["Enterprise", formatCurrentEvidenceScore(enterpriseProcurementScore)],
                     [
-                      "Decision readiness",
+                      "Decision Readiness",
                       formatCurrentEvidenceScore(decisionSupportReadiness?.score ?? null),
                     ],
-                    ["Risk exposure", formatCurrentEvidenceScore(procurementRiskIndex)],
-                    ["Board readiness", formatCurrentEvidenceScore(boardReadinessScore)],
+                    ["Risk Exposure", formatCurrentEvidenceScore(procurementRiskIndex)],
+                    ["Board Readiness", formatCurrentEvidenceScore(boardReadinessScore)],
                   ].map(([label, value], index) => (
                     <div
                       key={label}
@@ -2383,10 +2387,10 @@ remains ${ceoRiskLevel.toLowerCase()}.
                         index > 0 ? "sm:border-l sm:border-white/10" : ""
                       }`}
                     >
-                      <p className="np-type-meta truncate">
+                      <p className="np-type-meta text-pretty text-nexus-muted">
                         {label}
                       </p>
-                      <p className="np-type-kpi mt-1.5 text-lg tabular-nums">
+                      <p className="np-type-kpi mt-1.5 text-lg tabular-nums text-nexus-white">
                         {value}
                       </p>
                     </div>
@@ -2398,9 +2402,9 @@ remains ${ceoRiskLevel.toLowerCase()}.
 
           <nav
             aria-label="Analytics sections"
-            className="relative overflow-x-auto border-t border-white/10 bg-black/10 px-3 py-2 sm:px-4"
+            className="relative border-t border-white/10 bg-black/15 px-3 py-2.5 sm:px-4"
           >
-            <div className="flex min-w-max items-center gap-1.5">
+            <div className="flex flex-wrap items-center gap-2">
               {[
                 ["#executive-brief", "Executive Overview"],
                 ["#decision-command-center", "Decision Intelligence"],
@@ -2411,7 +2415,7 @@ remains ${ceoRiskLevel.toLowerCase()}.
                 <a
                   key={href}
                   href={href}
-                  className="np-type-meta inline-flex min-h-8 items-center rounded-lg border border-transparent px-3 text-slate-400 transition-colors hover:border-white/10 hover:bg-white/[0.045] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C8A646]/70"
+                  className={`np-type-meta inline-flex min-h-11 items-center rounded-xl border border-white/10 bg-white/[0.03] px-3.5 text-nexus-text-secondary transition-colors hover:border-nexus-cyan/25 hover:bg-white/[0.08] hover:text-nexus-white ${EXECUTIVE_FOCUS_CYAN}`}
                 >
                   {label}
                 </a>
@@ -2436,10 +2440,10 @@ remains ${ceoRiskLevel.toLowerCase()}.
               executiveNarrative={executiveNarrative}
             />
           ) : (
-            <div className="rounded-3xl border border-amber-300/15 bg-amber-400/[0.04] p-6 text-white">
-              <p className="np-type-eyebrow text-amber-300!">Executive Overview</p>
-              <h2 className="np-type-h2 mt-3">{executiveEvidenceLabel}</h2>
-              <p className="np-type-body mt-3">
+            <div className="rounded-[1.75rem] border border-amber-300/15 bg-amber-400/[0.04] p-6 text-nexus-white">
+              <p className="np-type-eyebrow text-amber-300">Executive Overview</p>
+              <h2 className="np-type-h2 mt-3 text-pretty">{executiveEvidenceLabel}</h2>
+              <p className="np-type-body mt-3 max-w-3xl text-pretty text-nexus-muted">
                 Composite executive intelligence is withheld while supplier
                 and commercial evidence is unavailable.
               </p>
