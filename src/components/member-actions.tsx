@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useId, useState } from "react";
 
 import type {
   MembershipStatus,
@@ -12,7 +12,16 @@ import {
   canChangeWorkspaceRoles,
   canManageWorkspaceMembers,
 } from "@/lib/authorization/workspace-permissions";
-import { EXECUTIVE_FOCUS_CYAN } from "@/lib/design-system/executive-contract";
+import {
+  EXECUTIVE_BUTTON_DESTRUCTIVE,
+  EXECUTIVE_BUTTON_SECONDARY,
+  EXECUTIVE_FEEDBACK_ERROR,
+  EXECUTIVE_FEEDBACK_SUCCESS,
+  EXECUTIVE_FEEDBACK_WARNING,
+  EXECUTIVE_FOCUS_CYAN,
+  EXECUTIVE_FORM_HELPER,
+  EXECUTIVE_FORM_SELECT,
+} from "@/lib/design-system/executive-contract";
 
 type EditableWorkspaceRole =
   | "admin"
@@ -70,6 +79,14 @@ function normalizeWorkspaceRole(
   return "member";
 }
 
+function getAccessLevelLabel(role: WorkspaceRole | null) {
+  if (role === "owner") return "Owner";
+  if (role === "admin") return "Administrator";
+  if (role === "member") return "Standard";
+  if (role === "viewer") return "Read Only";
+  return "Access Level Pending";
+}
+
 function getPermissionMessage({
   isCurrentUser,
   isOwner,
@@ -115,6 +132,8 @@ export default function MemberActions({
   currentUserMembershipStatus,
 }: MemberActionsProps) {
   const router = useRouter();
+  const accessSelectId = useId();
+  const helperId = useId();
 
   const [selectedRole, setSelectedRole] =
     useState<EditableWorkspaceRole>(
@@ -147,6 +166,11 @@ export default function MemberActions({
 
   const roleHasChanged =
     selectedRole !== memberWorkspaceRole;
+
+  const memberSubject = formatMemberRemovalSubject(
+    memberLabel,
+    memberEmail,
+  );
 
   async function handleUpdateRole() {
     if (!canChangeMemberRoles) {
@@ -213,10 +237,7 @@ export default function MemberActions({
     }
 
     const confirmed = window.confirm(
-      `Remove ${formatMemberRemovalSubject(
-        memberLabel,
-        memberEmail,
-      )} from this company workspace?`,
+      `Remove ${memberSubject} from this company workspace?`,
     );
 
     if (!confirmed) {
@@ -265,8 +286,11 @@ export default function MemberActions({
     !canChangeMemberRoles
   ) {
     return (
-      <div className="mt-4 rounded-[22px] border border-white/10 bg-white/[0.035] px-4 py-3">
-        <p className="text-xs font-bold leading-5 text-slate-400">
+      <div
+        role="status"
+        className={`mt-4 ${EXECUTIVE_FEEDBACK_WARNING}`}
+      >
+        <p className="text-xs font-bold leading-5">
           {getPermissionMessage({
             isCurrentUser,
             isOwner,
@@ -279,36 +303,55 @@ export default function MemberActions({
   }
 
   return (
-    <div className="mt-4 rounded-[22px] border border-white/10 bg-[#061426]/80 p-4">
-      <div className="grid gap-3 sm:grid-cols-[1fr_auto_auto]">
-        <select
-          aria-label={`Access Level for ${formatMemberRemovalSubject(
-            memberLabel,
-            memberEmail,
-          )}`}
-          value={selectedRole}
-          onChange={(event) =>
-            setSelectedRole(
-              event.target
-                .value as EditableWorkspaceRole,
-            )
-          }
-          disabled={
-            !canChangeMemberRoles ||
-            loadingAction !== ""
-          }
-          className={`rounded-2xl border border-white/10 bg-[#07111F] px-3 py-2 text-xs font-black uppercase tracking-[0.15em] text-white outline-none transition focus:border-[#2CC4E8]/40 disabled:cursor-not-allowed disabled:opacity-50 ${EXECUTIVE_FOCUS_CYAN}`}
-        >
-          {ROLE_OPTIONS.map((option) => (
-            <option
-              key={option.value}
-              value={option.value}
-              className="bg-[#061426]"
-            >
-              {option.label}
-            </option>
-          ))}
-        </select>
+    <div className="mt-4 rounded-executive border border-white/10 bg-white/[0.035] p-4">
+      <div className="flex flex-wrap items-center gap-2">
+        <p className="np-type-meta text-nexus-muted">
+          Current Access Level
+        </p>
+        <p className="np-type-body text-nexus-text-secondary">
+          {getAccessLevelLabel(memberWorkspaceRole)}
+        </p>
+      </div>
+
+      <div className="mt-3 grid gap-3 sm:grid-cols-[1fr_auto_auto] sm:items-end">
+        <div className="min-w-0">
+          <label
+            htmlFor={accessSelectId}
+            className="np-type-meta mb-2 block text-nexus-muted"
+          >
+            Selected Access Level
+          </label>
+          <select
+            id={accessSelectId}
+            aria-label={`Access Level for ${formatMemberRemovalSubject(
+              memberLabel,
+              memberEmail,
+            )}`}
+            aria-describedby={helperId}
+            value={selectedRole}
+            onChange={(event) =>
+              setSelectedRole(
+                event.target
+                  .value as EditableWorkspaceRole,
+              )
+            }
+            disabled={
+              !canChangeMemberRoles ||
+              loadingAction !== ""
+            }
+            className={`${EXECUTIVE_FORM_SELECT} min-h-11 ${EXECUTIVE_FOCUS_CYAN}`}
+          >
+            {ROLE_OPTIONS.map((option) => (
+              <option
+                key={option.value}
+                value={option.value}
+                className="bg-nexus-navy"
+              >
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </div>
 
         <button
           type="button"
@@ -318,7 +361,7 @@ export default function MemberActions({
             !roleHasChanged ||
             loadingAction === "role"
           }
-          className={`rounded-full border border-[#C8A646]/25 bg-[#C8A646]/10 px-4 py-2 text-xs font-black text-[#F5D77B] transition hover:bg-[#C8A646]/15 disabled:cursor-not-allowed disabled:opacity-50 ${EXECUTIVE_FOCUS_CYAN}`}
+          className={`${EXECUTIVE_BUTTON_SECONDARY} min-h-11 px-4 py-2 text-xs`}
         >
           {loadingAction === "role"
             ? "Saving..."
@@ -332,34 +375,43 @@ export default function MemberActions({
             !canManageMemberAccess ||
             loadingAction === "remove"
           }
-          className={`rounded-full border border-red-300/20 bg-red-400/10 px-4 py-2 text-xs font-black text-red-200 transition hover:bg-red-400/15 disabled:cursor-not-allowed disabled:opacity-50 ${EXECUTIVE_FOCUS_CYAN}`}
+          className={`${EXECUTIVE_BUTTON_DESTRUCTIVE} min-h-11 px-4 py-2 text-xs`}
         >
           {loadingAction === "remove"
             ? "Removing..."
-            : "Remove"}
+            : "Remove Member"}
         </button>
       </div>
 
-      <p className="mt-3 text-xs font-semibold leading-5 text-slate-400">
+      <p id={helperId} className={`mt-3 ${EXECUTIVE_FORM_HELPER}`}>
         This control changes workspace access only.
         It does not change Department, Job Title, RFQ
         relationship, or Procurement capability.
       </p>
 
       {memberMembershipStatus !== "active" ? (
-        <p className="mt-3 text-xs font-bold leading-5 text-orange-300">
+        <p
+          role="status"
+          className={`mt-3 ${EXECUTIVE_FEEDBACK_WARNING} text-xs font-bold leading-5`}
+        >
           This membership is not currently active.
         </p>
       ) : null}
 
       {message ? (
-        <p className="mt-3 text-xs font-bold leading-5 text-emerald-300">
+        <p
+          role="status"
+          className={`mt-3 ${EXECUTIVE_FEEDBACK_SUCCESS} text-xs font-bold leading-5`}
+        >
           {message}
         </p>
       ) : null}
 
       {error ? (
-        <p className="mt-3 text-xs font-bold leading-5 text-red-300">
+        <p
+          role="alert"
+          className={`mt-3 ${EXECUTIVE_FEEDBACK_ERROR} text-xs font-bold leading-5`}
+        >
           {error}
         </p>
       ) : null}

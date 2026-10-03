@@ -1,6 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState, type FormEvent } from "react";
+
+import {
+  EXECUTIVE_CTA_PRIMARY,
+  EXECUTIVE_FEEDBACK_ERROR,
+  EXECUTIVE_FEEDBACK_INFO,
+  EXECUTIVE_FEEDBACK_SUCCESS,
+  EXECUTIVE_FOCUS_CYAN,
+  EXECUTIVE_FORM_HELPER,
+  EXECUTIVE_FORM_INPUT,
+  EXECUTIVE_FORM_SELECT,
+} from "@/lib/design-system/executive-contract";
 
 type InviteEmailResult = {
   sent?: boolean;
@@ -52,6 +63,10 @@ function isValidEmail(value: string) {
 }
 
 export default function InviteUserForm() {
+  const emailId = useId();
+  const roleId = useId();
+  const roleHintId = useId();
+
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<InviteRole>("member");
   const [loading, setLoading] = useState(false);
@@ -62,7 +77,7 @@ export default function InviteUserForm() {
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState("");
 
-  async function handleInvite(event: React.FormEvent<HTMLFormElement>) {
+  async function handleInvite(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     const normalizedEmail = normalizeEmail(email);
@@ -207,18 +222,18 @@ export default function InviteUserForm() {
   const selectedRole = ROLE_OPTIONS.find((option) => option.value === role);
 
   return (
-    <section className="rounded-[32px] border border-white/10 bg-white/[0.045] p-6 text-white shadow-[0_24px_80px_rgba(0,0,0,0.28)] backdrop-blur-xl sm:p-8">
+    <section className="rounded-panel border border-white/10 bg-white/[0.045] p-6 text-white shadow-inner-executive backdrop-blur-xl sm:p-8">
       <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
-        <div>
-          <p className="text-xs font-black uppercase tracking-[0.3em] text-[#C8A646]">
-            Workspace Access
+        <div className="min-w-0">
+          <p className="np-type-eyebrow text-nexus-gold">
+            Workspace Invitation
           </p>
 
-          <h2 className="mt-3 text-3xl font-black text-white">
+          <h2 className="np-type-h2 mt-3 text-nexus-white">
             Invite Team Member
           </h2>
 
-          <p className="mt-3 max-w-2xl text-sm font-semibold leading-7 text-slate-400">
+          <p className="np-type-body mt-3 max-w-2xl text-pretty text-nexus-muted">
             Invite users to become members of your company workspace.
             Workspace membership is separate from RFQ invitations and supplier
             participation. Nexus Pavilion sends the workspace invitation email
@@ -231,48 +246,57 @@ export default function InviteUserForm() {
 
       <form
         onSubmit={handleInvite}
-        className="mt-7 grid gap-4 md:grid-cols-[1fr_220px_auto]"
+        className="mt-7 grid gap-4 md:grid-cols-[1fr_220px_auto] md:items-end"
+        noValidate
       >
-        <label className="block">
-          <FormLabel>Work Email</FormLabel>
-
+        <div className="min-w-0">
+          <label htmlFor={emailId} className="np-type-meta mb-2 block text-nexus-muted">
+            Work Email
+          </label>
           <input
+            id={emailId}
             type="email"
+            name="inviteEmail"
+            autoComplete="email"
             required
             placeholder="user@company.com"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
             disabled={loading}
-            className="h-[56px] w-full rounded-2xl border border-white/10 bg-[#061426]/80 px-4 text-sm font-bold text-white outline-none transition placeholder:text-slate-400 focus:border-[#2CC4E8]/40 focus:bg-[#07111F] disabled:cursor-not-allowed disabled:opacity-60"
+            className={`h-[56px] focus-visible:ring-2 ${EXECUTIVE_FORM_INPUT}`}
           />
-        </label>
+        </div>
 
-        <label className="block">
-          <FormLabel>Access Level</FormLabel>
-
+        <div className="min-w-0">
+          <label htmlFor={roleId} className="np-type-meta mb-2 block text-nexus-muted">
+            Access Level
+          </label>
           <select
+            id={roleId}
+            name="inviteAccessLevel"
             value={role}
             onChange={(event) => setRole(event.target.value as InviteRole)}
             disabled={loading}
-            className="h-[56px] w-full rounded-2xl border border-white/10 bg-[#061426]/80 px-4 text-sm font-bold text-white outline-none transition focus:border-[#2CC4E8]/40 focus:bg-[#07111F] disabled:cursor-not-allowed disabled:opacity-60"
+            aria-describedby={roleHintId}
+            className={`h-[56px] focus-visible:ring-2 ${EXECUTIVE_FORM_SELECT}`}
           >
             {ROLE_OPTIONS.map((option) => (
               <option
                 key={option.value}
                 value={option.value}
-                className="bg-[#061426] text-white"
+                className="bg-nexus-navy text-white"
               >
                 {option.label}
               </option>
             ))}
           </select>
-        </label>
+        </div>
 
         <div className="flex items-end">
           <button
             type="submit"
             disabled={loading}
-            className="h-[56px] w-full rounded-full bg-gradient-to-r from-[#B9902F] via-[#C8A646] to-[#F5D77B] px-6 text-sm font-black text-slate-950 shadow-[0_18px_55px_rgba(200,166,70,0.22)] transition disabled:cursor-not-allowed disabled:opacity-50 md:w-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C8A646]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#07111F]"
+            className={`${EXECUTIVE_CTA_PRIMARY} h-[56px] w-full md:w-auto`}
           >
             {loading ? "Sending..." : "Send Workspace Invitation"}
           </button>
@@ -280,34 +304,39 @@ export default function InviteUserForm() {
       </form>
 
       {selectedRole ? (
-        <div className="mt-4 rounded-[24px] border border-white/10 bg-[#061426]/70 p-5">
-          <p className="text-xs font-black uppercase tracking-[0.22em] text-slate-400">
+        <div className="mt-4 rounded-executive border border-white/10 bg-white/[0.035] p-5">
+          <p className="np-type-meta text-nexus-muted">
             Selected Access Level
           </p>
 
-          <p className="mt-2 text-sm font-black text-white">
+          <p className="np-type-body mt-2 font-black text-nexus-white">
             {selectedRole.label}
           </p>
 
-          <p className="mt-1 text-sm font-semibold leading-6 text-slate-400">
-            {selectedRole.description}
+          <p id={roleHintId} className={`mt-2 ${EXECUTIVE_FORM_HELPER}`}>
+            {selectedRole.description} Access Level is workspace membership
+            authority only. It does not assign Job Title, Procurement Function,
+            or RFQ participation.
           </p>
         </div>
       ) : null}
 
       {inviteUrl ? (
-        <div className="mt-6 rounded-[28px] border border-emerald-300/20 bg-emerald-400/10 p-5">
+        <div
+          role="status"
+          className={`mt-6 ${EXECUTIVE_FEEDBACK_SUCCESS} p-5`}
+        >
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-            <div>
-              <p className="text-sm font-black text-emerald-200">
+            <div className="min-w-0">
+              <p className="text-sm font-black">
                 {getResultTitle()}
               </p>
 
-              <p className="mt-2 text-sm font-bold leading-6 text-emerald-200/85">
+              <p className="mt-2 text-sm font-bold leading-6 opacity-90">
                 {getResultMessage()}
               </p>
 
-              <p className="mt-4 max-w-3xl break-all rounded-2xl border border-white/10 bg-[#061426]/70 p-4 text-xs font-semibold leading-6 text-emerald-100">
+              <p className="mt-4 max-w-3xl min-w-0 break-all rounded-2xl border border-white/10 bg-black/20 p-4 text-xs font-semibold leading-6">
                 {inviteUrl}
               </p>
             </div>
@@ -315,13 +344,13 @@ export default function InviteUserForm() {
             <button
               type="button"
               onClick={handleCopyInviteUrl}
-              className="rounded-full border border-emerald-300/20 bg-emerald-400/15 px-5 py-3 text-sm font-black text-emerald-100 transition hover:bg-emerald-400/20"
+              className={`min-h-11 shrink-0 rounded-2xl border border-status-success/25 bg-status-success/15 px-5 py-3 text-sm font-black text-status-success transition hover:bg-status-success/20 ${EXECUTIVE_FOCUS_CYAN}`}
             >
               {copied ? "Copied!" : "Copy Link"}
             </button>
           </div>
 
-          <p className="mt-4 text-xs font-bold leading-5 text-emerald-200/80">
+          <p className="mt-4 text-xs font-bold leading-5 opacity-80">
             The invited company member must use the same email address shown
             in the workspace invitation.
           </p>
@@ -329,7 +358,10 @@ export default function InviteUserForm() {
       ) : null}
 
       {error ? (
-        <div className="mt-6 rounded-[24px] border border-red-300/20 bg-red-400/10 p-4 text-sm font-bold leading-6 text-red-200">
+        <div
+          role="alert"
+          className={`mt-6 ${EXECUTIVE_FEEDBACK_ERROR} p-4 text-sm font-bold leading-6`}
+        >
           {error}
         </div>
       ) : null}
@@ -337,22 +369,11 @@ export default function InviteUserForm() {
   );
 }
 
-function FormLabel({ children }: { children: React.ReactNode }) {
-  return (
-    <span className="mb-2 block text-xs font-black uppercase tracking-[0.2em] text-slate-400">
-      {children}
-    </span>
-  );
-}
-
 function StatusCard({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-[26px] border border-[#2CC4E8]/15 bg-[#2CC4E8]/[0.055] px-5 py-4">
-      <p className="text-xs font-black uppercase tracking-[0.2em] text-[#9BE8F8]">
-        {label}
-      </p>
-
-      <p className="mt-1 text-sm font-black text-white">{value}</p>
+    <div className={`${EXECUTIVE_FEEDBACK_INFO} shrink-0 px-5 py-4`}>
+      <p className="np-type-meta">{label}</p>
+      <p className="np-type-body mt-1 font-black text-nexus-white">{value}</p>
     </div>
   );
 }

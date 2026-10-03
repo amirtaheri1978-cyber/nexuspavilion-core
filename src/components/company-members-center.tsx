@@ -157,22 +157,68 @@ function getRoleClass(
   role: Membership["workspace_role"] | null | undefined,
 ) {
   if (role === "owner") {
-    return "border-purple-300/20 bg-purple-400/10 text-purple-200";
+    return "border-nexus-gold/25 bg-nexus-gold/10 text-nexus-gold";
   }
 
   if (role === "admin") {
-    return "border-emerald-300/20 bg-emerald-400/10 text-emerald-200";
+    return "border-status-success/25 bg-status-success/10 text-status-success";
   }
 
   if (role === "member") {
-    return "border-[#2CC4E8]/25 bg-[#2CC4E8]/10 text-[#9BE8F8]";
+    return "border-nexus-cyan/25 bg-nexus-cyan/10 text-nexus-cyan";
   }
 
   if (role === "viewer") {
-    return "border-white/10 bg-white/[0.055] text-slate-300";
+    return "border-white/10 bg-white/[0.055] text-nexus-text-secondary";
   }
 
-  return "border-orange-300/20 bg-orange-400/10 text-orange-200";
+  return "border-status-warning/25 bg-status-warning/10 text-status-warning";
+}
+
+function getMembershipStatusLabel(
+  status: Membership["membership_status"] | null | undefined,
+) {
+  if (status === "pending") return "Pending";
+  if (status === "active") return "Active";
+  if (status === "archived") return "Archived";
+  if (status === "suspended") return "Suspended";
+  if (status === "revoked") return "Revoked";
+
+  return "Status Missing";
+}
+
+function getMembershipStatusClass(
+  status: Membership["membership_status"] | null | undefined,
+) {
+  if (status === "active") {
+    return "border-status-success/25 bg-status-success/10 text-status-success";
+  }
+
+  if (status === "pending") {
+    return "border-status-warning/25 bg-status-warning/10 text-status-warning";
+  }
+
+  if (status === "suspended") {
+    return "border-status-warning/25 bg-status-warning/10 text-status-warning";
+  }
+
+  if (status === "archived" || status === "revoked") {
+    return "border-status-risk/25 bg-status-risk/10 text-status-risk";
+  }
+
+  return "border-status-warning/25 bg-status-warning/10 text-status-warning";
+}
+
+function getInvitationStatusLabel(status: string | null) {
+  const value = String(status || "pending").trim().toLowerCase();
+
+  if (value === "pending" || value === "sent") return "Pending";
+  if (value === "accepted" || value === "approved") return "Accepted";
+  if (value === "revoked") return "Revoked";
+  if (value === "rejected") return "Rejected";
+  if (value === "expired") return "Expired";
+
+  return value.charAt(0).toUpperCase() + value.slice(1);
 }
 
 function getInvitationAccessLevelLabel(role: string | null) {
@@ -188,15 +234,17 @@ function getInvitationAccessLevelLabel(role: string | null) {
 }
 
 function getStatusClass(status: string | null) {
-  if (status === "accepted" || status === "approved") {
-    return "border-emerald-300/20 bg-emerald-400/10 text-emerald-200";
+  const value = String(status || "").trim().toLowerCase();
+
+  if (value === "accepted" || value === "approved") {
+    return "border-status-success/25 bg-status-success/10 text-status-success";
   }
 
-  if (status === "revoked" || status === "rejected") {
-    return "border-red-300/20 bg-red-400/10 text-red-200";
+  if (value === "revoked" || value === "rejected" || value === "expired") {
+    return "border-status-risk/25 bg-status-risk/10 text-status-risk";
   }
 
-  return "border-orange-300/20 bg-orange-400/10 text-orange-200";
+  return "border-status-warning/25 bg-status-warning/10 text-status-warning";
 }
 
 function formatDate(value: string | null | undefined) {
@@ -407,7 +455,7 @@ const readOnlyCount = workspaceMembers.filter(
           <ExecutivePanel
             eyebrow="Access Summary"
             title="Team Readiness"
-            description="Review workspace Access Level distribution before scaling activity."
+            description="Descriptive workspace membership counts by Access Level. This is not a governance, maturity, or readiness score."
           >
             <div className="mt-6 space-y-4">
               <RoleRow
@@ -437,8 +485,8 @@ const readOnlyCount = workspaceMembers.filter(
       <ExecutivePanel
         id="invite-users"
         eyebrow="Workspace Administration"
-title="Manage Workspace Access"
-description="Manage company membership, Access Levels, and pending access invitations."
+        title="Manage Workspace Access"
+        description="Manage company workspace membership and Access Levels. Workspace Invitations grant company membership only — not RFQ participation."
       >
         {invitationManagementEnabled ? (
           <div className="mt-6">
@@ -454,7 +502,7 @@ description="Manage company membership, Access Levels, and pending access invita
         <ExecutivePanel
           eyebrow="People & Access"
           title="Company Members"
-          description="Review people, Access Levels, and active organization participants."
+          description="Review people, professional context, Access Level, and membership status. Access Level is workspace authority — not Job Title or department assignment."
           action={
             <span className="rounded-full border border-white/10 bg-white/[0.055] px-5 py-3 text-sm font-black text-white">
               {canManage
@@ -463,24 +511,24 @@ description="Manage company membership, Access Levels, and pending access invita
             </span>
           }
         >
-          <div className="mt-6 overflow-hidden rounded-[26px] border border-white/10 bg-[#061426]/70">
+          <div className="mt-6 overflow-hidden rounded-panel border border-white/10 bg-black/20">
             <div className="hidden overflow-x-auto lg:block">
               <table className="w-full min-w-[760px] text-left">
                 <thead className="border-b border-white/10 bg-white/[0.055] text-white">
                   <tr>
-                    <th className="px-5 py-4 text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+                    <th scope="col" className="np-type-meta px-5 py-4 text-nexus-muted">
                       Person
                     </th>
 
-                    <th className="px-5 py-4 text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+                    <th scope="col" className="np-type-meta px-5 py-4 text-nexus-muted">
                       Access Level
                     </th>
 
-                    <th className="px-5 py-4 text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+                    <th scope="col" className="np-type-meta px-5 py-4 text-nexus-muted">
                       Status
                     </th>
 
-                    <th className="px-5 py-4 text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+                    <th scope="col" className="np-type-meta px-5 py-4 text-nexus-muted">
                       Actions
                     </th>
                   </tr>
@@ -520,15 +568,13 @@ description="Manage company membership, Access Levels, and pending access invita
 
                           <td className="px-5 py-4 align-top">
                             <StatusPill
-                              className={
-                                membership?.membership_status ===
-                                "active"
-                                  ? "border-emerald-300/20 bg-emerald-400/10 text-emerald-200"
-                                  : "border-orange-300/20 bg-orange-400/10 text-orange-200"
-                              }
+                              className={getMembershipStatusClass(
+                                membership?.membership_status,
+                              )}
                             >
-                              {membership?.membership_status ||
-                                "missing"}
+                              {getMembershipStatusLabel(
+                                membership?.membership_status,
+                              )}
                             </StatusPill>
                           </td>
 
@@ -577,34 +623,50 @@ description="Manage company membership, Access Levels, and pending access invita
                 workspaceMembers.map(({ profile, membership }) => (
                   <article
                     key={profile.id}
-                    className="rounded-2xl border border-white/10 bg-white/[0.04] p-4"
+                    className="rounded-executive border border-white/10 bg-white/[0.04] p-4"
                   >
-                    <MemberIdentityDisplay
-                      firstName={profile.first_name}
-                      lastName={profile.last_name}
-                      jobTitle={membership?.job_title}
-                      email={profile.email}
-                      isCurrentUser={profile.id === currentProfile.id}
-                    />
+                    <p className="np-type-meta text-nexus-muted">Person</p>
+                    <div className="mt-2">
+                      <MemberIdentityDisplay
+                        firstName={profile.first_name}
+                        lastName={profile.last_name}
+                        jobTitle={membership?.job_title}
+                        email={profile.email}
+                        isCurrentUser={profile.id === currentProfile.id}
+                      />
+                    </div>
 
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      <StatusPill
-                        className={getRoleClass(membership?.workspace_role)}
-                      >
-                        {getWorkspaceRoleLabel(membership?.workspace_role)}
-                      </StatusPill>
-                      <StatusPill
-                        className={
-                          membership?.membership_status === "active"
-                            ? "border-emerald-300/20 bg-emerald-400/10 text-emerald-200"
-                            : "border-amber-300/20 bg-amber-400/10 text-amber-200"
-                        }
-                      >
-                        {membership?.membership_status || "missing"}
-                      </StatusPill>
+                    <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                      <div>
+                        <p className="np-type-meta text-nexus-muted">
+                          Access Level
+                        </p>
+                        <div className="mt-2">
+                          <StatusPill
+                            className={getRoleClass(membership?.workspace_role)}
+                          >
+                            {getWorkspaceRoleLabel(membership?.workspace_role)}
+                          </StatusPill>
+                        </div>
+                      </div>
+                      <div>
+                        <p className="np-type-meta text-nexus-muted">Status</p>
+                        <div className="mt-2">
+                          <StatusPill
+                            className={getMembershipStatusClass(
+                              membership?.membership_status,
+                            )}
+                          >
+                            {getMembershipStatusLabel(
+                              membership?.membership_status,
+                            )}
+                          </StatusPill>
+                        </div>
+                      </div>
                     </div>
 
                     <div className="mt-4">
+                      <p className="np-type-meta text-nexus-muted">Actions</p>
                       <MemberActions
                         memberId={profile.id}
                         memberLabel={formatWorkspaceMemberPersonLabel({
@@ -637,10 +699,10 @@ description="Manage company membership, Access Levels, and pending access invita
 
         <div className="min-w-0">
         <ExecutivePanel
-  eyebrow="Workspace Access"
-  title="Workspace Invitations"
-  description="Users invited to join this company workspace. These invitations do not grant access to any specific RFQ."
->
+          eyebrow="Workspace Access"
+          title="Workspace Invitations"
+          description="Users invited to join this company workspace. These invitations do not grant access to any specific RFQ."
+        >
           <div className="mt-6 space-y-4">
             {pendingInvitations.length > 0 ? (
               pendingInvitations
@@ -648,45 +710,61 @@ description="Manage company membership, Access Levels, and pending access invita
                 .map((invitation) => (
                   <div
                     key={invitation.id}
-                    className="rounded-[26px] border border-white/10 bg-[#061426]/70 p-5"
+                    className="rounded-executive border border-white/10 bg-black/20 p-5"
                   >
-                    <p className="font-black text-white">
+                    <p className="np-type-meta text-nexus-muted">
+                      Invited Email
+                    </p>
+                    <p className="np-type-body mt-1 min-w-0 break-all font-black text-nexus-white">
                       {invitation.email || "No email"}
                     </p>
 
-                    <div className="mt-3 flex flex-wrap items-center gap-2">
-                      <StatusPill
-                        className={getStatusClass(
-                          invitation.status,
-                        )}
-                      >
-                        {invitation.status || "pending"}
-                      </StatusPill>
-
-                      <StatusPill className="border-white/10 bg-white/[0.055] text-slate-300">
-                        {getInvitationAccessLevelLabel(
-                          invitation.role,
-                        )}
-                      </StatusPill>
+                    <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                      <div>
+                        <p className="np-type-meta text-nexus-muted">
+                          Proposed Access Level
+                        </p>
+                        <div className="mt-2">
+                          <StatusPill className="border-nexus-cyan/25 bg-nexus-cyan/10 text-nexus-cyan">
+                            {getInvitationAccessLevelLabel(invitation.role)}
+                          </StatusPill>
+                        </div>
+                      </div>
+                      <div>
+                        <p className="np-type-meta text-nexus-muted">
+                          Invitation Status
+                        </p>
+                        <div className="mt-2">
+                          <StatusPill
+                            className={getStatusClass(invitation.status)}
+                          >
+                            {getInvitationStatusLabel(invitation.status)}
+                          </StatusPill>
+                        </div>
+                      </div>
                     </div>
 
-                    <p className="mt-3 text-xs font-bold text-slate-400">
-                      Sent{" "}
-                      {formatDate(
-                        invitation.created_at,
-                      )}
+                    <p className="np-type-meta mt-4 text-nexus-muted">
+                      Invitation Date{" "}
+                      <span className="text-nexus-text-secondary">
+                        {formatDate(invitation.created_at)}
+                      </span>
                     </p>
 
                     {invitationManagementEnabled ? (
                       <InvitationActions
                         invitationId={invitation.id}
-                        inviteUrl={getInviteUrl(
-                          invitation,
-                          siteUrl,
-                        )}
+                        inviteUrl={getInviteUrl(invitation, siteUrl)}
                         status={invitation.status}
                       />
-                    ) : null}
+                    ) : (
+                      <p
+                        role="status"
+                        className="mt-4 text-xs font-bold leading-5 text-nexus-muted"
+                      >
+                        You have read-only access to workspace invitations.
+                      </p>
+                    )}
                   </div>
                 ))
             ) : (
@@ -871,20 +949,16 @@ function ExecutivePanel({
   return (
     <section
       id={id}
-      className="mt-8 rounded-[32px] border border-white/10 bg-white/[0.045] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.28)] backdrop-blur-xl sm:p-8"
+      className="mt-8 rounded-panel border border-white/10 bg-white/[0.045] p-6 shadow-inner-executive backdrop-blur-xl sm:p-8"
     >
       <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-        <div>
-          <p className="text-xs font-black uppercase tracking-[0.3em] text-[#C8A646]">
-            {eyebrow}
-          </p>
+        <div className="min-w-0">
+          <p className="np-type-eyebrow text-nexus-gold">{eyebrow}</p>
 
-          <h2 className="mt-3 text-3xl font-black text-white">
-            {title}
-          </h2>
+          <h2 className="np-type-h2 mt-3 text-nexus-white">{title}</h2>
 
           {description ? (
-            <p className="mt-3 max-w-3xl text-sm font-semibold leading-7 text-slate-400">
+            <p className="np-type-body mt-3 max-w-3xl text-pretty text-nexus-muted">
               {description}
             </p>
           ) : null}
@@ -906,14 +980,12 @@ function RoleRow({
   value: number;
 }) {
   return (
-    <div className="flex items-center justify-between rounded-[24px] border border-white/10 bg-[#061426]/70 p-5">
-      <p className="text-sm font-black text-slate-300">
+    <div className="flex items-center justify-between rounded-executive border border-white/10 bg-black/20 p-5">
+      <p className="np-type-body font-black text-nexus-text-secondary">
         {label}
       </p>
 
-      <p className="text-2xl font-black text-white">
-        {value}
-      </p>
+      <p className="text-2xl font-black text-nexus-white">{value}</p>
     </div>
   );
 }
@@ -940,10 +1012,8 @@ function EmptyState({
   message: string;
 }) {
   return (
-    <div className="rounded-[26px] border border-dashed border-white/15 bg-white/[0.035] p-8 text-center">
-      <p className="text-sm font-bold text-slate-400">
-        {message}
-      </p>
+    <div className="rounded-executive border border-dashed border-white/15 bg-white/[0.035] p-8 text-center">
+      <p className="np-type-body text-nexus-muted">{message}</p>
     </div>
   );
 }
