@@ -13,6 +13,7 @@ type CompanyQualificationsDisplayProps = {
   qualifications: GroupedCompanyQualifications;
   variant?: "internal" | "public";
   className?: string;
+  headingId?: string;
 };
 
 function QualificationSummary({
@@ -23,53 +24,49 @@ function QualificationSummary({
   variant: "internal" | "public";
 }) {
   return (
-    <article className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+    <article className="min-w-0 rounded-executive border border-white/10 bg-white/[0.04] p-4 sm:p-5">
       <div className="min-w-0">
-        <p className="text-sm font-black text-white break-words">{item.name}</p>
+        <p className="np-type-body min-w-0 break-words font-black text-nexus-white">
+          {item.name}
+        </p>
         {item.issuer ? (
-          <p className="mt-1 text-xs font-semibold text-slate-400 break-words">
-            {item.issuer}
+          <p className="np-type-meta mt-2 min-w-0 break-words text-nexus-muted">
+            Issuer: {item.issuer}
           </p>
         ) : null}
       </div>
 
       <dl className="mt-4 grid gap-3 text-xs sm:grid-cols-2">
         {variant === "internal" ? (
-          <div>
-            <dt className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-500">
+          <div className="min-w-0">
+            <dt className="np-type-meta text-nexus-muted">
               Credential Identifier
             </dt>
-            <dd className="mt-1 font-semibold text-slate-300 break-words">
+            <dd className="np-type-body mt-1 min-w-0 break-words text-nexus-text-secondary">
               {item.credential_identifier || "Not provided"}
             </dd>
           </div>
         ) : null}
 
         {variant === "internal" ? (
-          <div>
-            <dt className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-500">
-              Visibility
-            </dt>
-            <dd className="mt-1 font-semibold text-slate-300">
+          <div className="min-w-0">
+            <dt className="np-type-meta text-nexus-muted">Visibility</dt>
+            <dd className="np-type-body mt-1 text-nexus-text-secondary">
               {item.is_public ? "Public profile" : "Workspace only"}
             </dd>
           </div>
         ) : null}
 
-        <div>
-          <dt className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-500">
-            Issued
-          </dt>
-          <dd className="mt-1 font-semibold text-slate-300">
+        <div className="min-w-0">
+          <dt className="np-type-meta text-nexus-muted">Issued</dt>
+          <dd className="np-type-body mt-1 text-nexus-text-secondary">
             {formatQualificationDate(item.issued_on)}
           </dd>
         </div>
 
-        <div>
-          <dt className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-500">
-            Expires
-          </dt>
-          <dd className="mt-1 font-semibold text-slate-300">
+        <div className="min-w-0">
+          <dt className="np-type-meta text-nexus-muted">Expires</dt>
+          <dd className="np-type-body mt-1 text-nexus-text-secondary">
             {formatQualificationExpiry(item.expires_on)}
           </dd>
         </div>
@@ -98,9 +95,7 @@ function QualificationGroup({
 
   return (
     <div className="min-w-0">
-      <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
-        {title}
-      </p>
+      <h3 className="np-type-meta text-nexus-muted">{title}</h3>
 
       {visibleItems.length > 0 ? (
         <div className="mt-3 space-y-3">
@@ -113,9 +108,7 @@ function QualificationGroup({
           ))}
         </div>
       ) : (
-        <p className="mt-3 text-sm font-semibold text-slate-500">
-          Not provided
-        </p>
+        <p className="np-type-body mt-3 text-nexus-muted">Not provided</p>
       )}
     </div>
   );
@@ -125,56 +118,72 @@ export function CompanyQualificationsDisplay({
   qualifications,
   variant = "internal",
   className = "",
+  headingId,
 }: CompanyQualificationsDisplayProps) {
   if (
     variant === "public" &&
     !hasAnyPublicGroupedQualifications(qualifications)
   ) {
-    return null;
+    return (
+      <section className={className}>
+        <p className="np-type-eyebrow text-nexus-gold">
+          Company Qualifications
+        </p>
+
+        <h2 id={headingId} className="np-type-h2 mt-3 text-nexus-white">
+          Published Qualifications
+        </h2>
+
+        <p className="np-type-body mt-3 max-w-3xl text-pretty text-nexus-muted">
+          Public qualifications are details this organization has chosen to
+          publish.
+        </p>
+
+        <p className="np-type-body mt-6 text-nexus-muted">
+          No Published Qualifications
+        </p>
+      </section>
+    );
   }
 
   if (variant === "internal" && !hasAnyGroupedQualifications(qualifications)) {
     return (
       <section className={className}>
-        <p className="text-xs font-black uppercase tracking-[0.3em] text-[#C8A646]">
+        <p className="np-type-eyebrow text-nexus-gold">
           Company Qualifications
         </p>
 
-        <h2 className="mt-3 text-2xl font-black text-white sm:text-3xl">
+        <h2 id={headingId} className="np-type-h2 mt-3 text-nexus-white">
           Qualification Registry
         </h2>
 
-        <p className="mt-3 max-w-3xl text-sm font-semibold leading-7 text-slate-400">
+        <p className="np-type-body mt-3 max-w-3xl text-pretty text-nexus-muted">
           Qualifications describe licenses, certifications, accreditations, and
           registrations recorded by your organization.
         </p>
 
-        <p className="mt-6 text-sm font-semibold text-slate-500">
-          Not provided
-        </p>
+        <p className="np-type-body mt-6 text-nexus-muted">Not provided</p>
       </section>
     );
   }
 
   return (
     <section className={className}>
-      <p className="text-xs font-black uppercase tracking-[0.3em] text-[#C8A646]">
-        Company Qualifications
-      </p>
+      <p className="np-type-eyebrow text-nexus-gold">Company Qualifications</p>
 
-      <h2 className="mt-3 text-2xl font-black text-white sm:text-3xl">
+      <h2 id={headingId} className="np-type-h2 mt-3 text-nexus-white">
         {variant === "public"
           ? "Published Qualifications"
           : "Qualification Registry"}
       </h2>
 
-      <p className="mt-3 max-w-3xl text-sm font-semibold leading-7 text-slate-400">
+      <p className="np-type-body mt-3 max-w-3xl text-pretty text-nexus-muted">
         {variant === "public"
           ? "Public qualifications are details this organization has chosen to publish."
           : "Qualifications describe licenses, certifications, accreditations, and registrations recorded by your organization."}
       </p>
 
-      <div className="mt-6 grid gap-6 md:grid-cols-2">
+      <div className="mt-6 grid gap-6 lg:grid-cols-2">
         {COMPANY_QUALIFICATION_TYPES.map((qualificationType) => (
           <QualificationGroup
             key={qualificationType}

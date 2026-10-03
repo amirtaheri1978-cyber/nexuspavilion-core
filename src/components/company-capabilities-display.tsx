@@ -9,11 +9,12 @@ type CompanyCapabilitiesDisplayProps = {
   capabilities: GroupedCompanyCapabilities;
   variant?: "internal" | "public";
   className?: string;
+  headingId?: string;
 };
 
 function CapabilityChip({ label }: { label: string }) {
   return (
-    <span className="inline-flex max-w-full items-center rounded-full border border-white/10 bg-white/[0.055] px-3 py-1.5 text-xs font-bold leading-5 text-slate-200 break-words">
+    <span className="inline-flex max-w-full items-center rounded-2xl border border-white/10 bg-white/[0.055] px-3 py-2 text-xs font-bold leading-5 text-nexus-text-secondary break-words">
       {label}
     </span>
   );
@@ -34,9 +35,7 @@ function CapabilityGroup({
 
   return (
     <div className="min-w-0">
-      <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
-        {title}
-      </p>
+      <h3 className="np-type-meta text-nexus-muted">{title}</h3>
 
       {labels.length > 0 ? (
         <div className="mt-3 flex flex-wrap gap-2">
@@ -45,9 +44,7 @@ function CapabilityGroup({
           ))}
         </div>
       ) : (
-        <p className="mt-3 text-sm font-semibold text-slate-500">
-          Not provided
-        </p>
+        <p className="np-type-body mt-3 text-nexus-muted">Not provided</p>
       )}
     </div>
   );
@@ -57,28 +54,49 @@ export function CompanyCapabilitiesDisplay({
   capabilities,
   variant = "internal",
   className = "",
+  headingId,
 }: CompanyCapabilitiesDisplayProps) {
-  if (variant === "public" && !hasAnyGroupedCapabilities(capabilities)) {
-    return null;
+  const hasCapabilities = hasAnyGroupedCapabilities(capabilities);
+
+  if (variant === "public" && !hasCapabilities) {
+    return (
+      <section className={className}>
+        <p className="np-type-eyebrow text-nexus-gold">Company Capabilities</p>
+
+        <h2
+          id={headingId}
+          className="np-type-h2 mt-3 text-nexus-white"
+        >
+          Capabilities
+        </h2>
+
+        <p className="np-type-body mt-3 max-w-3xl text-pretty text-nexus-muted">
+          Capabilities describe what this organization delivers and where it
+          operates.
+        </p>
+
+        <p className="np-type-body mt-6 text-nexus-muted">
+          No published capabilities.
+        </p>
+      </section>
+    );
   }
 
   return (
     <section className={className}>
-      <p className="text-xs font-black uppercase tracking-[0.3em] text-[#C8A646]">
-        Company Capabilities
-      </p>
+      <p className="np-type-eyebrow text-nexus-gold">Company Capabilities</p>
 
-      <h2 className="mt-3 text-2xl font-black text-white sm:text-3xl">
-        What We Deliver
+      <h2 id={headingId} className="np-type-h2 mt-3 text-nexus-white">
+        {variant === "public" ? "Capabilities" : "What We Deliver"}
       </h2>
 
-      <p className="mt-3 max-w-3xl text-sm font-semibold leading-7 text-slate-400">
+      <p className="np-type-body mt-3 max-w-3xl text-pretty text-nexus-muted">
         {variant === "public"
           ? "Capabilities describe what this organization delivers and where it operates."
           : "Capabilities describe what your organization delivers and where it operates."}
       </p>
 
-      <div className="mt-6 grid gap-6 md:grid-cols-2">
+      <div className="mt-6 grid gap-6 lg:grid-cols-2">
         {COMPANY_CAPABILITY_TYPES.map((capabilityType) => (
           <CapabilityGroup
             key={capabilityType}
