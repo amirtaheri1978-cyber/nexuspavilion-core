@@ -18,6 +18,15 @@ import { createClient } from "@/lib/supabase/client";
 
 export const RFQ_DOCUMENT_REQUIREMENTS_UPDATED_EVENT =
   "rfq-document-requirements-updated";
+export const RFQ_GOVERNED_REQUIREMENT_HANDOFF_EVENT =
+  "rfq-governed-requirement-handoff";
+
+type GovernedRequirementHandoffDetail = {
+  rfqId: string;
+  title: string;
+  reason: string;
+  affectedDocuments: string;
+};
 
 type RFQDocumentRequirementsProps = {
   rfqId: string;
@@ -29,6 +38,8 @@ type RFQDocumentRequirementsProps = {
 };
 
 type RequirementMutationResponse = {
+  addendumId?: string;
+  addendumNumber?: number | string | null;
   error?: string;
   success?: boolean;
   changed?: boolean;
@@ -119,6 +130,8 @@ export function RFQDocumentRequirements({
     null,
   );
   const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
+  const [handoffGuidance, setHandoffGuidance] = useState("");
   const [addendumTitle, setAddendumTitle] = useState("");
   const [amendmentReason, setAmendmentReason] = useState("");
   const isPublished = rfqStatus !== "draft";
@@ -183,6 +196,37 @@ export function RFQDocumentRequirements({
     };
   }, [refreshDocuments]);
 
+  useEffect(() => {
+    function handleGovernedRequirementHandoff(event: Event) {
+      const detail = (event as CustomEvent<GovernedRequirementHandoffDetail>)
+        .detail;
+
+      if (!canManage || detail?.rfqId !== rfqId) return;
+
+      setAddendumTitle(detail.title);
+      setAmendmentReason(detail.reason);
+      setError("");
+      setMessage("");
+      setHandoffGuidance(
+        detail.affectedDocuments
+          ? `Choose the matching document category for “${detail.affectedDocuments}”, then declare or remove its requirement.`
+          : "Choose the document category, then declare or remove its requirement.",
+      );
+    }
+
+    window.addEventListener(
+      RFQ_GOVERNED_REQUIREMENT_HANDOFF_EVENT,
+      handleGovernedRequirementHandoff,
+    );
+
+    return () => {
+      window.removeEventListener(
+        RFQ_GOVERNED_REQUIREMENT_HANDOFF_EVENT,
+        handleGovernedRequirementHandoff,
+      );
+    };
+  }, [canManage, rfqId]);
+
   const mutateRequirement = useCallback(
     async (attachmentType: RfqAttachmentType, required: boolean) => {
       if (!canManage || mutatingType) return;
@@ -199,6 +243,7 @@ export function RFQDocumentRequirements({
 
       setMutatingType(attachmentType);
       setError("");
+      setMessage("");
 
       try {
         const response = await fetch("/api/rfq-document-requirements", {
@@ -260,6 +305,12 @@ export function RFQDocumentRequirements({
         );
 
         if (isPublished) {
+          setMessage(
+            payload.addendumNumber
+              ? `Addendum #${payload.addendumNumber} issued. The governed document requirement change is recorded and acknowledgement remains required.`
+              : `Governed Addendum issued (${payload.addendumId || "recorded"}). The document requirement change is recorded and acknowledgement remains required.`,
+          );
+          setHandoffGuidance("");
           setAddendumTitle("");
           setAmendmentReason("");
         }
@@ -291,6 +342,7 @@ export function RFQDocumentRequirements({
 
   return (
     <section
+      tabIndex={-1}
       className="mt-8 min-w-0 border-t border-white/10 pt-8"
       aria-labelledby="rfq-required-document-coverage-title"
       data-rfq-document-requirements="true"
@@ -353,6 +405,30 @@ export function RFQDocumentRequirements({
           role="alert"
         >
           {error}
+        </div>
+      ) : null}
+
+      {handoffGuidance ? (
+        <div
+          className="mt-6 rounded-executive border border-amber-300/25 bg-amber-400/10 px-5 py-4"
+          role="status"
+        >
+          <p className="text-sm font-black text-amber-100">
+            Complete the governed requirement change
+          </p>
+          <p className="mt-2 text-sm font-semibold leading-6 text-amber-100/75">
+            {handoffGuidance}
+          </p>
+        </div>
+      ) : null}
+
+      {message ? (
+        <div
+          className="mt-6 rounded-executive border border-emerald-300/20 bg-emerald-400/10 px-5 py-4 text-sm font-bold text-emerald-200"
+          role="status"
+          aria-live="polite"
+        >
+          {message}
         </div>
       ) : null}
 

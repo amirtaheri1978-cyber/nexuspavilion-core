@@ -5,6 +5,7 @@ import {
   isRfqAttachmentType,
   type RfqAttachmentType,
 } from "@/lib/procurement/rfq-attachment-types";
+import { recordAndDeliverAddendumCommunication } from "@/lib/procurement/rfq-addendum-communication";
 import { canCreateCompanyRfq } from "@/lib/procurement/procurement-write-authorization";
 import { createClient } from "@/lib/supabase/server";
 
@@ -17,6 +18,14 @@ type AmendmentRpcResult = {
   error_code?: string;
   error_message?: string;
   addendum_id?: string;
+  addendum_number?: number | string | null;
+};
+
+type PublishedAddendumRecord = {
+  id: string;
+  addendum_number: number | string | null;
+  title: string | null;
+  requires_acknowledgement: boolean | null;
 };
 
 function getAmendmentEvidence(body: unknown) {
@@ -58,7 +67,7 @@ async function resolveAuthorizedIssuerContext({
 }) {
   const { data: rfq, error: rfqError } = await supabase
     .from("rfqs")
-    .select("id, company_id, status")
+    .select("id, company_id, title, slug, status")
     .eq("id", rfqId)
     .maybeSingle();
 
@@ -106,6 +115,60 @@ async function resolveAuthorizedIssuerContext({
   return {
     ok: true as const,
     rfq,
+  };
+}
+
+async function communicatePublishedPackageAmendment({
+  addendumId,
+  rfq,
+  userId,
+  supabase,
+}: {
+  addendumId: string;
+  rfq: {
+    company_id: string;
+    title: string | null;
+    slug: string | null;
+  };
+  userId: string;
+  supabase: Awaited<ReturnType<typeof createClient>>;
+}) {
+  const { data, error } = await supabase
+    .from("rfq_addenda")
+    .select("id, addendum_number, title, requires_acknowledgement")
+    .eq("id", addendumId)
+    .maybeSingle();
+  const addendum = data as PublishedAddendumRecord | null;
+
+  if (error || !addendum) {
+    return {
+      ok: false as const,
+      response: NextResponse.json(
+        {
+          error:
+            "The governed requirement was changed, but its Addendum communication could not be prepared.",
+        },
+        { status: 500 },
+      ),
+    };
+  }
+
+  const email = await recordAndDeliverAddendumCommunication({
+    addendumId: addendum.id,
+    rfqTitle: rfq.title,
+    rfqSlug: rfq.slug,
+    publishedNumber: addendum.addendum_number,
+    publishedTitle: addendum.title,
+    requiresAcknowledgement: Boolean(addendum.requires_acknowledgement),
+    userId,
+    companyId: rfq.company_id,
+    supabase,
+  });
+
+  return {
+    ok: true as const,
+    email,
+    addendumNumber: addendum.addendum_number,
   };
 }
 
@@ -201,7 +264,7 @@ export async function POST(request: Request) {
     );
     const result = rpcData as AmendmentRpcResult | null;
 
-    if (rpcError || !result?.success) {
+    if (rpcError || !result?.success || !result.addendum_id) {
       return amendmentFailure(
         result,
         rpcError?.message || "Failed to declare governed document requirement.",
@@ -225,6 +288,15 @@ export async function POST(request: Request) {
       );
     }
 
+    const communication = await communicatePublishedPackageAmendment({
+      addendumId: result.addendum_id,
+      rfq: authorization.rfq,
+      userId: user.id,
+      supabase,
+    });
+
+    if (!communication.ok) return communication.response;
+
     return NextResponse.json(
       {
         success: true,
@@ -232,6 +304,8 @@ export async function POST(request: Request) {
         status: "declared",
         requirement,
         addendumId: result.addendum_id,
+        addendumNumber: communication.addendumNumber,
+        email: communication.email,
       },
       { status: 201 },
     );
@@ -347,18 +421,29 @@ export async function DELETE(request: Request) {
     );
     const result = rpcData as AmendmentRpcResult | null;
 
-    if (rpcError || !result?.success) {
+    if (rpcError || !result?.success || !result.addendum_id) {
       return amendmentFailure(
         result,
         rpcError?.message || "Failed to remove governed document requirement.",
       );
     }
 
+    const communication = await communicatePublishedPackageAmendment({
+      addendumId: result.addendum_id,
+      rfq: authorization.rfq,
+      userId: user.id,
+      supabase,
+    });
+
+    if (!communication.ok) return communication.response;
+
     return NextResponse.json({
       success: true,
       changed: true,
       status: "removed",
       addendumId: result.addendum_id,
+      addendumNumber: communication.addendumNumber,
+      email: communication.email,
     });
   }
 

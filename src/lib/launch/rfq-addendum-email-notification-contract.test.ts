@@ -43,6 +43,12 @@ function readSource(relativePath: string) {
 }
 
 const addendaRoute = readSource("src/app/api/rfq-addenda/route.ts");
+const addendumCommunication = readSource(
+  "src/lib/procurement/rfq-addendum-communication.ts",
+);
+const documentRequirementsRoute = readSource(
+  "src/app/api/rfq-document-requirements/route.ts",
+);
 const acknowledgementRoute = readSource(
   "src/app/api/rfq-addendum-acknowledgements/route.ts",
 );
@@ -71,115 +77,155 @@ const sendEmailMock = vi.mocked(sendEmail);
 
 describe("14-05 RFQ Addendum email notification contract", () => {
   it("wires Addendum email delivery after successful publication and activity", () => {
-    expect(addendaRoute).toContain('from "@/lib/email/send-email"');
-    expect(addendaRoute).toContain(
+    expect(addendumCommunication).toContain('from "@/lib/email/send-email"');
+    expect(addendumCommunication).toContain(
       'from "@/lib/email/templates/rfq-addendum-email"',
     );
-    expect(addendaRoute).toContain("buildRfqAddendumEmail({");
-    expect(addendaRoute).toContain("joinPublicSitePath(`/rfq/${rfqSlug}`)");
+    expect(addendumCommunication).toContain("buildRfqAddendumEmail({");
+    expect(addendumCommunication).toContain(
+      "joinPublicSitePath(`/rfq/${rfqSlug}`)",
+    );
     expect(addendaRoute).toContain(
       'select("id, company_id, title, slug, status")',
     );
-    expect(addendaRoute).toContain(
-      'recordTrustedProcurementActivity(\n    supabase,\n    "addendum_published"',
+    expect(addendumCommunication).toContain(
+      'recordTrustedProcurementActivity(\n    deliveryInput.supabase,\n    "addendum_published"',
     );
     expect(addendaRoute).toContain("deliverAddendumNotificationEmails");
-    expect(addendaRoute).toContain(
+    expect(addendumCommunication).toContain(
       'rpc(\n    "resolve_rfq_addendum_notification_recipients"',
     );
-    expect(addendaRoute).toContain("p_addendum_id: addendumId");
-    expect(addendaRoute).toContain("await sendEmail({");
+    expect(addendumCommunication).toContain("p_addendum_id: addendumId");
+    expect(addendumCommunication).toContain("await sendEmail({");
     expect(addendaRoute).toContain(
       "success: true, addendum: data, email",
     );
-    expect(addendaRoute).toContain("recipients:");
-    expect(addendaRoute).toContain("sent:");
-    expect(addendaRoute).toContain("skipped:");
-    expect(addendaRoute).toContain("failed:");
-    expect(addendaRoute).not.toContain("createServiceRoleClient");
-    expect(addendaRoute).not.toContain("service_role");
-    expect(addendaRoute).not.toContain('.from("profiles")');
-    expect(addendaRoute).not.toMatch(
+    expect(addendumCommunication).toContain("recipients:");
+    expect(addendumCommunication).toContain("sent:");
+    expect(addendumCommunication).toContain("skipped:");
+    expect(addendumCommunication).toContain("failed:");
+    expect(addendumCommunication).not.toContain("createServiceRoleClient");
+    expect(addendumCommunication).not.toContain("service_role");
+    expect(addendumCommunication).not.toContain('.from("profiles")');
+    expect(addendumCommunication).not.toMatch(
       /buildRfqAddendumEmail\(\{[^}]*description/,
     );
-    expect(addendaRoute).not.toMatch(
+    expect(addendumCommunication).not.toMatch(
       /buildRfqAddendumEmail\(\{[^}]*affected/,
     );
-    expect(addendaRoute).not.toContain("to: recipientEmails");
-    expect(addendaRoute).not.toContain("email: recipientEmail");
-    expect(addendaRoute).not.toContain("emails:");
+    expect(addendumCommunication).not.toContain("to: recipientEmails");
+    expect(addendumCommunication).not.toContain("email: recipientEmail");
+    expect(addendumCommunication).not.toContain("emails:");
 
     const postStart = addendaRoute.indexOf("export async function POST");
     const insertStart = addendaRoute.indexOf(
       ".insert({\n        rfq_id: rfqId,",
       postStart,
     );
-    const activityStart = addendaRoute.indexOf(
-      '"addendum_published"',
+    const deliverStart = addendaRoute.indexOf(
+      "recordAndDeliverAddendumCommunication",
       postStart,
     );
-    const deliverStart = addendaRoute.indexOf(
-      "deliverAddendumNotificationEmails",
-      postStart,
+    const activityStart = addendumCommunication.indexOf(
+      '"addendum_published"',
+    );
+    const emailDeliveryStart = addendumCommunication.indexOf(
+      "deliverAddendumNotificationEmails(deliveryInput)",
+      activityStart,
     );
 
     expect(postStart).toBeGreaterThan(-1);
     expect(insertStart).toBeGreaterThan(-1);
-    expect(activityStart).toBeGreaterThan(insertStart);
-    expect(deliverStart).toBeGreaterThan(activityStart);
+    expect(deliverStart).toBeGreaterThan(insertStart);
+    expect(activityStart).toBeGreaterThan(-1);
+    expect(emailDeliveryStart).toBeGreaterThan(activityStart);
   });
 
   it("keeps Addendum email aggregate summary privacy-safe and non-provider-leaking", () => {
-    expect(addendaRoute).not.toContain("lastError = result.error");
-    expect(addendaRoute).not.toContain("result.error ?? lastError");
-    expect(addendaRoute).not.toContain("error: result.error");
-    expect(addendaRoute).not.toContain("id: result.id");
-    expect(addendaRoute).toContain(
+    expect(addendumCommunication).not.toContain("lastError = result.error");
+    expect(addendumCommunication).not.toContain("result.error ?? lastError");
+    expect(addendumCommunication).not.toContain("error: result.error");
+    expect(addendumCommunication).not.toContain("id: result.id");
+    expect(addendumCommunication).toContain(
       'error = "One or more Addendum notification emails could not be delivered."',
     );
-    expect(addendaRoute).toContain(
+    expect(addendumCommunication).toContain(
       'error = "One or more Addendum notification emails were skipped."',
     );
-    expect(addendaRoute).toContain(
+    expect(addendumCommunication).toContain(
       "return emptyAddendumEmailSummary(null);",
     );
-    expect(addendaRoute).not.toContain(
+    expect(addendumCommunication).not.toContain(
       "No established Addendum notification recipients were available.",
     );
-    expect(addendaRoute).toContain("for (const recipientEmail of recipientEmails)");
-    expect(addendaRoute).toContain("failed += 1;");
-    expect(addendaRoute).toContain("skipped += 1;");
-    expect(addendaRoute).toMatch(
+    expect(addendumCommunication).toContain(
+      "for (const recipientEmail of recipientEmails)",
+    );
+    expect(addendumCommunication).toContain("failed += 1;");
+    expect(addendumCommunication).toContain("skipped += 1;");
+    expect(addendumCommunication).toMatch(
       /return \{\s*recipients: recipientEmails\.length,\s*sent,\s*skipped,\s*failed,\s*error,\s*\}/,
     );
     expect(addendaRoute).not.toMatch(
       /return \{\s*success: true,\s*addendum: data,\s*email:[\s\S]*recipientEmail/,
     );
     expect(addendaRoute).not.toContain("emails:");
-    expect(addendaRoute).toContain(
+    expect(addendumCommunication).toContain(
       "Addendum notification recipients could not be resolved.",
     );
   });
 
   it("uses deterministic per-recipient provider idempotency without caller-writable delivery suppression", () => {
-    expect(addendaRoute).toContain('import { createHash } from "node:crypto"');
-    expect(addendaRoute).toContain("hashAddendumEmailRecipient");
-    expect(addendaRoute).toContain("buildAddendumEmailIdempotencyKey");
-    expect(addendaRoute).toContain(
+    expect(addendumCommunication).toContain(
+      'import { createHash } from "node:crypto"',
+    );
+    expect(addendumCommunication).toContain("hashAddendumEmailRecipient");
+    expect(addendumCommunication).toContain(
+      "buildAddendumEmailIdempotencyKey",
+    );
+    expect(addendumCommunication).toContain(
       ".update(`rfq-addendum-email:v1:${addendumId}:${recipientHash}`)",
     );
-    expect(addendaRoute).toContain("idempotencyKey:");
-    expect(addendaRoute).not.toContain('from("audit_logs")');
-    expect(addendaRoute).not.toContain(
+    expect(addendumCommunication).toContain("idempotencyKey:");
+    expect(addendumCommunication).not.toContain('from("audit_logs")');
+    expect(addendumCommunication).not.toContain(
       '.eq("action", "ADDENDUM_EMAIL_DELIVERY")',
     );
-    expect(addendaRoute).not.toContain("wasAddendumEmailDelivered");
-    expect(addendaRoute).not.toContain("recordTrustedAddendumEmailDelivery");
-    expect(addendaRoute).not.toContain("providerMessageId");
-    expect(addendaRoute).not.toContain("p_recipient_email");
-    expect(addendaRoute).not.toMatch(
+    expect(addendumCommunication).not.toContain("wasAddendumEmailDelivered");
+    expect(addendumCommunication).not.toContain(
+      "recordTrustedAddendumEmailDelivery",
+    );
+    expect(addendumCommunication).not.toContain("providerMessageId");
+    expect(addendumCommunication).not.toContain("p_recipient_email");
+    expect(addendumCommunication).not.toMatch(
       /console\.(?:error|warn|info)\([^)]*recipientEmail/s,
     );
+  });
+
+  it("routes governed package mutations through the canonical Addendum communication workflow", () => {
+    expect(documentRequirementsRoute).toContain(
+      'from "@/lib/procurement/rfq-addendum-communication"',
+    );
+    expect(documentRequirementsRoute).toContain(
+      "recordAndDeliverAddendumCommunication({",
+    );
+    expect(documentRequirementsRoute).toContain(
+      ".eq(\"id\", addendumId)",
+    );
+    expect(documentRequirementsRoute).toContain(
+      "addendumId: result.addendum_id",
+    );
+    expect(documentRequirementsRoute).toContain(
+      "requiresAcknowledgement: Boolean(addendum.requires_acknowledgement)",
+    );
+    expect(documentRequirementsRoute).toContain("email: communication.email");
+    expect(documentRequirementsRoute).not.toContain('.from("notifications")');
+    expect(documentRequirementsRoute).not.toContain('.from("audit_logs")');
+    expect(documentRequirementsRoute).not.toContain('.from("quotes")');
+    expect(documentRequirementsRoute).not.toContain('from("rfq_addenda").insert');
+    expect(
+      documentRequirementsRoute.match(/"amend_published_rfq_package"/g),
+    ).toHaveLength(2);
   });
 
   it("exposes an authorized retry without creating another Addendum or Activity fanout", () => {

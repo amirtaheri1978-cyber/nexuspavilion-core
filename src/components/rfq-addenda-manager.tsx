@@ -3,6 +3,7 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 
 import { ExecutiveCompletionMoment } from "@/components/executive/executive-completion-moment";
+import { RFQ_GOVERNED_REQUIREMENT_HANDOFF_EVENT } from "@/components/rfq-workspace/rfq-document-requirements";
 
 type Addendum = {
   id: string;
@@ -111,18 +112,9 @@ function acknowledgementImplication(required: boolean | null) {
 function notificationOutcome(email: AddendumEmailSummary | null) {
   if (!email) return "";
 
-  const outcome =
-    "Notification outcome: " +
-    email.sent +
-    " sent, " +
-    email.skipped +
-    " skipped, and " +
-    email.failed +
-    " failed out of " +
-    email.recipients +
-    " returned recipients.";
+  const outcome = `Notification outcome: ${email.sent} sent, ${email.skipped} skipped, and ${email.failed} failed out of ${email.recipients} returned recipients.`;
 
-  return email.error ? outcome + " " + email.error : outcome;
+  return email.error ? `${outcome} ${email.error}` : outcome;
 }
 
 function formatDate(value: string | null) {
@@ -144,6 +136,7 @@ export default function RFQAddendaManager({
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [affectedDocuments, setAffectedDocuments] = useState("");
+  const [amendmentReason, setAmendmentReason] = useState("");
   const [requiresAcknowledgement, setRequiresAcknowledgement] = useState(true);
   const [loading, setLoading] = useState(false);
   const createLock = useRef(false);
@@ -153,6 +146,7 @@ export default function RFQAddendaManager({
     useState<AddendumPublicationNotice | null>(null);
   const [error, setError] = useState("");
   const [titleValidationError, setTitleValidationError] = useState(false);
+  const [governedGuidance, setGovernedGuidance] = useState(false);
   const errorId = "rfq-addenda-error";
 
   const nextAddendumNumber = useMemo(
@@ -193,11 +187,47 @@ export default function RFQAddendaManager({
       return;
     }
 
+    const requestsGovernedPackageChange = Boolean(
+      affectedDocuments.trim() || amendmentReason.trim(),
+    );
+
+    if (requestsGovernedPackageChange && !amendmentReason.trim()) {
+      setGovernedGuidance(false);
+      setError("Amendment reason is required for a governed package change.");
+      return;
+    }
+
+    if (requestsGovernedPackageChange) {
+      setError("");
+      setMessage("");
+      setPublishedNotice(null);
+      setGovernedGuidance(true);
+      window.dispatchEvent(
+        new CustomEvent(RFQ_GOVERNED_REQUIREMENT_HANDOFF_EVENT, {
+          detail: {
+            rfqId,
+            title: title.trim(),
+            reason: amendmentReason.trim(),
+            affectedDocuments: affectedDocuments.trim(),
+          },
+        }),
+      );
+      window.requestAnimationFrame(() => {
+        const destination = document.querySelector<HTMLElement>(
+          '[data-rfq-document-requirements="true"]',
+        );
+        destination?.scrollIntoView({ behavior: "smooth", block: "start" });
+        destination?.focus({ preventScroll: true });
+      });
+      return;
+    }
+
     createLock.current = true;
     setLoading(true);
     setMessage("");
     setPublishedNotice(null);
     setError("");
+    setGovernedGuidance(false);
     setTitleValidationError(false);
 
     try {
@@ -210,7 +240,7 @@ export default function RFQAddendaManager({
           rfqId,
           title: title.trim(),
           description: description.trim(),
-          affectedDocuments: affectedDocuments.trim(),
+          affectedDocuments: "",
           requiresAcknowledgement,
         }),
       });
@@ -226,6 +256,7 @@ export default function RFQAddendaManager({
       setTitle("");
       setDescription("");
       setAffectedDocuments("");
+      setAmendmentReason("");
       setRequiresAcknowledgement(true);
       setPublishedNotice(readPublicationNotice(data));
       setMessage("");
@@ -272,26 +303,7 @@ export default function RFQAddendaManager({
         </div>
       </div>
 
-      {publishedNotice ? (
-        <div className="mt-6 min-w-0">
-          <ExecutiveCompletionMoment
-            state="confirmed"
-            title={
-              publishedNotice.addendumNumber === null
-                ? "Addendum issued."
-                : `Addendum #${publishedNotice.addendumNumber} issued.`
-            }
-            summary={
-              acknowledgementImplication(
-                publishedNotice.requiresAcknowledgement,
-              ) || "The Addendum is published."
-            }
-            detail={notificationOutcome(publishedNotice.email)}
-          />
-        </div>
-      ) : null}
-
-      {message ? (
+      {message && !canManage ? (
         <div
           className="mt-6 min-w-0 rounded-executive border border-emerald-300/20 bg-emerald-400/10 px-4 py-3 text-pretty text-sm font-bold text-emerald-300"
           role="status"
@@ -301,7 +313,7 @@ export default function RFQAddendaManager({
         </div>
       ) : null}
 
-      {error ? (
+      {error && !canManage ? (
         <div
           id={errorId}
           className="mt-6 min-w-0 rounded-executive border border-red-300/20 bg-red-400/10 px-4 py-3 text-pretty text-sm font-bold text-red-200"
@@ -452,7 +464,96 @@ export default function RFQAddendaManager({
                 className="min-w-0 w-full resize-none rounded-executive border border-white/10 bg-black/25 px-4 py-4 text-sm font-bold normal-case tracking-normal text-nexus-white outline-none transition placeholder:text-nexus-muted/70 focus:border-nexus-cyan/40 focus-visible:ring-2 focus-visible:ring-nexus-gold/40 disabled:cursor-not-allowed disabled:opacity-60"
               />
             </label>
+
+            <label className="grid min-w-0 gap-2 text-xs font-black uppercase tracking-[0.18em] text-nexus-muted">
+              Amendment Reason
+              <textarea
+                rows={3}
+                value={amendmentReason}
+                onChange={(event) => setAmendmentReason(event.target.value)}
+                disabled={loading}
+                placeholder="Explain why this material Addendum is required."
+                className="min-w-0 w-full resize-none rounded-executive border border-white/10 bg-black/25 px-4 py-4 text-sm font-bold normal-case tracking-normal text-nexus-white outline-none transition placeholder:text-nexus-muted/70 focus:border-nexus-cyan/40 focus-visible:ring-2 focus-visible:ring-nexus-gold/40 disabled:cursor-not-allowed disabled:opacity-60"
+              />
+              <span className="normal-case tracking-normal text-nexus-muted/80">
+                Required when the Addendum changes governed RFQ package evidence.
+              </span>
+            </label>
           </div>
+
+          {governedGuidance ? (
+            <div
+              className="mt-6 rounded-executive border border-amber-300/25 bg-amber-400/10 px-5 py-4"
+              role="status"
+              aria-live="polite"
+            >
+              <p className="text-sm font-black text-amber-100">
+                This Addendum changes a governed RFQ requirement. Complete the
+                required change below before issuing the Addendum.
+              </p>
+              <p className="mt-2 text-sm font-semibold leading-6 text-amber-100/75">
+                Your Addendum title and amendment reason have been carried to
+                Required Document Coverage. Select the document category and
+                declare or remove its requirement to create the governed record.
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  const destination = document.querySelector<HTMLElement>(
+                    '[data-rfq-document-requirements="true"]',
+                  );
+                  destination?.scrollIntoView({
+                    behavior: "smooth",
+                    block: "start",
+                  });
+                  destination?.focus({ preventScroll: true });
+                }}
+                className="mt-4 inline-flex min-h-11 items-center rounded-full border border-amber-200/30 bg-amber-200/10 px-5 py-3 text-sm font-black text-amber-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-nexus-gold/70"
+              >
+                Go to Required Document Coverage
+              </button>
+            </div>
+          ) : null}
+
+          {error ? (
+            <div
+              id={errorId}
+              className="mt-6 rounded-executive border border-red-300/20 bg-red-400/10 px-5 py-4 text-sm font-bold text-red-200"
+              role="alert"
+              aria-live="assertive"
+            >
+              {error}
+            </div>
+          ) : null}
+
+          {publishedNotice ? (
+            <div className="mt-6 min-w-0">
+              <ExecutiveCompletionMoment
+                state="confirmed"
+                title={
+                  publishedNotice.addendumNumber === null
+                    ? "Addendum issued."
+                    : `Addendum #${publishedNotice.addendumNumber} issued.`
+                }
+                summary={
+                  acknowledgementImplication(
+                    publishedNotice.requiresAcknowledgement,
+                  ) || "The Addendum is published."
+                }
+                detail={notificationOutcome(publishedNotice.email)}
+              />
+            </div>
+          ) : null}
+
+          {message ? (
+            <div
+              className="mt-6 rounded-executive border border-emerald-300/20 bg-emerald-400/10 px-5 py-4 text-sm font-bold text-emerald-200"
+              role="status"
+              aria-live="polite"
+            >
+              {message}
+            </div>
+          ) : null}
 
           <button
             type="submit"

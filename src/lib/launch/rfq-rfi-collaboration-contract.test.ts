@@ -165,6 +165,17 @@ describe("Cursor 04C RFI collaboration contract", () => {
     expect(addendaApi).toContain("rfq_id: rfqId");
     expect(addendaApi).toContain("title");
     expect(addendaApi).toContain("requires_acknowledgement");
+    expect(addendaApi).not.toContain("structuredProvenance");
+    expect(addendaApi).not.toContain(
+      'const provenanceKey = "addendum_instruction";',
+    );
+    expect(addendaApi).not.toContain("created_by: user.id");
+    expect(migration).toContain("new.created_by := auth.uid();");
+    expect(addendaManager).toContain("amendmentReason.trim()");
+    expect(addendaManager).toContain("Amendment Reason");
+    expect(addendaApi).toContain(
+      "body.amendment_reason ?? body.amendmentReason",
+    );
 
     expect(acknowledgementApi).toContain("insert({");
     expect(acknowledgementApi).toContain("addendum_id: addendumId");
@@ -515,7 +526,7 @@ describe("18-24 governed published RFQ amendment migration", () => {
 
   it("routes published document requirement changes through governed Addenda", () => {
     expect(documentRequirementsApi).toContain(
-      '.select("id, company_id, status")',
+      '.select("id, company_id, title, slug, status")',
     );
     expect(documentRequirementsApi).toContain(
       'authorization.rfq.status !== "draft"',

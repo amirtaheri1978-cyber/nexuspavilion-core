@@ -16,6 +16,10 @@ const acknowledgement = readSource(
 const documents = readSource(
   "src/components/rfq-workspace/rfq-document-workspace.tsx",
 );
+const requirements = readSource(
+  "src/components/rfq-workspace/rfq-document-requirements.tsx",
+);
+const addendaRoute = readSource("src/app/api/rfq-addenda/route.ts");
 const visualQa = readSource("src/app/dev/rfq-visual-qa/page.tsx");
 const invite = readSource("src/components/invite-vendor-form.tsx");
 const comparison = readSource(
@@ -50,6 +54,7 @@ describe("Task 24-RFQ-10 addenda manager presentation", () => {
     expect(manager).toContain("title: title.trim()");
     expect(manager).toContain("description: description.trim()");
     expect(manager).toContain("affectedDocuments: affectedDocuments.trim()");
+    expect(manager).toContain("Amendment Reason");
     expect(manager).toContain("requiresAcknowledgement");
     expect(manager).toContain("Issue Addendum");
     expect(manager).toContain("Refreshing...");
@@ -71,7 +76,7 @@ describe("Task 24-RFQ-10 addenda manager presentation", () => {
     expect(acknowledgement).toContain("Clear");
   });
 
-  it("shows truthful addendum publication completion from the returned record", () => {
+  it("keeps informational Addenda usable and hands governed changes to the canonical control", () => {
     expect(manager).toContain("<ExecutiveCompletionMoment");
     expect(manager).toContain("readPublicationNotice(data)");
     expect(manager).toContain("data.addendum.addendum_number");
@@ -86,14 +91,48 @@ describe("Task 24-RFQ-10 addenda manager presentation", () => {
     expect(manager).toContain(
       "This publication does not record that acknowledgement has occurred.",
     );
-    expect(manager).toContain(
-      "setAddenda((current) => [data.addendum, ...current])",
-    );
-    expect(manager).toContain("setPublishedNotice(null)");
+    expect(manager).toContain("setAddenda((current) => [data.addendum, ...current])");
     expect(manager).not.toContain("nextAction=");
     expect(manager).not.toContain("router.push");
     expect(manager).not.toContain("href=");
     expect(manager).not.toContain("all suppliers");
+    expect(manager).toContain("requestsGovernedPackageChange");
+    expect(manager).toContain("RFQ_GOVERNED_REQUIREMENT_HANDOFF_EVENT");
+    expect(manager).toContain(
+      "Go to Required Document Coverage",
+    );
+    expect(manager).toContain(
+      "This Addendum changes a governed RFQ requirement.",
+    );
+    expect(manager).toContain('affectedDocuments: ""');
+    expect(manager).not.toContain(
+      "amendment_reason: amendmentReason.trim()",
+    );
+    expect(addendaRoute).not.toContain("structuredProvenance");
+    expect(addendaRoute).not.toContain(
+      'const provenanceKey = "addendum_instruction"',
+    );
+  });
+
+  it("prefills governed evidence and reports the resulting Addendum beside the destination", () => {
+    expect(requirements).toContain(
+      "RFQ_GOVERNED_REQUIREMENT_HANDOFF_EVENT",
+    );
+    expect(requirements).toContain("setAddendumTitle(detail.title)");
+    expect(requirements).toContain("setAmendmentReason(detail.reason)");
+    expect(requirements).toContain(
+      "Complete the governed requirement change",
+    );
+    expect(requirements).toContain(
+      "`Addendum #${payload.addendumNumber} issued.",
+    );
+    expect(manager).toContain('role="alert"');
+    expect(manager.lastIndexOf('role="alert"')).toBeGreaterThan(
+      manager.indexOf('data-rfq-addenda-create="true"'),
+    );
+    expect(manager.lastIndexOf('role="status"')).toBeGreaterThan(
+      manager.indexOf('data-rfq-addenda-create="true"'),
+    );
   });
 
   it("flattens nested addenda cards and uses container-aware layout", () => {
