@@ -1,6 +1,17 @@
 import Link from "next/link";
 
 import { ExecutiveBadge } from "@/components/executive/executive-badge";
+import {
+  EXECUTIVE_CTA_PRIMARY,
+  EXECUTIVE_CTA_SECONDARY,
+  EXECUTIVE_EMPTY_BODY,
+  EXECUTIVE_EMPTY_COMPACT,
+  EXECUTIVE_EMPTY_LIVE,
+  EXECUTIVE_EMPTY_ROLE,
+  EXECUTIVE_EMPTY_TITLE,
+  EXECUTIVE_FEEDBACK_INFO,
+  EXECUTIVE_FEEDBACK_WARNING,
+} from "@/lib/design-system/executive-contract";
 
 type RFQSupplierQuote = {
   id: string;
@@ -30,6 +41,10 @@ export function RFQSupplierQuotes({
   const requiresMaterialReview = quotes.some(
     (quote) => quote.requiresMaterialRevalidation,
   );
+  const primaryQuote = quotes[0] ?? null;
+  const primaryDecisionLabel = primaryQuote
+    ? formatSupplierDecisionLabel(primaryQuote.decision)
+    : null;
 
   return (
     <section
@@ -37,18 +52,59 @@ export function RFQSupplierQuotes({
       aria-labelledby="rfq-supplier-quotes-title"
       data-rfq-supplier-quotes="true"
     >
-      <h3 id="rfq-supplier-quotes-title" className="sr-only">
-        Supplier Quote Submission
-      </h3>
+      <div className="min-w-0">
+        <p className="np-type-eyebrow text-nexus-gold">Submission tracking</p>
+        <h3
+          id="rfq-supplier-quotes-title"
+          className="np-type-h3 mt-2 min-w-0 text-pretty text-nexus-white"
+        >
+          Your quote submission &amp; outcome
+        </h3>
+      </div>
+
+      {primaryQuote && primaryDecisionLabel ? (
+        <div
+          className="mt-5 flex min-w-0 flex-col gap-3 @sm:flex-row @sm:items-center @sm:justify-between"
+          aria-label="Own submission state"
+        >
+          <div className="min-w-0">
+            <p className="np-type-meta">Own submission state</p>
+            <p className="np-type-body mt-1 min-w-0 text-pretty text-nexus-text-primary">
+              {getSubmissionStateSummary(primaryQuote.decision)}
+            </p>
+          </div>
+          <div className="flex min-w-0 flex-wrap gap-2">
+            <ExecutiveBadge tone={getDecisionTone(primaryQuote.decision)}>
+              {primaryDecisionLabel}
+            </ExecutiveBadge>
+            {requiresMaterialReview ? (
+              <ExecutiveBadge tone="warning">Requires Review</ExecutiveBadge>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
+
+      <div
+        className={`mt-5 min-w-0 ${EXECUTIVE_FEEDBACK_INFO}`}
+        role="status"
+        aria-label="Quote confidentiality"
+      >
+        <ExecutiveBadge tone="blue">Confidential</ExecutiveBadge>
+        <p className="np-type-body mt-3 min-w-0 text-pretty text-nexus-text-primary">
+          Quote pricing remains confidential to your organization. Competitor
+          quotations, ranking, evaluation scores, and award controls are not
+          available on this respondent tracking surface.
+        </p>
+      </div>
 
       {requiresMaterialReview ? (
         <div
-          className="mb-5 min-w-0 rounded-executive border border-amber-300/20 bg-amber-300/[0.08] p-5"
+          className={`mt-5 min-w-0 ${EXECUTIVE_FEEDBACK_WARNING}`}
           data-rfq-quote-revalidation="requires_review"
           role="status"
         >
           <ExecutiveBadge tone="warning">Requires Review</ExecutiveBadge>
-          <p className="np-type-body mt-3 min-w-0 text-pretty">
+          <p className="np-type-body mt-3 min-w-0 text-pretty text-nexus-text-primary">
             A governed material RFQ amendment changed the basis of your submitted
             quotation. Review the current commercial terms and reconfirm them
             unchanged or resubmit revised terms before the deadline.
@@ -56,7 +112,7 @@ export function RFQSupplierQuotes({
           {isOpen ? (
             <Link
               href={`/rfq/${rfqSlug}/submit`}
-              className="mt-5 inline-flex min-h-11 items-center justify-center rounded-full border border-amber-300/30 bg-amber-300/10 px-5 py-2 text-sm font-black text-amber-100 transition hover:bg-amber-300/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-200/70 focus-visible:ring-offset-2 focus-visible:ring-offset-nexus-navy"
+              className={`mt-5 ${EXECUTIVE_CTA_PRIMARY}`}
             >
               Review and reconfirm quote
             </Link>
@@ -65,15 +121,27 @@ export function RFQSupplierQuotes({
       ) : null}
 
       {quotes.length === 0 ? (
-        <SupplierQuoteEmptyState
-          isOpen={isOpen}
-          rfqSlug={rfqSlug}
-          canSubmitQuote={canSubmitQuote}
-        />
+        <div className="mt-5">
+          <SupplierQuoteEmptyState
+            isOpen={isOpen}
+            rfqSlug={rfqSlug}
+            canSubmitQuote={canSubmitQuote}
+          />
+        </div>
       ) : (
         <>
+          <div className="mt-6 min-w-0">
+            <p className="np-type-meta text-nexus-cyan-bright">
+              Commercial terms snapshot
+            </p>
+            <p className="np-type-body mt-2 max-w-3xl min-w-0 text-pretty text-nexus-muted">
+              Your recorded commercial values only. No competitor comparison is
+              shown here.
+            </p>
+          </div>
+
           <div
-            className="hidden min-w-0 @min-[1500px]:block"
+            className="mt-4 hidden min-w-0 @min-[1500px]:block"
             data-rfq-supplier-quotes-table="true"
           >
             <div className="rounded-executive border border-white/10">
@@ -83,9 +151,9 @@ export function RFQSupplierQuotes({
                 </caption>
                 <colgroup>
                   <col className="w-[18%]" />
+                  <col className="w-[18%]" />
+                  <col className="w-[12%]" />
                   <col className="w-[20%]" />
-                  <col className="w-[14%]" />
-                  <col className="w-[16%]" />
                   <col className="w-[32%]" />
                 </colgroup>
                 <thead className="bg-white/[0.04]">
@@ -147,6 +215,9 @@ export function RFQSupplierQuotes({
                               </ExecutiveBadge>
                             </div>
                           ) : null}
+                          <p className="np-type-meta mt-3 min-w-0 text-pretty text-nexus-muted">
+                            {getOutcomeGuidance(quote.decision)}
+                          </p>
                         </td>
                         <td className="min-w-0 px-3 py-4 align-top">
                           <p className="np-type-body min-w-0 text-pretty">
@@ -162,7 +233,7 @@ export function RFQSupplierQuotes({
           </div>
 
           <div
-            className="grid min-w-0 gap-4 @min-[1500px]:hidden"
+            className="mt-4 grid min-w-0 gap-4 @min-[1500px]:hidden"
             data-rfq-supplier-quotes-cards="true"
           >
             {quotes.map((quote) => {
@@ -192,6 +263,16 @@ export function RFQSupplierQuotes({
                       ) : null}
                     </div>
                   </header>
+
+                  <section
+                    className="mt-5 border-t border-white/10 pt-4"
+                    aria-label="Current decision outcome"
+                  >
+                    <p className="np-type-meta">Current outcome</p>
+                    <p className="np-type-body mt-2 min-w-0 text-pretty text-nexus-text-primary">
+                      {getOutcomeGuidance(quote.decision)}
+                    </p>
+                  </section>
 
                   <section
                     className="mt-5 border-t border-white/10 pt-4"
@@ -231,6 +312,28 @@ export function RFQSupplierQuotes({
               );
             })}
           </div>
+
+          <div
+            className="mt-6 min-w-0"
+            aria-label="Next available action"
+          >
+            <p className="np-type-meta">Next available action</p>
+            <p className="np-type-body mt-2 min-w-0 text-pretty text-nexus-muted">
+              {getNextActionCopy({
+                isOpen,
+                canSubmitQuote,
+                requiresMaterialReview,
+              })}
+            </p>
+            {!requiresMaterialReview && canSubmitQuote ? (
+              <Link
+                href={`/rfq/${rfqSlug}/submit`}
+                className={`mt-4 ${EXECUTIVE_CTA_SECONDARY}`}
+              >
+                Submit quote
+              </Link>
+            ) : null}
+          </div>
         </>
       )}
     </section>
@@ -248,15 +351,16 @@ function SupplierQuoteEmptyState({
 }) {
   return (
     <div
-      className="min-w-0 rounded-executive border border-white/10 px-5 py-10 text-center sm:px-6"
-      role="status"
+      className={`min-w-0 ${EXECUTIVE_EMPTY_COMPACT}`}
+      role={EXECUTIVE_EMPTY_ROLE}
+      aria-live={EXECUTIVE_EMPTY_LIVE}
       data-rfq-supplier-quotes-empty="true"
     >
-      <p className="np-type-h3 min-w-0 text-pretty">
+      <p className={`${EXECUTIVE_EMPTY_TITLE} min-w-0 text-pretty`}>
         No Quote Submission Recorded
       </p>
 
-      <p className="mx-auto mt-3 max-w-xl min-w-0 text-pretty text-sm font-semibold leading-6 text-nexus-muted">
+      <p className={`${EXECUTIVE_EMPTY_BODY} min-w-0 text-pretty text-nexus-muted`}>
         {isOpen
           ? "This RFQ is currently open for an authorized company quote submission."
           : "This RFQ is closed and is no longer accepting submissions."}
@@ -265,7 +369,7 @@ function SupplierQuoteEmptyState({
       {canSubmitQuote ? (
         <Link
           href={`/rfq/${rfqSlug}/submit`}
-          className="mt-6 inline-flex min-h-12 items-center justify-center rounded-full border border-nexus-gold/30 bg-nexus-gold/10 px-6 py-3 text-center text-sm font-black text-nexus-gold transition duration-200 hover:border-nexus-gold/40 hover:bg-nexus-gold/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-nexus-gold/70 focus-visible:ring-offset-2 focus-visible:ring-offset-nexus-navy"
+          className={`mt-7 ${EXECUTIVE_CTA_PRIMARY}`}
         >
           Submit Quote
         </Link>
@@ -307,6 +411,64 @@ function formatSupplierDecisionLabel(decision: string | null) {
       return humanizedDecision || "Submitted";
     }
   }
+}
+
+function getSubmissionStateSummary(decision: string | null) {
+  const label = formatSupplierDecisionLabel(decision);
+
+  switch (label) {
+    case "Approved":
+      return "Your quotation is approved for continued evaluation.";
+    case "Rejected":
+      return "Your quotation was not selected for award.";
+    case "Awarded":
+      return "Your quotation is the recorded RFQ award outcome.";
+    default:
+      return "Your quotation is recorded and awaiting issuer evaluation.";
+  }
+}
+
+function getOutcomeGuidance(decision: string | null) {
+  const label = formatSupplierDecisionLabel(decision);
+
+  switch (label) {
+    case "Approved":
+      return "Approved means continued evaluation only. It is not a contract award, purchase order, or legal contract.";
+    case "Rejected":
+      return "Rejected is the recorded issuer outcome for this quotation.";
+    case "Awarded":
+      return "Awarded means the RFQ award outcome is recorded. It does not claim purchase-order issuance or contract execution.";
+    default:
+      return "Submitted means your commercial response is on record pending issuer decision.";
+  }
+}
+
+function getNextActionCopy({
+  isOpen,
+  canSubmitQuote,
+  requiresMaterialReview,
+}: {
+  isOpen: boolean;
+  canSubmitQuote: boolean;
+  requiresMaterialReview: boolean;
+}) {
+  if (requiresMaterialReview && isOpen) {
+    return "Review the material amendment and reconfirm or revise your quotation before the deadline.";
+  }
+
+  if (requiresMaterialReview && !isOpen) {
+    return "This RFQ is closed. Material-review reconfirmation is no longer available.";
+  }
+
+  if (canSubmitQuote) {
+    return "An authorized company quote submission remains available for this open RFQ.";
+  }
+
+  if (!isOpen) {
+    return "This RFQ is closed. No further submission or reconfirmation action is available here.";
+  }
+
+  return "No additional respondent action is available on this tracking surface.";
 }
 
 function getDecisionTone(

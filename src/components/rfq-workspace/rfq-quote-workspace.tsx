@@ -53,7 +53,7 @@ export function RFQQuoteWorkspace({
   const receivedSubmissionCount = submissionCount ?? quoteList.length;
   const workspaceLabel = isOwner
     ? "Quote evaluation"
-    : "Respondent submission";
+    : "Submission & award tracking";
 
   const workspaceTitle = isOwner
     ? commercialEvaluationUnlocked
@@ -62,7 +62,7 @@ export function RFQQuoteWorkspace({
     : "Your organization’s quote submission";
 
   const workspaceDescription = !isOwner
-    ? "Quote pricing remains confidential. Your organization can review only its own submission. Competitor pricing, comparative evaluation, ranking, and award controls remain restricted to the issuing organization after commercial opening."
+    ? "Track your own submission state, confidentiality posture, material-amendment requirements, commercial terms, and recorded outcome. Competitor pricing, ranking, evaluation scores, and award controls remain unavailable on this respondent surface."
     : commercialEvaluationUnlocked
       ? "Quote evaluation applies weighted commercial and execution criteria across price, timeline, performance signals, procurement risk, and quote validity."
       : "Quote submissions remain protected until the RFQ deadline. The issuing organization can monitor participation volume while pricing, ranking, comparison, and award controls remain unavailable.";
