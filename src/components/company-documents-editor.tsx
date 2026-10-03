@@ -18,8 +18,19 @@ import {
   type CompanyDocumentType,
 } from "@/lib/company/documents";
 import {
+  EXECUTIVE_BUTTON_DESTRUCTIVE,
+  EXECUTIVE_BUTTON_SECONDARY,
+  EXECUTIVE_BUTTON_TERTIARY,
   EXECUTIVE_CTA_PRIMARY,
+  EXECUTIVE_FEEDBACK_ERROR,
+  EXECUTIVE_FEEDBACK_INFO,
+  EXECUTIVE_FEEDBACK_SUCCESS,
+  EXECUTIVE_FEEDBACK_WARNING,
   EXECUTIVE_FOCUS_GOLD,
+  EXECUTIVE_FORM_HELPER,
+  EXECUTIVE_FORM_INPUT,
+  EXECUTIVE_FORM_LABEL,
+  EXECUTIVE_FORM_SELECT,
 } from "@/lib/design-system/executive-contract";
 import { createClient } from "@/lib/supabase/client";
 
@@ -48,27 +59,42 @@ type DownloadResponse = {
   downloadUrl?: string;
 };
 
-const inputClass = [
-  "mt-2 h-[52px] w-full min-w-0 rounded-2xl border border-white/10 bg-[#07111F] px-4 text-sm font-semibold text-white outline-none transition",
-  "placeholder:text-slate-500",
-  "focus:border-[#C8A646] focus:bg-[#081827] focus:ring-4 focus:ring-[#C8A646]/15",
-  EXECUTIVE_FOCUS_GOLD,
-  "disabled:cursor-not-allowed disabled:opacity-60",
-].join(" ");
-
-const labelClass =
-  "text-[11px] font-black uppercase tracking-[0.18em] text-slate-500";
-
-const cardActionClass = [
-  "inline-flex min-h-11 shrink-0 items-center rounded-full border border-white/10 px-4",
-  "text-[11px] font-black uppercase tracking-[0.12em] transition",
-  EXECUTIVE_FOCUS_GOLD,
+const fileInputClass = [
+  `mt-2 min-h-12 ${EXECUTIVE_FORM_INPUT}`,
+  "h-auto py-3 file:mr-4 file:rounded-xl file:border-0 file:bg-white/10",
+  "file:px-4 file:py-2 file:text-sm file:font-black file:text-white",
 ].join(" ");
 
 function typeLabel(documentType: string) {
   return isCompanyDocumentType(documentType)
     ? COMPANY_DOCUMENT_TYPE_LABELS[documentType]
     : "Document";
+}
+
+function statusBadgeClass(status: string) {
+  if (status === "Expired") {
+    return "border-status-risk/25 bg-status-risk/10 text-status-risk";
+  }
+
+  if (status === "Expiring soon") {
+    return "border-status-warning/25 bg-status-warning/10 text-status-warning";
+  }
+
+  if (status === "Current") {
+    return "border-status-success/25 bg-status-success/10 text-status-success";
+  }
+
+  return "border-white/10 bg-white/[0.055] text-nexus-text-secondary";
+}
+
+function StatusBadge({ status }: { status: string }) {
+  return (
+    <span
+      className={`inline-flex rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-[0.12em] ${statusBadgeClass(status)}`}
+    >
+      {status}
+    </span>
+  );
 }
 
 async function downloadCompanyDocument(
@@ -180,16 +206,21 @@ function DocumentCard({
   onReplace: () => void;
   onDelete: () => void;
 }) {
+  const status = deriveDocumentPresentation(document.expires_on);
+
   return (
-    <article className="rounded-2xl border border-white/10 bg-[#07111F]/80 p-4">
+    <article className="min-w-0 rounded-executive border border-white/10 bg-black/20 p-4 sm:p-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-sm font-black text-white break-words">
+          <p className="np-type-body min-w-0 break-words font-black text-nexus-white">
             {document.title}
           </p>
-          <p className="mt-1 text-xs font-semibold text-slate-400">
+          <p className="np-type-meta mt-2 text-nexus-muted">
             {typeLabel(document.document_type)}
           </p>
+          <div className="mt-3">
+            <StatusBadge status={status} />
+          </div>
         </div>
 
         <div className="flex shrink-0 flex-wrap items-center gap-2">
@@ -198,7 +229,8 @@ function DocumentCard({
             onClick={() => {
               void downloadCompanyDocument(companyId, document.id);
             }}
-            className={`${cardActionClass} text-slate-300 hover:border-[#C8A646]/40 hover:text-white`}
+            aria-label={`Download ${document.title}`}
+            className={`${EXECUTIVE_BUTTON_TERTIARY} min-h-11 px-4 py-2 text-xs`}
           >
             Download
           </button>
@@ -207,21 +239,24 @@ function DocumentCard({
               <button
                 type="button"
                 onClick={onEdit}
-                className={`${cardActionClass} text-slate-300 hover:border-[#C8A646]/40 hover:text-white`}
+                aria-label={`Edit metadata for ${document.title}`}
+                className={`${EXECUTIVE_BUTTON_SECONDARY} min-h-11 px-4 py-2 text-xs`}
               >
                 Edit Metadata
               </button>
               <button
                 type="button"
                 onClick={onReplace}
-                className={`${cardActionClass} text-slate-300 hover:border-[#C8A646]/40 hover:text-white`}
+                aria-label={`Replace file for ${document.title}`}
+                className={`${EXECUTIVE_BUTTON_SECONDARY} min-h-11 px-4 py-2 text-xs`}
               >
                 Replace File
               </button>
               <button
                 type="button"
                 onClick={onDelete}
-                className={`${cardActionClass} text-slate-400 hover:border-red-400/30 hover:text-red-300`}
+                aria-label={`Delete ${document.title}`}
+                className={`${EXECUTIVE_BUTTON_DESTRUCTIVE} min-h-11 px-4 py-2 text-xs`}
               >
                 Delete
               </button>
@@ -231,34 +266,34 @@ function DocumentCard({
       </div>
 
       <dl className="mt-4 grid gap-3 text-xs sm:grid-cols-2">
-        <div>
-          <dt className={labelClass}>File</dt>
-          <dd className="mt-1 font-semibold text-slate-300 break-words">
+        <div className="min-w-0">
+          <dt className={EXECUTIVE_FORM_LABEL}>File</dt>
+          <dd className="np-type-body mt-1 min-w-0 break-words text-nexus-text-secondary">
             {document.file_name}
           </dd>
         </div>
-        <div>
-          <dt className={labelClass}>Size</dt>
-          <dd className="mt-1 font-semibold text-slate-300">
+        <div className="min-w-0">
+          <dt className={EXECUTIVE_FORM_LABEL}>Size</dt>
+          <dd className="np-type-body mt-1 text-nexus-text-secondary">
             {formatDocumentFileSize(document.file_size)}
           </dd>
         </div>
-        <div>
-          <dt className={labelClass}>Issued</dt>
-          <dd className="mt-1 font-semibold text-slate-300">
+        <div className="min-w-0">
+          <dt className={EXECUTIVE_FORM_LABEL}>Issued Date</dt>
+          <dd className="np-type-body mt-1 text-nexus-text-secondary">
             {formatDocumentDate(document.issued_on)}
           </dd>
         </div>
-        <div>
-          <dt className={labelClass}>Expires</dt>
-          <dd className="mt-1 font-semibold text-slate-300">
+        <div className="min-w-0">
+          <dt className={EXECUTIVE_FORM_LABEL}>Expiry Date</dt>
+          <dd className="np-type-body mt-1 text-nexus-text-secondary">
             {formatDocumentDate(document.expires_on)}
           </dd>
         </div>
-        <div>
-          <dt className={labelClass}>Status</dt>
-          <dd className="mt-1 font-semibold text-slate-300">
-            {deriveDocumentPresentation(document.expires_on)}
+        <div className="min-w-0 sm:col-span-2">
+          <dt className={EXECUTIVE_FORM_LABEL}>Derived Status</dt>
+          <dd className="np-type-body mt-1 text-nexus-text-secondary">
+            {status}
           </dd>
         </div>
       </dl>
@@ -591,19 +626,46 @@ export function CompanyDocumentsEditor({
 
   return (
     <div className="space-y-6">
+      <p
+        role="status"
+        className={`${EXECUTIVE_FEEDBACK_INFO} text-xs font-semibold leading-6`}
+      >
+        {COMPANY_DOCUMENTS_SELF_DECLARED_NOTICE}
+      </p>
+
+      <p className={EXECUTIVE_FORM_HELPER}>
+        Document presence does not prove validity or compliance. Derived status
+        is calculated from Expiry Date only and is not a verification score.
+      </p>
+
+      {!canEdit ? (
+        <p
+          role="status"
+          className={`${EXECUTIVE_FEEDBACK_WARNING} text-sm font-semibold`}
+        >
+          Read-only access. Documents cannot be uploaded, replaced, or deleted
+          with your current Access Level. Download remains available when a
+          document exists.
+        </p>
+      ) : null}
+
       {documents.length > 0 ? (
         <div className="space-y-3">
           {documents.map((document) =>
             canEdit && editingId === document.id ? (
               <div
                 key={`${document.id}-edit`}
-                className="space-y-4 rounded-2xl border border-[#C8A646]/30 bg-[#07111F]/80 p-4"
+                className="space-y-4 rounded-executive border border-nexus-gold/30 bg-black/20 p-4 sm:p-5"
               >
-                <p className="text-[11px] font-black uppercase tracking-[0.18em] text-[#C8A646]">
+                <p className="np-type-eyebrow text-nexus-gold">
                   Editing Document Metadata
                 </p>
-                <div>
-                  <label htmlFor={`${typeId}-edit`} className={labelClass}>
+                <p className={EXECUTIVE_FORM_HELPER}>
+                  Metadata edit does not replace the stored file. Use Replace
+                  File to change the uploaded document.
+                </p>
+                <div className="min-w-0">
+                  <label htmlFor={`${typeId}-edit`} className={EXECUTIVE_FORM_LABEL}>
                     Document Type
                   </label>
                   <select
@@ -612,7 +674,7 @@ export function CompanyDocumentsEditor({
                     onChange={(event) =>
                       setEditType(event.target.value as CompanyDocumentType)
                     }
-                    className={inputClass}
+                    className={`mt-2 min-h-12 ${EXECUTIVE_FORM_SELECT}`}
                   >
                     {COMPANY_DOCUMENT_TYPES.map((value) => (
                       <option key={value} value={value}>
@@ -621,8 +683,8 @@ export function CompanyDocumentsEditor({
                     ))}
                   </select>
                 </div>
-                <div>
-                  <label htmlFor={`${titleId}-edit`} className={labelClass}>
+                <div className="min-w-0">
+                  <label htmlFor={`${titleId}-edit`} className={EXECUTIVE_FORM_LABEL}>
                     Title
                   </label>
                   <input
@@ -631,12 +693,15 @@ export function CompanyDocumentsEditor({
                     value={editTitle}
                     maxLength={160}
                     onChange={(event) => setEditTitle(event.target.value)}
-                    className={inputClass}
+                    className={`mt-2 min-h-12 ${EXECUTIVE_FORM_INPUT}`}
                   />
                 </div>
                 <div className="grid gap-4 md:grid-cols-2">
-                  <div>
-                    <label htmlFor={`${issuedId}-edit`} className={labelClass}>
+                  <div className="min-w-0">
+                    <label
+                      htmlFor={`${issuedId}-edit`}
+                      className={EXECUTIVE_FORM_LABEL}
+                    >
                       Issued Date
                     </label>
                     <input
@@ -644,11 +709,14 @@ export function CompanyDocumentsEditor({
                       type="date"
                       value={editIssuedOn}
                       onChange={(event) => setEditIssuedOn(event.target.value)}
-                      className={inputClass}
+                      className={`mt-2 min-h-12 ${EXECUTIVE_FORM_INPUT}`}
                     />
                   </div>
-                  <div>
-                    <label htmlFor={`${expiresId}-edit`} className={labelClass}>
+                  <div className="min-w-0">
+                    <label
+                      htmlFor={`${expiresId}-edit`}
+                      className={EXECUTIVE_FORM_LABEL}
+                    >
                       Expiry Date
                     </label>
                     <input
@@ -656,7 +724,7 @@ export function CompanyDocumentsEditor({
                       type="date"
                       value={editExpiresOn}
                       onChange={(event) => setEditExpiresOn(event.target.value)}
-                      className={inputClass}
+                      className={`mt-2 min-h-12 ${EXECUTIVE_FORM_INPUT}`}
                     />
                   </div>
                 </div>
@@ -665,7 +733,7 @@ export function CompanyDocumentsEditor({
                     type="button"
                     disabled={busy}
                     onClick={() => void handleMetadataUpdate(document.id)}
-                    className={cardActionClass}
+                    className={`${EXECUTIVE_BUTTON_SECONDARY} min-h-11 px-4 py-2 text-xs`}
                   >
                     Update
                   </button>
@@ -673,7 +741,7 @@ export function CompanyDocumentsEditor({
                     type="button"
                     disabled={busy}
                     onClick={cancelEdit}
-                    className={`${cardActionClass} text-slate-300`}
+                    className={`${EXECUTIVE_BUTTON_TERTIARY} min-h-11 px-4 py-2 text-xs`}
                   >
                     Cancel
                   </button>
@@ -696,15 +764,22 @@ export function CompanyDocumentsEditor({
           )}
         </div>
       ) : (
-        <p className="text-sm font-semibold text-slate-500">
+        <p className={EXECUTIVE_FORM_HELPER}>
           {canEdit ? "No documents uploaded yet." : "Not provided"}
         </p>
       )}
 
       {canEdit ? (
-        <div className="space-y-4 rounded-2xl border border-dashed border-white/10 p-4">
+        <div className="space-y-4 rounded-executive border border-dashed border-white/15 bg-white/[0.03] p-4 sm:p-5">
           <div>
-            <label htmlFor={typeId} className={labelClass}>
+            <p className="np-type-eyebrow text-nexus-gold">Upload Document</p>
+            <p className={`mt-2 ${EXECUTIVE_FORM_HELPER}`}>
+              Choose Document Type, Title, and File, then upload. Accepted files:
+              PDF, JPEG, PNG, and WebP.
+            </p>
+          </div>
+          <div className="min-w-0">
+            <label htmlFor={typeId} className={EXECUTIVE_FORM_LABEL}>
               Document Type
             </label>
             <select
@@ -713,7 +788,7 @@ export function CompanyDocumentsEditor({
               onChange={(event) =>
                 setDocumentType(event.target.value as CompanyDocumentType)
               }
-              className={inputClass}
+              className={`mt-2 min-h-12 ${EXECUTIVE_FORM_SELECT}`}
             >
               {COMPANY_DOCUMENT_TYPES.map((value) => (
                 <option key={value} value={value}>
@@ -722,8 +797,8 @@ export function CompanyDocumentsEditor({
               ))}
             </select>
           </div>
-          <div>
-            <label htmlFor={titleId} className={labelClass}>
+          <div className="min-w-0">
+            <label htmlFor={titleId} className={EXECUTIVE_FORM_LABEL}>
               Title
             </label>
             <input
@@ -732,11 +807,11 @@ export function CompanyDocumentsEditor({
               value={title}
               maxLength={160}
               onChange={(event) => setTitle(event.target.value)}
-              className={inputClass}
+              className={`mt-2 min-h-12 ${EXECUTIVE_FORM_INPUT}`}
             />
           </div>
-          <div>
-            <label htmlFor={fileId} className={labelClass}>
+          <div className="min-w-0">
+            <label htmlFor={fileId} className={EXECUTIVE_FORM_LABEL}>
               File
             </label>
             <input
@@ -747,12 +822,18 @@ export function CompanyDocumentsEditor({
               onChange={(event) =>
                 setSelectedFile(event.target.files?.[0] ?? null)
               }
-              className={`${inputClass} h-auto py-3 file:mr-4 file:rounded-xl file:border-0 file:bg-white/10 file:px-4 file:py-2 file:text-sm file:font-black file:text-white`}
+              className={fileInputClass}
             />
+            {selectedFile ? (
+              <p className={`mt-2 min-w-0 break-words ${EXECUTIVE_FORM_HELPER}`}>
+                Selected: {selectedFile.name} (
+                {formatDocumentFileSize(selectedFile.size)})
+              </p>
+            ) : null}
           </div>
           <div className="grid gap-4 md:grid-cols-2">
-            <div>
-              <label htmlFor={issuedId} className={labelClass}>
+            <div className="min-w-0">
+              <label htmlFor={issuedId} className={EXECUTIVE_FORM_LABEL}>
                 Issued Date
               </label>
               <input
@@ -760,11 +841,11 @@ export function CompanyDocumentsEditor({
                 type="date"
                 value={issuedOn}
                 onChange={(event) => setIssuedOn(event.target.value)}
-                className={inputClass}
+                className={`mt-2 min-h-12 ${EXECUTIVE_FORM_INPUT}`}
               />
             </div>
-            <div>
-              <label htmlFor={expiresId} className={labelClass}>
+            <div className="min-w-0">
+              <label htmlFor={expiresId} className={EXECUTIVE_FORM_LABEL}>
                 Expiry Date
               </label>
               <input
@@ -772,7 +853,7 @@ export function CompanyDocumentsEditor({
                 type="date"
                 value={expiresOn}
                 onChange={(event) => setExpiresOn(event.target.value)}
-                className={inputClass}
+                className={`mt-2 min-h-12 ${EXECUTIVE_FORM_INPUT}`}
               />
             </div>
           </div>
@@ -780,7 +861,7 @@ export function CompanyDocumentsEditor({
             type="button"
             disabled={busy}
             onClick={() => void handleUpload()}
-            className={`${EXECUTIVE_CTA_PRIMARY} min-h-12 px-6 disabled:cursor-not-allowed disabled:opacity-60`}
+            className={`${EXECUTIVE_CTA_PRIMARY} min-h-12 px-6 ${EXECUTIVE_FOCUS_GOLD}`}
           >
             {busy ? "Uploading..." : "Upload Document"}
           </button>
@@ -792,6 +873,8 @@ export function CompanyDocumentsEditor({
         type="file"
         accept="application/pdf,image/jpeg,image/png,image/webp,.pdf,.jpg,.jpeg,.png,.webp"
         className="hidden"
+        aria-hidden="true"
+        tabIndex={-1}
         onChange={(event) => {
           const file = event.target.files?.[0];
           const documentId = replacingId;
@@ -803,19 +886,26 @@ export function CompanyDocumentsEditor({
         }}
       />
 
-      <p
-        id={statusId}
-        className="text-sm font-semibold"
-        role="status"
-        aria-live="polite"
-      >
-        {success ? <span className="text-emerald-300">{success}</span> : null}
-        {error ? <span className="text-red-300">{error}</span> : null}
-      </p>
-
-      <p className="text-xs font-semibold leading-6 text-slate-500">
-        {COMPANY_DOCUMENTS_SELF_DECLARED_NOTICE}
-      </p>
+      <div className="min-w-0 space-y-2">
+        {success ? (
+          <p
+            id={statusId}
+            role="status"
+            aria-live="polite"
+            className={`${EXECUTIVE_FEEDBACK_SUCCESS} text-sm font-semibold`}
+          >
+            {success}
+          </p>
+        ) : null}
+        {error ? (
+          <p
+            role="alert"
+            className={`${EXECUTIVE_FEEDBACK_ERROR} text-sm font-semibold`}
+          >
+            {error}
+          </p>
+        ) : null}
+      </div>
     </div>
   );
 }
