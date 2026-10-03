@@ -137,7 +137,8 @@ describe("Project Portfolio contract", () => {
       'association.status.trim().toLowerCase() === "open"',
     );
     expect(portfolioListSource).toContain("Procurement Active");
-    expect(portfolioListSource).toContain("Contract Awarded");
+    expect(portfolioListSource).toContain("Award Recorded");
+    expect(portfolioListSource).not.toContain("Contract Awarded");
     expect(portfolioListSource).toContain("No Supported Signal");
     expect(portfolioListSource).toContain(
       "No supported Project status or risk signal is available",

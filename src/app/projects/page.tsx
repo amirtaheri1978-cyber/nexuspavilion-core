@@ -1,5 +1,7 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 
+import { ExecutivePanel } from "@/components/executive/executive-panel";
 import { ProjectPortfolioList } from "@/components/projects/project-portfolio-list";
 import { ProjectSystemState } from "@/components/projects/project-system-state";
 import {
@@ -8,7 +10,10 @@ import {
 } from "@/lib/auth/workspace-context";
 import { canManageWorkspace } from "@/lib/auth/membership";
 import { getSafeNextPath } from "@/lib/auth/login-continuation";
-import { EXECUTIVE_PAGE_CLASS } from "@/lib/design-system/executive-contract";
+import {
+  EXECUTIVE_CTA_SECONDARY,
+  EXECUTIVE_PAGE_CLASS,
+} from "@/lib/design-system/executive-contract";
 import {
   loadCompanyProjects,
   ProjectRepositoryError,
@@ -97,21 +102,27 @@ export default async function ProjectsPage() {
 
   return (
     <main className={EXECUTIVE_PAGE_CLASS}>
-      <section className="rounded-[34px] border border-white/10 bg-white/[0.045] p-7 shadow-[0_30px_100px_rgba(0,0,0,0.34)] sm:p-9">
-        <p className="text-xs font-black uppercase tracking-[0.34em] text-[#C8A646]">
-          Company Operations
-        </p>
+      <ExecutivePanel variant="operational" padding="lg" tone="gold">
+        <div className="flex min-w-0 flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+          <div className="min-w-0">
+            <p className="np-type-eyebrow text-nexus-gold">Company Operations</p>
 
-        <h1 className="mt-4 max-w-5xl text-4xl font-black tracking-[-0.05em] text-white sm:text-5xl">
-          Project Portfolio
-        </h1>
+            <h1 className="np-type-h1 mt-4 max-w-5xl min-w-0 text-pretty text-nexus-white">
+              Project Portfolio
+            </h1>
 
-        <p className="mt-5 max-w-4xl text-sm font-semibold leading-7 text-slate-300 sm:text-base">
-          Maintain first-class company Project records while surfacing only
-          verified company-scoped RFQ and contract-award context. Project
-          identity remains independent from procurement events.
-        </p>
-      </section>
+            <p className="np-type-body mt-5 max-w-4xl min-w-0 text-pretty text-nexus-muted">
+              Maintain first-class company Project records while surfacing only
+              verified company-scoped RFQ and contract-award context. Project
+              identity remains independent from procurement events.
+            </p>
+          </div>
+
+          <Link href="/dashboard" className={`shrink-0 ${EXECUTIVE_CTA_SECONDARY}`}>
+            Executive Overview
+          </Link>
+        </div>
+      </ExecutivePanel>
 
       <ProjectPortfolioList
         projects={projects}

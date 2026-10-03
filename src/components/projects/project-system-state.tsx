@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { ExecutivePanel } from "@/components/executive/executive-panel";
 import {
   EXECUTIVE_CTA_PRIMARY,
   EXECUTIVE_CTA_SECONDARY,
@@ -25,16 +26,14 @@ export function ProjectSystemState({
 }) {
   return (
     <main className={EXECUTIVE_PAGE_CLASS}>
-      <section className="rounded-[34px] border border-white/10 bg-white/[0.045] p-7 shadow-[0_28px_90px_rgba(0,0,0,0.32)] sm:p-9">
-        <p className="text-xs font-black uppercase tracking-[0.32em] text-[#C8A646]">
-          {eyebrow}
-        </p>
+      <ExecutivePanel variant="operational" padding="lg" tone="gold">
+        <p className="np-type-eyebrow text-nexus-gold">{eyebrow}</p>
 
-        <h1 className="mt-4 max-w-4xl text-3xl font-black tracking-[-0.04em] text-white sm:text-4xl">
+        <h1 className="np-type-h1 mt-4 max-w-4xl min-w-0 text-pretty text-nexus-white">
           {title}
         </h1>
 
-        <p className="mt-4 max-w-3xl text-sm font-semibold leading-7 text-slate-400 sm:text-base">
+        <p className="np-type-body mt-4 max-w-3xl min-w-0 text-pretty text-nexus-muted">
           {description}
         </p>
 
@@ -53,7 +52,7 @@ export function ProjectSystemState({
             ) : null}
           </div>
         ) : null}
-      </section>
+      </ExecutivePanel>
     </main>
   );
 }
