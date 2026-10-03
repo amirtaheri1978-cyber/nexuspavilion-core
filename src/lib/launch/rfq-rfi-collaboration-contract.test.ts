@@ -382,7 +382,19 @@ describe("Cursor 04C RFI collaboration contract", () => {
       "canAcknowledge &&\n                  requiresAcknowledgement &&\n                  !acknowledged",
     );
     expect(acknowledgementCenter).toContain(
-      "Acknowledgements are closed for this RFQ. Issued addenda remain",
+      "Acknowledgements are closed for this RFQ. Any required Addenda not",
+    );
+    expect(acknowledgementCenter).toContain(
+      "No acknowledgement action is currently available.",
+    );
+    expect(acknowledgementCenter).toContain('label: "Acknowledgement Status"');
+    expect(acknowledgementCenter).toContain('value: outstandingRequiredAcknowledgements ? "Closed" : "Complete"');
+    expect(acknowledgementCenter).toContain('label: "Quote Status"');
+    expect(acknowledgementCenter).toContain(
+      'value: allRequiredAcknowledged ? "Clear" : "Blocked"',
+    );
+    expect(acknowledgementCenter).not.toContain(
+      'value={allRequiredAcknowledged ? "Clear" : "Blocked"}',
     );
     expect(acknowledgementCenter).toContain("initialAddenda.map((addendum)");
     expect(acknowledgementCenter).toContain("data-rfq-addenda-history");

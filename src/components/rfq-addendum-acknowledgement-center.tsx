@@ -81,6 +81,24 @@ export default function RFQAddendumAcknowledgementCenter({
     requiredAddenda.length === 0 ||
     requiredAcknowledgedCount === requiredAddenda.length;
 
+  const outstandingRequiredAcknowledgements = !allRequiredAcknowledged;
+
+  const statusMetric = !canAcknowledge
+    ? {
+        label: "Acknowledgement Status",
+        value: outstandingRequiredAcknowledgements ? "Closed" : "Complete",
+        tone: outstandingRequiredAcknowledgements
+          ? ("gold" as const)
+          : ("success" as const),
+      }
+    : {
+        label: "Quote Status",
+        value: allRequiredAcknowledged ? "Clear" : "Blocked",
+        tone: allRequiredAcknowledged
+          ? ("success" as const)
+          : ("risk" as const),
+      };
+
   const handleAcknowledge = useCallback(
     async (addendumId: string) => {
       if (!canAcknowledge) {
@@ -140,8 +158,9 @@ export default function RFQAddendumAcknowledgementCenter({
           Acknowledgement status
         </p>
         <p className="np-type-body mt-2 min-w-0 text-pretty text-nexus-text-secondary">
-          Review issued addenda and complete any required acknowledgements
-          before submitting or revising your quote.
+          {canAcknowledge
+            ? "Review issued addenda and complete any required acknowledgements before submitting or revising your quote."
+            : "Review issued addenda and acknowledgement records for this RFQ. The acknowledgement window is closed."}
         </p>
 
         <div
@@ -156,25 +175,28 @@ export default function RFQAddendumAcknowledgementCenter({
           <ExecutiveMetricCard
             label="Acknowledged"
             value={String(requiredAcknowledgedCount)}
-            tone="blue"
+            tone={canAcknowledge ? "blue" : "neutral"}
           />
           <ExecutiveMetricCard
-            label="Quote Status"
-            value={allRequiredAcknowledged ? "Clear" : "Blocked"}
-            tone={allRequiredAcknowledged ? "success" : "risk"}
+            label={statusMetric.label}
+            value={statusMetric.value}
+            tone={statusMetric.tone}
           />
         </div>
       </div>
 
       {!canAcknowledge ? (
         <div
-          className={`mt-6 min-w-0 text-pretty text-sm font-bold ${EXECUTIVE_FEEDBACK_WARNING}`}
+          className={`mt-5 min-w-0 text-pretty text-sm font-semibold leading-6 ${EXECUTIVE_FEEDBACK_WARNING}`}
           role="status"
           aria-live="polite"
           data-rfq-addenda-acknowledgement-closed="true"
         >
-          Acknowledgements are closed for this RFQ. Issued addenda remain
-          available for reference.
+          Acknowledgements are closed for this RFQ. Any required Addenda not
+          acknowledged before closure remain recorded as unacknowledged.{" "}
+          No acknowledgement action is currently available. Quotation and
+          outcome status continue under the RFQ workflow elsewhere on this
+          page.
         </div>
       ) : null}
 
@@ -199,7 +221,7 @@ export default function RFQAddendumAcknowledgementCenter({
       ) : null}
 
       <div
-        className="mt-7 min-w-0 border-t border-white/10 pt-7"
+        className="mt-6 min-w-0 border-t border-white/10 pt-6"
         data-rfq-addenda-history="true"
       >
         {initialAddenda.length === 0 ? (
@@ -214,10 +236,15 @@ export default function RFQAddendumAcknowledgementCenter({
           </div>
         ) : (
           <div className="grid min-w-0 gap-4">
+            <p className="np-type-eyebrow text-nexus-text-muted">
+              Issued addenda
+            </p>
             {initialAddenda.map((addendum) => {
               const acknowledged = acknowledgedIds.has(addendum.id);
               const requiresAcknowledgement =
                 addendum.requires_acknowledgement !== false;
+              const outstandingClosedRecord =
+                !canAcknowledge && requiresAcknowledgement && !acknowledged;
 
               return (
                 <article
@@ -236,15 +263,19 @@ export default function RFQAddendumAcknowledgementCenter({
                         tone={
                           acknowledged
                             ? "success"
-                            : requiresAcknowledgement
-                              ? "warning"
-                              : "blue"
+                            : outstandingClosedRecord
+                              ? "neutral"
+                              : requiresAcknowledgement
+                                ? "warning"
+                                : "blue"
                         }
                       >
                         {acknowledged
                           ? "Acknowledged"
                           : requiresAcknowledgement
-                            ? "Acknowledgement Required"
+                            ? canAcknowledge
+                              ? "Acknowledgement Required"
+                              : "Unacknowledged"
                             : "Informational"}
                       </ExecutiveBadge>
                     </div>

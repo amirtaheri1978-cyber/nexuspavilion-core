@@ -74,6 +74,18 @@ describe("Task 24-RFQ-10 addenda manager presentation", () => {
     expect(acknowledgement).toContain("Quote Status");
     expect(acknowledgement).toContain("Blocked");
     expect(acknowledgement).toContain("Clear");
+    expect(acknowledgement).toContain("Acknowledgement Status");
+    expect(acknowledgement).toContain('"Closed"');
+    expect(acknowledgement).toContain("Unacknowledged");
+    expect(acknowledgement).toContain(
+      "No acknowledgement action is currently available.",
+    );
+    expect(acknowledgement).not.toContain(
+      'value={allRequiredAcknowledged ? "Clear" : "Blocked"}',
+    );
+    expect(acknowledgement).toContain(
+      "canAcknowledge &&\n                  requiresAcknowledgement &&\n                  !acknowledged",
+    );
   });
 
   it("keeps informational Addenda usable and hands governed changes to the canonical control", () => {
