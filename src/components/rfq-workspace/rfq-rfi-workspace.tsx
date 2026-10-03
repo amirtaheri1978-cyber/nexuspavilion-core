@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 
+import { ExecutiveBadge } from "@/components/executive/executive-badge";
 import { ExecutiveCompletionMoment } from "@/components/executive/executive-completion-moment";
 import { ExecutiveGuidanceCard } from "@/components/executive/executive-guidance-card";
 import { formatRfqDeadlineForDisplay } from "@/lib/datetime/format-rfq-deadline-display";
@@ -9,6 +10,20 @@ import {
   getRfiDeadlineAwareness,
   type RfiDeadlineAwareness,
 } from "@/lib/datetime/rfi-deadline-awareness";
+import {
+  EXECUTIVE_BUTTON_PRIMARY,
+  EXECUTIVE_BUTTON_TERTIARY,
+  EXECUTIVE_EMPTY_BODY,
+  EXECUTIVE_EMPTY_COMPACT,
+  EXECUTIVE_EMPTY_TITLE,
+  EXECUTIVE_FEEDBACK_ERROR,
+  EXECUTIVE_FEEDBACK_INFO,
+  EXECUTIVE_FEEDBACK_SUCCESS,
+  EXECUTIVE_FEEDBACK_WARNING,
+  EXECUTIVE_FORM_HELPER,
+  EXECUTIVE_FORM_LABEL,
+  EXECUTIVE_FORM_TEXTAREA,
+} from "@/lib/design-system/executive-contract";
 import { resolveRfiContextualGuidance } from "@/lib/guidance/rfi-contextual-guidance";
 
 type PrivateRfi = {
@@ -72,31 +87,30 @@ function getCurrentRfiDeadlineAwareness(
   return getRfiDeadlineAwareness(deadline, now);
 }
 
-function getDeadlineAwarenessPresentation(
-  awareness: RfiDeadlineAwareness,
-) {
+function getDeadlineAwarenessPresentation(awareness: RfiDeadlineAwareness): {
+  label: string;
+  feedbackClassName: string;
+} {
   switch (awareness.status) {
     case "approaching":
       return {
         label: "RFI window closes within 72 hours",
-        className:
-          "border-amber-300/25 bg-amber-400/10 text-amber-100",
+        feedbackClassName: EXECUTIVE_FEEDBACK_WARNING,
       };
     case "expired":
       return {
         label: "RFI window closed",
-        className: "border-red-300/20 bg-red-400/10 text-red-200",
+        feedbackClassName: EXECUTIVE_FEEDBACK_ERROR,
       };
     case "open":
       return {
         label: "RFI window open",
-        className:
-          "border-nexus-cyan/25 bg-nexus-cyan/10 text-nexus-cyan-bright",
+        feedbackClassName: EXECUTIVE_FEEDBACK_INFO,
       };
     default:
       return {
         label: "RFI deadline unavailable",
-        className: "border-white/10 bg-white/[0.055] text-nexus-muted",
+        feedbackClassName: EXECUTIVE_FEEDBACK_INFO,
       };
   }
 }
@@ -330,18 +344,19 @@ export function RFQRfiWorkspace({
       aria-labelledby="rfq-rfi-workspace-title"
       data-rfq-rfi-workspace="true"
     >
-      <div className="flex min-w-0 flex-col gap-3 @sm:flex-row @sm:items-end @sm:justify-between">
+      <div className="flex min-w-0 flex-col gap-4 @sm:flex-row @sm:items-end @sm:justify-between">
         <div className="min-w-0">
-          <p className="text-xs font-black uppercase tracking-[0.22em] text-nexus-cyan-bright">
-            Private RFI
-          </p>
+          <div className="flex min-w-0 flex-wrap items-center gap-2">
+            <p className="np-type-eyebrow text-nexus-cyan-bright">Private RFI</p>
+            <ExecutiveBadge tone="blue">Confidential</ExecutiveBadge>
+          </div>
           <h4
             id="rfq-rfi-workspace-title"
-            className="mt-2 min-w-0 text-pretty text-xl font-black text-nexus-white sm:text-2xl"
+            className="np-type-h2 mt-2 min-w-0 text-pretty"
           >
             Private respondent inquiries
           </h4>
-          <p className="mt-3 max-w-3xl min-w-0 text-pretty text-sm font-semibold leading-7 text-nexus-muted">
+          <p className="np-type-body mt-3 max-w-3xl min-w-0 text-pretty text-nexus-text-secondary">
             Private RFIs are visible only to the issuing procurement team and
             the originating respondent company. Material clarifications
             affecting all respondents must be issued through the formal
@@ -349,23 +364,27 @@ export function RFQRfiWorkspace({
           </p>
         </div>
 
-        <div className="flex min-w-0 flex-wrap items-center gap-2">
-          <p className="w-fit rounded-full border border-white/10 bg-white/[0.055] px-4 py-2 text-xs font-black text-nexus-muted">
-            Deadline: {deadlineLabel}
-          </p>
-          <p
-            className={`w-fit rounded-full border px-4 py-2 text-xs font-black ${deadlinePresentation.className}`}
-            data-rfq-rfi-deadline-status={deadlineAwareness.status}
-            role="status"
-            aria-live="polite"
-          >
-            {deadlinePresentation.label}
-          </p>
+        <div className="flex min-w-0 flex-col items-stretch gap-2 @sm:items-end">
+          <div className="flex min-w-0 flex-wrap items-center gap-2 @sm:justify-end">
+            <ExecutiveBadge tone="neutral">
+              Deadline: {deadlineLabel}
+            </ExecutiveBadge>
+            <span
+              className={`inline-flex max-w-full min-w-0 ${deadlinePresentation.feedbackClassName}`}
+              data-rfq-rfi-deadline-status={deadlineAwareness.status}
+              role="status"
+              aria-live="polite"
+            >
+              <span className="min-w-0 text-pretty text-xs font-black">
+                {deadlinePresentation.label}
+              </span>
+            </span>
+          </div>
           <button
             type="button"
             onClick={() => void loadRfis({ showLoading: true })}
             disabled={loading}
-            className="inline-flex min-h-11 items-center rounded-full border border-white/10 bg-white/[0.055] px-5 py-3 text-sm font-black text-nexus-white transition hover:bg-white/[0.08] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-nexus-gold/70 disabled:cursor-not-allowed disabled:opacity-50"
+            className={`${EXECUTIVE_BUTTON_TERTIARY} min-h-11 px-5 py-3`}
           >
             {loading ? "Refreshing..." : "Refresh"}
           </button>
@@ -393,7 +412,7 @@ export function RFQRfiWorkspace({
 
       {message ? (
         <div
-          className="mt-6 min-w-0 rounded-executive border border-emerald-300/20 bg-emerald-400/10 px-4 py-3 text-pretty text-sm font-bold text-emerald-300"
+          className={`mt-6 min-w-0 text-pretty text-sm font-bold ${EXECUTIVE_FEEDBACK_SUCCESS}`}
           role="status"
           aria-live="polite"
         >
@@ -404,7 +423,7 @@ export function RFQRfiWorkspace({
       {error ? (
         <div
           id={errorId}
-          className="mt-6 min-w-0 rounded-executive border border-red-300/20 bg-red-400/10 px-4 py-3 text-pretty text-sm font-bold text-red-200"
+          className={`mt-6 min-w-0 text-pretty text-sm font-bold ${EXECUTIVE_FEEDBACK_ERROR}`}
           role="alert"
           aria-live="assertive"
         >
@@ -418,23 +437,26 @@ export function RFQRfiWorkspace({
           className="mt-7 min-w-0 border-t border-white/10 pt-7"
           data-rfq-rfi-submit="true"
         >
-          <p className="text-xs font-black uppercase tracking-[0.18em] text-nexus-muted">
+          <p className="np-type-eyebrow text-nexus-text-muted">
             Submit private RFI
           </p>
-          <p className="mt-2 min-w-0 text-pretty text-sm font-semibold leading-6 text-nexus-muted">
+          <p className={`${EXECUTIVE_FORM_HELPER} mt-2 min-w-0 text-pretty`}>
             Your question remains confidential to your company and the issuing
             procurement team. It is not shared with competing respondents.
           </p>
 
           {deadlineClosed ? (
-            <p className="mt-4 rounded-executive border border-amber-300/20 bg-amber-400/10 px-4 py-3 text-sm font-bold text-amber-100">
+            <p
+              className={`mt-4 text-sm font-bold ${EXECUTIVE_FEEDBACK_WARNING}`}
+              role="status"
+            >
               {deadlineAwareness.status === "expired"
                 ? "The RFI deadline has passed. New private inquiries cannot be submitted."
                 : "The RFI deadline cannot be resolved. New private inquiries cannot be submitted."}
             </p>
           ) : (
             <>
-              <label className="mt-5 grid min-w-0 gap-2 text-xs font-black uppercase tracking-[0.18em] text-nexus-muted">
+              <label className={`mt-5 grid min-w-0 gap-2 ${EXECUTIVE_FORM_LABEL}`}>
                 Question *
                 <textarea
                   rows={4}
@@ -451,14 +473,14 @@ export function RFQRfiWorkspace({
                     validationTarget === "question" ? errorId : undefined
                   }
                   placeholder="Ask a private clarification that applies only to your company response."
-                  className="min-w-0 w-full resize-none rounded-executive border border-white/10 bg-black/25 px-4 py-4 text-sm font-bold normal-case tracking-normal text-nexus-white outline-none transition placeholder:text-nexus-muted focus:border-nexus-cyan/40 focus-visible:ring-2 focus-visible:ring-nexus-gold/40 disabled:cursor-not-allowed disabled:opacity-60"
+                  className={`${EXECUTIVE_FORM_TEXTAREA} min-w-0 resize-none normal-case tracking-normal`}
                 />
               </label>
 
               <button
                 type="submit"
                 disabled={submitting}
-                className="mt-5 inline-flex min-h-14 w-full items-center justify-center rounded-full bg-nexus-gold px-7 py-4 text-sm font-black text-nexus-navy transition hover:bg-[#F5D77B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-nexus-gold/70 focus-visible:ring-offset-2 focus-visible:ring-offset-nexus-navy disabled:cursor-not-allowed disabled:opacity-50 @md:w-auto"
+                className={`${EXECUTIVE_BUTTON_PRIMARY} mt-5 w-full @md:w-auto`}
               >
                 {submitting ? "Submitting..." : "Submit Private RFI"}
               </button>
@@ -467,62 +489,59 @@ export function RFQRfiWorkspace({
         </form>
       ) : null}
 
-      <div className="mt-7 min-w-0 border-t border-white/10 pt-7" data-rfq-rfi-history="true">
+      <div
+        className="mt-7 min-w-0 border-t border-white/10 pt-7"
+        data-rfq-rfi-history="true"
+      >
+        <p className="np-type-eyebrow text-nexus-text-muted">RFI history</p>
         {loading ? (
-          <p className="text-sm font-semibold text-nexus-muted" role="status">
+          <p className="np-type-body mt-4 text-nexus-text-secondary" role="status">
             Loading private RFIs...
           </p>
         ) : rfis.length === 0 ? (
-          <div
-            className="min-w-0 rounded-executive border border-dashed border-white/10 bg-white/[0.035] p-5"
-            role="status"
-          >
-            <p className="text-pretty text-lg font-black text-nexus-white">
+          <div className={`mt-4 min-w-0 ${EXECUTIVE_EMPTY_COMPACT}`} role="status">
+            <p className={`${EXECUTIVE_EMPTY_TITLE} !mt-0`}>
               No private RFIs yet.
             </p>
-            <p className="mt-3 min-w-0 text-pretty text-sm font-semibold leading-6 text-nexus-muted">
+            <p className={`${EXECUTIVE_EMPTY_BODY} !mx-0 max-w-none text-left`}>
               {isOwner
                 ? "Private respondent inquiries will appear here when submitted."
                 : "Submitted private inquiries and issuer responses will appear here."}
             </p>
           </div>
         ) : (
-          <div className="grid min-w-0 gap-4">
+          <div className="mt-4 grid min-w-0 gap-4">
             {rfis.map((rfi) => (
               <article
                 key={rfi.id}
                 className="min-w-0 rounded-executive border border-white/10 bg-white/[0.045] p-5"
               >
                 <div className="flex min-w-0 flex-wrap items-center gap-2">
-                  <span className="rounded-full border border-white/10 bg-white/[0.055] px-3 py-1 text-xs font-black uppercase tracking-[0.14em] text-nexus-muted">
+                  <ExecutiveBadge tone="neutral">
                     {formatTimestamp(rfi.created_at)}
-                  </span>
-                  <span
-                    className={`rounded-full border px-3 py-1 text-xs font-black uppercase tracking-[0.14em] ${
-                      rfi.status === "answered"
-                        ? "border-emerald-300/25 bg-emerald-400/10 text-emerald-300"
-                        : "border-nexus-gold/25 bg-nexus-gold/10 text-nexus-gold-bright"
-                    }`}
+                  </ExecutiveBadge>
+                  <ExecutiveBadge
+                    tone={rfi.status === "answered" ? "success" : "gold"}
                   >
                     {rfi.status === "answered" ? "Answered" : "Open"}
-                  </span>
+                  </ExecutiveBadge>
                   {isOwner ? (
-                    <span className="rounded-full border border-nexus-cyan/25 bg-nexus-cyan/10 px-3 py-1 text-xs font-black uppercase tracking-[0.14em] text-nexus-cyan-bright">
+                    <ExecutiveBadge tone="blue">
                       Private respondent inquiry
-                    </span>
+                    </ExecutiveBadge>
                   ) : null}
                 </div>
 
-                <p className="mt-4 min-w-0 whitespace-pre-wrap text-pretty text-sm font-semibold leading-7 text-nexus-white">
+                <p className="np-type-body mt-4 min-w-0 whitespace-pre-wrap text-pretty text-nexus-text-primary">
                   {rfi.question}
                 </p>
 
                 {rfi.status === "answered" ? (
                   <div className="mt-5 min-w-0 border-t border-white/10 pt-4">
-                    <p className="text-xs font-black uppercase tracking-[0.18em] text-nexus-muted">
+                    <p className={EXECUTIVE_FORM_LABEL}>
                       Issuer response · {formatTimestamp(rfi.responded_at)}
                     </p>
-                    <p className="mt-2 min-w-0 whitespace-pre-wrap text-pretty text-sm font-semibold leading-7 text-nexus-white">
+                    <p className="np-type-body mt-2 min-w-0 whitespace-pre-wrap text-pretty text-nexus-text-primary">
                       {rfi.response_text}
                     </p>
                   </div>
@@ -530,22 +549,29 @@ export function RFQRfiWorkspace({
 
                 {isOwner && canParticipate && rfi.status === "open" ? (
                   <div className="mt-5 min-w-0 border-t border-white/10 pt-4">
-                    <label className="grid min-w-0 gap-2 text-xs font-black uppercase tracking-[0.18em] text-nexus-muted">
+                    <p className="np-type-meta text-nexus-gold-bright">
+                      Private issuer response
+                    </p>
+                    <p className={`${EXECUTIVE_FORM_HELPER} mt-1 text-pretty`}>
+                      This answer stays private to the originating respondent
+                      company. Shared clarifications must use an Addendum.
+                    </p>
+                    <label
+                      className={`mt-4 grid min-w-0 gap-2 ${EXECUTIVE_FORM_LABEL}`}
+                    >
                       Response
                       <textarea
                         rows={3}
                         value={responseDrafts[rfi.id] || ""}
-                        onChange={(event) =>
-                          {
-                            setResponseDrafts((current) => ({
-                              ...current,
-                              [rfi.id]: event.target.value,
-                            }));
-                            if (validationTarget === `response:${rfi.id}`) {
-                              setValidationTarget(null);
-                            }
+                        onChange={(event) => {
+                          setResponseDrafts((current) => ({
+                            ...current,
+                            [rfi.id]: event.target.value,
+                          }));
+                          if (validationTarget === `response:${rfi.id}`) {
+                            setValidationTarget(null);
                           }
-                        }
+                        }}
                         disabled={answeringId === rfi.id}
                         aria-invalid={validationTarget === `response:${rfi.id}`}
                         aria-describedby={
@@ -554,14 +580,14 @@ export function RFQRfiWorkspace({
                             : undefined
                         }
                         placeholder="Provide a private response to this respondent company."
-                        className="min-w-0 w-full resize-none rounded-executive border border-white/10 bg-black/25 px-4 py-4 text-sm font-bold normal-case tracking-normal text-nexus-white outline-none transition placeholder:text-nexus-muted focus:border-nexus-cyan/40 focus-visible:ring-2 focus-visible:ring-nexus-gold/40 disabled:cursor-not-allowed disabled:opacity-60"
+                        className={`${EXECUTIVE_FORM_TEXTAREA} min-w-0 resize-none normal-case tracking-normal`}
                       />
                     </label>
                     <button
                       type="button"
                       onClick={() => void handleAnswerRfi(rfi.id)}
                       disabled={answeringId === rfi.id}
-                      className="mt-4 inline-flex min-h-11 items-center justify-center rounded-full bg-nexus-gold px-5 py-3 text-sm font-black text-nexus-navy transition hover:bg-[#F5D77B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-nexus-gold/70 disabled:cursor-not-allowed disabled:opacity-50"
+                      className={`${EXECUTIVE_BUTTON_PRIMARY} mt-4`}
                     >
                       {answeringId === rfi.id
                         ? "Answering..."

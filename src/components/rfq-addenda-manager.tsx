@@ -2,8 +2,26 @@
 
 import { useCallback, useMemo, useRef, useState } from "react";
 
+import { ExecutiveBadge } from "@/components/executive/executive-badge";
 import { ExecutiveCompletionMoment } from "@/components/executive/executive-completion-moment";
 import { RFQ_GOVERNED_REQUIREMENT_HANDOFF_EVENT } from "@/components/rfq-workspace/rfq-document-requirements";
+import {
+  EXECUTIVE_BUTTON_PRIMARY,
+  EXECUTIVE_BUTTON_SECONDARY,
+  EXECUTIVE_BUTTON_TERTIARY,
+  EXECUTIVE_EMPTY_BODY,
+  EXECUTIVE_EMPTY_COMPACT,
+  EXECUTIVE_EMPTY_TITLE,
+  EXECUTIVE_FEEDBACK_ERROR,
+  EXECUTIVE_FEEDBACK_INFO,
+  EXECUTIVE_FEEDBACK_SUCCESS,
+  EXECUTIVE_FEEDBACK_WARNING,
+  EXECUTIVE_FORM_CHECKBOX,
+  EXECUTIVE_FORM_HELPER,
+  EXECUTIVE_FORM_INPUT,
+  EXECUTIVE_FORM_LABEL,
+  EXECUTIVE_FORM_TEXTAREA,
+} from "@/lib/design-system/executive-contract";
 
 type Addendum = {
   id: string;
@@ -280,23 +298,22 @@ export default function RFQAddendaManager({
         data-rfq-addenda-status="true"
       >
         <div className="min-w-0">
-          <p className="text-xs font-black uppercase tracking-[0.22em] text-nexus-cyan-bright">
+          <p className="np-type-eyebrow text-nexus-cyan-bright">
             Issued addenda
           </p>
-          <p className="mt-2 min-w-0 text-pretty text-sm font-semibold leading-6 text-nexus-muted">
-            Current clarifications, revisions, and supplier notices for this RFQ.
+          <p className="np-type-body mt-2 min-w-0 text-pretty text-nexus-text-secondary">
+            Formal RFQ-wide clarifications, revisions, and supplier notices.
+            Private respondent inquiries remain in Private RFI.
           </p>
         </div>
 
         <div className="flex min-w-0 flex-wrap items-center gap-2">
-          <p className="w-fit rounded-full border border-white/10 bg-white/[0.055] px-4 py-2 text-xs font-black text-nexus-muted">
-            {addenda.length} issued
-          </p>
+          <ExecutiveBadge tone="neutral">{addenda.length} issued</ExecutiveBadge>
           <button
             type="button"
             onClick={() => void loadAddenda()}
             disabled={refreshing}
-            className="inline-flex min-h-11 items-center rounded-full border border-white/10 bg-white/[0.055] px-5 py-3 text-sm font-black text-nexus-white transition hover:bg-white/[0.08] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-nexus-gold/70 disabled:cursor-not-allowed disabled:opacity-50"
+            className={`${EXECUTIVE_BUTTON_TERTIARY} min-h-11 px-5 py-3`}
           >
             {refreshing ? "Refreshing..." : "Refresh"}
           </button>
@@ -305,7 +322,7 @@ export default function RFQAddendaManager({
 
       {message && !canManage ? (
         <div
-          className="mt-6 min-w-0 rounded-executive border border-emerald-300/20 bg-emerald-400/10 px-4 py-3 text-pretty text-sm font-bold text-emerald-300"
+          className={`mt-6 min-w-0 text-pretty text-sm font-bold ${EXECUTIVE_FEEDBACK_SUCCESS}`}
           role="status"
           aria-live="polite"
         >
@@ -316,7 +333,7 @@ export default function RFQAddendaManager({
       {error && !canManage ? (
         <div
           id={errorId}
-          className="mt-6 min-w-0 rounded-executive border border-red-300/20 bg-red-400/10 px-4 py-3 text-pretty text-sm font-bold text-red-200"
+          className={`mt-6 min-w-0 text-pretty text-sm font-bold ${EXECUTIVE_FEEDBACK_ERROR}`}
           role="alert"
           aria-live="assertive"
         >
@@ -324,16 +341,16 @@ export default function RFQAddendaManager({
         </div>
       ) : null}
 
-      <div className="mt-7 min-w-0 border-t border-white/10 pt-7" data-rfq-addenda-history="true">
+      <div
+        className="mt-7 min-w-0 border-t border-white/10 pt-7"
+        data-rfq-addenda-history="true"
+      >
         {addenda.length === 0 ? (
-          <div
-            className="min-w-0 rounded-executive border border-dashed border-white/10 bg-white/[0.035] p-5"
-            role="status"
-          >
-            <p className="text-pretty text-lg font-black text-nexus-white">
+          <div className={`min-w-0 ${EXECUTIVE_EMPTY_COMPACT}`} role="status">
+            <p className={`${EXECUTIVE_EMPTY_TITLE} !mt-0`}>
               No addenda issued yet.
             </p>
-            <p className="mt-3 min-w-0 text-pretty text-sm font-semibold leading-6 text-nexus-muted">
+            <p className={`${EXECUTIVE_EMPTY_BODY} !mx-0 max-w-none text-left`}>
               Formal drawing changes, scope clarifications, and supplier notices
               will appear here.
             </p>
@@ -346,35 +363,37 @@ export default function RFQAddendaManager({
                 className="min-w-0 rounded-executive border border-white/10 bg-white/[0.045] p-5"
               >
                 <div className="flex min-w-0 flex-wrap items-center gap-2">
-                  <span className="rounded-full border border-nexus-gold/25 bg-nexus-gold/10 px-3 py-1 text-xs font-black uppercase tracking-[0.14em] text-nexus-gold-bright">
+                  <ExecutiveBadge tone="gold">
                     Addendum #{addendum.addendum_number}
-                  </span>
-                  <span className="rounded-full border border-white/10 bg-white/[0.055] px-3 py-1 text-xs font-black uppercase tracking-[0.14em] text-nexus-muted">
+                  </ExecutiveBadge>
+                  <ExecutiveBadge tone="neutral">
                     {formatDate(addendum.created_at)}
-                  </span>
-                  <span className="rounded-full border border-nexus-cyan/25 bg-nexus-cyan/10 px-3 py-1 text-xs font-black uppercase tracking-[0.14em] text-nexus-cyan-bright">
+                  </ExecutiveBadge>
+                  <ExecutiveBadge
+                    tone={
+                      addendum.requires_acknowledgement ? "warning" : "blue"
+                    }
+                  >
                     {addendum.requires_acknowledgement
                       ? "Acknowledgement Required"
                       : "Informational"}
-                  </span>
+                  </ExecutiveBadge>
                 </div>
 
-                <h4 className="mt-4 min-w-0 text-pretty text-xl font-black text-nexus-white sm:text-2xl">
+                <h4 className="np-type-h2 mt-4 min-w-0 text-pretty">
                   {addendum.title}
                 </h4>
 
                 {addendum.description ? (
-                  <p className="mt-3 max-w-4xl min-w-0 text-pretty text-sm font-semibold leading-7 text-nexus-muted">
+                  <p className="np-type-body mt-3 max-w-4xl min-w-0 text-pretty text-nexus-text-secondary">
                     {addendum.description}
                   </p>
                 ) : null}
 
                 {addendum.affected_documents ? (
                   <dl className="mt-5 min-w-0 border-t border-white/10 pt-4">
-                    <dt className="text-xs font-black uppercase tracking-[0.18em] text-nexus-muted">
-                      Affected Documents
-                    </dt>
-                    <dd className="mt-2 min-w-0 whitespace-pre-wrap text-pretty text-sm font-semibold leading-7 text-nexus-white">
+                    <dt className={EXECUTIVE_FORM_LABEL}>Affected Documents</dt>
+                    <dd className="np-type-body mt-2 min-w-0 whitespace-pre-wrap text-pretty text-nexus-text-primary">
                       {addendum.affected_documents}
                     </dd>
                   </dl>
@@ -393,19 +412,19 @@ export default function RFQAddendaManager({
         >
           <div className="flex min-w-0 flex-col gap-3 @md:flex-row @md:items-end @md:justify-between">
             <div className="min-w-0">
-              <p className="text-xs font-black uppercase tracking-[0.22em] text-nexus-cyan-bright">
+              <p className="np-type-eyebrow text-nexus-cyan-bright">
                 Issue New Addendum
               </p>
-              <h4 className="mt-2 min-w-0 text-pretty text-xl font-black text-nexus-white sm:text-2xl">
+              <h4 className="np-type-h2 mt-2 min-w-0 text-pretty">
                 Preview Addendum #{nextAddendumNumber}
               </h4>
-              <p className="mt-2 min-w-0 text-pretty text-xs font-semibold leading-5 text-nexus-muted">
+              <p className={`${EXECUTIVE_FORM_HELPER} mt-2 min-w-0 text-pretty`}>
                 The issued addendum number is assigned by the database and may
                 differ under concurrent issuance.
               </p>
             </div>
 
-            <label className="flex min-h-11 min-w-0 items-center gap-3 rounded-full border border-white/10 bg-white/[0.055] px-4 py-3">
+            <label className="flex min-h-11 min-w-0 items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.055] px-4 py-3">
               <input
                 type="checkbox"
                 checked={requiresAcknowledgement}
@@ -413,16 +432,29 @@ export default function RFQAddendaManager({
                   setRequiresAcknowledgement(event.target.checked)
                 }
                 disabled={loading}
-                className="h-4 w-4 shrink-0"
+                className={EXECUTIVE_FORM_CHECKBOX}
               />
-              <span className="min-w-0 text-pretty text-xs font-black uppercase tracking-[0.14em] text-nexus-muted">
+              <span className={`min-w-0 text-pretty ${EXECUTIVE_FORM_LABEL}`}>
                 Requires acknowledgement
               </span>
             </label>
           </div>
 
+          <div
+            className={`mt-6 min-w-0 ${EXECUTIVE_FEEDBACK_INFO}`}
+            role="note"
+          >
+            <p className="np-type-meta text-nexus-cyan-bright">
+              Ordinary Addendum
+            </p>
+            <p className="np-type-body mt-1 text-pretty text-nexus-text-primary">
+              Use title and description alone for a formal clarification that
+              does not change governed package requirements.
+            </p>
+          </div>
+
           <div className="mt-6 grid min-w-0 gap-5">
-            <label className="grid min-w-0 gap-2 text-xs font-black uppercase tracking-[0.18em] text-nexus-muted">
+            <label className={`grid min-w-0 gap-2 ${EXECUTIVE_FORM_LABEL}`}>
               Title *
               <input
                 required
@@ -437,11 +469,11 @@ export default function RFQAddendaManager({
                 aria-invalid={titleValidationError}
                 aria-describedby={titleValidationError ? errorId : undefined}
                 placeholder="Updated ceiling layout"
-                className="min-h-14 min-w-0 w-full rounded-executive border border-white/10 bg-black/25 px-4 py-4 text-sm font-bold normal-case tracking-normal text-nexus-white outline-none transition placeholder:text-nexus-muted/70 focus:border-nexus-cyan/40 focus-visible:ring-2 focus-visible:ring-nexus-gold/40 disabled:cursor-not-allowed disabled:opacity-60"
+                className={`${EXECUTIVE_FORM_INPUT} min-h-14 min-w-0 normal-case tracking-normal`}
               />
             </label>
 
-            <label className="grid min-w-0 gap-2 text-xs font-black uppercase tracking-[0.18em] text-nexus-muted">
+            <label className={`grid min-w-0 gap-2 ${EXECUTIVE_FORM_LABEL}`}>
               Description
               <textarea
                 rows={4}
@@ -449,11 +481,25 @@ export default function RFQAddendaManager({
                 onChange={(event) => setDescription(event.target.value)}
                 disabled={loading}
                 placeholder="Describe the clarification, revision, scope update, or instruction issued to suppliers."
-                className="min-w-0 w-full resize-none rounded-executive border border-white/10 bg-black/25 px-4 py-4 text-sm font-bold normal-case tracking-normal text-nexus-white outline-none transition placeholder:text-nexus-muted/70 focus:border-nexus-cyan/40 focus-visible:ring-2 focus-visible:ring-nexus-gold/40 disabled:cursor-not-allowed disabled:opacity-60"
+                className={`${EXECUTIVE_FORM_TEXTAREA} min-w-0 resize-none normal-case tracking-normal`}
               />
             </label>
 
-            <label className="grid min-w-0 gap-2 text-xs font-black uppercase tracking-[0.18em] text-nexus-muted">
+            <div
+              className={`min-w-0 ${EXECUTIVE_FEEDBACK_WARNING}`}
+              role="note"
+            >
+              <p className="np-type-meta text-status-warning">
+                Governed package change
+              </p>
+              <p className="np-type-body mt-1 text-pretty text-nexus-text-primary">
+                Entering Affected Documents or Amendment Reason routes this
+                change to Required Document Coverage. Do not use these fields
+                for ordinary clarification.
+              </p>
+            </div>
+
+            <label className={`grid min-w-0 gap-2 ${EXECUTIVE_FORM_LABEL}`}>
               Affected Documents
               <textarea
                 rows={3}
@@ -461,11 +507,11 @@ export default function RFQAddendaManager({
                 onChange={(event) => setAffectedDocuments(event.target.value)}
                 disabled={loading}
                 placeholder="e.g. Drawing A401 Rev 2, Specification 09 51 13, BOQ Rev 1"
-                className="min-w-0 w-full resize-none rounded-executive border border-white/10 bg-black/25 px-4 py-4 text-sm font-bold normal-case tracking-normal text-nexus-white outline-none transition placeholder:text-nexus-muted/70 focus:border-nexus-cyan/40 focus-visible:ring-2 focus-visible:ring-nexus-gold/40 disabled:cursor-not-allowed disabled:opacity-60"
+                className={`${EXECUTIVE_FORM_TEXTAREA} min-w-0 resize-none normal-case tracking-normal`}
               />
             </label>
 
-            <label className="grid min-w-0 gap-2 text-xs font-black uppercase tracking-[0.18em] text-nexus-muted">
+            <label className={`grid min-w-0 gap-2 ${EXECUTIVE_FORM_LABEL}`}>
               Amendment Reason
               <textarea
                 rows={3}
@@ -473,9 +519,9 @@ export default function RFQAddendaManager({
                 onChange={(event) => setAmendmentReason(event.target.value)}
                 disabled={loading}
                 placeholder="Explain why this material Addendum is required."
-                className="min-w-0 w-full resize-none rounded-executive border border-white/10 bg-black/25 px-4 py-4 text-sm font-bold normal-case tracking-normal text-nexus-white outline-none transition placeholder:text-nexus-muted/70 focus:border-nexus-cyan/40 focus-visible:ring-2 focus-visible:ring-nexus-gold/40 disabled:cursor-not-allowed disabled:opacity-60"
+                className={`${EXECUTIVE_FORM_TEXTAREA} min-w-0 resize-none normal-case tracking-normal`}
               />
-              <span className="normal-case tracking-normal text-nexus-muted/80">
+              <span className={`${EXECUTIVE_FORM_HELPER} normal-case tracking-normal`}>
                 Required when the Addendum changes governed RFQ package evidence.
               </span>
             </label>
@@ -483,15 +529,15 @@ export default function RFQAddendaManager({
 
           {governedGuidance ? (
             <div
-              className="mt-6 rounded-executive border border-amber-300/25 bg-amber-400/10 px-5 py-4"
+              className={`mt-6 ${EXECUTIVE_FEEDBACK_WARNING}`}
               role="status"
               aria-live="polite"
             >
-              <p className="text-sm font-black text-amber-100">
+              <p className="text-sm font-black">
                 This Addendum changes a governed RFQ requirement. Complete the
                 required change below before issuing the Addendum.
               </p>
-              <p className="mt-2 text-sm font-semibold leading-6 text-amber-100/75">
+              <p className="mt-2 text-sm font-semibold leading-6 text-nexus-text-primary">
                 Your Addendum title and amendment reason have been carried to
                 Required Document Coverage. Select the document category and
                 declare or remove its requirement to create the governed record.
@@ -508,7 +554,7 @@ export default function RFQAddendaManager({
                   });
                   destination?.focus({ preventScroll: true });
                 }}
-                className="mt-4 inline-flex min-h-11 items-center rounded-full border border-amber-200/30 bg-amber-200/10 px-5 py-3 text-sm font-black text-amber-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-nexus-gold/70"
+                className={`${EXECUTIVE_BUTTON_SECONDARY} mt-4 min-h-11`}
               >
                 Go to Required Document Coverage
               </button>
@@ -518,7 +564,7 @@ export default function RFQAddendaManager({
           {error ? (
             <div
               id={errorId}
-              className="mt-6 rounded-executive border border-red-300/20 bg-red-400/10 px-5 py-4 text-sm font-bold text-red-200"
+              className={`mt-6 text-sm font-bold ${EXECUTIVE_FEEDBACK_ERROR}`}
               role="alert"
               aria-live="assertive"
             >
@@ -547,7 +593,7 @@ export default function RFQAddendaManager({
 
           {message ? (
             <div
-              className="mt-6 rounded-executive border border-emerald-300/20 bg-emerald-400/10 px-5 py-4 text-sm font-bold text-emerald-200"
+              className={`mt-6 text-sm font-bold ${EXECUTIVE_FEEDBACK_SUCCESS}`}
               role="status"
               aria-live="polite"
             >
@@ -558,7 +604,7 @@ export default function RFQAddendaManager({
           <button
             type="submit"
             disabled={loading}
-            className="mt-6 inline-flex min-h-14 w-full items-center justify-center rounded-full bg-nexus-gold px-7 py-4 text-sm font-black text-nexus-navy transition hover:bg-[#F5D77B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-nexus-gold/70 focus-visible:ring-offset-2 focus-visible:ring-offset-nexus-navy disabled:cursor-not-allowed disabled:opacity-50 @md:w-auto"
+            className={`${EXECUTIVE_BUTTON_PRIMARY} mt-6 w-full @md:w-auto`}
           >
             {loading ? "Issuing Addendum..." : "Issue Addendum"}
           </button>

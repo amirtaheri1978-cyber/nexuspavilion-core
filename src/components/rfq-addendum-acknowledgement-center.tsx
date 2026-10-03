@@ -2,6 +2,19 @@
 
 import { useCallback, useMemo, useState } from "react";
 
+import { ExecutiveBadge } from "@/components/executive/executive-badge";
+import { ExecutiveMetricCard } from "@/components/executive/executive-metric-card";
+import {
+  EXECUTIVE_BUTTON_PRIMARY,
+  EXECUTIVE_EMPTY_BODY,
+  EXECUTIVE_EMPTY_COMPACT,
+  EXECUTIVE_EMPTY_TITLE,
+  EXECUTIVE_FEEDBACK_ERROR,
+  EXECUTIVE_FEEDBACK_SUCCESS,
+  EXECUTIVE_FEEDBACK_WARNING,
+  EXECUTIVE_FORM_LABEL,
+} from "@/lib/design-system/executive-contract";
+
 type Addendum = {
   id: string;
   title: string;
@@ -123,48 +136,39 @@ export default function RFQAddendumAcknowledgementCenter({
       data-rfq-addenda-acknowledgement="true"
     >
       <div className="min-w-0" data-rfq-addenda-status="true">
-        <p className="text-xs font-black uppercase tracking-[0.22em] text-nexus-cyan-bright">
+        <p className="np-type-eyebrow text-nexus-cyan-bright">
           Acknowledgement status
         </p>
-        <p className="mt-2 min-w-0 text-pretty text-sm font-semibold leading-6 text-nexus-muted">
+        <p className="np-type-body mt-2 min-w-0 text-pretty text-nexus-text-secondary">
           Review issued addenda and complete any required acknowledgements
           before submitting or revising your quote.
         </p>
 
-        <dl
+        <div
           className="mt-5 grid min-w-0 grid-cols-1 gap-3 @sm:grid-cols-3"
           data-rfq-addenda-compliance="true"
         >
-          <div className="min-w-0">
-            <dt className="text-xs font-black uppercase tracking-[0.2em] text-nexus-muted">
-              Required
-            </dt>
-            <dd className="mt-2 text-pretty text-xl font-black text-nexus-white">
-              {requiredAddenda.length}
-            </dd>
-          </div>
-          <div className="min-w-0">
-            <dt className="text-xs font-black uppercase tracking-[0.2em] text-nexus-muted">
-              Acknowledged
-            </dt>
-            <dd className="mt-2 text-pretty text-xl font-black text-nexus-white">
-              {requiredAcknowledgedCount}
-            </dd>
-          </div>
-          <div className="min-w-0">
-            <dt className="text-xs font-black uppercase tracking-[0.2em] text-nexus-muted">
-              Quote Status
-            </dt>
-            <dd className="mt-2 text-pretty text-xl font-black text-nexus-white">
-              {allRequiredAcknowledged ? "Clear" : "Blocked"}
-            </dd>
-          </div>
-        </dl>
+          <ExecutiveMetricCard
+            label="Required"
+            value={String(requiredAddenda.length)}
+            tone="neutral"
+          />
+          <ExecutiveMetricCard
+            label="Acknowledged"
+            value={String(requiredAcknowledgedCount)}
+            tone="blue"
+          />
+          <ExecutiveMetricCard
+            label="Quote Status"
+            value={allRequiredAcknowledged ? "Clear" : "Blocked"}
+            tone={allRequiredAcknowledged ? "success" : "risk"}
+          />
+        </div>
       </div>
 
       {!canAcknowledge ? (
         <div
-          className="mt-6 min-w-0 rounded-executive border border-amber-300/20 bg-amber-400/10 px-4 py-3 text-pretty text-sm font-bold text-amber-100"
+          className={`mt-6 min-w-0 text-pretty text-sm font-bold ${EXECUTIVE_FEEDBACK_WARNING}`}
           role="status"
           aria-live="polite"
           data-rfq-addenda-acknowledgement-closed="true"
@@ -176,7 +180,7 @@ export default function RFQAddendumAcknowledgementCenter({
 
       {message ? (
         <div
-          className="mt-6 min-w-0 rounded-executive border border-emerald-300/20 bg-emerald-400/10 px-4 py-3 text-pretty text-sm font-bold text-emerald-300"
+          className={`mt-6 min-w-0 text-pretty text-sm font-bold ${EXECUTIVE_FEEDBACK_SUCCESS}`}
           role="status"
           aria-live="polite"
         >
@@ -186,7 +190,7 @@ export default function RFQAddendumAcknowledgementCenter({
 
       {error ? (
         <div
-          className="mt-6 min-w-0 rounded-executive border border-red-300/20 bg-red-400/10 px-4 py-3 text-pretty text-sm font-bold text-red-200"
+          className={`mt-6 min-w-0 text-pretty text-sm font-bold ${EXECUTIVE_FEEDBACK_ERROR}`}
           role="alert"
           aria-live="assertive"
         >
@@ -194,16 +198,16 @@ export default function RFQAddendumAcknowledgementCenter({
         </div>
       ) : null}
 
-      <div className="mt-7 min-w-0 border-t border-white/10 pt-7" data-rfq-addenda-history="true">
+      <div
+        className="mt-7 min-w-0 border-t border-white/10 pt-7"
+        data-rfq-addenda-history="true"
+      >
         {initialAddenda.length === 0 ? (
-          <div
-            className="min-w-0 rounded-executive border border-dashed border-white/10 bg-white/[0.035] p-5"
-            role="status"
-          >
-            <p className="text-pretty text-lg font-black text-nexus-white">
+          <div className={`min-w-0 ${EXECUTIVE_EMPTY_COMPACT}`} role="status">
+            <p className={`${EXECUTIVE_EMPTY_TITLE} !mt-0`}>
               No addenda issued yet.
             </p>
-            <p className="mt-3 min-w-0 text-pretty text-sm font-semibold leading-6 text-nexus-muted">
+            <p className={`${EXECUTIVE_EMPTY_BODY} !mx-0 max-w-none text-left`}>
               Addenda and clarification notices will appear here when issued by
               the issuing organization.
             </p>
@@ -222,45 +226,45 @@ export default function RFQAddendumAcknowledgementCenter({
                 >
                   <div className="min-w-0">
                     <div className="flex min-w-0 flex-wrap items-center gap-2">
-                      <span className="rounded-full border border-nexus-gold/25 bg-nexus-gold/10 px-3 py-1 text-xs font-black uppercase tracking-[0.14em] text-nexus-gold-bright">
+                      <ExecutiveBadge tone="gold">
                         Addendum #{addendum.addendum_number}
-                      </span>
-                      <span className="rounded-full border border-white/10 bg-white/[0.055] px-3 py-1 text-xs font-black uppercase tracking-[0.14em] text-nexus-muted">
+                      </ExecutiveBadge>
+                      <ExecutiveBadge tone="neutral">
                         {formatDate(addendum.created_at)}
-                      </span>
-                      <span
-                        className={`rounded-full border px-3 py-1 text-xs font-black uppercase tracking-[0.14em] ${
+                      </ExecutiveBadge>
+                      <ExecutiveBadge
+                        tone={
                           acknowledged
-                            ? "border-emerald-300/20 bg-emerald-400/10 text-emerald-300"
+                            ? "success"
                             : requiresAcknowledgement
-                              ? "border-orange-300/20 bg-orange-400/10 text-orange-300"
-                              : "border-nexus-cyan/25 bg-nexus-cyan/10 text-nexus-cyan-bright"
-                        }`}
+                              ? "warning"
+                              : "blue"
+                        }
                       >
                         {acknowledged
                           ? "Acknowledged"
                           : requiresAcknowledgement
                             ? "Acknowledgement Required"
                             : "Informational"}
-                      </span>
+                      </ExecutiveBadge>
                     </div>
 
-                    <h4 className="mt-4 min-w-0 text-pretty text-xl font-black text-nexus-white sm:text-2xl">
+                    <h4 className="np-type-h2 mt-4 min-w-0 text-pretty">
                       {addendum.title}
                     </h4>
 
                     {addendum.description ? (
-                      <p className="mt-3 max-w-4xl min-w-0 text-pretty text-sm font-semibold leading-7 text-nexus-muted">
+                      <p className="np-type-body mt-3 max-w-4xl min-w-0 text-pretty text-nexus-text-secondary">
                         {addendum.description}
                       </p>
                     ) : null}
 
                     {addendum.affected_documents ? (
                       <dl className="mt-5 min-w-0 border-t border-white/10 pt-4">
-                        <dt className="text-xs font-black uppercase tracking-[0.18em] text-nexus-muted">
+                        <dt className={EXECUTIVE_FORM_LABEL}>
                           Affected Documents
                         </dt>
-                        <dd className="mt-2 min-w-0 whitespace-pre-wrap text-pretty text-sm font-semibold leading-7 text-nexus-white">
+                        <dd className="np-type-body mt-2 min-w-0 whitespace-pre-wrap text-pretty text-nexus-text-primary">
                           {addendum.affected_documents}
                         </dd>
                       </dl>
@@ -274,7 +278,7 @@ export default function RFQAddendumAcknowledgementCenter({
                       type="button"
                       onClick={() => void handleAcknowledge(addendum.id)}
                       disabled={loadingId === addendum.id}
-                      className="mt-5 inline-flex min-h-11 w-full items-center justify-center rounded-full bg-nexus-gold px-6 py-3 text-sm font-black text-nexus-navy transition hover:bg-[#F5D77B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-nexus-gold/70 focus-visible:ring-offset-2 focus-visible:ring-offset-nexus-navy disabled:cursor-not-allowed disabled:opacity-50 @md:w-auto"
+                      className={`${EXECUTIVE_BUTTON_PRIMARY} mt-5 min-h-11 w-full @md:w-auto`}
                     >
                       {loadingId === addendum.id
                         ? "Acknowledging..."
