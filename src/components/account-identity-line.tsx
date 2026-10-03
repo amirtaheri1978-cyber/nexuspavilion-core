@@ -29,15 +29,17 @@ export function AccountIdentityLine({
   return (
     <div className="mt-2 min-w-0">
       <p
-        className="break-words text-sm font-semibold text-slate-300"
+        className="np-type-body min-w-0 break-words text-pretty text-nexus-text-secondary"
         title={accessiblePrimary}
       >
         Signed in as {identity.primary}
-        {roleLabel ? ` · ${roleLabel}` : ""}
+        {roleLabel ? (
+          <span className="text-nexus-muted"> · {roleLabel}</span>
+        ) : null}
       </p>
       {secondary ? (
         <p
-          className="mt-1 break-words text-xs font-semibold text-slate-400"
+          className="np-type-meta mt-1 min-w-0 break-words text-pretty text-nexus-muted"
           title={secondary}
         >
           {secondary}

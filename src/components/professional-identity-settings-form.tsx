@@ -4,7 +4,11 @@ import { useId, useState, type FormEvent } from "react";
 
 import {
   EXECUTIVE_CTA_PRIMARY,
-  EXECUTIVE_FOCUS_GOLD,
+  EXECUTIVE_FEEDBACK_ERROR,
+  EXECUTIVE_FEEDBACK_SUCCESS,
+  EXECUTIVE_FORM_ERROR,
+  EXECUTIVE_FORM_HELPER,
+  EXECUTIVE_FORM_INPUT,
 } from "@/lib/design-system/executive-contract";
 import { getFriendlyProfessionalIdentityError } from "@/lib/auth/professional-identity-settings";
 import {
@@ -16,16 +20,13 @@ import {
   validateProfessionalName,
 } from "@/lib/auth/professional-names";
 
-const identityInputClass = [
-  "mt-2 h-[58px] w-full rounded-2xl border border-white/10 bg-[#07111F] px-5 text-sm font-semibold text-white outline-none transition",
-  "placeholder:text-slate-500",
-  "focus:border-[#C8A646] focus:bg-[#081827] focus:ring-4 focus:ring-[#C8A646]/15",
-  EXECUTIVE_FOCUS_GOLD,
-  "disabled:cursor-not-allowed disabled:opacity-60",
-].join(" ");
+const identityLabelClass =
+  "np-type-meta block text-nexus-muted";
 
-const identityReadonlyClass =
-  "mt-2 h-[58px] w-full rounded-2xl border border-white/10 bg-black/20 px-5 text-sm font-semibold text-slate-400 outline-none";
+const identityReadonlyClass = [
+  EXECUTIVE_FORM_INPUT,
+  "mt-2 cursor-default bg-black/20 text-nexus-muted",
+].join(" ");
 
 type ProfessionalIdentitySettingsFormProps = {
   initialFirstName?: string;
@@ -61,6 +62,7 @@ export function ProfessionalIdentitySettingsForm({
   const lastNameErrorId = useId();
   const jobTitleErrorId = useId();
   const jobTitleHintId = useId();
+  const emailHintId = useId();
   const formStatusId = useId();
 
   const [firstName, setFirstName] = useState(initialFirstName);
@@ -151,79 +153,73 @@ export function ProfessionalIdentitySettingsForm({
 
   return (
     <form onSubmit={handleSubmit} className="mt-6 space-y-5" noValidate>
-      <div className="grid gap-5 sm:grid-cols-2">
-        <div>
-          <label
-            htmlFor={firstNameId}
-            className="block text-xs font-black uppercase tracking-[0.22em] text-slate-400"
-          >
-            First name
-          </label>
-          <input
-            id={firstNameId}
-            type="text"
-            name="firstName"
-            autoComplete="given-name"
-            required
-            maxLength={PROFESSIONAL_NAME_MAX_LENGTH}
-            placeholder="Alex"
-            value={firstName}
-            onChange={(event) => setFirstName(event.target.value)}
-            disabled={saving}
-            aria-invalid={Boolean(firstNameError)}
-            aria-describedby={firstNameError ? firstNameErrorId : undefined}
-            className={identityInputClass}
-          />
-          {firstNameError ? (
-            <p
-              id={firstNameErrorId}
-              role="alert"
-              className="mt-2 text-xs font-bold leading-5 text-red-200"
-            >
-              {firstNameError}
-            </p>
-          ) : null}
-        </div>
+      <div className="min-w-0">
+        <p className="np-type-meta text-nexus-muted">Professional Name</p>
+        <div className="mt-3 grid gap-5 sm:grid-cols-2">
+          <div className="min-w-0">
+            <label htmlFor={firstNameId} className={identityLabelClass}>
+              First name
+            </label>
+            <input
+              id={firstNameId}
+              type="text"
+              name="firstName"
+              autoComplete="given-name"
+              required
+              maxLength={PROFESSIONAL_NAME_MAX_LENGTH}
+              placeholder="Alex"
+              value={firstName}
+              onChange={(event) => setFirstName(event.target.value)}
+              disabled={saving}
+              aria-invalid={Boolean(firstNameError)}
+              aria-describedby={firstNameError ? firstNameErrorId : undefined}
+              className={`mt-2 ${EXECUTIVE_FORM_INPUT}`}
+            />
+            {firstNameError ? (
+              <p
+                id={firstNameErrorId}
+                role="alert"
+                className={`mt-2 ${EXECUTIVE_FORM_ERROR}`}
+              >
+                {firstNameError}
+              </p>
+            ) : null}
+          </div>
 
-        <div>
-          <label
-            htmlFor={lastNameId}
-            className="block text-xs font-black uppercase tracking-[0.22em] text-slate-400"
-          >
-            Last name
-          </label>
-          <input
-            id={lastNameId}
-            type="text"
-            name="lastName"
-            autoComplete="family-name"
-            required
-            maxLength={PROFESSIONAL_NAME_MAX_LENGTH}
-            placeholder="Morgan"
-            value={lastName}
-            onChange={(event) => setLastName(event.target.value)}
-            disabled={saving}
-            aria-invalid={Boolean(lastNameError)}
-            aria-describedby={lastNameError ? lastNameErrorId : undefined}
-            className={identityInputClass}
-          />
-          {lastNameError ? (
-            <p
-              id={lastNameErrorId}
-              role="alert"
-              className="mt-2 text-xs font-bold leading-5 text-red-200"
-            >
-              {lastNameError}
-            </p>
-          ) : null}
+          <div className="min-w-0">
+            <label htmlFor={lastNameId} className={identityLabelClass}>
+              Last name
+            </label>
+            <input
+              id={lastNameId}
+              type="text"
+              name="lastName"
+              autoComplete="family-name"
+              required
+              maxLength={PROFESSIONAL_NAME_MAX_LENGTH}
+              placeholder="Morgan"
+              value={lastName}
+              onChange={(event) => setLastName(event.target.value)}
+              disabled={saving}
+              aria-invalid={Boolean(lastNameError)}
+              aria-describedby={lastNameError ? lastNameErrorId : undefined}
+              className={`mt-2 ${EXECUTIVE_FORM_INPUT}`}
+            />
+            {lastNameError ? (
+              <p
+                id={lastNameErrorId}
+                role="alert"
+                className={`mt-2 ${EXECUTIVE_FORM_ERROR}`}
+              >
+                {lastNameError}
+              </p>
+            ) : null}
+          </div>
         </div>
       </div>
 
-      <div>
-        <label
-          htmlFor={jobTitleId}
-          className="block text-xs font-black uppercase tracking-[0.22em] text-slate-400"
-        >
+      <div className="min-w-0">
+        <label htmlFor={jobTitleId} className={identityLabelClass}>
           Job title
         </label>
         <input
@@ -240,31 +236,26 @@ export function ProfessionalIdentitySettingsForm({
           aria-describedby={
             jobTitleError ? jobTitleErrorId : jobTitleHintId
           }
-          className={identityInputClass}
+          className={`mt-2 ${EXECUTIVE_FORM_INPUT}`}
         />
-        <p
-          id={jobTitleHintId}
-          className="mt-2 text-sm font-semibold leading-6 text-slate-400"
-        >
-          Your title in this workspace. Leave blank to clear it.
+        <p id={jobTitleHintId} className={`mt-2 ${EXECUTIVE_FORM_HELPER}`}>
+          Your title in this workspace. Descriptive professional context only —
+          it does not grant workspace permissions. Leave blank to clear it.
         </p>
         {jobTitleError ? (
           <p
             id={jobTitleErrorId}
             role="alert"
-            className="mt-2 text-xs font-bold leading-5 text-red-200"
+            className={`mt-2 ${EXECUTIVE_FORM_ERROR}`}
           >
             {jobTitleError}
           </p>
         ) : null}
       </div>
 
-      <div>
-        <label
-          htmlFor={emailId}
-          className="block text-xs font-black uppercase tracking-[0.22em] text-slate-400"
-        >
-          Email
+      <div className="min-w-0">
+        <label htmlFor={emailId} className={identityLabelClass}>
+          Account Email
         </label>
         <input
           id={emailId}
@@ -272,27 +263,24 @@ export function ProfessionalIdentitySettingsForm({
           name="email"
           readOnly
           value={email}
-          aria-label="Account email"
+          aria-readonly="true"
+          aria-describedby={emailHintId}
           className={identityReadonlyClass}
         />
+        <p id={emailHintId} className={`mt-2 ${EXECUTIVE_FORM_HELPER}`}>
+          Account email is read-only here. It remains the account identifier and
+          is shown when a professional name is not yet stored.
+        </p>
       </div>
 
       {success ? (
-        <div
-          id={formStatusId}
-          role="status"
-          className="rounded-2xl border border-emerald-300/20 bg-emerald-300/[0.07] px-4 py-3 text-sm font-semibold leading-6 text-emerald-200"
-        >
+        <div id={formStatusId} role="status" className={EXECUTIVE_FEEDBACK_SUCCESS}>
           {success}
         </div>
       ) : null}
 
       {error ? (
-        <div
-          id={formStatusId}
-          role="alert"
-          className="rounded-2xl border border-rose-300/20 bg-rose-300/[0.07] px-4 py-3 text-sm font-semibold leading-6 text-rose-200"
-        >
+        <div id={formStatusId} role="alert" className={EXECUTIVE_FEEDBACK_ERROR}>
           {error}
         </div>
       ) : null}

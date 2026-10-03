@@ -1,201 +1,245 @@
 "use client";
 
+import { useId, useState, type FormEvent, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+
+import {
+  EXECUTIVE_CTA_PRIMARY,
+  EXECUTIVE_FEEDBACK_ERROR,
+  EXECUTIVE_FEEDBACK_SUCCESS,
+  EXECUTIVE_FEEDBACK_WARNING,
+  EXECUTIVE_FORM_HELPER,
+  EXECUTIVE_FORM_INPUT,
+  EXECUTIVE_FORM_SELECT,
+} from "@/lib/design-system/executive-contract";
 
 type CompanySettingsFormProps = {
-companyId: string;
-initialName: string;
-initialCategory: string;
-initialLocation: string;
-initialNetworkRole: string;
-canUpdateCompany: boolean;
+  companyId: string;
+  initialName: string;
+  initialCategory: string;
+  initialLocation: string;
+  initialNetworkRole: string;
+  canUpdateCompany: boolean;
 };
 
 type UpdateCompanyResponse = {
-success?: boolean;
-error?: string;
+  success?: boolean;
+  error?: string;
 };
 
 const NETWORK_ROLE_OPTIONS = [
-"Owner / Developer",
-"General Contractor",
-"Architect / Designer",
-"Manufacturer",
-"Vendor / Supplier",
-"Consultant",
+  "Owner / Developer",
+  "General Contractor",
+  "Architect / Designer",
+  "Manufacturer",
+  "Vendor / Supplier",
+  "Consultant",
 ];
 
+const fieldLabelClass = "np-type-meta mb-2 block text-nexus-muted";
+
 export default function CompanySettingsForm({
-companyId,
-initialName,
-initialCategory,
-initialLocation,
-initialNetworkRole,
-canUpdateCompany,
+  companyId,
+  initialName,
+  initialCategory,
+  initialLocation,
+  initialNetworkRole,
+  canUpdateCompany,
 }: CompanySettingsFormProps) {
-const router = useRouter();
+  const router = useRouter();
+  const nameId = useId();
+  const categoryId = useId();
+  const locationId = useId();
+  const networkRoleId = useId();
+  const networkRoleHintId = useId();
+  const readOnlyNoticeId = useId();
+  const formStatusId = useId();
 
-const [name, setName] = useState(initialName);
-const [category, setCategory] = useState(initialCategory);
-const [location, setLocation] = useState(initialLocation);
-const [networkRole, setNetworkRole] = useState(initialNetworkRole);
+  const [name, setName] = useState(initialName);
+  const [category, setCategory] = useState(initialCategory);
+  const [location, setLocation] = useState(initialLocation);
+  const [networkRole, setNetworkRole] = useState(initialNetworkRole);
 
-const [loading, setLoading] = useState(false);
-const [message, setMessage] = useState("");
-const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
 
-async function handleUpdateCompany(event: React.FormEvent<HTMLFormElement>) {
-event.preventDefault();
+  async function handleUpdateCompany(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
 
-if (!canUpdateCompany) {
-setError("Your current role has read-only access to company profile settings.");
-return;
-}
+    if (!canUpdateCompany) {
+      setError(
+        "Your current role has read-only access to company profile settings.",
+      );
+      return;
+    }
 
-setLoading(true);
-setMessage("");
-setError("");
+    setLoading(true);
+    setMessage("");
+    setError("");
 
-try {
-const response = await fetch(`/api/companies/${companyId}`, {
-method: "PATCH",
-headers: {
-"Content-Type": "application/json",
-},
-body: JSON.stringify({
-name,
-category,
-location,
-networkRole,
-}),
-});
+    try {
+      const response = await fetch(`/api/companies/${companyId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name,
+          category,
+          location,
+          networkRole,
+        }),
+      });
 
-const data = (await response.json()) as UpdateCompanyResponse;
+      const data = (await response.json()) as UpdateCompanyResponse;
 
-if (!response.ok) {
-setError(data.error || "Failed to update company.");
-setLoading(false);
-return;
-}
+      if (!response.ok) {
+        setError(data.error || "Failed to update company.");
+        setLoading(false);
+        return;
+      }
 
-setMessage("Company settings updated successfully.");
-router.refresh();
-} catch (requestError) {
-console.error(requestError);
-setError("Request failed. Please try again.");
-} finally {
-setLoading(false);
-}
-}
+      setMessage("Company settings updated successfully.");
+      router.refresh();
+    } catch (requestError) {
+      console.error(requestError);
+      setError("Request failed. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  }
 
-return (
-<form onSubmit={handleUpdateCompany} className="mt-8 space-y-5">
-<label className="block">
-<FormLabel>Company Name</FormLabel>
+  return (
+    <form onSubmit={handleUpdateCompany} className="mt-6 space-y-5" noValidate>
+      <div className="min-w-0">
+        <label htmlFor={nameId} className={fieldLabelClass}>
+          Company Name
+        </label>
+        <input
+          id={nameId}
+          type="text"
+          name="companyName"
+          required
+          disabled={!canUpdateCompany || loading}
+          placeholder="Northline Development Group"
+          value={name}
+          onChange={(event) => setName(event.target.value)}
+          className={EXECUTIVE_FORM_INPUT}
+        />
+      </div>
 
-<input
-type="text"
-required
-disabled={!canUpdateCompany || loading}
-placeholder="Northline Development Group"
-value={name}
-onChange={(event) => setName(event.target.value)}
-className="w-full rounded-2xl border border-white/10 bg-[#061426]/80 px-4 py-4 text-sm font-bold text-white outline-none transition placeholder:text-slate-400 focus:border-[#2CC4E8]/40 focus:bg-[#07111F] disabled:cursor-not-allowed disabled:opacity-60"
-/>
-</label>
+      <div className="grid gap-5 md:grid-cols-2">
+        <div className="min-w-0">
+          <label htmlFor={categoryId} className={fieldLabelClass}>
+            Category
+          </label>
+          <input
+            id={categoryId}
+            type="text"
+            name="category"
+            disabled={!canUpdateCompany || loading}
+            placeholder="General Contractor"
+            value={category}
+            onChange={(event) => setCategory(event.target.value)}
+            className={EXECUTIVE_FORM_INPUT}
+          />
+        </div>
 
-<div className="grid gap-5 md:grid-cols-2">
-<label className="block">
-<FormLabel>Category</FormLabel>
+        <div className="min-w-0">
+          <label htmlFor={locationId} className={fieldLabelClass}>
+            Location
+          </label>
+          <input
+            id={locationId}
+            type="text"
+            name="location"
+            disabled={!canUpdateCompany || loading}
+            placeholder="Toronto, ON"
+            value={location}
+            onChange={(event) => setLocation(event.target.value)}
+            className={EXECUTIVE_FORM_INPUT}
+          />
+        </div>
+      </div>
 
-<input
-type="text"
-disabled={!canUpdateCompany || loading}
-placeholder="General Contractor"
-value={category}
-onChange={(event) => setCategory(event.target.value)}
-className="w-full rounded-2xl border border-white/10 bg-[#061426]/80 px-4 py-4 text-sm font-bold text-white outline-none transition placeholder:text-slate-400 focus:border-[#2CC4E8]/40 focus:bg-[#07111F] disabled:cursor-not-allowed disabled:opacity-60"
-/>
-</label>
+      <div className="min-w-0">
+        <label htmlFor={networkRoleId} className={fieldLabelClass}>
+          Network Role
+        </label>
+        <select
+          id={networkRoleId}
+          name="networkRole"
+          disabled={!canUpdateCompany || loading}
+          value={networkRole}
+          onChange={(event) => setNetworkRole(event.target.value)}
+          aria-describedby={networkRoleHintId}
+          className={EXECUTIVE_FORM_SELECT}
+        >
+          {NETWORK_ROLE_OPTIONS.map((option) => (
+            <option key={option} value={option} className="bg-nexus-navy text-white">
+              {option}
+            </option>
+          ))}
+        </select>
+        <p id={networkRoleHintId} className={`mt-2 ${EXECUTIVE_FORM_HELPER}`}>
+          Network Role describes the organization&apos;s market/network position.
+          It does not grant workspace permissions.
+        </p>
+      </div>
 
-<label className="block">
-<FormLabel>Location</FormLabel>
+      {!canUpdateCompany ? (
+        <Notice id={readOnlyNoticeId} tone="warning">
+          Your current role has read-only access to company profile settings.
+        </Notice>
+      ) : null}
 
-<input
-type="text"
-disabled={!canUpdateCompany || loading}
-placeholder="Toronto, ON"
-value={location}
-onChange={(event) => setLocation(event.target.value)}
-className="w-full rounded-2xl border border-white/10 bg-[#061426]/80 px-4 py-4 text-sm font-bold text-white outline-none transition placeholder:text-slate-400 focus:border-[#2CC4E8]/40 focus:bg-[#07111F] disabled:cursor-not-allowed disabled:opacity-60"
-/>
-</label>
-</div>
+      {message ? (
+        <Notice id={formStatusId} tone="success">
+          {message}
+        </Notice>
+      ) : null}
 
-<label className="block">
-<FormLabel>Network Role</FormLabel>
+      {error ? (
+        <Notice id={formStatusId} tone="danger">
+          {error}
+        </Notice>
+      ) : null}
 
-<select
-disabled={!canUpdateCompany || loading}
-value={networkRole}
-onChange={(event) => setNetworkRole(event.target.value)}
-className="w-full rounded-2xl border border-white/10 bg-[#061426]/80 px-4 py-4 text-sm font-bold text-white outline-none transition focus:border-[#2CC4E8]/40 focus:bg-[#07111F] disabled:cursor-not-allowed disabled:opacity-60"
->
-{NETWORK_ROLE_OPTIONS.map((option) => (
-<option key={option} value={option} className="bg-[#061426] text-white">
-{option}
-</option>
-))}
-</select>
-</label>
-
-{!canUpdateCompany ? (
-<Notice tone="warning">
-Your current role has read-only access to company profile settings.
-</Notice>
-) : null}
-
-{message ? <Notice tone="success">{message}</Notice> : null}
-
-{error ? <Notice tone="danger">{error}</Notice> : null}
-
-<button
-type="submit"
-disabled={loading || !canUpdateCompany}
-className="rounded-full bg-gradient-to-r from-[#B9902F] via-[#C8A646] to-[#F5D77B] px-7 py-4 text-sm font-black text-slate-950 shadow-[0_18px_55px_rgba(200,166,70,0.22)] transition disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C8A646]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#07111F]"
->
-{loading ? "Saving changes..." : "Save Company Settings"}
-</button>
-</form>
-);
-}
-
-function FormLabel({ children }: { children: React.ReactNode }) {
-return (
-<span className="np-type-meta mb-2 block text-slate-400">
-{children}
-</span>
-);
+      <button
+        type="submit"
+        disabled={loading || !canUpdateCompany}
+        className={`${EXECUTIVE_CTA_PRIMARY} w-full sm:w-auto disabled:cursor-not-allowed disabled:opacity-50`}
+      >
+        {loading ? "Saving changes..." : "Save Company Settings"}
+      </button>
+    </form>
+  );
 }
 
 function Notice({
-children,
-tone,
+  children,
+  tone,
+  id,
 }: {
-children: React.ReactNode;
-tone: "success" | "warning" | "danger";
+  children: ReactNode;
+  tone: "success" | "warning" | "danger";
+  id?: string;
 }) {
-const toneClass =
-tone === "success"
-? "border-emerald-300/20 bg-emerald-400/10 text-emerald-200"
-: tone === "warning"
-? "border-orange-300/20 bg-orange-400/10 text-orange-200"
-: "border-red-300/20 bg-red-400/10 text-red-200";
+  const toneClass =
+    tone === "success"
+      ? EXECUTIVE_FEEDBACK_SUCCESS
+      : tone === "warning"
+        ? EXECUTIVE_FEEDBACK_WARNING
+        : EXECUTIVE_FEEDBACK_ERROR;
 
-return (
-<div className={`rounded-2xl border px-4 py-3 text-sm font-bold leading-6 ${toneClass}`}>
-{children}
-</div>
-);
+  return (
+    <div
+      id={id}
+      role={tone === "success" ? "status" : "alert"}
+      className={`${toneClass} text-sm font-bold leading-6`}
+    >
+      {children}
+    </div>
+  );
 }

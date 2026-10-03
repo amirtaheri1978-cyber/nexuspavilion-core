@@ -3,6 +3,13 @@
 import Image from "next/image";
 import { useState, type ChangeEvent } from "react";
 
+import { ExecutivePanel } from "@/components/executive/executive-panel";
+import {
+  EXECUTIVE_FEEDBACK_INFO,
+  EXECUTIVE_FEEDBACK_WARNING,
+  EXECUTIVE_FOCUS_GOLD,
+  EXECUTIVE_FORM_HELPER,
+} from "@/lib/design-system/executive-contract";
 import { createClient } from "@/lib/supabase/client";
 
 const LOGO_BUCKET = "Company-logos";
@@ -264,14 +271,24 @@ export default function CompanyLogoUpload({
   }
 
   return (
-    <div className="rounded-3xl border border-white/10 bg-[#0B1B2C] p-8 shadow-[0_24px_80px_rgba(0,0,0,0.28)]">
-      <p className="text-sm font-semibold uppercase tracking-[0.2em] text-orange-500">
-        Company Branding
-      </p>
+    <ExecutivePanel
+      variant="operational"
+      padding="lg"
+      aria-labelledby="company-logo-heading"
+    >
+      <p className="np-type-eyebrow text-nexus-gold">Company Profile</p>
 
-      <h2 className="mt-3 text-3xl font-black text-white">
+      <h2
+        id="company-logo-heading"
+        className="np-type-h2 mt-3 text-nexus-white"
+      >
         Company Logo
       </h2>
+
+      <p className={`mt-3 ${EXECUTIVE_FORM_HELPER}`}>
+        Organization logo for company identity. Upload and storage rules are
+        unchanged.
+      </p>
 
       {logoUrl ? (
         <div className="mt-6">
@@ -280,15 +297,19 @@ export default function CompanyLogoUpload({
             alt="Company logo"
             width={112}
             height={112}
-            className="h-28 w-28 rounded-2xl border border-white/10 bg-[#061426]/80 object-contain p-3"
+            className="h-28 w-28 rounded-executive border border-white/10 bg-white/[0.045] object-contain p-3"
           />
         </div>
-      ) : null}
+      ) : (
+        <p className={`mt-6 ${EXECUTIVE_FORM_HELPER}`}>
+          No company logo uploaded.
+        </p>
+      )}
 
       <div className="mt-6">
         <label
           htmlFor="company-logo-upload"
-          className="mb-2 block text-xs font-black uppercase tracking-[0.15em] text-slate-300"
+          className="np-type-meta mb-2 block text-nexus-muted"
         >
           Upload company logo
         </label>
@@ -299,27 +320,27 @@ export default function CompanyLogoUpload({
           accept="image/jpeg,image/png,image/webp"
           onChange={handleUpload}
           disabled={uploading || !canManageBranding}
-          className="w-full rounded-2xl border border-white/10 bg-[#061426]/80 p-4 text-sm font-semibold text-slate-300 file:mr-4 file:rounded-xl file:border-0 file:bg-white/10 file:px-4 file:py-2 file:text-sm file:font-black file:text-white focus:border-[#2CC4E8]/40 focus:outline-none focus:ring-4 focus:ring-[#2CC4E8]/15 disabled:cursor-not-allowed disabled:opacity-60"
+          className={`w-full rounded-2xl border border-white/10 bg-white/[0.045] p-4 text-sm font-semibold text-nexus-text-secondary file:mr-4 file:rounded-xl file:border-0 file:bg-white/10 file:px-4 file:py-2 file:text-sm file:font-black file:text-white disabled:cursor-not-allowed disabled:opacity-60 ${EXECUTIVE_FOCUS_GOLD}`}
         />
       </div>
 
       {!canManageBranding ? (
-        <p className="mt-4 text-sm font-semibold leading-6 text-orange-200">
+        <p role="status" className={`mt-4 ${EXECUTIVE_FEEDBACK_WARNING}`}>
           You have read-only access to company branding settings.
         </p>
       ) : null}
 
       {message ? (
-        <p className="mt-4 text-sm font-semibold text-slate-300">
+        <p role="status" className={`mt-4 ${EXECUTIVE_FEEDBACK_INFO}`}>
           {message}
         </p>
       ) : null}
 
       {uploading ? (
-        <p className="mt-4 text-sm text-slate-400">
+        <p role="status" className={`mt-4 ${EXECUTIVE_FORM_HELPER}`}>
           Uploading logo...
         </p>
       ) : null}
-    </div>
+    </ExecutivePanel>
   );
 }

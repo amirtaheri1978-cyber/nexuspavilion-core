@@ -718,17 +718,21 @@ networkRole={company.network_role?.trim() || "Not specified"}
   padding="lg"
   tone="gold"
   className="mt-8"
+  aria-labelledby="professional-identity-heading"
 >
-  <p className="text-xs font-black uppercase tracking-[0.3em] text-[#C8A646]">
+  <p className="np-type-eyebrow text-nexus-gold">
     Account Identity
   </p>
-  <h2 className="mt-3 text-3xl font-black text-white">
+  <h2
+    id="professional-identity-heading"
+    className="np-type-h2 mt-3 text-nexus-white"
+  >
     Professional Identity
   </h2>
-  <p className="mt-3 max-w-3xl text-sm font-semibold leading-7 text-slate-400">
-    Confirm your name and title for this workspace. Email remains
-    the account identifier and is shown as a fallback when a name
-    is not yet stored.
+  <p className="np-type-body mt-3 max-w-3xl text-pretty text-nexus-muted">
+    Confirm your professional name, job title, and account email. Job title
+    is descriptive professional context only and does not grant workspace
+    permissions. Account email remains read-only.
   </p>
   <ProfessionalIdentitySettingsForm
     initialFirstName={ownNames.firstName || ""}
