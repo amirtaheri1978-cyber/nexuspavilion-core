@@ -11,6 +11,10 @@ import {
 import { SupplierInvitationDelivery } from "@/components/rfq-workspace/supplier-invitation-delivery";
 import { SupplierInvitationResult } from "@/components/rfq-workspace/supplier-invitation-result";
 import {
+  EXECUTIVE_FEEDBACK_INFO,
+  EXECUTIVE_FEEDBACK_WARNING,
+} from "@/lib/design-system/executive-contract";
+import {
   APPROVED_VENDOR_DOMAIN_AVAILABLE,
   APPROVED_VENDOR_UNAVAILABLE_MESSAGE,
   INVITE_BY_EMAIL_REMAINS_MESSAGE,
@@ -155,18 +159,18 @@ export default function InviteVendorForm({
     >
       {embedded ? null : (
         <div className="min-w-0">
-          <p className="text-xs font-black uppercase tracking-[0.3em] text-nexus-gold">
+          <p className="np-type-eyebrow text-nexus-gold">
             Supplier Invitations
           </p>
 
           <h3
             id="supplier-invitation-form-title"
-            className="mt-3 min-w-0 text-pretty text-2xl font-black tracking-tight text-nexus-white sm:text-3xl"
+            className="np-type-h2 mt-3 min-w-0 text-pretty"
           >
             Invite Suppliers to Quote
           </h3>
 
-          <p className="mt-3 max-w-3xl min-w-0 text-pretty text-sm font-semibold leading-7 text-nexus-muted">
+          <p className="np-type-body mt-3 max-w-3xl min-w-0 text-pretty text-nexus-text-secondary">
             Route secure RFQ invitations by email. {INVITE_BY_EMAIL_REMAINS_MESSAGE}
           </p>
         </div>
@@ -177,14 +181,36 @@ export default function InviteVendorForm({
         data-rfq-invitation-access="true"
       >
         <p className="np-type-meta text-nexus-gold-bright">Invitation access</p>
-        <div className="mt-3">
+
+        <div className="mt-3 flex min-w-0 flex-wrap gap-2">
           <ExecutiveBadge tone="gold">Email invitation</ExecutiveBadge>
+          <ExecutiveBadge
+            tone={APPROVED_VENDOR_DOMAIN_AVAILABLE ? "success" : "warning"}
+          >
+            {APPROVED_VENDOR_DOMAIN_AVAILABLE
+              ? "AVL selection available"
+              : "AVL unavailable"}
+          </ExecutiveBadge>
         </div>
-        <p className="mt-3 max-w-3xl min-w-0 text-pretty text-sm font-semibold leading-6 text-nexus-muted">
-          {APPROVED_VENDOR_DOMAIN_AVAILABLE
-            ? "Supplier selection and direct invitations remain recorded against this RFQ."
-            : `${APPROVED_VENDOR_UNAVAILABLE_MESSAGE} ${INVITE_BY_EMAIL_REMAINS_MESSAGE}`}
-        </p>
+
+        <div
+          className={`mt-4 ${
+            APPROVED_VENDOR_DOMAIN_AVAILABLE
+              ? EXECUTIVE_FEEDBACK_INFO
+              : EXECUTIVE_FEEDBACK_WARNING
+          }`}
+        >
+          <p className="np-type-body text-pretty text-nexus-text-primary">
+            {APPROVED_VENDOR_DOMAIN_AVAILABLE
+              ? "Supplier selection and direct invitations remain recorded against this RFQ."
+              : `${APPROVED_VENDOR_UNAVAILABLE_MESSAGE} ${INVITE_BY_EMAIL_REMAINS_MESSAGE}`}
+          </p>
+          <p className="np-type-body mt-2 text-pretty text-nexus-text-secondary">
+            Invitation delivery builds respondent coverage for this RFQ.
+            An invitation is not quote participation, and participation is
+            not an award decision.
+          </p>
+        </div>
       </div>
 
       <SupplierAvlPanel

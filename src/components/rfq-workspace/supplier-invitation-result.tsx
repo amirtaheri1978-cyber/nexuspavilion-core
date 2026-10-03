@@ -1,3 +1,11 @@
+import {
+  EXECUTIVE_BUTTON_PRIMARY,
+  EXECUTIVE_BUTTON_SECONDARY,
+  EXECUTIVE_FEEDBACK_ERROR,
+  EXECUTIVE_FEEDBACK_SUCCESS,
+  EXECUTIVE_FEEDBACK_WARNING,
+} from "@/lib/design-system/executive-contract";
+
 type InviteEmailResult = {
   sent?: boolean;
   skipped?: boolean;
@@ -108,26 +116,22 @@ export function SupplierInvitationResult({
     : null;
   const deliveryClassName =
     delivery?.tone === "success"
-      ? "border-emerald-300/15 bg-emerald-400/[0.08]"
-      : "border-amber-300/20 bg-amber-400/[0.08]";
-  const deliveryLabelClassName =
-    delivery?.tone === "success" ? "text-emerald-300" : "text-amber-200";
-  const deliveryBodyClassName =
-    delivery?.tone === "success" ? "text-emerald-100" : "text-amber-100";
+      ? EXECUTIVE_FEEDBACK_SUCCESS
+      : EXECUTIVE_FEEDBACK_WARNING;
 
   return (
     <div className="min-w-0" data-rfq-supplier-result="true">
       {error ? (
         <div
-          className="mt-5 min-w-0 rounded-executive border border-red-300/15 bg-red-400/[0.08] px-5 py-4"
+          className={`mt-5 min-w-0 ${EXECUTIVE_FEEDBACK_ERROR}`}
           role="alert"
           aria-live="assertive"
         >
-          <p className="text-xs font-black uppercase tracking-[0.2em] text-red-300">
+          <p className="np-type-meta">
             Invitation Not Created
           </p>
 
-          <p className="mt-2 min-w-0 text-pretty text-sm font-bold leading-6 text-red-200">
+          <p className="mt-2 min-w-0 text-pretty text-sm font-bold leading-6 text-status-risk">
             {error}
           </p>
         </div>
@@ -135,7 +139,7 @@ export function SupplierInvitationResult({
 
       {delivery ? (
         <div
-          className={`mt-5 min-w-0 rounded-executive border px-5 py-4 ${deliveryClassName}`}
+          className={`mt-5 min-w-0 ${deliveryClassName}`}
           role="status"
           aria-live="polite"
           data-rfq-invitation-email-status={
@@ -149,21 +153,15 @@ export function SupplierInvitationResult({
           }
           data-rfq-invitation-reused={reused ? "true" : "false"}
         >
-          <p
-            className={`text-xs font-black uppercase tracking-[0.2em] ${deliveryLabelClassName}`}
-          >
+          <p className="np-type-meta">
             {delivery.title}
           </p>
 
-          <p
-            className={`mt-2 min-w-0 text-pretty text-sm font-bold leading-6 ${deliveryBodyClassName}`}
-          >
+          <p className="mt-2 min-w-0 text-pretty text-sm font-bold leading-6 text-nexus-text-primary">
             {successMessage}
           </p>
 
-          <p
-            className={`mt-2 min-w-0 text-pretty text-sm font-bold leading-6 ${deliveryBodyClassName}`}
-          >
+          <p className="mt-2 min-w-0 text-pretty text-sm font-bold leading-6 text-nexus-text-primary">
             {delivery.message}
           </p>
         </div>
@@ -176,18 +174,18 @@ export function SupplierInvitationResult({
         >
           <p
             id="secure-supplier-invite-link-title"
-            className="text-xs font-black uppercase tracking-[0.25em] text-nexus-gold"
+            className="np-type-eyebrow text-nexus-gold"
           >
             Secure Invite Link
           </p>
 
-          <p className="mt-2 min-w-0 text-pretty text-sm font-semibold leading-6 text-nexus-muted">
+          <p className="np-type-body mt-2 min-w-0 text-pretty text-nexus-text-secondary">
             Share this controlled invitation link with the authorized
             supplier contact.
           </p>
 
           <p
-            className="mt-4 min-w-0 break-all rounded-executive border border-white/10 bg-black/25 px-4 py-3 text-sm font-bold leading-6 text-nexus-white"
+            className="mt-4 min-w-0 break-all rounded-executive border border-white/10 bg-white/[0.045] px-4 py-3 text-sm font-bold leading-6 text-nexus-text-primary"
             data-rfq-invite-url="true"
           >
             {/* Unavoidable opaque invite URL token: break-all prevents horizontal overflow. */}
@@ -198,14 +196,14 @@ export function SupplierInvitationResult({
             <button
               type="button"
               onClick={onCopyInviteLink}
-              className="inline-flex min-h-11 items-center justify-center rounded-full border border-nexus-gold/30 bg-nexus-gold px-5 py-3 text-xs font-black text-nexus-navy transition hover:bg-[#F5D77B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-nexus-gold/70"
+              className={`${EXECUTIVE_BUTTON_PRIMARY} min-h-11 px-5 py-3 text-xs`}
             >
               Copy Invite Link
             </button>
 
             <a
               href={inviteUrl}
-              className="inline-flex min-h-11 items-center justify-center rounded-full border border-white/10 bg-white/[0.055] px-5 py-3 text-center text-xs font-black text-nexus-white transition hover:bg-white/[0.08] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-nexus-gold/70"
+              className={`${EXECUTIVE_BUTTON_SECONDARY} min-h-11 px-5 py-3 text-center text-xs`}
             >
               Open Invite
             </a>
@@ -213,7 +211,7 @@ export function SupplierInvitationResult({
 
           {copyMessage ? (
             <p
-              className="mt-3 min-w-0 text-pretty text-xs font-black leading-5 text-emerald-300"
+              className="mt-3 min-w-0 text-pretty text-xs font-black leading-5 text-status-success"
               role="status"
               aria-live="polite"
             >

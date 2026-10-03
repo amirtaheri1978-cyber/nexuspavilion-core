@@ -1,6 +1,15 @@
 import type { FormEvent } from "react";
 
+import { ExecutiveBadge } from "@/components/executive/executive-badge";
 import type { SupplierAvlVendorOption } from "@/components/rfq-workspace/supplier-avl-panel";
+import {
+  EXECUTIVE_BUTTON_PRIMARY,
+  EXECUTIVE_BUTTON_TERTIARY,
+  EXECUTIVE_FEEDBACK_SUCCESS,
+  EXECUTIVE_FORM_HELPER,
+  EXECUTIVE_FORM_INPUT,
+  EXECUTIVE_FORM_LABEL,
+} from "@/lib/design-system/executive-contract";
 
 type SupplierInvitationDeliveryProps = {
   email: string;
@@ -28,15 +37,15 @@ export function SupplierInvitationDelivery({
       data-rfq-supplier-delivery="true"
     >
       <div className="min-w-0">
-        <p className="text-xs font-black uppercase tracking-[0.25em] text-nexus-gold">
+        <p className="np-type-eyebrow text-nexus-gold">
           Invitation Delivery
         </p>
 
-        <h3 className="mt-2 min-w-0 text-pretty text-xl font-black text-nexus-white">
+        <h3 className="np-type-h3 mt-2 min-w-0 text-pretty">
           Send Secure Supplier Invitation
         </h3>
 
-        <p className="mt-2 max-w-3xl min-w-0 text-pretty text-sm font-semibold leading-6 text-nexus-muted">
+        <p className="np-type-body mt-2 max-w-3xl min-w-0 text-pretty text-nexus-text-secondary">
           Enter the authorized supplier contact email. The invitation
           remains associated with this RFQ. When an invitation already
           exists for the same RFQ and supplier email, its secure
@@ -45,17 +54,17 @@ export function SupplierInvitationDelivery({
       </div>
 
       {selectedVendor ? (
-        <div className="mt-5 flex min-w-0 flex-col gap-3 rounded-executive border border-emerald-300/15 bg-emerald-400/[0.07] p-4 @sm:flex-row @sm:items-center @sm:justify-between">
+        <div className={`mt-5 flex min-w-0 flex-col gap-3 ${EXECUTIVE_FEEDBACK_SUCCESS} @sm:flex-row @sm:items-center @sm:justify-between`}>
           <div className="min-w-0">
-            <p className="text-xs font-black uppercase tracking-[0.2em] text-emerald-300">
-              Selected AVL Supplier
-            </p>
+            <div className="flex flex-wrap items-center gap-2">
+              <ExecutiveBadge tone="success">Selected AVL Supplier</ExecutiveBadge>
+            </div>
 
-            <p className="mt-2 min-w-0 text-pretty text-sm font-black text-nexus-white">
+            <p className="mt-2 min-w-0 text-pretty text-sm font-black text-nexus-text-primary">
               {selectedVendor.name || "Approved Supplier"}
             </p>
 
-            <p className="mt-1 min-w-0 text-pretty text-xs font-semibold leading-5 text-nexus-muted">
+            <p className="mt-1 min-w-0 text-pretty text-xs font-semibold leading-5 text-nexus-text-secondary">
               {selectedVendor.category || "Supplier Organization"}
               {" · "}
               {selectedVendor.location || "Location not specified"}
@@ -65,7 +74,7 @@ export function SupplierInvitationDelivery({
           <button
             type="button"
             onClick={onClearVendor}
-            className="inline-flex min-h-11 shrink-0 items-center self-start rounded-full border border-white/10 bg-white/[0.055] px-4 py-2 text-xs font-black text-nexus-muted transition hover:bg-white/[0.08] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-nexus-gold/70 @sm:self-auto"
+            className={`${EXECUTIVE_BUTTON_TERTIARY} min-h-11 self-start px-4 py-2 text-xs @sm:self-auto`}
           >
             Clear Selection
           </button>
@@ -73,8 +82,10 @@ export function SupplierInvitationDelivery({
       ) : null}
 
       <div className="mt-5 grid min-w-0 grid-cols-1 items-end gap-4 @md:grid-cols-[minmax(0,1fr)_auto]">
-        <label className="grid min-w-0 gap-2 text-sm font-bold text-nexus-white">
-          Supplier contact email
+        <label className="grid min-w-0 gap-2">
+          <span className={EXECUTIVE_FORM_LABEL}>
+            Supplier contact email
+          </span>
           <input
             type="email"
             value={email}
@@ -86,14 +97,14 @@ export function SupplierInvitationDelivery({
             }
             required
             autoComplete="email"
-            className="min-h-14 min-w-0 w-full rounded-2xl border border-white/10 bg-black/25 px-5 py-4 text-sm font-bold text-nexus-white outline-none transition placeholder:text-nexus-muted hover:border-white/20 focus:border-nexus-gold/40 focus:ring-2 focus:ring-nexus-gold/20"
+            className={EXECUTIVE_FORM_INPUT}
           />
         </label>
 
         <button
           type="submit"
           disabled={loading}
-          className="inline-flex min-h-14 w-full items-center justify-center rounded-full border border-nexus-gold/30 bg-nexus-gold px-7 py-4 text-sm font-black text-nexus-navy transition duration-200 hover:bg-[#F5D77B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-nexus-gold/70 focus-visible:ring-offset-2 focus-visible:ring-offset-nexus-navy disabled:cursor-not-allowed disabled:opacity-50 @md:w-auto @md:shrink-0"
+          className={`${EXECUTIVE_BUTTON_PRIMARY} w-full @md:w-auto @md:shrink-0`}
         >
           {loading
             ? "Sending Supplier Invitation..."
@@ -102,12 +113,12 @@ export function SupplierInvitationDelivery({
       </div>
 
       {selectedVendorId ? (
-        <p className="mt-3 min-w-0 text-pretty text-xs font-bold leading-5 text-nexus-muted">
+        <p className={`mt-3 min-w-0 text-pretty ${EXECUTIVE_FORM_HELPER}`}>
           The selected AVL supplier will be attached to this invitation
           for procurement governance and audit tracking.
         </p>
       ) : (
-        <p className="mt-3 min-w-0 text-pretty text-xs font-bold leading-5 text-nexus-muted">
+        <p className={`mt-3 min-w-0 text-pretty ${EXECUTIVE_FORM_HELPER}`}>
           Direct email invitations remain available where permitted by
           the RFQ sourcing method and governance policy.
         </p>
