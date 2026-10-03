@@ -286,9 +286,9 @@ export function RFQDocumentWorkspace({
             </h3>
 
             <p className="mt-3 max-w-3xl min-w-0 text-pretty text-sm font-semibold leading-7 text-nexus-muted">
-              Submit private respondent inquiries, manage issued addenda, and
-              track acknowledgements within the same controlled RFQ workspace
-              while preserving the existing document and governance workflows.
+              {isOwner
+                ? "Review private respondent inquiries, issue formal Addenda, and track acknowledgements within the same controlled RFQ workspace while preserving the existing document and governance workflows."
+                : "Submit private RFIs, review issuer responses, inspect issued Addenda and affected-document changes, and complete required acknowledgements before submitting or revising your quote. Required acknowledgement can block quotation where existing governance requires it."}
             </p>
           </div>
 
