@@ -17,8 +17,20 @@ import {
   type GroupedCompanyQualifications,
 } from "@/lib/company/qualifications";
 import {
+  EXECUTIVE_BUTTON_DESTRUCTIVE,
+  EXECUTIVE_BUTTON_SECONDARY,
+  EXECUTIVE_BUTTON_TERTIARY,
   EXECUTIVE_CTA_PRIMARY,
+  EXECUTIVE_FEEDBACK_ERROR,
+  EXECUTIVE_FEEDBACK_INFO,
+  EXECUTIVE_FEEDBACK_SUCCESS,
+  EXECUTIVE_FEEDBACK_WARNING,
   EXECUTIVE_FOCUS_GOLD,
+  EXECUTIVE_FORM_CHECKBOX,
+  EXECUTIVE_FORM_ERROR,
+  EXECUTIVE_FORM_HELPER,
+  EXECUTIVE_FORM_INPUT,
+  EXECUTIVE_FORM_LABEL,
 } from "@/lib/design-system/executive-contract";
 
 type CompanyQualificationsEditorProps = {
@@ -32,31 +44,6 @@ type SaveResponse = {
   error?: string;
   qualifications?: GroupedCompanyQualifications;
 };
-
-const inputClass = [
-  "mt-2 h-[52px] w-full min-w-0 rounded-2xl border border-white/10 bg-[#07111F] px-4 text-sm font-semibold text-white outline-none transition",
-  "placeholder:text-slate-500",
-  "focus:border-[#C8A646] focus:bg-[#081827] focus:ring-4 focus:ring-[#C8A646]/15",
-  EXECUTIVE_FOCUS_GOLD,
-  "disabled:cursor-not-allowed disabled:opacity-60",
-].join(" ");
-
-const labelClass =
-  "text-[11px] font-black uppercase tracking-[0.18em] text-slate-500";
-
-const cardActionClass = [
-  "inline-flex min-h-11 shrink-0 items-center rounded-full border border-white/10 px-4",
-  "text-[11px] font-black uppercase tracking-[0.12em] transition",
-  EXECUTIVE_FOCUS_GOLD,
-].join(" ");
-
-const formActionClass = [
-  "inline-flex min-h-11 items-center justify-center rounded-full border border-white/10",
-  "bg-white/[0.055] px-4 text-xs font-black uppercase tracking-[0.12em] text-white",
-  "transition hover:bg-white/[0.08]",
-  EXECUTIVE_FOCUS_GOLD,
-  "disabled:cursor-not-allowed disabled:opacity-60",
-].join(" ");
 
 function emptyDraft(): CompanyQualificationInput {
   return {
@@ -97,6 +84,20 @@ function resolveQualificationDraft(
   return { item: normalized.item, error: "" };
 }
 
+function VisibilityBadge({ isPublic }: { isPublic: boolean }) {
+  return (
+    <span
+      className={`inline-flex rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-[0.12em] ${
+        isPublic
+          ? "border-nexus-cyan/25 bg-nexus-cyan/10 text-nexus-cyan"
+          : "border-white/10 bg-white/[0.055] text-nexus-text-secondary"
+      }`}
+    >
+      {isPublic ? "Public Profile" : "Workspace Only"}
+    </span>
+  );
+}
+
 function QualificationFields({
   value,
   onChange,
@@ -110,11 +111,12 @@ function QualificationFields({
   const issuedOnId = useId();
   const expiresOnId = useId();
   const publicId = useId();
+  const publicHintId = useId();
 
   return (
     <>
-      <div>
-        <label htmlFor={nameId} className={labelClass}>
+      <div className="min-w-0">
+        <label htmlFor={nameId} className={EXECUTIVE_FORM_LABEL}>
           Name
         </label>
         <input
@@ -124,14 +126,14 @@ function QualificationFields({
           onChange={(event) =>
             onChange({ ...value, name: event.target.value })
           }
-          className={inputClass}
+          className={`mt-2 min-h-12 ${EXECUTIVE_FORM_INPUT}`}
           maxLength={160}
         />
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
-        <div>
-          <label htmlFor={issuerId} className={labelClass}>
+        <div className="min-w-0">
+          <label htmlFor={issuerId} className={EXECUTIVE_FORM_LABEL}>
             Issuer
           </label>
           <input
@@ -141,13 +143,13 @@ function QualificationFields({
             onChange={(event) =>
               onChange({ ...value, issuer: event.target.value })
             }
-            className={inputClass}
+            className={`mt-2 min-h-12 ${EXECUTIVE_FORM_INPUT}`}
             maxLength={160}
           />
         </div>
 
-        <div>
-          <label htmlFor={identifierId} className={labelClass}>
+        <div className="min-w-0">
+          <label htmlFor={identifierId} className={EXECUTIVE_FORM_LABEL}>
             Credential Identifier
           </label>
           <input
@@ -160,15 +162,19 @@ function QualificationFields({
                 credential_identifier: event.target.value,
               })
             }
-            className={inputClass}
+            className={`mt-2 min-h-12 ${EXECUTIVE_FORM_INPUT}`}
             maxLength={120}
           />
+          <p className={`mt-2 ${EXECUTIVE_FORM_HELPER}`}>
+            Credential Identifier remains Workspace Only and is never shown on
+            the Public Profile.
+          </p>
         </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
-        <div>
-          <label htmlFor={issuedOnId} className={labelClass}>
+        <div className="min-w-0">
+          <label htmlFor={issuedOnId} className={EXECUTIVE_FORM_LABEL}>
             Issued Date
           </label>
           <input
@@ -178,12 +184,12 @@ function QualificationFields({
             onChange={(event) =>
               onChange({ ...value, issued_on: event.target.value || null })
             }
-            className={inputClass}
+            className={`mt-2 min-h-12 ${EXECUTIVE_FORM_INPUT}`}
           />
         </div>
 
-        <div>
-          <label htmlFor={expiresOnId} className={labelClass}>
+        <div className="min-w-0">
+          <label htmlFor={expiresOnId} className={EXECUTIVE_FORM_LABEL}>
             Expiry Date
           </label>
           <input
@@ -193,29 +199,35 @@ function QualificationFields({
             onChange={(event) =>
               onChange({ ...value, expires_on: event.target.value || null })
             }
-            className={inputClass}
+            className={`mt-2 min-h-12 ${EXECUTIVE_FORM_INPUT}`}
           />
         </div>
       </div>
 
-      <label
-        htmlFor={publicId}
-        className="flex min-h-11 items-start gap-3 py-2 text-sm font-semibold text-slate-300"
-      >
-        <input
-          id={publicId}
-          type="checkbox"
-          checked={value.is_public}
-          onChange={(event) =>
-            onChange({ ...value, is_public: event.target.checked })
-          }
-          className={`mt-1 h-5 w-5 rounded border-white/20 bg-[#07111F] text-[#C8A646] ${EXECUTIVE_FOCUS_GOLD}`}
-        />
-        <span>
-          Show on public company profile. Credential identifiers remain
-          workspace-only.
-        </span>
-      </label>
+      <div className="rounded-executive border border-white/10 bg-white/[0.035] p-4">
+        <label
+          htmlFor={publicId}
+          className="flex min-h-11 items-start gap-3 text-sm font-semibold text-nexus-text-secondary"
+        >
+          <input
+            id={publicId}
+            type="checkbox"
+            checked={value.is_public}
+            onChange={(event) =>
+              onChange({ ...value, is_public: event.target.checked })
+            }
+            aria-describedby={publicHintId}
+            className={EXECUTIVE_FORM_CHECKBOX}
+          />
+          <span className="min-w-0">
+            Show on Public Profile
+          </span>
+        </label>
+        <p id={publicHintId} className={`mt-2 ${EXECUTIVE_FORM_HELPER}`}>
+          When selected, this qualification may appear on the Public Profile.
+          Credential Identifier remains Workspace Only either way.
+        </p>
+      </div>
     </>
   );
 }
@@ -232,22 +244,27 @@ function QualificationCard({
   onRemove: () => void;
 }) {
   return (
-    <article className="rounded-2xl border border-white/10 bg-[#07111F]/80 p-4">
+    <article className="min-w-0 rounded-executive border border-white/10 bg-black/20 p-4 sm:p-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-sm font-black text-white break-words">{item.name}</p>
-          <p className="mt-1 text-xs font-semibold text-slate-400 break-words">
+          <p className="np-type-body min-w-0 break-words font-black text-nexus-white">
+            {item.name}
+          </p>
+          <p className="np-type-meta mt-2 min-w-0 break-words text-nexus-muted">
             {item.issuer || "Issuer not provided"}
           </p>
+          <div className="mt-3">
+            <VisibilityBadge isPublic={item.is_public} />
+          </div>
         </div>
 
         {canEdit ? (
-          <div className="flex shrink-0 items-center gap-2">
+          <div className="flex shrink-0 flex-wrap items-center gap-2">
             <button
               type="button"
               onClick={onEdit}
               aria-label={`Edit ${item.name}`}
-              className={`${cardActionClass} text-slate-300 hover:border-[#C8A646]/40 hover:text-white`}
+              className={`${EXECUTIVE_BUTTON_SECONDARY} min-h-11 px-4 py-2 text-xs`}
             >
               Edit
             </button>
@@ -255,7 +272,7 @@ function QualificationCard({
               type="button"
               onClick={onRemove}
               aria-label={`Remove ${item.name}`}
-              className={`${cardActionClass} text-slate-400 hover:border-red-400/30 hover:text-red-300`}
+              className={`${EXECUTIVE_BUTTON_DESTRUCTIVE} min-h-11 px-4 py-2 text-xs`}
             >
               Remove
             </button>
@@ -264,27 +281,27 @@ function QualificationCard({
       </div>
 
       <dl className="mt-4 grid gap-3 text-xs sm:grid-cols-2">
-        <div>
-          <dt className={labelClass}>Credential Identifier</dt>
-          <dd className="mt-1 font-semibold text-slate-300 break-words">
+        <div className="min-w-0">
+          <dt className={EXECUTIVE_FORM_LABEL}>Credential Identifier</dt>
+          <dd className="np-type-body mt-1 min-w-0 break-words text-nexus-text-secondary">
             {item.credential_identifier || "Not provided"}
           </dd>
         </div>
-        <div>
-          <dt className={labelClass}>Visibility</dt>
-          <dd className="mt-1 font-semibold text-slate-300">
-            {item.is_public ? "Public profile" : "Workspace only"}
+        <div className="min-w-0">
+          <dt className={EXECUTIVE_FORM_LABEL}>Visibility</dt>
+          <dd className="np-type-body mt-1 text-nexus-text-secondary">
+            {item.is_public ? "Public Profile" : "Workspace Only"}
           </dd>
         </div>
-        <div>
-          <dt className={labelClass}>Issued</dt>
-          <dd className="mt-1 font-semibold text-slate-300">
+        <div className="min-w-0">
+          <dt className={EXECUTIVE_FORM_LABEL}>Issued Date</dt>
+          <dd className="np-type-body mt-1 text-nexus-text-secondary">
             {formatQualificationDate(item.issued_on)}
           </dd>
         </div>
-        <div>
-          <dt className={labelClass}>Expires</dt>
-          <dd className="mt-1 font-semibold text-slate-300">
+        <div className="min-w-0">
+          <dt className={EXECUTIVE_FORM_LABEL}>Expiry Date</dt>
+          <dd className="np-type-body mt-1 text-nexus-text-secondary">
             {formatQualificationExpiry(item.expires_on)}
           </dd>
         </div>
@@ -307,28 +324,30 @@ function QualificationEditCard({
   onUpdate: () => void;
 }) {
   return (
-    <div className="space-y-4 rounded-2xl border border-[#C8A646]/30 bg-[#07111F]/80 p-4">
-      <p className="text-[11px] font-black uppercase tracking-[0.18em] text-[#C8A646]">
-        Editing Qualification
-      </p>
+    <div className="space-y-4 rounded-executive border border-nexus-gold/30 bg-black/20 p-4 sm:p-5">
+      <p className="np-type-eyebrow text-nexus-gold">Editing Qualification</p>
 
       <QualificationFields value={draft} onChange={onChange} />
 
       <div className="flex flex-wrap gap-3">
-        <button type="button" onClick={onUpdate} className={formActionClass}>
+        <button
+          type="button"
+          onClick={onUpdate}
+          className={`${EXECUTIVE_BUTTON_SECONDARY} min-h-11 px-4 py-2 text-xs`}
+        >
           Update Qualification
         </button>
         <button
           type="button"
           onClick={onCancel}
-          className={`${formActionClass} bg-transparent text-slate-300`}
+          className={`${EXECUTIVE_BUTTON_TERTIARY} min-h-11 px-4 py-2 text-xs`}
         >
           Cancel
         </button>
       </div>
 
       {error ? (
-        <p className="text-sm font-semibold text-red-300" role="alert">
+        <p className={EXECUTIVE_FORM_ERROR} role="alert">
           {error}
         </p>
       ) : null}
@@ -417,10 +436,18 @@ function QualificationGroupEditor({
   }
 
   return (
-    <section className="min-w-0 rounded-3xl border border-white/10 bg-[#07111F]/75 p-5">
-      <h3 className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
-        {groupTitle}
-      </h3>
+    <section className="min-w-0 rounded-executive border border-white/10 bg-black/20 p-5">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="np-type-eyebrow text-nexus-gold">
+            Qualification Registry
+          </p>
+          <h3 className="np-type-h3 mt-2 text-nexus-white">{groupTitle}</h3>
+        </div>
+        <p className="np-type-meta text-nexus-text-secondary">
+          {items.length} / {COMPANY_QUALIFICATION_MAX_PER_TYPE}
+        </p>
+      </div>
 
       {items.length > 0 ? (
         <div className="mt-4 space-y-3">
@@ -451,20 +478,31 @@ function QualificationGroupEditor({
           )}
         </div>
       ) : (
-        <p className="mt-3 text-sm font-semibold text-slate-500">
+        <p className={`mt-4 ${EXECUTIVE_FORM_HELPER}`}>
           {canEdit ? "No qualifications added yet." : "Not provided"}
         </p>
       )}
 
       {canEdit ? (
-        <div className="mt-5 space-y-4 rounded-2xl border border-dashed border-white/10 p-4">
+        <div className="mt-5 space-y-4 rounded-executive border border-dashed border-white/15 bg-white/[0.03] p-4">
           {atGroupLimit ? (
-            <p className="text-sm font-semibold text-slate-400" role="status">
+            <p
+              role="status"
+              className={`${EXECUTIVE_FEEDBACK_WARNING} text-sm font-semibold`}
+            >
               This group supports up to {COMPANY_QUALIFICATION_MAX_PER_TYPE}{" "}
               qualifications. Remove an entry to add another.
             </p>
           ) : (
             <>
+              <div>
+                <p className="np-type-meta text-nexus-muted">Add Qualification</p>
+                <p className={`mt-2 ${EXECUTIVE_FORM_HELPER}`}>
+                  Complete the fields below, then select Add Qualification.
+                  Nothing is stored until you save the registry.
+                </p>
+              </div>
+
               <QualificationFields
                 value={draft}
                 onChange={(next) => {
@@ -479,7 +517,7 @@ function QualificationGroupEditor({
                 type="button"
                 onClick={tryAddQualification}
                 disabled={atGroupLimit}
-                className={formActionClass}
+                className={`${EXECUTIVE_BUTTON_SECONDARY} min-h-11 px-4 py-2 text-xs`}
               >
                 Add Qualification
               </button>
@@ -487,7 +525,7 @@ function QualificationGroupEditor({
           )}
 
           {groupError ? (
-            <p className="text-sm font-semibold text-red-300" role="alert">
+            <p className={EXECUTIVE_FORM_ERROR} role="alert">
               {groupError}
             </p>
           ) : null}
@@ -598,33 +636,59 @@ export function CompanyQualificationsEditor({
   );
 
   if (!canEdit) {
-    return content;
+    return (
+      <div className="space-y-4">
+        <p
+          role="status"
+          className={`${EXECUTIVE_FEEDBACK_WARNING} text-sm font-semibold`}
+        >
+          Read-only access. The Qualification Registry cannot be changed with
+          your current Access Level.
+        </p>
+        {content}
+      </div>
+    );
   }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      <p className={`${EXECUTIVE_FEEDBACK_INFO} text-sm font-semibold`}>
+        Qualification Registry records are workspace-managed. Public Profile
+        visibility is optional per qualification. Credential Identifier remains
+        Workspace Only.
+      </p>
+
       {content}
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <button
           type="submit"
           disabled={saving}
-          className={`${EXECUTIVE_CTA_PRIMARY} min-h-12 px-6 disabled:cursor-not-allowed disabled:opacity-60`}
+          className={`${EXECUTIVE_CTA_PRIMARY} min-h-12 px-6 ${EXECUTIVE_FOCUS_GOLD}`}
         >
           {saving ? "Saving Qualifications..." : "Save Qualifications"}
         </button>
 
-        <p
-          id={statusId}
-          className="text-sm font-semibold"
-          role="status"
-          aria-live="polite"
-        >
+        <div className="min-w-0 space-y-2">
           {success ? (
-            <span className="text-emerald-300">{success}</span>
+            <p
+              id={statusId}
+              role="status"
+              aria-live="polite"
+              className={`${EXECUTIVE_FEEDBACK_SUCCESS} text-sm font-semibold`}
+            >
+              {success}
+            </p>
           ) : null}
-          {error ? <span className="text-red-300">{error}</span> : null}
-        </p>
+          {error ? (
+            <p
+              role="alert"
+              className={`${EXECUTIVE_FEEDBACK_ERROR} text-sm font-semibold`}
+            >
+              {error}
+            </p>
+          ) : null}
+        </div>
       </div>
     </form>
   );

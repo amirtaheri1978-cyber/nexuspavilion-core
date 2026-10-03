@@ -13,8 +13,17 @@ import {
   type GroupedCompanyCapabilities,
 } from "@/lib/company/capabilities";
 import {
+  EXECUTIVE_BUTTON_DESTRUCTIVE,
+  EXECUTIVE_BUTTON_SECONDARY,
   EXECUTIVE_CTA_PRIMARY,
+  EXECUTIVE_FEEDBACK_ERROR,
+  EXECUTIVE_FEEDBACK_SUCCESS,
+  EXECUTIVE_FEEDBACK_WARNING,
   EXECUTIVE_FOCUS_GOLD,
+  EXECUTIVE_FORM_ERROR,
+  EXECUTIVE_FORM_HELPER,
+  EXECUTIVE_FORM_INPUT,
+  EXECUTIVE_FORM_LABEL,
 } from "@/lib/design-system/executive-contract";
 
 type CompanyCapabilitiesEditorProps = {
@@ -28,14 +37,6 @@ type SaveResponse = {
   error?: string;
   capabilities?: GroupedCompanyCapabilities;
 };
-
-const inputClass = [
-  "mt-2 h-[52px] w-full min-w-0 rounded-2xl border border-white/10 bg-[#07111F] px-4 text-sm font-semibold text-white outline-none transition",
-  "placeholder:text-slate-500",
-  "focus:border-[#C8A646] focus:bg-[#081827] focus:ring-4 focus:ring-[#C8A646]/15",
-  EXECUTIVE_FOCUS_GOLD,
-  "disabled:cursor-not-allowed disabled:opacity-60",
-].join(" ");
 
 function CapabilityGroupEditor({
   capabilityType,
@@ -96,36 +97,42 @@ function CapabilityGroupEditor({
   const groupTitle = COMPANY_CAPABILITY_TYPE_LABELS[capabilityType];
 
   return (
-    <div className="min-w-0 rounded-3xl border border-white/10 bg-[#07111F]/75 p-5">
-      {canEdit ? (
-        <label
-          htmlFor={inputId}
-          className="text-xs font-black uppercase tracking-[0.2em] text-slate-400"
-        >
-          {groupTitle}
-        </label>
-      ) : (
-        <p
-          id={headingId}
-          className="text-xs font-black uppercase tracking-[0.2em] text-slate-400"
-        >
-          {groupTitle}
+    <div className="min-w-0 rounded-executive border border-white/10 bg-black/20 p-5">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        {canEdit ? (
+          <label
+            htmlFor={inputId}
+            className={`${EXECUTIVE_FORM_LABEL} text-nexus-muted`}
+          >
+            {groupTitle}
+          </label>
+        ) : (
+          <p
+            id={headingId}
+            className={`${EXECUTIVE_FORM_LABEL} text-nexus-muted`}
+          >
+            {groupTitle}
+          </p>
+        )}
+
+        <p className="np-type-meta text-nexus-text-secondary">
+          {labels.length} / {COMPANY_CAPABILITY_MAX_PER_TYPE}
         </p>
-      )}
+      </div>
 
       {labels.length > 0 ? (
-        <div className="mt-3 flex flex-wrap gap-2">
+        <div className="mt-4 flex flex-wrap gap-2">
           {labels.map((label) => (
             <span
               key={`${capabilityType}-${label}`}
-              className="inline-flex max-w-full items-center gap-2 rounded-full border border-white/10 bg-white/[0.055] px-3 py-1.5 text-xs font-bold leading-5 text-slate-200 break-words"
+              className="inline-flex max-w-full items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.055] px-3 py-2 text-xs font-bold leading-5 text-nexus-text-secondary"
             >
               <span className="min-w-0 break-words">{label}</span>
               {canEdit ? (
                 <button
                   type="button"
                   onClick={() => onRemove(label)}
-                  className="shrink-0 rounded-full border border-white/10 px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.12em] text-slate-400 transition hover:border-red-400/30 hover:text-red-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C8A646]/70"
+                  className={`${EXECUTIVE_BUTTON_DESTRUCTIVE} min-h-8 shrink-0 px-3 py-1 text-[10px]`}
                   aria-label={`Remove ${label}`}
                 >
                   Remove
@@ -135,17 +142,18 @@ function CapabilityGroupEditor({
           ))}
         </div>
       ) : (
-        <p className="mt-3 text-sm font-semibold text-slate-500">
-          {canEdit
-            ? "No capabilities added yet."
-            : "Not provided"}
+        <p className={`mt-4 ${EXECUTIVE_FORM_HELPER}`}>
+          {canEdit ? "No capabilities added yet." : "Not provided"}
         </p>
       )}
 
       {canEdit ? (
         <div className="mt-4">
           {atGroupLimit ? (
-            <p className="text-sm font-semibold text-slate-400" role="status">
+            <p
+              role="status"
+              className={`${EXECUTIVE_FEEDBACK_WARNING} text-sm font-semibold`}
+            >
               This group supports up to {COMPANY_CAPABILITY_MAX_PER_TYPE}{" "}
               capabilities. Remove an entry to add another.
             </p>
@@ -163,7 +171,7 @@ function CapabilityGroupEditor({
                 }}
                 onKeyDown={handleKeyDown}
                 placeholder={`Add ${groupTitle.toLowerCase()}`}
-                className={inputClass}
+                className={`mt-1 min-h-12 ${EXECUTIVE_FORM_INPUT}`}
                 maxLength={120}
                 aria-invalid={groupError ? true : undefined}
                 aria-describedby={groupError ? groupErrorId : undefined}
@@ -174,7 +182,7 @@ function CapabilityGroupEditor({
                   type="button"
                   onClick={tryAddLabel}
                   disabled={atGroupLimit}
-                  className="rounded-full border border-white/10 bg-white/[0.055] px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-white transition hover:bg-white/[0.08] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C8A646]/70 disabled:cursor-not-allowed disabled:opacity-60"
+                  className={`${EXECUTIVE_BUTTON_SECONDARY} min-h-11 px-4 py-2 text-xs`}
                 >
                   Add
                 </button>
@@ -185,7 +193,7 @@ function CapabilityGroupEditor({
           {groupError ? (
             <p
               id={groupErrorId}
-              className="mt-2 text-sm font-semibold text-red-300"
+              className={`mt-3 ${EXECUTIVE_FORM_ERROR}`}
               role="alert"
             >
               {groupError}
@@ -268,23 +276,38 @@ export function CompanyCapabilitiesEditor({
 
   if (!canEdit) {
     return (
-      <div className="mt-6 grid gap-6 md:grid-cols-2">
-        {COMPANY_CAPABILITY_TYPES.map((capabilityType) => (
-          <CapabilityGroupEditor
-            key={capabilityType}
-            capabilityType={capabilityType}
-            labels={capabilities[capabilityType]}
-            canEdit={false}
-            onAdd={() => undefined}
-            onRemove={() => undefined}
-          />
-        ))}
+      <div className="mt-6 space-y-4">
+        <p
+          role="status"
+          className={`${EXECUTIVE_FEEDBACK_WARNING} text-sm font-semibold`}
+        >
+          Read-only access. Capabilities cannot be changed with your current
+          Access Level.
+        </p>
+
+        <div className="grid gap-6 md:grid-cols-2">
+          {COMPANY_CAPABILITY_TYPES.map((capabilityType) => (
+            <CapabilityGroupEditor
+              key={capabilityType}
+              capabilityType={capabilityType}
+              labels={capabilities[capabilityType]}
+              canEdit={false}
+              onAdd={() => undefined}
+              onRemove={() => undefined}
+            />
+          ))}
+        </div>
       </div>
     );
   }
 
   return (
     <form onSubmit={handleSubmit} className="mt-6 space-y-6">
+      <p className={EXECUTIVE_FORM_HELPER}>
+        Add capabilities by group, then save. Changes are not stored until you
+        select Save Capabilities.
+      </p>
+
       <div className="grid gap-6 md:grid-cols-2">
         {COMPANY_CAPABILITY_TYPES.map((capabilityType) => (
           <CapabilityGroupEditor
@@ -308,22 +331,31 @@ export function CompanyCapabilitiesEditor({
         <button
           type="submit"
           disabled={saving}
-          className={`${EXECUTIVE_CTA_PRIMARY} min-h-12 px-6 disabled:cursor-not-allowed disabled:opacity-60`}
+          className={`${EXECUTIVE_CTA_PRIMARY} min-h-12 px-6 ${EXECUTIVE_FOCUS_GOLD}`}
         >
           {saving ? "Saving Capabilities..." : "Save Capabilities"}
         </button>
 
-        <p
-          id={statusId}
-          className="text-sm font-semibold"
-          role="status"
-          aria-live="polite"
-        >
+        <div className="min-w-0 space-y-2">
           {success ? (
-            <span className="text-emerald-300">{success}</span>
+            <p
+              id={statusId}
+              role="status"
+              aria-live="polite"
+              className={`${EXECUTIVE_FEEDBACK_SUCCESS} text-sm font-semibold`}
+            >
+              {success}
+            </p>
           ) : null}
-          {error ? <span className="text-red-300">{error}</span> : null}
-        </p>
+          {error ? (
+            <p
+              role="alert"
+              className={`${EXECUTIVE_FEEDBACK_ERROR} text-sm font-semibold`}
+            >
+              {error}
+            </p>
+          ) : null}
+        </div>
       </div>
     </form>
   );
