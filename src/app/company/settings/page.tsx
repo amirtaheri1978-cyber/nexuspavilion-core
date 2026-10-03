@@ -44,6 +44,13 @@ import { createClient } from "@/lib/supabase/server";
 
 const SITE_URL = getPublicSiteUrl() ?? "";
 
+const SETTINGS_SECTION_NAV_LINK_CLASS = [
+  "inline-flex min-h-11 items-center rounded-2xl border border-white/10 bg-white/[0.045]",
+  "px-4 py-2 text-xs font-black text-nexus-text-secondary",
+  "transition hover:border-nexus-cyan/25 hover:bg-white/[0.08] hover:text-white",
+  EXECUTIVE_FOCUS_CYAN,
+].join(" ");
+
 type Profile = {
 id: string;
 email: string | null;
@@ -599,25 +606,31 @@ const companyDocumentsForClient =
   serializeCompanyDocumentsForClient(companyDocuments);
 
 return (
-<main className="relative min-h-screen overflow-hidden bg-[#07111F] text-white">
-<div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(circle_at_top_left,rgba(44,196,232,0.18),transparent_34%),radial-gradient(circle_at_top_right,rgba(200,166,70,0.15),transparent_30%),linear-gradient(180deg,#07111F_0%,#07111F_45%,#020617_100%)]" />
-<div className="pointer-events-none fixed inset-0 -z-10 bg-[linear-gradient(120deg,rgba(255,255,255,0.055),transparent_32%,rgba(200,166,70,0.05)_66%,transparent)]" />
+<main className="relative min-h-screen overflow-hidden bg-nexus-navy text-nexus-white">
+<div className="pointer-events-none fixed inset-0 -z-10 bg-nexus-radial opacity-90" />
 
 <div className={EXECUTIVE_PAGE_CLASS}>
-<section className="mb-8 rounded-[32px] border border-white/10 bg-white/[0.045] p-6 shadow-[0_28px_90px_rgba(0,0,0,0.32)] backdrop-blur-2xl sm:p-8">
+<ExecutivePanel
+  variant="operational"
+  padding="lg"
+  tone="gold"
+  className="mb-8"
+>
 <div className="flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
-<div>
-<p className="text-[11px] font-black uppercase tracking-[0.34em] text-[#C8A646]">
+<div className="min-w-0">
+<p className="np-type-eyebrow text-nexus-gold">
 Company Workspace
 </p>
 
-<h1 className="mt-4 text-4xl font-black tracking-[-0.05em] text-white sm:text-5xl">
+<h1 className="np-type-h1 mt-4 max-w-4xl min-w-0 text-pretty text-nexus-white">
 Workspace Settings
 </h1>
 
-<p className="mt-4 max-w-4xl text-sm font-semibold leading-7 text-slate-300 sm:text-base">
-Manage professional identity, company configuration, workspace access,
-governance evidence, documents, and ownership controls.
+<p className="np-type-body mt-4 max-w-4xl text-pretty text-nexus-muted">
+Configure professional identity, company profile, workspace access,
+capabilities, qualifications, compliance records, documents, policies,
+activity history, and ownership controls. This is a configuration surface,
+not a procurement or analytics command center.
 </p>
 </div>
 
@@ -631,72 +644,77 @@ Dashboard
 </div>
 </div>
 
+<div className="mt-6">
+<p className="np-type-meta text-nexus-muted">
+Configuration sections
+</p>
 <nav
 aria-label="Workspace settings sections"
-className="mt-6 flex flex-wrap gap-2"
+className="mt-3 flex flex-wrap gap-2"
 >
 <a
 href="#professional-identity"
-className={`inline-flex min-h-11 items-center rounded-full border border-white/10 bg-white/[0.045] px-4 py-2 text-xs font-black text-slate-200 transition hover:border-[#2CC4E8]/25 hover:bg-white/[0.08] hover:text-white ${EXECUTIVE_FOCUS_CYAN}`}
+className={SETTINGS_SECTION_NAV_LINK_CLASS}
 >
 Professional Identity
 </a>
 <a
 href="#company-profile"
-className={`inline-flex min-h-11 items-center rounded-full border border-white/10 bg-white/[0.045] px-4 py-2 text-xs font-black text-slate-200 transition hover:border-[#2CC4E8]/25 hover:bg-white/[0.08] hover:text-white ${EXECUTIVE_FOCUS_CYAN}`}
+className={SETTINGS_SECTION_NAV_LINK_CLASS}
 >
 Company Profile
 </a>
 <a
 href="#invite-users"
-className={`inline-flex min-h-11 items-center rounded-full border border-white/10 bg-white/[0.045] px-4 py-2 text-xs font-black text-slate-200 transition hover:border-[#2CC4E8]/25 hover:bg-white/[0.08] hover:text-white ${EXECUTIVE_FOCUS_CYAN}`}
+className={SETTINGS_SECTION_NAV_LINK_CLASS}
 >
 Workspace Access
 </a>
 <a
 href="#company-capabilities"
-className={`inline-flex min-h-11 items-center rounded-full border border-white/10 bg-white/[0.045] px-4 py-2 text-xs font-black text-slate-200 transition hover:border-[#2CC4E8]/25 hover:bg-white/[0.08] hover:text-white ${EXECUTIVE_FOCUS_CYAN}`}
+className={SETTINGS_SECTION_NAV_LINK_CLASS}
 >
 Capabilities
 </a>
 <a
 href="#company-qualifications"
-className={`inline-flex min-h-11 items-center rounded-full border border-white/10 bg-white/[0.045] px-4 py-2 text-xs font-black text-slate-200 transition hover:border-[#2CC4E8]/25 hover:bg-white/[0.08] hover:text-white ${EXECUTIVE_FOCUS_CYAN}`}
+className={SETTINGS_SECTION_NAV_LINK_CLASS}
 >
 Qualifications
 </a>
 <a
 href="#company-compliance"
-className={`inline-flex min-h-11 items-center rounded-full border border-white/10 bg-white/[0.045] px-4 py-2 text-xs font-black text-slate-200 transition hover:border-[#2CC4E8]/25 hover:bg-white/[0.08] hover:text-white ${EXECUTIVE_FOCUS_CYAN}`}
+className={SETTINGS_SECTION_NAV_LINK_CLASS}
 >
 Compliance
 </a>
 <a
 href="#company-documents"
-className={`inline-flex min-h-11 items-center rounded-full border border-white/10 bg-white/[0.045] px-4 py-2 text-xs font-black text-slate-200 transition hover:border-[#2CC4E8]/25 hover:bg-white/[0.08] hover:text-white ${EXECUTIVE_FOCUS_CYAN}`}
+className={SETTINGS_SECTION_NAV_LINK_CLASS}
 >
 Documents
 </a>
 <a
 href="#policies-approval-controls-heading"
-className={`inline-flex min-h-11 items-center rounded-full border border-white/10 bg-white/[0.045] px-4 py-2 text-xs font-black text-slate-200 transition hover:border-[#2CC4E8]/25 hover:bg-white/[0.08] hover:text-white ${EXECUTIVE_FOCUS_CYAN}`}
+className={SETTINGS_SECTION_NAV_LINK_CLASS}
 >
 Policies
 </a>
 <a
 href="#activity-history"
-className={`inline-flex min-h-11 items-center rounded-full border border-white/10 bg-white/[0.045] px-4 py-2 text-xs font-black text-slate-200 transition hover:border-[#2CC4E8]/25 hover:bg-white/[0.08] hover:text-white ${EXECUTIVE_FOCUS_CYAN}`}
+className={SETTINGS_SECTION_NAV_LINK_CLASS}
 >
 Activity
 </a>
 <a
 href="#governance"
-className={`inline-flex min-h-11 items-center rounded-full border border-white/10 bg-white/[0.045] px-4 py-2 text-xs font-black text-slate-200 transition hover:border-[#2CC4E8]/25 hover:bg-white/[0.08] hover:text-white ${EXECUTIVE_FOCUS_CYAN}`}
+className={SETTINGS_SECTION_NAV_LINK_CLASS}
 >
 Ownership
 </a>
 </nav>
-</section>
+</div>
+</ExecutivePanel>
 
 <CompanyGovernanceCenter
 workspaceStage={workspaceStage}
@@ -917,19 +935,24 @@ secondaryHref: string;
 secondaryLabel: string;
 }) {
 return (
-<main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#061426] px-4 py-10 text-white sm:px-6 lg:px-10">
-<div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(circle_at_top_left,rgba(44,196,232,0.18),transparent_34%),radial-gradient(circle_at_top_right,rgba(200,166,70,0.15),transparent_30%),linear-gradient(180deg,#061426_0%,#07111F_45%,#020617_100%)]" />
+<main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-nexus-navy px-4 py-10 text-nexus-white sm:px-6 lg:px-10">
+<div className="pointer-events-none fixed inset-0 -z-10 bg-nexus-radial opacity-90" />
 
-<section className="w-full max-w-2xl rounded-[32px] border border-white/10 bg-white/[0.065] p-8 text-center shadow-[0_36px_120px_rgba(0,0,0,0.52)] backdrop-blur-2xl sm:p-10">
-<p className="text-xs font-black uppercase tracking-[0.34em] text-[#C8A646]">
+<ExecutivePanel
+  variant="operational"
+  padding="lg"
+  tone="gold"
+  className="w-full max-w-2xl text-center"
+>
+<p className="np-type-eyebrow text-nexus-gold">
 {eyebrow}
 </p>
 
-<h1 className="mt-4 text-4xl font-black tracking-[-0.05em] text-white sm:text-5xl">
+<h1 className="np-type-h1 mt-4 text-pretty text-nexus-white">
 {title}
 </h1>
 
-<p className="mt-5 text-base font-semibold leading-8 text-slate-300">
+<p className="np-type-body mt-5 text-pretty text-nexus-muted">
 {description}
 </p>
 
@@ -948,7 +971,7 @@ className={EXECUTIVE_CTA_SECONDARY}
 {secondaryLabel}
 </Link>
 </div>
-</section>
+</ExecutivePanel>
 </main>
 );
 }
