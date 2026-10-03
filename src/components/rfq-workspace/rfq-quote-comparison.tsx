@@ -6,7 +6,16 @@ import AwardContractButton from "@/components/award-contract-button";
 import { ExecutiveBadge } from "@/components/executive/executive-badge";
 import { ExecutiveGuidanceCard } from "@/components/executive/executive-guidance-card";
 import { ExecutivePanel } from "@/components/executive/executive-panel";
-import { EXECUTIVE_FOCUS_CYAN } from "@/lib/design-system/executive-contract";
+import {
+  EXECUTIVE_BUTTON_SECONDARY,
+  EXECUTIVE_EMPTY_BODY,
+  EXECUTIVE_EMPTY_COMPACT,
+  EXECUTIVE_EMPTY_TITLE,
+  EXECUTIVE_FEEDBACK_WARNING,
+  EXECUTIVE_FORM_HELPER,
+  EXECUTIVE_FORM_INPUT,
+  EXECUTIVE_FORM_LABEL,
+} from "@/lib/design-system/executive-contract";
 import { resolveEvaluationExceptionGuidance } from "@/lib/guidance/evaluation-exception-guidance";
 
 export type RfqQuoteComparisonItem = {
@@ -150,15 +159,18 @@ export function RfqQuoteComparison({
 
   if (quotes.length === 0) {
     const empty = (
-      <>
+      <div className={`min-w-0 ${EXECUTIVE_EMPTY_COMPACT}`} role="status">
         <p className="np-type-eyebrow">Comparison</p>
-        <h2 id="rfq-comparison-heading" className="np-type-h2 mt-3">
+        <h2
+          id="rfq-comparison-heading"
+          className={`${EXECUTIVE_EMPTY_TITLE} !mt-3`}
+        >
           No supplier quotes
         </h2>
-        <p className="np-type-body mt-3">
+        <p className={`${EXECUTIVE_EMPTY_BODY} !mx-0 max-w-none text-left`}>
           No supplier quotes have been submitted for this RFQ yet.
         </p>
-      </>
+      </div>
     );
 
     if (embedded) {
@@ -215,7 +227,7 @@ export function RfqQuoteComparison({
       <div className="mt-6 grid min-w-0 gap-3">
         <label
           htmlFor="rfq-respondent-search"
-          className="np-type-meta text-nexus-cyan-bright"
+          className={`${EXECUTIVE_FORM_LABEL} text-nexus-cyan-bright`}
         >
           Respondent search
         </label>
@@ -230,10 +242,10 @@ export function RfqQuoteComparison({
           }}
           placeholder="Search respondents by supplier name"
           aria-label="Search RFQ respondents"
-          className={`min-h-12 w-full rounded-executive border border-white/10 bg-black/20 px-4 text-sm font-semibold text-white outline-none transition placeholder:text-slate-400 hover:border-white/20 focus:border-nexus-cyan-bright ${EXECUTIVE_FOCUS_CYAN}`}
+          className={`${EXECUTIVE_FORM_INPUT} min-h-12`}
         />
 
-        <p className="np-type-meta" aria-live="polite">
+        <p className={`${EXECUTIVE_FORM_HELPER}`} aria-live="polite">
           {deferredSearch.trim()
             ? `${filteredQuotes.length} of ${quotes.length} respondents match the current search.`
             : `${quotes.length} respondent quotation${
@@ -244,13 +256,15 @@ export function RfqQuoteComparison({
 
       {filteredQuotes.length === 0 ? (
         <section
-          className="mt-6 rounded-executive border border-white/10 bg-black/20 px-5 py-8"
+          className={`mt-6 min-w-0 ${EXECUTIVE_EMPTY_COMPACT}`}
           role="status"
           aria-live="polite"
         >
           <p className="np-type-eyebrow">Respondent search</p>
-          <h3 className="np-type-h3 mt-3">No matching respondents</h3>
-          <p className="np-type-body mt-3">
+          <h3 className={`${EXECUTIVE_EMPTY_TITLE} !mt-3`}>
+            No matching respondents
+          </h3>
+          <p className={`${EXECUTIVE_EMPTY_BODY} !mx-0 max-w-none text-left`}>
             No supplier name matches the current search. Clear or revise the
             search to restore the available respondent quotations.
           </p>
@@ -376,7 +390,7 @@ export function RfqQuoteComparison({
 
                       <td className="min-w-0 px-3 py-4 align-top">
                         {quote.requiresMaterialRevalidation ? (
-                          <>
+                          <div className={EXECUTIVE_FEEDBACK_WARNING}>
                             <ExecutiveBadge tone="warning">
                               Not decision-ready
                             </ExecutiveBadge>
@@ -384,7 +398,7 @@ export function RfqQuoteComparison({
                               Reconfirm or resubmit against the current RFQ basis
                               before comparative evaluation is used for decisioning.
                             </p>
-                          </>
+                          </div>
                         ) : (
                           <>
                             <p className="np-type-kpi text-lg">
@@ -441,7 +455,9 @@ export function RfqQuoteComparison({
                 className={`min-w-0 rounded-executive border p-5 ${
                   quote.isRecommended
                     ? "border-nexus-gold/30 bg-nexus-gold/[0.08]"
-                    : "border-white/10 bg-black/20"
+                    : quote.requiresMaterialRevalidation
+                      ? "border-status-warning/30 bg-status-warning/[0.06]"
+                      : "border-white/10 bg-black/20"
                 }`}
               >
                 <header className="flex min-w-0 flex-col gap-3 @md:flex-row @md:items-start @md:justify-between">
@@ -456,7 +472,10 @@ export function RfqQuoteComparison({
                       {quote.supplierLabel}
                     </h3>
 
-                    <p className="np-type-kpi mt-3 min-w-0 text-pretty text-2xl">
+                    <p className="np-type-meta mt-3 text-nexus-cyan-bright">
+                      Commercial offer
+                    </p>
+                    <p className="np-type-kpi mt-1 min-w-0 text-pretty text-2xl">
                       {quote.amountLabel}
                     </p>
                   </div>
@@ -513,6 +532,18 @@ export function RfqQuoteComparison({
                     Comparison intelligence
                   </p>
 
+                  {quote.requiresMaterialRevalidation ? (
+                    <div className={`mt-3 ${EXECUTIVE_FEEDBACK_WARNING}`}>
+                      <ExecutiveBadge tone="warning">
+                        Not decision-ready
+                      </ExecutiveBadge>
+                      <p className="np-type-meta mt-2 min-w-0 text-pretty">
+                        Reconfirm or resubmit against the current RFQ basis
+                        before comparative evaluation is used for decisioning.
+                      </p>
+                    </div>
+                  ) : null}
+
                   <dl className="mt-3 grid grid-cols-1 gap-3 @sm:grid-cols-2">
                     <ComparisonField
                       label="Evaluation"
@@ -532,10 +563,14 @@ export function RfqQuoteComparison({
                       }
                     />
 
-                    <ComparisonField
-                      label="Risk"
-                      value={quote.riskLevel}
-                    />
+                    <div className="min-w-0">
+                      <dt className="np-type-meta">Risk</dt>
+                      <dd className="mt-2 min-w-0">
+                        <ExecutiveBadge tone={riskTone(quote.riskLevel)}>
+                          {quote.riskLevel}
+                        </ExecutiveBadge>
+                      </dd>
+                    </div>
 
                     <ComparisonField
                       label="Budget variance"
@@ -555,6 +590,9 @@ export function RfqQuoteComparison({
 
                 <div className="mt-5 min-w-0 border-t border-white/10 pt-4">
                   <p className="np-type-meta">Owner action</p>
+                  <p className={`${EXECUTIVE_FORM_HELPER} mt-1 text-pretty`}>
+                    Decision
+                  </p>
 
                   <div className="mt-3 min-w-0">
                     <QuoteAction
@@ -588,7 +626,7 @@ export function RfqQuoteComparison({
                 }
                 disabled={safeCurrentPage === 1}
                 aria-label="Previous respondent page"
-                className={`inline-flex min-h-11 items-center justify-center rounded-executive border border-white/10 bg-white/[0.055] px-4 text-sm font-black text-white transition hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-40 ${EXECUTIVE_FOCUS_CYAN}`}
+                className={`${EXECUTIVE_BUTTON_SECONDARY} min-h-11 px-4`}
               >
                 Previous
               </button>
@@ -606,7 +644,7 @@ export function RfqQuoteComparison({
                 }
                 disabled={safeCurrentPage === totalPages}
                 aria-label="Next respondent page"
-                className={`inline-flex min-h-11 items-center justify-center rounded-executive border border-white/10 bg-white/[0.055] px-4 text-sm font-black text-white transition hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-40 ${EXECUTIVE_FOCUS_CYAN}`}
+                className={`${EXECUTIVE_BUTTON_SECONDARY} min-h-11 px-4`}
               >
                 Next
               </button>

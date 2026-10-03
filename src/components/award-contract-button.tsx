@@ -5,7 +5,9 @@ import { useRef, useState } from "react";
 
 import { ExecutiveConfirmDialog } from "@/components/executive/executive-confirm-dialog";
 import {
-  EXECUTIVE_FOCUS_GOLD,
+  EXECUTIVE_BUTTON_PRIMARY,
+  EXECUTIVE_FEEDBACK_ERROR,
+  EXECUTIVE_FORM_LABEL,
 } from "@/lib/design-system/executive-contract";
 
 type AwardContractButtonProps = {
@@ -123,7 +125,7 @@ export default function AwardContractButton({
   }
 
   return (
-    <div className="flex flex-col items-start gap-2">
+    <div className="flex min-w-0 flex-col items-start gap-2">
       <button
         ref={triggerRef}
         type="button"
@@ -133,13 +135,16 @@ export default function AwardContractButton({
           setOpen(true);
         }}
         disabled={loading || disabled}
-        className={`inline-flex min-h-11 items-center justify-center rounded-2xl border border-nexus-gold/30 bg-nexus-gold/15 px-5 py-2.5 text-sm font-black text-nexus-gold-bright transition-colors hover:bg-nexus-gold/20 disabled:cursor-not-allowed disabled:border-white/10 disabled:bg-white/5 disabled:text-nexus-text-muted ${EXECUTIVE_FOCUS_GOLD}`}
+        className={`${EXECUTIVE_BUTTON_PRIMARY} min-h-11`}
       >
         {loading ? "Awarding..." : "Award contract"}
       </button>
 
       {error ? (
-        <p role="alert" className="max-w-[240px] np-type-meta text-red-300">
+        <p
+          role="alert"
+          className={`max-w-[240px] min-w-0 text-pretty text-sm font-bold ${EXECUTIVE_FEEDBACK_ERROR}`}
+        >
           {error}
         </p>
       ) : null}
@@ -153,22 +158,26 @@ export default function AwardContractButton({
         onConfirm={handleAward}
         description={
           <div className="space-y-3">
-            <p>
+            <p className="np-type-body text-pretty text-nexus-text-primary">
               Awarding this quote will reject all other quotes for this RFQ and
               mark the RFQ as awarded.
             </p>
             <dl className="space-y-2 rounded-executive border border-white/10 bg-white/[0.04] p-4">
-              <div>
-                <dt className="np-type-meta">RFQ</dt>
-                <dd className="np-type-body mt-1 text-white">{rfqTitle}</dd>
+              <div className="min-w-0">
+                <dt className={EXECUTIVE_FORM_LABEL}>RFQ</dt>
+                <dd className="np-type-body mt-1 min-w-0 text-pretty text-white">
+                  {rfqTitle}
+                </dd>
               </div>
-              <div>
-                <dt className="np-type-meta">Supplier</dt>
-                <dd className="np-type-body mt-1 text-white">{supplierLabel}</dd>
+              <div className="min-w-0">
+                <dt className={EXECUTIVE_FORM_LABEL}>Supplier</dt>
+                <dd className="np-type-body mt-1 min-w-0 text-pretty text-white">
+                  {supplierLabel}
+                </dd>
               </div>
-              <div>
-                <dt className="np-type-meta">Quoted amount</dt>
-                <dd className="np-type-kpi mt-1 text-lg text-nexus-gold-bright">
+              <div className="min-w-0">
+                <dt className={EXECUTIVE_FORM_LABEL}>Quoted amount</dt>
+                <dd className="np-type-kpi mt-1 min-w-0 text-pretty text-lg text-nexus-gold-bright">
                   {amountLabel}
                 </dd>
               </div>
