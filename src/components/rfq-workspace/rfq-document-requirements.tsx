@@ -2,7 +2,16 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 
+import { ExecutiveBadge } from "@/components/executive/executive-badge";
 import { RFQAmendmentEvidenceFields } from "@/components/rfq-amendment-evidence-fields";
+import {
+  EXECUTIVE_BUTTON_SECONDARY,
+  EXECUTIVE_FEEDBACK_ERROR,
+  EXECUTIVE_FEEDBACK_SUCCESS,
+  EXECUTIVE_FEEDBACK_WARNING,
+  EXECUTIVE_FORM_HELPER,
+  type ExecutiveContractBadgeTone,
+} from "@/lib/design-system/executive-contract";
 import {
   RFQ_ATTACHMENT_TYPE_LABELS,
   RFQ_ATTACHMENT_TYPES,
@@ -53,25 +62,27 @@ type RequirementMutationResponse = {
 
 function getCoveragePresentation(
   coverageStatus: "not_declared" | "complete" | "incomplete",
-) {
+): {
+  label: string;
+  tone: ExecutiveContractBadgeTone;
+} {
   if (coverageStatus === "complete") {
     return {
       label: "Complete",
-      className:
-        "border-emerald-300/20 bg-emerald-400/10 text-emerald-300",
+      tone: "success",
     };
   }
 
   if (coverageStatus === "incomplete") {
     return {
       label: "Incomplete",
-      className: "border-red-300/20 bg-red-400/10 text-red-200",
+      tone: "risk",
     };
   }
 
   return {
     label: "No Requirements Declared",
-    className: "border-white/10 bg-white/[0.055] text-slate-300",
+    tone: "neutral",
   };
 }
 
@@ -81,25 +92,27 @@ function getRequirementPresentation({
 }: {
   required: boolean;
   present: boolean;
-}) {
+}): {
+  label: string;
+  tone: ExecutiveContractBadgeTone;
+} {
   if (!required) {
     return {
       label: "Not Declared as Required",
-      className: "border-white/10 bg-white/[0.055] text-slate-400",
+      tone: "neutral",
     };
   }
 
   if (present) {
     return {
       label: "Required · Document Present",
-      className:
-        "border-emerald-300/20 bg-emerald-400/10 text-emerald-300",
+      tone: "success",
     };
   }
 
   return {
     label: "Required · Missing",
-    className: "border-red-300/20 bg-red-400/10 text-red-200",
+    tone: "risk",
   };
 }
 
@@ -343,40 +356,52 @@ export function RFQDocumentRequirements({
   return (
     <section
       tabIndex={-1}
-      className="mt-8 min-w-0 border-t border-white/10 pt-8"
+      className="@container mt-8 min-w-0 border-t border-white/10 pt-8"
       aria-labelledby="rfq-required-document-coverage-title"
       data-rfq-document-requirements="true"
     >
       <div className="flex min-w-0 flex-col gap-4 @3xl:flex-row @3xl:items-start @3xl:justify-between">
         <div className="min-w-0">
-          <p className="text-xs font-black uppercase tracking-[0.25em] text-nexus-cyan-bright">
-            Required Document Coverage
-          </p>
+          <div className="flex min-w-0 flex-wrap items-center gap-2">
+            <p className="np-type-eyebrow text-nexus-cyan-bright">
+              Required Document Coverage
+            </p>
+            {!canManage ? (
+              <ExecutiveBadge tone="blue">Package review</ExecutiveBadge>
+            ) : (
+              <ExecutiveBadge tone="gold">Issuer controls</ExecutiveBadge>
+            )}
+          </div>
 
           <h3
             id="rfq-required-document-coverage-title"
-            className="mt-3 min-w-0 text-pretty text-xl font-black tracking-tight text-nexus-white sm:text-2xl"
+            className="np-type-h2 mt-3 min-w-0 text-pretty"
           >
             Issuer-declared RFQ package requirements
           </h3>
 
-          <p className="mt-3 max-w-4xl min-w-0 text-pretty text-sm font-semibold leading-7 text-nexus-muted">
+          <p className="np-type-body mt-3 max-w-4xl min-w-0 text-pretty text-nexus-text-secondary">
             Compare the issuing organization&apos;s declared required document
             categories against the documents currently recorded in this RFQ
             package. Presence confirms only that evidence exists under the
             matching category; it does not assert technical adequacy,
             contractual compliance, or historical package immutability.
           </p>
+
+          {!canManage ? (
+            <p className={`${EXECUTIVE_FORM_HELPER} mt-3 min-w-0 text-pretty`}>
+              This is respondent review evidence for scoping. Coverage and
+              presence states do not recommend whether to bid.
+            </p>
+          ) : null}
         </div>
 
         {coveragePresentation && coverage ? (
           <div className="shrink-0 text-left @3xl:text-right">
-            <span
-              className={`inline-flex rounded-full border px-3 py-1 text-xs font-black uppercase tracking-[0.14em] ${coveragePresentation.className}`}
-            >
+            <ExecutiveBadge tone={coveragePresentation.tone}>
               {coveragePresentation.label}
-            </span>
-            <p className="mt-2 text-sm font-bold text-slate-400">
+            </ExecutiveBadge>
+            <p className="np-type-meta mt-2 text-nexus-text-secondary">
               {coverage.requiredCount === 0
                 ? "No document requirements declared"
                 : `${coverage.presentCount} present · ${coverage.missingCount} missing · ${coverage.requiredCount} required`}
@@ -387,21 +412,25 @@ export function RFQDocumentRequirements({
 
       {coverageState.kind === "unavailable" ? (
         <div
-          className="mt-6 rounded-executive border border-amber-300/20 bg-amber-400/10 px-5 py-4"
+          className={`mt-6 ${EXECUTIVE_FEEDBACK_WARNING}`}
           role="status"
         >
-          <p className="text-sm font-black text-amber-200">
+          <p className="text-sm font-black">
             Required-document coverage unavailable
           </p>
-          <p className="mt-2 text-sm font-semibold leading-6 text-amber-100/75">
+          <p className="mt-2 text-sm font-semibold leading-6 text-nexus-text-primary">
             {getUnavailableMessage(coverageState.reason)}
+          </p>
+          <p className={`${EXECUTIVE_FORM_HELPER} mt-2 text-pretty`}>
+            Evidence unavailable — coverage is not treated as empty, complete,
+            or missing.
           </p>
         </div>
       ) : null}
 
       {error ? (
         <div
-          className="mt-6 rounded-executive border border-red-300/20 bg-red-400/10 px-5 py-4 text-sm font-bold text-red-200"
+          className={`mt-6 text-sm font-bold ${EXECUTIVE_FEEDBACK_ERROR}`}
           role="alert"
         >
           {error}
@@ -410,13 +439,13 @@ export function RFQDocumentRequirements({
 
       {handoffGuidance ? (
         <div
-          className="mt-6 rounded-executive border border-amber-300/25 bg-amber-400/10 px-5 py-4"
+          className={`mt-6 ${EXECUTIVE_FEEDBACK_WARNING}`}
           role="status"
         >
-          <p className="text-sm font-black text-amber-100">
+          <p className="text-sm font-black">
             Complete the governed requirement change
           </p>
-          <p className="mt-2 text-sm font-semibold leading-6 text-amber-100/75">
+          <p className="mt-2 text-sm font-semibold leading-6 text-nexus-text-primary">
             {handoffGuidance}
           </p>
         </div>
@@ -424,7 +453,7 @@ export function RFQDocumentRequirements({
 
       {message ? (
         <div
-          className="mt-6 rounded-executive border border-emerald-300/20 bg-emerald-400/10 px-5 py-4 text-sm font-bold text-emerald-200"
+          className={`mt-6 text-sm font-bold ${EXECUTIVE_FEEDBACK_SUCCESS}`}
           role="status"
           aria-live="polite"
         >
@@ -467,6 +496,8 @@ export function RFQDocumentRequirements({
             coverageState.reason === "attachments_query_failed";
           const cardStatusUnavailable =
             requirementStateUnavailable || attachmentEvidenceUnavailable;
+          const requirementCurrentlyMissing =
+            !cardStatusUnavailable && required && !present;
 
           return (
             <article
@@ -476,10 +507,10 @@ export function RFQDocumentRequirements({
             >
               <div className="flex min-w-0 flex-col gap-3 @sm:flex-row @sm:items-start @sm:justify-between">
                 <div className="min-w-0">
-                  <h4 className="min-w-0 text-pretty text-base font-black text-white">
+                  <h4 className="np-type-h3 min-w-0 text-pretty text-base">
                     {RFQ_ATTACHMENT_TYPE_LABELS[attachmentType]}
                   </h4>
-                  <p className="mt-2 min-w-0 text-pretty text-sm font-semibold leading-6 text-slate-400">
+                  <p className="np-type-body mt-2 min-w-0 text-pretty text-nexus-text-secondary">
                     {requirementStateUnavailable
                       ? "Requirement declaration state is unavailable."
                       : attachmentEvidenceUnavailable
@@ -487,14 +518,17 @@ export function RFQDocumentRequirements({
                         : signal?.context ||
                           "The issuing organization has not declared this category as required in the structured RFQ checklist."}
                   </p>
+                  {requirementCurrentlyMissing ? (
+                    <p className={`${EXECUTIVE_FORM_HELPER} mt-2 text-pretty`}>
+                      Requirement currently missing. Clarification may be needed
+                      before treating this category as package-complete.
+                    </p>
+                  ) : null}
                 </div>
 
-                <span
-                  className={`w-fit shrink-0 rounded-full border px-3 py-1 text-xs font-black uppercase tracking-[0.12em] ${
-                    cardStatusUnavailable
-                      ? "border-amber-300/20 bg-amber-400/10 text-amber-200"
-                      : presentation.className
-                  }`}
+                <ExecutiveBadge
+                  tone={cardStatusUnavailable ? "warning" : presentation.tone}
+                  className="w-fit max-w-full whitespace-normal text-pretty"
                 >
                   {requirementStateUnavailable
                     ? "Requirement Status Unavailable"
@@ -503,19 +537,19 @@ export function RFQDocumentRequirements({
                         ? "Required · Evidence Unavailable"
                         : "Evidence Unavailable"
                       : presentation.label}
-                </span>
+                </ExecutiveBadge>
               </div>
 
               {required && matchingAttachments.length > 0 ? (
-                <div className="mt-4 rounded-2xl border border-white/10 bg-[#07111F]/70 px-4 py-3">
-                  <p className="text-xs font-black uppercase tracking-[0.16em] text-slate-400">
+                <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.045] px-4 py-3">
+                  <p className="np-type-meta text-nexus-text-secondary">
                     Current evidence
                   </p>
                   <div className="mt-2 space-y-2">
                     {matchingAttachments.slice(0, 2).map((attachment) => (
                       <p
                         key={attachment.id}
-                        className="min-w-0 text-pretty text-sm font-bold text-slate-300"
+                        className="np-type-body min-w-0 text-pretty text-nexus-text-primary"
                       >
                         {attachment.file_name}
                         {attachment.revision_label
@@ -524,7 +558,7 @@ export function RFQDocumentRequirements({
                       </p>
                     ))}
                     {matchingAttachments.length > 2 ? (
-                      <p className="text-xs font-bold text-slate-400">
+                      <p className="np-type-meta text-nexus-text-secondary">
                         +{matchingAttachments.length - 2} additional matching
                         document
                         {matchingAttachments.length - 2 === 1 ? "" : "s"}
@@ -542,7 +576,7 @@ export function RFQDocumentRequirements({
                     void mutateRequirement(attachmentType, !required)
                   }
                   disabled={isMutating || requirementStateUnavailable}
-                  className="mt-4 inline-flex min-h-11 w-full items-center justify-center rounded-full border border-[#C8A646]/25 bg-[#C8A646]/10 px-5 py-3 text-sm font-black text-[#F5D77B] transition hover:bg-[#C8A646]/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C8A646]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#07111F] disabled:cursor-not-allowed disabled:opacity-50"
+                  className={`${EXECUTIVE_BUTTON_SECONDARY} mt-4 min-h-11 w-full`}
                 >
                   {isMutating
                     ? "Updating..."
