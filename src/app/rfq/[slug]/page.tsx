@@ -3,7 +3,8 @@ import Link from "next/link";
 import InviteVendorForm from "@/components/invite-vendor-form";
 import RFQAIAdvisor from "@/components/rfq-ai-advisor";
 import {
-  getActiveMembershipForUserCompany,
+  getWorkspaceMembershipForUserCompany,
+  isMembershipActive,
   type OrganizationMembership,
 } from "@/lib/auth/membership";
 import { createClient } from "@/lib/supabase/server";
@@ -27,8 +28,10 @@ import {
 } from "@/lib/procurement/rfq-detail-intelligence-boundary";
 import {
   canCreateCompanyRfq,
+  canDecideCompanyQuotes,
   canInviteCompanySuppliers,
 } from "@/lib/procurement/procurement-write-authorization";
+import { canReadIssuerCommercialQuotes } from "@/lib/procurement/rfq-commercial-read-authorization";
 import {
   getExecutiveRiskMatrix,
   getHealthLabel,
@@ -99,6 +102,7 @@ import { RFQExecutiveGuidance } from "@/components/rfq-workspace/rfq-executive-g
 import { RFQExecutiveActions } from "@/components/rfq-workspace/rfq-executive-actions";
 import { RFQProcurementContext } from "@/components/rfq-workspace/rfq-procurement-context";
 import { RFQScopeReview } from "@/components/rfq-workspace/rfq-scope-review";
+import { isRfqDetailAwardAvailable } from "@/components/rfq-workspace/rfq-owner-quotes";
 import { RFQDocumentWorkspace } from "@/components/rfq-workspace/rfq-document-workspace";
 import { RFQLifecycleGovernance } from "@/components/rfq-workspace/rfq-lifecycle-governance";
 import { RFQQuoteWorkspace } from "@/components/rfq-workspace/rfq-quote-workspace";
@@ -290,17 +294,17 @@ export default async function RFQDetailPage({ params }: PageProps) {
 
   const isOwner = participantRole === "issuer";
 
-  let sourcingMembership: OrganizationMembership | null = null;
+  let issuerWorkspaceMembership: OrganizationMembership | null = null;
 
   if (isOwner && user && profile?.company_id) {
     try {
-      sourcingMembership = await getActiveMembershipForUserCompany(
+      issuerWorkspaceMembership = await getWorkspaceMembershipForUserCompany(
         supabase,
         user.id,
         profile.company_id,
       );
     } catch (membershipError) {
-      console.error("RFQ supplier invitation membership lookup failed.", {
+      console.error("RFQ issuer workspace membership lookup failed.", {
         userId: user.id,
         companyId: profile.company_id,
         rfqId: rfq.id,
@@ -308,6 +312,15 @@ export default async function RFQDetailPage({ params }: PageProps) {
       });
     }
   }
+
+  const sourcingMembership =
+    issuerWorkspaceMembership && isMembershipActive(issuerWorkspaceMembership)
+      ? issuerWorkspaceMembership
+      : null;
+  const commercialReadAuthorized = canReadIssuerCommercialQuotes(
+    issuerWorkspaceMembership,
+    rfq.company_id ?? "",
+  );
 
   const rfqStatus = String(rfq.status || "open");
   const canManageLifecycle = canCreateCompanyRfq(
@@ -342,12 +355,24 @@ export default async function RFQDetailPage({ params }: PageProps) {
     !deadlinePassed &&
     !rfq.awarded_quote_id &&
     !rfq.awarded_at;
+  const rfqAwardAvailable = isRfqDetailAwardAvailable({
+    issuerCanDecideQuotes: canDecideCompanyQuotes(
+      sourcingMembership,
+      rfq.company_id ?? "",
+    ),
+    rfqStatus: rfq.status,
+    commercialEvaluationUnlocked,
+    awardedQuoteId: rfq.awarded_quote_id,
+    awardedAt: rfq.awarded_at,
+  });
 
-  const loadIssuerQuoteRows = isOwner && commercialEvaluationUnlocked;
-  const loadIssuerQuoteCount = isOwner && !commercialEvaluationUnlocked;
+  const loadIssuerQuoteRows =
+    isOwner && commercialReadAuthorized && commercialEvaluationUnlocked;
+  const loadIssuerQuoteCount =
+    isOwner && commercialReadAuthorized && !commercialEvaluationUnlocked;
   const loadRespondentQuoteRows = !isOwner && Boolean(profile?.company_id);
   const loadIssuerQuoteGovernanceEvidence =
-    isOwner && commercialEvaluationUnlocked;
+    isOwner && commercialReadAuthorized && commercialEvaluationUnlocked;
   const loadRespondentQuoteGovernanceEvidence =
     !isOwner && Boolean(profile?.company_id);
 
@@ -518,7 +543,7 @@ export default async function RFQDetailPage({ params }: PageProps) {
     highestAmount,
     averageBid,
     potentialSavings,
-  } = isOwner
+  } = isOwner && commercialReadAuthorized
     ? buildCommercialIntelligence({
         quoteList,
         budget,
@@ -1158,6 +1183,7 @@ export default async function RFQDetailPage({ params }: PageProps) {
           rfqTitle={rfq.title || "Untitled RFQ"}
           isOwner={isOwner}
           isOpen={isOpen}
+          rfqAwardAvailable={rfqAwardAvailable}
           canSubmitQuote={canSubmitQuote}
           commercialEvaluationUnlocked={commercialEvaluationUnlocked}
           quoteList={quoteList}

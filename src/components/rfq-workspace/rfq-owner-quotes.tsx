@@ -32,9 +32,78 @@ type RFQOwnerQuotesProps = {
   lowestAmount: number | null;
   highestAmount: number | null;
   averageBid: number;
-  isOpen: boolean;
+  rfqAwardAvailable: boolean;
   supplierCompanies?: ReadonlyArray<RfqOwnerSupplierCompanyIdentity>;
 };
+
+/**
+ * RFQ-detail UI award-action availability.
+ * Combines issuer decision permission with lifecycle/opening/existing-award gates.
+ * Backend award RPC remains authoritative for mutation authorization.
+ */
+export function isRfqDetailAwardAvailable({
+  issuerCanDecideQuotes,
+  rfqStatus,
+  commercialEvaluationUnlocked,
+  awardedQuoteId,
+  awardedAt,
+}: {
+  issuerCanDecideQuotes: boolean;
+  rfqStatus: string | null | undefined;
+  commercialEvaluationUnlocked: boolean;
+  awardedQuoteId: string | null;
+  awardedAt: string | null;
+}) {
+  return (
+    issuerCanDecideQuotes &&
+    rfqStatus === "open" &&
+    commercialEvaluationUnlocked &&
+    !awardedQuoteId &&
+    !awardedAt
+  );
+}
+
+/** Quote-level award eligibility given RFQ-level availability. Backend remains authoritative. */
+export function isOwnerQuoteAwardEligible({
+  rfqAwardAvailable,
+  decision,
+  requiresMaterialRevalidation,
+}: {
+  rfqAwardAvailable: boolean;
+  decision: string | null;
+  requiresMaterialRevalidation: boolean;
+}) {
+  return (
+    rfqAwardAvailable &&
+    decision !== "awarded" &&
+    decision !== "rejected" &&
+    !requiresMaterialRevalidation
+  );
+}
+
+/** Shared bid-set position label used by compare surfaces. Not award-authorization logic. */
+export function getBidSetPosition({
+  recommendedAmount,
+  averageBid,
+}: {
+  recommendedAmount: number;
+  averageBid: number;
+}) {
+  if (recommendedAmount <= 0 || averageBid <= 0) {
+    return "Quote-set position pending";
+  }
+
+  const ratio = recommendedAmount / averageBid;
+
+  if (recommendedAmount === averageBid) {
+    return "At decision-ready quote average";
+  }
+
+  if (ratio <= 0.9) return "Strong relative quote position";
+  if (ratio < 1) return "Below decision-ready quote average";
+  if (ratio <= 1.1) return "Above decision-ready quote average";
+  return "High relative cost position";
+}
 
 function formatMoney(value: number) {
   return `$${value.toLocaleString()}`;
@@ -47,7 +116,7 @@ export function RFQOwnerQuotes({
   lowestAmount,
   highestAmount,
   averageBid,
-  isOpen,
+  rfqAwardAvailable,
   supplierCompanies,
 }: RFQOwnerQuotesProps) {
   const supplierNameById = buildRfqOwnerSupplierNameById(supplierCompanies);
@@ -56,7 +125,7 @@ export function RFQOwnerQuotes({
     <RfqQuoteComparison
       embedded
       rfqTitle={rfqTitle}
-      awarded={!isOpen || quotes.some((quote) => quote.decision === "awarded")}
+      awarded={quotes.some((quote) => quote.decision === "awarded")}
       quotes={quotes.map((quote) => {
         const requiresMaterialRevalidation = Boolean(
           quote.requiresMaterialRevalidation,
@@ -101,10 +170,11 @@ export function RFQOwnerQuotes({
             averageBid > 0 &&
             quote.amountNumber <= averageBid,
           requiresMaterialRevalidation,
-          canAward:
-            isOpen &&
-            quote.decision !== "awarded" &&
-            !requiresMaterialRevalidation,
+          canAward: isOwnerQuoteAwardEligible({
+            rfqAwardAvailable,
+            decision: quote.decision,
+            requiresMaterialRevalidation,
+          }),
         };
       })}
     />

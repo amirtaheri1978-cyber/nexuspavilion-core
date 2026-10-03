@@ -20,6 +20,7 @@ type RFQQuoteWorkspaceProps = {
   rfqTitle: string;
   isOwner: boolean;
   isOpen: boolean;
+  rfqAwardAvailable?: boolean;
   canSubmitQuote: boolean;
   commercialEvaluationUnlocked: boolean;
   quoteList: RFQSupplierQuotesProps["quotes"];
@@ -37,6 +38,7 @@ export function RFQQuoteWorkspace({
   rfqTitle,
   isOwner,
   isOpen,
+  rfqAwardAvailable = false,
   canSubmitQuote,
   commercialEvaluationUnlocked,
   quoteList,
@@ -195,7 +197,7 @@ export function RFQQuoteWorkspace({
               lowestAmount={lowestAmount}
               highestAmount={highestAmount}
               averageBid={averageBid}
-              isOpen={isOpen}
+              rfqAwardAvailable={rfqAwardAvailable}
               supplierCompanies={supplierCompanies}
             />
           </div>

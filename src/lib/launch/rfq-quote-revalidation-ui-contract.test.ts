@@ -85,16 +85,16 @@ describe("18-26B Quote revalidation application contract", () => {
 
   it("preserves R-50 by loading issuer-linked Quote evidence only after commercial opening", () => {
     expect(detailPage).toContain(
-      "const loadIssuerQuoteGovernanceEvidence =\n    isOwner && commercialEvaluationUnlocked;",
+      "const loadIssuerQuoteGovernanceEvidence =\n    isOwner && commercialReadAuthorized && commercialEvaluationUnlocked;",
     );
     expect(detailPage).toContain("loadIssuerQuoteGovernanceEvidence\n      ? supabase");
     expect(detailPage).toContain('.from("rfq_quote_revalidations")');
     expect(detailPage).toContain('.from("rfq_addendum_acknowledgements")');
     expect(detailPage).toContain(
-      "const loadIssuerQuoteRows = isOwner && commercialEvaluationUnlocked;",
+      "isOwner && commercialReadAuthorized && commercialEvaluationUnlocked",
     );
     expect(detailPage).toContain(
-      "const loadIssuerQuoteCount = isOwner && !commercialEvaluationUnlocked;",
+      "isOwner && commercialReadAuthorized && !commercialEvaluationUnlocked",
     );
 
     const compareOpening = comparePage.indexOf(

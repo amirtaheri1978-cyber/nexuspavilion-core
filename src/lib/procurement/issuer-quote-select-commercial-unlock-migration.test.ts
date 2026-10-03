@@ -311,11 +311,13 @@ describe("issuer quote SELECT commercial unlock migration", () => {
 
   it("keeps RFQ detail on a count-only issuer path while locked", () => {
     expect(detail).toContain(
-      "const loadIssuerQuoteRows = isOwner && commercialEvaluationUnlocked;",
+      "isOwner && commercialReadAuthorized && commercialEvaluationUnlocked",
     );
     expect(detail).toContain(
-      "const loadIssuerQuoteCount = isOwner && !commercialEvaluationUnlocked;",
+      "isOwner && commercialReadAuthorized && !commercialEvaluationUnlocked",
     );
+    expect(detail).toContain("canReadIssuerCommercialQuotes");
+    expect(detail).toContain("getWorkspaceMembershipForUserCompany");
     expect(detail).toContain(
       'supabase.rpc("count_rfq_quote_submissions", { p_rfq_id: rfq.id })',
     );
@@ -340,6 +342,8 @@ describe("issuer quote SELECT commercial unlock migration", () => {
     expect(compare).toContain("getBlindBiddingMessage");
     expect(compare).not.toContain("function shouldEnforceBlindBidding");
     expect(compare).not.toContain("function getBlindBiddingMessage");
+    expect(compare).toContain("canReadIssuerCommercialQuotes");
+    expect(compare).toContain("getWorkspaceMembershipForUserCompany");
     expect(compare).toContain("if (commercialEvaluationUnlocked)");
     expect(compare).toContain('.from("quotes")');
     expect(compare).toContain('.select("*")');
@@ -352,6 +356,9 @@ describe("issuer quote SELECT commercial unlock migration", () => {
     );
     expect(compare).toContain("from(\"company_directory\")");
     expect(compare).toContain("supplierCompanyIds.length > 0");
+    expect(compare.indexOf("canReadIssuerCommercialQuotes")).toBeLessThan(
+      compare.indexOf("if (commercialEvaluationUnlocked)"),
+    );
     expect(compare.indexOf("if (commercialEvaluationUnlocked)")).toBeLessThan(
       compare.indexOf('.from("quotes")'),
     );

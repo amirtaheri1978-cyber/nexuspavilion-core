@@ -130,7 +130,7 @@ describe("18-27B lifecycle governance UI contract", () => {
 
   it("leaves R-50 commercial loading and static governance notices in place", () => {
     expect(detail).toContain(
-      "const loadIssuerQuoteRows = isOwner && commercialEvaluationUnlocked",
+      "isOwner && commercialReadAuthorized && commercialEvaluationUnlocked",
     );
     expect(detail).toContain('supabase.rpc("count_rfq_quote_submissions"');
     expect(detail).toContain("buildCommercialIntelligence({");

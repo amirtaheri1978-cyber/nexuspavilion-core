@@ -18,6 +18,11 @@ import {
   getNextBestAction,
   getPredictedTimeline,
 } from "@/lib/procurement/rfq-executive-guidance";
+import {
+  getExecutiveRiskMatrix,
+  getHealthScore,
+  getProcurementHealthBreakdown,
+} from "@/lib/procurement/rfq-procurement-health";
 
 function readSource(relativePath: string) {
   return readFileSync(resolve(process.cwd(), relativePath), "utf8").replace(
@@ -249,6 +254,122 @@ describe("Task 33C RFQ buyer executive intelligence isolation", () => {
     expect(recommendations.join(" ")).not.toContain("before final award");
   });
 
+  it("keeps sealed submission counts operational and unavailable to decision derivatives", () => {
+    const lockedStates = [0, 1, 4].map((submissionCount) => {
+      const quoteCount = null;
+
+      return {
+        submissionCount,
+        healthScore: getHealthScore({
+          isOpen: true,
+          deadlinePassed: false,
+          quoteCount,
+          documentCount: 0,
+          addendaCount: 0,
+          hasBudget: false,
+          hasDescription: true,
+          blindBiddingEnabled: true,
+          commercialEvaluationUnlocked: false,
+        }),
+        breakdown: getProcurementHealthBreakdown({
+          quoteCount,
+          documentCount: 0,
+          addendaCount: 0,
+          hasBudget: false,
+          hasDescription: true,
+          blindBiddingEnabled: true,
+          commercialEvaluationUnlocked: false,
+        }),
+        risk: getExecutiveRiskMatrix({
+          isOpen: true,
+          deadlinePassed: false,
+          deadlineRiskStatus: "open",
+          quoteCount,
+          documentCount: 0,
+          addendaCount: 0,
+          commercialEvaluationUnlocked: false,
+        }),
+        suggestions: getCopilotSuggestions({
+          isOwner: true,
+          isOpen: true,
+          quoteCount,
+          documentCount: 0,
+          addendaCount: 0,
+          commercialEvaluationUnlocked: false,
+          recommendedQuote: null,
+          potentialSavings: 0,
+        }),
+      };
+    });
+
+    expect(lockedStates.map(({ submissionCount }) => submissionCount)).toEqual([
+      0, 1, 4,
+    ]);
+    expect(lockedStates[1]).toMatchObject({
+      ...lockedStates[0],
+      submissionCount: 1,
+    });
+    expect(lockedStates[2]).toMatchObject({
+      ...lockedStates[0],
+      submissionCount: 4,
+    });
+    expect(lockedStates[0].breakdown.map(({ label }) => label)).not.toContain(
+      "Competition",
+    );
+    expect(lockedStates[0].breakdown.map(({ label }) => label)).not.toContain(
+      "Decision Readiness",
+    );
+    expect(lockedStates[0].risk.map(({ label }) => label)).not.toContain(
+      "Competition",
+    );
+    expect(lockedStates[0].suggestions.join(" ")).not.toContain(
+      "Supplier competition",
+    );
+
+    const openedZero = getHealthScore({
+      isOpen: false,
+      deadlinePassed: true,
+      quoteCount: 0,
+      documentCount: 0,
+      addendaCount: 0,
+      hasBudget: false,
+      hasDescription: true,
+      blindBiddingEnabled: true,
+      commercialEvaluationUnlocked: true,
+    });
+    const openedOne = getHealthScore({
+      isOpen: false,
+      deadlinePassed: true,
+      quoteCount: 1,
+      documentCount: 0,
+      addendaCount: 0,
+      hasBudget: false,
+      hasDescription: true,
+      blindBiddingEnabled: true,
+      commercialEvaluationUnlocked: true,
+    });
+    const openedMultiple = getHealthScore({
+      isOpen: false,
+      deadlinePassed: true,
+      quoteCount: 4,
+      documentCount: 0,
+      addendaCount: 0,
+      hasBudget: false,
+      hasDescription: true,
+      blindBiddingEnabled: true,
+      commercialEvaluationUnlocked: true,
+    });
+
+    expect(openedOne).toBeGreaterThan(openedZero);
+    expect(openedMultiple).toBeGreaterThan(openedOne);
+    expect(detailPage).toContain(
+      "isOwner && commercialReadAuthorized && !commercialEvaluationUnlocked",
+    );
+    expect(detailPage).toContain('rpc("count_rfq_quote_submissions"');
+    expect(detailPage).toContain("quoteCount={quoteCount}");
+    expect(detailPage).toContain("submissionCount={quoteCount}");
+  });
+
   it("gates the post-award commercial handoff indicator to issuer authorization truth", () => {
     expect(detailPage).toContain(
       'const awardRecorded = isOwner && rfqStatus === "awarded";',
@@ -266,13 +387,16 @@ describe("Task 33C RFQ buyer executive intelligence isolation", () => {
 
     const handoffDerivation = detailPage.indexOf("const commercialHandoff =");
     const handoffProp = detailPage.indexOf("handoff={commercialHandoff}");
-    const isOwnerGate = detailPage.indexOf(
-      "isOwner &&\n  awardRecorded &&\n  commercialEvaluationUnlocked &&\n  awardedQuote &&\n  awardedSupplierLabel &&\n  commercialHandoffPath",
-    );
+    const handoffBlock = detailPage.slice(handoffDerivation, handoffProp);
 
     expect(handoffDerivation).toBeGreaterThan(-1);
-    expect(isOwnerGate).toBeGreaterThan(handoffDerivation);
-    expect(handoffProp).toBeGreaterThan(isOwnerGate);
+    expect(handoffProp).toBeGreaterThan(handoffDerivation);
+    expect(handoffBlock).toContain("isOwner &&");
+    expect(handoffBlock).toContain("awardRecorded &&");
+    expect(handoffBlock).toContain("commercialEvaluationUnlocked &&");
+    expect(handoffBlock).toContain("awardedQuote &&");
+    expect(handoffBlock).toContain("awardedSupplierLabel &&");
+    expect(handoffBlock).toContain("commercialHandoffPath");
 
     // Supplier path must not receive a buyer handoff payload outside issuer gates.
     expect(detailPage).toMatch(
@@ -380,7 +504,9 @@ describe("Task 33C RFQ buyer executive intelligence isolation", () => {
     expect(
       detailPage.indexOf("if (canViewBuyerExecutiveIntelligence)"),
     ).toBeLessThan(detailPage.indexOf("buildExecutiveIntelligence({"));
-    expect(detailPage).toContain("isOwner\n  ? buildCommercialIntelligence");
+    expect(detailPage).toMatch(
+      /}\s*=\s*isOwner\s*&&\s*commercialReadAuthorized\s*\?\s*buildCommercialIntelligence\(\{/,
+    );
     expect(detailPage).toContain("scoredQuotes: []");
     expect(detailPage).toContain("{executive ? (");
     expect(quoteWorkspace).toContain("<RFQSupplierQuotes");
@@ -391,8 +517,8 @@ describe("Task 33C RFQ buyer executive intelligence isolation", () => {
     expect(detailPage).toContain("<RFQDocumentWorkspace");
     expect(detailPage).toContain("hasMyQuote={hasMyQuote}");
     expect(detailPage).toContain("quoteList={quoteList}");
-    expect(detailPage).toContain(
-      "participantRole === \"respondent\" &&\nquoteList.length > 0",
+    expect(detailPage).toMatch(
+      /participantRole === "respondent"\s*&&\s*quoteList\.length > 0/,
     );
   });
 
@@ -409,7 +535,7 @@ describe("Task 33C RFQ buyer executive intelligence isolation", () => {
     expect(detailPage).toContain("<RFQGovernanceNotice");
     expect(detailPage).toContain("canViewBlindBiddingControl");
     expect(detailPage).toContain(
-      "const loadIssuerQuoteRows = isOwner && commercialEvaluationUnlocked;",
+      "isOwner && commercialReadAuthorized && commercialEvaluationUnlocked",
     );
     expect(quotesRoute).toContain(
       'return NextResponse.json({ error: "Unauthorized" }, { status: 401 });',

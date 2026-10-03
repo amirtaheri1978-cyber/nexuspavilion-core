@@ -9,12 +9,17 @@ import {
   EXECUTIVE_FOCUS_CYAN,
   EXECUTIVE_PAGE_CLASS,
 } from "@/lib/design-system/executive-contract";
+import {
+  getWorkspaceMembershipForUserCompany,
+  type OrganizationMembership,
+} from "@/lib/auth/membership";
 import { formatRfqDeadlineForDisplay as formatDateTime } from "@/lib/datetime/format-rfq-deadline-display";
 import {
   buildCommercialIntelligence,
   isRfqCommercialOpeningUnlocked,
   type Quote,
 } from "@/lib/procurement/rfq-commercial-intelligence";
+import { canReadIssuerCommercialQuotes } from "@/lib/procurement/rfq-commercial-read-authorization";
 import {
   attachQuoteMaterialRevalidationState,
   type AddendumAcknowledgementEvidence,
@@ -164,6 +169,31 @@ export default async function CompareQuotesPage({ params }: PageProps) {
     .single();
 
   if (!profile?.company_id || profile.company_id !== rfq.company_id) {
+    redirect("/rfq");
+  }
+
+  const issuerCompanyId = profile.company_id;
+
+  let issuerWorkspaceMembership: OrganizationMembership | null = null;
+
+  try {
+    issuerWorkspaceMembership = await getWorkspaceMembershipForUserCompany(
+      supabase,
+      user.id,
+      issuerCompanyId,
+    );
+  } catch (membershipError) {
+    console.error("RFQ compare issuer workspace membership lookup failed.", {
+      userId: user.id,
+      companyId: issuerCompanyId,
+      rfqId: rfq.id,
+      error: membershipError,
+    });
+  }
+
+  if (
+    !canReadIssuerCommercialQuotes(issuerWorkspaceMembership, issuerCompanyId)
+  ) {
     redirect("/rfq");
   }
 

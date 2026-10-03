@@ -97,10 +97,10 @@ describe("Task 18-14 commercial opening authority", () => {
 
   it("keeps RFQ detail quote rows behind commercial opening and uses the safe aggregate while locked", () => {
     expect(detail).toContain(
-      "const loadIssuerQuoteRows = isOwner && commercialEvaluationUnlocked;",
+      "isOwner && commercialReadAuthorized && commercialEvaluationUnlocked",
     );
     expect(detail).toContain(
-      "const loadIssuerQuoteCount = isOwner && !commercialEvaluationUnlocked;",
+      "isOwner && commercialReadAuthorized && !commercialEvaluationUnlocked",
     );
     expect(detail).toContain('rpc("count_rfq_quote_submissions"');
   });

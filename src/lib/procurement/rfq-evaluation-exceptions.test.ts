@@ -51,24 +51,24 @@ describe("Master Plan 8-09 evaluation exception lifecycle contract", () => {
 
   it("keeps the RFQ detail issuer path count-only until commercial evaluation unlock", () => {
     expect(normalizedDetailPage).toContain(
-      "const loadissuerquoterows = isowner && commercialevaluationunlocked;",
+      "isowner && commercialreadauthorized && commercialevaluationunlocked",
     );
     expect(normalizedDetailPage).toContain(
-      "const loadissuerquotecount = isowner && !commercialevaluationunlocked;",
+      "isowner && commercialreadauthorized && !commercialevaluationunlocked",
     );
     expect(normalizedDetailPage).toContain(
       'supabase.rpc("count_rfq_quote_submissions", { p_rfq_id: rfq.id })',
     );
 
     const issuerRowGate = normalizedDetailPage.indexOf(
-      "const loadissuerquoterows = isowner && commercialevaluationunlocked;",
+      "isowner && commercialreadauthorized && commercialevaluationunlocked",
     );
     const issuerQuoteSelect = normalizedDetailPage.indexOf(
       '.from("quotes")',
       issuerRowGate,
     );
     const issuerCountGate = normalizedDetailPage.indexOf(
-      "const loadissuerquotecount = isowner && !commercialevaluationunlocked;",
+      "isowner && commercialreadauthorized && !commercialevaluationunlocked",
     );
     const countRpc = normalizedDetailPage.indexOf(
       "count_rfq_quote_submissions",
@@ -89,7 +89,7 @@ describe("Master Plan 8-09 evaluation exception lifecycle contract", () => {
       '.eq("company_id", profile!.company_id!)',
     );
     expect(normalizedDetailPage).toContain(
-      "} = isowner ? buildcommercialintelligence({",
+      "} = isowner && commercialreadauthorized ? buildcommercialintelligence({",
     );
     expect(normalizedDetailPage).toContain("scoredquotes: [],");
     expect(normalizedDetailPage).toContain("recommendedquote: null,");
