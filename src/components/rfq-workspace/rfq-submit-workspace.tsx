@@ -16,7 +16,17 @@ import { evaluateQuotationSubmissionCompleteness } from "@/lib/procurement/quota
 import {
   EXECUTIVE_CTA_PRIMARY,
   EXECUTIVE_CTA_SECONDARY,
+  EXECUTIVE_FEEDBACK_ERROR,
+  EXECUTIVE_FEEDBACK_INFO,
+  EXECUTIVE_FEEDBACK_SUCCESS,
+  EXECUTIVE_FEEDBACK_WARNING,
   EXECUTIVE_FOCUS_CYAN,
+  EXECUTIVE_FOCUS_GOLD,
+  EXECUTIVE_FORM_HELPER,
+  EXECUTIVE_FORM_INPUT,
+  EXECUTIVE_FORM_LABEL,
+  EXECUTIVE_FORM_SELECT,
+  EXECUTIVE_FORM_TEXTAREA,
   EXECUTIVE_PAGE_CLASS,
 } from "@/lib/design-system/executive-contract";
 
@@ -189,6 +199,25 @@ function getDeadlineRiskPresentation(
   };
 }
 
+function getDeadlineRiskFeedbackClass(
+  tone: RfqDeadlineRiskPresentation["tone"],
+) {
+  switch (tone) {
+    case "risk":
+      return EXECUTIVE_FEEDBACK_ERROR;
+    case "warning":
+      return EXECUTIVE_FEEDBACK_WARNING;
+    case "success":
+      return EXECUTIVE_FEEDBACK_SUCCESS;
+    case "neutral":
+      return EXECUTIVE_FEEDBACK_INFO;
+    default: {
+      const _exhaustive: never = tone;
+      return _exhaustive;
+    }
+  }
+}
+
 function isSubmissionClosed(rfq: RfqStatus | null) {
   if (!rfq) return false;
 
@@ -213,9 +242,6 @@ function toWorkspaceError(message: string) {
 
   return message;
 }
-
-const fieldClassName =
-  "mt-3 min-h-14 min-w-0 w-full rounded-executive border border-white/10 bg-black/20 px-5 py-4 text-sm font-semibold text-white outline-none transition placeholder:text-nexus-text-muted focus-visible:ring-2 focus-visible:ring-[#2CC4E8]/40 focus-visible:ring-offset-2 focus-visible:ring-offset-[#07111F] disabled:cursor-not-allowed disabled:opacity-60";
 
 const RFQ_DEADLINE_RISK_REFRESH_INTERVAL_MS = 60_000;
 
@@ -551,6 +577,17 @@ export function RfqSubmitWorkspace({
       ? "Quote submission current"
       : "Submit quote";
 
+  const deadlineRiskFeedbackClass = getDeadlineRiskFeedbackClass(
+    deadlineRiskPresentation.tone,
+  );
+  const amountHintId =
+    errorField === "amount"
+      ? errorId
+      : "quote-amount-hint quote-amount-preview";
+  const hasOutstandingRequiredAcknowledgement = Boolean(
+    initialQuote?.hasOutstandingRequiredAcknowledgement,
+  );
+
   return (
     <div className="min-h-full bg-nexus-navy text-white">
       <div className={`${EXECUTIVE_PAGE_CLASS} min-w-0`}>
@@ -569,7 +606,11 @@ export function RfqSubmitWorkspace({
           className="np-region min-w-0 @container"
           data-rfq-submit-workspace="true"
           data-rfq-quote-revalidation={
-            quoteRequiresReview ? "requires_review" : quoteCurrent ? "current" : "new"
+            quoteRequiresReview
+              ? "requires_review"
+              : quoteCurrent
+                ? "current"
+                : "new"
           }
         >
           <p className="np-type-eyebrow">Respondent submission</p>
@@ -584,35 +625,43 @@ export function RfqSubmitWorkspace({
                   : "Submit your quote with a validated contract amount, delivery timeline, and commercial note."}
           </p>
 
-          <dl
-            className="mt-8 grid min-w-0 grid-cols-1 gap-4 border-t border-white/10 pt-6 @lg:grid-cols-3"
-            data-rfq-submit-status="true"
+          <section
+            className="mt-8 min-w-0 border-t border-white/10 pt-6"
+            aria-labelledby="rfq-submit-status-heading"
           >
-            <div className="min-w-0">
-              <dt className="np-type-meta">RFQ status</dt>
-              <dd className="mt-2 min-w-0 text-pretty text-lg font-black text-nexus-white">
-                {rfqStatusLabel}
-              </dd>
-            </div>
-            <div className="min-w-0">
-              <dt className="np-type-meta">Deadline</dt>
-              <dd className="mt-2 min-w-0 text-pretty text-lg font-black text-nexus-white">
-                {formatRfqDeadlineForDisplay(
-                  rfq?.deadline,
-                  rfq?.deadline_timezone,
-                )}
-              </dd>
-            </div>
-            <div className="min-w-0">
-              <dt className="np-type-meta">Governance</dt>
-              <dd className="mt-2 min-w-0 text-pretty text-lg font-black text-nexus-white">
-                {governanceLabel}
-              </dd>
-            </div>
-          </dl>
+            <h2 id="rfq-submit-status-heading" className="np-type-h3">
+              Current quotation state
+            </h2>
+            <dl
+              className="mt-5 grid min-w-0 grid-cols-1 gap-4 @lg:grid-cols-3"
+              data-rfq-submit-status="true"
+            >
+              <div className="min-w-0">
+                <dt className="np-type-meta">RFQ status</dt>
+                <dd className="mt-2 min-w-0 text-pretty text-lg font-black text-nexus-white">
+                  {rfqStatusLabel}
+                </dd>
+              </div>
+              <div className="min-w-0">
+                <dt className="np-type-meta">Deadline</dt>
+                <dd className="mt-2 min-w-0 text-pretty text-lg font-black text-nexus-white">
+                  {formatRfqDeadlineForDisplay(
+                    rfq?.deadline,
+                    rfq?.deadline_timezone,
+                  )}
+                </dd>
+              </div>
+              <div className="min-w-0">
+                <dt className="np-type-meta">Governance</dt>
+                <dd className="mt-2 min-w-0 text-pretty text-lg font-black text-nexus-white">
+                  {governanceLabel}
+                </dd>
+              </div>
+            </dl>
+          </section>
 
           <div
-            className="mt-5 min-w-0 rounded-executive border border-white/10 bg-white/[0.025] p-5"
+            className={`mt-5 min-w-0 ${deadlineRiskFeedbackClass}`}
             data-rfq-submit-deadline-risk={deadlineRisk.status}
             role="status"
             aria-live="polite"
@@ -620,23 +669,23 @@ export function RfqSubmitWorkspace({
             <ExecutiveBadge tone={deadlineRiskPresentation.tone}>
               {deadlineRiskPresentation.label}
             </ExecutiveBadge>
-            <p className="np-type-body mt-3 min-w-0 max-w-3xl text-pretty">
+            <p className="np-type-body mt-3 min-w-0 max-w-3xl text-pretty text-nexus-text-primary">
               {deadlineRiskPresentation.detail}
             </p>
           </div>
 
           {quoteRequiresReview ? (
-            <div className="mt-8 min-w-0 rounded-executive border border-amber-300/20 bg-amber-300/[0.08] p-5">
+            <div className={`mt-8 min-w-0 ${EXECUTIVE_FEEDBACK_WARNING}`}>
               <ExecutiveBadge tone="warning">
                 Material amendment review required
               </ExecutiveBadge>
-              <p className="np-type-body mt-3 min-w-0 text-pretty">
+              <p className="np-type-body mt-3 min-w-0 text-pretty text-nexus-text-primary">
                 The existing quotation remains confidential, but it is not eligible
                 for Contract Award until required Addenda are acknowledged and the
                 quotation is reconfirmed or resubmitted against the current RFQ basis.
               </p>
-              {initialQuote?.hasOutstandingRequiredAcknowledgement ? (
-                <p className="np-type-meta mt-3 min-w-0 text-pretty text-amber-200">
+              {hasOutstandingRequiredAcknowledgement ? (
+                <p className="np-type-meta mt-3 min-w-0 text-pretty text-status-warning">
                   Required RFQ Addenda acknowledgement is still outstanding. Complete
                   that acknowledgement in the RFQ workspace before reconfirming or
                   resubmitting this quotation.
@@ -644,25 +693,25 @@ export function RfqSubmitWorkspace({
               ) : null}
             </div>
           ) : quoteCurrent ? (
-            <div className="mt-8 min-w-0 rounded-executive border border-emerald-300/20 bg-emerald-300/[0.08] p-5">
+            <div className={`mt-8 min-w-0 ${EXECUTIVE_FEEDBACK_SUCCESS}`}>
               <ExecutiveBadge tone="success">Quote current</ExecutiveBadge>
-              <p className="np-type-body mt-3 min-w-0 text-pretty">
+              <p className="np-type-body mt-3 min-w-0 text-pretty text-nexus-text-primary">
                 This quotation is current against the latest governed material RFQ
                 amendment basis. No reconfirmation or resubmission action is required.
               </p>
             </div>
           ) : submissionClosed ? (
-            <div className="mt-8 min-w-0 rounded-executive border border-red-400/20 bg-red-500/10 p-5">
+            <div className={`mt-8 min-w-0 ${EXECUTIVE_FEEDBACK_ERROR}`}>
               <ExecutiveBadge tone="risk">Submission closed</ExecutiveBadge>
-              <p className="np-type-body mt-3 min-w-0 text-pretty">
+              <p className="np-type-body mt-3 min-w-0 text-pretty text-nexus-text-primary">
                 This RFQ is no longer accepting submissions. Late quote submissions
                 are rejected automatically.
               </p>
             </div>
           ) : (
-            <div className="mt-8 min-w-0 rounded-executive border border-nexus-gold/20 bg-nexus-gold/[0.08] p-5">
+            <div className={`mt-8 min-w-0 ${EXECUTIVE_FEEDBACK_INFO}`}>
               <ExecutiveBadge tone="warning">Confidential submission</ExecutiveBadge>
-              <p className="np-type-body mt-3 min-w-0 text-pretty">
+              <p className="np-type-body mt-3 min-w-0 text-pretty text-nexus-text-primary">
                 Your submission is confidential. Competing suppliers cannot view
                 your commercial response. Submissions after the RFQ deadline are
                 rejected automatically.
@@ -672,7 +721,7 @@ export function RfqSubmitWorkspace({
 
           <form
             onSubmit={handleSubmit}
-            className="mt-8 min-w-0 space-y-8"
+            className="mt-8 min-w-0 space-y-8 pb-28"
             noValidate
           >
             <section aria-labelledby="rfq-submit-commercial-heading">
@@ -680,43 +729,60 @@ export function RfqSubmitWorkspace({
                 Commercial offer
               </h2>
 
-              <div className="mt-5 min-w-0">
-                <div className="flex min-w-0 flex-wrap items-center justify-between gap-3">
-                  <label htmlFor="quote-amount" className="np-type-meta">
-                    Quote amount
-                  </label>
-                  <ExecutiveBadge tone="neutral">{currency}</ExecutiveBadge>
-                </div>
-                <div className="mt-3 flex min-w-0 overflow-hidden rounded-executive border border-white/10 bg-black/20">
-                  <div className="flex shrink-0 items-center border-r border-white/10 px-4 np-type-meta sm:px-5">
-                    {currency}
+              <div className="mt-5 grid min-w-0 grid-cols-1 gap-4 @lg:grid-cols-[minmax(0,1fr)_minmax(14rem,18rem)]">
+                <div className="min-w-0">
+                  <div className="flex min-w-0 flex-wrap items-center justify-between gap-3">
+                    <label htmlFor="quote-amount" className={EXECUTIVE_FORM_LABEL}>
+                      Quote amount
+                    </label>
+                    <ExecutiveBadge tone="neutral">{currency}</ExecutiveBadge>
                   </div>
-                  <input
-                    id="quote-amount"
-                    required
-                    inputMode="numeric"
-                    placeholder="7,250,000"
-                    value={formattedAmount}
-                    onChange={(event) => setAmount(event.target.value)}
-                    disabled={submissionClosed || loading || quoteCurrent}
-                    aria-invalid={errorField === "amount"}
-                    aria-describedby={
-                      errorField === "amount" ? errorId : "quote-amount-hint"
-                    }
-                    className="min-h-14 min-w-0 w-full bg-transparent px-4 py-4 text-lg font-black text-white outline-none placeholder:text-nexus-text-muted focus-visible:ring-2 focus-visible:ring-[#2CC4E8]/40 disabled:cursor-not-allowed sm:px-5"
-                  />
+                  <div className="mt-3 flex min-w-0 overflow-hidden rounded-2xl border border-white/10 bg-white/[0.045]">
+                    <div
+                      className="flex shrink-0 items-center border-r border-white/10 px-4 np-type-meta text-nexus-text-secondary sm:px-5"
+                      aria-hidden="true"
+                    >
+                      {currency}
+                    </div>
+                    <input
+                      id="quote-amount"
+                      required
+                      inputMode="numeric"
+                      placeholder="7,250,000"
+                      value={formattedAmount}
+                      onChange={(event) => setAmount(event.target.value)}
+                      disabled={submissionClosed || loading || quoteCurrent}
+                      aria-invalid={errorField === "amount"}
+                      aria-describedby={amountHintId}
+                      className={`min-h-14 min-w-0 w-full bg-transparent px-4 py-4 text-lg font-black text-white outline-none placeholder:text-slate-400 disabled:cursor-not-allowed disabled:opacity-60 sm:px-5 ${EXECUTIVE_FOCUS_GOLD}`}
+                    />
+                  </div>
+                  <p
+                    id="quote-amount-hint"
+                    className={`${EXECUTIVE_FORM_HELPER} mt-3 min-w-0 text-pretty`}
+                  >
+                    Enter the full contract value. Commas are added automatically.
+                  </p>
                 </div>
-                <p
-                  id="quote-amount-hint"
-                  className="np-type-meta mt-3 min-w-0 text-pretty"
+
+                <aside
+                  id="quote-amount-preview"
+                  className="min-w-0 rounded-executive border border-white/10 bg-white/[0.025] p-4"
+                  aria-label="Formatted commercial preview"
                 >
-                  Enter the full contract value. Commas are added automatically.
-                  Preview: {amountPreview}
-                </p>
+                  <p className="np-type-meta">Commercial preview</p>
+                  <p className="mt-3 min-w-0 text-pretty text-2xl font-black text-nexus-white">
+                    {amountPreview}
+                  </p>
+                  <p className={`${EXECUTIVE_FORM_HELPER} mt-2 min-w-0 text-pretty`}>
+                    Currency {currency}. Preview reflects the entered full-contract
+                    value only.
+                  </p>
+                </aside>
               </div>
 
               <div className="mt-6 min-w-0">
-                <label htmlFor="quote-timeline" className="np-type-meta">
+                <label htmlFor="quote-timeline" className={EXECUTIVE_FORM_LABEL}>
                   Delivery timeline
                 </label>
                 <input
@@ -731,21 +797,23 @@ export function RfqSubmitWorkspace({
                   aria-describedby={
                     errorField === "timeline" ? errorId : undefined
                   }
-                  className={fieldClassName}
+                  className={`${EXECUTIVE_FORM_INPUT} mt-3 min-h-14 min-w-0`}
                 />
               </div>
 
               {quoteRequiresReview ? (
                 <div className="mt-6 min-w-0">
-                  <label htmlFor="quote-validity" className="np-type-meta">
+                  <label htmlFor="quote-validity" className={EXECUTIVE_FORM_LABEL}>
                     Quote validity
                   </label>
                   <select
                     id="quote-validity"
                     value={validityDays}
-                    onChange={(event) => setValidityDays(Number(event.target.value))}
+                    onChange={(event) =>
+                      setValidityDays(Number(event.target.value))
+                    }
                     disabled={submissionClosed || loading || quoteCurrent}
-                    className={fieldClassName}
+                    className={`${EXECUTIVE_FORM_SELECT} mt-3 min-h-14 min-w-0`}
                   >
                     {VALIDITY_DAY_OPTIONS.map((days) => (
                       <option key={days} value={days}>
@@ -753,14 +821,16 @@ export function RfqSubmitWorkspace({
                       </option>
                     ))}
                   </select>
-                  <p className="np-type-meta mt-3 min-w-0 text-pretty">
+                  <p
+                    className={`${EXECUTIVE_FORM_HELPER} mt-3 min-w-0 text-pretty`}
+                  >
                     Revised resubmissions may update the quotation validity period.
                   </p>
                 </div>
               ) : null}
 
               <div className="mt-6 min-w-0">
-                <label htmlFor="quote-message" className="np-type-meta">
+                <label htmlFor="quote-message" className={EXECUTIVE_FORM_LABEL}>
                   Commercial note
                 </label>
                 <textarea
@@ -775,7 +845,7 @@ export function RfqSubmitWorkspace({
                   aria-describedby={
                     errorField === "message" ? errorId : undefined
                   }
-                  className={fieldClassName}
+                  className={`${EXECUTIVE_FORM_TEXTAREA} mt-3 min-h-14 min-w-0`}
                 />
               </div>
             </section>
@@ -784,17 +854,10 @@ export function RfqSubmitWorkspace({
               <p
                 id="quote-submit-error"
                 role="alert"
-                className="min-w-0 rounded-executive border border-red-400/20 bg-red-500/10 px-5 py-4 text-pretty text-sm font-bold text-red-300"
+                className={`min-w-0 text-pretty text-sm font-bold ${EXECUTIVE_FEEDBACK_ERROR}`}
               >
                 {error}
               </p>
-            ) : null}
-
-            {readinessGuidance ? (
-              <ExecutiveGuidanceCard
-                title={readinessGuidance.title}
-                description={readinessGuidance.description}
-              />
             ) : null}
 
             <section
@@ -804,12 +867,12 @@ export function RfqSubmitWorkspace({
             >
               <div className="flex min-w-0 flex-col gap-3 @sm:flex-row @sm:items-start @sm:justify-between">
                 <div className="min-w-0">
-                  <h3
+                  <h2
                     id="rfq-submit-completeness-heading"
-                    className="np-type-meta"
+                    className="np-type-h3"
                   >
                     Submission completeness
-                  </h3>
+                  </h2>
                   <p
                     className="np-type-body mt-2 min-w-0 text-pretty"
                     aria-live="polite"
@@ -864,11 +927,68 @@ export function RfqSubmitWorkspace({
               </ul>
             </section>
 
-            <div
+            {readinessGuidance ? (
+              <section
+                className="min-w-0 border-t border-white/10 pt-6"
+                aria-labelledby="rfq-submit-readiness-heading"
+                data-rfq-submit-readiness="true"
+              >
+                <h2 id="rfq-submit-readiness-heading" className="np-type-h3">
+                  Preparation readiness
+                </h2>
+                <p className="np-type-meta mt-2 max-w-3xl min-w-0 text-pretty">
+                  Readiness highlights missing preparation items. It does not prove
+                  submission authorization, deadline eligibility, or award
+                  eligibility.
+                </p>
+                <div className="mt-4 min-w-0">
+                  <ExecutiveGuidanceCard
+                    title={readinessGuidance.title}
+                    description={readinessGuidance.description}
+                  />
+                </div>
+                {hasOutstandingRequiredAcknowledgement ||
+                submissionCompleteness.missingSignals.length > 0 ? (
+                  <ul className="mt-4 grid min-w-0 grid-cols-1 gap-3 @sm:grid-cols-2">
+                    {hasOutstandingRequiredAcknowledgement ? (
+                      <li
+                        className={`min-w-0 ${EXECUTIVE_FEEDBACK_WARNING}`}
+                      >
+                        <p className="np-type-meta text-status-warning">
+                          Required Addenda acknowledgement
+                        </p>
+                        <p className="np-type-body mt-2 min-w-0 text-pretty text-nexus-text-primary">
+                          Return to the RFQ workspace and complete required
+                          acknowledgements before reconfirming or resubmitting.
+                        </p>
+                      </li>
+                    ) : null}
+                    {submissionCompleteness.missingSignals.map((signal) => (
+                      <li
+                        key={`readiness-${signal.key}`}
+                        className={`min-w-0 ${EXECUTIVE_FEEDBACK_WARNING}`}
+                      >
+                        <p className="np-type-meta text-status-warning">
+                          {signal.label}
+                        </p>
+                        <p className="np-type-body mt-2 min-w-0 text-pretty text-nexus-text-primary">
+                          {signal.context}
+                        </p>
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+              </section>
+            ) : null}
+
+            <section
               className="min-w-0 border-t border-white/10 pt-6"
               data-rfq-submit-summary="true"
+              aria-labelledby="rfq-submit-summary-heading"
             >
-              <h3 className="np-type-meta">Submission summary</h3>
+              <h2 id="rfq-submit-summary-heading" className="np-type-h3">
+                Submission summary
+              </h2>
               <dl
                 className={`mt-4 grid min-w-0 grid-cols-1 gap-4 @sm:grid-cols-2 ${
                   quoteRequiresReview ? "@4xl:grid-cols-4" : "@4xl:grid-cols-3"
@@ -901,9 +1021,9 @@ export function RfqSubmitWorkspace({
                   </div>
                 ) : null}
               </dl>
-            </div>
+            </section>
 
-            <div className="sticky bottom-4 z-10 flex min-w-0 flex-col gap-3 rounded-executive bg-nexus-navy/90 p-3 @sm:flex-row @sm:flex-wrap">
+            <div className="sticky bottom-4 z-10 flex min-w-0 flex-col gap-3 rounded-executive border border-white/10 bg-nexus-navy/95 p-3 shadow-inner-executive backdrop-blur-md @sm:flex-row @sm:flex-wrap">
               {quoteRequiresReview ? (
                 <button
                   type="button"
@@ -911,7 +1031,7 @@ export function RfqSubmitWorkspace({
                   disabled={
                     loading ||
                     submissionClosed ||
-                    Boolean(initialQuote?.hasOutstandingRequiredAcknowledgement) ||
+                    hasOutstandingRequiredAcknowledgement ||
                     hasRevisedCommercialTerms
                   }
                   title={
