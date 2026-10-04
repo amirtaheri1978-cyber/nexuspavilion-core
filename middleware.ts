@@ -156,6 +156,33 @@ redirect.cookies.set(cookie);
 authHeaders.forEach((value, name) => redirect.headers.set(name, value));
 return redirect;
 }
+
+const {
+data: pendingInvitation,
+error: pendingInvitationError,
+} = await supabase.rpc("get_current_user_pending_workspace_invitation");
+
+const pendingInvitationToken =
+!pendingInvitationError &&
+pendingInvitation &&
+typeof pendingInvitation === "object" &&
+!Array.isArray(pendingInvitation) &&
+"token" in pendingInvitation &&
+typeof pendingInvitation.token === "string"
+? pendingInvitation.token.trim()
+: "";
+
+if (pendingInvitationToken) {
+const redirect = NextResponse.redirect(
+new URL(`/invite/${encodeURIComponent(pendingInvitationToken)}`, request.url)
+);
+for (const cookie of response.cookies.getAll()) {
+redirect.cookies.set(cookie);
+}
+authHeaders.forEach((value, name) => redirect.headers.set(name, value));
+return redirect;
+}
+
 return response;
 }
 
