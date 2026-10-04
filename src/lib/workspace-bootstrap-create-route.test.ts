@@ -39,6 +39,17 @@ describe("workspace bootstrap create route", () => {
     expect(route).not.toContain("bootstrap_owned_company_founder_membership");
   });
 
+  it("records company creation activity through the trusted workspace writer", () => {
+    expect(route).toContain('"record_company_workspace_activity"');
+    expect(route).toContain('p_activity_kind: "company_created"');
+    expect(route).toContain("p_company_id: company.id");
+    expect(route).toContain("activityPayload?.success !== true");
+    expect(route).not.toContain('.from("notifications")');
+    expect(route).not.toContain('.from("audit_logs")');
+    expect(route).not.toContain("notificationError");
+    expect(route).not.toContain("auditError");
+  });
+
   it("recovers a missing profile when exactly one owned company exists", () => {
     expect(route).toContain('.eq("user_id", user.id)');
     expect(route).toContain("planOwnedCompanyResolution");

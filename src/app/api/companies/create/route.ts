@@ -40,6 +40,15 @@ type RequestBody = {
   next?: unknown;
 };
 
+type CompanyWorkspaceActivityRpcResult = {
+  success?: boolean;
+  error_code?: string;
+  error_message?: string;
+  audit_id?: string;
+  notification_id?: string;
+  idempotent?: boolean;
+};
+
 const COMPANY_NAME_MIN_LENGTH = 2;
 const COMPANY_NAME_MAX_LENGTH = 160;
 const LOCATION_MIN_LENGTH = 2;
@@ -550,8 +559,6 @@ export async function POST(request: Request) {
       );
     }
 
-    const normalizedEmail = normalizeText(user.email).toLowerCase();
-
     const { data: bootstrapResult, error: bootstrapError } =
       await supabase.rpc(
         "bootstrap_owned_company_workspace",
@@ -584,56 +591,29 @@ export async function POST(request: Request) {
     }
 
     if (createdNewCompany) {
-      const { error: notificationError } = await supabase
-        .from("notifications")
-        .insert({
-          title: "Company Created",
-          message: `${name} workspace was created successfully.`,
-          type: "company",
-          is_read: false,
-          company_id: company.id,
+      const { data: activityResult, error: activityError } =
+        await supabase.rpc("record_company_workspace_activity", {
+          p_activity_kind: "company_created",
+          p_company_id: company.id,
         });
 
-      if (notificationError) {
+      const activityPayload = activityResult as
+        | CompanyWorkspaceActivityRpcResult
+        | null;
+
+      if (activityError || activityPayload?.success !== true) {
         console.error(
-          "Company creation completed, but the notification was not recorded.",
+          "Company creation completed, but workspace activity was not recorded.",
           {
             userId: user.id,
             companyId: company.id,
-            error: notificationError,
-          },
-        );
-      }
-
-      const { error: auditError } = await supabase
-        .from("audit_logs")
-        .insert({
-          action: "COMPANY_CREATED",
-          entity_type: "company",
-          entity_id: company.id,
-          user_id: user.id,
-          company_id: company.id,
-          metadata: {
-            name,
-            slug,
-            category: networkRole,
-            location,
-            account_type: rawAccountType,
-            profile_role: accountConfig.profileRole,
-            network_role: networkRole,
-            owner_email: normalizedEmail,
-            created_at: new Date().toISOString(),
-          },
-        });
-
-      if (auditError) {
-        console.error(
-          "Company creation completed, but the audit event was not recorded.",
-          {
-            userId: user.id,
-            companyId: company.id,
-            action: "COMPANY_CREATED",
-            error: auditError,
+            error:
+              activityError ?? {
+                code: activityPayload?.error_code ?? "UNKNOWN",
+                message:
+                  activityPayload?.error_message ??
+                  "Workspace activity writer returned an unsuccessful result.",
+              },
           },
         );
       }
