@@ -73,6 +73,22 @@ describe("wrong-identity invitation switch", () => {
   });
 });
 
+describe("invite signup confirmation continuation", () => {
+  it("returns email confirmation to the same Workspace Invitation", () => {
+    expect(inviteSignupPage).toContain(
+      'const confirmationRedirect = new URL(',
+    );
+    expect(inviteSignupPage).toContain('"/auth/callback",');
+    expect(inviteSignupPage).toContain("window.location.origin,");
+    expect(inviteSignupPage).toContain(
+      'confirmationRedirect.searchParams.set("next", `/invite/${token}`);',
+    );
+    expect(inviteSignupPage).toContain(
+      "emailRedirectTo: confirmationRedirect.toString()",
+    );
+  });
+});
+
 describe("existing-account invite signup sign-in errors", () => {
   it("maps known sign-in failures to bounded copy", () => {
     expect(getFriendlyInviteSignInError("Invalid login credentials")).toBe(
