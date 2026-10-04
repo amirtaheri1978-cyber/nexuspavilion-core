@@ -1077,15 +1077,32 @@ function CreateCompanyWizard() {
                     Continue
                   </button>
                 ) : (
-                  <button
-                    type="submit"
-                    disabled={loading || !formIsReady}
-                    className={`${EXECUTIVE_CTA_PRIMARY} h-[58px] flex-1 disabled:cursor-not-allowed disabled:opacity-50`}
-                  >
-                    {loading
-                      ? "Activating workspace…"
-                      : "Activate company workspace"}
-                  </button>
+                  <div className="flex flex-1 flex-col gap-2">
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      aria-describedby={
+                        !formIsReady
+                          ? "workspace-activation-readiness"
+                          : undefined
+                      }
+                      className={`${EXECUTIVE_CTA_PRIMARY} h-[58px] w-full disabled:cursor-not-allowed disabled:opacity-50`}
+                    >
+                      {loading
+                        ? "Activating workspace…"
+                        : "Activate company workspace"}
+                    </button>
+
+                    {!formIsReady ? (
+                      <p
+                        id="workspace-activation-readiness"
+                        className="text-xs font-semibold leading-5 text-amber-200"
+                      >
+                        Complete all required founder details above to activate
+                        your Company Workspace.
+                      </p>
+                    ) : null}
+                  </div>
                 )}
               </div>
             </form>
