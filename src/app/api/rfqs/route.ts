@@ -553,7 +553,7 @@ const rfqUrl = joinPublicSitePath(`/rfq/${rfq.slug}`);
 if (user.email && rfqUrl) {
 await sendEmail({
 to: user.email,
-subject: `RFQ Created: ${rfq.title}`,
+subject: `RFQ Created — ${rfq.title}`,
 html: rfqCreatedEmail({
 rfqTitle: rfq.title || "New RFQ",
 category: rfq.category || "Procurement",

@@ -275,7 +275,7 @@ export async function POST(request: Request) {
       if (user.email && awardUrl) {
         const emailResult = await sendEmail({
           to: user.email,
-          subject: `Contract Awarded: ${
+          subject: `Contract Award Recorded — ${
             updatedRfq.title ?? "Project"
           }`,
           html: awardNotificationEmail({

@@ -522,7 +522,7 @@ export async function POST(request: Request) {
       if (user.email && quoteUrl) {
         const emailResult = await sendEmail({
           to: user.email,
-          subject: `Quote Submitted: ${rfq.title}`,
+          subject: `Quotation Submitted — ${rfq.title}`,
           html: quoteSubmittedEmail({
             rfqTitle: rfq.title || "RFQ",
             amount: amount ? String(amount) : "Not specified",
