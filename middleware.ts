@@ -115,8 +115,32 @@ let companyId: string | null = null;
 try {
 companyId = (await getCurrentWorkspaceContext(supabase)).companyId;
 } catch (error) {
-if (!(error instanceof WorkspaceContextError) ||
-!['UNAUTHENTICATED', 'AUTH_LOOKUP_FAILED', 'PROFILE_NOT_FOUND'].includes(error.code)) {
+/*
+ * Onboarding must remain reachable when an authenticated user does not yet
+ * have a resolvable company workspace. Profile/membership lookup failures
+ * are treated as "no company confirmed" rather than crashing the route.
+ */
+const code =
+error instanceof WorkspaceContextError
+? error.code
+: error &&
+typeof error === "object" &&
+"name" in error &&
+(error as { name?: unknown }).name === "WorkspaceContextError" &&
+"code" in error &&
+typeof (error as { code?: unknown }).code === "string"
+? (error as { code: string }).code
+: null;
+
+const recoverableCodes = [
+"UNAUTHENTICATED",
+"AUTH_LOOKUP_FAILED",
+"PROFILE_NOT_FOUND",
+"PROFILE_LOOKUP_FAILED",
+"MEMBERSHIP_LOOKUP_FAILED",
+];
+
+if (!code || !recoverableCodes.includes(code)) {
 throw error;
 }
 }

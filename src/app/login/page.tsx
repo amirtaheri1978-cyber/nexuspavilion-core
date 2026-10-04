@@ -1,10 +1,10 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { Suspense, useId, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
+import { NexusPavilionLogo } from "@/components/branding/nexus-pavilion-logo";
 import {
   DEFAULT_POST_LOGIN_PATH,
   getSafeLoginStatusMessage,
@@ -13,9 +13,6 @@ import {
 } from "@/lib/auth/login-continuation";
 import { syncCurrentUserProfessionalNames } from "@/lib/auth/professional-names";
 import { createClient } from "@/lib/supabase/client";
-
-const BRAND_LOGO_SRC =
-  "/branding/logo-horizontal-512.png";
 
 const PLATFORM_SIGNALS = [
   "RFQ & Award Governance",
@@ -221,15 +218,11 @@ function LoginScreen({
         <div className="pointer-events-none fixed inset-0 -z-10 bg-[linear-gradient(120deg,rgba(255,255,255,0.05),transparent_34%,rgba(200,166,70,0.05)_68%,transparent)]" />
 
         <section className="mx-auto grid min-h-[calc(100vh-3rem)] w-full max-w-[1680px] gap-8 lg:grid-cols-[0.82fr_1.18fr] lg:grid-rows-[minmax(0,1fr)] lg:items-stretch xl:gap-10">
-          <aside className="flex h-full min-h-0 flex-col rounded-[38px] border border-white/10 bg-white/[0.045] p-7 shadow-[0_32px_110px_rgba(0,0,0,0.42)] backdrop-blur-2xl sm:p-9 lg:p-11 xl:p-12">
-            <BrandTile />
+          <aside className="flex h-full min-h-0 flex-col rounded-[32px] border border-white/10 bg-white/[0.04] p-7 sm:p-9 lg:p-11 xl:p-12">
+            <BrandMark />
 
             <div className="mt-10">
-              <p className="text-xs font-black uppercase tracking-[0.3em] text-[#F2D778]">
-                Intelligent Procurement
-              </p>
-
-              <h1 className="mt-5 max-w-2xl text-4xl font-black tracking-[-0.05em] text-white sm:text-5xl xl:text-[64px] xl:leading-[0.98]">
+              <h1 className="max-w-2xl text-4xl font-black tracking-[-0.05em] text-white sm:text-5xl xl:text-[64px] xl:leading-[0.98]">
                 Secure access to your procurement
                 workspace.
               </h1>
@@ -271,20 +264,21 @@ function LoginScreen({
             </div>
           </aside>
 
-          <section className="flex h-full min-h-0 w-full flex-col rounded-[40px] border border-white/10 bg-white/[0.065] p-7 shadow-[0_36px_120px_rgba(0,0,0,0.52)] backdrop-blur-2xl sm:p-10 lg:p-12 xl:p-14">
+          <section className="flex h-full min-h-0 w-full flex-col rounded-[32px] border border-white/10 bg-white/[0.055] p-7 sm:p-10 lg:p-12 xl:p-14">
             <div>
               <p className="text-xs font-black uppercase tracking-[0.3em] text-[#F2D778]">
-                Intelligent Procurement Access
+                Secure workspace access
               </p>
 
               <h2 className="mt-5 text-4xl font-black tracking-[-0.05em] text-white sm:text-5xl xl:text-[58px]">
-                Sign in to your workspace.
+                Sign in to Intelligent Procurement.
               </h2>
 
               <p className="mt-5 max-w-xl text-base font-semibold leading-8 text-slate-100">
                 Continue to your organization&apos;s
-                secure procurement intelligence
-                environment.
+                protected procurement workspace for RFQs,
+                supplier intelligence, and governed award
+                decisions.
               </p>
 
               <form
@@ -446,9 +440,11 @@ function LoginScreen({
               </div>
             </div>
 
-            <p className="mt-5 flex items-center justify-center gap-2 text-center text-xs font-bold leading-5 text-slate-100">
-              <span aria-hidden="true">🔒</span>
+            <p className="mt-5 text-center text-xs font-semibold leading-5 text-slate-400">
               Secure sign-in for Intelligent Procurement.
+              <span className="mt-1 block font-bold text-slate-300">
+                A Nexus Pavilion Inc. product
+              </span>
             </p>
           </section>
         </section>
@@ -457,21 +453,27 @@ function LoginScreen({
   );
 }
 
-function BrandTile() {
+function BrandMark() {
   return (
     <Link
       href="/"
-      aria-label="Nexus Pavilion home"
-      className="inline-flex w-fit rounded-xl outline-none transition focus-visible:ring-2 focus-visible:ring-[#F5D77B] focus-visible:ring-offset-4 focus-visible:ring-offset-[#0A1929]"
+      aria-label="Intelligent Procurement home"
+      className="inline-flex w-fit flex-col gap-2 rounded-xl outline-none transition focus-visible:ring-2 focus-visible:ring-[#F5D77B] focus-visible:ring-offset-4 focus-visible:ring-offset-[#0A1929]"
     >
-      <Image
-        src={BRAND_LOGO_SRC}
-        alt="Nexus Pavilion"
-        width={300}
-        height={110}
+      <NexusPavilionLogo
+        variant="horizontal"
+        size={72}
         priority
-        className="h-auto w-[240px] object-contain sm:w-[275px] xl:w-[300px]"
+        className="justify-start"
       />
+      <div>
+        <p className="text-xs font-black uppercase tracking-[0.28em] text-[#F2D778]">
+          Intelligent Procurement
+        </p>
+        <p className="mt-1 text-[11px] font-semibold text-slate-400">
+          A Nexus Pavilion Inc. product
+        </p>
+      </div>
     </Link>
   );
 }

@@ -9,7 +9,10 @@ vi.mock("@/lib/auth/workspace-context", async (importOriginal) => ({
   ...await importOriginal<typeof import("@/lib/auth/workspace-context")>(),
   getCurrentWorkspaceContext: vi.fn(),
 }));
-import { getCurrentWorkspaceContext } from "@/lib/auth/workspace-context";
+import {
+  getCurrentWorkspaceContext,
+  WorkspaceContextError,
+} from "@/lib/auth/workspace-context";
 import { middleware as runMiddleware } from "../../../middleware";
 
 describe("existing workspace onboarding guard", () => {
@@ -59,6 +62,30 @@ describe("existing workspace onboarding guard", () => {
     expect(response.headers.get("location")).toBeNull();
     expect(response.headers.get("x-middleware-next")).toBe("1");
   });
+
+  it.each([
+    "UNAUTHENTICATED",
+    "AUTH_LOOKUP_FAILED",
+    "PROFILE_NOT_FOUND",
+    "PROFILE_LOOKUP_FAILED",
+    "MEMBERSHIP_LOOKUP_FAILED",
+  ] as const)(
+    "keeps create-company reachable when workspace context fails with %s",
+    async (code) => {
+      vi.mocked(getCurrentWorkspaceContext).mockRejectedValueOnce(
+        new WorkspaceContextError("workspace context unavailable", code),
+      );
+
+      const response = await runMiddleware(
+        new NextRequest("http://localhost:3000/create-company", {
+          headers: { cookie: "sb-test=existing-session" },
+        }),
+      );
+
+      expect(response.headers.get("location")).toBeNull();
+      expect(response.headers.get("x-middleware-next")).toBe("1");
+    },
+  );
 });
 
 import {

@@ -643,7 +643,7 @@ export async function POST(request: Request) {
         if (user.email && workspaceUrl) {
           await sendEmail({
             to: user.email,
-            subject: "Welcome to Nexus Pavilion",
+            subject: `Company Workspace Ready — ${name}`,
             html: companyWelcomeEmail({
               companyName: name,
               workspaceUrl,

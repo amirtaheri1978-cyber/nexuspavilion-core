@@ -1,12 +1,13 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { Suspense, useId, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
+import { NexusPavilionLogo } from "@/components/branding/nexus-pavilion-logo";
 import {
   EXECUTIVE_CTA_PRIMARY,
+  EXECUTIVE_FOCUS_GOLD,
   EXECUTIVE_PAGE_CLASS,
 } from "@/lib/design-system/executive-contract";
 import {
@@ -28,8 +29,6 @@ type SignupResponseMessage = {
   text: string;
 };
 
-const BRAND_LOGO_SRC = "/branding/logo-horizontal-512.png";
-
 const platformCapabilities = [
   "Company Workspace",
   "Company Network",
@@ -43,7 +42,7 @@ const setupSteps = [
   "Create secure account",
   "Complete company workspace",
   "Choose organization type",
-  "Activate correct permissions",
+  "Activate workspace permissions",
 ];
 
 const inputClassName =
@@ -312,50 +311,50 @@ function SignupScreen({ nextPath }: { nextPath: string }) {
   }
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-[#061426] text-white">
+    <main className="relative min-h-screen overflow-hidden bg-[#061426] px-4 py-6 text-white sm:px-6 lg:px-10">
       <div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(circle_at_top_left,rgba(44,196,232,0.18),transparent_34%),radial-gradient(circle_at_top_right,rgba(200,166,70,0.15),transparent_30%),linear-gradient(180deg,#061426_0%,#07111F_45%,#020617_100%)]" />
 
       <div className="pointer-events-none fixed inset-0 -z-10 bg-[linear-gradient(120deg,rgba(255,255,255,0.05),transparent_34%,rgba(200,166,70,0.05)_68%,transparent)]" />
 
-      <section className={`${EXECUTIVE_PAGE_CLASS} grid min-h-[calc(100vh-3rem)] items-center gap-8 lg:grid-cols-[0.82fr_1.18fr] xl:gap-10`}>
-        <aside className="rounded-[38px] border border-white/10 bg-white/[0.045] p-7 shadow-[0_32px_110px_rgba(0,0,0,0.42)] backdrop-blur-2xl sm:p-9 lg:p-11 xl:p-12">
-          <BrandTile />
+      <section className={`${EXECUTIVE_PAGE_CLASS} mx-auto grid min-h-[calc(100vh-3rem)] w-full max-w-[1680px] items-stretch gap-8 lg:grid-cols-[0.82fr_1.18fr] xl:gap-10`}>
+        <aside className="flex h-full min-h-0 flex-col rounded-[32px] border border-white/10 bg-white/[0.04] p-7 sm:p-9 lg:p-11 xl:p-12">
+          <BrandMark />
 
-          <p className="mt-10 text-xs font-black uppercase tracking-[0.34em] text-[#C8A646]">
-            Intelligent Procurement Access
-          </p>
+          <div className="mt-10">
+            <h1 className="max-w-2xl text-4xl font-black tracking-[-0.05em] text-white sm:text-5xl xl:text-[64px] xl:leading-[0.98]">
+              Create your procurement account.
+            </h1>
 
-          <h1 className="mt-5 max-w-2xl text-4xl font-black tracking-[-0.05em] text-white sm:text-5xl xl:text-[64px] xl:leading-[0.98]">
-            Create your enterprise account.
-          </h1>
-
-          <p className="mt-7 max-w-2xl text-base font-semibold leading-8 text-slate-300 xl:text-lg">
-            Build your organization&apos;s Intelligent Procurement
-            company workspace with governed access, supplier collaboration,
-            and decision-support capabilities.
-          </p>
-
-          <div className="mt-9 grid gap-3 sm:grid-cols-2">
-            {platformCapabilities.map((capability) => (
-              <div
-                key={capability}
-                className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.045] px-4 py-3 text-sm font-black text-slate-200"
-              >
-                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-[#C8A646]/30 bg-[#C8A646]/10 text-xs text-[#F5D77B]">
-                  ✓
-                </span>
-
-                <span>{capability}</span>
-              </div>
-            ))}
+            <p className="mt-7 max-w-2xl text-base font-semibold leading-8 text-slate-300 xl:text-lg">
+              Establish secure access to Intelligent Procurement, then
+              activate your company workspace with the correct operating
+              model and governed permissions.
+            </p>
           </div>
 
-          <div className="mt-9 rounded-3xl border border-white/10 bg-[#07111F]/75 p-5">
+          <ul className="mt-9 space-y-2.5">
+            {platformCapabilities.map((capability) => (
+              <li
+                key={capability}
+                className="flex items-start gap-3 text-sm font-semibold text-slate-200"
+              >
+                <span
+                  aria-hidden="true"
+                  className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-[#C8A646]/35 bg-[#C8A646]/10 text-[10px] text-[#F5D77B]"
+                >
+                  ✓
+                </span>
+                <span>{capability}</span>
+              </li>
+            ))}
+          </ul>
+
+          <div className="mt-auto border-t border-white/10 pt-7">
             <p className="text-xs font-black uppercase tracking-[0.24em] text-slate-500">
-              Account Setup Path
+              Account setup path
             </p>
 
-            <div className="mt-4 space-y-3">
+            <div className="mt-4 space-y-2">
               {setupSteps.map((step, index) => (
                 <StatusRow
                   key={step}
@@ -367,31 +366,31 @@ function SignupScreen({ nextPath }: { nextPath: string }) {
           </div>
         </aside>
 
-        <section className="mx-auto w-full max-w-[700px] rounded-[40px] border border-white/10 bg-white/[0.065] p-7 shadow-[0_36px_120px_rgba(0,0,0,0.52)] backdrop-blur-2xl sm:p-10 lg:p-12 xl:p-14">
+        <section className="flex h-full min-h-0 w-full flex-col rounded-[32px] border border-white/10 bg-white/[0.055] p-7 sm:p-10 lg:p-12 xl:p-14">
           <Link
             href={
               nextPath === DEFAULT_POST_LOGIN_PATH
                 ? "/login"
                 : `/login?next=${encodeURIComponent(nextPath)}`
             }
-            className="inline-flex text-sm font-bold text-slate-400 transition hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2CC4E8]/40"
+            className={`inline-flex w-fit rounded-lg text-sm font-bold text-slate-400 transition hover:text-white ${EXECUTIVE_FOCUS_GOLD}`}
           >
             ← Back to login
           </Link>
 
           <div className="mt-8">
-            <p className="text-xs font-black uppercase tracking-[0.34em] text-[#C8A646]">
-              Secure Account
+            <p className="text-xs font-black uppercase tracking-[0.3em] text-[#F2D778]">
+              Secure account registration
             </p>
 
             <h2 className="mt-5 text-4xl font-black tracking-[-0.05em] text-white sm:text-5xl xl:text-[58px]">
-              Create account.
+              Create your Intelligent Procurement account.
             </h2>
 
             <p className="mt-5 text-base font-semibold leading-8 text-slate-300">
-              Create your Intelligent Procurement account first. Company setup,
-              organization type, and permissions are assigned in
-              the next step.
+              Start with your professional identity and secure credentials.
+              Company workspace setup and organization type follow in the
+              next step.
             </p>
           </div>
 
@@ -552,7 +551,11 @@ function SignupScreen({ nextPath }: { nextPath: string }) {
                     setShowPassword((current) => !current)
                   }
                   disabled={loading}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-black uppercase tracking-wide text-[#F5D77B] transition hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C8A646]/70 disabled:cursor-not-allowed disabled:opacity-60"
+                  aria-label={
+                    showPassword ? "Hide password" : "Show password"
+                  }
+                  aria-pressed={showPassword}
+                  className={`absolute right-3 top-1/2 -translate-y-1/2 rounded-xl px-3 py-2 text-xs font-black uppercase tracking-wide text-[#F5D77B] transition hover:text-white disabled:cursor-not-allowed disabled:opacity-60 ${EXECUTIVE_FOCUS_GOLD}`}
                 >
                   {showPassword ? "Hide" : "Show"}
                 </button>
@@ -610,7 +613,13 @@ function SignupScreen({ nextPath }: { nextPath: string }) {
                     )
                   }
                   disabled={loading}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-black uppercase tracking-wide text-[#F5D77B] transition hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C8A646]/70 disabled:cursor-not-allowed disabled:opacity-60"
+                  aria-label={
+                    showConfirmPassword
+                      ? "Hide confirm password"
+                      : "Show confirm password"
+                  }
+                  aria-pressed={showConfirmPassword}
+                  className={`absolute right-3 top-1/2 -translate-y-1/2 rounded-xl px-3 py-2 text-xs font-black uppercase tracking-wide text-[#F5D77B] transition hover:text-white disabled:cursor-not-allowed disabled:opacity-60 ${EXECUTIVE_FOCUS_GOLD}`}
                 >
                   {showConfirmPassword ? "Hide" : "Show"}
                 </button>
@@ -628,10 +637,10 @@ function SignupScreen({ nextPath }: { nextPath: string }) {
               ) : null}
             </div>
 
-            <div className="rounded-3xl border border-white/10 bg-[#07111F]/75 p-5">
+            <div className="border-y border-white/10 py-5">
               <div className="flex items-center justify-between gap-4">
                 <p className="text-xs font-black uppercase tracking-[0.22em] text-slate-500">
-                  Password Strength
+                  Password strength
                 </p>
 
                 <p className="text-xs font-black text-[#F5D77B]">
@@ -645,7 +654,7 @@ function SignupScreen({ nextPath }: { nextPath: string }) {
                 />
               </div>
 
-              <div className="mt-5 grid gap-3 sm:grid-cols-2">
+              <div className="mt-5 grid gap-2 sm:grid-cols-2">
                 {passwordRules.map((rule) => (
                   <CheckRow
                     key={rule.label}
@@ -694,37 +703,46 @@ function SignupScreen({ nextPath }: { nextPath: string }) {
                   ? "/login"
                   : `/login?next=${encodeURIComponent(nextPath)}`
               }
-              className="font-black text-[#F5D77B]"
+              className={`rounded-lg font-black text-[#F5D77B] ${EXECUTIVE_FOCUS_GOLD}`}
             >
               Sign in
             </Link>
           </p>
 
-          <div className="mt-5 rounded-2xl border border-white/10 bg-white/[0.035] px-4 py-3">
-            <p className="text-xs font-bold leading-5 text-slate-400">
-              🔒 Secure account creation for Intelligent Procurement.
-            </p>
-          </div>
+          <p className="mt-5 text-center text-xs font-semibold leading-5 text-slate-400">
+            Secure account creation for Intelligent Procurement.
+            <span className="mt-1 block font-bold text-slate-300">
+              A Nexus Pavilion Inc. product
+            </span>
+          </p>
         </section>
       </section>
     </main>
   );
 }
 
-function BrandTile() {
+function BrandMark() {
   return (
-    <div className="inline-flex rounded-[30px] border border-white/10 bg-white/[0.06] p-2 shadow-[0_22px_70px_rgba(0,0,0,0.42)] backdrop-blur-xl">
-      <div className="rounded-[24px] border border-white/10 bg-black px-6 py-5">
-        <Image
-          src={BRAND_LOGO_SRC}
-          alt="Nexus Pavilion"
-          width={240}
-          height={88}
-          priority
-          className="h-[72px] w-auto object-contain sm:h-[82px] xl:h-[88px]"
-        />
+    <Link
+      href="/"
+      aria-label="Intelligent Procurement home"
+      className={`inline-flex w-fit flex-col gap-2 rounded-xl outline-none transition ${EXECUTIVE_FOCUS_GOLD}`}
+    >
+      <NexusPavilionLogo
+        variant="horizontal"
+        size={72}
+        priority
+        className="justify-start"
+      />
+      <div>
+        <p className="text-xs font-black uppercase tracking-[0.28em] text-[#F2D778]">
+          Intelligent Procurement
+        </p>
+        <p className="mt-1 text-[11px] font-semibold text-slate-400">
+          A Nexus Pavilion Inc. product
+        </p>
       </div>
-    </div>
+    </Link>
   );
 }
 
@@ -736,16 +754,14 @@ function StatusRow({
   ready: boolean;
 }) {
   return (
-    <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.045] px-4 py-3">
-      <span className="text-xs font-bold text-slate-300">
+    <div className="flex items-center justify-between gap-3 py-2">
+      <span className="text-xs font-semibold text-slate-300">
         {label}
       </span>
 
       <span
-        className={`rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-wide ${
-          ready
-            ? "bg-emerald-400/15 text-emerald-300"
-            : "bg-white/[0.06] text-slate-500"
+        className={`text-[10px] font-black uppercase tracking-wide ${
+          ready ? "text-emerald-300" : "text-slate-500"
         }`}
       >
         {ready ? "Ready" : "Next"}
@@ -762,7 +778,7 @@ function CheckRow({
   ready: boolean;
 }) {
   return (
-    <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.035] px-4 py-3 text-xs font-bold">
+    <div className="flex items-center justify-between gap-3 py-1.5 text-xs font-bold">
       <span className="text-slate-300">{label}</span>
 
       <span

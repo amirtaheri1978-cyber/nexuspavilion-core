@@ -1,9 +1,10 @@
 "use client";
 
 import { Suspense, useEffect, useId, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import Image from "next/image";
 
+import { NexusPavilionLogo } from "@/components/branding/nexus-pavilion-logo";
 import SignOutButton from "@/components/sign-out-button";
 import {
   EXECUTIVE_CTA_PRIMARY,
@@ -61,8 +62,6 @@ type OrganizationOption = {
   workspaceCapabilities: string[];
 };
 
-const BRAND_LOGO_SRC = "/branding/logo-horizontal-512.png";
-
 const ORGANIZATION_TYPES: OrganizationOption[] = [
   {
     value: "owner_developer",
@@ -85,7 +84,7 @@ const ORGANIZATION_TYPES: OrganizationOption[] = [
       "Create RFQs",
       "Invite suppliers",
       "Compare proposals",
-      "Award contracts",
+      "Record procurement awards",
       "Generate executive reports",
     ],
   },
@@ -110,7 +109,7 @@ const ORGANIZATION_TYPES: OrganizationOption[] = [
       "Create RFQs",
       "Invite subcontractors",
       "Compare trade quotes",
-      "Award packages",
+      "Record package awards",
       "Track procurement execution",
     ],
   },
@@ -160,7 +159,7 @@ const ORGANIZATION_TYPES: OrganizationOption[] = [
       "Receive service RFQs",
       "Submit technical proposals",
       "Manage project opportunities",
-      "Track awarded contracts",
+      "Track recorded awards",
       "Showcase service expertise",
     ],
   },
@@ -226,7 +225,18 @@ function getFriendlyCreateCompanyError(message?: string) {
 
 export default function CreateCompanyPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-[#061426]" />}>
+    <Suspense
+      fallback={
+        <main className="relative min-h-screen overflow-hidden bg-[#061426] text-white">
+          <div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(circle_at_top_left,rgba(44,196,232,0.18),transparent_34%),radial-gradient(circle_at_top_right,rgba(200,166,70,0.15),transparent_30%),linear-gradient(180deg,#061426_0%,#07111F_45%,#020617_100%)]" />
+          <div className={`${EXECUTIVE_PAGE_CLASS} flex min-h-screen items-center justify-center`}>
+            <p className="text-sm font-semibold text-slate-300">
+              Preparing company setup…
+            </p>
+          </div>
+        </main>
+      }
+    >
       <CreateCompanyWizard />
     </Suspense>
   );
@@ -511,17 +521,17 @@ function CreateCompanyWizard() {
       <div className="pointer-events-none fixed inset-0 -z-10 bg-[linear-gradient(120deg,rgba(255,255,255,0.05),transparent_34%,rgba(200,166,70,0.05)_68%,transparent)]" />
 
       <div className={EXECUTIVE_PAGE_CLASS}>
-        <header className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
-          <BrandTile />
+        <header className="flex flex-col gap-6 border-b border-white/10 pb-6 sm:flex-row sm:items-end sm:justify-between">
+          <BrandMark />
 
           <div className="flex flex-col items-start gap-3 sm:items-end">
-            <div className="max-w-sm sm:text-right">
-              <p className="text-xs font-black uppercase tracking-[0.22em] text-[#C8A646]">
-                Workspace activation required
+            <div className="max-w-md sm:text-right">
+              <p className="text-xs font-black uppercase tracking-[0.22em] text-[#F2D778]">
+                Company workspace setup
               </p>
 
-              <p className="mt-1 text-xs font-semibold leading-5 text-slate-400">
-                Complete company setup to access the executive
+              <p className="mt-1.5 text-xs font-semibold leading-5 text-slate-400">
+                Complete this guided setup to activate your company
                 workspace, or securely sign out of this session.
               </p>
             </div>
@@ -530,96 +540,80 @@ function CreateCompanyWizard() {
           </div>
         </header>
 
-        <section className="mt-8 grid gap-8 lg:grid-cols-[0.86fr_1.14fr] xl:gap-10">
-          <aside className="rounded-[38px] border border-white/10 bg-white/[0.045] p-7 shadow-[0_32px_110px_rgba(0,0,0,0.42)] backdrop-blur-2xl sm:p-9 lg:p-11 xl:p-12">
-            <p className="text-xs font-black uppercase tracking-[0.34em] text-[#C8A646]">
-              Executive Company Setup
+        <section className="mt-8 grid gap-8 lg:grid-cols-[0.82fr_1.18fr] xl:gap-10">
+          <aside className="flex flex-col rounded-[32px] border border-white/10 bg-white/[0.04] p-7 sm:p-9 lg:p-10">
+            <p className="text-xs font-black uppercase tracking-[0.3em] text-[#F2D778]">
+              Intelligent Procurement
             </p>
 
-            <h1 className="mt-5 max-w-2xl text-4xl font-black tracking-[-0.05em] text-white sm:text-5xl xl:text-[64px] xl:leading-[0.98]">
-              Activate your enterprise workspace.
+            <h1 className="mt-5 max-w-xl text-4xl font-black tracking-[-0.05em] text-white sm:text-5xl xl:text-[56px] xl:leading-[1.02]">
+              Establish your company workspace.
             </h1>
 
-            <p className="mt-7 max-w-2xl text-base font-semibold leading-8 text-slate-300 xl:text-lg">
-              Configure your company identity, organization type,
-              access model, and procurement workspace foundation
-              before entering Intelligent Procurement.
+            <p className="mt-6 max-w-xl text-base font-semibold leading-8 text-slate-300">
+              Confirm company identity, organization type, and founder
+              details to open your procurement environment with the
+              correct operating model.
             </p>
 
-            <div className="mt-9 rounded-[32px] border border-[#2CC4E8]/15 bg-[#2CC4E8]/[0.055] p-6">
-              <p className="text-xs font-black uppercase tracking-[0.28em] text-[#9BE8F8]">
+            <div className="mt-8 border-t border-white/10 pt-7">
+              <p className="text-xs font-black uppercase tracking-[0.24em] text-slate-400">
                 {selectedOrganization.workspaceTitle}
               </p>
 
-              <h2 className="mt-4 text-3xl font-black text-white">
+              <h2 className="mt-3 text-2xl font-black text-white sm:text-3xl">
                 {selectedOrganization.label}
               </h2>
 
-              <p className="mt-4 text-sm font-semibold leading-7 text-slate-300">
+              <p className="mt-3 text-sm font-semibold leading-7 text-slate-300">
                 {selectedOrganization.workspaceDescription}
               </p>
 
-              <div className="mt-6 grid gap-3">
+              <ul className="mt-6 space-y-2.5">
                 {selectedOrganization.workspaceCapabilities.map(
                   (capability) => (
-                    <div
+                    <li
                       key={capability}
-                      className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.055] px-4 py-3 text-sm font-bold text-slate-200"
+                      className="flex items-start gap-3 text-sm font-semibold text-slate-200"
                     >
-                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-[#C8A646]/30 bg-[#C8A646]/10 text-xs text-[#F5D77B]">
+                      <span
+                        aria-hidden="true"
+                        className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-[#C8A646]/35 bg-[#C8A646]/10 text-[10px] text-[#F5D77B]"
+                      >
                         ✓
                       </span>
-
                       <span>{capability}</span>
-                    </div>
+                    </li>
                   ),
                 )}
-              </div>
+              </ul>
             </div>
 
-            <div className="mt-8 grid gap-3 sm:grid-cols-2">
-              <SetupPoint
-                title="Guided setup"
-                description="A focused onboarding flow for your enterprise workspace."
-              />
-
-              <SetupPoint
-                title="Clear access model"
-                description="Your organization type configures workspace behavior."
-              />
-
-              <SetupPoint
-                title="Procurement ready"
-                description="RFQs, suppliers, analytics, and reporting activate after setup."
-              />
-
-              <SetupPoint
-                title="Profile details later"
-                description="Branding, products, services, and certifications can be completed next."
-              />
-            </div>
+            <p className="mt-auto pt-8 text-xs font-semibold leading-5 text-slate-500">
+              A Nexus Pavilion Inc. product · Company branding, coverage,
+              and certifications can be completed after activation.
+            </p>
           </aside>
 
-          <section className="rounded-[40px] border border-white/10 bg-white/[0.065] p-6 text-white shadow-[0_36px_120px_rgba(0,0,0,0.52)] backdrop-blur-2xl sm:p-8 lg:p-10 xl:p-12">
-            <div className="flex flex-col gap-5 border-b border-white/10 pb-7 lg:flex-row lg:items-center lg:justify-between">
-              <div>
-                <p className="text-xs font-black uppercase tracking-[0.34em] text-[#C8A646]">
-                  Workspace Registration
-                </p>
+          <section className="rounded-[32px] border border-white/10 bg-white/[0.055] p-6 text-white sm:p-8 lg:p-10">
+            <div className="border-b border-white/10 pb-7">
+              <p className="text-xs font-black uppercase tracking-[0.3em] text-[#F2D778]">
+                Guided company onboarding
+              </p>
 
-                <h2 className="mt-3 text-4xl font-black tracking-[-0.05em] text-white sm:text-5xl">
-                  Company setup.
-                </h2>
-              </div>
+              <h2 className="mt-3 text-3xl font-black tracking-[-0.05em] text-white sm:text-4xl">
+                Complete the three setup steps.
+              </h2>
 
-              <div className="grid gap-2 sm:grid-cols-3">
+              <nav
+                aria-label="Company setup steps"
+                className="mt-6 grid gap-2 sm:grid-cols-3"
+              >
                 {STEPS.map((step, index) => {
-                  const active =
-                    step.key === currentStep;
+                  const active = step.key === currentStep;
 
                   const completed =
-                    (step.key === "identity" &&
-                      identityIsReady) ||
+                    (step.key === "identity" && identityIsReady) ||
                     (step.key === "organization" &&
                       currentStep === "review" &&
                       identityIsReady);
@@ -628,35 +622,34 @@ function CreateCompanyWizard() {
                     <button
                       key={step.key}
                       type="button"
-                      onClick={() =>
-                        goToStep(step.key)
-                      }
+                      onClick={() => goToStep(step.key)}
                       disabled={loading}
-                      className={`rounded-2xl border px-4 py-3 text-left transition disabled:cursor-not-allowed disabled:opacity-60 ${
+                      aria-current={active ? "step" : undefined}
+                      className={`rounded-2xl border px-4 py-3 text-left transition disabled:cursor-not-allowed disabled:opacity-60 ${EXECUTIVE_FOCUS_GOLD} ${
                         active
                           ? "border-[#C8A646]/45 bg-[#C8A646]/10"
-                          : "border-white/10 bg-white/[0.035] hover:bg-white/[0.06]"
+                          : "border-white/10 bg-transparent hover:bg-white/[0.04]"
                       }`}
                     >
                       <p
                         className={`text-[10px] font-black uppercase tracking-[0.2em] ${
-                          active
-                            ? "text-[#F5D77B]"
-                            : "text-slate-500"
+                          active ? "text-[#F5D77B]" : "text-slate-500"
                         }`}
                       >
-                        {completed
-                          ? "Ready"
-                          : `Step ${index + 1}`}
+                        {completed ? "Ready" : `Step ${index + 1}`}
                       </p>
 
                       <p className="mt-1 text-xs font-black text-white">
                         {step.label}
                       </p>
+
+                      <p className="mt-1 text-[11px] font-semibold leading-4 text-slate-500">
+                        {step.description}
+                      </p>
                     </button>
                   );
                 })}
-              </div>
+              </nav>
             </div>
 
             {isRfqQuoteContinuation ? (
@@ -680,10 +673,10 @@ function CreateCompanyWizard() {
                     </p>
 
                     <p className="mt-3 text-sm font-semibold leading-7 text-slate-300">
-                      Start with the minimum required details.
-                      Company branding, company-network visibility,
-                      services, products, and certifications can be
-                      completed in the Company Command Center.
+                      Enter the minimum company details required to
+                      activate your workspace. Branding, services,
+                      products, certifications, and network visibility
+                      can be completed afterward in Company Settings.
                     </p>
                   </div>
 
@@ -749,9 +742,9 @@ function CreateCompanyWizard() {
                     </p>
 
                     <p className="mt-3 text-sm font-semibold leading-7 text-slate-300">
-                      Select the organization type that best
-                      represents your business. Intelligent Procurement will
-                      configure the correct workspace behavior.
+                      Select the organization type that best describes
+                      your company. Intelligent Procurement uses this to
+                      configure the correct workspace operating model.
                     </p>
                   </div>
 
@@ -843,7 +836,7 @@ function CreateCompanyWizard() {
                     </p>
                   </div>
 
-                  <div className="rounded-3xl border border-white/10 bg-[#07111F]/75 p-6">
+                  <div className="border-y border-white/10 py-6">
                     <p className="text-xs font-black uppercase tracking-[0.24em] text-slate-500">
                       Workspace Summary
                     </p>
@@ -875,8 +868,8 @@ function CreateCompanyWizard() {
                     </div>
                   </div>
 
-                  <section className="rounded-3xl border border-white/10 bg-white/[0.045] p-6">
-                    <p className="text-xs font-black uppercase tracking-[0.24em] text-[#C8A646]">
+                  <section>
+                    <p className="text-xs font-black uppercase tracking-[0.24em] text-[#F2D778]">
                       Founder Professional Identity
                     </p>
 
@@ -1019,7 +1012,7 @@ function CreateCompanyWizard() {
                     </div>
                   </section>
 
-                  <section className="rounded-3xl border border-white/10 bg-white/[0.045] p-5">
+                  <section className="border-t border-white/10 pt-6">
                     <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">
                       What happens next?
                     </p>
@@ -1090,8 +1083,8 @@ function CreateCompanyWizard() {
                     className={`${EXECUTIVE_CTA_PRIMARY} h-[58px] flex-1 disabled:cursor-not-allowed disabled:opacity-50`}
                   >
                     {loading
-                      ? "Activating Workspace..."
-                      : "Launch Workspace"}
+                      ? "Activating workspace…"
+                      : "Activate company workspace"}
                   </button>
                 )}
               </div>
@@ -1103,40 +1096,28 @@ function CreateCompanyWizard() {
   );
 }
 
-function BrandTile() {
+function BrandMark() {
   return (
-    <div className="inline-flex rounded-[30px] border border-white/10 bg-white/[0.06] p-2 shadow-[0_22px_70px_rgba(0,0,0,0.42)] backdrop-blur-xl">
-      <div className="rounded-[24px] border border-white/10 bg-black px-6 py-5">
-        <Image
-          src={BRAND_LOGO_SRC}
-          alt="Nexus Pavilion"
-          width={240}
-          height={82}
-          className="h-[72px] w-auto object-contain sm:h-[82px]"
-          priority
-        />
+    <Link
+      href="/"
+      aria-label="Intelligent Procurement home"
+      className={`inline-flex w-fit flex-col gap-2 rounded-xl outline-none transition ${EXECUTIVE_FOCUS_GOLD}`}
+    >
+      <NexusPavilionLogo
+        variant="horizontal"
+        size={72}
+        priority
+        className="justify-start"
+      />
+      <div>
+        <p className="text-xs font-black uppercase tracking-[0.28em] text-[#F2D778]">
+          Intelligent Procurement
+        </p>
+        <p className="mt-1 text-[11px] font-semibold text-slate-400">
+          A Nexus Pavilion Inc. product
+        </p>
       </div>
-    </div>
-  );
-}
-
-function SetupPoint({
-  title,
-  description,
-}: {
-  title: string;
-  description: string;
-}) {
-  return (
-    <div className="rounded-3xl border border-white/10 bg-white/[0.045] p-5">
-      <p className="text-sm font-black text-white">
-        {title}
-      </p>
-
-      <p className="mt-2 text-xs font-semibold leading-5 text-slate-400">
-        {description}
-      </p>
-    </div>
+    </Link>
   );
 }
 
@@ -1148,7 +1129,7 @@ function ReviewItem({
   value: string;
 }) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/[0.045] p-4">
+    <div className="border-l border-white/15 pl-4">
       <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-500">
         {label}
       </p>
@@ -1170,18 +1151,20 @@ function NextStep({
   description: string;
 }) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-[#07111F] p-4">
+    <div className="grid grid-cols-[auto_1fr] gap-3 py-1">
       <p className="text-xs font-black uppercase tracking-[0.2em] text-[#C8A646]">
         {number}
       </p>
 
-      <p className="mt-2 text-sm font-black text-white">
-        {title}
-      </p>
+      <div>
+        <p className="text-sm font-black text-white">
+          {title}
+        </p>
 
-      <p className="mt-1 text-xs font-semibold leading-5 text-slate-400">
-        {description}
-      </p>
+        <p className="mt-1 text-xs font-semibold leading-5 text-slate-400">
+          {description}
+        </p>
+      </div>
     </div>
   );
 }

@@ -1,13 +1,16 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useId, useMemo, useState } from "react";
 
+import { NexusPavilionLogo } from "@/components/branding/nexus-pavilion-logo";
+import {
+  EXECUTIVE_CTA_PRIMARY,
+  EXECUTIVE_CTA_SECONDARY,
+  EXECUTIVE_FOCUS_GOLD,
+} from "@/lib/design-system/executive-contract";
 import { getPublicSiteUrl } from "@/lib/ops/public-site-url";
 import { createClient } from "@/lib/supabase/client";
-
-const BRAND_LOGO_SRC = "/branding/logo-horizontal-512.png";
 
 const RECOVERY_ASSURANCES = [
   {
@@ -23,7 +26,7 @@ const RECOVERY_ASSURANCES = [
 ];
 
 const inputClassName =
-  "h-[60px] w-full rounded-2xl border border-white/20 bg-[#07111F]/90 px-5 text-base font-semibold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.035)] outline-none transition duration-200 placeholder:font-medium placeholder:text-slate-500 hover:border-white/30 focus:border-[#D8B84E] focus:bg-[#081827] focus:ring-4 focus:ring-[#C8A646]/15 disabled:cursor-not-allowed disabled:opacity-60";
+  "h-[60px] w-full rounded-2xl border border-white/20 bg-[#07111F] px-5 text-sm font-semibold text-white outline-none transition placeholder:text-slate-300 hover:border-white/30 focus:border-[#F0D576] focus:bg-[#081827] focus:ring-4 focus:ring-[#F0D576]/20 disabled:cursor-not-allowed disabled:opacity-60";
 
 function normalizeEmail(value: string) {
   return value.trim().toLowerCase();
@@ -68,6 +71,8 @@ function getFriendlyResetError(message: string) {
 
 export default function ForgotPasswordPage() {
   const supabase = useMemo(() => createClient(), []);
+  const emailId = useId();
+  const errorId = useId();
 
   const [email, setEmail] = useState("");
   const [submittedEmail, setSubmittedEmail] = useState("");
@@ -133,58 +138,52 @@ export default function ForgotPasswordPage() {
 
       <div className="pointer-events-none fixed inset-0 -z-10 bg-[linear-gradient(120deg,rgba(255,255,255,0.05),transparent_34%,rgba(200,166,70,0.05)_68%,transparent)]" />
 
-      <section className="mx-auto grid min-h-[calc(100vh-3rem)] w-full max-w-[1560px] items-stretch gap-8 lg:grid-cols-[0.82fr_1.18fr] xl:gap-10">
-        <aside className="flex h-full flex-col justify-between rounded-[38px] border border-white/10 bg-white/[0.045] p-7 shadow-[0_32px_110px_rgba(0,0,0,0.42)] backdrop-blur-2xl sm:p-9 lg:p-11 xl:p-12">
-          <div>
-            <BrandLogo />
+      <section className="mx-auto grid min-h-[calc(100vh-3rem)] w-full max-w-[1680px] items-stretch gap-8 lg:grid-cols-[0.82fr_1.18fr] xl:gap-10">
+        <aside className="flex h-full min-h-0 flex-col rounded-[32px] border border-white/10 bg-white/[0.04] p-7 sm:p-9 lg:p-11 xl:p-12">
+          <BrandMark />
 
-            <p className="mt-10 text-xs font-black uppercase tracking-[0.32em] text-[#D8B84E]">
-              Intelligent Procurement account recovery
-            </p>
-
-            <h1 className="mt-5 max-w-xl text-4xl font-black leading-[1.03] tracking-[-0.045em] text-white sm:text-5xl xl:text-[58px]">
+          <div className="mt-10">
+            <h1 className="max-w-xl text-4xl font-black tracking-[-0.05em] text-white sm:text-5xl xl:text-[58px] xl:leading-[1.02]">
               Restore access to your workspace.
             </h1>
 
-            <p className="mt-6 max-w-xl text-base font-semibold leading-8 text-slate-300 xl:text-[17px]">
-              Use your verified work email to begin a protected
-              password recovery process and regain access to your
-              procurement workspace.
+            <p className="mt-6 max-w-xl text-base font-semibold leading-8 text-slate-300">
+              Use your verified work email to start a protected
+              password recovery process for Intelligent Procurement.
             </p>
-
-            <div className="mt-9 space-y-3">
-              {RECOVERY_ASSURANCES.map((assurance) => (
-                <RecoveryAssurance
-                  key={assurance.title}
-                  title={assurance.title}
-                  description={assurance.description}
-                />
-              ))}
-            </div>
           </div>
 
-          <div className="mt-10 border-t border-white/10 pt-6">
-            <div className="flex items-start gap-4">
-              <span
-                aria-hidden="true"
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-[#C8A646]/25 bg-[#C8A646]/10 text-base text-[#F5D77B]"
-              >
-                🔒
-              </span>
+          <ul className="mt-9 space-y-4">
+            {RECOVERY_ASSURANCES.map((assurance) => (
+              <li key={assurance.title} className="flex items-start gap-3">
+                <span
+                  aria-hidden="true"
+                  className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-[#C8A646]/35 bg-[#C8A646]/10 text-[10px] text-[#F5D77B]"
+                >
+                  ✓
+                </span>
+                <div>
+                  <p className="text-sm font-black text-white">
+                    {assurance.title}
+                  </p>
+                  <p className="mt-1 text-sm font-semibold leading-6 text-slate-400">
+                    {assurance.description}
+                  </p>
+                </div>
+              </li>
+            ))}
+          </ul>
 
-              <p className="max-w-lg text-sm font-semibold leading-6 text-slate-300">
-                Recovery links are time-limited, valid for one use,
-                and return you to a protected password setup
-                process.
-              </p>
-            </div>
-          </div>
+          <p className="mt-auto border-t border-white/10 pt-7 text-sm font-semibold leading-6 text-slate-400">
+            Recovery links are time-limited, valid for one use, and
+            return you to a protected password setup process.
+          </p>
         </aside>
 
-        <section className="mx-auto flex h-full w-full max-w-[700px] flex-col rounded-[40px] border border-white/10 bg-white/[0.065] p-7 shadow-[0_36px_120px_rgba(0,0,0,0.52)] backdrop-blur-2xl sm:p-10 lg:p-12 xl:p-14">
+        <section className="flex h-full min-h-0 w-full flex-col rounded-[32px] border border-white/10 bg-white/[0.055] p-7 sm:p-10 lg:p-12 xl:p-14">
           <Link
             href="/login"
-            className="inline-flex min-h-11 w-fit items-center gap-2 rounded-xl px-1 text-sm font-extrabold text-slate-300 outline-none transition hover:text-white focus-visible:ring-2 focus-visible:ring-[#C8A646] focus-visible:ring-offset-4 focus-visible:ring-offset-[#132238]"
+            className={`inline-flex min-h-11 w-fit items-center gap-2 rounded-xl px-1 text-sm font-extrabold text-slate-300 transition hover:text-white ${EXECUTIVE_FOCUS_GOLD}`}
           >
             <span aria-hidden="true">←</span>
             <span>Back to sign in</span>
@@ -193,12 +192,12 @@ export default function ForgotPasswordPage() {
           {!sent ? (
             <div className="flex flex-1 flex-col">
               <div className="mt-7">
-                <p className="text-xs font-black uppercase tracking-[0.32em] text-[#D8B84E]">
-                  Secure recovery
+                <p className="text-xs font-black uppercase tracking-[0.3em] text-[#F2D778]">
+                  Secure password recovery
                 </p>
 
-                <h2 className="mt-5 text-4xl font-black tracking-[-0.045em] text-white sm:text-5xl xl:text-[56px] xl:leading-[1.02]">
-                  Reset your password
+                <h2 className="mt-5 text-4xl font-black tracking-[-0.05em] text-white sm:text-5xl xl:text-[56px] xl:leading-[1.02]">
+                  Reset your password.
                 </h2>
 
                 <p className="mt-5 max-w-xl text-base font-semibold leading-8 text-slate-300">
@@ -211,16 +210,22 @@ export default function ForgotPasswordPage() {
                 onSubmit={handleSubmit}
                 className="mt-9 space-y-6"
               >
-                <label className="block">
-                  <span className="mb-2.5 block text-xs font-black uppercase tracking-[0.22em] text-slate-300">
+                <div>
+                  <label
+                    htmlFor={emailId}
+                    className="mb-2 block text-xs font-black uppercase tracking-[0.22em] text-white"
+                  >
                     Work email
-                  </span>
+                  </label>
 
                   <input
+                    id={emailId}
                     type="email"
+                    name="email"
                     required
                     autoComplete="email"
                     inputMode="email"
+                    spellCheck={false}
                     placeholder="you@company.com"
                     value={email}
                     onChange={(event) =>
@@ -229,18 +234,18 @@ export default function ForgotPasswordPage() {
                     disabled={loading}
                     aria-invalid={Boolean(error)}
                     aria-describedby={
-                      error ? "recovery-error" : undefined
+                      error ? errorId : undefined
                     }
                     className={inputClassName}
                   />
-                </label>
+                </div>
 
                 {error ? (
                   <div
-                    id="recovery-error"
+                    id={errorId}
                     role="alert"
-                    aria-live="polite"
-                    className="rounded-2xl border border-red-300/20 bg-red-400/10 px-4 py-3 text-sm font-bold leading-6 text-red-200"
+                    aria-live="assertive"
+                    className="rounded-2xl border border-red-300/30 bg-red-400/10 px-4 py-3 text-sm font-bold leading-6 text-red-100"
                   >
                     {error}
                   </div>
@@ -249,7 +254,7 @@ export default function ForgotPasswordPage() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="h-[60px] w-full rounded-2xl bg-gradient-to-r from-[#B9902F] via-[#C8A646] to-[#F5D77B] px-6 text-sm font-black uppercase tracking-[0.14em] text-slate-950 shadow-[0_22px_65px_rgba(200,166,70,0.34)] outline-none transition duration-200 hover:shadow-[0_28px_80px_rgba(200,166,70,0.42)] focus-visible:ring-4 focus-visible:ring-[#F5D77B]/30 focus-visible:ring-offset-4 focus-visible:ring-offset-[#132238] disabled:cursor-not-allowed disabled:opacity-50"
+                  className={`${EXECUTIVE_CTA_PRIMARY} h-[60px] w-full disabled:cursor-not-allowed disabled:opacity-50`}
                 >
                   {loading
                     ? "Sending recovery link..."
@@ -257,34 +262,22 @@ export default function ForgotPasswordPage() {
                 </button>
               </form>
 
-              <div className="mt-7 rounded-3xl border border-white/10 bg-[#07111F]/75 p-5">
-                <p className="text-sm font-semibold leading-6 text-slate-300">
-                  Remember your password?{" "}
-                  <Link
-                    href="/login"
-                    className="font-black text-[#F5D77B] underline decoration-[#F5D77B]/40 underline-offset-4 transition hover:text-white"
-                  >
-                    Back to sign in
-                  </Link>
-                  .
-                </p>
-              </div>
+              <p className="mt-7 text-sm font-semibold leading-6 text-slate-300">
+                Remember your password?{" "}
+                <Link
+                  href="/login"
+                  className={`rounded-lg font-black text-[#F5D77B] ${EXECUTIVE_FOCUS_GOLD}`}
+                >
+                  Back to sign in
+                </Link>
+              </p>
 
-              <div className="mt-auto pt-5">
-                <div className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/[0.035] px-4 py-3.5">
-                  <span
-                    aria-hidden="true"
-                    className="mt-0.5 shrink-0 text-sm text-[#F5D77B]"
-                  >
-                    🔒
-                  </span>
-
-                  <p className="text-sm font-semibold leading-6 text-slate-300">
-                    Recovery links are encrypted, time-limited, and
-                    valid for one use.
-                  </p>
-                </div>
-              </div>
+              <p className="mt-auto pt-6 text-center text-xs font-semibold leading-5 text-slate-400">
+                Secure recovery for Intelligent Procurement.
+                <span className="mt-1 block font-bold text-slate-300">
+                  A Nexus Pavilion Inc. product
+                </span>
+              </p>
             </div>
           ) : (
             <div
@@ -292,16 +285,19 @@ export default function ForgotPasswordPage() {
               aria-live="polite"
             >
               <div className="mt-7">
-                <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-emerald-300/20 bg-emerald-400/10 text-2xl text-emerald-300">
+                <div
+                  aria-hidden="true"
+                  className="flex h-12 w-12 items-center justify-center rounded-full border border-emerald-300/25 bg-emerald-400/10 text-lg font-black text-emerald-300"
+                >
                   ✓
                 </div>
 
-                <p className="mt-8 text-xs font-black uppercase tracking-[0.32em] text-[#D8B84E]">
+                <p className="mt-8 text-xs font-black uppercase tracking-[0.3em] text-[#F2D778]">
                   Recovery email sent
                 </p>
 
-                <h2 className="mt-5 text-4xl font-black tracking-[-0.045em] text-white sm:text-5xl xl:text-[56px] xl:leading-[1.02]">
-                  Check your inbox
+                <h2 className="mt-5 text-4xl font-black tracking-[-0.05em] text-white sm:text-5xl xl:text-[56px] xl:leading-[1.02]">
+                  Check your inbox.
                 </h2>
 
                 <p className="mt-5 text-base font-semibold leading-8 text-slate-300">
@@ -313,16 +309,16 @@ export default function ForgotPasswordPage() {
                   protected password reset process.
                 </p>
 
-                <div className="mt-8 rounded-3xl border border-white/10 bg-[#07111F]/75 p-5">
+                <div className="mt-8 border-y border-white/10 py-6">
                   <p className="text-xs font-black uppercase tracking-[0.22em] text-slate-400">
                     Complete account recovery
                   </p>
 
-                  <div className="mt-4 space-y-3">
+                  <ol className="mt-4 space-y-3">
                     <RecoveryStep label="Open your newest password recovery email" />
                     <RecoveryStep label="Follow the secure, time-limited link" />
                     <RecoveryStep label="Create and confirm your new password" />
-                  </div>
+                  </ol>
                 </div>
 
                 <div className="mt-8 grid gap-3 sm:grid-cols-2">
@@ -332,14 +328,14 @@ export default function ForgotPasswordPage() {
                       setSent(false);
                       setError("");
                     }}
-                    className="h-[56px] rounded-2xl border border-white/15 bg-white/[0.045] px-5 text-sm font-black text-white outline-none transition hover:border-white/25 hover:bg-white/[0.08] focus-visible:ring-2 focus-visible:ring-[#C8A646] focus-visible:ring-offset-4 focus-visible:ring-offset-[#132238]"
+                    className={`${EXECUTIVE_CTA_SECONDARY} h-[56px]`}
                   >
                     Request another link
                   </button>
 
                   <Link
                     href="/login"
-                    className="flex h-[56px] items-center justify-center rounded-2xl bg-gradient-to-r from-[#B9902F] via-[#C8A646] to-[#F5D77B] px-5 text-sm font-black uppercase tracking-[0.12em] text-slate-950 shadow-[0_18px_55px_rgba(200,166,70,0.3)] outline-none transition focus-visible:ring-4 focus-visible:ring-[#F5D77B]/30 focus-visible:ring-offset-4 focus-visible:ring-offset-[#132238]"
+                    className={`${EXECUTIVE_CTA_PRIMARY} h-[56px]`}
                   >
                     Back to sign in
                   </Link>
@@ -358,57 +354,44 @@ export default function ForgotPasswordPage() {
   );
 }
 
-function BrandLogo() {
+function BrandMark() {
   return (
-    <div className="w-fit">
-      <Image
-        src={BRAND_LOGO_SRC}
-        alt="Nexus Pavilion"
-        width={320}
-        height={110}
-        className="h-auto w-[230px] object-contain sm:w-[260px] xl:w-[290px]"
+    <Link
+      href="/"
+      aria-label="Intelligent Procurement home"
+      className={`inline-flex w-fit flex-col gap-2 rounded-xl outline-none transition ${EXECUTIVE_FOCUS_GOLD}`}
+    >
+      <NexusPavilionLogo
+        variant="horizontal"
+        size={72}
         priority
+        className="justify-start"
       />
-    </div>
-  );
-}
-
-function RecoveryAssurance({
-  title,
-  description,
-}: {
-  title: string;
-  description: string;
-}) {
-  return (
-    <div className="flex items-start gap-4 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-4">
-      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#C8A646]/30 bg-[#C8A646]/10 text-sm font-black text-[#F5D77B]">
-        ✓
-      </span>
-
       <div>
-        <p className="text-sm font-black text-white">
-          {title}
+        <p className="text-xs font-black uppercase tracking-[0.28em] text-[#F2D778]">
+          Intelligent Procurement
         </p>
-
-        <p className="mt-1 text-sm font-semibold leading-6 text-slate-400">
-          {description}
+        <p className="mt-1 text-[11px] font-semibold text-slate-400">
+          A Nexus Pavilion Inc. product
         </p>
       </div>
-    </div>
+    </Link>
   );
 }
 
 function RecoveryStep({ label }: { label: string }) {
   return (
-    <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.045] px-4 py-3">
-      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-[#C8A646]/30 bg-[#C8A646]/10 text-xs text-[#F5D77B]">
+    <li className="flex items-start gap-3">
+      <span
+        aria-hidden="true"
+        className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-[#C8A646]/35 bg-[#C8A646]/10 text-[10px] text-[#F5D77B]"
+      >
         ✓
       </span>
 
-      <span className="text-sm font-bold leading-6 text-slate-300">
+      <span className="text-sm font-semibold leading-6 text-slate-300">
         {label}
       </span>
-    </div>
+    </li>
   );
 }

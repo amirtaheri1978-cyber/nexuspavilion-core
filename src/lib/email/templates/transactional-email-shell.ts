@@ -1,5 +1,7 @@
-
-import { joinPublicSitePath } from "@/lib/ops/public-site-url";
+import {
+  getPublicSiteUrl,
+  joinPublicSitePath,
+} from "@/lib/ops/public-site-url";
 
 export type TransactionalEmailCta = {
   label: string;
@@ -27,11 +29,60 @@ export function escapeEmailHtml(value: string) {
     .replaceAll("'", "&#039;");
 }
 
+function isEmailSafePublicHttpsOrigin(origin: string) {
+  try {
+    const parsed = new URL(origin);
+
+    if (parsed.protocol !== "https:") {
+      return false;
+    }
+
+    const host = parsed.hostname.toLowerCase();
+
+    if (
+      host === "localhost" ||
+      host === "127.0.0.1" ||
+      host === "[::1]" ||
+      host === "::1"
+    ) {
+      return false;
+    }
+
+    if (host.endsWith(".local") || host.endsWith(".internal")) {
+      return false;
+    }
+
+    if (
+      /^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[0-1])\.|169\.254\.)/.test(host)
+    ) {
+      return false;
+    }
+
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Official logo only when NEXT_PUBLIC_SITE_URL resolves to a public HTTPS origin.
+ * Never emit localhost/private image URLs — Gmail cannot fetch them.
+ */
+function resolveEmailSafeBrandLogoUrl() {
+  const origin = getPublicSiteUrl();
+
+  if (!origin || !isEmailSafePublicHttpsOrigin(origin)) {
+    return null;
+  }
+
+  return joinPublicSitePath("/branding/logo-horizontal-1024.png");
+}
+
 export function transactionalEmailInfoBlock(label: string, value: string) {
   return `
-<div style="margin-top:14px;border-radius:16px;background:#081827;padding:17px 18px;border:1px solid #20354a;">
-  <p style="margin:0;font-size:10px;font-weight:800;letter-spacing:0.16em;color:#8fa0b5;text-transform:uppercase;">${escapeEmailHtml(label)}</p>
-  <p style="margin:7px 0 0;font-size:16px;font-weight:800;color:#f8fafc;line-height:1.45;">${escapeEmailHtml(value)}</p>
+<div style="margin-top:14px;border-radius:16px;background:#081827;padding:28px 32px;border:1px solid #20354a;">
+  <p style="margin:0;padding:0 4px;font-size:10px;font-weight:800;letter-spacing:0.16em;color:#8fa0b5;text-transform:uppercase;">${escapeEmailHtml(label)}</p>
+  <p style="margin:7px 0 0;padding:0 4px;font-size:16px;font-weight:800;color:#f8fafc;line-height:1.45;">${escapeEmailHtml(value)}</p>
 </div>
 `;
 }
@@ -43,9 +94,9 @@ export function transactionalEmailNotice(
   return `
 <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:18px;background:#081827;border:1px solid #20354a;border-radius:18px;">
   <tr>
-    <td style="padding:20px 22px;">
-      <p style="margin:0;color:#C8A646;font-size:11px;font-weight:800;letter-spacing:2.2px;text-transform:uppercase;">${escapeEmailHtml(title)}</p>
-      <p style="margin:11px 0 0;color:#c7d2df;font-size:14px;line-height:1.75;font-weight:500;">${escapeEmailHtml(description)}</p>
+    <td style="padding:28px 32px;">
+      <p style="margin:0;padding:0 4px;color:#C8A646;font-size:11px;font-weight:800;letter-spacing:2.2px;text-transform:uppercase;">${escapeEmailHtml(title)}</p>
+      <p style="margin:11px 0 0;padding:0 4px;color:#c7d2df;font-size:14px;line-height:1.75;font-weight:500;">${escapeEmailHtml(description)}</p>
     </td>
   </tr>
 </table>
@@ -53,7 +104,7 @@ export function transactionalEmailNotice(
 }
 
 function brandHeader() {
-  const logoUrl = joinPublicSitePath("/branding/logo-horizontal-1024.png");
+  const logoUrl = resolveEmailSafeBrandLogoUrl();
 
   if (logoUrl) {
     return `
