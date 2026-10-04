@@ -211,10 +211,17 @@ export default function InviteSignupPage() {
       return;
     }
 
+    const confirmationRedirect = new URL(
+      "/auth/callback",
+      window.location.origin,
+    );
+    confirmationRedirect.searchParams.set("next", `/invite/${token}`);
+
     const { error: signupError } = await supabase.auth.signUp({
       email,
       password,
       options: {
+        emailRedirectTo: confirmationRedirect.toString(),
         data: buildInviteSignupTransitMetadata(
           submittedFirstName,
           submittedLastName,
