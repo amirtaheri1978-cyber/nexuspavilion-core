@@ -52,8 +52,8 @@ describe("workspace invitation onboarding recovery", () => {
     expect(recoveryMigration).toContain("set search_path = public, pg_temp");
     expect(recoveryMigration).toContain("from anon");
     expect(recoveryMigration).toContain("to authenticated");
-    expect(recoveryMigration).not.toMatch(/\\binsert\\s+into\\b/i);
-    expect(recoveryMigration).not.toMatch(/\\bupdate\\s+public\\./i);
-    expect(recoveryMigration).not.toMatch(/\\bdelete\\s+from\\b/i);
+    expect(recoveryMigration).not.toMatch(/\binsert\s+into\b/i);
+    expect(recoveryMigration).not.toMatch(/\bupdate\s+public\./i);
+    expect(recoveryMigration).not.toMatch(/\bdelete\s+from\b/i);
   });
 });
