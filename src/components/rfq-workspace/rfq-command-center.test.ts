@@ -78,7 +78,7 @@ describe("Task 24-RFQ-05 command center density closeout", () => {
     expect(detail).toContain(
       'const awardRecorded = isOwner && rfqStatus === "awarded";',
     );
-    expect(detail).toContain('awardRecorded\n            ? "Award Recorded"');
+    expect(detail).toMatch(/awardRecorded\s*\? "Award Recorded"/);
     expect(detail).toContain(
       '"Commercial decision recorded for downstream handoff"',
     );
