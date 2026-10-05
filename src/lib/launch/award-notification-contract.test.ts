@@ -223,7 +223,7 @@ describe("14-07 Award notification contract", () => {
     expect(email.html).toContain(`href="${workspaceUrl}"`);
     expect(email.html).toContain("Review Award");
     expect(email.html).toContain("Procurement Record");
-    expect(email.html).toContain("not itself an executed legal contract");
+    expect(email.html).toContain("does not itself constitute an executed legal contract");
     expect(email.html).not.toContain("/compare");
     expect(email.html).not.toContain("ranking");
     expect(email.html).not.toContain("evaluation score");
