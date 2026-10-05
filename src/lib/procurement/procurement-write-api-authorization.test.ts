@@ -12,6 +12,9 @@ const quoteDecisionRoute = readSource("src/app/api/quote-decision/route.ts");
 const awardRoute = readSource("src/app/api/award-contract/route.ts");
 const invitesRoute = readSource("src/app/api/invites/route.ts");
 const membershipModule = readSource("src/lib/auth/membership.ts");
+const deadlineLockedAwardMigration = readSource(
+  "supabase/migrations/20260913082925_enforce_deadline_locked_rfq_award.sql",
+);
 
 describe("procurement write API membership authorization", () => {
   it("loads company-scoped active organization_memberships rather than profiles.role", () => {
@@ -82,8 +85,8 @@ describe("procurement write API membership authorization", () => {
     expect(awardRoute).toContain("SELF_AWARD_NOT_ALLOWED");
     expect(awardRoute).toContain("RFQ_ALREADY_AWARDED");
     expect(awardRoute).toContain("QUOTE_ALREADY_AWARDED");
-    expect(awardRoute).toContain(
-      "awarded_by_workspace_role: membership?.workspaceRole ?? null",
+    expect(deadlineLockedAwardMigration).toMatch(
+      /record_rfq_award_workspace_activity\(\s*selected_quote\.id,\s*actor_user_id,\s*membership_role\s*\)/,
     );
     expect(awardRoute).not.toContain("awarded_by_role:");
     expect(awardRoute).not.toContain('decision: "pending"');
