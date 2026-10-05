@@ -16,6 +16,7 @@ import {
   reportCriticalApiFailure,
 } from "@/lib/ops/report-critical-api-failure";
 import { createClient } from "@/lib/supabase/server";
+import { recordWorkspaceInvitationActivity } from "@/lib/workspace/record-workspace-invitation-activity";
 
 type WorkspaceInvitation = {
   id: string;
@@ -203,31 +204,22 @@ export async function POST(request: Request) {
           error: PUBLIC_SITE_URL_UNCONFIGURED,
         };
 
-    await supabase.from("audit_logs").insert({
-      action: "INVITATION_RESENT",
-      entity_type: "invitation",
-      entity_id: invitation.id,
-      user_id: workspace.userId,
-      company_id: commandCompanyId,
-      metadata: {
-        email: invitation.email,
-        role: invitation.role,
-        invite_url: inviteUrl,
-        email_sent: emailResult.success,
-        email_skipped: emailResult.skipped,
-        email_id: emailResult.id,
-        email_error: emailResult.error,
-        resent_by: {
-          id: workspace.userId,
-          email: workspace.email,
-          workspace_role: workspace.workspaceRole,
-        },
-        resent_at: new Date().toISOString(),
+    const activityRecorded = await recordWorkspaceInvitationActivity(
+      supabase,
+      {
+        activityKind: "resent",
+        invitationId: invitation.id,
+        deliveryStatus: emailResult.success
+          ? "sent"
+          : emailResult.skipped
+            ? "skipped"
+            : "failed",
       },
-    });
+    );
 
     return NextResponse.json({
       success: true,
+      activityRecorded,
       inviteUrl,
       email: {
         sent: emailResult.success,
