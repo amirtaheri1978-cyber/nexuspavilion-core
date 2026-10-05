@@ -542,8 +542,11 @@ describe("Task 33C RFQ buyer executive intelligence isolation", () => {
     );
     expect(quotesRoute).toContain("canSubmitCompanyQuote");
     expect(quotesRoute).not.toContain("get_rfq_invitation_context");
-    expect(middleware).not.toContain('"/rfq"');
-    expect(middleware).not.toContain('"/rfq/:path*"');
+    expect(middleware).toContain("function isRfqWorkspaceProtectedPath");
+    expect(middleware).toContain("isRfqInvitePublicPath(pathname)");
+    expect(middleware).toContain("isRfqSubmitPageOwnedPath(pathname)");
+    expect(middleware).toContain('"/rfq"');
+    expect(middleware).toContain('"/rfq/:path*"');
     expect(RFQ_BUYER_ONLY_INTELLIGENCE_MARKERS).toContain(
       "Executive Decision Center",
     );
