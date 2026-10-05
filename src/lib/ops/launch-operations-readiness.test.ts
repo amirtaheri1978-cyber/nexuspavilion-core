@@ -229,6 +229,16 @@ describe("Task 27 launch operations readiness", () => {
     expect(runbook).toContain("CONTACT_EMAIL");
     expect(runbook).toContain("Final Product Owner Go/No-Go");
     expect(runbook).toContain("D1–D6");
+    expect(runbook).toContain("### First 72-hour watch cadence");
+    expect(runbook).toContain("T+0, +15m, +30m, +60m, +2h");
+    expect(runbook).toContain("T+4h, +8h, +12h, +24h");
+    expect(runbook).toContain("T+48h and +72h");
+    expect(runbook).toContain(
+      "do not wait for the next checkpoint",
+    );
+    expect(runbook).toContain(
+      "Do not create synthetic procurement evidence merely to satisfy a cadence.",
+    );
     expect(evidence).not.toContain("Production Supabase project unknown");
     expect(runbook).not.toContain("280/290 not applied");
 
