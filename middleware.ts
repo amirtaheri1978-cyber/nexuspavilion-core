@@ -13,6 +13,7 @@ const protectedRoutes = [
 
 const COMPANY_SETUP_ROUTE = "/create-company";
 const RFQ_WORKSPACE_FALLBACK = "/rfq";
+const PRODUCT_HOST = "procurement.nexuspavilion.com";
 
 function isCompanySetupRoute(pathname: string) {
 return (
@@ -69,6 +70,15 @@ return NextResponse.redirect(loginUrl);
 
 export async function middleware(request: NextRequest) {
 const { pathname } = request.nextUrl;
+const hostname = request.nextUrl.hostname.toLowerCase();
+
+if (hostname === PRODUCT_HOST && pathname === "/") {
+const loginUrl = new URL("/login", request.url);
+request.nextUrl.searchParams.forEach((value, key) => {
+loginUrl.searchParams.append(key, value);
+});
+return NextResponse.redirect(loginUrl);
+}
 
 if (isCompanySetupRoute(pathname) && !hasSupabaseSessionCookie(request)) {
 const loginUrl = new URL("/login", request.url);
@@ -212,6 +222,7 @@ return NextResponse.next();
 
 export const config = {
 matcher: [
+"/",
 "/dashboard/:path*",
 "/analytics/:path*",
 "/vendor-dashboard/:path*",
