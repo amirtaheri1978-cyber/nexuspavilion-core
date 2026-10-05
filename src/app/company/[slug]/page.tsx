@@ -129,7 +129,7 @@ export default async function PublicCompanyPage({ params }: PageProps) {
 
   const status = publicCompanyStatus(company.status);
   const category = company.category?.trim() || "Not specified";
-  const location = company.location?.trim() || "Location not specified";
+  const location = company.location?.trim() || "Location N/A";
   const networkRole = company.network_role?.trim() || "Not specified";
 
   return (
