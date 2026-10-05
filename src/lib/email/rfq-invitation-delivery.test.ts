@@ -253,7 +253,7 @@ describe("RFQ invitation email delivery", () => {
     const payload = sendEmailMock.mock.calls[0]?.[0];
     expect(payload?.to).toBe(SUPPLIER_EMAIL);
     expect(payload?.subject).toBe(
-      "RFQ Invitation: Level 4 Electrical & Lighting Upgrade",
+      "RFQ Invitation — Level 4 Electrical & Lighting Upgrade",
     );
     expect(payload?.html).toContain(`${PUBLIC_ORIGIN}/rfq/invite/`);
     expect(payload?.html).not.toContain("/submit");
