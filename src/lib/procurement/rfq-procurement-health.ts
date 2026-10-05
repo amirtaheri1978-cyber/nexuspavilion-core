@@ -130,8 +130,8 @@ export function getHealthScore({
 
   if (isOpen) score += 8;
   if (!deadlinePassed) score += 8;
-  if (quoteCount > 0) score += 12;
-  if (quoteCount >= 3) score += 8;
+  if (commercialEvaluationUnlocked && quoteCount > 0) score += 12;
+  if (commercialEvaluationUnlocked && quoteCount >= 3) score += 8;
   if (documentCount > 0) score += 12;
   if (documentCount >= 3) score += 6;
   if (addendaCount > 0) score += 4;
@@ -186,7 +186,7 @@ export function getProcurementHealthBreakdown({
       : 38 + quoteCount * 8 + documentCount * 4,
   );
 
-  return [
+  const breakdown: RFQProcurementHealthBreakdownItem[] = [
     {
       label: "Competition",
       score: competition,
@@ -218,6 +218,12 @@ export function getProcurementHealthBreakdown({
         : "Awaiting commercial opening",
     },
   ];
+
+  return commercialEvaluationUnlocked
+    ? breakdown
+    : breakdown.filter(
+        ({ label }) => label !== "Competition" && label !== "Decision Readiness",
+      );
 }
 
 export function getExecutiveRiskMatrix({
@@ -229,7 +235,7 @@ export function getExecutiveRiskMatrix({
   addendaCount,
   commercialEvaluationUnlocked,
 }: RFQExecutiveRiskMatrixInput): RFQExecutiveRiskItem[] {
-  return [
+  const riskMatrix: RFQExecutiveRiskItem[] = [
     {
       label: "Schedule",
       level:
@@ -297,4 +303,8 @@ export function getExecutiveRiskMatrix({
           : "No issued addenda yet",
     },
   ];
+
+  return commercialEvaluationUnlocked
+    ? riskMatrix
+    : riskMatrix.filter(({ label }) => label !== "Competition");
 }

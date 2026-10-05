@@ -39,9 +39,12 @@ describe("anonymous RFQ marketplace auth continuation", () => {
     expect(getSafeNextPath("https://evil.example/rfq")).toBe("/dashboard");
   });
 
-  it("does not middleware-lock the whole /rfq tree, so invite-token access stays intact", () => {
-    expect(middleware).not.toContain('"/rfq"');
-    expect(middleware).not.toContain('"/rfq/:path*"');
+  it("protects the RFQ workspace while preserving public invite and submit-page continuation paths", () => {
+    expect(middleware).toContain("function isRfqWorkspaceProtectedPath");
+    expect(middleware).toContain("isRfqInvitePublicPath(pathname)");
+    expect(middleware).toContain("isRfqSubmitPageOwnedPath(pathname)");
+    expect(middleware).toContain('"/rfq"');
+    expect(middleware).toContain('"/rfq/:path*"');
     expect(invitePage).not.toContain("getProcurementContext(");
     expect(marketplace).toContain("getProcurementContext()");
   });
