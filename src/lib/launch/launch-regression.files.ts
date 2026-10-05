@@ -101,4 +101,5 @@ export const LAUNCH_REGRESSION_TEST_FILES = [
   "src/lib/submit-representative-verification-rpc.test.ts",
   "src/lib/workspace-bootstrap-authorization-migration.test.ts",
   "src/lib/workspace-bootstrap-create-route.test.ts",
+  "src/lib/workspace-invitation-activity-migration.test.ts",
 ] as const;
