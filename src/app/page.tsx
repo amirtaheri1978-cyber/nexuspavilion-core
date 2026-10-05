@@ -9,6 +9,7 @@ import CorporateProductsMotion from "@/components/corporate/corporate-products-m
 import CorporateTechnologyMotion from "@/components/corporate/corporate-technology-motion";
 import CorporateVisionMotion from "@/components/corporate/corporate-vision-motion";
 import styles from "@/components/corporate/corporate-home.module.css";
+import { corporateSocialProfiles } from "@/components/corporate/corporate-social-profiles";
 
 const instrumentSans = Instrument_Sans({ subsets: ["latin"], variable: "--font-corporate-display", display: "swap" });
 const manrope = Manrope({ subsets: ["latin"], variable: "--font-corporate-body", display: "swap" });
@@ -37,9 +38,11 @@ const navigation = [
 const organizationJsonLd = {
   "@context": "https://schema.org",
   "@type": "Organization",
+  "@id": "https://nexuspavilion.com/#organization",
   name: "Nexus Pavilion Inc.",
   url: "https://nexuspavilion.com",
   logo: "https://nexuspavilion.com/branding/logo-icon-1024.png",
+  sameAs: corporateSocialProfiles.map(({ href }) => href),
   description:
     "Nexus Pavilion Inc. builds focused software and decision-intelligence systems for complex real-world environments.",
 };
@@ -299,10 +302,10 @@ export default function HomePage() {
               <p className={styles.productStatement}>Intelligent Procurement is organized around a Company Workspace for company identity, access, and operating context, and a Procurement Center where authorized participants manage RFQs, supplier responses, commercial evaluation, and governed award decisions.</p>
               <p className={styles.productCapabilities}>SOURCING · EVALUATION · GOVERNANCE · DECISION INTELLIGENCE</p>
               <Link
-                href="https://procurement.nexuspavilion.com/login"
+                href="/products/intelligent-procurement"
                 className={styles.productExplore}
               >
-                Open Intelligent Procurement <span aria-hidden="true">→</span>
+                Explore Intelligent Procurement <span aria-hidden="true">→</span>
               </Link>
             </div>
 

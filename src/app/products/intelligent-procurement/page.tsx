@@ -4,6 +4,8 @@ import Link from "next/link";
 
 import { NexusPavilionLogo } from "@/components/branding/nexus-pavilion-logo";
 import styles from "@/components/corporate/corporate-about.module.css";
+import { corporateSocialProfiles } from "@/components/corporate/corporate-social-profiles";
+import productStyles from "./product.module.css";
 
 const instrumentSans = Instrument_Sans({
   subsets: ["latin"],
@@ -18,9 +20,10 @@ const manrope = Manrope({
 });
 
 const PRODUCT_TITLE =
-  "Intelligent Procurement by Nexus Pavilion Inc. | Procurement Intelligence";
+  "Intelligent Procurement Platform | Nexus Pavilion Inc.";
 const PRODUCT_DESCRIPTION =
-  "Intelligent Procurement by Nexus Pavilion Inc. is a live procurement intelligence product for company workspace administration, RFQ workflows, supplier responses, commercial evaluation, and governed award decisions.";
+  "Construction procurement software for RFQ management, supplier quotation comparison, commercial evaluation and award records. Request a demo.";
+const PRODUCT_URL = "https://nexuspavilion.com/products/intelligent-procurement";
 
 export const metadata: Metadata = {
   title: { absolute: PRODUCT_TITLE },
@@ -33,7 +36,7 @@ export const metadata: Metadata = {
     url: "/products/intelligent-procurement",
     siteName: "Nexus Pavilion Inc.",
     type: "website",
-    locale: "en_US",
+    locale: "en_CA",
     images: [
       {
         url: "/branding/og-image.png",
@@ -78,30 +81,92 @@ const productPrinciples = [
   },
 ] as const;
 
+const productQuestions = [
+  {
+    question: "What is Intelligent Procurement?",
+    answer:
+      "Intelligent Procurement by Nexus Pavilion Inc. is a web-based construction procurement platform for RFQ management, supplier responses, commercial evaluation and recorded award decisions. A Company Workspace manages company identity and roles separately from participation in an RFQ.",
+  },
+  {
+    question: "Who can use it for material purchasing?",
+    answer:
+      "Construction buying teams, including specialty contractors purchasing materials after a project award, can explore the buyer workflow. General contractors and material suppliers purchasing inputs or outsourcing work can discuss their use case in a demo. An invited supplier responding to an RFQ has a different role from the buyer evaluating quotations.",
+  },
+  {
+    question: "How does construction RFQ management work?",
+    answer:
+      "A request for quotation (RFQ) sets the sourcing context. Authorized participants manage invitations and supplier responses, then review commercial information at the applicable opening stage. Company membership alone does not grant participation in an RFQ.",
+  },
+  {
+    question: "How does supplier quotation comparison support a decision?",
+    answer:
+      "Supplier quote comparison brings commercial responses into an authorized evaluation workflow. Review price together with the quoted scope, delivery terms, inclusions and exclusions before recording a selection rationale. Commercial information remains confidential before the applicable opening point; missing or different quote assumptions still need buyer clarification.",
+  },
+  {
+    question: "Does an award record replace a contract or purchase order?",
+    answer:
+      "No. A procurement decision trail records the selection context and rationale. An award record does not execute a legal contract, purchase order or notice to proceed. Professional judgment and formal contracting obligations remain separate responsibilities.",
+  },
+  {
+    question: "How can I request a demo?",
+    answer:
+      "Use the Nexus Pavilion corporate contact form, select Product Inquiry and describe a representative material RFQ or supplier-comparison workflow. Demo availability, supported scope and access are confirmed individually. Existing invited users can use the application login.",
+  },
+] as const;
+
 const productJsonLd = {
   "@context": "https://schema.org",
-  "@type": "WebPage",
-  name: "Intelligent Procurement by Nexus Pavilion Inc.",
-  url: "https://nexuspavilion.com/products/intelligent-procurement",
-  description: PRODUCT_DESCRIPTION,
-  isPartOf: {
-    "@type": "WebSite",
-    name: "Nexus Pavilion Inc.",
-    url: "https://nexuspavilion.com",
-  },
-  about: {
-    "@type": "SoftwareApplication",
-    name: "Intelligent Procurement",
-    applicationCategory: "BusinessApplication",
-    operatingSystem: "Web",
-    creator: {
+  "@graph": [
+    {
       "@type": "Organization",
+      "@id": "https://nexuspavilion.com/#organization",
       name: "Nexus Pavilion Inc.",
       url: "https://nexuspavilion.com",
+      logo: "https://nexuspavilion.com/branding/logo-icon-1024.png",
+      sameAs: corporateSocialProfiles.map(({ href }) => href),
     },
-    description:
-      "A live procurement intelligence product organized around Company Workspace administration and governed procurement workflows.",
-  },
+    {
+      "@type": "SoftwareApplication",
+      "@id": `${PRODUCT_URL}#software`,
+      name: "Intelligent Procurement",
+      url: PRODUCT_URL,
+      applicationCategory: "BusinessApplication",
+      applicationSubCategory: "Construction procurement software",
+      operatingSystem: "Web",
+      creator: { "@id": "https://nexuspavilion.com/#organization" },
+      description: PRODUCT_DESCRIPTION,
+      featureList: [
+        "Company Workspace administration",
+        "RFQ management and authorized supplier invitations",
+        "Supplier responses and quotation comparison",
+        "Commercial evaluation with opening-stage controls",
+        "Procurement award decision records",
+      ],
+    },
+    {
+      "@type": "WebPage",
+      "@id": PRODUCT_URL,
+      name: PRODUCT_TITLE,
+      url: PRODUCT_URL,
+      description: PRODUCT_DESCRIPTION,
+      inLanguage: "en-CA",
+      mainEntity: { "@id": `${PRODUCT_URL}#software` },
+      breadcrumb: { "@id": `${PRODUCT_URL}#breadcrumb` },
+      isPartOf: {
+        "@type": "WebSite",
+        name: "Nexus Pavilion Inc.",
+        url: "https://nexuspavilion.com",
+      },
+    },
+    {
+      "@type": "BreadcrumbList",
+      "@id": `${PRODUCT_URL}#breadcrumb`,
+      itemListElement: [
+        { "@type": "ListItem", position: 1, name: "Nexus Pavilion Inc.", item: "https://nexuspavilion.com" },
+        { "@type": "ListItem", position: 2, name: "Intelligent Procurement", item: PRODUCT_URL },
+      ],
+    },
+  ],
 };
 
 export default function IntelligentProcurementPage() {
@@ -142,16 +207,19 @@ export default function IntelligentProcurementPage() {
             INTELLIGENT PROCUREMENT BY NEXUS PAVILION INC.
           </p>
           <h1 id="intelligent-procurement-heading">
-            Procurement intelligence built around governed decisions.
+            Intelligent Procurement Platform
           </h1>
           <div className={styles.introductionCopy}>
             <p>
-              Intelligent Procurement is live for organizations that need clearer
-              control across company workspace
-              administration, RFQ sourcing, supplier responses, commercial
-              evaluation, and governed award decisions.
+              Construction procurement software for buying teams that need a
+              clear path from material RFQs to supplier quotation comparison,
+              commercial evaluation and an explained award decision.
             </p>
             <span>LIVE / ACCESS BY INVITATION</span>
+          </div>
+          <div className={productStyles.heroActions}>
+            <Link href="/contact">Request a demo <span aria-hidden="true">→</span></Link>
+            <a href="#procurement-questions">Explore the procurement workflow</a>
           </div>
         </section>
 
@@ -255,16 +323,39 @@ export default function IntelligentProcurementPage() {
         </section>
 
         <section
+          id="procurement-questions"
+          className={styles.building}
+          aria-labelledby="procurement-questions-heading"
+        >
+          <header className={styles.buildingHeader}>
+            <SectionMarker index="06">BUYER QUESTIONS</SectionMarker>
+            <h2 id="procurement-questions-heading">From material purchasing to a decision you can explain.</h2>
+          </header>
+          <div className={productStyles.questions}>
+            {productQuestions.map(({ question, answer }) => (
+              <article key={question} className={productStyles.answer}>
+                <h3>{question}</h3>
+                <p>{answer}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section
           className={styles.contactClose}
           aria-labelledby="product-contact-heading"
         >
-          <p>PRODUCT ACCESS</p>
+          <p>EXPLORE THE WORKFLOW</p>
           <h2 id="product-contact-heading">
-            Intelligent Procurement is live. Access is currently by invitation.
+            Bring one material RFQ. Explore the decision workflow.
           </h2>
-          <Link href="https://procurement.nexuspavilion.com/login">
-            Open Intelligent Procurement <span aria-hidden="true">→</span>
+          <Link href="/contact">
+            Request a demo <span aria-hidden="true">→</span>
           </Link>
+          <p className={productStyles.accessNote}>
+            Select Product Inquiry in the contact form. Access and demo scope are
+            confirmed individually. <a href="https://procurement.nexuspavilion.com/login">Invited-user login</a>
+          </p>
         </section>
       </div>
     </main>
