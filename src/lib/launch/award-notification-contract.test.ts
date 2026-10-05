@@ -33,7 +33,7 @@ describe("14-07 Award notification contract", () => {
     expect(awardRoute).toContain("supplierAwardNotificationEmail({");
     expect(awardRoute).toContain("to: user.email");
     expect(awardRoute).toContain(
-      "subject: `Contract Awarded: ${\n            updatedRfq.title ?? \"Project\"\n          }`",
+      "subject: `Contract Award Recorded — ${\n            updatedRfq.title ?? \"Project\"\n          }`",
     );
     expect(awardRoute).toContain('rpc(\n      "award_rfq_quote"');
     expect(awardRoute).toContain(
@@ -194,7 +194,7 @@ describe("14-07 Award notification contract", () => {
       awardUrl: workspaceUrl,
     });
 
-    expect(html).toContain("Contract Award Confirmed");
+    expect(html).toContain("The Contract Award has been recorded.");
     expect(html).toContain("Harbor Point Mixed-Use Development");
     expect(html).toContain("$125,000");
     expect(html).toContain("Awarded");
@@ -210,7 +210,7 @@ describe("14-07 Award notification contract", () => {
     });
 
     expect(email.subject).toBe(
-      "Contract Award: Harbor Point Mixed-Use Development",
+      "Contract Award — Harbor Point Mixed-Use Development",
     );
     expect(email.html).toContain("Nexus Pavilion");
     expect(email.html).toContain("Contract Award");
@@ -222,7 +222,7 @@ describe("14-07 Award notification contract", () => {
     expect(email.html).toContain("Awarded");
     expect(email.html).toContain(`href="${workspaceUrl}"`);
     expect(email.html).toContain("Review Award");
-    expect(email.html).toContain("Open RFQ Workspace");
+    expect(email.html).toContain("Procurement Record");
     expect(email.html).toContain("not itself an executed legal contract");
     expect(email.html).not.toContain("/compare");
     expect(email.html).not.toContain("ranking");
