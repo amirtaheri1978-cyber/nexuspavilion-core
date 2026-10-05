@@ -16,6 +16,7 @@ import {
   reportCriticalApiFailure,
 } from "@/lib/ops/report-critical-api-failure";
 import { createClient } from "@/lib/supabase/server";
+import { recordWorkspaceInvitationActivity } from "@/lib/workspace/record-workspace-invitation-activity";
 
 type Company = {
   id: string;
@@ -255,43 +256,24 @@ export async function POST(request: Request) {
           error: PUBLIC_SITE_URL_UNCONFIGURED,
         };
 
-    await supabase.from("notifications").insert({
-      title: "Invitation Created",
-      message: `${email} was invited to ${companyName} as ${accessLevelLabel}.`,
-      type: "invitation",
-      is_read: false,
-      company_id: commandCompanyId,
-    });
-
-    await supabase.from("audit_logs").insert({
-      action: "INVITATION_CREATED",
-      entity_type: "invitation",
-      entity_id: invitation.id,
-      user_id: workspace.userId,
-      company_id: commandCompanyId,
-      metadata: {
-        email,
-        role,
-        access_level: role,
-        access_level_label: accessLevelLabel,
-        invite_url: inviteUrl,
-        email_sent: emailResult.success,
-        email_skipped: emailResult.skipped,
-        email_id: emailResult.id,
-        email_error: emailResult.error,
-        invited_by: {
-          id: workspace.userId,
-          email: workspace.email,
-          workspace_role: workspace.workspaceRole,
-        },
-        created_at: new Date().toISOString(),
+    const activityRecorded = await recordWorkspaceInvitationActivity(
+      supabase,
+      {
+        activityKind: "created",
+        invitationId: invitation.id,
+        deliveryStatus: emailResult.success
+          ? "sent"
+          : emailResult.skipped
+            ? "skipped"
+            : "failed",
       },
-    });
+    );
 
     return NextResponse.json({
       success: true,
       invitation,
       inviteUrl,
+      activityRecorded,
       email: {
         sent: emailResult.success,
         skipped: emailResult.skipped,
