@@ -20,7 +20,7 @@ const manrope = Manrope({
 const PRODUCT_TITLE =
   "Intelligent Procurement by Nexus Pavilion Inc. | Procurement Intelligence";
 const PRODUCT_DESCRIPTION =
-  "Intelligent Procurement by Nexus Pavilion Inc. is an in-development procurement intelligence product for company workspace administration, RFQ workflows, supplier responses, commercial evaluation, and governed award decisions.";
+  "Intelligent Procurement by Nexus Pavilion Inc. is a live procurement intelligence product for company workspace administration, RFQ workflows, supplier responses, commercial evaluation, and governed award decisions.";
 
 export const metadata: Metadata = {
   title: { absolute: PRODUCT_TITLE },
@@ -100,7 +100,7 @@ const productJsonLd = {
       url: "https://nexuspavilion.com",
     },
     description:
-      "An in-development procurement intelligence product organized around Company Workspace administration and governed procurement workflows.",
+      "A live procurement intelligence product organized around Company Workspace administration and governed procurement workflows.",
   },
 };
 
@@ -146,12 +146,12 @@ export default function IntelligentProcurementPage() {
           </h1>
           <div className={styles.introductionCopy}>
             <p>
-              Intelligent Procurement is an in-development product for
-              organizations that need clearer control across company workspace
+              Intelligent Procurement is live for organizations that need clearer
+              control across company workspace
               administration, RFQ sourcing, supplier responses, commercial
               evaluation, and governed award decisions.
             </p>
-            <span>IN DEVELOPMENT</span>
+            <span>LIVE / ACCESS BY INVITATION</span>
           </div>
         </section>
 
@@ -224,7 +224,7 @@ export default function IntelligentProcurementPage() {
 
           <div className={styles.product}>
             <p>PRODUCT / 01</p>
-            <div className={styles.productStatus}>IN DEVELOPMENT</div>
+            <div className={styles.productStatus}>LIVE</div>
             <h2 id="product-architecture-heading">Intelligent Procurement</h2>
             <p className={styles.productStatement}>
               The product is operated on its own application boundary at
@@ -258,12 +258,12 @@ export default function IntelligentProcurementPage() {
           className={styles.contactClose}
           aria-labelledby="product-contact-heading"
         >
-          <p>PRODUCT INQUIRIES</p>
+          <p>PRODUCT ACCESS</p>
           <h2 id="product-contact-heading">
-            Start with the procurement problem you need to govern more clearly.
+            Intelligent Procurement is live. Access is currently by invitation.
           </h2>
-          <Link href="/contact">
-            Contact Nexus Pavilion <span aria-hidden="true">→</span>
+          <Link href="https://procurement.nexuspavilion.com/login">
+            Open Intelligent Procurement <span aria-hidden="true">→</span>
           </Link>
         </section>
       </div>
