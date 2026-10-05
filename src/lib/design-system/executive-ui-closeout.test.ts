@@ -640,7 +640,7 @@ describe("NP-MASTER-22-B05 launch-critical closeout", () => {
       "const submissionClosed = isSubmissionClosed(rfq);",
     );
     expect(launchCritical.rfqSubmit).toContain(
-      "disabled={loading || submissionClosed}",
+      "disabled={loading || submissionClosed || quoteCurrent}",
     );
     expect(launchCritical.rfqSubmit).not.toContain("rfqStatusError");
     expect(launchCritical.rfqSubmit).not.toContain("rfqLoading");
