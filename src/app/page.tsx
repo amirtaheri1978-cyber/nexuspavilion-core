@@ -66,15 +66,31 @@ export default function HomePage() {
               </span>
               <span className={styles.brandName}>Nexus Pavilion Inc.</span>
             </Link>
-            <nav className={styles.navigation} aria-label="Corporate">
-              {navigation.map((item) => <Link key={item.label} href={item.href}>{item.label}</Link>)}
-            </nav>
+            <div className={styles.headerActions}>
+              <nav className={styles.navigation} aria-label="Corporate">
+                {navigation.map((item) => <Link key={item.label} href={item.href}>{item.label}</Link>)}
+              </nav>
+              <Link
+                className={styles.productAccess}
+                href="https://procurement.nexuspavilion.com/login"
+              >
+                <span>LIVE</span>
+                Open Intelligent Procurement
+              </Link>
+            </div>
             <details className={styles.mobileNavigation}>
               <summary aria-label="Corporate navigation menu">
                 <span>Menu</span>
                 <span className={styles.mobileNavigationIcon} aria-hidden="true" />
               </summary>
               <nav aria-label="Corporate mobile navigation">
+                <Link
+                  className={styles.mobileProductAccess}
+                  href="https://procurement.nexuspavilion.com/login"
+                >
+                  <span aria-hidden="true">LIVE</span>
+                  Open Intelligent Procurement
+                </Link>
                 {navigation.map((item, index) => (
                   <Link key={item.label} href={item.href}>
                     <span aria-hidden="true">0{index + 1}</span>
@@ -87,12 +103,21 @@ export default function HomePage() {
 
           <div className={styles.hero}>
             <section id="technology" className={styles.copy} aria-labelledby="corporate-hero-heading">
+              <Link
+                className={styles.launchRail}
+                href="https://procurement.nexuspavilion.com/login"
+                aria-label="Open Intelligent Procurement"
+              >
+                <span className={styles.launchStatus}>LIVE</span>
+                <span className={styles.launchProduct}>Intelligent Procurement</span>
+                <span className={styles.launchAction}>Open Product →</span>
+              </Link>
               <p className={styles.kicker}>Real systems · brighter tomorrows</p>
               <h1 id="corporate-hero-heading">Turning complexity into decisive intelligence.</h1>
               <p className={styles.lead}>We build focused software products that transform complex data, operations, infrastructure, and domain expertise into clearer decisions and meaningful real-world outcomes.</p>
               <div className={styles.actions}>
-                <Link className={styles.primary} href="#corporate-technology">Explore Technology</Link>
-                <Link className={styles.secondary} href="#products-projects">View Products</Link>
+                <Link className={styles.primary} href="https://procurement.nexuspavilion.com/login">Open Intelligent Procurement</Link>
+                <Link className={styles.secondary} href="#corporate-technology">Explore Technology</Link>
               </div>
             </section>
 
