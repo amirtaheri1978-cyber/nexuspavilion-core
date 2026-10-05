@@ -10,6 +10,7 @@ import {
   reportCriticalApiFailure,
 } from "@/lib/ops/report-critical-api-failure";
 import { createClient } from "@/lib/supabase/server";
+import { recordWorkspaceInvitationActivity } from "@/lib/workspace/record-workspace-invitation-activity";
 
 type RevokeInvitationRpcResult = {
   success?: boolean;
@@ -153,26 +154,17 @@ export async function POST(request: Request) {
 
     const commandCompanyId = invitation.company_id;
 
-    await supabase.from("audit_logs").insert({
-      action: "INVITATION_REVOKED",
-      entity_type: "invitation",
-      entity_id: invitation.id,
-      user_id: workspace.userId,
-      company_id: commandCompanyId,
-      metadata: {
-        email: invitation.email,
-        role: invitation.role,
-        revoked_by: {
-          id: workspace.userId,
-          email: workspace.email,
-          workspace_role: workspace.workspaceRole,
-        },
-        revoked_at: new Date().toISOString(),
+    const activityRecorded = await recordWorkspaceInvitationActivity(
+      supabase,
+      {
+        activityKind: "revoked",
+        invitationId: invitation.id,
       },
-    });
+    );
 
     return NextResponse.json({
       success: true,
+      activityRecorded,
     });
   } catch (error) {
     reportCriticalApiFailure({
