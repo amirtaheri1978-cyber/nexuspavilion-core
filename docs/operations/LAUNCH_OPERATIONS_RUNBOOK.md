@@ -656,6 +656,39 @@ Check these on a fixed cadence after Production cutover. Evidence is host
 logs, `/api/health`, Supabase status, and authenticated UAT — not an
 imaginary APM suite.
 
+### First 72-hour watch cadence
+
+The launch watch starts only after the Product Owner records the explicit
+Production Go/No-Go and the intended deployment SHA is live on the product
+origin. Use these checkpoints so the watch plan is executable rather than
+aspirational:
+
+- **T+0, +15m, +30m, +60m, +2h:** verify deployment identity,
+  `/api/health`, host 5xx/error signals, Supabase project health, and
+  authentication availability.
+- **T+4h, +8h, +12h, +24h:** repeat the platform checks and add one
+  authenticated Company Workspace/RFQ read-path smoke. At **T+8h** and
+  **T+24h**, verify one Product Owner-approved non-destructive or controlled
+  write-path check when operationally safe.
+- **T+48h and +72h:** repeat the platform and authenticated smoke checks,
+  review invitation/email delivery failures, review permission/RLS anomaly
+  signals, and confirm no unresolved rollback trigger remains.
+- **Any time a shared stop condition is observed:** do not wait for the next
+  checkpoint. Freeze the affected writes or deployment promotion immediately,
+  preserve evidence, and follow the applicable rollback/incident procedure in
+  this runbook.
+
+For every checkpoint record: UTC timestamp, live deployment SHA, operator,
+`/api/health` result, Supabase health state, authentication result when
+scheduled, application 5xx/error summary, authenticated smoke result when
+scheduled, any invitation/email failure signal, any tenant-isolation/RLS
+anomaly, decision taken, and unresolved follow-up.
+
+Do not create synthetic procurement evidence merely to satisfy a cadence.
+Controlled write checks require a Product Owner-approved test context and must
+preserve the separation of Workspace Membership, Workspace Invitation, RFQ
+Invitation, Quotation, and Contract Award.
+
 1. Deployment healthy — `/api/health` `ok: true`; `commitSha` matches the
    launched git SHA when the host provides it.
 2. Auth/login — password login and callback continuation.
