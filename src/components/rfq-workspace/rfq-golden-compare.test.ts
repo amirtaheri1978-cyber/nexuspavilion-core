@@ -100,8 +100,8 @@ describe("NP-MASTER-22-B03 Golden RFQ compare / submit", () => {
   it("uses canonical quote terminology while preserving blind-bidding terminology", () => {
     expect(compare).toContain('label="Recommended quote"');
     expect(compare).toContain("Submitted quote set");
-    expect(compare).toContain('label="Average submitted quote"');
-    expect(compare).toContain('label="Quote spread"');
+    expect(compare).toContain('label="Average decision-ready quote"');
+    expect(compare).toContain('label="Decision-ready quote spread"');
     expect(compare).toContain("Blind bidding active");
     expect(compare).not.toContain('label="Recommended bid"');
     expect(comparison).toContain("Lowest quote");
