@@ -46,8 +46,8 @@ describe("21-03E SEO and AI discoverability contract", () => {
     expect(productPage).toContain("RFQ workflows");
     expect(productPage).toContain("Commercial evaluation");
     expect(productPage).toContain("Governed award decisions");
-    expect(productPage).toContain(
-      "Workspace invitations establish company membership; they do not grant RFQ participation by themselves.",
+    expect(productPage).toMatch(
+      /Workspace invitations\s+establish company membership; they do not grant RFQ\s+participation by themselves\./,
     );
     expect(productPage).toContain(
       "it does not itself constitute an executed legal contract, purchase order, or notice to proceed.",
