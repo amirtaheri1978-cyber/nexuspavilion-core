@@ -140,13 +140,18 @@ export function getCopilotSuggestions({
     );
   }
 
-  if (isOpen && quoteCount === 0) {
+  if (commercialEvaluationUnlocked && isOpen && quoteCount === 0) {
     suggestions.push(
       "Invite qualified suppliers now to strengthen supplier response coverage before the deadline.",
     );
   }
 
-  if (isOpen && quoteCount > 0 && quoteCount < 3) {
+  if (
+    commercialEvaluationUnlocked &&
+    isOpen &&
+    quoteCount > 0 &&
+    quoteCount < 3
+  ) {
     suggestions.push(
       "Supplier competition is still light. Invite at least two more suppliers if timing allows.",
     );
@@ -254,11 +259,11 @@ export function getNextBestAction({
     return "Upload drawings, specifications, BOQ, or supporting documents.";
   }
 
-  if (isOpen && quoteCount === 0) {
+  if (commercialEvaluationUnlocked && isOpen && quoteCount === 0) {
     return "Invite qualified suppliers to strengthen supplier response coverage.";
   }
 
-  if (isOpen && quoteCount < 3) {
+  if (commercialEvaluationUnlocked && isOpen && quoteCount < 3) {
     return "Increase supplier coverage before the deadline.";
   }
 
