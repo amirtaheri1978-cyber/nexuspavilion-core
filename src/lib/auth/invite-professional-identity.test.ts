@@ -180,7 +180,13 @@ describe("NP-MASTER-22-B04-3 invite signup metadata", () => {
     expect(signUpBlock).not.toContain("procurement_function");
     expect(signUpBlock).not.toContain("membership_type");
     expect(signUpBlock).not.toContain("job_title");
-    expect(signUpBlock).not.toContain("emailRedirectTo");
+    expect(signUpBlock).toContain(
+      "emailRedirectTo: confirmationRedirect.toString()",
+    );
+    expect(inviteSignupPage).toContain('new URL(\n      "/auth/callback"');
+    expect(inviteSignupPage).toContain(
+      'confirmationRedirect.searchParams.set("next", `/invite/${token}`)',
+    );
     expect(inviteSignupPage).not.toContain("/auth/callback?next=/create-company");
   });
 });
