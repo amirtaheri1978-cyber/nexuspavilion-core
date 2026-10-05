@@ -160,11 +160,6 @@ export function getProcurementHealthBreakdown({
   blindBiddingEnabled,
   commercialEvaluationUnlocked,
 }: RFQProcurementHealthBreakdownInput): RFQProcurementHealthBreakdownItem[] {
-  const competition = Math.min(
-    100,
-    quoteCount * 28 + (quoteCount >= 3 ? 16 : 0),
-  );
-
   const documentation = Math.min(
     100,
     documentCount * 18 +
@@ -179,22 +174,7 @@ export function getProcurementHealthBreakdown({
       (addendaCount > 0 ? 10 : 0),
   );
 
-  const decisionReadiness = Math.min(
-    100,
-    commercialEvaluationUnlocked && quoteCount > 0
-      ? 62 + quoteCount * 8 + documentCount * 3
-      : 38 + quoteCount * 8 + documentCount * 4,
-  );
-
-  return [
-    {
-      label: "Competition",
-      score: competition,
-      detail:
-        quoteCount >= 3
-          ? "Healthy supplier coverage"
-          : "Supplier coverage can improve",
-    },
+  const nonCommercialBreakdown: RFQProcurementHealthBreakdownItem[] = [
     {
       label: "Documentation",
       score: documentation,
@@ -210,12 +190,38 @@ export function getProcurementHealthBreakdown({
         ? "Controlled commercial process"
         : "Standard RFQ controls",
     },
+  ];
+
+  if (!commercialEvaluationUnlocked) {
+    return nonCommercialBreakdown;
+  }
+
+  const competition = Math.min(
+    100,
+    quoteCount * 28 + (quoteCount >= 3 ? 16 : 0),
+  );
+
+  const decisionReadiness = Math.min(
+    100,
+    quoteCount > 0
+      ? 62 + quoteCount * 8 + documentCount * 3
+      : 38 + documentCount * 4,
+  );
+
+  return [
+    {
+      label: "Competition",
+      score: competition,
+      detail:
+        quoteCount >= 3
+          ? "Healthy supplier coverage"
+          : "Supplier coverage can improve",
+    },
+    ...nonCommercialBreakdown,
     {
       label: "Decision Readiness",
       score: decisionReadiness,
-      detail: commercialEvaluationUnlocked
-        ? "Evaluation path is open"
-        : "Awaiting commercial opening",
+      detail: "Evaluation path is open",
     },
   ];
 }
@@ -229,72 +235,86 @@ export function getExecutiveRiskMatrix({
   addendaCount,
   commercialEvaluationUnlocked,
 }: RFQExecutiveRiskMatrixInput): RFQExecutiveRiskItem[] {
-  return [
-    {
-      label: "Schedule",
-      level:
-        deadlinePassed || deadlineRiskStatus === "expired"
+  const schedule: RFQExecutiveRiskItem = {
+    label: "Schedule",
+    level:
+      deadlinePassed || deadlineRiskStatus === "expired"
+        ? "High"
+        : deadlineRiskStatus === "urgent"
           ? "High"
-          : deadlineRiskStatus === "urgent"
-            ? "High"
-            : deadlineRiskStatus === "approaching"
+          : deadlineRiskStatus === "approaching"
+            ? "Medium"
+            : !isOpen || deadlineRiskStatus === "unavailable"
               ? "Medium"
-              : !isOpen || deadlineRiskStatus === "unavailable"
-                ? "Medium"
-                : "Low",
-      detail:
-        deadlinePassed || deadlineRiskStatus === "expired"
-          ? "Submission window has closed"
-          : deadlineRiskStatus === "urgent"
-            ? "Submission deadline is within 72 hours"
-            : deadlineRiskStatus === "approaching"
-              ? "Submission deadline is within 7 days"
-              : deadlineRiskStatus === "unavailable"
-                ? "Submission deadline risk cannot be resolved"
-                : !isOpen
-                  ? "RFQ is not open for submissions"
-                  : "More than 7 days remain before submission closes",
-    },
-    {
-      label: "Competition",
-      level:
-        quoteCount >= 3
-          ? "Strong"
-          : quoteCount > 0
-            ? "Moderate"
-            : "Low",
-      detail:
-        quoteCount >= 3
-          ? "Supplier response coverage is healthy"
-          : "More supplier participation recommended",
-    },
-    {
-      label: "Documentation",
-      level:
-        documentCount >= 3
-          ? "Strong"
-          : documentCount > 0
-            ? "Moderate"
-            : "Low",
-      detail:
-        documentCount > 0
-          ? "RFQ package has supporting files"
-          : "Upload documents before supplier review",
-    },
-    {
-      label: "Commercial",
-      level: commercialEvaluationUnlocked ? "Open" : "Locked",
-      detail: commercialEvaluationUnlocked
-        ? "Commercial comparison is available"
-        : "Commercial data remains protected",
-    },
-    {
-      label: "Clarifications",
-      level: addendaCount > 0 ? "Active" : "Quiet",
-      detail:
-        addendaCount > 0
-          ? "Addenda history is present"
-          : "No issued addenda yet",
-    },
+              : "Low",
+    detail:
+      deadlinePassed || deadlineRiskStatus === "expired"
+        ? "Submission window has closed"
+        : deadlineRiskStatus === "urgent"
+          ? "Submission deadline is within 72 hours"
+          : deadlineRiskStatus === "approaching"
+            ? "Submission deadline is within 7 days"
+            : deadlineRiskStatus === "unavailable"
+              ? "Submission deadline risk cannot be resolved"
+              : !isOpen
+                ? "RFQ is not open for submissions"
+                : "More than 7 days remain before submission closes",
+  };
+
+  const documentation: RFQExecutiveRiskItem = {
+    label: "Documentation",
+    level:
+      documentCount >= 3
+        ? "Strong"
+        : documentCount > 0
+          ? "Moderate"
+          : "Low",
+    detail:
+      documentCount > 0
+        ? "RFQ package has supporting files"
+        : "Upload documents before supplier review",
+  };
+
+  const commercial: RFQExecutiveRiskItem = {
+    label: "Commercial",
+    level: commercialEvaluationUnlocked ? "Open" : "Locked",
+    detail: commercialEvaluationUnlocked
+      ? "Commercial comparison is available"
+      : "Commercial data remains protected",
+  };
+
+  const clarifications: RFQExecutiveRiskItem = {
+    label: "Clarifications",
+    level: addendaCount > 0 ? "Active" : "Quiet",
+    detail:
+      addendaCount > 0
+        ? "Addenda history is present"
+        : "No issued addenda yet",
+  };
+
+  if (!commercialEvaluationUnlocked) {
+    return [schedule, documentation, commercial, clarifications];
+  }
+
+  const competition: RFQExecutiveRiskItem = {
+    label: "Competition",
+    level:
+      quoteCount >= 3
+        ? "Strong"
+        : quoteCount > 0
+          ? "Moderate"
+          : "Low",
+    detail:
+      quoteCount >= 3
+        ? "Supplier response coverage is healthy"
+        : "More supplier participation recommended",
+  };
+
+  return [
+    schedule,
+    competition,
+    documentation,
+    commercial,
+    clarifications,
   ];
 }
