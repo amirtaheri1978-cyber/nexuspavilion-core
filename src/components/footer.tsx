@@ -97,7 +97,7 @@ export default function Footer() {
               Intelligent Procurement
             </Link>
           </h2>
-          <p>A Nexus Pavilion Inc. product · In Development</p>
+          <p>A Nexus Pavilion Inc. product · Live · Access by invitation</p>
         </aside>
 
         <div className={styles.closing}>
