@@ -71,7 +71,7 @@ describe("Task 28 RFQ invitation continuation surface", () => {
     expect(inviteWorkspace).toContain("EXECUTIVE_CTA_PRIMARY");
     expect(inviteWorkspace).toContain("EXECUTIVE_CTA_SECONDARY");
     expect(frozenSubmit).toContain('fetch("/api/quotes"');
-    expect(frozenSubmit).toContain('method: "POST"');
+    expect(frozenSubmit).toContain('method: isResubmission ? "PATCH" : "POST"');
     expect(frozenSubmit).toContain('data-rfq-submit-workspace="true"');
   });
 
