@@ -83,8 +83,8 @@ describe("Task 24-RFQ-05 command center density closeout", () => {
       '"Commercial decision recorded for downstream handoff"',
     );
     expect(detail).toContain("awardRecorded,");
-    expect(detail).toContain(
-      'rfqStatus === "awarded"\n      ? getRFQStatusLabel(rfq.status)',
+    expect(detail).toMatch(
+      /rfqStatus === "awarded"\s*\? getRFQStatusLabel\(rfq\.status\)/,
     );
     expect(visualQa).toContain('value: "Award Recorded"');
     expect(visualQa).toContain(
