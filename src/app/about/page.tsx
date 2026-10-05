@@ -88,7 +88,7 @@ export default function AboutPage() {
             <p>PRODUCT / 01</p>
             <div className={styles.productStatus}>LIVE</div>
             <h2 id="product-heading">Intelligent Procurement</h2>
-            <p className={styles.productStatement}>Intelligent Procurement is live and organized around a Company Workspace for company identity, access, and operating context, and a Procurement Center where authorized participants manage RFQs, supplier responses, commercial evaluation, and governed award decisions.</p>
+            <p className={styles.productStatement}>Intelligent Procurement is live with access by invitation and is organized around a Company Workspace for company identity, access, and operating context, and a Procurement Center where authorized participants manage RFQs, supplier responses, commercial evaluation, and governed award decisions.</p>
           </div>
         </section>
 
