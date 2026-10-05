@@ -65,6 +65,7 @@ export const LAUNCH_REGRESSION_TEST_FILES = [
   "src/lib/launch/rfq-activity-audit-write-contract.test.ts",
   "src/lib/launch/rfq-marketplace-auth-guard.test.ts",
   "src/lib/launch/seo-ai-discoverability.test.ts",
+  "src/lib/launch/final-legal-attribution.test.ts",
   "src/lib/migration-baseline-rehearsal.test.ts",
   "src/lib/navigation/application-nav.test.ts",
   "src/lib/navigation/application-shell.test.ts",
