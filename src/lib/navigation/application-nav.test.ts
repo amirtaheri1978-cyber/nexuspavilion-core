@@ -138,6 +138,7 @@ describe("Task 23 application navigation contract", () => {
   it("classifies public, chromeless, and application shells without inventing routes", () => {
     expect(getAppShellKind("/")).toBe("public");
     expect(getAppShellKind("/pricing")).toBe("public");
+    expect(getAppShellKind("/products/intelligent-procurement")).toBe("public");
     expect(getAppShellKind("/login")).toBe("chromeless");
     expect(getAppShellKind("/verify")).toBe("chromeless");
     expect(getAppShellKind("/create-company")).toBe("chromeless");
