@@ -225,7 +225,7 @@ describe("Cursor Corp 02 Slice A corporate root contract", () => {
     expect(rootPage).not.toContain("primary live product");
     expect(rootPage).not.toMatch(/coming soon/i);
     expect(rootPage).not.toMatch(/placeholder/i);
-    expect(rootPage).not.toContain("/products");
+    expect(rootPage).toContain('href="/products/intelligent-procurement"');
     expect(rootPage).not.toContain("ExecutiveActionCard");
     expect(rootPage).not.toContain("NexusPavilion Cloud");
     expect(rootPage).not.toContain("NexusPavilion Analytics Platform");
