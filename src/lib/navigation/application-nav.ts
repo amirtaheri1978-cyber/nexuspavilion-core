@@ -66,6 +66,7 @@ export const APP_SHELL_PUBLIC_ROUTES = [
   "/pricing",
   "/privacy",
   "/terms",
+  "/products",
 ] as const;
 
 export const APP_SHELL_CHROMELESS_PREFIXES = ["/dev", "/rfq/invite"] as const;
