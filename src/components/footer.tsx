@@ -89,7 +89,14 @@ export default function Footer() {
 
         <aside className={styles.product} aria-labelledby="footer-product-title">
           <p className={styles.productEyebrow}>Product / 01</p>
-          <h2 id="footer-product-title">Intelligent Procurement</h2>
+          <h2 id="footer-product-title">
+            <Link
+              href="/products/intelligent-procurement"
+              className={styles.productLink}
+            >
+              Intelligent Procurement
+            </Link>
+          </h2>
           <p>A Nexus Pavilion Inc. product · In Development</p>
         </aside>
 
