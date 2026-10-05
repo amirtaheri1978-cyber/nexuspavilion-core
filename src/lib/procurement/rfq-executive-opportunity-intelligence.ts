@@ -87,19 +87,23 @@ export function buildRfqExecutiveOpportunityIntelligence({
               ? "Nexus Pavilion has identified a savings opportunity against the current average submitted quote."
               : "Savings opportunity will become clearer once supplier commercial submissions are available.",
         },
-        {
-          title: "Supplier Competition Expansion",
-          priority: quoteCount >= 3 ? "Medium" : "High",
-          impact: "Market Coverage",
-          value:
-            quoteCount >= 3
-              ? "Healthy coverage"
-              : `${Math.max(3 - quoteCount, 1)}+ more suppliers`,
-          summary:
-            quoteCount >= 3
-              ? "Supplier competition is currently healthy for executive review."
-              : "Expanding supplier participation can improve quote quality, negotiation leverage, and award confidence.",
-        },
+        ...(commercialEvaluationUnlocked
+          ? [
+              {
+                title: "Supplier Competition Expansion" as const,
+                priority: quoteCount >= 3 ? ("Medium" as const) : ("High" as const),
+                impact: "Market Coverage",
+                value:
+                  quoteCount >= 3
+                    ? "Healthy coverage"
+                    : `${Math.max(3 - quoteCount, 1)}+ more suppliers`,
+                summary:
+                  quoteCount >= 3
+                    ? "Supplier competition is currently healthy for executive review."
+                    : "Expanding supplier participation can improve quote quality, negotiation leverage, and award confidence.",
+              },
+            ]
+          : []),
         {
           title: "Documentation Readiness",
           priority: documentCount > 0 ? "Medium" : "High",
