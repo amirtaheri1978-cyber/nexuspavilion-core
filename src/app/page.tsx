@@ -274,10 +274,10 @@ export default function HomePage() {
               <p className={styles.productStatement}>Intelligent Procurement is organized around a Company Workspace for company identity, access, and operating context, and a Procurement Center where authorized participants manage RFQs, supplier responses, commercial evaluation, and governed award decisions.</p>
               <p className={styles.productCapabilities}>SOURCING · EVALUATION · GOVERNANCE · DECISION INTELLIGENCE</p>
               <Link
-                href="/products/intelligent-procurement"
+                href="https://procurement.nexuspavilion.com/login"
                 className={styles.productExplore}
               >
-                View Intelligent Procurement <span aria-hidden="true">→</span>
+                Open Intelligent Procurement <span aria-hidden="true">→</span>
               </Link>
             </div>
 
