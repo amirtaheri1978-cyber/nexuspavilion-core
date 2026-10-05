@@ -4,7 +4,11 @@ import { describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
 import { createServerClient, type CookieMethodsServer } from "@supabase/ssr";
 
-vi.mock("@supabase/ssr", () => ({ createServerClient: vi.fn(() => ({})) }));
+vi.mock("@supabase/ssr", () => ({
+  createServerClient: vi.fn(() => ({
+    rpc: vi.fn(async () => ({ data: null, error: null })),
+  })),
+}));
 vi.mock("@/lib/auth/workspace-context", async (importOriginal) => ({
   ...await importOriginal<typeof import("@/lib/auth/workspace-context")>(),
   getCurrentWorkspaceContext: vi.fn(),

@@ -519,6 +519,10 @@ export default async function RFQDetailPage({ params }: PageProps) {
     ? readQuoteSubmissionCount(issuerSubmissionCountResult.data)
     : quoteList.length;
 
+  // Pre-opening issuer participation is a safe aggregate display only.
+  // It must not shape decision, competition, ranking, or recommendation outputs.
+  const decisionQuoteCount = commercialEvaluationUnlocked ? quoteCount : 0;
+
   let effectiveRfiDeadline: string | null = null;
   let effectiveRfiDeadlineTimezone: string | null =
     rfq.rfi_deadline_timezone ?? rfq.deadline_timezone ?? null;
@@ -705,7 +709,7 @@ export default async function RFQDetailPage({ params }: PageProps) {
     healthScore = getHealthScore({
       isOpen,
       deadlinePassed,
-      quoteCount,
+      quoteCount: decisionQuoteCount,
       documentCount: rfqAttachments.length,
       addendaCount: rfqAddenda.length,
       hasBudget: budget > 0,
@@ -715,7 +719,7 @@ export default async function RFQDetailPage({ params }: PageProps) {
     });
 
     healthBreakdown = getProcurementHealthBreakdown({
-      quoteCount,
+      quoteCount: decisionQuoteCount,
       documentCount: rfqAttachments.length,
       addendaCount: rfqAddenda.length,
       hasBudget: budget > 0,
@@ -728,7 +732,7 @@ export default async function RFQDetailPage({ params }: PageProps) {
       isOpen,
       deadlinePassed,
       deadlineRiskStatus: deadlineRisk.status,
-      quoteCount,
+      quoteCount: decisionQuoteCount,
       documentCount: rfqAttachments.length,
       addendaCount: rfqAddenda.length,
       commercialEvaluationUnlocked,
@@ -746,7 +750,7 @@ export default async function RFQDetailPage({ params }: PageProps) {
       awardRecorded,
       isOwner,
       isOpen,
-      quoteCount,
+      quoteCount: decisionQuoteCount,
       documentCount: rfqAttachments.length,
       addendaCount: rfqAddenda.length,
       commercialEvaluationUnlocked,
@@ -758,7 +762,7 @@ export default async function RFQDetailPage({ params }: PageProps) {
       isOwner,
       potentialSavings,
       commercialEvaluationUnlocked,
-      quoteCount,
+      quoteCount: decisionQuoteCount,
       documentCount: rfqAttachments.length,
       recommendedAwardConfidence: recommendedQuote?.awardConfidence ?? null,
     });
@@ -771,7 +775,7 @@ export default async function RFQDetailPage({ params }: PageProps) {
       isOpen,
       commercialEvaluationUnlocked,
       healthScore,
-      quoteCount,
+      quoteCount: decisionQuoteCount,
       documentCount: rfqAttachments.length,
       addendaCount: rfqAddenda.length,
       averageBid,
@@ -807,7 +811,7 @@ export default async function RFQDetailPage({ params }: PageProps) {
     isOwner,
     isOpen,
     canSubmitQuote,
-    quoteCount,
+    quoteCount: decisionQuoteCount,
     documentCount: rfqAttachments.length,
     addendaCount: rfqAddenda.length,
     commercialEvaluationUnlocked,

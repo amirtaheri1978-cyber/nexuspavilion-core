@@ -544,8 +544,8 @@ describe("NP-MASTER-22-B05 launch-critical closeout", () => {
     expect(launchCritical.rfqCompare).toContain(
       "No supplier quotations are available for comparison yet. Review RFQ participation and sourcing status.",
     );
-    expect(launchCritical.rfqCompare).toContain(
-      'commercialEvaluationUnlocked && recommendedQuote\n                ? formatMoney(Math.max(potentialSavings, 0))\n                : insufficientComparisonLabel',
+    expect(launchCritical.rfqCompare).toMatch(
+      /commercialEvaluationUnlocked\s*&&\s*recommendedQuote[\s\S]*?formatMoney\(Math\.max\(potentialSavings, 0\)\)[\s\S]*?: insufficientComparisonLabel/,
     );
 
     expect(launchCritical.rfqQuoteWorkspace).toContain(
@@ -632,15 +632,15 @@ describe("NP-MASTER-22-B05 launch-critical closeout", () => {
       'throw new Error("Unable to verify RFQ access.")',
     );
     expect(launchCritical.rfqSubmitPage).toContain("if (accessError)");
-    expect(launchCritical.rfqSubmitPage).toContain(
-      "<RfqSubmitWorkspace slug={slug} initialRfq={submitRfq} />",
+    expect(launchCritical.rfqSubmitPage).toMatch(
+      /<RfqSubmitWorkspace[\s\S]*slug=\{slug\}[\s\S]*initialRfq=\{submitRfq\}[\s\S]*initialQuote=\{initialQuote\}[\s\S]*\/>/,
     );
     expect(launchCritical.rfqSubmit).toContain("const rfq = initialRfq;");
     expect(launchCritical.rfqSubmit).toContain(
       "const submissionClosed = isSubmissionClosed(rfq);",
     );
     expect(launchCritical.rfqSubmit).toContain(
-      "disabled={loading || submissionClosed}",
+      "disabled={loading || submissionClosed || quoteCurrent}",
     );
     expect(launchCritical.rfqSubmit).not.toContain("rfqStatusError");
     expect(launchCritical.rfqSubmit).not.toContain("rfqLoading");
