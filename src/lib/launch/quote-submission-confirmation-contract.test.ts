@@ -95,16 +95,18 @@ describe("14-06 Quote submission confirmation contract", () => {
     });
 
     expect(html).toContain("Nexus Pavilion");
-    expect(html).toContain("Supplier Submission Recorded");
-    expect(html).toContain("Quote submitted successfully.");
+    expect(html).toContain("Quotation Submitted");
+    expect(html).toContain("Your quotation has been recorded.");
     expect(html).toContain("Harbor Point Mixed-Use Development");
     expect(html).toContain("125000");
     expect(html).toContain("Q2 delivery");
     expect(html).toContain("60 days");
     expect(html).toContain(`href="${workspaceUrl}"`);
-    expect(html).toContain("View Submission");
-    expect(html).toContain("Open RFQ Workspace");
-    expect(html).toContain("Competing suppliers cannot access or view your submission.");
+    expect(html).toContain("Review Submission");
+    expect(html).toContain("Procurement Status");
+    expect(html).toContain(
+      "Your pricing, commercial notes, validity period and supporting submission information remain confidential and are not visible to competing respondents.",
+    );
     expect(html).not.toContain("/compare");
     expect(html).not.toContain("invitation");
     expect(html).not.toContain("provider");

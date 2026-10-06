@@ -27,6 +27,7 @@ vi.mock("@/lib/email/send-email", () => ({
 }));
 
 vi.mock("@/lib/ops/public-site-url", () => ({
+  getPublicSiteUrl: () => "https://example.test",
   joinPublicSitePath: (path: string) => `https://example.test${path}`,
 }));
 

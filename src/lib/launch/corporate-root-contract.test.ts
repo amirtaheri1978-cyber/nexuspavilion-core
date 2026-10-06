@@ -67,8 +67,10 @@ describe("Cursor Corp 02 Slice A corporate root contract", () => {
   });
 
   it("identifies NexusPavilion Inc. as the corporate parent on the root", () => {
-    expect(rootPage).toContain("NexusPavilion Inc.");
-    expect(rootPage).toContain("parent company");
+    expect(rootPage).toContain("Nexus Pavilion Inc.");
+    expect(rootPage).toContain(
+      "including Intelligent Procurement, its procurement intelligence product.",
+    );
     expect(rootPage).toContain('id="corporate-hero-heading"');
     expect(rootPage).toContain("<h1");
   });
@@ -205,7 +207,7 @@ describe("Cursor Corp 02 Slice A corporate root contract", () => {
     expect(products).toContain("INTELLIGENT PROCUREMENT");
     expect(products).toContain("IN DEVELOPMENT");
     expect(products).toContain(
-      "An AI-assisted procurement intelligence product designed to help teams structure sourcing workflows, evaluate commercial information, and make consequential procurement decisions with greater context and control.",
+      "Intelligent Procurement is organized around a Company Workspace for company identity, access, and operating context, and a Procurement Center where authorized participants manage RFQs, supplier responses, commercial evaluation, and governed award decisions.",
     );
     expect(products).toContain(
       "SOURCING · EVALUATION · GOVERNANCE · DECISION INTELLIGENCE",
@@ -260,7 +262,7 @@ describe("Cursor Corp 02 Slice A corporate root contract", () => {
   it("uses only valid corporate routes and anchors", () => {
     expect(rootPage).toContain('href: "/about"');
     expect(rootPage).toContain('href: "/contact"');
-    expect(rootPage).toContain('href: "#technology"');
+    expect(rootPage).toContain('href: "#corporate-technology"');
     expect(rootPage).toContain('href: "#industries"');
     expect(rootPage).not.toContain('href="/create-company"');
     expect(rootPage).not.toContain('href="#"');
@@ -277,7 +279,7 @@ describe("Cursor Corp 02 Slice A corporate root contract", () => {
     expect(publicFooter).toContain('href: "/terms"');
     expect(publicFooter).toContain("Nexus Pavilion Inc.");
     expect(publicFooter).toContain(
-      "Focused AI and software systems for complex real-world environments.",
+      "Focused software and decision-intelligence systems for complex real-world environments.",
     );
     expect(publicFooter).toContain("Ontario, Canada");
     expect(publicFooter).toContain("ONTARIO, CANADA");
@@ -298,8 +300,9 @@ describe("Cursor Corp 02 Slice A corporate root contract", () => {
     expect(publicFooter).not.toContain('href="/products"');
     expect(publicFooter).not.toContain('href="/resources"');
     expect(publicFooter).not.toContain('href="/help"');
-    expect(publicFooter).not.toContain("All rights reserved");
-    expect(publicFooter).not.toContain("©");
+    expect(publicFooter).toContain(
+      "© 2026 Nexus Pavilion Inc. All rights reserved.",
+    );
     expect(publicFooter).not.toContain("/dashboard");
     expect(publicFooter).not.toContain("/analytics");
     expect(publicFooter).not.toContain("Products / Projects");
@@ -331,34 +334,35 @@ describe("Cursor Corp 02 Slice A corporate root contract", () => {
   it("defines corporate root metadata rather than procurement-only site identity", () => {
     expect(rootPage).toContain("absolute: CORPORATE_TITLE");
     expect(rootPage).toContain(
-      'const CORPORATE_TITLE = "NexusPavilion Inc. | Corporate Home"',
+      'const CORPORATE_TITLE = "Nexus Pavilion Inc. | Software & Decision Intelligence"',
     );
     expect(rootPage).toContain('canonical: "/"');
     expect(rootPage).toContain("index: true");
     expect(rootPage).toContain("follow: true");
-    expect(rootPage).toContain('siteName: "NexusPavilion Inc."');
+    expect(rootPage).toContain('siteName: "Nexus Pavilion Inc."');
     expect(rootPage).toContain(
-      "parent company of NexusPavilion Intelligent Procurement",
+      "including Intelligent Procurement, its procurement intelligence product.",
     );
     expect(rootPage).not.toContain("Procurement Intelligence Platform");
-    expect(rootPage).not.toContain("Nexus Pavilion |");
   });
 
   it("leaves unresolved legal page copy and logo alt unchanged", () => {
     expect(privacyPage).toContain(
-      "Nexus Pavilion is committed to protecting company information",
+      "Nexus Pavilion Inc. operates this corporate website and is the corporate owner of Intelligent Procurement.",
     );
-    expect(termsPage).toContain("Nexus Pavilion Terms");
+    expect(termsPage).toContain(
+      "These Terms set out the operating boundaries for applicable services provided by Nexus Pavilion Inc.",
+    );
     expect(logo).toContain('alt="NexusPavilion"');
   });
 });
 
 describe("Cursor Corp 02 Slice B application footer contract", () => {
-  it("attributes Intelligent Procurement to NexusPavilion Inc.", () => {
+  it("attributes Intelligent Procurement to Nexus Pavilion Inc.", () => {
     expect(applicationFooter).toContain("Intelligent Procurement");
-    expect(applicationFooter).toContain("NexusPavilion Inc.");
+    expect(applicationFooter).toContain("Nexus Pavilion Inc.");
     expect(applicationFooter).toContain(
-      "Intelligent Procurement · A NexusPavilion Inc. product",
+      "Intelligent Procurement · A Nexus Pavilion Inc. product",
     );
     expect(applicationFooter).not.toContain(
       "Nexus Pavilion · Confidential procurement workspace",
@@ -448,30 +452,30 @@ describe("Cursor Corp 02 Slice C metadata indexing contract", () => {
 
   it("preserves corporate root page metadata", () => {
     expect(rootPage).toContain(
-      'const CORPORATE_TITLE = "NexusPavilion Inc. | Corporate Home"',
+      'const CORPORATE_TITLE = "Nexus Pavilion Inc. | Software & Decision Intelligence"',
     );
     expect(rootPage).toContain('canonical: "/"');
     expect(rootPage).toContain("index: true");
     expect(rootPage).toContain("follow: true");
-    expect(rootPage).toContain('siteName: "NexusPavilion Inc."');
+    expect(rootPage).toContain('siteName: "Nexus Pavilion Inc."');
   });
 
   it("indexes corporate about and contact with self-canonicals", () => {
     expect(aboutPage).toContain(
-      'const ABOUT_TITLE = "About | NexusPavilion Inc."',
+      'const ABOUT_TITLE = "Company | Nexus Pavilion Inc."',
     );
     expect(aboutPage).toContain('canonical: "/about"');
     expect(aboutPage).toContain("index: true");
     expect(aboutPage).toContain("follow: true");
-    expect(aboutPage).toContain('siteName: "NexusPavilion Inc."');
+    expect(aboutPage).toContain('siteName: "Nexus Pavilion Inc."');
 
     expect(contactPage).toContain(
-      'const CONTACT_TITLE = "Contact | NexusPavilion Inc."',
+      'const CONTACT_TITLE = "Contact | Nexus Pavilion Inc."',
     );
     expect(contactPage).toContain('canonical: "/contact"');
     expect(contactPage).toContain("index: true");
     expect(contactPage).toContain("follow: true");
-    expect(contactPage).toContain('siteName: "NexusPavilion Inc."');
+    expect(contactPage).toContain('siteName: "Nexus Pavilion Inc."');
   });
 
   it("renders the approved corporate contact narrative without legacy procurement positioning", () => {
@@ -501,34 +505,32 @@ describe("Cursor Corp 02 Slice C metadata indexing contract", () => {
     expect(publicContact).not.toMatch(/gmail\.com|Executive procurement consultation|Supplier Network|RFQ Governance|Board Reporting|Executive Response Framework|Join Network|View Directory|Request Executive Consultation/i);
   });
 
-  it("indexes product pricing with self-canonical", () => {
+  it("keeps Early Access pricing out of public indexing", () => {
     expect(pricingPage).toContain(
-      'const PRICING_TITLE = "Pricing | NexusPavilion Intelligent Procurement"',
+      'const PAGE_TITLE = "Intelligent Procurement Early Access | Nexus Pavilion"',
     );
-    expect(pricingPage).toContain('canonical: "/pricing"');
-    expect(pricingPage).toContain("index: true");
+    expect(pricingPage).toContain("index: false");
     expect(pricingPage).toContain("follow: true");
-    expect(pricingPage).toContain(
-      'siteName: "NexusPavilion Intelligent Procurement"',
-    );
+    expect(pricingPage).not.toContain("canonical:");
+    expect(pricingPage).toContain('siteName: "Nexus Pavilion"');
   });
 
   it("marks legal routes noindex/follow without ownership claims", () => {
     expect(privacyPage).toContain(
-      'const PRIVACY_TITLE = "Privacy | NexusPavilion"',
+      'const PRIVACY_TITLE = "Privacy | Nexus Pavilion Inc."',
     );
     expect(privacyPage).toContain("index: false");
     expect(privacyPage).toContain("follow: true");
     expect(privacyPage).not.toContain("canonical:");
     expect(privacyPage).not.toContain("All rights reserved");
-    expect(privacyPage).not.toContain("© NexusPavilion Inc.");
+    expect(privacyPage).not.toContain("All rights reserved");
 
-    expect(termsPage).toContain('const TERMS_TITLE = "Terms | NexusPavilion"');
+    expect(termsPage).toContain('const TERMS_TITLE = "Terms | Nexus Pavilion Inc."');
     expect(termsPage).toContain("index: false");
     expect(termsPage).toContain("follow: true");
     expect(termsPage).not.toContain("canonical:");
     expect(termsPage).not.toContain("All rights reserved");
-    expect(termsPage).not.toContain("© NexusPavilion Inc.");
+    expect(termsPage).not.toContain("All rights reserved");
   });
 
   it("marks auth and onboarding routes product-context noindex/nofollow", () => {
@@ -542,7 +544,7 @@ describe("Cursor Corp 02 Slice C metadata indexing contract", () => {
     ];
 
     for (const source of authLayouts) {
-      expect(source).toContain("NexusPavilion Intelligent Procurement");
+      expect(source).toContain("| Intelligent Procurement");
       expect(source).toContain("index: false");
       expect(source).toContain("follow: false");
       expect(source).not.toContain('canonical: "/"');
@@ -550,29 +552,33 @@ describe("Cursor Corp 02 Slice C metadata indexing contract", () => {
       expect(source).not.toContain("twitter:");
     }
 
-    expect(loginLayout).toContain("Sign In | NexusPavilion Intelligent Procurement");
+    expect(loginLayout).toContain("Sign In | Intelligent Procurement");
     expect(signupLayout).toContain(
-      "Create Account | NexusPavilion Intelligent Procurement",
+      "Create Account | Intelligent Procurement",
     );
     expect(forgotPasswordLayout).toContain(
-      "Forgot Password | NexusPavilion Intelligent Procurement",
+      "Forgot Password | Intelligent Procurement",
     );
     expect(setPasswordLayout).toContain(
-      "Set Password | NexusPavilion Intelligent Procurement",
+      "Set Password | Intelligent Procurement",
     );
     expect(verifyLayout).toContain(
-      "Verify Account | NexusPavilion Intelligent Procurement",
+      "Verify Account | Intelligent Procurement",
     );
     expect(createCompanyLayout).toContain(
-      "Create Company | NexusPavilion Intelligent Procurement",
+      "Create Company | Intelligent Procurement",
     );
   });
 
   it("keeps invitation metadata generic without confidential fields", () => {
+    expect(inviteLayout).toContain(
+      "Workspace Invitation | Intelligent Procurement",
+    );
+    expect(rfqInviteLayout).toContain(
+      "RFQ Invitation | Intelligent Procurement",
+    );
+
     for (const source of [inviteLayout, rfqInviteLayout]) {
-      expect(source).toContain(
-        "Invitation | NexusPavilion Intelligent Procurement",
-      );
       expect(source).toContain("index: false");
       expect(source).toContain("follow: false");
       expect(source).not.toContain("openGraph:");
@@ -595,7 +601,10 @@ describe("Cursor Corp 02 Slice C metadata indexing contract", () => {
     expect(sitemap).toContain('url: "https://nexuspavilion.com"');
     expect(sitemap).toContain('url: "https://nexuspavilion.com/about"');
     expect(sitemap).toContain('url: "https://nexuspavilion.com/contact"');
-    expect(sitemap).toContain('url: "https://nexuspavilion.com/pricing"');
+    expect(sitemap).toContain(
+      'url: "https://nexuspavilion.com/products/intelligent-procurement"',
+    );
+    expect(sitemap).not.toContain('url: "https://nexuspavilion.com/pricing"');
 
     expect(sitemap).not.toContain("/rfq");
     expect(sitemap).not.toContain("/directory");
@@ -642,7 +651,7 @@ describe("Cursor Corp 02 Slice C metadata indexing contract", () => {
     expect(appShell).toMatch(/if \(shellKind === "public"\)[\s\S]*<Footer \/>/);
     expect(appShell).toContain("<ApplicationFooter />");
     expect(applicationFooter).toContain(
-      "Intelligent Procurement · A NexusPavilion Inc. product",
+      "Intelligent Procurement · A Nexus Pavilion Inc. product",
     );
     expect(publicFooter).toContain("Intelligent Procurement");
     expect(publicFooter).toContain("A Nexus Pavilion Inc. product · In Development");

@@ -8,6 +8,9 @@ function readSource(path: string) {
 }
 
 const addendaRoute = readSource("src/app/api/rfq-addenda/route.ts");
+const addendumCommunication = readSource(
+  "src/lib/procurement/rfq-addendum-communication.ts",
+);
 const rfqsRoute = readSource("src/app/api/rfqs/route.ts");
 
 describe("18-27A deadline, cancellation, and reissue API contract", () => {
@@ -51,11 +54,12 @@ describe("18-27A deadline, cancellation, and reissue API contract", () => {
 
   it("keeps Addendum publication, activity, acknowledgement, and delivery behavior", () => {
     expect(addendaRoute).toContain("p_requires_acknowledgement: true");
-    expect(addendaRoute).toContain('"addendum_published"');
-    expect(addendaRoute).toContain("recordTrustedProcurementActivity(");
+    expect(addendaRoute).toContain("recordAndDeliverAddendumCommunication({");
+    expect(addendumCommunication).toContain('"addendum_published"');
+    expect(addendumCommunication).toContain("recordTrustedProcurementActivity(");
     expect(addendaRoute).toContain("deliverAddendumNotificationEmails({");
     expect(addendaRoute).toContain("ADDENDUM_EMAIL_SAFE_RETRY_WINDOW_MS");
-    expect(addendaRoute).toContain("buildAddendumEmailIdempotencyKey(");
+    expect(addendumCommunication).toContain("buildAddendumEmailIdempotencyKey(");
   });
 
   it("implements cancellation as a validated cancel_rfq command only", () => {

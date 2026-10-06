@@ -774,7 +774,9 @@ it("keeps executive visual semantics aligned with the underlying evidence", () =
     expect(companyProfile).not.toContain("supplierIntelligenceScore");
     expect(companyProfile).not.toContain("Procurement Fit");
     expect(companyProfile).not.toContain("Buyer suitability");
-    expect(companyProfile).toContain("Supplier Commercial Evidence");
+    expect(companyProfile).toContain("Public Data Boundary");
+    expect(companyProfile).toContain("Access Restricted");
+    expect(companyProfile).toContain("not published on public company profiles");
 
     expect(vendorDashboard).not.toContain("supplierScore");
     expect(vendorDashboard).not.toContain("awardProbability");
@@ -907,10 +909,13 @@ describe("analytics procurement insight denominator truthfulness", () => {
   });
   it("keeps public discovery surfaces free of quote-row commercial intelligence and gates buyer context by commercial opening", () => {
     expect(publicCompanyPage).not.toContain('.from("quotes")');
-    expect(publicCompanyPage).toContain("Commercial Award Details");
+    expect(publicCompanyPage).toContain("Public Data Boundary");
     expect(publicCompanyPage).toContain("Access Restricted");
     expect(publicCompanyPage).toContain(
-      "Commercial performance data is not published on public company",
+      "Submitted quotes, supplier pricing, commercial evaluation, rankings",
+    );
+    expect(publicCompanyPage).toContain(
+      "not published on public company profiles",
     );
 
     expect(publicDirectoryPage).not.toContain('.from("quotes")');
