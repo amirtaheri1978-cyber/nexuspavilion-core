@@ -1,5 +1,18 @@
 import type { Metadata } from "next";
+import { Instrument_Sans, Manrope } from "next/font/google";
 import type { ReactNode } from "react";
+
+const instrumentSans = Instrument_Sans({
+  subsets: ["latin"],
+  variable: "--font-corporate-display",
+  display: "swap",
+});
+
+const manrope = Manrope({
+  subsets: ["latin"],
+  variable: "--font-corporate-body",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: {
@@ -12,5 +25,15 @@ export const metadata: Metadata = {
 };
 
 export default function LoginLayout({ children }: { children: ReactNode }) {
-  return children;
+  return (
+    <div
+      className={`${instrumentSans.variable} ${manrope.variable}`}
+      style={{
+        fontFamily:
+          "var(--font-corporate-body), system-ui, sans-serif",
+      }}
+    >
+      {children}
+    </div>
+  );
 }
