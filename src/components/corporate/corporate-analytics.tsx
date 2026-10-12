@@ -2,17 +2,23 @@
 
 import Link from "next/link";
 import Script from "next/script";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 
 import styles from "@/components/corporate/corporate-analytics.module.css";
 
-const CONSENT_STORAGE_KEY = "nexus-pavilion:corporate-analytics-consent";
+const CLARITY_PROJECT_ID = "ywaen8hn5r";
+
+const CONSENT_STORAGE_KEY = "nexus-pavilion:corporate-analytics-consent:v2";
 
 type AnalyticsConsent = "granted" | "denied";
+type ClarityCommand = ((...args: unknown[]) => void) & { q?: unknown[][] };
+let clarityAllowed = false;
+let clarityLoaded = false;
 
 declare global {
   interface Window {
+    clarity?: ClarityCommand;
     dataLayer?: unknown[];
     gtag?: (...args: unknown[]) => void;
   }
@@ -130,8 +136,23 @@ function sendCorporatePageView(measurementId: string, pagePath: string) {
   });
 }
 
+function setClarityConsent(granted: boolean) {
+  window.clarity?.("consentv2", {
+    analytics_Storage: granted ? "granted" : "denied",
+    ad_Storage: "denied",
+  });
+}
+
+function ensureClarityQueue() {
+  if (window.clarity) return;
+  const command: ClarityCommand = (...args) => {
+    (command.q ??= []).push(args);
+  };
+  window.clarity = command;
+}
+
 /**
- * Corporate-public GA4 only.
+ * Corporate-public GA4 and Clarity only.
  * Mounted exclusively from the AppShell "public" branch.
  * Scripts and page_view events run only after explicit analytics consent.
  * On unmount (leaving public shell), runtime analytics is revoked so SPA
@@ -153,6 +174,19 @@ export default function CorporateAnalytics() {
     setConsent(readStoredConsent());
     setHydrated(true);
   }, []);
+
+  useLayoutEffect(() => {
+    clarityAllowed = hydrated && consent === "granted";
+    if (!clarityAllowed) return;
+    ensureClarityQueue();
+    if (clarityLoaded) window.clarity?.("start");
+    setClarityConsent(true);
+    return () => {
+      clarityAllowed = false;
+      setClarityConsent(false);
+      window.clarity?.("stop");
+    };
+  }, [consent, hydrated]);
 
   useEffect(() => {
     if (!measurementId) {
@@ -197,7 +231,7 @@ export default function CorporateAnalytics() {
     sendCorporatePageView(measurementId, pagePath);
   }, [consent, measurementId, pathname, scriptReady, searchParams]);
 
-  if (!measurementId || !hydrated) {
+  if (!hydrated) {
     return null;
   }
 
@@ -219,6 +253,18 @@ export default function CorporateAnalytics() {
   return (
     <>
       {consent === "granted" ? (
+        <Script
+          id="corporate-clarity"
+          src={`https://www.clarity.ms/tag/${CLARITY_PROJECT_ID}`}
+          strategy="afterInteractive"
+          onLoad={() => {
+            clarityLoaded = true;
+            setClarityConsent(clarityAllowed);
+            if (!clarityAllowed) window.clarity?.("stop");
+          }}
+        />
+      ) : null}
+      {consent === "granted" && measurementId ? (
         <Script
           src={`https://www.googletagmanager.com/gtag/js?id=${measurementId}`}
           strategy="afterInteractive"
@@ -245,8 +291,9 @@ export default function CorporateAnalytics() {
               id="corporate-analytics-consent-description"
               className={styles.body}
             >
-              Nexus Pavilion Inc. uses Google Analytics 4 on this corporate website
-              only, to understand aggregate traffic and usage. Analytics is optional
+              Nexus Pavilion Inc. uses Google Analytics 4 and Microsoft Clarity on
+              this corporate website to understand traffic and usage through
+              analytics, heatmaps, and session recordings. Analytics is optional
               and non-essential.{" "}
               <Link
                 href="/privacy#cookies-storage-tracking"

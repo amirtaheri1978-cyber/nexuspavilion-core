@@ -151,6 +151,7 @@ export default function ContactForm() {
 
   return (
     <form
+      data-clarity-mask="true"
       onSubmit={handleSubmit}
       aria-describedby={statusMessage ? "contact-form-status" : undefined}
       className={styles.form}
