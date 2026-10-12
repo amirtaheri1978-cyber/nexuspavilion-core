@@ -16,7 +16,7 @@ const manrope = Manrope({ subsets: ["latin"], variable: "--font-corporate-body",
 
 const CORPORATE_TITLE = "Nexus Pavilion Inc. | Software & Decision Intelligence";
 const CORPORATE_DESCRIPTION =
-  "Nexus Pavilion Inc. builds focused software and decision-intelligence systems for complex real-world environments, including Intelligent Procurement, its procurement intelligence product.";
+  "Nexus Pavilion Inc. develops software and decision intelligence for complex industries, including its construction procurement platform.";
 
 export const metadata: Metadata = {
   title: { absolute: CORPORATE_TITLE },
