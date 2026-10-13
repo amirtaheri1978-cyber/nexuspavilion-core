@@ -229,6 +229,32 @@ function LoginScreen({
 
         <div className="pointer-events-none fixed inset-0 -z-10 bg-[linear-gradient(120deg,rgba(255,255,255,0.04),transparent_34%,rgba(200,166,70,0.04)_68%,transparent)]" />
 
+        <div className="mx-auto mb-5 w-full max-w-[1200px] sm:mb-6">
+          <Link
+            href="https://nexuspavilion.com/"
+            aria-label="Back to Nexus Pavilion Inc. homepage"
+            className="inline-flex min-h-11 max-w-full items-center gap-3 text-[12px] font-semibold tracking-[-0.01em] text-[#dfe7eb] focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#75d5eb]"
+            style={{
+              fontFamily:
+                "var(--font-corporate-display), system-ui, sans-serif",
+            }}
+          >
+            <span
+              aria-hidden="true"
+              className="text-[17px] leading-none text-[#75d5eb]"
+            >
+              ←
+            </span>
+            <NexusPavilionLogo
+              variant="icon"
+              size={42}
+              priority
+              className="shrink-0 justify-start"
+            />
+            <span>Nexus Pavilion Inc.</span>
+          </Link>
+        </div>
+
         <section className="mx-auto grid min-h-[calc(100vh-2.5rem)] w-full max-w-[1200px] items-center gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(400px,460px)] lg:gap-14 xl:gap-16">
           {/* Open product introduction — desktop left; mobile below form */}
           <aside className="order-2 flex min-h-0 flex-col justify-center lg:order-1">
