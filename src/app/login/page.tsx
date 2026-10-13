@@ -232,8 +232,8 @@ function LoginScreen({
         <div className="mx-auto mb-5 w-full max-w-[1200px] sm:mb-6">
           <Link
             href="https://nexuspavilion.com/"
-            aria-label="Back to Nexus Pavilion Inc. homepage"
-            className="inline-flex min-h-11 max-w-full items-center gap-3 text-[12px] font-semibold tracking-[-0.01em] text-[#dfe7eb] focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#75d5eb]"
+            aria-label="Back to Nexus Pavilion Inc. corporate website"
+            className="group inline-flex min-h-11 max-w-full items-center gap-2 text-[12px] font-medium tracking-[-0.01em] text-slate-400 outline-none transition-colors duration-200 hover:text-slate-200 focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#75d5eb]"
             style={{
               fontFamily:
                 "var(--font-corporate-display), system-ui, sans-serif",
@@ -241,16 +241,10 @@ function LoginScreen({
           >
             <span
               aria-hidden="true"
-              className="text-[17px] leading-none text-[#75d5eb]"
+              className="text-[17px] leading-none transition-transform duration-200 group-hover:-translate-x-0.5"
             >
               ←
             </span>
-            <NexusPavilionLogo
-              variant="icon"
-              size={42}
-              priority
-              className="shrink-0 justify-start"
-            />
             <span>Nexus Pavilion Inc.</span>
           </Link>
         </div>
