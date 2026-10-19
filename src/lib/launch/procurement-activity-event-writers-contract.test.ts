@@ -21,6 +21,9 @@ const helper = readSource(
 const invitesRoute = readSource("src/app/api/invites/route.ts");
 const rfiRoute = readSource("src/app/api/rfq-rfis/route.ts");
 const addendaRoute = readSource("src/app/api/rfq-addenda/route.ts");
+const addendumCommunication = readSource(
+  "src/lib/procurement/rfq-addendum-communication.ts",
+);
 const acknowledgementRoute = readSource(
   "src/app/api/rfq-addendum-acknowledgements/route.ts",
 );
@@ -95,8 +98,9 @@ describe("Cursor 05B procurement activity event writers", () => {
   });
 
   it("records addendum publish and new acknowledgement activity only", () => {
-    expect(addendaRoute).toContain("recordTrustedProcurementActivity");
-    expect(addendaRoute).toContain('"addendum_published"');
+    expect(addendaRoute).toContain("recordAndDeliverAddendumCommunication");
+    expect(addendumCommunication).toContain("recordTrustedProcurementActivity");
+    expect(addendumCommunication).toContain('"addendum_published"');
     expect(acknowledgementRoute).toContain("recordTrustedProcurementActivity");
     expect(acknowledgementRoute).toContain('"addendum_acknowledged"');
 
