@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Instrument_Sans, Manrope } from "next/font/google";
+import Image from "next/image";
 import Link from "next/link";
 
 import { NexusPavilionLogo } from "@/components/branding/nexus-pavilion-logo";
@@ -323,6 +324,75 @@ export default function HomePage() {
                 <i />
               </div>
               <span className={styles.productFieldOutcome}>CONTEXT → CONTROL</span>
+            </div>
+          </article>
+
+          <article
+            className={`${styles.productStage} ${styles.networkProduct}`}
+            aria-labelledby="global-construction-network-heading"
+          >
+            <div className={styles.productIdentity}>
+              <p className={styles.productOrdinal}>02 / NEXUS PAVILION INC. PRODUCT</p>
+              <p className={styles.productStatus}>IN DEVELOPMENT</p>
+              <h3 id="global-construction-network-heading">
+                <span className={styles.productTitleLine}>NEXUS PAVILION</span>
+                <span className={styles.productTitleLine}>GLOBAL CONSTRUCTION</span>
+                <span className={styles.productTitleLine}>NETWORK</span>
+              </h3>
+              <p className={styles.productStatement}>
+                A global construction industry network in development, bringing together exhibitions and events, companies, products, projects, and emerging technologies.
+              </p>
+              <a
+                className={styles.productPreviewLink}
+                href="https://nexus-pavilion-global-construction.onrender.com/"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Explore Preview <span aria-hidden="true">↗</span>
+              </a>
+            </div>
+
+            <div className={`${styles.productField} ${styles.networkProductField}`} aria-hidden="true">
+              <Image
+                className={styles.networkEarth}
+                src="/corporate/global-construction-network/earth-network-enterprise.webp"
+                alt=""
+                fill
+                sizes="(max-width: 980px) calc(100vw - 44px), 52vw"
+              />
+              <div className={styles.networkProductOverlay} />
+              <span className={styles.productFieldLabel}>CONNECTED INDUSTRY / 02</span>
+              <div className={styles.networkOrbit}>
+                <svg className={styles.networkConnections} viewBox="0 0 100 100" preserveAspectRatio="none">
+                  <path d="M50 52 50 14M50 52 84 36M50 52 73 84M50 52 27 84M50 52 16 36" />
+                  <circle cx="50" cy="52" r="31" />
+                </svg>
+                <span className={`${styles.networkGateway} ${styles.networkGatewayCompanies}`}>
+                  <Image src="/corporate/global-construction-network/companies.webp" alt="" fill sizes="96px" />
+                  <small>COMPANIES</small>
+                </span>
+                <span className={`${styles.networkGateway} ${styles.networkGatewayProducts}`}>
+                  <Image src="/corporate/global-construction-network/products.webp" alt="" fill sizes="96px" />
+                  <small>PRODUCTS</small>
+                </span>
+                <span className={`${styles.networkGateway} ${styles.networkGatewayEvents}`}>
+                  <Image src="/corporate/global-construction-network/exhibitions-events.webp" alt="" fill sizes="96px" />
+                  <small>EVENTS</small>
+                </span>
+                <span className={`${styles.networkGateway} ${styles.networkGatewayTechnology}`}>
+                  <Image src="/corporate/global-construction-network/new-technologies.webp" alt="" fill sizes="96px" />
+                  <small>TECHNOLOGIES</small>
+                </span>
+                <span className={`${styles.networkGateway} ${styles.networkGatewayProjects}`}>
+                  <Image src="/corporate/global-construction-network/projects-expertise.webp" alt="" fill sizes="96px" />
+                  <small>PROJECTS</small>
+                </span>
+                <span className={styles.networkCore}>
+                  <strong>GLOBAL</strong>
+                  <small>CONSTRUCTION NETWORK</small>
+                </span>
+              </div>
+              <span className={styles.productFieldOutcome}>FIVE GATEWAYS · ONE CONNECTED INDUSTRY</span>
             </div>
           </article>
 
