@@ -364,32 +364,64 @@ export default function HomePage() {
               <span className={styles.productFieldLabel}>CONNECTED INDUSTRY / 02</span>
               <div className={styles.networkOrbit}>
                 <svg className={styles.networkConnections} viewBox="0 0 100 100" preserveAspectRatio="none">
-                  <path d="M50 52 50 14M50 52 84 36M50 52 73 84M50 52 27 84M50 52 16 36" />
-                  <circle cx="50" cy="52" r="31" />
+                  <path className={styles.networkSpokes} d="M50 52 50 14M50 52 84 36M50 52 73 84M50 52 27 84M50 52 16 36" />
+                  <path className={styles.networkGatewayRing} d="M50 14 84 36 73 84 27 84 16 36Z" />
+                  <circle className={styles.networkOrbitGuide} cx="50" cy="52" r="31" />
+                  <g className={styles.networkJunctions}>
+                    <circle cx="50" cy="14" r="0.8" />
+                    <circle cx="84" cy="36" r="0.8" />
+                    <circle cx="73" cy="84" r="0.8" />
+                    <circle cx="27" cy="84" r="0.8" />
+                    <circle cx="16" cy="36" r="0.8" />
+                  </g>
                 </svg>
                 <span className={`${styles.networkGateway} ${styles.networkGatewayCompanies}`}>
-                  <Image src="/corporate/global-construction-network/companies.webp" alt="" fill sizes="96px" />
-                  <small>COMPANIES</small>
+                  <span className={styles.networkGatewayVisual}>
+                    <Image src="/corporate/global-construction-network/companies.webp" alt="" fill sizes="106px" />
+                    <svg className={styles.networkGatewayLabel} viewBox="0 0 140 140">
+                      <defs><path id="network-label-companies" d="M12 82 A60 60 0 0 1 128 82" /></defs>
+                      <text><textPath href="#network-label-companies" startOffset="50%">COMPANIES</textPath></text>
+                    </svg>
+                  </span>
                 </span>
                 <span className={`${styles.networkGateway} ${styles.networkGatewayProducts}`}>
-                  <Image src="/corporate/global-construction-network/products.webp" alt="" fill sizes="96px" />
-                  <small>PRODUCTS</small>
+                  <span className={styles.networkGatewayVisual}>
+                    <Image src="/corporate/global-construction-network/products.webp" alt="" fill sizes="106px" />
+                    <svg className={styles.networkGatewayLabel} viewBox="0 0 140 140">
+                      <defs><path id="network-label-products" d="M12 82 A60 60 0 0 1 128 82" /></defs>
+                      <text><textPath href="#network-label-products" startOffset="50%">PRODUCTS</textPath></text>
+                    </svg>
+                  </span>
                 </span>
                 <span className={`${styles.networkGateway} ${styles.networkGatewayEvents}`}>
-                  <Image src="/corporate/global-construction-network/exhibitions-events.webp" alt="" fill sizes="96px" />
-                  <small>EVENTS</small>
+                  <span className={styles.networkGatewayVisual}>
+                    <Image src="/corporate/global-construction-network/exhibitions-events.webp" alt="" fill sizes="106px" />
+                    <svg className={styles.networkGatewayLabel} viewBox="0 0 140 140">
+                      <defs><path id="network-label-events" d="M8 85 A64 64 0 0 1 132 85" /></defs>
+                      <text><textPath href="#network-label-events" startOffset="50%">EXHIBITIONS &amp; EVENTS</textPath></text>
+                    </svg>
+                  </span>
                 </span>
                 <span className={`${styles.networkGateway} ${styles.networkGatewayTechnology}`}>
-                  <Image src="/corporate/global-construction-network/new-technologies.webp" alt="" fill sizes="96px" />
-                  <small>TECHNOLOGIES</small>
+                  <span className={styles.networkGatewayVisual}>
+                    <Image src="/corporate/global-construction-network/new-technologies.webp" alt="" fill sizes="106px" />
+                    <svg className={styles.networkGatewayLabel} viewBox="0 0 140 140">
+                      <defs><path id="network-label-technologies" d="M8 55 A64 64 0 0 0 132 55" /></defs>
+                      <text><textPath href="#network-label-technologies" startOffset="50%">NEW TECHNOLOGIES</textPath></text>
+                    </svg>
+                  </span>
                 </span>
                 <span className={`${styles.networkGateway} ${styles.networkGatewayProjects}`}>
-                  <Image src="/corporate/global-construction-network/projects-expertise.webp" alt="" fill sizes="96px" />
-                  <small>PROJECTS</small>
+                  <span className={styles.networkGatewayVisual}>
+                    <Image src="/corporate/global-construction-network/projects-expertise.webp" alt="" fill sizes="106px" />
+                    <svg className={styles.networkGatewayLabel} viewBox="0 0 140 140">
+                      <defs><path id="network-label-projects" d="M8 55 A64 64 0 0 0 132 55" /></defs>
+                      <text><textPath href="#network-label-projects" startOffset="50%">PROJECTS &amp; EXPERTISE</textPath></text>
+                    </svg>
+                  </span>
                 </span>
                 <span className={styles.networkCore}>
-                  <strong>GLOBAL</strong>
-                  <small>CONSTRUCTION NETWORK</small>
+                  <strong><span>Nexus</span><span>Pavilion</span></strong>
                 </span>
               </div>
               <span className={styles.productFieldOutcome}>FIVE GATEWAYS · ONE CONNECTED INDUSTRY</span>
