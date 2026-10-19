@@ -130,6 +130,21 @@
 .networkConnections{z-index:1}.networkGateway{z-index:2;width:clamp(88px,7.2vw,108px);transform:translate(-50%,-50%)}.networkGatewayLabel{inset:-32%;width:164%;height:164%}.networkGatewayLabel text{font-size:8.8px;letter-spacing:.105em}.networkGatewayCompanies{top:36%;left:16%}.networkGatewayProducts{top:36%;right:auto;left:84%}.networkGatewayEvents{top:14%;left:50%}.networkGatewayTechnology{top:84%;right:auto;bottom:auto;left:73%}.networkGatewayProjects{top:84%;bottom:auto;left:27%}.networkCore{z-index:3;width:clamp(58px,5.2vw,72px);box-shadow:0 14px 34px rgb(0 0 0/48%),0 0 0 4px rgb(8 43 61/24%),inset 0 0 18px rgb(60 180 214/7%)}.networkCore::before{inset:6px}.networkCore strong{font-size:clamp(7.5px,.72vw,10px);letter-spacing:.055em;line-height:1.12}.networkCore strong span:last-child{font-size:.86em;letter-spacing:.07em}.products[data-motion="active"] .networkGatewayVisual{animation:none}.products[data-motion="active"] .networkGatewayRing{animation:networkConnectionFlow 28s linear infinite}
 @media(max-width:600px){.networkOrbit{inset:12% 1% 13%}.networkGateway{width:70px}.networkGatewayLabel{inset:-33%;width:166%;height:166%}.networkGatewayLabel text{font-size:9.7px;letter-spacing:.065em}.networkGatewayCompanies{top:36%;left:16%}.networkGatewayProducts{top:36%;right:auto;left:84%}.networkGatewayEvents{top:14%;left:50%}.networkGatewayTechnology{top:84%;right:auto;bottom:auto;left:73%}.networkGatewayProjects{top:84%;bottom:auto;left:27%}.networkCore{width:52px}.networkCore::before{inset:5px}.networkCore strong{font-size:7px;letter-spacing:.04em}.networkCore strong span:last-child{letter-spacing:.055em}}
 
+/* Product 02: restrained enterprise image grade and legible five-way topology. */
+.networkConnections{filter:drop-shadow(0 0 3px rgb(76 199 226/10%))}
+.networkConnections .networkSpokes{stroke:rgb(104 205 229/50%);stroke-width:.62}
+.networkConnections .networkGatewayRing{stroke:rgb(91 207 233/68%);stroke-width:.76;stroke-dasharray:none}
+.networkConnections .networkOrbitGuide{stroke:rgb(84 182 210/13%);stroke-width:.34;stroke-dasharray:1 2.4}
+.networkConnections .networkJunctions circle{fill:#8dd8e7;stroke:rgb(3 22 36/88%);stroke-width:.42;opacity:.78}
+.networkGateway{border-color:rgb(105 207 230/58%);background:#041321;box-shadow:0 14px 34px rgb(0 0 0/48%),0 0 0 5px rgb(5 29 45/62%)}
+.networkGatewayProducts,.networkGatewayProjects{border-color:rgb(107 205 228/58%)}
+.networkGatewayVisual{border-radius:50%;isolation:isolate}
+.networkGatewayVisual::after{content:"";position:absolute;inset:0;z-index:1;border-radius:50%;background:linear-gradient(150deg,rgb(7 42 65/11%),rgb(2 19 34/24%));box-shadow:inset 0 0 20px rgb(0 15 29/30%);pointer-events:none}
+.networkGateway img{position:relative;z-index:0;filter:saturate(.72) contrast(.94) brightness(.82) blur(.12px)}
+.networkGatewayLabel{z-index:2}
+.networkGatewayLabel text{fill:#dceef2;stroke:rgb(2 13 24/92%);text-shadow:none}
+.products[data-motion="active"] .networkGatewayRing{animation:none}
+
 .vision{position:relative;isolation:isolate;overflow:hidden;border-top:1px solid rgb(130 203 229/7%);background:radial-gradient(ellipse at 72% 44%,rgb(38 116 145/6%),transparent 37%),linear-gradient(180deg,#01050a 0%,#030912 54%,#010409 100%)}
 .vision::before{content:"";position:absolute;inset:0;background:linear-gradient(104deg,transparent 0 57%,rgb(111 194 219/2.8%) 57.08%,transparent 57.16%);pointer-events:none}
 .visionPlanes{position:absolute;inset:0;overflow:hidden;pointer-events:none}.visionPlanes span{position:absolute;width:min(66vw,1060px);height:min(35vw,560px);border:1px solid rgb(112 183 207/5.5%);transform:skewY(-8deg) rotate(-2deg)}.visionPlanes span:nth-child(1){top:12%;right:-21%}.visionPlanes span:nth-child(2){top:31%;right:-9%;border-color:rgb(115 196 221/4%)}.visionPlanes span:nth-child(3){right:-28%;bottom:3%;border-color:rgb(204 173 91/3.5%)}
