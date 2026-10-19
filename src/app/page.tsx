@@ -344,7 +344,7 @@ export default function HomePage() {
               </p>
               <a
                 className={styles.productPreviewLink}
-                href="https://nexus-pavilion-global-construction.onrender.com/"
+                href="https://network.nexuspavilion.com/"
                 target="_blank"
                 rel="noopener noreferrer"
               >
