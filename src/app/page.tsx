@@ -379,7 +379,7 @@ export default function HomePage() {
                   <span className={styles.networkGatewayVisual}>
                     <Image src="/corporate/global-construction-network/companies.webp" alt="" fill sizes="106px" />
                     <svg className={styles.networkGatewayLabel} viewBox="0 0 140 140">
-                      <defs><path id="network-label-companies" d="M12 82 A60 60 0 0 1 128 82" /></defs>
+                      <defs><path id="network-label-companies" d="M7 70 A65 65 0 0 1 133 70" /></defs>
                       <text><textPath href="#network-label-companies" startOffset="50%">COMPANIES</textPath></text>
                     </svg>
                   </span>
@@ -388,7 +388,7 @@ export default function HomePage() {
                   <span className={styles.networkGatewayVisual}>
                     <Image src="/corporate/global-construction-network/products.webp" alt="" fill sizes="106px" />
                     <svg className={styles.networkGatewayLabel} viewBox="0 0 140 140">
-                      <defs><path id="network-label-products" d="M12 82 A60 60 0 0 1 128 82" /></defs>
+                      <defs><path id="network-label-products" d="M7 70 A65 65 0 0 1 133 70" /></defs>
                       <text><textPath href="#network-label-products" startOffset="50%">PRODUCTS</textPath></text>
                     </svg>
                   </span>
@@ -397,7 +397,7 @@ export default function HomePage() {
                   <span className={styles.networkGatewayVisual}>
                     <Image src="/corporate/global-construction-network/exhibitions-events.webp" alt="" fill sizes="106px" />
                     <svg className={styles.networkGatewayLabel} viewBox="0 0 140 140">
-                      <defs><path id="network-label-events" d="M8 85 A64 64 0 0 1 132 85" /></defs>
+                      <defs><path id="network-label-events" d="M7 70 A65 65 0 0 1 133 70" /></defs>
                       <text><textPath href="#network-label-events" startOffset="50%">EXHIBITIONS &amp; EVENTS</textPath></text>
                     </svg>
                   </span>
@@ -406,7 +406,7 @@ export default function HomePage() {
                   <span className={styles.networkGatewayVisual}>
                     <Image src="/corporate/global-construction-network/new-technologies.webp" alt="" fill sizes="106px" />
                     <svg className={styles.networkGatewayLabel} viewBox="0 0 140 140">
-                      <defs><path id="network-label-technologies" d="M8 55 A64 64 0 0 0 132 55" /></defs>
+                      <defs><path id="network-label-technologies" d="M7 70 A65 65 0 0 1 133 70" /></defs>
                       <text><textPath href="#network-label-technologies" startOffset="50%">NEW TECHNOLOGIES</textPath></text>
                     </svg>
                   </span>
@@ -415,7 +415,7 @@ export default function HomePage() {
                   <span className={styles.networkGatewayVisual}>
                     <Image src="/corporate/global-construction-network/projects-expertise.webp" alt="" fill sizes="106px" />
                     <svg className={styles.networkGatewayLabel} viewBox="0 0 140 140">
-                      <defs><path id="network-label-projects" d="M8 55 A64 64 0 0 0 132 55" /></defs>
+                      <defs><path id="network-label-projects" d="M7 70 A65 65 0 0 1 133 70" /></defs>
                       <text><textPath href="#network-label-projects" startOffset="50%">PROJECTS &amp; EXPERTISE</textPath></text>
                     </svg>
                   </span>
