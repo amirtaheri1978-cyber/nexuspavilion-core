@@ -9,7 +9,7 @@ const instrumentSans = Instrument_Sans({ subsets: ["latin"], variable: "--font-c
 const manrope = Manrope({ subsets: ["latin"], variable: "--font-corporate-body", display: "swap" });
 
 const PRIVACY_TITLE = "Privacy | Nexus Pavilion Inc.";
-const PRIVACY_DESCRIPTION = "Privacy information for Nexus Pavilion Inc. and its Intelligent Procurement product.";
+const PRIVACY_DESCRIPTION = "Privacy information for Nexus Pavilion Inc., Global Construction Network, and Intelligent Procurement.";
 
 export const metadata: Metadata = {
   title: { absolute: PRIVACY_TITLE },
@@ -34,6 +34,7 @@ const documentIndex = [
   ["11", "Accountability"],
   ["12", "Organization responsibilities"],
   ["13", "Policy changes"],
+  ["14", "Global Construction Network"],
 ] as const;
 
 const policySections = [
@@ -43,7 +44,7 @@ const policySections = [
     title: "Scope",
     content: (
       <>
-        <p>This privacy information is provided by Nexus Pavilion Inc. It describes the information handled through this corporate website and, where stated, through Intelligent Procurement, a Nexus Pavilion Inc. product currently in development.</p>
+        <p>This privacy information is provided by Nexus Pavilion Inc. It describes the information handled through this corporate website and, where stated, through Global Construction Network and Intelligent Procurement, a Nexus Pavilion Inc. product currently in development.</p>
         <p>References to procurement workspaces, RFQs, quotations, suppliers, and procurement intelligence apply to Intelligent Procurement rather than to every activity or future product of Nexus Pavilion Inc.</p>
       </>
     ),
@@ -169,6 +170,20 @@ const policySections = [
       <p>This page may be revised as the corporate website, Intelligent Procurement, and their supporting operations evolve. Material policy details should be read from the current published version of this page.</p>
     ),
   },
+  {
+    number: "14",
+    id: "global-construction-network",
+    title: "Global Construction Network",
+    content: (
+      <>
+        <p>Global Construction Network is Nexus Pavilion Inc.’s curated construction-industry information and discovery platform. Its directory records include organization names, official websites, business locations, publicly described services and capabilities, products, events, projects, classifications, documented relationships, and source references. Information may come from official organization and event websites, public industry sources, and other lawfully accessible material. Some published business information may identify an individual; publicly accessible information is still handled in accordance with applicable privacy law.</p>
+        <p>This information is used to maintain and categorize directory records, attribute sources, enable search and industry discovery, display documented connections, and review accuracy. A source-supported classification or connection reflects the cited material; it does not establish independent accreditation or certification. The Event Intelligence control uses selections such as industry focus, geography, and business objective to calculate recommendations in the visitor’s browser without submitting those selections for storage.</p>
+        <p>Global Construction Network offers optional Google Analytics 4 to understand use of the site. The application denies analytics by default and loads the Google analytics script after a visitor accepts. It then sends page views that include the page path, full page URL, and page title. The analytics choice is stored in the visitor’s browser storage and can be changed through the analytics control. Google may process information received through that service according to its own terms and privacy practices.</p>
+        <p>The directory retrieves published records through Supabase, and Global Construction Network is hosted through Cloudflare. These providers process information needed to deliver their respective services. The retention approach in Section 09 applies to personal information handled by Nexus Pavilion. The browser-stored analytics choice remains until the visitor changes it or clears browser storage.</p>
+        <p>Individuals may request access to or correction of personal information concerning them, raise a privacy concern, or ask about withdrawal of consent where applicable by contacting the Privacy Officer — Nexus Pavilion Inc. at <a href="mailto:contact@nexuspavilion.com">contact@nexuspavilion.com</a>. Nexus Pavilion may request information reasonably needed to confirm identity and respond under applicable law. Organizations may use the same contact for review of business-listing information. The <Link href="/terms">Terms of Use</Link> explain the directory’s editorial listing and correction framework.</p>
+      </>
+    ),
+  },
 ] as const;
 
 export default function PrivacyPage() {
@@ -190,7 +205,7 @@ export default function PrivacyPage() {
             <p>DOCUMENT / 01</p>
             <span>CORPORATE POLICY</span>
             <span>Effective September 22, 2026</span>
-            <span>Last updated September 22, 2026</span>
+            <span>Last updated October 31, 2026</span>
           </div>
           <div className={styles.introductionMain}>
             <p className={styles.eyebrow}>PRIVACY</p>

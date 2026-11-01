@@ -9,7 +9,7 @@ const instrumentSans = Instrument_Sans({ subsets: ["latin"], variable: "--font-c
 const manrope = Manrope({ subsets: ["latin"], variable: "--font-corporate-body", display: "swap" });
 
 const TERMS_TITLE = "Terms | Nexus Pavilion Inc.";
-const TERMS_DESCRIPTION = "Terms for Nexus Pavilion Inc. services and its Intelligent Procurement product.";
+const TERMS_DESCRIPTION = "Terms for Nexus Pavilion Inc. services, Global Construction Network, and Intelligent Procurement.";
 
 export const metadata: Metadata = {
   title: { absolute: TERMS_TITLE },
@@ -20,7 +20,7 @@ export const metadata: Metadata = {
 const clauses = [
   {
     number: "01", id: "scope", label: "Scope and acceptance",
-    content: <><p>These Terms describe the operating boundaries for the applicable website and services provided by Nexus Pavilion Inc. References to Intelligent Procurement identify a Nexus Pavilion Inc. product currently in development.</p><p>Provisions concerning procurement workspaces, RFQs, suppliers, quotations, analytics, and related workflows apply specifically to Intelligent Procurement. They do not describe every activity or future product of Nexus Pavilion Inc.</p></>,
+    content: <><p>These Terms describe the operating boundaries for the applicable websites and services provided by Nexus Pavilion Inc., including Global Construction Network and, where expressly identified, Intelligent Procurement. References to Intelligent Procurement identify a Nexus Pavilion Inc. product currently in development.</p><p>Provisions concerning procurement workspaces, RFQs, suppliers, quotations, analytics, and related workflows apply specifically to Intelligent Procurement. They do not describe every activity or future product of Nexus Pavilion Inc.</p></>,
   },
   {
     number: "02", id: "accounts-access", label: "Accounts and authorized access",
@@ -59,16 +59,20 @@ const clauses = [
     content: <><p>Features and workflows may evolve as Nexus Pavilion Inc. develops its services and products. A service or feature may also be temporarily unavailable during maintenance, security work, infrastructure changes, or other operational activity.</p><p>This section describes how the services may evolve; it does not create an uptime or availability commitment.</p></>,
   },
   {
-    number: "11", id: "responsibility-boundary", label: "Responsibility and liability boundary",
+    number: "11", id: "gcn-directory", label: "Global Construction Network directory",
+    content: <><p>These provisions supplement the other sections of these Terms for Global Construction Network, a curated industry information and discovery platform operated by Nexus Pavilion Inc. They do not alter rights or obligations under a separate binding agreement for a paid service.</p><h3>Independent editorial listings</h3><p>Nexus Pavilion may independently select, create, classify, publish, update, correct, restrict, suspend, or remove free organization listings and related event, project, product, and industry information. Editorial actions may occur with or without prior notice, subject to applicable law and binding contractual obligations. Inclusion, classification, placement, visibility, and continued publication are not guaranteed. Nexus Pavilion may decline a request to add or reinstate a free listing, subject to applicable law and binding obligations.</p><h3>No implied relationship</h3><p>Inclusion of an organization, its activities, or its products does not, by itself, create membership, a contract with that organization, agency, partnership, sponsorship, affiliation, approval, or endorsement by Nexus Pavilion. A reference to participation in an event or project describes the reported underlying relationship; it does not imply a commercial relationship with Nexus Pavilion. A free editorial listing creates no entitlement to continued publication.</p><h3>Sources and accuracy</h3><p>Directory information may be drawn from official organizational and event sources, public industry materials, authorized submissions, and other lawfully accessible sources. Nexus Pavilion makes reasonable editorial efforts to identify supporting evidence and correct material inaccuracies, but information from third parties may be incomplete, inaccurate, or outdated. A “source-supported” record or relationship means that identified source material supports the information displayed within the stated scope of review as of the review date. It is not an independent audit or guarantee of subsequent accuracy. Status indicators do not establish accreditation, professional certification, regulatory approval, endorsement, or independent verification of an organization’s qualifications, products, or performance.</p><p>Directory information is provided for industry discovery and general information. Users should confirm facts material to professional, technical, safety, purchasing, or commercial decisions with the organization, relevant authority, or other appropriate primary source.</p><h3>Third-party rights</h3><p>Names, trademarks, logos, photographs, website text, documents, and other third-party materials remain subject to their owners’ rights. These Terms neither transfer those rights nor grant Nexus Pavilion permission to reproduce protected material. Nexus Pavilion may make factual references and use third-party material only where it has permission or another lawful basis.</p><h3>Corrections and removal requests</h3><p>An organization, individual, or rights holder may request review of a listing, correction of information, or removal of material by emailing <a href="mailto:contact@nexuspavilion.com">contact@nexuspavilion.com</a>. A request should identify the record or material, the requested action, and supporting information. Nexus Pavilion may seek information reasonably necessary to establish the requester’s identity or authority and will assess the request under applicable law, relevant rights, evidence, and editorial policies. A request does not guarantee a particular outcome except where required by law or a binding obligation. Requests concerning an individual’s personal information are also handled under the <Link href="/privacy">Privacy Policy</Link>.</p><h3>Free and paid services</h3><p>Free editorial listings are distinct from contracted subscriptions, enhanced profiles, advertising, sponsored placement, and other paid services. The applicable agreement governs paid deliverables, duration, termination, and other contractual rights. Editorial removal discretion under this section does not override a binding paid-service obligation. Paid or sponsored content will be identified where required by applicable law; payment does not establish independent editorial endorsement.</p><h3>Responsibility and liability</h3><p>The responsibility and liability limitations elsewhere in these Terms apply to use of Global Construction Network to the extent their wording covers the relevant claim and applicable law permits. This section creates no additional exclusion of liability and does not limit any right or remedy that cannot lawfully be excluded or limited.</p></>,
+  },
+  {
+    number: "12", id: "responsibility-boundary", label: "Responsibility and liability boundary",
     content: <><p>To the maximum extent permitted by applicable law, Nexus Pavilion Inc. shall not be liable for indirect, incidental, special, consequential, or business losses arising from use of the applicable services or procurement decisions made by users.</p><p>Nothing in these Terms excludes or limits any right or remedy that cannot lawfully be excluded or limited.</p></>,
   },
   {
-    number: "12", id: "governing-law", label: "Governing law",
+    number: "13", id: "governing-law", label: "Governing law",
     content: <p>These Terms are governed by the laws of the Province of Ontario and the applicable federal laws of Canada.</p>,
   },
   {
-    number: "13", id: "terms-changes", label: "Terms changes and contact",
-    content: <><p>These Terms may be revised as the corporate website, Intelligent Procurement, and their supporting operations evolve. Publishing an updated version of this page does not, by itself, constitute acceptance of every material contractual change.</p><p>Material changes affecting registered or service users may require additional notice or acceptance where appropriate or required by law. Questions about these Terms may be directed through the Nexus Pavilion Inc. corporate contact channel.</p></>,
+    number: "14", id: "terms-changes", label: "Terms changes and contact",
+    content: <><p>These Terms may be revised as the corporate website, Global Construction Network, Intelligent Procurement, and their supporting operations evolve. Publishing an updated version of this page does not, by itself, constitute acceptance of every material contractual change.</p><p>Material changes affecting registered or service users may require additional notice or acceptance where appropriate or required by law. Questions about these Terms may be directed through the Nexus Pavilion Inc. corporate contact channel.</p></>,
   },
 ] as const;
 
@@ -91,7 +95,7 @@ export default function TermsPage() {
             <p>AGREEMENT / 01</p>
             <span>OPERATING BOUNDARIES</span>
             <span>Effective September 22, 2026</span>
-            <span>Last updated September 22, 2026</span>
+            <span>Last updated October 31, 2026</span>
           </div>
           <div className={styles.introductionMain}>
             <p className={styles.eyebrow}>TERMS</p>
