@@ -164,3 +164,7 @@
 @media(prefers-reduced-motion:reduce){.vision[data-motion] .visionEditorial,.vision[data-motion] .visionBody,.vision[data-motion] .visionClosing{opacity:1!important;clip-path:none!important;transform:none!important;animation:none!important}.vision[data-motion] .visionHorizon span{width:81%;opacity:1;animation:none!important}.vision[data-motion] .visionPlanes span{animation:none!important}}
 
 .productExplore{display:inline-flex;align-items:center;gap:18px;margin-top:30px;padding-bottom:8px;border-bottom:1px solid rgb(113 211 235/34%);color:#eaf1f4;font:600 11px/1.4 var(--font-corporate-display),system-ui,sans-serif;letter-spacing:.04em;text-decoration:none;transition:border-color 180ms ease,color 180ms ease}.productExplore span{color:#d8b96f;font-size:16px;transition:transform 180ms ease}.productExplore:hover{border-color:rgb(216 185 111/62%);color:#fff}.productExplore:hover span{transform:translateX(4px)}.productExplore:focus-visible{outline:2px solid #75d5eb;outline-offset:4px}@media(prefers-reduced-motion:reduce){.productExplore,.productExplore span{transition:none}.productExplore:hover span{transform:none}}
+/* GCN editorial hierarchy within the existing product stage. */
+.networkHeadline{max-width:610px;margin:28px 0 0;color:#edf4f7;font-family:var(--font-corporate-display),system-ui,sans-serif;font-size:clamp(22px,2.15vw,32px);font-weight:500;letter-spacing:-.035em;line-height:1.25}
+.networkHeadline+.productStatement{margin-top:20px}
+.networkProduct .productPreviewLink{margin-top:35px}

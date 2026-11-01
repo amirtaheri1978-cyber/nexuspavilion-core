@@ -333,14 +333,13 @@ export default function HomePage() {
           >
             <div className={styles.productIdentity}>
               <p className={styles.productOrdinal}>02 / NEXUS PAVILION INC. PRODUCT</p>
-              <p className={styles.productStatus}>IN DEVELOPMENT</p>
               <h3 id="global-construction-network-heading">
-                <span className={styles.productTitleLine}>NEXUS PAVILION</span>
                 <span className={styles.productTitleLine}>GLOBAL CONSTRUCTION</span>
                 <span className={styles.productTitleLine}>NETWORK</span>
               </h3>
+              <p className={styles.networkHeadline}>A Clearer View of the Global Construction Landscape.</p>
               <p className={styles.productStatement}>
-                A global construction industry network in development, bringing together exhibitions and events, companies, products, projects, and emerging technologies.
+                Connecting industry exhibitions, companies, and building products through a growing network of structured, source-backed information.
               </p>
               <a
                 className={styles.productPreviewLink}
@@ -348,7 +347,7 @@ export default function HomePage() {
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                Explore Preview <span aria-hidden="true">↗</span>
+                Explore the Network <span aria-hidden="true">↗</span>
               </a>
             </div>
 
