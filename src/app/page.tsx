@@ -332,22 +332,25 @@ export default function HomePage() {
             aria-labelledby="global-construction-network-heading"
           >
             <div className={styles.productIdentity}>
-              <p className={styles.productOrdinal}>02 / NEXUS PAVILION INC. PRODUCT</p>
+              <p className={styles.productOrdinal}>02 / A DIGITAL PLATFORM DEVELOPED BY NEXUS PAVILION INC.</p>
               <h3 id="global-construction-network-heading">
+                <span className={styles.productTitleLine}>NEXUS PAVILION</span>
                 <span className={styles.productTitleLine}>GLOBAL CONSTRUCTION</span>
                 <span className={styles.productTitleLine}>NETWORK</span>
               </h3>
-              <p className={styles.networkHeadline}>A Clearer View of the Global Construction Landscape.</p>
+              <p className={styles.networkHeadline}>Connecting Industry Knowledge.<br />Enabling Informed Decisions.</p>
+              <p className={styles.productCapabilities}>A MORE INTELLIGENT APPROACH TO INDUSTRY DISCOVERY</p>
               <p className={styles.productStatement}>
-                Connecting industry exhibitions, companies, and building products through a growing network of structured, source-backed information.
+                Nexus Pavilion Global Construction Network is a structured digital platform designed to bring greater clarity, context, and transparency to construction industry information. By organizing selected industry records and documenting relevant relationships, the network helps professionals discover information, understand connections, and explore the broader context behind them.
               </p>
+              <p className={styles.productCapabilities}>STRUCTURED INFORMATION · SOURCE TRANSPARENCY · DOCUMENTED RELATIONSHIPS</p>
               <a
                 className={styles.productPreviewLink}
                 href="https://network.nexuspavilion.com/"
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                Explore the Network <span aria-hidden="true">↗</span>
+                Explore Global Construction Network <span aria-hidden="true">↗</span>
               </a>
             </div>
 
@@ -379,7 +382,7 @@ export default function HomePage() {
                     <Image src="/corporate/global-construction-network/companies.webp" alt="" fill sizes="106px" />
                     <svg className={styles.networkGatewayLabel} viewBox="0 0 140 140">
                       <defs><path id="network-label-companies" d="M7 70 A65 65 0 0 1 133 70" /></defs>
-                      <text><textPath href="#network-label-companies" startOffset="50%">COMPANIES</textPath></text>
+                      <text><textPath href="#network-label-companies" startOffset="50%">COMPANIES &amp; ORGANIZATIONS</textPath></text>
                     </svg>
                   </span>
                 </span>
@@ -388,7 +391,7 @@ export default function HomePage() {
                     <Image src="/corporate/global-construction-network/products.webp" alt="" fill sizes="106px" />
                     <svg className={styles.networkGatewayLabel} viewBox="0 0 140 140">
                       <defs><path id="network-label-products" d="M7 70 A65 65 0 0 1 133 70" /></defs>
-                      <text><textPath href="#network-label-products" startOffset="50%">PRODUCTS</textPath></text>
+                      <text><textPath href="#network-label-products" startOffset="50%">BUILDING PRODUCTS</textPath></text>
                     </svg>
                   </span>
                 </span>
@@ -406,7 +409,7 @@ export default function HomePage() {
                     <Image src="/corporate/global-construction-network/new-technologies.webp" alt="" fill sizes="106px" />
                     <svg className={styles.networkGatewayLabel} viewBox="0 0 140 140">
                       <defs><path id="network-label-technologies" d="M7 70 A65 65 0 0 1 133 70" /></defs>
-                      <text><textPath href="#network-label-technologies" startOffset="50%">NEW TECHNOLOGIES</textPath></text>
+                      <text><textPath href="#network-label-technologies" startOffset="50%">EMERGING TECHNOLOGIES</textPath></text>
                     </svg>
                   </span>
                 </span>
