@@ -168,3 +168,15 @@
 .networkHeadline{max-width:610px;margin:28px 0 0;color:#edf4f7;font-family:var(--font-corporate-display),system-ui,sans-serif;font-size:clamp(22px,2.15vw,32px);font-weight:500;letter-spacing:-.035em;line-height:1.25}
 .networkHeadline+.productStatement{margin-top:20px}
 .networkProduct .productPreviewLink{margin-top:35px}
+.networkProduct{grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:clamp(32px,4vw,64px)}
+.networkProduct h3{margin-top:28px;font-size:clamp(34px,3.2vw,48px);line-height:1.1;text-wrap:balance}
+.networkBrand{display:block;margin-bottom:14px;color:#82b9cf;font-size:14px;font-weight:600;letter-spacing:.16em;text-transform:uppercase}
+.networkProduct .productOrdinal{font-size:10px;line-height:1.8;letter-spacing:.12em}
+.networkProduct .productCapabilities{margin-top:26px;padding-top:20px;font-size:11px;letter-spacing:.12em}
+.networkProduct .productStatement{margin-top:18px;font-size:15px;line-height:1.8}
+.networkPrinciples{display:flex;flex-wrap:wrap;gap:12px 22px;margin:26px 0 0;padding:20px 0 0;border-top:1px solid rgb(126 190 211/20%);list-style:none;color:#b6cfda;font-size:12px;line-height:1.6}
+.networkPreview{min-width:0;margin:0;border:1px solid rgb(126 190 211/25%);background:#040e17;box-shadow:0 24px 64px rgb(0 0 0/24%)}
+.networkPreview img{display:block;width:100%;height:auto}
+.networkPreview figcaption{padding:18px 22px;border-top:1px solid rgb(126 190 211/16%);color:#b6cfda;font-size:12px;line-height:1.7;text-align:center}
+@media(max-width:980px){.networkProduct{grid-template-columns:1fr;gap:40px}.networkProduct .productIdentity{max-width:680px}.networkPreview{width:100%}}
+@media(max-width:600px){.networkProduct h3{font-size:36px}.networkPrinciples{gap:10px 18px}.networkPreview{overflow:hidden}.networkPreview img{width:155%;max-width:none;margin-left:-55%}.networkPreview figcaption{padding:14px;font-size:12px}.networkProduct .productPreviewLink{font-size:10px;letter-spacing:.1em}}
