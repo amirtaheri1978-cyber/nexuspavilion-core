@@ -74,13 +74,23 @@ export default function HomePage() {
               <nav className={styles.navigation} aria-label="Corporate">
                 {navigation.map((item) => <Link key={item.label} href={item.href}>{item.label}</Link>)}
               </nav>
-              <Link
-                className={styles.productAccess}
-                href="https://procurement.nexuspavilion.com/login"
-              >
-                <span>LIVE</span>
-                Open Intelligent Procurement
-              </Link>
+              <div className={styles.productLinks}>
+                <a
+                  className={styles.networkAccess}
+                  href="https://network.nexuspavilion.com/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Global Construction Network
+                </a>
+                <Link
+                  className={styles.productAccess}
+                  href="https://procurement.nexuspavilion.com/login"
+                >
+                  <span>LIVE</span>
+                  Open Intelligent Procurement
+                </Link>
+              </div>
             </div>
             <details className={styles.mobileNavigation}>
               <summary aria-label="Corporate navigation menu">
@@ -95,6 +105,15 @@ export default function HomePage() {
                   <span aria-hidden="true">LIVE</span>
                   Open Intelligent Procurement
                 </Link>
+                <a
+                  className={styles.mobileNetworkAccess}
+                  href="https://network.nexuspavilion.com/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <span aria-hidden="true">LIVE</span>
+                  Global Construction Network
+                </a>
                 {navigation.map((item, index) => (
                   <Link key={item.label} href={item.href}>
                     <span aria-hidden="true">0{index + 1}</span>
@@ -107,15 +126,28 @@ export default function HomePage() {
 
           <div className={styles.hero}>
             <section id="technology" className={styles.copy} aria-labelledby="corporate-hero-heading">
-              <Link
-                className={styles.launchRail}
-                href="https://procurement.nexuspavilion.com/login"
-                aria-label="Open Intelligent Procurement"
-              >
-                <span className={styles.launchStatus}>LIVE</span>
-                <span className={styles.launchProduct}>Intelligent Procurement</span>
-                <span className={styles.launchAction}>Open Product →</span>
-              </Link>
+              <div className={styles.launchGroup}>
+                <Link
+                  className={styles.launchRail}
+                  href="https://procurement.nexuspavilion.com/login"
+                  aria-label="Open Intelligent Procurement"
+                >
+                  <span className={styles.launchStatus}>LIVE</span>
+                  <span className={styles.launchProduct}>Intelligent Procurement</span>
+                  <span className={styles.launchAction}>Open Product →</span>
+                </Link>
+                <a
+                  className={`${styles.launchRail} ${styles.launchRailSecondary}`}
+                  href="https://network.nexuspavilion.com/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Explore Global Construction Network"
+                >
+                  <span className={styles.launchStatus}>LIVE &amp; EVOLVING</span>
+                  <span className={styles.launchProduct}>Global Construction Network</span>
+                  <span className={styles.launchAction}>Explore →</span>
+                </a>
+              </div>
               <p className={styles.kicker}>Real systems · brighter tomorrows</p>
               <h1 id="corporate-hero-heading">Turning complexity into decisive intelligence.</h1>
               <p className={styles.lead}>We build focused software products that transform complex data, operations, infrastructure, and domain expertise into clearer decisions and meaningful real-world outcomes.</p>
@@ -332,21 +364,15 @@ export default function HomePage() {
             aria-labelledby="global-construction-network-heading"
           >
             <div className={styles.productIdentity}>
-              <p className={styles.productOrdinal}>02 / A DIGITAL PLATFORM DEVELOPED BY NEXUS PAVILION INC.</p>
-              <h3 id="global-construction-network-heading">
-                <span className={styles.networkBrand}>Nexus Pavilion</span>
-                <span className={styles.productTitleLine}>Global Construction Network</span>
-              </h3>
-              <p className={styles.networkHeadline}>Connecting Industry Knowledge.<br />Enabling Informed Decisions.</p>
-              <p className={styles.productCapabilities}>A MORE INTELLIGENT APPROACH TO INDUSTRY DISCOVERY</p>
+              <p className={styles.productOrdinal}>02 / ACTIVE PRODUCT</p>
+              <p className={styles.productStatus}>LIVE &amp; EVOLVING</p>
+              <h3 id="global-construction-network-heading">GLOBAL CONSTRUCTION NETWORK</h3>
               <p className={styles.productStatement}>
-                Nexus Pavilion Global Construction Network is a structured digital platform designed to bring greater clarity, context, and transparency to construction industry information. By organizing selected industry records and documenting relevant relationships, the network helps professionals discover information, understand connections, and explore the broader context behind them.
+                A construction intelligence platform connecting industry exhibitions, manufacturers, products, and evidence-based technical comparison.
               </p>
-              <ul className={styles.networkPrinciples} aria-label="Platform principles">
-                <li>Structured Information</li>
-                <li>Source Transparency</li>
-                <li>Documented Relationships</li>
-              </ul>
+              <p className={styles.productCapabilities}>
+                EXHIBITIONS &amp; EVENTS · MANUFACTURER &amp; PRODUCT DISCOVERY · TECHNICAL COMPARISONS · STRUCTURED INDUSTRY INTELLIGENCE
+              </p>
               <a
                 className={styles.productPreviewLink}
                 href="https://network.nexuspavilion.com/"

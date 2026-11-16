@@ -189,7 +189,7 @@ describe("Cursor Corp 02 Slice A corporate root contract", () => {
     );
   });
 
-  it("renders one factual flagship product without unsupported availability claims", () => {
+  it("renders balanced dual-product visibility for Intelligent Procurement and GCN", () => {
     const productsStart = rootPage.indexOf('id="products-projects"');
     const productsEnd = rootPage.indexOf("</section>", productsStart);
 
@@ -203,29 +203,34 @@ describe("Cursor Corp 02 Slice A corporate root contract", () => {
       "Purpose-built intelligence for decisions that matter.",
     );
     expect(products).toContain("INTELLIGENT PROCUREMENT");
-    expect(products).toContain("IN DEVELOPMENT");
+    expect(products).toContain("GLOBAL CONSTRUCTION NETWORK");
+    expect(products).toContain(">LIVE<");
+    expect(products).toContain("LIVE &amp; EVOLVING");
     expect(products).toContain(
-      "An AI-assisted procurement intelligence product designed to help teams structure sourcing workflows, evaluate commercial information, and make consequential procurement decisions with greater context and control.",
+      "A construction intelligence platform connecting industry exhibitions, manufacturers, products, and evidence-based technical comparison.",
     );
     expect(products).toContain(
       "SOURCING · EVALUATION · GOVERNANCE · DECISION INTELLIGENCE",
     );
+    expect(products).toContain('href="https://network.nexuspavilion.com/"');
+    expect(products).toContain("Explore Global Construction Network");
     expect(products).toContain(
       "We build products around the problem—not technology for its own sake.",
     );
     expect(products.match(/INTELLIGENT PROCUREMENT/g)).toHaveLength(1);
+    expect(products).not.toMatch(/coming soon|in development|under construction/i);
     expect(products).not.toMatch(
       /available now|live product|launched|our customers|trusted by|pricing/i,
     );
   });
 
   it("does not make unsupported product-status claims", () => {
-    expect(rootPage).not.toContain(">Live<");
     expect(rootPage).not.toContain("Available Now");
     expect(rootPage).not.toContain("primary live product");
     expect(rootPage).not.toMatch(/coming soon/i);
     expect(rootPage).not.toMatch(/placeholder/i);
     expect(rootPage).toContain('href="/products/intelligent-procurement"');
+    expect(rootPage).toContain('href="https://network.nexuspavilion.com/"');
     expect(rootPage).not.toContain("ExecutiveActionCard");
     expect(rootPage).not.toContain("NexusPavilion Cloud");
     expect(rootPage).not.toContain("NexusPavilion Analytics Platform");
