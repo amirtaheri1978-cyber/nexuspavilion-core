@@ -126,28 +126,6 @@ export default function HomePage() {
 
           <div className={styles.hero}>
             <section id="technology" className={styles.copy} aria-labelledby="corporate-hero-heading">
-              <div className={styles.launchGroup}>
-                <Link
-                  className={styles.launchRail}
-                  href="https://procurement.nexuspavilion.com/login"
-                  aria-label="Open Intelligent Procurement"
-                >
-                  <span className={styles.launchStatus}>LIVE</span>
-                  <span className={styles.launchProduct}>Intelligent Procurement</span>
-                  <span className={styles.launchAction}>Open Product →</span>
-                </Link>
-                <a
-                  className={`${styles.launchRail} ${styles.launchRailSecondary}`}
-                  href="https://network.nexuspavilion.com/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label="Explore Global Construction Network"
-                >
-                  <span className={styles.launchStatus}>LIVE &amp; EVOLVING</span>
-                  <span className={styles.launchProduct}>Global Construction Network</span>
-                  <span className={styles.launchAction}>Explore →</span>
-                </a>
-              </div>
               <p className={styles.kicker}>Real systems · brighter tomorrows</p>
               <h1 id="corporate-hero-heading">Turning complexity into decisive intelligence.</h1>
               <p className={styles.lead}>We build focused software products that transform complex data, operations, infrastructure, and domain expertise into clearer decisions and meaningful real-world outcomes.</p>

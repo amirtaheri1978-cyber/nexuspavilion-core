@@ -190,13 +190,27 @@ describe("Cursor Corp 02 Slice A corporate root contract", () => {
   });
 
   it("renders balanced dual-product visibility for Intelligent Procurement and GCN", () => {
+    const heroStart = rootPage.indexOf('id="technology"');
+    const heroEnd = rootPage.indexOf("</section>", heroStart);
     const productsStart = rootPage.indexOf('id="products-projects"');
     const productsEnd = rootPage.indexOf("</section>", productsStart);
 
+    expect(heroStart).toBeGreaterThan(-1);
+    expect(heroEnd).toBeGreaterThan(heroStart);
     expect(productsStart).toBeGreaterThan(-1);
     expect(productsEnd).toBeGreaterThan(productsStart);
 
+    const hero = rootPage.slice(heroStart, heroEnd);
     const products = rootPage.slice(productsStart, productsEnd);
+
+    expect(rootPage).toContain('className={styles.networkAccess}');
+    expect(rootPage).toContain('className={styles.productAccess}');
+    expect(rootPage).toContain("Open Intelligent Procurement");
+    expect(hero).not.toContain("launchGroup");
+    expect(hero).not.toContain("Open Product →");
+    expect(hero).not.toContain("Explore →");
+    expect(hero).toContain("Open Intelligent Procurement");
+    expect(hero).not.toContain("Global Construction Network");
 
     expect(products).toContain("FOCUSED PRODUCTS. REAL OPERATING PROBLEMS.");
     expect(products).toContain(
