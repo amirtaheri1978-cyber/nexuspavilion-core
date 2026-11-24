@@ -112,4 +112,23 @@ describe("resolveCorporateHeroRenderSize", () => {
     expect(size.width * size.pixelRatio).toBeLessThanOrEqual(CORPORATE_HERO_MAX_BUFFER_EDGE);
     expect(size.height * size.pixelRatio).toBeLessThanOrEqual(CORPORATE_HERO_MAX_BUFFER_EDGE);
   });
+
+  it("keeps extreme-width drawing buffers within the practical edge budget", () => {
+    const size = resolveCorporateHeroRenderSize({
+      containerWidth: 12000,
+      containerHeight: 900,
+      layoutViewportWidth: 12000,
+      layoutViewportHeight: 900,
+      screenHeight: 1440,
+      visualViewportHeight: 900,
+      devicePixelRatio: 2,
+    });
+
+    expect(size.width).toBeLessThanOrEqual(CORPORATE_HERO_MAX_BUFFER_EDGE);
+    expect(size.height).toBe(900);
+    expect(size.width * size.pixelRatio).toBeLessThanOrEqual(CORPORATE_HERO_MAX_BUFFER_EDGE);
+    expect(size.height * size.pixelRatio).toBeLessThanOrEqual(CORPORATE_HERO_MAX_BUFFER_EDGE);
+    expect(size.width).toBe(CORPORATE_HERO_MAX_BUFFER_EDGE);
+    expect(size.pixelRatio).toBe(1);
+  });
 });

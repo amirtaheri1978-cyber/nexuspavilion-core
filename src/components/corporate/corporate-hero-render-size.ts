@@ -100,9 +100,13 @@ export function resolveCorporateHeroRenderSize(
 
   const heightClamped =
     unconstrainedHeight > safeCeiling * CORPORATE_HERO_HEIGHT_CLAMP_TRIGGER_RATIO;
-  const height = heightClamped
+  let height = heightClamped
     ? Math.min(unconstrainedHeight, safeCeiling)
     : unconstrainedHeight;
+
+  // Cap CSS edges first so a floor of 1.0 device pixel cannot blow the buffer budget.
+  const renderWidth = Math.min(width, CORPORATE_HERO_MAX_BUFFER_EDGE);
+  height = Math.min(height, CORPORATE_HERO_MAX_BUFFER_EDGE);
 
   const requestedRatio =
     Number.isFinite(input.devicePixelRatio) && input.devicePixelRatio > 0
@@ -110,16 +114,16 @@ export function resolveCorporateHeroRenderSize(
       : 1;
   let pixelRatio = Math.min(requestedRatio, CORPORATE_HERO_MAX_PIXEL_RATIO);
 
-  const longestEdge = Math.max(width, height);
+  const longestEdge = Math.max(renderWidth, height);
   if (longestEdge * pixelRatio > CORPORATE_HERO_MAX_BUFFER_EDGE) {
-    pixelRatio = Math.max(1, CORPORATE_HERO_MAX_BUFFER_EDGE / longestEdge);
+    pixelRatio = CORPORATE_HERO_MAX_BUFFER_EDGE / longestEdge;
   }
 
   return {
-    width,
+    width: renderWidth,
     height,
     pixelRatio,
-    aspect: width / height,
+    aspect: renderWidth / height,
     heightClamped,
   };
 }
