@@ -6,6 +6,7 @@ import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer
 import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
 import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass.js";
 
+import { resolveCorporateHeroRenderSize } from "./corporate-hero-render-size";
 import styles from "./corporate-home.module.css";
 
 type Ribbon = { mesh: THREE.Mesh; curve: THREE.CatmullRomCurve3; speed: number; phase: number };
@@ -28,8 +29,21 @@ export default function CorporateHeroVisual() {
       return;
     }
 
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.8));
-    renderer.setSize(window.innerWidth, window.innerHeight);
+    const visualHost = canvas.parentElement;
+    const readRenderSize = () =>
+      resolveCorporateHeroRenderSize({
+        containerWidth: visualHost?.clientWidth ?? 0,
+        containerHeight: visualHost?.clientHeight ?? 0,
+        layoutViewportWidth: window.innerWidth,
+        layoutViewportHeight: window.innerHeight,
+        screenHeight: window.screen?.height ?? 0,
+        visualViewportHeight: window.visualViewport?.height ?? 0,
+        devicePixelRatio: window.devicePixelRatio || 1,
+      });
+
+    let renderSize = readRenderSize();
+    renderer.setPixelRatio(renderSize.pixelRatio);
+    renderer.setSize(renderSize.width, renderSize.height);
     renderer.setClearColor(0x01040a, 1);
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -37,11 +51,12 @@ export default function CorporateHeroVisual() {
 
     const scene = new THREE.Scene();
     scene.fog = new THREE.FogExp2(0x01040a, 0.019);
-    const camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 0.1, 140);
+    const camera = new THREE.PerspectiveCamera(40, renderSize.aspect, 0.1, 140);
     camera.position.set(0, 0.2, 12.7);
     const composer = new EffectComposer(renderer);
+    composer.setPixelRatio(renderSize.pixelRatio);
     composer.addPass(new RenderPass(scene, camera));
-    const bloom = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 0.84, 0.72, 0.12);
+    const bloom = new UnrealBloomPass(new THREE.Vector2(renderSize.width, renderSize.height), 0.84, 0.72, 0.12);
     bloom.threshold = 0.11; bloom.strength = 0.34; bloom.radius = 0.48;
     composer.addPass(bloom);
 
@@ -101,7 +116,24 @@ export default function CorporateHeroVisual() {
 
     const pointer={x:0,y:0,targetX:0,targetY:0}; const onPointer=(event:PointerEvent)=>{pointer.targetX=event.clientX/window.innerWidth-.5;pointer.targetY=event.clientY/window.innerHeight-.5;};
     const responsive=()=>{if(window.innerWidth<980){world.position.set(2.9,-.15,-1.25);world.scale.setScalar(.8);camera.position.z=13.7;}else{world.position.set(3.82,.1,0);world.scale.setScalar(1);camera.position.z=12.7;}};
-    const onResize=()=>{camera.aspect=window.innerWidth/window.innerHeight;camera.updateProjectionMatrix();renderer.setSize(window.innerWidth,window.innerHeight);composer.setSize(window.innerWidth,window.innerHeight);renderer.setPixelRatio(Math.min(window.devicePixelRatio,1.8));responsive();composer.render();};responsive();if(!reduced)window.addEventListener("pointermove",onPointer);window.addEventListener("resize",onResize);
+    const applyRenderSize=()=>{
+      const nextSize=readRenderSize();
+      const unchanged=nextSize.width===renderSize.width&&nextSize.height===renderSize.height&&nextSize.pixelRatio===renderSize.pixelRatio;
+      renderSize=nextSize;
+      if(unchanged){responsive();return false;}
+      camera.aspect=renderSize.aspect;
+      camera.updateProjectionMatrix();
+      renderer.setPixelRatio(renderSize.pixelRatio);
+      renderer.setSize(renderSize.width,renderSize.height);
+      composer.setPixelRatio(renderSize.pixelRatio);
+      composer.setSize(renderSize.width,renderSize.height);
+      responsive();
+      return true;
+    };
+    const onResize=()=>{if(applyRenderSize())composer.render();};
+    applyRenderSize();
+    if(!reduced)window.addEventListener("pointermove",onPointer);
+    window.addEventListener("resize",onResize);
     const clock=new THREE.Clock();let animationFrame=0;const streamPosition=new THREE.Vector3();const animate=()=>{animationFrame=window.requestAnimationFrame(animate);const delta=Math.min(clock.getDelta(),.033);const elapsed=clock.elapsedTime;pointer.x+=(pointer.targetX-pointer.x)*.03;pointer.y+=(pointer.targetY-pointer.y)*.03;if(!reduced){globe.rotation.y+=delta*.092;globe.rotation.x=Math.sin(elapsed*.14)*.026;goldCoreMaterial.uniforms.uTime.value=elapsed;fieldMaterial.uniforms.uTime.value=elapsed;haloMaterial.uniforms.uTime.value=elapsed;glassCore.rotation.y+=delta*.018;goldCore.rotation.y-=delta*.034;fieldMesh.rotation.y+=delta*.012;veilCore.rotation.y-=delta*.010;particleCloud.rotation.y+=delta*.009;lattice.forEach((tube,index)=>{tube.rotation.y+=delta*(.0035+index*.00055);});ribbons.forEach((ribbon)=>{ribbon.mesh.rotation.y+=delta*ribbon.speed;ribbon.mesh.rotation.x+=delta*ribbon.speed*.42;ribbon.mesh.rotation.z=Math.sin(elapsed*.11+ribbon.phase)*.045;});torusLayers.forEach((layer)=>{layer.mesh.rotation.z+=delta*layer.speed;layer.mesh.rotation.y+=delta*layer.speed*.38;});packets.forEach((packet)=>{packet.curve.getPointAt((elapsed*packet.speed+packet.offset)%1,packet.sprite.position);packet.sprite.scale.setScalar(packet.base*(1+.15*Math.sin(elapsed*1.7+packet.phase)));});majorNodes.forEach((node)=>{node.scale.setScalar(node.userData.base*(1+.15*Math.sin(elapsed+node.userData.phase)));});orbitData.forEach((orbit)=>{orbit.tube.rotation.y+=delta*(.012+orbit.index*.0017);orbit.curve.getPointAt((elapsed*orbit.speed+orbit.index*.153)%1,orbit.tracer.position);});streamPackets.forEach((item,index)=>{item.curve.getPointAt((elapsed*item.speed+item.offset)%1,streamPosition);item.packet.position.copy(streamPosition);item.packet.scale.setScalar(.86+.24*Math.sin(elapsed*3.1+index));});stars.rotation.y+=delta*.0022;backgroundDots.forEach((item,index)=>{const twinkle=.56+.44*Math.sin(elapsed*item.twinkle+item.phase);item.dot.position.y=item.origin.y+Math.cos(elapsed*(.12+item.drift*.22)+item.phase)*.22;(item.dot.material as THREE.SpriteMaterial).opacity=(.18+twinkle*.46)*(index%9===0?1:.82);item.dot.scale.setScalar(item.base*(.90+twinkle*.30));});cyanKey.intensity=17+Math.sin(elapsed*.45)*1.8;goldKey.intensity=7.2+Math.sin(elapsed*.39+1.2);violetFill.intensity=2.8+Math.sin(elapsed*.27+2)*.55;}world.rotation.y=pointer.x*.05;world.rotation.x=-pointer.y*.03;camera.position.x=pointer.x*.12;camera.position.y=.2-pointer.y*.10;camera.lookAt(1.9,0,0);composer.render();};
     animate();
 
